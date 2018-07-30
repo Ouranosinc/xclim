@@ -4,4 +4,4 @@ Usage
 
 To use dcvar in a project::
 
-    import dcvar
+    import hailstorm as hs
