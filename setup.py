@@ -18,6 +18,8 @@ setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
+KEYWORDS = "hailstorm climate hydrological analysis "
+
 setup(
     author="Travis Logan",
     author_email='logan.travis@ouranos.ca',
@@ -33,19 +35,20 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering :: Atmospheric Science',
     ],
-    description="Derived climate variables written with xarray.",
+    description="Derived climate variables built with xarray.",
     install_requires=requirements,
     license="Apache Software License 2.0",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
-    keywords='dcvar',
-    name='dcvar',
-    packages=find_packages(include=['dcvar']),
+    keywords=KEYWORDS,
+    name='hailstorm',
+    packages=find_packages(include=['hailstorm']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/tlogan2000/dcvar',
+    url='https://github.com/tlogan2000/hailstorm',
     version='0.1.0',
     zip_safe=False,
 )

@@ -4,7 +4,7 @@
 
 
 """
-from checks import *
+from hailstorm.checks import *
 
 import xarray as xr
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start

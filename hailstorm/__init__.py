@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Top-level package for dcvar."""
+"""Top-level package for hailstorm."""
 
 __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
