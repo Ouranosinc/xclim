@@ -145,8 +145,28 @@ def CSDI(tasmin, freq='YS'):
     """Cold spell duration index."""
     raise NotImplementedError
 
+def percentile_doy(arr, window=5, per=.1):
+    """Compute the climatological percentile over a moving window
+    around the day of the year.
+    """
+    # TODO: Support percentile array, store percentile in attributes.
+    rr = arr.rolling(1, center=True, time=window).construct('window')
 
+    # Create empty percentile array
+    g = rr.groupby('time.dayofyear')
+    c = g.count(dim=('time', 'window'))
 
+    p = xr.full_like(c, np.nan).astype(float).load()
+    out = []
+    for doy, ind in rr.groupby('time.dayofyear'):
+        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+
+    return p
+
+#@valid_daily_min_temperature
+def TN10p(tasmin, p10, freq='YS'):
+    """Days with daily minimum temperature below the 10th percentile of the reference period."""
+    return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
 
 xr.set_options(enable_cftimeindex=False)
 def check():
@@ -154,7 +174,7 @@ def check():
 
     fn = '~/src/flyingpigeon/flyingpigeon/tests/testdata/cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc'
     D = xr.open_dataset(fn, chunks={'lat': 1})
-    return CFD(D.tas)
+    return TN10p(D.tas, D.tas)
     #return GSL(D.tas)
 
-o = check()
+#o = check()

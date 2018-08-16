@@ -19,7 +19,7 @@ def check_valid_discharge(var):
 
 def valid_daily_min_temperature(comp):
     """Decorator to check that a computation runs on a valid temperature dataset."""
-    def func(tasmin, **kwds):
+    def func(tasmin, *args, **kwds):
         check_valid_temperature(tasmin)
         check_valid(tasmin, 'cell_methods', 'time: minimum within days')
         return comp(tasmin, **kwds)
