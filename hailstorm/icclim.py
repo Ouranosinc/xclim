@@ -4,12 +4,14 @@
 
 
 """
+
 from checks import *
 import numpy as np
 import xarray as xr
 import dask
+
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-K2C=273.15
+K2C = 273.15
 
 @valid_daily_mean_temperature
 def TG(tas, freq='YS'):
@@ -174,7 +176,7 @@ def check():
 
     fn = '~/src/flyingpigeon/flyingpigeon/tests/testdata/cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc'
     D = xr.open_dataset(fn, chunks={'lat': 1})
-    return TN10p(D.tas, D.tas)
+    #return TN10p(D.tas, D.tas)
     #return GSL(D.tas)
 
 #o = check()

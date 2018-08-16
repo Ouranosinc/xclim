@@ -25,5 +25,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: tlogan2000/dcvar
+    repo: tlogan2000/hailstorm
     python: 3.6

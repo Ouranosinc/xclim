@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `dcvar` package."""
+"""Tests for `hailstorm` package."""
 
 import pytest
 
 
-from dcvar import dcvar
+from hailstorm import hailstorm
 
 
 @pytest.fixture
