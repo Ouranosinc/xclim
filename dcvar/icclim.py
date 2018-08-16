@@ -80,66 +80,21 @@ def GSL(tas):
     mean daily temperature below 5C after July 1st in the northern
     hemisphere and January 1st in the southern hemisphere.
     """
+    freq= 'YS'
+    i = xr.DataArray(np.arange(tas.time.size), dims='time')
+    ind = xr.broadcast(i, tas)[0]
 
-    thresh = 5 + K2C
-    over = (tas > thresh)*1
-    c = over.rolling(time=6).sum(dim='time')
-    nh = c.where(tas.lat >= 0)
-    sh = c.where(tas.lat < 0)
+    c = ((tas > 5 + K2C)*1).rolling(time=6).sum(dim='time')
+    i1 = ind.where(c==6).resample(time=freq).min(dim='time')
 
-    def gsl1(ar):
+    # Resample sets the time to T00:00.
+    i11 = i1.reindex_like(c, method='ffill')
 
-        started = False
-        i1 = 0
-        i2 = -1
-        for i, x in enumerate(ar):
-            if x == 6:
-                i1 = i
-                started = True
-            if started and x == 0 and i > 181:
-                i2 = i
-                break
+    # TODO: Adjust for southern hemisphere
+    i2 = ind.where(c==0).where(tas.time.dt.month >= 7)
+    d = i2 - i11
 
-        return i2 - i1
-
-    def gsl(arr, axis=-1):
-        return np.apply_along_axis(gsl1, axis, arr)
-
-        #return np.clip(i2-i1, 0, np.infty)
-        #i1 = ar.argmax(dim='time').where(ar.max(dim='time') == 6)
-
-
-    def start(ar):
-        # Could probably use ar.time.dt.dayofyear to handle bisextile years
-        return ar.argmax(dim='time').where(ar.max(dim='time') == 6)
-
-    def end(ar):
-        # Need to pass the start date to make sure end > start
-        return ar.argmin(dim='time').where(ar.min(dim='time') == 0)
-
-    #out = dask.array.apply_along_axis(lambda x: x.resample(time='AS-JAN').apply(gsl), tas.get_axis_num('time'), c)
-    #c.resample(time='AS-JAN').apply(lambda x: dask.array.apply_along_axis(gsl, tas.get_axis_num('time'), x))
-
-    #return c.resample(time='AS-JAN').apply(gsl)
-    r = c.resample(time='AS-JAN')
-    return xr.apply_ufunc(gsl, r, input_core_dims=[['time']], kwargs={'axis': -1}, dask='allowed')
-
-    # The code assumes that the series starts in January to align both series
-    nh_i1 = c.resample(time='AS-JAN').apply(start, shortcut=False)
-
-    nh_i2 = c.resample(time='AS-JUL').apply(end, shortcut=True)[1:] + 181
-    nh_i2.coords.update(nh_i1.coords)
-
-    sh_i2 = c.resample(time='AS-JAN').apply(end, shortcut=True)
-    sh_i1 = c.resample(time='AS-JUL').apply(start, shortcut=True)[:-1] + 181
-    sh_i1.coords.update(sh_i2.coords)
-
-
-    nh_gsl = nh_i2 - nh_i1
-    sh_gsl = sh_i2 - sh_i1 + 365
-    return nh_i2, nh_i1, nh_gsl
-    gsl = nh_gsl.where(tas.lat >= 0, sh_gsl)
-    return nh_gsl, sh_gsl
+    return d.resample(time=freq).max(dim='time')
 
 @valid_daily_min_temperature
 def CFD(tasmin, freq='AS-JUL'):
