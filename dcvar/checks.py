@@ -1,13 +1,13 @@
 
 from warnings import warn
 
-
 def check_valid(var, key, expected):
     """Check that a variable's attribute has the expected value. Warn user otherwise."""
     att = getattr(var, key)
     if att != expected:
         warn('Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected))
 
+# TODO: check that the series are continuous (no jumps in time index).
 def check_valid_temperature(var):
     """Check that variable is a temperature."""
     check_valid(var, 'standard_name', 'air_temperature')
