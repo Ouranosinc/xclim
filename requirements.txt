@@ -1,2 +1,4 @@
 xarray
 dask
+numpy
+scipy

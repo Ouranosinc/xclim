@@ -4,7 +4,7 @@
 http://pandas.pydata.org/pandas-docs/version/0.12/timeseries.html#offset-aliases
 """
 
-from hailstorm.checks import *
+from .checks import *
 import xarray as xr
 import pandas as pd
 import numpy as np

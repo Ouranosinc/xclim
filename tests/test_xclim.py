@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `hailstorm` package.
+
+"""Tests for `xclim` package.
 
 We want to tests multiple things here:
  - that data results are correct
@@ -16,11 +17,10 @@ the results in a reference netcdf dataset. We could then compare the hailstorm o
 of defense.
 """
 
-
 import pytest
 
 
-from hailstorm import hailstorm
+from xclim import xclim
 
 def test_TG(fn):
     pass

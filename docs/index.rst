@@ -1,5 +1,5 @@
-Welcome to dcvar's documentation!
-======================================
+Welcome to xclim's documentation!
+=====================================
 
 .. toctree::
    :maxdepth: 2

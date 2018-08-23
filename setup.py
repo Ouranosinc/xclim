@@ -11,14 +11,16 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-with open('requirements.txt') as req_file:
-    requirements = req_file.read().split('\n')
+#with open('requirements.txt') as req_file:
+#    requirements = req_file.read().split('\n')
+
+requirements = ['dask', 'numpy', 'scipy', 'xarray', ]
 
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
-KEYWORDS = "hailstorm climate hydrological analysis "
+KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
 setup(
     author="Travis Logan",
@@ -43,12 +45,12 @@ setup(
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords=KEYWORDS,
-    name='hailstorm',
-    packages=find_packages(include=['hailstorm']),
+    name='xclim',
+    packages=find_packages(include=['xclim']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/tlogan2000/hailstorm',
-    version='0.1.0',
+    url='https://github.com/Ouranosinc/xclim',
+    version='0.1.0.dev',
     zip_safe=False,
 )

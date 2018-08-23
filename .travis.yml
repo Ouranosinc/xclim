@@ -25,5 +25,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: tlogan2000/hailstorm
+    repo: Ouranosinc/xclim
     python: 3.6
