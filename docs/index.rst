@@ -8,7 +8,7 @@ Welcome to xclim's documentation!
    readme
    installation
    usage
-   modules
+   icclim
    contributing
    authors
    history

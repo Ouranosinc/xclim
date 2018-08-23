@@ -1,4 +1,14 @@
 from warnings import warn
+from functools import wraps
+
+"""
+Dev notes
+---------
+
+`functools.wraps` is used to copy the docstring and the function's original name from the source 
+function to the decorated function. This allows sphinx to correctly find and document
+functions.  
+"""
 
 
 def check_valid(var, key, expected):
@@ -34,6 +44,7 @@ def valid_daily_min_temperature(comp):
 def valid_daily_mean_temperature(comp):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
+    @wraps(comp)
     def func(tas, *args, **kwds):
         check_valid_temperature(tas)
         check_valid(tas, 'cell_methods', 'time: mean within days')
@@ -45,6 +56,7 @@ def valid_daily_mean_temperature(comp):
 def valid_daily_max_temperature(comp):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
+    @wraps(comp)
     def func(tasmax, **kwds):
         check_valid_temperature(tasmax)
         check_valid(tasmax, 'cell_methods', 'time: maximum within days')
@@ -56,6 +68,7 @@ def valid_daily_max_temperature(comp):
 def valid_daily_max_min_temperature(comp):
     """Decorator to check that a computation runs on valid min and max temperature datasets."""
 
+    @wraps(comp)
     def func(tasmax, tasmin, **kwds):
         valid_daily_max_temperature(tasmax)
         valid_daily_min_temperature(tasmin)
@@ -68,6 +81,7 @@ def valid_daily_max_min_temperature(comp):
 def valid_daily_mean_discharge(comp):
     """Decorator to check that a computation runs on valid discharge data."""
 
+    @wraps(comp)
     def func(q, **kwds):
         check_valid_discharge(q)
         return comp(q, **kwds)

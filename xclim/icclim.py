@@ -19,7 +19,43 @@ K2C = 273.15
 
 @valid_daily_mean_temperature
 def TG(tas, freq='YS'):
-    """Mean of daily mean temperature."""
+    r"""Mean of daily mean temperature.
+
+    Resample the original daily mean temperature series by taking the mean over each period.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values [K].
+    freq : str, optional
+      Resampling frequency.
+
+
+    Returns
+    -------
+    xarray.DataArray
+      The mean daily temperature at the given time frequency.
+
+
+    Notes
+    -----
+    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `tas.day.nc` the mean temperature
+    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> t = xr.open_dataset('tas.day.nc')
+    >>> tg = xlim.icclim.TG(t, freq="QS-DEC")
+
+    """
     return tas.resample(time=freq).mean(dim='time')
 
 
