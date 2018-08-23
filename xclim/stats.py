@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Statistical distribution fit"""
 
-import xarray as xr
 import dask
+import xarray as xr
+
 from scipy import stats
 
 
@@ -46,6 +47,3 @@ def test():
     D = xr.open_dataset(fn, chunks={'lat': 1}, decode_cf=True)
     p = fit(D.tas)
     c = stats.norm.cdf(.99, *p.values)
-
-
-

@@ -4,11 +4,10 @@
 
 
 """
-
 import numpy as np
 import xarray as xr
 
-from xclim.checks import *
+from .checks import *
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 K2C = 273.15
@@ -180,8 +179,8 @@ def TN10p(tasmin, p10, freq='YS'):
     """Days with daily minimum temperature below the 10th percentile of the reference period."""
     return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
 
-
-xr.set_options(enable_cftimeindex=False)
+# TODO: ValueError: argument names set(['enable_cftimeindex']) are not in the set of valid options set(['arithmetic_join', 'display_width'])
+# xr.set_options(enable_cftimeindex=False)
 
 
 def check():
