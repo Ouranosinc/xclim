@@ -18,7 +18,7 @@ setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
-KEYWORDS = "xclim climate hydrological analysis "
+KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
 setup(
     author="Travis Logan",
@@ -48,7 +48,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/tlogan2000/xclim',
-    version='0.1.0',
+    url='https://github.com/Ouranosinc/xclim',
+    version='0.1.0.dev',
     zip_safe=False,
 )
