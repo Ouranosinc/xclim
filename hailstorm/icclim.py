@@ -2,6 +2,10 @@
 """ICCLIM indices.
 
 
+Run length can be computed using itertools.groupby
+a = pd.Series([1, 2, 3, np.nan, 4, np.nan, np.nan, np.nan, 5, np.nan, np.nan])
+len_holes = [len(list(g)) for k, g in itertools.groupby(a, lambda x: np.isnan(x)) if k]
+
 
 """
 
@@ -170,7 +174,9 @@ def TN10p(tasmin, p10, freq='YS'):
     """Days with daily minimum temperature below the 10th percentile of the reference period."""
     return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
 
-xr.set_options(enable_cftimeindex=False)
+
+
+#xr.set_options(enable_cftimeindex=False)
 def check():
     # Let's try it
 
