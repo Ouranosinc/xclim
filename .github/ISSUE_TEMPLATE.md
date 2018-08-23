@@ -1,4 +1,4 @@
-* HailStorm version:
+* xclim version:
 * Python version:
 * Operating System:
 

@@ -18,7 +18,7 @@ setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
-KEYWORDS = "hailstorm climate hydrological analysis "
+KEYWORDS = "xclim climate hydrological analysis "
 
 setup(
     author="Travis Logan",
@@ -43,12 +43,12 @@ setup(
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords=KEYWORDS,
-    name='hailstorm',
-    packages=find_packages(include=['hailstorm']),
+    name='xclim',
+    packages=find_packages(include=['xclim']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/tlogan2000/hailstorm',
+    url='https://github.com/tlogan2000/xclim',
     version='0.1.0',
     zip_safe=False,
 )

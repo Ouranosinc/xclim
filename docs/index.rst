@@ -1,4 +1,4 @@
-Welcome to hailstorm's documentation!
+Welcome to xclim's documentation!
 =====================================
 
 .. toctree::

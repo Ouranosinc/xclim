@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=hailstorm
+set SPHINXPROJ=xclim
 
 if "%1" == "" goto help
 

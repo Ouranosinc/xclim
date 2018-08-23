@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `hailstorm` package."""
+"""Tests for `xclim` package."""
 
 import pytest
 
 
-from hailstorm import hailstorm
+from xclim import xclim
 
 
 @pytest.fixture

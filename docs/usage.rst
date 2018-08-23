@@ -2,7 +2,7 @@
 Usage
 =====
 
-To use hailstorm in a project::
+To use xclim in a project::
 
-    import hailstorm as hs
+    import xclim as hs
 

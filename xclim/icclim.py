@@ -8,7 +8,7 @@
 import numpy as np
 import xarray as xr
 
-from hailstorm.checks import *
+from xclim.checks import *
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 K2C = 273.15
