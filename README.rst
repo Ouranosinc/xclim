@@ -19,9 +19,14 @@ xclim
      :alt: Updates
 
 
+`xclim` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with little to no boilerplate.
 
-Derived climate variables written with xarray.
-
+```
+import xclim
+import xarray as xr
+ds = xr.open_dataset(filename)
+xlim.icclim.TG(ds)
+```
 
 * Free software: Apache Software License 2.0
 * Documentation: https://xclim.readthedocs.io.
