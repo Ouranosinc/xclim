@@ -1,20 +1,20 @@
-=====
-hailstorm
-=====
+=========
+HailStorm
+=========
 
 
-.. image:: https://img.shields.io/pypi/v/dcvar.svg
+.. image:: https://img.shields.io/pypi/v/hailstorm.svg
         :target: https://pypi.python.org/pypi/hailstorm
 
-.. image:: https://img.shields.io/travis/tlogan2000/dcvar.svg
+.. image:: https://img.shields.io/travis/Ouranosinc/HailStorm.svg
         :target: https://travis-ci.org/Ouranosinc/hailstorm
 
-.. image:: https://readthedocs.org/projects/dcvar/badge/?version=latest
+.. image:: https://readthedocs.org/projects/HailStorm/badge/?version=latest
         :target: https://hailstorm.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 
-.. image:: https://pyup.io/repos/github/tlogan2000/dcvar/shield.svg
+.. image:: https://pyup.io/repos/github/Ouranosinc/HailStorm/shield.svg
      :target: https://pyup.io/repos/github/Ouranosinc/hailstorm/
      :alt: Updates
 

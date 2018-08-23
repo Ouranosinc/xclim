@@ -1,4 +1,4 @@
-* dcvar version:
+* HailStorm version:
 * Python version:
 * Operating System:
 

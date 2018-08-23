@@ -1,5 +1,5 @@
-Welcome to dcvar's documentation!
-======================================
+Welcome to hailstorm's documentation!
+=====================================
 
 .. toctree::
    :maxdepth: 2

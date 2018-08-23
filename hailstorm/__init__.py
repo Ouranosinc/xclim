@@ -6,4 +6,4 @@ __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
 __version__ = '0.1.0'
 
-import checks
+import hailstorm.checks
