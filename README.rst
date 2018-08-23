@@ -3,7 +3,7 @@ HailStorm
 =========
 
 
-.. image:: https://img.shields.io/pypi/v/hailstorm.svg
+.. image:: https://img.shields.io/pypi/v/HailStorm.svg
         :target: https://pypi.python.org/pypi/hailstorm
 
 .. image:: https://img.shields.io/travis/Ouranosinc/HailStorm.svg
