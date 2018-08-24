@@ -4,7 +4,7 @@
 
 __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
-__version__ = '__version__ = '0.1.1'.dev'
+__version__ = '__version__ = '0.1.2'.dev'
 
 
 from .checks import *
