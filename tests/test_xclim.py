@@ -18,12 +18,26 @@ of defense.
 """
 
 import pytest
-
-
 from xclim import xclim
+import xarray as xr
+import os
 
-def test_TG(fn):
-    pass
+TEST_DATA_DIR = os.path.join(os.path.split(__file__)[0], 'testdata')
+
+@pytest.fixture(scope="session")
+def cmip3_day_tas():
+    ds = xr.open_dataset(os.path.join(TEST_DATA_DIR, 'cmip3', 'tas.sresa2.miub_echo_g.run1.atm.da.nc'))
+    yield ds.tas
+    ds.close()
+
+
+# I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator. 
+class TestTG():
+    def test_simple(self, cmip3_day_tas):
+        rd = xclim.TG(cmip3_day_tas)
+
+    def compare_against_icclim(self, cmip3_day_tas):
+        pass
 
 @pytest.fixture
 def response():
