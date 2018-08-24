@@ -11,6 +11,6 @@ from .checks import *
 from .hydro import BFI
 from .icclim import *
 from .stats import fit, test
-from .xclim import xclim_indice
+
 
 

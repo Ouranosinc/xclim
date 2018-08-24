@@ -12,6 +12,7 @@ import numpy as np
 import xarray as xr
 
 from .checks import *
+from . import run_length as rl
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 K2C = 273.15
@@ -163,6 +164,23 @@ def CFD(tasmin, freq='AS-JUL'):
     d = b.diff(dim='time') - 1
 
     return d.resample(time=freq).max(dim='time')
+
+@valid_daily_min_temperature
+def CFD2(tasmin, freq='AS-JUL'):
+    # Results are different from CFD, possibly because resampling occurs at first.
+    # CFD looks faster anyway.
+    f = tasmin < K2C
+    group = f.resample(time=freq)
+    func = lambda x: xr.apply_ufunc(rl.longest_run,
+                                    x,
+                                    input_core_dims=[['time'], ],
+                                    vectorize=True,
+                                    dask='parallelized',
+                                    output_dtypes=[np.int, ],
+                                    keep_attrs=True,
+                                    )
+
+    return group.apply(func)
 
 
 @valid_daily_min_temperature

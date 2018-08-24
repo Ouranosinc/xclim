@@ -57,10 +57,10 @@ def valid_daily_max_temperature(comp):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
-    def func(tasmax, **kwds):
+    def func(tasmax, *args, **kwds):
         check_valid_temperature(tasmax)
         check_valid(tasmax, 'cell_methods', 'time: maximum within days')
-        return comp(tasmax, **kwds)
+        return comp(tasmax, *args, **kwds)
 
     return func
 
