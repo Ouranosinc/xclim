@@ -51,6 +51,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/Ouranosinc/xclim',
-    version='0.1.0.dev',
+    version='version='0.1.1'.dev',
     zip_safe=False,
 )
