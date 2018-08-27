@@ -21,5 +21,17 @@ def BFI(q, freq=None):
     m7m = m7.min(dim='time')
     return m7m/q.mean(dim='time')
 
+@valid_daily_mean_temperature
+def freshet_start(tas, thresh=0, window=5):
+    """Return first day of year when a temperature threshold is exceeded
+    over a given number of days.
+    """
+    i = xr.DataArray(np.arange(tasmin.time.size), dims='time')
+    ind = xr.broadcast(i, tasmin)[0]
+
+    over = ((tas > K2C + thresh) * 1).rolling(time=window).sum(dim='time')
+    i = ind.where(over==window)
+    return i.resample(time=freq).min(dim='time')
+
 
 #da = xr.DataArray(np.linspace(0, 1000, num=1001), coords=[pd.date_range('15/12/1999',  periods=1001, freq=pd.DateOffset(days=1))], dims='time')

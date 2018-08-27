@@ -144,7 +144,7 @@ def GSL(tas):
 
 @valid_daily_min_temperature
 def CFD(tasmin, freq='AS-JUL'):
-    """Maximum number of consecutive frost days (TN < 0℃)."""
+    """Maximum number of consecutive frost days (Tmin < 0℃)."""
 
     # TODO: Deal with start and end boundaries
     # TODO: Handle missing values ?
@@ -185,7 +185,7 @@ def CFD2(tasmin, freq='AS-JUL'):
 
 @valid_daily_min_temperature
 def FD(tasmin, freq='YS'):
-    """Number of frost days (TN < 0℃)."""
+    """Number of frost days (Tmin < 0℃)."""
     f = (tasmin < K2C) * 1
     return f.resample(time=freq).sum(dim='time')
 
