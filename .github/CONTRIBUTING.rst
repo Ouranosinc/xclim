@@ -102,7 +102,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.7, 3.4, 3.5 and 3.6, and for PyPy. Check
+3. The pull request should work for Python 2.7, 3.4, 3.5, 3.6, 3.7, and for PyPy. Check
    https://travis-ci.org/Ouranosinc/xclim/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
@@ -114,6 +114,22 @@ To run a subset of tests::
 $ py.test tests.test_xclim
 
 
+Versioning
+----------
+
+In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
+The method we use is as such::
+
+  major.minor-release
+
+**Major** releases denote major changes resulting in a stable API;
+
+**Minor** is to be used when adding a module or set of components;
+
+**Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
+
+  An increment to the Major or Minor will reset the Release to `alpha`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
+
 Deploying
 ---------
 
@@ -121,7 +137,7 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (including an entry in HISTORY.rst).
 Then run::
 
-$ bumpversion patch # possible: major / minor / patch
+$ bumpversion minor # possible options: major / minor / release
 $ git push
 $ git push --tags
 

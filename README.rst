@@ -28,7 +28,7 @@ For example, the following would compute seasonal mean temperature from daily me
   import xclim
   import xarray as xr
   ds = xr.open_dataset(filename)
-  tg = xlim.icclim.TG(ds, freq='QS-DEC')
+  tg = xclim.icclim.TG(ds, freq='QS-DEC')
 
 
 * Free software: Apache Software License 2.0
