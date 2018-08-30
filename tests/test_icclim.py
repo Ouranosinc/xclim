@@ -36,7 +36,7 @@ def cmip3_day_tas():
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG():
     def test_cmip3(self, cmip3_day_tas): # This fails, xarray chokes on the time dimension. Unclear why.
-        rd = xclim.TG(cmip3_day_tas)
+        rd = xclim.icclim.TG(cmip3_day_tas)
 
     def compare_against_icclim(self, cmip3_day_tas):
         pass
