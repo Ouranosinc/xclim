@@ -28,15 +28,15 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 @pytest.fixture(scope="session")
 def cmip3_day_tas():
     #xr.set_options(enable_cftimeindex=False)
-    ds = xr.open_dataset(os.path.join(TESTS_DATA, 'cmip3', 'tas.sresa2.miub_echo_g.run1.atm.da.nc'))
+    ds = xr.open_dataset(os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc'))
     yield ds.tas
     ds.close()
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG():
-    #def test_cmip3(self, cmip3_day_tas): # This fails, xarray chokes on the time dimension. Unclear why.
-    #    rd = xclim.TG(cmip3_day_tas)
+    def test_cmip3(self, cmip3_day_tas): # This fails, xarray chokes on the time dimension. Unclear why.
+        rd = xclim.TG(cmip3_day_tas)
 
     def compare_against_icclim(self, cmip3_day_tas):
         pass

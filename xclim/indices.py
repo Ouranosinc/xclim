@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
-"""ICCLIM indices.
 
-
-Run length can be computed using itertools.groupby
-a = pd.Series([1, 2, 3, np.nan, 4, np.nan, np.nan, np.nan, 5, np.nan, np.nan])
-len_holes = [len(list(g)) for k, g in itertools.groupby(a, lambda x: np.isnan(x)) if k]
-
-
-"""
+"""Main module."""
+import dask
 import numpy as np
+import pandas as pd
 import xarray as xr
 
+from functools import wraps
 from .checks import *
 from . import run_length as rl
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
+# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 
 
@@ -57,19 +54,22 @@ def TG(tas, freq='YS'):
     >>> tg = xlim.icclim.TG(t, freq="QS-DEC")
 
     """
-    return tas.resample(time=freq).mean(dim='time')
+    arr = tas.resample(time=freq) if freq else tas
+    return arr.mean(dim='time')
 
 
 @valid_daily_min_temperature
 def TN(tasmin, freq='YS'):
     """Mean of daily minimum temperature."""
-    return tasmin.resample(time=freq).mean(dim='time')
+    arr = tasmin.resample(time=freq) if freq else tasmin
+    return arr.mean(dim='time')
 
 
 @valid_daily_max_temperature
 def TX(tasmax, freq='YS'):
     """Mean of daily maximum temperature."""
-    return tasmax.resample(time=freq).mean(dim='time')
+    arr = tasmax.resample(time=freq) if freq else tasmax
+    return arr.mean(dim='time')
 
 
 @valid_daily_max_temperature
@@ -249,3 +249,122 @@ def check():
     # return GSL(D.tas)
 
 # o = check()
+
+
+
+
+@valid_daily_max_temperature
+def HWI(tasmax, thresh=25, window=5, freq='YS'):
+    """Heat wave index.
+
+    Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
+
+    Parameters
+    ----------
+    tasmax : xr.DataArray
+      Maximum daily temperature.
+    thresh : float
+      Threshold temperature to designate a heatwave [℃].
+    window : int
+      Minimum number of days with temperature above threshold to qualify as a heatwave.
+
+    Returns
+    -------
+    DataArray
+      Heat wave index.
+    """
+    # TODO: Deal better with boundary effects.
+    # TODO: Deal with attributes
+
+    over = tasmax > K2C + thresh
+    group = over.resample(time=freq)
+    func = lambda x: xr.apply_ufunc(rl.windowed_run_count,
+                          x,
+                          input_core_dims=[['time'],],
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.int,],
+                          keep_attrs=True,
+                          kwargs={'window': window})
+
+    return group.apply(func)
+
+@valid_daily_mean_temperature
+def CSI(tas, thresh=-10, window=5, freq='AS-JUL'):
+    """Cold spell index.
+    """
+    over = tas < K2C + thresh
+    group = over.resample(time=freq)
+    func = lambda x: xr.apply_ufunc(rl.windowed_run_count,
+                                    x,
+                                    input_core_dims=[['time'], ],
+                                    vectorize=True,
+                                    dask='parallelized',
+                                    output_dtypes=[np.int, ],
+                                    keep_attrs=True,
+                                    kwargs={'window': window})
+
+    return group.apply(func)
+
+@valid_daily_max_min_temperature
+def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
+    """Number of days with a freeze-thaw cycle.
+
+    The number of days where Tmax > 0℃ and Tmin < 0℃.
+    """
+    ft = (tasmin < K2C) * (tasmax > K2C) * 1
+    return ft.resample(time=freq).sum(dim='time')
+
+@valid_daily_max_temperature
+def hotdays(tasmax, thresh=30, freq='YS'):
+    """Number of very hot days.
+
+    The number of days exceeding a threshold. """
+    hd = (tasmax > K2C + thresh)*1
+    return hd.resample(time=freq).sum(dim='time')
+
+@valid_daily_mean_temperature
+def CoolingDD(tas, thresh=18, freq='YS'):
+    """Cooling degree days above threshold."""
+    cdd = (tas > K2C + thresh) * 1
+    return cdd.resample(time=freq).sum(dim='time')
+
+
+
+class UnivariateFunc():
+    standard_name = ''
+    long_name = ''
+    units = ''
+    comments = ''
+
+    def __init__(self):
+        self.meta_wrap(self.compute)
+
+    def add_meta(self, arr):
+        arr.attrs.update(dict([(k, v) for (k, v) in vars(self).items()]))
+        return arr
+
+    def meta_wrap(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwds):
+            out = func(*args, **kwds)
+            return self.add_meta(out)
+
+        self.__call__ = wrapper
+
+    @staticmethod
+    def compute(*args, **kwds):
+        return
+
+
+class CDD(UnivariateFunc):
+    standard_name = 'cooling_degree_days'
+    long_name = 'cooling degree days'
+    units = 'K*day'
+
+    @staticmethod
+    def compute(tas, freq='YS', thresh=18):
+        """Cooling degree days above threshold."""
+        cdd = (tas > K2C + thresh) * 1
+        return cdd.resample(time=freq).sum(dim='time')
+
