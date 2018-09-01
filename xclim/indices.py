@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from functools import wraps
 from .checks import *
 from . import run_length as rl
 
@@ -15,85 +14,94 @@ from . import run_length as rl
 K2C = 273.15
 
 
+
+
+
 @valid_daily_mean_temperature
-def TG(tas, freq='YS'):
-    r"""Mean of daily mean temperature.
-
-    Resample the original daily mean temperature series by taking the mean over each period.
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-      Mean daily temperature values [K].
-    freq : str, optional
-      Resampling frequency.
+def cooling_degree_days(tas, thresh=18, freq='YS'):
+    """Cooling degree days above threshold."""
+    cdd = (tas > K2C + thresh) * 1
+    return cdd.resample(time=freq).sum(dim='time')
 
 
-    Returns
-    -------
-    xarray.DataArray
-      The mean daily temperature at the given time frequency.
+@valid_daily_min_temperature
+def CFD(tasmin, freq='AS-JUL'):
+    """Maximum number of consecutive frost days (Tmin < 0℃)."""
+
+    # TODO: Deal with start and end boundaries
+    # TODO: Handle missing values ?
+    # TODO: Check that input array has no missing dates (holes)
+
+    # Create an monotonously increasing index [0,1,2,...] along the time dimension.
+    i = xr.DataArray(np.arange(tasmin.time.size), dims='time')
+    ind = xr.broadcast(i, tasmin)[0]
+
+    # Mask index  values where tasmin > K2C
+    d = ind.where(tasmin > K2C)
+
+    # Fill NaNs with the following valid value
+    b = d.bfill(dim='time')
+
+    # Find the difference between start and end indices
+    d = b.diff(dim='time') - 1
+
+    return d.resample(time=freq).max(dim='time')
 
 
-    Notes
-    -----
-    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
+@valid_daily_min_temperature
+def CFD2(tasmin, freq='AS-JUL'):
+    # Results are different from CFD, possibly because resampling occurs at first.
+    # CFD looks faster anyway.
+    f = tasmin < K2C
+    group = f.resample(time=freq)
 
-    .. math::
+    def func(x):
+        return xr.apply_ufunc(rl.longest_run,
+                                x,
+                                input_core_dims=[['time'], ],
+                                vectorize=True,
+                                dask='parallelized',
+                                output_dtypes=[np.int, ],
+                                keep_attrs=True,
+                                )
 
-       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    return group.apply(func)
 
 
-    Examples
-    --------
-    The following would compute for each grid cell of file `tas.day.nc` the mean temperature
-    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+@valid_daily_min_temperature
+def CSDI(tasmin, freq='YS'):
+    """Cold spell duration index."""
+    raise NotImplementedError
 
-    >>> t = xr.open_dataset('tas.day.nc')
-    >>> tg = xlim.icclim.TG(t, freq="QS-DEC")
 
+@valid_daily_mean_temperature
+def CSI(tas, thresh=-10, window=5, freq='AS-JUL'):
+    """Cold spell index.
     """
-    arr = tas.resample(time=freq) if freq else tas
-    return arr.mean(dim='time')
+    over = tas < K2C + thresh
+    group = over.resample(time=freq)
+
+    def func(x):
+        xr.apply_ufunc(rl.windowed_run_count,
+                        x,
+                        input_core_dims=[['time'], ],
+                        vectorize=True,
+                        dask='parallelized',
+                        output_dtypes=[np.int, ],
+                        keep_attrs=True,
+                        kwargs={'window': window})
+
+    return group.apply(func)
 
 
-@valid_daily_min_temperature
-def TN(tasmin, freq='YS'):
-    """Mean of daily minimum temperature."""
-    arr = tasmin.resample(time=freq) if freq else tasmin
-    return arr.mean(dim='time')
+@valid_daily_max_min_temperature
+def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
+    """Number of days with a freeze-thaw cycle.
 
-
-@valid_daily_max_temperature
-def TX(tasmax, freq='YS'):
-    """Mean of daily maximum temperature."""
-    arr = tasmax.resample(time=freq) if freq else tasmax
-    return arr.mean(dim='time')
-
-
-@valid_daily_max_temperature
-def TXx(tasmax, freq='YS'):
-    """Maximum of daily maximum temperature."""
-    return tasmax.resample(time=freq).max(dim='time')
-
-
-@valid_daily_min_temperature
-def TNx(tasmin, freq='YS'):
-    """Maximum of daily minimum temperature."""
-    return tasmin.resample(time=freq).max(dim='time')
-
-
-@valid_daily_max_temperature
-def TXn(tasmax, freq='YS'):
-    """Minimum of daily maximum temperature."""
-    return tasmax.resample(time=freq).min(dim='time')
-
-
-@valid_daily_min_temperature
-def TNn(tasmin, freq='YS'):
-    """Minimum of daily minimum temperature."""
-    return tasmin.resample(time=freq).min(dim='time')
+    The number of days where Tmax > 0℃ and Tmin < 0℃.
+    """
+    ft = (tasmin < K2C) * (tasmax > K2C) * 1
+    return ft.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_max_min_temperature
@@ -101,6 +109,13 @@ def DTR(tasmax, tasmin, freq='YS'):
     """Mean of daily temperature range."""
     dtr = tasmax - tasmin
     return dtr.resample(time=freq).mean(dim='time')
+
+
+@valid_daily_min_temperature
+def FD(tasmin, freq='YS'):
+    """Number of frost days (Tmin < 0℃)."""
+    f = (tasmin < K2C) * 1
+    return f.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_mean_temperature
@@ -142,54 +157,6 @@ def GSL(tas):
     return d.resample(time=freq).max(dim='time')
 
 
-@valid_daily_min_temperature
-def CFD(tasmin, freq='AS-JUL'):
-    """Maximum number of consecutive frost days (Tmin < 0℃)."""
-
-    # TODO: Deal with start and end boundaries
-    # TODO: Handle missing values ?
-    # TODO: Check that input array has no missing dates (holes)
-
-    # Create an monotonously increasing index [0,1,2,...] along the time dimension.
-    i = xr.DataArray(np.arange(tasmin.time.size), dims='time')
-    ind = xr.broadcast(i, tasmin)[0]
-
-    # Mask index  values where tasmin > K2C
-    d = ind.where(tasmin > K2C)
-
-    # Fill NaNs with the following valid value
-    b = d.bfill(dim='time')
-
-    # Find the difference between start and end indices
-    d = b.diff(dim='time') - 1
-
-    return d.resample(time=freq).max(dim='time')
-
-@valid_daily_min_temperature
-def CFD2(tasmin, freq='AS-JUL'):
-    # Results are different from CFD, possibly because resampling occurs at first.
-    # CFD looks faster anyway.
-    f = tasmin < K2C
-    group = f.resample(time=freq)
-    func = lambda x: xr.apply_ufunc(rl.longest_run,
-                                    x,
-                                    input_core_dims=[['time'], ],
-                                    vectorize=True,
-                                    dask='parallelized',
-                                    output_dtypes=[np.int, ],
-                                    keep_attrs=True,
-                                    )
-
-    return group.apply(func)
-
-
-@valid_daily_min_temperature
-def FD(tasmin, freq='YS'):
-    """Number of frost days (Tmin < 0℃)."""
-    f = (tasmin < K2C) * 1
-    return f.resample(time=freq).sum(dim='time')
-
-
 @valid_daily_mean_temperature
 def HD(tas, freq='YS', thresh=17):
     """Heating degree days.
@@ -201,56 +168,12 @@ def HD(tas, freq='YS', thresh=17):
 
 
 @valid_daily_max_temperature
-def ID(tasmax, freq='YS'):
-    """Number of days where the daily maximum temperature is below 0℃."""
-    f = (tasmax < K2C) * 1
-    return f.resample(time=freq).sum(dim='time')
+def hotdays(tasmax, thresh=30, freq='YS'):
+    """Number of very hot days.
 
-
-@valid_daily_min_temperature
-def CSDI(tasmin, freq='YS'):
-    """Cold spell duration index."""
-    raise NotImplementedError
-
-
-def percentile_doy(arr, window=5, per=.1):
-    """Compute the climatological percentile over a moving window
-    around the day of the year.
-    """
-    # TODO: Support percentile array, store percentile in attributes.
-    rr = arr.rolling(1, center=True, time=window).construct('window')
-
-    # Create empty percentile array
-    g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
-
-    p = xr.full_like(c, np.nan).astype(float).load()
-    out = []
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
-
-    return p
-
-
-# @valid_daily_min_temperature
-def TN10p(tasmin, p10, freq='YS'):
-    """Days with daily minimum temperature below the 10th percentile of the reference period."""
-    return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
-
-# TODO: ValueError: argument names set(['enable_cftimeindex']) are not in the set of valid options set(['arithmetic_join', 'display_width'])
-# xr.set_options(enable_cftimeindex=False)
-
-def check():
-    # Let's try it
-
-    fn = '~/src/flyingpigeon/flyingpigeon/tests/testdata/cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc'
-    D = xr.open_dataset(fn, chunks={'lat': 1})
-    # return TN10p(D.tas, D.tas)
-    # return GSL(D.tas)
-
-# o = check()
-
-
+    The number of days exceeding a threshold. """
+    hd = (tasmax > K2C + thresh)*1
+    return hd.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_max_temperature
@@ -278,7 +201,9 @@ def HWI(tasmax, thresh=25, window=5, freq='YS'):
 
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
-    func = lambda x: xr.apply_ufunc(rl.windowed_run_count,
+
+    def func(x):
+        xr.apply_ufunc(rl.windowed_run_count,
                           x,
                           input_core_dims=[['time'],],
                           vectorize=True,
@@ -289,82 +214,133 @@ def HWI(tasmax, thresh=25, window=5, freq='YS'):
 
     return group.apply(func)
 
-@valid_daily_mean_temperature
-def CSI(tas, thresh=-10, window=5, freq='AS-JUL'):
-    """Cold spell index.
-    """
-    over = tas < K2C + thresh
-    group = over.resample(time=freq)
-    func = lambda x: xr.apply_ufunc(rl.windowed_run_count,
-                                    x,
-                                    input_core_dims=[['time'], ],
-                                    vectorize=True,
-                                    dask='parallelized',
-                                    output_dtypes=[np.int, ],
-                                    keep_attrs=True,
-                                    kwargs={'window': window})
-
-    return group.apply(func)
-
-@valid_daily_max_min_temperature
-def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
-    """Number of days with a freeze-thaw cycle.
-
-    The number of days where Tmax > 0℃ and Tmin < 0℃.
-    """
-    ft = (tasmin < K2C) * (tasmax > K2C) * 1
-    return ft.resample(time=freq).sum(dim='time')
 
 @valid_daily_max_temperature
-def hotdays(tasmax, thresh=30, freq='YS'):
-    """Number of very hot days.
+def ID(tasmax, freq='YS'):
+    """Number of days where the daily maximum temperature is below 0℃."""
+    f = (tasmax < K2C) * 1
+    return f.resample(time=freq).sum(dim='time')
 
-    The number of days exceeding a threshold. """
-    hd = (tasmax > K2C + thresh)*1
-    return hd.resample(time=freq).sum(dim='time')
 
 @valid_daily_mean_temperature
-def CoolingDD(tas, thresh=18, freq='YS'):
-    """Cooling degree days above threshold."""
-    cdd = (tas > K2C + thresh) * 1
-    return cdd.resample(time=freq).sum(dim='time')
+def TG(tas, freq='YS'):
+    r"""Mean of daily mean temperature.
+
+    Resample the original daily mean temperature series by taking the mean over each period.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values [K].
+    freq : str, optional
+      Resampling frequency.
 
 
-
-class UnivariateFunc():
-    standard_name = ''
-    long_name = ''
-    units = ''
-    comments = ''
-
-    def __init__(self):
-        self.meta_wrap(self.compute)
-
-    def add_meta(self, arr):
-        arr.attrs.update(dict([(k, v) for (k, v) in vars(self).items()]))
-        return arr
-
-    def meta_wrap(self, func):
-        @wraps(func)
-        def wrapper(*args, **kwds):
-            out = func(*args, **kwds)
-            return self.add_meta(out)
-
-        self.__call__ = wrapper
-
-    @staticmethod
-    def compute(*args, **kwds):
-        return
+    Returns
+    -------
+    xarray.DataArray
+      The mean daily temperature at the given time frequency.
 
 
-class CDD(UnivariateFunc):
-    standard_name = 'cooling_degree_days'
-    long_name = 'cooling degree days'
-    units = 'K*day'
+    Notes
+    -----
+    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
 
-    @staticmethod
-    def compute(tas, freq='YS', thresh=18):
-        """Cooling degree days above threshold."""
-        cdd = (tas > K2C + thresh) * 1
-        return cdd.resample(time=freq).sum(dim='time')
+    .. math::
+
+       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `tas.day.nc` the mean temperature
+    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> t = xr.open_dataset('tas.day.nc')
+    >>> tg = TG(t, freq="QS-DEC")
+
+    """
+    arr = tas.resample(time=freq) if freq else tas
+    return arr.mean(dim='time')
+
+
+@valid_daily_min_temperature
+def TN(tasmin, freq='YS'):
+    """Mean of daily minimum temperature."""
+    arr = tasmin.resample(time=freq) if freq else tasmin
+    return arr.mean(dim='time')
+
+
+# @valid_daily_min_temperature
+def TN10p(tasmin, p10, freq='YS'):
+    """Days with daily minimum temperature below the 10th percentile of the reference period."""
+    return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
+
+
+@valid_daily_min_temperature
+def TNn(tasmin, freq='YS'):
+    """Minimum of daily minimum temperature."""
+    return tasmin.resample(time=freq).min(dim='time')
+
+
+@valid_daily_min_temperature
+def TNx(tasmin, freq='YS'):
+    """Maximum of daily minimum temperature."""
+    return tasmin.resample(time=freq).max(dim='time')
+
+
+@valid_daily_max_temperature
+def TX(tasmax, freq='YS'):
+    """Mean of daily maximum temperature."""
+    arr = tasmax.resample(time=freq) if freq else tasmax
+    return arr.mean(dim='time')
+
+
+@valid_daily_max_temperature
+def TXn(tasmax, freq='YS'):
+    """Minimum of daily maximum temperature."""
+    return tasmax.resample(time=freq).min(dim='time')
+
+
+@valid_daily_max_temperature
+def TXx(tasmax, freq='YS'):
+    """Maximum of daily maximum temperature."""
+    return tasmax.resample(time=freq).max(dim='time')
+
+
+def percentile_doy(arr, window=5, per=.1):
+    """Compute the climatological percentile over a moving window
+    around the day of the year.
+    """
+    # TODO: Support percentile array, store percentile in attributes.
+    rr = arr.rolling(1, center=True, time=window).construct('window')
+
+    # Create empty percentile array
+    g = rr.groupby('time.dayofyear')
+    c = g.count(dim=('time', 'window'))
+
+    p = xr.full_like(c, np.nan).astype(float).load()
+
+    for doy, ind in rr.groupby('time.dayofyear'):
+        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+
+    return p
+
+
+# TODO: ValueError: argument names set(['enable_cftimeindex']) are not in the set of valid options set(['arithmetic_join', 'display_width'])
+# xr.set_options(enable_cftimeindex=False)
+
+
+def check():
+    # Let's try it
+
+    fn = '~/src/flyingpigeon/flyingpigeon/tests/testdata/cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc'
+    D = xr.open_dataset(fn, chunks={'lat': 1})
+    # return TN10p(D.tas, D.tas)
+    # return GSL(D.tas)
+
+# o = check()
+
+
 

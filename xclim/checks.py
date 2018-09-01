@@ -13,8 +13,10 @@ functions.
 
 def check_valid(var, key, expected):
     """Check that a variable's attribute has the expected value. Warn user otherwise."""
-    att = getattr(var, key)
-    if att != expected:
+    att = getattr(var, key, None)
+    if att is None:
+        warn('Variable does not have a `{}` attribute.'.format(key))
+    elif att != expected:
         warn('Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected))
 
 
