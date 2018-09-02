@@ -19,8 +19,11 @@ def check_valid(var, key, expected):
     elif att != expected:
         warn('Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected))
 
+def check_monotonic(var):
+    """Assert that the series is continuous (no jumps in time index)."""
+    if not var.time.to_pandas().is_monotonic:
+        raise ValueError("time index is not monotonically increasing.")
 
-# TODO: check that the series are continuous (no jumps in time index).
 def check_valid_temperature(var):
     """Check that variable is a temperature."""
     check_valid(var, 'standard_name', 'air_temperature')

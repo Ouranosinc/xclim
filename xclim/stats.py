@@ -3,7 +3,7 @@
 
 import dask
 import xarray as xr
-
+import numpy as np
 from scipy import stats
 
 
@@ -11,7 +11,9 @@ def fit(arr, dist='norm'):
     """Fit an array to a distribution along the time dimension."""
 
     # Note: stats.dist.shapes: comma separated names of shape parameters
+    # The other parameters, common to all distribution, are loc and scale.
 
+    # Get the distribution object
     dc = getattr(stats, dist, None)
     if dc is None:
         raise ValueError("Statistical distribution {} is not in scipy.stats.".format(dist))

@@ -15,7 +15,15 @@ K2C = 273.15
 
 
 
+def CD(tas, TGin25, pr, wet25):
+    """Cold and dry days.
 
+    See Beniston (2009)..."""
+    c1 = tas < TGin25
+    c2 = (pr > 1 * ftomm) * (pr < wet25)
+
+    c = (c1 * c2) * 1
+    return c.resample(time=freq).sum(dim='time')
 
 @valid_daily_mean_temperature
 def cooling_degree_days(tas, thresh=18, freq='YS'):
@@ -26,10 +34,38 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
 
 @valid_daily_min_temperature
 def CFD(tasmin, freq='AS-JUL'):
-    """Maximum number of consecutive frost days (Tmin < 0℃)."""
+    """Maximum number of consecutive frost days (Tmin < 0℃).
+
+    Resample the daily minimum temperature series by computing the maximum number
+    of days below the freezing point over each period.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature values [K].
+    freq : str, optional
+      Resampling frequency.
+
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive days below the freezing point.
+
+    Notes
+    -----
+    Let :math:`Tmin_i` be the minimum daily temperature of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       CFD_p = \max(run_l(Tmin_i < 273.15)) \for a <= i <= b
+
+    where run_l returns the length of each consecutive series of true values.
+
+    """
 
     # TODO: Deal with start and end boundaries
-    # TODO: Handle missing values ?
     # TODO: Check that input array has no missing dates (holes)
 
     # Create an monotonously increasing index [0,1,2,...] along the time dimension.
@@ -69,9 +105,43 @@ def CFD2(tasmin, freq='AS-JUL'):
 
 
 @valid_daily_min_temperature
-def CSDI(tasmin, freq='YS'):
-    """Cold spell duration index."""
-    raise NotImplementedError
+def CSDI(tasmin, TN10p, freq='YS'):
+    """Cold spell duration index.
+
+    Resample the daily minimum temperature series by returning the number of days per
+    period where the temperature is below the calendar day 10th percentile (calculated
+    over a centered 5-day window for values during the 1961–1990 period) for a minimum of
+    at least six consecutive days.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature values [K].
+    TN10p : xarray.DataArray
+      The climatological 10th percentile of the minimum daily temperature computed over
+      the period 1961-1990, computed for each day of the year using a centered 5-day window.
+    freq : str, optional
+      Resampling frequency.
+
+
+    See also
+    --------
+    percentile_doy
+    """
+    cold = tasmin < TN10p
+    group = cold.resample(time=freq)
+
+    def func(x):
+        xr.apply_ufunc(rl.windowed_run_count,
+                        x,
+                        input_core_dims=[['time'], ],
+                        vectorize=True,
+                        dask='parallelized',
+                        output_dtypes=[np.int, ],
+                        keep_attrs=True,
+                        kwargs={'window': 6})
+
+    return group.apply(func)
 
 
 @valid_daily_mean_temperature
