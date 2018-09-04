@@ -40,8 +40,8 @@ def build_module(name, keys, source, doc='', mode='ignore'):
 
     out = types.ModuleType(name, doc)
 
-    for k in keys:
-        f = getattr(source, k, None)
+    for key, name in keys.items():
+        f = getattr(source, name, None)
         if f is None:
             msg = "{} has not been implemented.".format(k)
             if mode == 'raise':
@@ -50,7 +50,7 @@ def build_module(name, keys, source, doc='', mode='ignore'):
                 warnings.warn(msg)
 
         else:
-            out.__dict__[k] = f
+            out.__dict__[key] = f
 
     return out
 
@@ -60,6 +60,8 @@ def __build_icclim(mode='warn'):
             'SD', 'SD1', 'SD5cm', 'SD50cm', 'DTR', 'ETR', 'vDTR', 'TG10p', 'TX10p', 'TN10p', 'TG90p',
             'TX90p', 'TN90p', 'WSDI', 'CSDI', 'R75p', 'R75pTOT', 'R95p', 'R95pTOT', 'R99p', 'R99pTOT']
 
-    return build_module('icclim', keys, indices, doc="""ICCLIM indices""", mode=mode)
+    mapping = {'CFD': 'consecutive_frost_days'}
+
+    return build_module('icclim', mapping, indices, doc="""ICCLIM indices""", mode=mode)
 
 icclim = __build_icclim('ignore')
