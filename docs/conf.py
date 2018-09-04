@@ -15,18 +15,17 @@
 
 import os
 import sys
+import guzzle_sphinx_theme
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-import guzzle_sphinx_theme
+sys.path.insert(0, os.path.abspath('..'))
 
 import xclim
-from xclim import __version__
 
-sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ---------------------------------------------
 
@@ -108,7 +107,7 @@ html_theme = 'guzzle_sphinx_theme'  # 'alabaster
 # documentation.
 #
 html_theme_options = {
-    "project_nav_name": "XClim {}".format(__version__),
+    "project_nav_name": "XClim {}".format(xclim.__version__),
     "homepage": "index"
 }
 
