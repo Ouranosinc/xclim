@@ -3,9 +3,9 @@
 language: python
 python:
   - 3.6
-  - 3.5
-  - 3.4
-  - 2.7
+  #- 3.5
+  #- 3.4
+  #- 2.7
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
@@ -26,7 +26,7 @@ install:
   # Update now the env with our environment
   - source activate xclim
   # Packages for testing
-  - conda install --file requirements_dev.txt
+  #- conda install --file requirements_dev.txt
   - pip install tox-travis
   # Install xclim
   - python setup.py install
