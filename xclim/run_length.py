@@ -2,7 +2,7 @@ import numpy as np
 
 """Run length algorithms.
 
-Need to benchmark and adapt for xarray. 
+Need to benchmark and adapt for xarray.
 
 """
 

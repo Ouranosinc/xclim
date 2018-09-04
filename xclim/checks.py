@@ -5,9 +5,9 @@ from functools import wraps
 Dev notes
 ---------
 
-`functools.wraps` is used to copy the docstring and the function's original name from the source 
+`functools.wraps` is used to copy the docstring and the function's original name from the source
 function to the decorated function. This allows sphinx to correctly find and document
-functions.  
+functions.
 """
 
 
@@ -19,10 +19,12 @@ def check_valid(var, key, expected):
     elif att != expected:
         warn('Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected))
 
+
 def check_monotonic(var):
     """Assert that the series is continuous (no jumps in time index)."""
     if not var.time.to_pandas().is_monotonic:
         raise ValueError("time index is not monotonically increasing.")
+
 
 def check_valid_temperature(var, units):
     """Check that variable is a temperature."""
