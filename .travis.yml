@@ -22,17 +22,17 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
   # Prepare env with Python version
-  - conda create -q -n xclim python=$TRAVIS_PYTHON_VERSION --file=requirements.txt
+  - conda create -q -n xclim python=$TRAVIS_PYTHON_VERSION --file=requirements.txt --file=requirements_dev.txt
   # Update now the env with our environment
   - source activate xclim
   # Packages for testing
   #- conda install --file requirements_dev.txt
-  - pip install tox-travis
+  #- pip install tox-travis
   # Install xclim
   - python setup.py install
 
 # Command to run tests, e.g. python setup.py test
-script: tox
+script: pytest
 
 # Assuming you have installed the travis-ci CLI tool, after you
 # create the Github repo and add it to Travis, run the
