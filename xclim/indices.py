@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """Main module.
-
-I suggest we give detailed names in the indices module for each indicator (long names such as heating_degree_days,
-not hdd). Then, in the ICCLIM module, we can map the ICCLIM abbreviations to the long names.
-
-
-
 """
 import numpy as np
 import xarray as xr
 
-from checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
+from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature
 from . import run_length as rl
 from functools import wraps
@@ -20,6 +14,8 @@ from functools import wraps
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 ftomm = np.nan
+
+# TODO: Move utility functions to another file.
 
 
 def first_paragraph(txt):
