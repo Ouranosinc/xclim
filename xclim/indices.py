@@ -24,28 +24,28 @@ def first_paragraph(txt):
 
 
 def with_attrs(**func_attrs):
-    """Set attributes in the decorated function, at definition time.
-    Only accepts keyword arguments.
+    """Set attributes in the decorated function at definition time,
+    and assign these attributes to the function output at the
+    execution time.
 
-    E.g.:
-        @with_attrs(counter=0, something='boing')
-        def count_it():
-            count_it.counter += 1
-        print count_it.counter
-        print count_it.something
-        # Out:
-        # >>> 0
-        # >>> 'boing'
+    Notes
+    -----
+    Assumes the output has an attrs dictionary attribute (e.g. xarray.DataArray).
     """
     def attr_decorator(fn):
+        # Use the docstring as the description attribute.
+        func_attrs['description'] = first_paragraph(fn.__doc__)
+
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            return fn(*args, **kwargs)
+            out = fn(*args, **kwargs)
+            out.attrs.update(func_attrs)
+            return out
 
+        # Assign the attributes to the function itself
         for attr, value in func_attrs.items():
             setattr(wrapper, attr, value)
 
-        setattr(wrapper, 'description', first_paragraph(fn.__doc__))
         return wrapper
 
     return attr_decorator
