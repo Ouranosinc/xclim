@@ -4,3 +4,4 @@ numpy
 scipy
 bottleneck
 netCDF4
+guzzle-sphinx-theme
