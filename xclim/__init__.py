@@ -19,8 +19,9 @@ def build_module(name, keys, source, doc='', mode='ignore'):
     ----------
     name : str
       New module name.
-    keys : sequence
-      Iterable sequence of the names of the objects to import into the module.
+    keys : dict
+      Dictionary of the names of the objects to import into the module,
+      keyed by the name they will take in the created module. 
     source : str
       Module where objects are defined.
     doc : str
