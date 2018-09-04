@@ -3,36 +3,15 @@
 language: python
 python:
   - 3.6
-  #- 3.5
-  #- 3.4
-  #- 2.7
+  - 3.5
+  - 3.4
+  - 2.7
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-  # Prepare env with Python version
-  - conda create -q -n xclim python=$TRAVIS_PYTHON_VERSION --file=requirements.txt --file=requirements_dev.txt
-  # Update now the env with our environment
-  - source activate xclim
-  # Packages for testing
-  #- conda install --file requirements_dev.txt
-  #- pip install tox-travis
-  # Install xclim
-  - python setup.py install
+install: pip install -U tox-travis
 
 # Command to run tests, e.g. python setup.py test
-script: pytest
+script: tox
 
 # Assuming you have installed the travis-ci CLI tool, after you
 # create the Github repo and add it to Travis, run the

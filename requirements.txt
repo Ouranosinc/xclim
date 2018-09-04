@@ -3,3 +3,4 @@ dask
 numpy
 scipy
 bottleneck
+netCDF4
