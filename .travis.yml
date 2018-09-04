@@ -22,11 +22,11 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
   # Prepare env with Python version
-  - conda create -q -n xclim python=$TRAVIS_PYTHON_VERSION --file=requirements.yxy tox-travis
+  - conda create -q -n xclim python=$TRAVIS_PYTHON_VERSION --file=requirements.yxy
   # Update now the env with our environment
   - source activate xclim
   # Packages for testing
-  - conda install --file requirements.txt
+  - conda install tox-travis
   # Install xclim
   - python setup.py install
 
