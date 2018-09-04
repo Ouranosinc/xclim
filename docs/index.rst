@@ -1,5 +1,5 @@
-Welcome to xclim's documentation!
-=====================================
+xclim Official Documentation
+============================
 
 .. toctree::
    :maxdepth: 2
