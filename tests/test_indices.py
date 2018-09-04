@@ -71,6 +71,14 @@ class Test_cooling_degree_days():
         cdd = cooling_degree_days(a)
         assert cdd == 10
 
+    def test_attrs(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        cdd = cooling_degree_days(a)
+        assert cdd.standard_name == 'cooling_degree_days'
+        assert cdd.long_name == 'cooling degree days'
+        assert cdd.units == 'K*day'
+        assert len(cdd.description) > 0
+
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
 class TestTG():
