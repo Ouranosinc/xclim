@@ -2,3 +2,4 @@ xarray
 dask
 numpy
 scipy
+bottleneck

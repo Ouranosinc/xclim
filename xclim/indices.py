@@ -46,7 +46,7 @@ def with_attrs(**func_attrs):
         def wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
 
-        for attr, value in func_attrs.iteritems():
+        for attr, value in func_attrs.items():
             setattr(wrapper, attr, value)
 
         setattr(wrapper, 'description', first_paragraph(fn.__doc__))
@@ -54,9 +54,10 @@ def with_attrs(**func_attrs):
 
     return attr_decorator
 
-# ------------------------------------------------------ #
-### ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! ###
-# ------------------------------------------------------ #
+# -------------------------------------------------- #
+# ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
+# -------------------------------------------------- #
+
 
 def CD(tas, TGin25, pr, wet25):
     """Cold and dry days.
@@ -70,6 +71,7 @@ def CD(tas, TGin25, pr, wet25):
     c = (c1 * c2) * 1
     return c.resample(time=freq).sum(dim='time')
 
+
 @with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
 def cooling_degree_days(tas, thresh=18, freq='YS'):
@@ -79,6 +81,7 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
         .clip(min=0)\
         .resample(time=freq)\
         .sum(dim='time')
+
 
 @valid_daily_min_temperature
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
@@ -94,7 +97,6 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     freq : str, optional
       Resampling frequency.
 
-
     Returns
     -------
     xarray.DataArray
@@ -107,7 +109,9 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
     .. math::
 
-       CFD_p = \max(run_l(Tmin_i < 273.15)) \for a <= i <= b
+       CFD_p = max(run_l(Tmin_i < 273.15))
+
+    for :math:`a <= i <= b`
 
     where run_l returns the length of each consecutive series of true values.
 

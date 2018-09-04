@@ -8,6 +8,7 @@ Installation
 Stable release
 --------------
 
+
 To install xclim, run this command in your terminal:
 
 .. code-block:: console
@@ -49,3 +50,13 @@ Once you have a copy of the source, you can install it with:
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
+
+
+Creating a Conda environment
+----------------------------
+
+To create a conda environment including all xclim dependencies, enter the following command, where :
+
+.. code-block:: console
+
+    $ conda create -n my_xclim_env python=3.6 --file=requirements.txt --file=requirements_dev.txt
