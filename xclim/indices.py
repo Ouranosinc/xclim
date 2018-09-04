@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
-    valid_daily_max_temperature
+    valid_daily_max_temperature, valid_daily_mean_discharge
 from . import run_length as rl
 from functools import wraps
 
@@ -55,6 +55,16 @@ def with_attrs(**func_attrs):
 # -------------------------------------------------- #
 
 
+@valid_daily_mean_discharge
+def base_flow_index(q, freq='YS'):
+    """Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow."""
+    m7 = q.rolling(time=7, center=True).mean(dim='time').resample(time=freq)
+    mq = q.resample(time=freq)
+
+    m7m = m7.min(dim='time')
+    return m7m/mq.mean(dim='time')
+
+
 @valid_daily_min_temperature
 def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     """Cold spell duration index.
@@ -95,8 +105,10 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
 
 @valid_daily_mean_temperature
-def cold_spell_index_2(tas, thresh=-10, window=5, freq='AS-JUL'):
+def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     """Cold spell index.
+
+    Days that are part of a cold spell (5 or more consecutive days with Tavg < -10°C)
     """
     over = tas < K2C + thresh
     group = over.resample(time=freq)
@@ -235,6 +247,19 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     return dtr.resample(time=freq).mean(dim='time')
 
 
+@valid_daily_mean_temperature
+def freshet_start(tas, thresh=0, window=5, freq='YS'):
+    """Return first day of year when a temperature threshold is exceeded
+    over a given number of days.
+    """
+    i = xr.DataArray(np.arange(tas.time.size), dims='time')
+    ind = xr.broadcast(i, tas)[0]
+
+    over = ((tas > K2C + thresh) * 1).rolling(time=window).sum(dim='time')
+    i = ind.where(over == window)
+    return i.resample(time=freq).min(dim='time')
+
+
 @valid_daily_min_temperature
 def frost_days(tasmin, freq='YS'):
     """Number of frost days (Tmin < 0℃)."""
@@ -281,27 +306,6 @@ def growing_season_length(tas, thresh=5, window=6, freq='YS'):
     return d.resample(time=freq).max(dim='time')
 
 
-@valid_daily_mean_temperature
-def heating_degree_days(tas, freq='YS', thresh=17):
-    """Heating degree days.
-
-    Sum of positive values of threshold - tas.
-    """
-    return tas.pipe(lambda x: thresh - x)\
-        .clip(0)\
-        .resample(time=freq)\
-        .sum(dim='time')
-
-
-@valid_daily_max_temperature
-def hotdays(tasmax, thresh=30, freq='YS'):
-    """Number of very hot days.
-
-    The number of days exceeding a threshold. """
-    hd = (tasmax > K2C + thresh)*1
-    return hd.resample(time=freq).sum(dim='time')
-
-
 @valid_daily_max_temperature
 def heat_wave_index(tasmax, thresh=25, window=5, freq='YS'):
     """Heat wave index.
@@ -341,6 +345,27 @@ def heat_wave_index(tasmax, thresh=25, window=5, freq='YS'):
                        kwargs={'window': window})
 
     return group.apply(func)
+
+
+@valid_daily_mean_temperature
+def heating_degree_days(tas, freq='YS', thresh=17):
+    """Heating degree days.
+
+    Sum of positive values of threshold - tas.
+    """
+    return tas.pipe(lambda x: thresh - x)\
+        .clip(0)\
+        .resample(time=freq)\
+        .sum(dim='time')
+
+
+@valid_daily_max_temperature
+def hot_days(tasmax, thresh=30, freq='YS'):
+    """Number of very hot days.
+
+    The number of days exceeding a threshold. """
+    hd = (tasmax > K2C + thresh) * 1
+    return hd.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_max_temperature
