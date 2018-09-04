@@ -24,10 +24,10 @@ def check_monotonic(var):
     if not var.time.to_pandas().is_monotonic:
         raise ValueError("time index is not monotonically increasing.")
 
-def check_valid_temperature(var):
+def check_valid_temperature(var, units):
     """Check that variable is a temperature."""
     check_valid(var, 'standard_name', 'air_temperature')
-    # check_valid(var, 'units', 'K')
+    check_valid(var, 'units', units)
 
 
 def check_valid_discharge(var):
@@ -35,49 +35,49 @@ def check_valid_discharge(var):
     check_valid(var, 'standard_name', 'discharge')
 
 
-def valid_daily_min_temperature(comp):
+def valid_daily_min_temperature(comp, units='K'):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmin, *args, **kwds):
-        check_valid_temperature(tasmin)
+        check_valid_temperature(tasmin, units)
         check_valid(tasmin, 'cell_methods', 'time: minimum within days')
         return comp(tasmin, **kwds)
 
     return func
 
 
-def valid_daily_mean_temperature(comp):
+def valid_daily_mean_temperature(comp, units='K'):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tas, *args, **kwds):
-        check_valid_temperature(tas)
+        check_valid_temperature(tas, units)
         check_valid(tas, 'cell_methods', 'time: mean within days')
         return comp(tas, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_temperature(comp):
+def valid_daily_max_temperature(comp, units='K'):
     """Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmax, *args, **kwds):
-        check_valid_temperature(tasmax)
+        check_valid_temperature(tasmax, units)
         check_valid(tasmax, 'cell_methods', 'time: maximum within days')
         return comp(tasmax, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_min_temperature(comp):
+def valid_daily_max_min_temperature(comp, units='K'):
     """Decorator to check that a computation runs on valid min and max temperature datasets."""
 
     @wraps(comp)
     def func(tasmax, tasmin, **kwds):
-        valid_daily_max_temperature(tasmax)
-        valid_daily_min_temperature(tasmin)
+        valid_daily_max_temperature(tasmax, units)
+        valid_daily_min_temperature(tasmin, units)
 
         return comp(tasmin, tasmax, **kwds)
 

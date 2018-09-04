@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""Main module."""
+"""Main module.
+
+I suggest we give detailed names in the indices module for each indicator (long names such as heating_degree_days,
+not hdd). Then, in the ICCLIM module, we can map the ICCLIM abbreviations to the long names.
+
+
+
+"""
 import dask
 import numpy as np
 import pandas as pd
@@ -8,32 +15,73 @@ import xarray as xr
 
 from .checks import *
 from . import run_length as rl
+import itertools
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 
+def first_paragraph(txt):
+    """Return the first paragraph of a text."""
+    return txt.split('\n\n')[0]
 
+
+def with_attrs(**func_attrs):
+    """Set attributes in the decorated function, at definition time.
+    Only accepts keyword arguments.
+
+    E.g.:
+        @with_attrs(counter=0, something='boing')
+        def count_it():
+            count_it.counter += 1
+        print count_it.counter
+        print count_it.something
+        # Out:
+        # >>> 0
+        # >>> 'boing'
+    """
+    def attr_decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+
+        for attr, value in func_attrs.iteritems():
+            setattr(wrapper, attr, value)
+
+        setattr(wrapper, 'description', first_paragraph(fn.__doc__))
+        return wrapper
+
+    return attr_decorator
+
+# ------------------------------------------------------ #
+### ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! ###
+# ------------------------------------------------------ #
 
 def CD(tas, TGin25, pr, wet25):
     """Cold and dry days.
 
-    See Beniston (2009)..."""
+    See Beniston (2009)...
+
+    """
     c1 = tas < TGin25
     c2 = (pr > 1 * ftomm) * (pr < wet25)
 
     c = (c1 * c2) * 1
     return c.resample(time=freq).sum(dim='time')
 
+@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
 def cooling_degree_days(tas, thresh=18, freq='YS'):
     """Cooling degree days above threshold."""
-    cdd = (tas > K2C + thresh) * 1
-    return cdd.resample(time=freq).sum(dim='time')
 
+    return tas.pipe(lambda x: x - K2C - thresh)\
+        .clip(min=0)\
+        .resample(time=freq)\
+        .sum(dim='time')
 
 @valid_daily_min_temperature
-def CFD(tasmin, freq='AS-JUL'):
+def consecutive_frost_days(tasmin, freq='AS-JUL'):
     """Maximum number of consecutive frost days (Tmin < 0℃).
 
     Resample the daily minimum temperature series by computing the maximum number
@@ -133,13 +181,13 @@ def CSDI(tasmin, TN10p, freq='YS'):
 
     def func(x):
         xr.apply_ufunc(rl.windowed_run_count,
-                        x,
-                        input_core_dims=[['time'], ],
-                        vectorize=True,
-                        dask='parallelized',
-                        output_dtypes=[np.int, ],
-                        keep_attrs=True,
-                        kwargs={'window': 6})
+                       x,
+                       input_core_dims=[['time'], ],
+                       vectorize=True,
+                       dask='parallelized',
+                       output_dtypes=[np.int, ],
+                       keep_attrs=True,
+                       kwargs={'window': 6})
 
     return group.apply(func)
 
@@ -153,13 +201,13 @@ def CSI(tas, thresh=-10, window=5, freq='AS-JUL'):
 
     def func(x):
         xr.apply_ufunc(rl.windowed_run_count,
-                        x,
-                        input_core_dims=[['time'], ],
-                        vectorize=True,
-                        dask='parallelized',
-                        output_dtypes=[np.int, ],
-                        keep_attrs=True,
-                        kwargs={'window': window})
+                       x,
+                       input_core_dims=[['time'], ],
+                       vectorize=True,
+                       dask='parallelized',
+                       output_dtypes=[np.int, ],
+                       keep_attrs=True,
+                       kwargs={'window': window})
 
     return group.apply(func)
 
@@ -274,13 +322,13 @@ def HWI(tasmax, thresh=25, window=5, freq='YS'):
 
     def func(x):
         xr.apply_ufunc(rl.windowed_run_count,
-                          x,
-                          input_core_dims=[['time'],],
-                          vectorize=True,
-                          dask='parallelized',
-                          output_dtypes=[np.int,],
-                          keep_attrs=True,
-                          kwargs={'window': window})
+                       x,
+                       input_core_dims=[['time'],],
+                       vectorize=True,
+                       dask='parallelized',
+                       output_dtypes=[np.int,],
+                       keep_attrs=True,
+                       kwargs={'window': window})
 
     return group.apply(func)
 

@@ -20,13 +20,65 @@ of defense.
 import pytest
 import pandas as pd
 import numpy as np
-import xclim
+from xclim.indices import *
 import xarray as xr
 import os
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
+
+class Test_consecutive_frost_days():
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                         attrs={'standard_name': 'air_temperature',
+                                'cell_methods': 'time: minimum within days',
+                                'units': 'K'})
+
+    def test_one_freeze_day(self):
+        a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
+        cfd = consecutive_frost_days(a)
+        assert cfd == 1
+        assert cfd.time.dt.year == 2000
+
+    def test_no_freeze(self):
+        a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
+        cfd = consecutive_frost_days(a)
+        assert cfd == 0
+
+    @pytest.mark.skip("This is probably badly defined anyway...")
+    def test_all_year_freeze(self):
+        a = self.time_series(np.zeros(365) + K2C - 10)
+        cfd = consecutive_frost_days(a)
+        assert cfd == 365
+
+class Test_cooling_degree_days():
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                         attrs={'standard_name': 'air_temperature',
+                                'cell_methods': 'time: mean within days',
+                                'units': 'K'})
+
+    def test_no_cdd(self):
+        a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
+        cdd = cooling_degree_days(a)
+        assert cdd == 0
+
+    def test_cdd(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        cdd = cooling_degree_days(a)
+        assert cdd == 10
+
+# I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
+@pytest.mark.skip('')
+class TestTG():
+    def test_cmip3(self, cmip3_day_tas): # This fails, xarray chokes on the time dimension. Unclear why.
+        rd = TG(cmip3_day_tas)
+
+    def compare_against_icclim(self, cmip3_day_tas):
+        pass
 
 @pytest.fixture(scope="session")
 def cmip3_day_tas():
@@ -35,38 +87,9 @@ def cmip3_day_tas():
     yield ds.tas
     ds.close()
 
-class Test_CFD():
-    def time_series(self, values):
-        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                         attrs={'standard_name': 'air_temperature', 'cell_methods': 'time: minimum within days'})
-
-    def test_one_freeze_day(self):
-        a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
-        cfd = xclim.icclim.CFD(a)
-        assert cfd == 1
-        assert cfd.time.dt.year == 2000
-
-    def test_no_freeze(self):
-        a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
-        cfd = xclim.icclim.CFD(a)
-        assert cfd == 0
-
-    @pytest.mark.skip("This is probably badly defined anyway...")
-    def test_all_year_freeze(self):
-        a = self.time_series(np.zeros(365) + K2C - 10)
-        cfd = xclim.icclim.CFD(a)
-        assert cfd == 365
 
 
-# I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
-@pytest.mark.skip('')
-class TestTG():
-    def test_cmip3(self, cmip3_day_tas): # This fails, xarray chokes on the time dimension. Unclear why.
-        rd = xclim.icclim.TG(cmip3_day_tas)
 
-    def compare_against_icclim(self, cmip3_day_tas):
-        pass
 
 @pytest.fixture
 def response():
