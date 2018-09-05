@@ -18,6 +18,10 @@ xclim
      :target: https://pyup.io/repos/github/Ouranosinc/xclim/
      :alt: Updates
 
+.. image:: _static/xclim-logo.png
+     :align: center
+     :target: https://xclim.readthedocs.io/en/latest/?badge=latest
+
 
 ``xclim`` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with little to no boilerplate.
 

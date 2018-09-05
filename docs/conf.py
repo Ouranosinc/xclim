@@ -15,18 +15,17 @@
 
 import os
 import sys
+import guzzle_sphinx_theme
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-import guzzle_sphinx_theme
+sys.path.insert(0, os.path.abspath('..'))
 
 import xclim
-from xclim import __version__
 
-sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ---------------------------------------------
 
@@ -40,13 +39,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx.ext.coverage'
 ]
 
 extensions.append("guzzle_sphinx_theme")
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
+napoleon_use_param = False
+napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -108,7 +110,7 @@ html_theme = 'guzzle_sphinx_theme'  # 'alabaster
 # documentation.
 #
 html_theme_options = {
-    "project_nav_name": "XClim {}".format(__version__),
+    "project_nav_name": "XClim {}".format(xclim.__version__),
     "homepage": "index"
 }
 

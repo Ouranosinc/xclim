@@ -8,7 +8,7 @@ xclim Official Documentation
    readme
    installation
    usage
-   icclim
+   indices
    contributing
    authors
    history
