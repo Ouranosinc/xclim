@@ -13,10 +13,10 @@ xclim
         :target: https://xclim.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-
 .. image:: https://pyup.io/repos/github/Ouranosinc/xclim/shield.svg
      :target: https://pyup.io/repos/github/Ouranosinc/xclim/
      :alt: Updates
+
 
 .. image:: _static/_images/xclim-logo.png
      :align: center
