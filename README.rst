@@ -2,6 +2,9 @@
 xclim
 ======
 
+.. image:: _static/_images/xclim-logo.png
+     :align: left
+     :target: _static/_images/xclim-logo.png
 
 .. image:: https://img.shields.io/pypi/v/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
@@ -13,14 +16,12 @@ xclim
         :target: https://xclim.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+.. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
+    :target: https://github.com/bird-house/birdhouse-docs/blob/master/LICENSE
+
 .. image:: https://pyup.io/repos/github/Ouranosinc/xclim/shield.svg
      :target: https://pyup.io/repos/github/Ouranosinc/xclim/
      :alt: Updates
-
-
-.. image:: _static/_images/xclim-logo.png
-     :align: center
-     :target: _static/_images/xclim-logo.png
 
 
 ``xclim`` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with little to no boilerplate.
