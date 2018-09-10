@@ -23,6 +23,10 @@ def first_paragraph(txt):
     return txt.split('\n\n')[0]
 
 
+def newfunction(x):
+    y = x
+    return y
+
 def with_attrs(**func_attrs):
     """Set attributes in the decorated function at definition time,
     and assign these attributes to the function output at the
