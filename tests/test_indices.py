@@ -28,6 +28,10 @@ TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
+class test_newfunction():
+    x = newfunction(3)
+    assert x > 0
+
 class Test_consecutive_frost_days():
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))

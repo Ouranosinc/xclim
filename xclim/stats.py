@@ -5,6 +5,8 @@ import dask
 import xarray as xr
 from scipy import stats
 
+def newfunction:
+    pass
 
 def fit(arr, dist='norm'):
     """Fit an array to a distribution along the time dimension."""
