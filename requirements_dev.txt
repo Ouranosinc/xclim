@@ -10,3 +10,7 @@ twine==1.10.0
 
 pytest==3.4.2
 pytest-runner==2.11.1
+
+pytest-cov
+coveralls
+codecov
