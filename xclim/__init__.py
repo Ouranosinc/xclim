@@ -4,7 +4,7 @@
 
 __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
-__version__ = '0.3-alpha'
+__version__ = '0.4-alpha'
 
 from . import indices
 # from .stats import fit, test
