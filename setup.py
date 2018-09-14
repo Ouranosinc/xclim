@@ -20,6 +20,8 @@ setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
+docs_requirements = ['Sphinx', 'guzzle-sphinx-theme']
+
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
 setup(
@@ -50,7 +52,9 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
+    extras_require={'docs': docs_requirements},
     url='https://github.com/Ouranosinc/xclim',
     version='0.3-alpha',
     zip_safe=False,
 )
+
