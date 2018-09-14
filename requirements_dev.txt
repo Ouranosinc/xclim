@@ -6,8 +6,6 @@ flake8
 tox
 coverage
 twine
-# Sphinx
-# guzzle-sphinx-theme
 
 pytest
 pytest-runner

@@ -14,13 +14,13 @@ with open('HISTORY.rst') as history_file:
 #with open('requirements.txt') as req_file:
 #    requirements = req_file.read().split('\n')
 
-requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas']
+requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', ]
 
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
-docs_requirements = ['Sphinx', 'guzzle-sphinx-theme']
+docs_requirements = ['Sphinx', 'guzzle-sphinx-theme', ]
 
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
