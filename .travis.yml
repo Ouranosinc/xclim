@@ -52,7 +52,3 @@ deploy:
     tags: true
     repo: Ouranosinc/xclim
     python: 3.6
-
-after_success:
-    - coveralls
-    - codecov
