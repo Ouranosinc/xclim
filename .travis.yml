@@ -1,6 +1,7 @@
 # Config file for automatic testing at travis-ci.org
 
 language: python
+sudo: false
 
 matrix:
   include:
@@ -8,13 +9,23 @@ matrix:
 #      python: 3.7
 #      sudo: required
 #      dist: xenial
-    - env: TOXENV=py36
+    - env:
+        - TOXENV=docs
       python: 3.6
-    - env: TOXENV=py35
+    - env:
+        - TOXENV=flake8
+      python: 3.6
+    - env:
+        - TOXENV=py36
+      python: 3.6
+    - env:
+        - TOXENV=py35
       python: 3.5
-    - env: TOXENV=py34
+    - env:
+        - TOXENV=py34
       python: 3.4
-    - env: TOXENV=py27
+    - env:
+        - TOXENV=py27
       python: 2.7
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
