@@ -19,12 +19,14 @@ of defense.
 
 import os
 
+import numpy as np
 import pandas as pd
 import pytest
 #import cftime
 import calendar
+import xarray as xr
 
-from xclim.indices import *
+import xclim.indices as xci
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
@@ -41,19 +43,19 @@ class Test_consecutive_frost_days():
 
     def test_one_freeze_day(self):
         a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
-        cfd = consecutive_frost_days(a)
+        cfd = xci.consecutive_frost_days(a)
         assert cfd == 1
         assert cfd.time.dt.year == 2000
 
     def test_no_freeze(self):
         a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
-        cfd = consecutive_frost_days(a)
+        cfd = xci.consecutive_frost_days(a)
         assert cfd == 0
 
     @pytest.mark.skip("This is probably badly defined anyway...")
     def test_all_year_freeze(self):
         a = self.time_series(np.zeros(365) + K2C - 10)
-        cfd = consecutive_frost_days(a)
+        cfd = xci.consecutive_frost_days(a)
         assert cfd == 365
 
 
@@ -67,17 +69,17 @@ class Test_cooling_degree_days():
 
     def test_no_cdd(self):
         a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
-        cdd = cooling_degree_days(a)
+        cdd = xci.cooling_degree_days(a)
         assert cdd == 0
 
     def test_cdd(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        cdd = cooling_degree_days(a)
+        cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
     def test_attrs(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        cdd = cooling_degree_days(a)
+        cdd = xci.cooling_degree_days(a)
         assert cdd.standard_name == 'cooling_degree_days'
         assert cdd.long_name == 'cooling degree days'
         assert cdd.units == 'K*day'
@@ -111,7 +113,8 @@ class Test_prcptotal():
 @pytest.mark.skip('')
 class TestTG():
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
-        rd = TG(cmip3_day_tas)
+        # rd = xci.TG(cmip3_day_tas)
+        pass
 
     def compare_against_icclim(self, cmip3_day_tas):
         pass
