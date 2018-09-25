@@ -375,6 +375,10 @@ def ice_days(tasmax, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
+
+
+
+
 @valid_daily_max_temperature
 def summer_days(tasmax, thresh=25, freq='YS'):
     f = (tasmax > thresh + K2C) * 1
@@ -447,6 +451,64 @@ def tn_mean(tasmin, freq='YS'):
 def tn_min(tasmin, freq='YS'):
     """Minimum of daily minimum temperature."""
     return tasmin.resample(time=freq).min(dim='time')
+
+#@check_is_dataarray
+def prcptot(pr, freq='YS', units = 'kg m-2 s-1'):
+    r"""Accumulated total (liquid + solid) precipitation
+
+    Resample the original daily mean precipitation flux and cumulate over each period
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    freq : str, optional
+      Resampling frequency as defined in
+      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+    units: str, optional
+      units of the precipitation data. Must be within ['kg m-2 s-2', 'mm']
+
+    Returns
+    -------
+    xarray.DataArray
+      The total daily precipitation at the given time frequency in [mm].
+
+
+    Notes
+    -----
+    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr_day.nc` the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr_day = xr.open_dataset('pr_day.nc').pr
+    >>> prcptot_seasonal = prcptot(pr_day, freq="QS-DEC")
+
+    """
+    #TODO deal with the time_boundaries
+
+    # resample the precipitation to the wanted frequency
+    arr = pr.resample(time = freq)
+    # cumulate the values over the season
+    output =  arr.sum(dim='time')
+    # unit conversion as needed
+    if units == 'kg m-2 s-1':
+        # convert from km m-2 s-1 to mm day-1
+        output *= 86400 # number of sec in 24h
+    elif units == 'mm':
+        # nothing to do
+        pass
+    else:
+        raise RuntimeError('non conform units')
+    return output
 
 
 @valid_daily_min_temperature
