@@ -102,7 +102,7 @@ class Test_prcptotal():
 
     def test_yearly(self):
         da_std = self.da_std
-        out_std = xci.prcptot(da_std, units='mm')
+        out_std = xci.prcp_tot(da_std, units='mm')
         # l_years = np.unique(da_std.time.dt.year) TODO: Unused local variables are a PEP8 violation
         target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
         assert (np.allclose(target, out_std.values))
