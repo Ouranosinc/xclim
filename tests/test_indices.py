@@ -17,13 +17,13 @@ the results in a reference netcdf dataset. We could then compare the hailstorm o
 of defense.
 """
 
+# import cftime
+import calendar
 import os
 
 import numpy as np
 import pandas as pd
 import pytest
-#import cftime
-import calendar
 import xarray as xr
 
 import xclim.indices as xci
@@ -85,25 +85,24 @@ class Test_cooling_degree_days():
         assert cdd.units == 'K*day'
         assert len(cdd.description) > 0
 
+
 class Test_prcptotal():
-
-
     # build test data for different calendar
-    time_std = pd.date_range('2000-01-01', '2010-12-31', freq = 'D')
+    time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
 
     # calendar 365_day and 360_day not tested for now since xarray.resample
     # does not support other calendars than standard
     #
-    #units = 'days since 2000-01-01 00:00'
-    #time_365 = cftime.num2date(np.arange(0, 10 * 365), units, '365_day')
-    #time_360 = cftime.num2date(np.arange(0, 10 * 360), units, '360_day')
-    #da_365 = xr.DataArray(np.arange(time_365.size), coords=[time_365], dims='time')
-    #da_360 = xr.DataArray(np.arange(time_360.size), coords=[time_360], dims='time')
+    # units = 'days since 2000-01-01 00:00'
+    # time_365 = cftime.num2date(np.arange(0, 10 * 365), units, '365_day')
+    # time_360 = cftime.num2date(np.arange(0, 10 * 360), units, '360_day')
+    # da_365 = xr.DataArray(np.arange(time_365.size), coords=[time_365], dims='time')
+    # da_360 = xr.DataArray(np.arange(time_360.size), coords=[time_360], dims='time')
 
     def test_yearly(self):
         da_std = self.da_std
-        out_std = prcptot(da_std, units='mm')
+        out_std = xci.prcptot(da_std, units='mm')
         l_years = np.unique(da_std.time.dt.year)
         target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
         assert (np.allclose(target, out_std.values))
