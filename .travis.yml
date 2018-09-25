@@ -33,7 +33,7 @@ install:
   - pip install -U tox-travis 
 
 # Command to run tests, e.g. python setup.py test
-script: travis_wait 15 mvn tox
+script: travis_wait tox -e $TOXENV
 
 branches:
   only:
