@@ -455,7 +455,7 @@ def tn_min(tasmin, freq='YS'):
 
 
 # @check_is_dataarray
-def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
+def prcptot(pr, freq='YS', units='kg m-2 s-1'):
     r"""Accumulated total (liquid + solid) precipitation
 
     Resample the original daily mean precipitation flux and cumulate over each period
@@ -492,7 +492,7 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
 
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> prcp_tot_seasonal = prcp_tot(pr_day, freq="QS-DEC")
+    >>> prcptot_seasonal = prcptot(pr_day, freq="QS-DEC")
 
     """
     # TODO deal with the time_boundaries
