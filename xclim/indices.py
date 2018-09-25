@@ -2,18 +2,20 @@
 
 """Main module.
 """
+from functools import wraps
+
 import numpy as np
 import xarray as xr
 
+from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
-from . import run_length as rl
-from functools import wraps
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 ftomm = np.nan
+
 
 # TODO: Move utility functions to another file.
 
@@ -32,6 +34,7 @@ def with_attrs(**func_attrs):
     -----
     Assumes the output has an attrs dictionary attribute (e.g. xarray.DataArray).
     """
+
     def attr_decorator(fn):
         # Use the docstring as the description attribute.
         func_attrs['description'] = first_paragraph(fn.__doc__)
@@ -50,6 +53,7 @@ def with_attrs(**func_attrs):
 
     return attr_decorator
 
+
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
@@ -62,7 +66,7 @@ def base_flow_index(q, freq='YS'):
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim='time')
-    return m7m/mq.mean(dim='time')
+    return m7m / mq.mean(dim='time')
 
 
 @valid_daily_min_temperature
@@ -89,6 +93,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     --------
     percentile_doy
     """
+
     def func(x):
         xr.apply_ufunc(rl.windowed_run_count,
                        x,
@@ -224,9 +229,9 @@ def CFD2(tasmin, freq='AS-JUL'):
 def cooling_degree_days(tas, thresh=18, freq='YS'):
     """Cooling degree days above threshold."""
 
-    return tas.pipe(lambda x: x - thresh - K2C)\
-        .clip(min=0)\
-        .resample(time=freq)\
+    return tas.pipe(lambda x: x - thresh - K2C) \
+        .clip(min=0) \
+        .resample(time=freq) \
         .sum(dim='time')
 
 
@@ -268,14 +273,14 @@ def frost_days(tasmin, freq='YS'):
 
 
 @valid_daily_mean_temperature
-def growing_degree_days(tas, thresh=4,  freq='YS'):
+def growing_degree_days(tas, thresh=4, freq='YS'):
     """Growing degree days over 4℃.
 
     The sum of degree-days over 4℃.
     """
-    return tas.pipe(lambda x: x - thresh - K2C)\
-        .clip(min=0)\
-        .resample(time=freq)\
+    return tas.pipe(lambda x: x - thresh - K2C) \
+        .clip(min=0) \
+        .resample(time=freq) \
         .sum(dim='time')
 
 
@@ -353,9 +358,9 @@ def heating_degree_days(tas, freq='YS', thresh=17):
 
     Sum of positive values of threshold - tas.
     """
-    return tas.pipe(lambda x: thresh - x)\
-        .clip(0)\
-        .resample(time=freq)\
+    return tas.pipe(lambda x: thresh - x) \
+        .clip(0) \
+        .resample(time=freq) \
         .sum(dim='time')
 
 
@@ -373,10 +378,6 @@ def ice_days(tasmax, freq='YS'):
     """Number of days where the daily maximum temperature is below 0℃."""
     f = (tasmax < K2C) * 1
     return f.resample(time=freq).sum(dim='time')
-
-
-
-
 
 
 @valid_daily_max_temperature
@@ -452,8 +453,9 @@ def tn_min(tasmin, freq='YS'):
     """Minimum of daily minimum temperature."""
     return tasmin.resample(time=freq).min(dim='time')
 
-#@check_is_dataarray
-def prcptot(pr, freq='YS', units = 'kg m-2 s-1'):
+
+# @check_is_dataarray
+def prcptot(pr, freq='YS', units='kg m-2 s-1'):
     r"""Accumulated total (liquid + solid) precipitation
 
     Resample the original daily mean precipitation flux and cumulate over each period
@@ -493,16 +495,16 @@ def prcptot(pr, freq='YS', units = 'kg m-2 s-1'):
     >>> prcptot_seasonal = prcptot(pr_day, freq="QS-DEC")
 
     """
-    #TODO deal with the time_boundaries
+    # TODO deal with the time_boundaries
 
     # resample the precipitation to the wanted frequency
-    arr = pr.resample(time = freq)
+    arr = pr.resample(time=freq)
     # cumulate the values over the season
-    output =  arr.sum(dim='time')
+    output = arr.sum(dim='time')
     # unit conversion as needed
     if units == 'kg m-2 s-1':
         # convert from km m-2 s-1 to mm day-1
-        output *= 86400 # number of sec in 24h
+        output *= 86400  # number of sec in 24h
     elif units == 'mm':
         # nothing to do
         pass
@@ -514,8 +516,8 @@ def prcptot(pr, freq='YS', units = 'kg m-2 s-1'):
 @valid_daily_min_temperature
 def tropical_nights(tasmin, thresh=20, freq='YS'):
     """Number of days with minimum daily temperature above threshold."""
-    return tasmin.pipe(lambda x: (tasmin > thresh + K2C) * 1)\
-        .resample(time=freq)\
+    return tasmin.pipe(lambda x: (tasmin > thresh + K2C) * 1) \
+        .resample(time=freq) \
         .sum(dim='time')
 
 
