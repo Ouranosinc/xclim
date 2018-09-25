@@ -30,8 +30,8 @@ matrix:
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
-  pip install -U tox-travis
-  tarvis_wait 15 mvn install 
+  - pip install -U tox-travis
+  - tarvis_wait 15 mvn install 
 
 # Command to run tests, e.g. python setup.py test
 script: tox
