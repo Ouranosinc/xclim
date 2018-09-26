@@ -11,6 +11,20 @@ def daily_downsampler(da, freq='YS'):
     :param freq: string
 
     :return: xarray.DataArray
+
+    expample of usage
+
+
+            grouper = daily_downsampler(da_std, freq='YS')
+            x2 = grouper.mean()
+
+            # add time coords to x2 and change dimension tags to time
+            time1 = daily_downsampler(da_std.time, freq=freq).first()
+            x2.coords['time'] = ('tags', time1.values)
+            x2 = x2.swap_dims({'tags': 'time'})
+            x2 = x2.sortby('time')
+
+
     """
 
     # generate tags from da.time and freq
