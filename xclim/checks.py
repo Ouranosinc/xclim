@@ -1,5 +1,5 @@
-from warnings import warn
 from functools import wraps
+from warnings import warn
 
 """
 Dev notes
@@ -101,3 +101,16 @@ def valid_missing_data_threshold(comp, threshold=0):
     """Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
     pass
+
+
+def check_is_dataarray(comp):
+    """Decorator to check that a computation has an instance of xarray.DataArray
+     as first argument."""
+
+    @wraps(comp)
+    def func(data_array, *args, **kwds):
+        import xarray as xr
+        assert (isinstance(data_array, xr.DataArray))
+        return comp(data_array, *args, **kwds)
+
+    return func

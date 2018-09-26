@@ -54,7 +54,7 @@ setup(
     tests_require=test_requirements,
     extras_require={'docs': docs_requirements},
     url='https://github.com/Ouranosinc/xclim',
-    version='0.4-alpha',
+    version='0.5-alpha',
     zip_safe=False,
 )
 
