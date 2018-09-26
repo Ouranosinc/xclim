@@ -1,6 +1,3 @@
-import xarray as xr
-import pandas as pd
-import cftime
 import numpy as np
 
 
@@ -65,5 +62,3 @@ def daily_downsampler(da, freq='YS'):
 
     # return groupby according to tags
     return buffer.groupby('tags')
-
-
