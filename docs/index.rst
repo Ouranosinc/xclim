@@ -9,6 +9,7 @@ xclim Official Documentation
    installation
    usage
    indices
+   icclim
    contributing
    authors
    history
