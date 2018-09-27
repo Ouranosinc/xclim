@@ -95,4 +95,5 @@ def __build_icclim(mode='warn'):
     sys.modules['xclim.icclim'] = mod
     return mod
 
+
 icclim = __build_icclim('ignore')
