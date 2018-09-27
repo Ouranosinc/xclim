@@ -55,11 +55,13 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
 
         else:
             out.__dict__[key] = f
+            f.__module__ = 'xclim.'+name
 
     return out
 
 
 def __build_icclim(mode='warn'):
+    import sys
     #  ['TG', 'TX', 'TN', 'TXx', 'TXn', 'TNx', 'TNn', 'SU', 'TR', 'CSU', 'GD4', 'FD', 'CFD',
     #   'ID', 'HD17', 'CDD', 'CWD', 'PRCPTOT', 'RR1', 'SDII', 'R10mm', 'R20mm', 'RX1day', 'RX5day',
     #   'SD', 'SD1', 'SD5cm', 'SD50cm', 'DTR', 'ETR', 'vDTR', 'TG10p', 'TX10p', 'TN10p', 'TG90p',
@@ -89,7 +91,9 @@ def __build_icclim(mode='warn'):
                'DTR': indices.daily_temperature_range,
                }
 
-    return build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
+    mod = build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
+    sys.modules['xclim.icclim'] = mod
+    return mod
 
 
 icclim = __build_icclim('ignore')
