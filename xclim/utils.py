@@ -26,12 +26,12 @@ def daily_downsampler(da, freq='YS'):
 
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
-        years = ['{:04n}'.format(y) for y in da.time.dt.year.values]
-        months = ['{:02n}'.format(m) for m in da.time.dt.month.values]
+        years = ['{:04d}'.format(y) for y in da.time.dt.year.values]
+        months = ['{:02d}'.format(m) for m in da.time.dt.month.values]
     else:
         # cannot use year, month, season attributes, not available for all calendars ...
-        years = ['{:04n}'.format(v.year) for v in da.time.values]
-        months = ['{:02n}'.format(v.month) for v in da.time.values]
+        years = ['{:04d}'.format(v.year) for v in da.time.values]
+        months = ['{:02d}'.format(v.month) for v in da.time.values]
     seasons = ['DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF'.split()[int(m) - 1] for m in months]
 
     n_t = da.time.size
