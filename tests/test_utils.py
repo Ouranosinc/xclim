@@ -21,7 +21,6 @@ import os
 import cftime
 import numpy as np
 import pandas as pd
-import pytest
 import xarray as xr
 
 from xclim.utils import daily_downsampler
