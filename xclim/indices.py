@@ -557,3 +557,40 @@ def percentile_doy(arr, window=5, per=.1):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
     return p
+
+def wet_days(pr, pr_min = 1., freq='YS'):
+    r"""wet days
+
+    compute the number of days with precipitation over pr_min and accumulates over periods.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm]
+    pr_min : float
+      precipitation value over which a day is considered wet
+    freq : str, optional
+      Resampling frequency as defined in
+      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray
+      The number of wet days at the given time frequency [day]
+
+    Notes
+    -----
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the number days
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> wd = tg_mean(pr, pr_min = 5., freq="QS-DEC")
+
+    """
+
+
+    arr = tas.resample(time=freq) if freq else tas
+    return arr.mean(dim='time')
