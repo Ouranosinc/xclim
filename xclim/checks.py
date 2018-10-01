@@ -1,5 +1,9 @@
 from functools import wraps
 from warnings import warn
+import logging
+
+logging.basicConfig(filename='./logs/checks.txt', filemode='w')
+logging.captureWarnings(True)
 
 """
 Dev notes
@@ -23,7 +27,9 @@ def check_valid(var, key, expected):
 def check_monotonic(var):
     """Assert that the series is continuous (no jumps in time index)."""
     if not var.time.to_pandas().is_monotonic:
-        raise ValueError("time index is not monotonically increasing.")
+        e = "time index is not monotonically increasing for {}.".format(var)
+        logging.ERROR(e)
+        raise ValueError(e)
 
 
 def check_valid_temperature(var, units):

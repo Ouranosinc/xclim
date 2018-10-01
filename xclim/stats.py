@@ -2,8 +2,11 @@
 """Statistical distribution fit"""
 
 import dask
+import logging
 import xarray as xr
 from scipy import stats
+
+logging.basicConfig(filename='./log/stats.txt', filemode='w')
 
 
 def fit(arr, dist='norm'):
@@ -15,7 +18,9 @@ def fit(arr, dist='norm'):
     # Get the distribution object
     dc = getattr(stats, dist, None)
     if dc is None:
-        raise ValueError("Statistical distribution {} is not in scipy.stats.".format(dist))
+        e = "Statistical distribution {} is not in scipy.stats.".format(dist)
+        logging.exception(ValueError(e))
+        raise ValueError(e)
 
     # Fit the parameters (lazy computation)
     data = dask.array.apply_along_axis(dc.fit, arr.get_axis_num('time'), arr)

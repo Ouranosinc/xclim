@@ -4,6 +4,7 @@
 """
 from functools import wraps
 
+# import logging
 import numpy as np
 import xarray as xr
 
@@ -15,6 +16,8 @@ from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperatur
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 ftomm = np.nan
+
+# logging.basicConfig(filename='./logs/indices.txt', filemode='w')
 
 
 # TODO: Move utility functions to another file.
@@ -509,7 +512,9 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
         # nothing to do
         pass
     else:
-        raise RuntimeError('non conform units')
+        e = 'Non-conforming units'
+        logging.exception(RuntimeError(e))
+        raise RuntimeError(e)
     return output
 
 
