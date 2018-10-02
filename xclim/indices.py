@@ -31,8 +31,8 @@ def with_attrs(**func_attrs):
     and assign these attributes to the function output at the
     execution time.
 
-    Notes
-    -----
+    Note
+    ----
     Assumes the output has an attrs dictionary attribute (e.g. xarray.DataArray).
     """
 
@@ -175,8 +175,8 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     xarray.DataArray
       The maximum number of consecutive days below the freezing point.
 
-    Notes
-    -----
+    Note
+    ----
     Let :math:`Tmin_i` be the minimum daily temperature of day `i`, then for a period `p` starting at
     day `a` and finishing on day `b`
 
@@ -214,26 +214,25 @@ def consecutive_wet_days(pr, thresh=1, freq='YS'):
     raise NotImplementedError
 
 
-"""
-@valid_daily_min_temperature
-def CFD2(tasmin, freq='AS-JUL'):
-    # Results are different from CFD, possibly because resampling occurs at first.
-    # CFD looks faster anyway.
-    f = tasmin < K2C
-    group = f.resample(time=freq)
-
-    def func(x):
-        return xr.apply_ufunc(rl.longest_run,
-                                x,
-                                input_core_dims=[['time'], ],
-                                vectorize=True,
-                                dask='parallelized',
-                                output_dtypes=[np.int, ],
-                                keep_attrs=True,
-                                )
-
-    return group.apply(func)
-"""
+# TODO: Clarify valid daily min temperature function and implement it
+# @valid_daily_min_temperature
+# def CFD2(tasmin, freq='AS-JUL'):
+#     # Results are different from CFD, possibly because resampling occurs at first.
+#     # CFD looks faster anyway.
+#     f = tasmin < K2C
+#     group = f.resample(time=freq)
+#
+#     def func(x):
+#         return xr.apply_ufunc(rl.longest_run,
+#                                 x,
+#                                 input_core_dims=[['time'], ],
+#                                 vectorize=True,
+#                                 dask='parallelized',
+#                                 output_dtypes=[np.int, ],
+#                                 keep_attrs=True,
+#                                 )
+#
+#     return group.apply(func)
 
 
 @with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
@@ -265,9 +264,23 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
 
 
 @valid_daily_mean_temperature
-def freshet_start(tas, thresh=0, window=5, freq='YS'):
-    """Return first day of year when a temperature threshold is exceeded
+def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
+    r"""First day of consistent threshold temperature.
+
+    Return first day of year when a temperature threshold is exceeded
     over a given number of days.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature
+    thresh : float
+      Threshold temperature to base evaluation [℃]
+    window : int
+      Minimum number of days with temperature above threshold needed for evaluation
+    freq : str, optional
+      Resampling frequency
+
     """
     i = xr.DataArray(np.arange(tas.time.size), dims='time')
     ind = xr.broadcast(i, tas)[0]
@@ -297,15 +310,25 @@ def growing_degree_days(tas, thresh=4, freq='YS'):
 
 
 @valid_daily_mean_temperature
-def growing_season_length(tas, thresh=5, window=6, freq='YS'):
-    """Growing season length.
+def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
+    r"""Growing season length.
 
     The number of days between the first occurrence of at least
-    six consecutive days with mean daily temperature over 5C and
+    six consecutive days with mean daily temperature over 5℃ and
     the first occurrence of at least six consecutive days with
-    mean daily temperature below 5C after July 1st in the northern
+    mean daily temperature below 5℃ after July 1st in the northern
     hemisphere and January 1st in the southern hemisphere.
 
+    Parameters
+    ---------
+    tas : xarray.DataArray
+      Mean daily temperature
+    thresh : float
+      Threshold temperature to base evaluation [℃]
+    window : int
+      Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
+    freq : str, optional
+      Resampling frequency
     """
     i = xr.DataArray(np.arange(tas.time.size), dims='time')
     ind = xr.broadcast(i, tas)[0]
@@ -324,14 +347,14 @@ def growing_season_length(tas, thresh=5, window=6, freq='YS'):
 
 
 @valid_daily_max_temperature
-def heat_wave_index(tasmax, thresh=25, window=5, freq='YS'):
-    """Heat wave index.
+def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
+    r"""Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
 
     Parameters
     ----------
-    tasmax : xr.DataArray
+    tasmax : xarrray.DataArray
       Maximum daily temperature.
     thresh : float
       Threshold temperature to designate a heatwave [℃].
@@ -418,8 +441,8 @@ def tg_mean(tas, freq='YS'):
       The mean daily temperature at the given time frequency.
 
 
-    Notes
-    -----
+    Note
+    ----
     Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
     day `a` and finishing on day `b`
 
@@ -488,8 +511,8 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
       The total daily precipitation at the given time frequency in [mm].
 
 
-    Notes
-    -----
+    Note
+    ----
     Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
     day `a` and finishing on day `b`
 
