@@ -14,6 +14,7 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
+
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
@@ -21,7 +22,8 @@ ftomm = np.nan
 
 
 # TODO: Move utility functions to another file.
-
+# TODO: Should we reference the standard vocabulary we're using ?
+# E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 def first_paragraph(txt):
     """Return the first paragraph of a text."""
@@ -61,10 +63,20 @@ def with_attrs(**func_attrs):
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-
+@with_attrs(standard_name='water_volume_transport_in_river_channel', long_name='discharge', units='m3 s-1')
 @valid_daily_mean_discharge
 def base_flow_index(q, freq='YS'):
-    """Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow."""
+    """Base flow index.
+
+    Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+      The river flow [m³/s].
+    freq : str, optional
+      Resampling frequency.
+    """
     m7 = q.rolling(time=7, center=True).mean(dim='time').resample(time=freq)
     mq = q.resample(time=freq)
 
@@ -72,6 +84,7 @@ def base_flow_index(q, freq='YS'):
     return m7m / mq.mean(dim='time')
 
 
+@with_attrs(standard_name='cold_spell_duration_index', long_name='', units='days')
 @valid_daily_min_temperature
 def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     """Cold spell duration index.
