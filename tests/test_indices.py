@@ -25,12 +25,15 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-xr.set_options(enable_cftimeindex=True)
+
 import xclim.indices as xci
+
+xr.set_options(enable_cftimeindex=True)
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
+
 
 class Test_max_1day_precipitation_amount():
 
@@ -43,26 +46,27 @@ class Test_max_1day_precipitation_amount():
 
     # test max precip
     def test_single_max(self):
-        a = self.time_series(np.array([3, 4, 20, 0, 0]) )
+        a = self.time_series(np.array([3, 4, 20, 0, 0]))
         rx1day = xci.max_1day_precipitation_amount(a)
         assert rx1day == 20
         assert rx1day.time.dt.year == 2000
 
     # test whether repeated maxes are resolved
     def test_multi_max(self):
-        a = self.time_series(np.array([20, 4, 20, 20, 0]) )
+        a = self.time_series(np.array([20, 4, 20, 20, 0]))
         rx1day = xci.max_1day_precipitation_amount(a)
         assert rx1day == 20
         assert rx1day.time.dt.year == 2000
-        assert len(rx1day) ==1
+        assert len(rx1day) == 1
 
     # test whether uniform maxes are resolved
     def test_uniform_max(self):
-        a = self.time_series(np.array([20, 20, 20, 20, 20]) )
+        a = self.time_series(np.array([20, 20, 20, 20, 20]))
         rx1day = xci.max_1day_precipitation_amount(a)
         assert rx1day == 20
         assert rx1day.time.dt.year == 2000
-        assert len(rx1day) ==1
+        assert len(rx1day) == 1
+
 
 class Test_consecutive_frost_days():
     def time_series(self, values):
