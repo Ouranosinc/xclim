@@ -457,7 +457,7 @@ def tn_min(tasmin, freq='YS'):
 # @check_daily_monotonic # TODO create daily timestep check
 # @convert_precip_units   # TODO create units checker / converter
 def max_1day_precipitation_amount(da, freq='YS'):
-    r"""Highest 1-day precipitation amount for a period (frequency).
+    """Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitaiton temperature series by taking the max over each period.
 
