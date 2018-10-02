@@ -22,12 +22,17 @@ ftomm = np.nan
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 def first_paragraph(txt):
-    """Return the first paragraph of a text."""
+    r"""Return the first paragraph of a text
+
+    Parameters
+    ----------
+    txt : str
+    """
     return txt.split('\n\n')[0]
 
 
 def with_attrs(**func_attrs):
-    """Set attributes in the decorated function at definition time,
+    r"""Set attributes in the decorated function at definition time,
     and assign these attributes to the function output at the
     execution time.
 
@@ -62,16 +67,21 @@ def with_attrs(**func_attrs):
 @with_attrs(standard_name='water_volume_transport_in_river_channel', long_name='discharge', units='m3 s-1')
 @valid_daily_mean_discharge
 def base_flow_index(q, freq='YS'):
-    """Base flow index
+    r"""Base flow index
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
 
     Parameters
     ----------
     q : xarray.DataArray
-      The river flow [m³/s]
+      Rate of iver discharge [m³/s]
     freq : str, optional
       Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArrray
+      Base flow index.
     """
     m7 = q.rolling(time=7, center=True).mean(dim='time').resample(time=freq)
     mq = q.resample(time=freq)
@@ -83,7 +93,7 @@ def base_flow_index(q, freq='YS'):
 @with_attrs(standard_name='cold_spell_duration_index', long_name='', units='days')
 @valid_daily_min_temperature
 def cold_spell_duration_index(tasmin, tn10, freq='YS'):
-    """Cold spell duration index
+    r"""Cold spell duration index
 
     Re-samples the daily minimum temperature series by returning the number of days per
     period where the temperature is below the calendar day 10th percentile (calculated
@@ -100,6 +110,10 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     freq : str, optional
       Resampling frequency
 
+    Returns
+    -------
+    xarray.DataArray
+      Cold spell duration index.
 
     See also
     --------
@@ -123,7 +137,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
 @valid_daily_mean_temperature
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
-    """Cold spell index.
+    r"""Cold spell index
 
     Days that are part of a cold spell (5 or more consecutive days with Tavg < -10°C)
     """
@@ -144,7 +158,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
 
 
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
-    """Cold and dry days.
+    r"""Cold and dry days.
 
     Returns the total number of days where "Cold" and "Dry" conditions coincide.
 
@@ -152,7 +166,12 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     ----------
     tas : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
-    tgin25 :
+    pr : xarray.DataArray
+
+    tgin25 : unknown
+    wet25: unknown
+
+    pr : xarray.DataArray
 
     Note
     ----
@@ -168,7 +187,7 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
 
 @valid_daily_min_temperature
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
-    """Maximum number of consecutive frost days (Tmin < 0℃).
+    r"""Maximum number of consecutive frost days (Tmin < 0℃).
 
     Resample the daily minimum temperature series by computing the maximum number
     of days below the freezing point over each period.
@@ -220,7 +239,7 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
 
 def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
-    """Consecutive wet days.
+    r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
 
@@ -260,7 +279,7 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 @with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
 def cooling_degree_days(tas, thresh=18, freq='YS'):
-    """Cooling degree days above threshold."""
+    r"""Cooling degree days above threshold."""
 
     return tas.pipe(lambda x: x - thresh - K2C) \
         .clip(min=0) \
@@ -270,7 +289,7 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
 
 @valid_daily_max_min_temperature
 def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
-    """Number of freeze-thaw cycle days.
+    r"""Number of freeze-thaw cycle days.
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
     """
@@ -280,14 +299,14 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
 @valid_daily_max_min_temperature
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
-    """Mean of daily temperature range."""
+    r"""Mean of daily temperature range."""
     dtr = tasmax - tasmin
     return dtr.resample(time=freq).mean(dim='time')
 
 
 @valid_daily_mean_temperature
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
-    r"""First day of consistent threshold temperature.
+    r"""First day consistently exceeding threshold temperature.
 
     Return first day of year when a temperature threshold is exceeded
     over a given number of days.
@@ -314,14 +333,29 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
 
 @valid_daily_min_temperature
 def frost_days(tasmin, freq='YS'):
-    """Number of frost days (Tmin < 0℃)."""
+    r"""Frost days index
+
+    Number of days where Tmin does not exceed 0℃.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Frost days index.
+    """
     f = (tasmin < K2C) * 1
     return f.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_mean_temperature
 def growing_degree_days(tas, thresh=4, freq='YS'):
-    """Growing degree days over 4℃.
+    r"""Growing degree days over 4℃.
 
     The sum of degree-days over 4℃.
     """
@@ -351,6 +385,11 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     freq : str, optional
       Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Growing season length
     """
     i = xr.DataArray(np.arange(tas.time.size), dims='time')
     ind = xr.broadcast(i, tas)[0]
@@ -411,9 +450,23 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
 
 @valid_daily_mean_temperature
 def heating_degree_days(tas, freq='YS', thresh=17):
-    """Heating degree days.
+    r"""Heating degree days
 
-    Sum of positive values of threshold - tas.
+    Sum of daily positive values for a temperature threshold minus mean daily temperature.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Heating degree days index.
     """
     return tas.pipe(lambda x: thresh - x) \
         .clip(0) \
@@ -423,22 +476,70 @@ def heating_degree_days(tas, freq='YS', thresh=17):
 
 @valid_daily_max_temperature
 def hot_days(tasmax, thresh=30, freq='YS'):
-    """Number of very hot days.
+    r"""Number of very hot days.
 
-    The number of days exceeding a threshold. """
+    Number of days with max temperature exceeding a base threshold.
+
+    Parameters
+    ----------
+    tasmax : xarrray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of hot days.
+    """
     hd = (tasmax > K2C + thresh) * 1
     return hd.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_max_temperature
 def ice_days(tasmax, freq='YS'):
-    """Number of days where the daily maximum temperature is below 0℃."""
+    r"""Number of freezing days
+
+    Number of days where daily maximum temperature does not exceed 0℃.
+
+    Parameters
+    ----------
+    tasmax : xarrray.DataArray
+      Maximum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of freezing days.
+    """
     f = (tasmax < K2C) * 1
     return f.resample(time=freq).sum(dim='time')
 
 
 @valid_daily_max_temperature
 def summer_days(tasmax, thresh=25, freq='YS'):
+    r"""Number of summer days
+
+    Number of days where daily maximum temperature exceeds 25℃.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of summer days.
+    """
     f = (tasmax > thresh + K2C) * 1
     return f.resample(time=freq).sum(dim='time')
 
@@ -487,26 +588,66 @@ def tg_mean(tas, freq='YS'):
 
 # @valid_daily_min_temperature
 def tn10p(tasmin, p10, freq='YS'):
-    """Days with daily minimum temperature below the 10th percentile of the reference period."""
+    """Days with daily minimum temperature below the 10th percentile of the reference period.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    p10 : float
+    freq : str, optional
+      Resampling frequency
+
+    """
     return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
 
 
 @valid_daily_min_temperature
 def tn_max(tasmin, freq='YS'):
-    """Maximum of daily minimum temperature."""
+    """Highest minimum temperature
+
+    Maximum of daily minimum temperature.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
     return tasmin.resample(time=freq).max(dim='time')
 
 
 @valid_daily_min_temperature
 def tn_mean(tasmin, freq='YS'):
-    """Mean of daily minimum temperature."""
+    """Mean minimum temperature
+
+    Mean of daily minimum temperature.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
     arr = tasmin.resample(time=freq) if freq else tasmin
     return arr.mean(dim='time')
 
 
 @valid_daily_min_temperature
 def tn_min(tasmin, freq='YS'):
-    """Minimum of daily minimum temperature."""
+    """Extreme minimum temperature
+
+    Minimum of daily minimum temperature.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
     return tasmin.resample(time=freq).min(dim='time')
 
 
@@ -531,15 +672,15 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     xarray.DataArray
       The total daily precipitation at the given time frequency in [mm].
 
-
-    Note
-    ----
-    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
-
-    .. math::
-
-       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    # FIXME: Update the prcp_tot ReST math formula
+    # Note
+    # ----
+    # Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
+    # day `a` and finishing on day `b`
+    #
+    # .. math::
+    #
+    #    TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
 
 
     Examples
@@ -551,6 +692,7 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     >>> prcp_tot_seasonal = prcp_tot(pr_day, freq="QS-DEC")
 
     """
+
     # TODO deal with the time_boundaries
 
     # resample the precipitation to the wanted frequency
@@ -578,14 +720,13 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K[
+      Minimum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K[
+      Threshold temperature on which to base evaluation [℃] or [K]
     freq : str, optional
       Resampling frequency
-
-
     """
+
     return tasmin.pipe(lambda x: (tasmin > thresh + K2C) * 1) \
         .resample(time=freq) \
         .sum(dim='time')
@@ -593,27 +734,69 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
 
 @valid_daily_max_temperature
 def tx_max(tasmax, freq='YS'):
-    """Maximum of daily maximum temperature."""
+    r"""Extreme max temperature
+
+    Maximum of daily maximum temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
+
     return tasmax.resample(time=freq).max(dim='time')
 
 
 @valid_daily_max_temperature
 def tx_mean(tasmax, freq='YS'):
-    """Mean of daily maximum temperature."""
+    r""" Mean max temperature
+
+    Mean of daily maximum temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
+
     arr = tasmax.resample(time=freq) if freq else tasmax
     return arr.mean(dim='time')
 
 
 @valid_daily_max_temperature
 def tx_min(tasmax, freq='YS'):
-    """Minimum of daily maximum temperature."""
+    """Lowest max temperature
+
+    Minimum of daily maximum temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+    """
+
     return tasmax.resample(time=freq).min(dim='time')
 
 
 def percentile_doy(arr, window=5, per=.1):
-    """Compute the climatological percentile over a moving window
+    """Percentile day of year
+
+    Returns the climatological percentile over a moving window
     around the day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+    window : int
+    per : float
     """
+
     # TODO: Support percentile array, store percentile in attributes.
     rr = arr.rolling(1, center=True, time=window).construct('window')
 
