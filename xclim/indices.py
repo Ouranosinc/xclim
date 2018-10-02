@@ -464,7 +464,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
     Parameters
     ----------
     pr : xarray.DataArray
-      daily total precipitation values [kg m-2 s-1 (mm s-1)].
+      daily precipitation values.
     freq : str, optional
       Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
 
@@ -472,7 +472,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
     Returns
     -------
     xarray.DataArray
-      The highest 1-day total precipitation at the given time frequency (mm).
+      The highest 1-day precipitation value at the given time frequency (mm).
 
 
     Examples
