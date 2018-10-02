@@ -95,7 +95,7 @@ def base_flow_index(q, freq='YS'):
 def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     r"""Cold spell duration index
 
-    Re-samples the daily minimum temperature series by returning the number of days per
+    Resamples the daily minimum temperature series by returning the number of days per
     period where the temperature is below the calendar day 10th percentile (calculated
     over a centered 5-day window for values during the 1961–1990 period) for a minimum of
     at least six consecutive days.
