@@ -48,7 +48,7 @@ def format_kwargs(attrs, params):
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
     for key, val in attrs.items():
-        m = re.findall("\{(\w+)\}", val)
+        m = re.findall("{(\w+)\}", val)
         for name in m:
             repl = attrs_mapping[key][params[name]]
             attrs[key] = re.sub("{\w+}", repl, val)
