@@ -116,11 +116,11 @@ class Test_tx_min():
                                    'cell_methods': 'time: mean within days',
                                    'units': 'K'})
 
-
     def test_attrs(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         txm = xci.tx_min(a, freq='YS')
         assert txm.cell_methods == 'time: minimum within years'
+
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
