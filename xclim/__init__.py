@@ -7,6 +7,7 @@ __email__ = 'logan.travis@ouranos.ca'
 __version__ = '0.5-alpha'
 
 from . import indices
+from . import benchmark
 # from .stats import fit, test
 from functools import partial
 
