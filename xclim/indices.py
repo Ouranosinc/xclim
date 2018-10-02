@@ -472,7 +472,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
     Returns
     -------
     xarray.DataArray
-      The highest 1-day precipitation value at the given time frequency (mm).
+      The highest 1-day precipitation value at the given time frequency.
 
 
     Examples
