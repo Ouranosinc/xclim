@@ -43,7 +43,6 @@ def fit(arr, dist='norm'):
     return out
 
 
-# FIXME: Write a name for this test
 def test():
     fn = '~/src/flyingpigeon/flyingpigeon/tests/testdata/cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc'
     D = xr.open_dataset(fn, chunks={'lat': 1}, decode_cf=True)

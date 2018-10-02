@@ -15,10 +15,6 @@ xclim
 .. image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/xclim
 
-.. image:: https://www.codefactor.io/repository/github/ouranosinc/xclim/badge
-   :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
-   :alt: CodeFactor
-
 .. image:: https://readthedocs.org/projects/xclim/badge/?version=latest
         :target: https://xclim.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
