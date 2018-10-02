@@ -9,7 +9,7 @@ import xarray as xr
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
-    valid_daily_max_temperature, valid_daily_mean_discharge, assert_daily
+    valid_daily_max_temperature, valid_daily_mean_discharge  # , assert_daily
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -78,6 +78,7 @@ def base_flow_index(q, freq='YS'):
 
     m7m = m7.min(dim='time')
     return m7m / mq.mean(dim='time')
+
 
 @with_attrs(standard_name='cold_spell_duration_index', long_name='', units='days')
 @valid_daily_min_temperature

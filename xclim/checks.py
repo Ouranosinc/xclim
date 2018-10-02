@@ -1,23 +1,22 @@
+import datetime as dt
 from functools import wraps
 from warnings import warn
-import datetime as dt
+
 import numpy as np
 import pandas as pd
-
 
 """
 Dev notes
 ---------
 
-I suggest we use `check` for weak checking, and `assert` for strong checking. 
-Weak checking would log problems in a log, while strong checking would raise an error. 
- 
-
+I suggest we use `check` for weak checking, and `assert` for strong checking.
+Weak checking would log problems in a log, while strong checking would raise an error.
 
 `functools.wraps` is used to copy the docstring and the function's original name from the source
 function to the decorated function. This allows sphinx to correctly find and document
 functions.
 """
+
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
 
@@ -41,7 +40,7 @@ def assert_daily(var):
         raise ValueError("time series is not recognized as daily.")
 
     # Check that the first time step is one day.
-    if np.timedelta64(dt.timedelta(days=1)) != (t1-t0).data:
+    if np.timedelta64(dt.timedelta(days=1)) != (t1 - t0).data:
         raise ValueError("time series is not daily.")
 
     # Check that the series has the same time step throughout
@@ -55,11 +54,13 @@ def check_valid_temperature(var, units):
     check_valid(var, 'units', units)
     assert_daily(var)
 
+
 def check_valid_discharge(var):
     """Check that the variable is a discharge."""
     #
     check_valid(var, 'standard_name', 'water_volume_transport_in_river_channel')
     check_valid(var, 'units', 'm3 s-1')
+
 
 def valid_daily_min_temperature(comp, units='K'):
     """Decorator to check that a computation runs on a valid temperature dataset."""

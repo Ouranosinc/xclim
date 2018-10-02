@@ -30,10 +30,3 @@ def test_assert_daily():
         times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))
         da = xr.DataArray(np.arange(2*n), [('time', times)])
         tg_mean(da)
-
-
-
-
-
-
-
