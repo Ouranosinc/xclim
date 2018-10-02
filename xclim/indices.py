@@ -3,14 +3,16 @@
 """Main module.
 """
 from functools import wraps
+
 import numpy as np
 import xarray as xr
-from xclim.utils import daily_downsampler as dds
+
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
+from .utils import daily_downsampler as dds
 
-xr.set_options(enable_cftimeindex=True) # Set xarray to use cftimeindex
+xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -454,6 +456,7 @@ def tn_min(tasmin, freq='YS'):
     """Minimum of daily minimum temperature."""
     return tasmin.resample(time=freq).min(dim='time')
 
+
 # @check_daily_monotonic # TODO create daily timestep check
 # @convert_precip_units   # TODO create units checker / converter
 def max_1day_precipitation_amount(da, freq='YS'):
@@ -486,14 +489,13 @@ def max_1day_precipitation_amount(da, freq='YS'):
     """
 
     # resample the values
-    #arr = da.resample(time=freq,keep_attrs=True)
+    # arr = da.resample(time=freq,keep_attrs=True)
     # Get max value for each period
-    #output1 = arr.max(dim='time')
-
+    # output1 = arr.max(dim='time')
 
     # use custom resample function for now
     grouper = dds(da, freq=freq)
-    output = grouper.max(dim='time',keep_attrs=True)
+    output = grouper.max(dim='time', keep_attrs=True)
 
     # add time coords to output and change dimension tags to time
     time1 = dds(da.time, freq=freq).first()
