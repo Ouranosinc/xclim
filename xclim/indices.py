@@ -74,7 +74,7 @@ def base_flow_index(q, freq='YS'):
     Parameters
     ----------
     q : xarray.DataArray
-      Rate of iver discharge [m³/s]
+      Rate of river discharge [m³/s]
     freq : str, optional
       Resampling frequency
 
