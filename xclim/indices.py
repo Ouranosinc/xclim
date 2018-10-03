@@ -173,11 +173,10 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     tas : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
     pr : xarray.DataArray
-
     tgin25 : unknown
     wet25: unknown
-
-    pr : xarray.DataArray
+    freq : str, optional
+      Resampling frequency
 
     Note
     ----
