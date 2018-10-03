@@ -39,6 +39,7 @@ def with_attrs(**func_attrs):
     -----
     Assumes the output has an attrs dictionary attribute (e.g. xarray.DataArray).
     """
+    import types
 
     def attr_decorator(fn):
         # Use the docstring as the description attribute.
@@ -46,8 +47,22 @@ def with_attrs(**func_attrs):
 
         @wraps(fn)
         def wrapper(*args, **kwargs):
+            # This is a temporary fix to support non-standard calendars.
+            tmp_fix = False
+            for i, arg in enumerate(args):
+                if isinstance(arg.indexes['time'], xr.CFTimeIndex):
+                    args[i].resample = types.MethodType(dds, args[i])
+                    tmp_fix = True
+
             out = fn(*args, **kwargs)
             out.attrs.update(func_attrs)
+
+            if tmp_fix:
+                time1 = dds(args[0].time, time=kwargs['freq']).first()
+                out.coords['time'] = ('tags', time1.values)
+                out = out.swap_dims({'tags': 'time'})
+                out = out.sortby('time')
+
             return out
 
         # Assign the attributes to the function itself
@@ -472,6 +487,7 @@ def tn_min(tasmin, freq='YS'):
 
 # @check_daily_monotonic # TODO create daily timestep check
 # @convert_precip_units   # TODO create units checker / converter
+@with_attrs(long_name='maximum daily precipitation')
 def max_1day_precipitation_amount(da, freq='YS'):
     """Highest 1-day precipitation amount for a period (frequency).
 
@@ -500,23 +516,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
 
     """
-
-    # resample the values
-    # arr = da.resample(time=freq,keep_attrs=True)
-    # Get max value for each period
-    # output1 = arr.max(dim='time')
-
-    # use custom resample function for now
-    grouper = dds(da, freq=freq)
-    output = grouper.max(dim='time', keep_attrs=True)
-
-    # add time coords to output and change dimension tags to time
-    time1 = dds(da.time, freq=freq).first()
-    output.coords['time'] = ('tags', time1.values)
-    output = output.swap_dims({'tags': 'time'})
-    output = output.sortby('time')
-
-    return output
+    return da.resample(time=freq).max(dim='time')
 
 
 # @check_is_dataarray

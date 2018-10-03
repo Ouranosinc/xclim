@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def daily_downsampler(da, freq='YS'):
+def daily_downsampler(da, **indexer):
     """
     :param da: xarray.DataArray
 
@@ -23,6 +23,9 @@ def daily_downsampler(da, freq='YS'):
 
 
     """
+    dim, freq = indexer.popitem()
+    if dim != 'time':
+        raise ValueError("Expected `time` dimension.")
 
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
