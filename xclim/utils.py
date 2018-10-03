@@ -2,15 +2,22 @@ import numpy as np
 
 
 def daily_downsampler(da, freq='YS'):
-    """
-    :param da: xarray.DataArray
+    r"""Daily climate data downsampler
 
-    :param freq: string
+    Parameters
+    ----------
+    da : xarray.DataArray
+    freq : string
 
-    :return: xarray.DataArray
+    Returns
+    -------
+    xarray.DataArray
 
-    expample of usage
 
+    Note
+    ----
+
+        Usage Example
 
             grouper = daily_downsampler(da_std, freq='YS')
             x2 = grouper.mean()
@@ -20,8 +27,6 @@ def daily_downsampler(da, freq='YS'):
             x2.coords['time'] = ('tags', time1.values)
             x2 = x2.swap_dims({'tags': 'time'})
             x2 = x2.sortby('time')
-
-
     """
 
     # generate tags from da.time and freq

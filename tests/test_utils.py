@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
-"""Tests for `xclim` package.
+# Tests for `xclim` package.
+#
+# We want to tests multiple things here:
+#  - that data results are correct
+#  - that metadata is correct and complete
+#  - that missing data are handled appropriately
+#  - that various calendar formats and supported
+#  - that non-valid input frequencies or holes in the time series are detected
+#
+#
+# For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
+# saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
+# a first line of defense.
 
-We want to tests multiple things here:
- - that data results are correct
- - that metadata is correct and complete
- - that missing data are handled appropriately
- - that various calendar formats and supported
- - that non-valid input frequencies or holes in the time series are detected
-
-
-For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it, saving
-the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as a first line
-of defense.
-"""
 
 import os
 import cftime
