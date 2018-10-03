@@ -108,6 +108,49 @@ class Test_prcptotal():
         assert (np.allclose(target, out_std.values))
 
 
+class Test_wet_days_and_daily_intensity():
+    # testing of wet_day and daily_intensity, both are related
+
+    nc_file = ('testdata/CanESM2_365day/pr_day_CanESM2_rcp85_r1i1p1_'
+               'na10kgrid_qm-moving-50bins-detrend_2095.nc')
+
+    def test_nans(self):
+        pr = xr.open_dataset(self.nc_file).pr
+        pr = pr * 86400.
+        pr['units'] = 'mm'
+        pr_min = 5.
+
+        # put a nan in pr[35,2,0]
+        pr.values[35, 2, 0] = np.nan
+
+        # compute wet_days and daily intensity with both skipna values
+        wd = xci.wet_days(pr, pr_min=pr_min, freq='MS')
+        wds = xci.wet_days(pr, pr_min=pr_min, freq='MS', skipna=True)
+        di = xci.daily_intensity(pr, pr_min=pr_min, freq='MS')
+        dis = xci.daily_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
+
+        # check values for Feb
+        x1 = pr[31:59, 0, 0]  # no nan
+        # notice that pr[31:59, 1, 0] are all nan
+        x3 = pr[31:59, 2, 0]  # one nan
+
+        # wet days
+        assert (np.allclose(wd[1, 0, 0].values, x1[x1 >= pr_min].size))
+        assert (np.allclose(wds[1, 0, 0].values, x1[x1 >= pr_min].size))
+        assert (np.isnan(wd[1, 1, 0].values))
+        assert (np.isnan(wds[1, 1, 0].values))
+        assert (np.isnan(wd[1, 2, 0].values))
+        assert (np.allclose(wds[1, 2, 0].values, x3[x3 >= pr_min].size))
+
+        # daily intensity
+        assert (np.allclose(di[1, 0, 0].values, x1[x1 >= pr_min].mean()))
+        assert (np.allclose(dis[1, 0, 0].values, x1[x1 >= pr_min].mean()))
+        assert (np.isnan(dis[1, 1, 0].values))
+        assert (np.isnan(dis[1, 1, 0].values))
+        assert (np.isnan(di[1, 2, 0].values))
+        assert (np.allclose(dis[1, 2, 0].values, x3[x3 >= pr_min].mean()))
+
+
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
 class TestTG():
