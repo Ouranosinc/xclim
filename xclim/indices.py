@@ -517,7 +517,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
 
     """
     return da.resample(time=freq).max(dim='time')
-    
+
 
 # @check_is_dataarray
 def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
