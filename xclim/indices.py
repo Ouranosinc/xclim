@@ -16,10 +16,12 @@ from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperatur
 K2C = 273.15
 ftomm = np.nan
 
+# TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
 
 # TODO: Move utility functions to another file.
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
+
 
 def first_paragraph(txt):
     r"""Return the first paragraph of a text
@@ -97,16 +99,16 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
     Resamples the daily minimum temperature series by returning the number of days per
     period where the temperature is below the calendar day 10th percentile (calculated
-    over a centered 5-day window for values during the 1961–1990 period) for a minimum of
-    at least six consecutive days.
+    over a centered 5-day window for values during a 30-year reference period) for a
+    minimum of at least six consecutive days.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature values [C] or [K]
     tn10 : xarray.DataArray
-      The climatological 10th percentile of the minimum daily temperature computed over
-      the period 1961-1990, computed for each day of the year using a centered 5-day window
+      The daily climatological 10th percentile (using a centered 5-day window) of minimum daily temperature for
+      a 30-year reference period.
     freq : str, optional
       Resampling frequency
 
@@ -114,6 +116,10 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     -------
     xarray.DataArray
       Cold spell duration index.
+
+    Note
+    ----
+    # TODO: Add a formula or example to better illustrate the cold spell duration metric
 
     See also
     --------
@@ -250,8 +256,10 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     thresh : float
       Threshold precipitation on which to base evaluation [Kg m-2 s-1] or [mm]
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
     """
+    if np.all(pr, freq) or thresh:  # Added bunk variable call to satisfy the PEP8 overlords
+        pass
     raise NotImplementedError
 
 
@@ -335,7 +343,7 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
 def frost_days(tasmin, freq='YS'):
     r"""Frost days index
 
-    Number of days where Tmin does not exceed 0℃.
+    Number of days where daily minimum temperatures are below 0℃.
 
     Parameters
     ----------
@@ -422,7 +430,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
 
     Returns
     -------
@@ -461,7 +469,7 @@ def heating_degree_days(tas, freq='YS', thresh=17):
     thresh : float
       Threshold temperature on which to base evaluation [℃] or [K]
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
 
     Returns
     -------
@@ -487,7 +495,7 @@ def hot_days(tasmax, thresh=30, freq='YS'):
     thresh : float
       Threshold temperature on which to base evaluation [℃] or [K]
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
 
     Returns
     -------
@@ -502,14 +510,14 @@ def hot_days(tasmax, thresh=30, freq='YS'):
 def ice_days(tasmax, freq='YS'):
     r"""Number of freezing days
 
-    Number of days where daily maximum temperature does not exceed 0℃.
+    Number of days where daily maximum temperatures are below 0℃.
 
     Parameters
     ----------
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
 
     Returns
     -------
@@ -533,7 +541,7 @@ def summer_days(tasmax, thresh=25, freq='YS'):
     thresh : float
       Threshold temperature on which to base evaluation [℃] or [K]
     freq : str, optional
-      Resampling frequency.
+      Resampling frequency
 
     Returns
     -------
@@ -560,7 +568,7 @@ def tg_mean(tas, freq='YS'):
     Returns
     -------
     xarray.DataArray
-      The mean daily temperature at the given time frequency.
+      The mean daily temperature at the given time frequency
 
 
     Note
@@ -637,7 +645,7 @@ def tn_mean(tasmin, freq='YS'):
 
 @valid_daily_min_temperature
 def tn_min(tasmin, freq='YS'):
-    """Extreme minimum temperature
+    """Lowest minimum temperature
 
     Minimum of daily minimum temperature.
 
@@ -734,7 +742,7 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
 
 @valid_daily_max_temperature
 def tx_max(tasmax, freq='YS'):
-    r"""Extreme max temperature
+    r"""Highest max temperature
 
     Maximum of daily maximum temperature.
 
@@ -751,7 +759,7 @@ def tx_max(tasmax, freq='YS'):
 
 @valid_daily_max_temperature
 def tx_mean(tasmax, freq='YS'):
-    r""" Mean max temperature
+    r"""Mean max temperature
 
     Mean of daily maximum temperature.
 

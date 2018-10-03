@@ -19,11 +19,11 @@ def rle(arr):
     -------
     (values, run lengths, start positions)
     values : np.array
-      The values taken by arr over each run.
+      The values taken by arr over each run
     run lengths : np.array
-      The length of each run.
+      The length of each run
     start position : np.array
-      The starting index of each run.
+      The starting index of each run
 
     Examples
     --------
@@ -50,7 +50,7 @@ def windowed_run_count(arr, window):
     Parameters
     ----------
     arr : bool array
-      Input array.
+      Input array
     window : int
       Minimum duration of consecutive run to accumulate values.
 
@@ -69,7 +69,7 @@ def longest_run(arr):
     Parameters
     ----------
     arr : bool array
-      Input array.
+      Input array
 
     Returns
     -------
