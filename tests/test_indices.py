@@ -28,9 +28,44 @@ import xarray as xr
 
 import xclim.indices as xci
 
+xr.set_options(enable_cftimeindex=True)
+
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
+
+
+class Test_max_1day_precipitation_amount():
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'precipitation_flux',
+                                   'cell_methods': 'time: sum (interval: 1 day)',
+                                   'units': 'mm'})
+
+    # test max precip
+    def test_single_max(self):
+        a = self.time_series(np.array([3, 4, 20, 0, 0]))
+        rx1day = xci.max_1day_precipitation_amount(a)
+        assert rx1day == 20
+        assert rx1day.time.dt.year == 2000
+
+    # test whether repeated maxes are resolved
+    def test_multi_max(self):
+        a = self.time_series(np.array([20, 4, 20, 20, 0]))
+        rx1day = xci.max_1day_precipitation_amount(a)
+        assert rx1day == 20
+        assert rx1day.time.dt.year == 2000
+        assert len(rx1day) == 1
+
+    # test whether uniform maxes are resolved
+    def test_uniform_max(self):
+        a = self.time_series(np.array([20, 20, 20, 20, 20]))
+        rx1day = xci.max_1day_precipitation_amount(a)
+        assert rx1day == 20
+        assert rx1day.time.dt.year == 2000
+        assert len(rx1day) == 1
 
 
 class Test_consecutive_frost_days():

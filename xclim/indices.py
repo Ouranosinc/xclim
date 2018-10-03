@@ -9,7 +9,11 @@ import xarray as xr
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
-    valid_daily_max_temperature, valid_daily_mean_discharge  # , assert_daily
+    valid_daily_max_temperature, valid_daily_mean_discharge
+from .utils import daily_downsampler as dds
+
+xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -464,6 +468,55 @@ def tn_mean(tasmin, freq='YS'):
 def tn_min(tasmin, freq='YS'):
     """Minimum of daily minimum temperature."""
     return tasmin.resample(time=freq).min(dim='time')
+
+
+# @check_daily_monotonic # TODO create daily timestep check
+# @convert_precip_units   # TODO create units checker / converter
+def max_1day_precipitation_amount(da, freq='YS'):
+    """Highest 1-day precipitation amount for a period (frequency).
+
+    Resample the original daily total precipitaiton temperature series by taking the max over each period.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      daily precipitation values.
+    freq : str, optional
+      Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
+
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest 1-day precipitation value at the given time frequency.
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
+    at an annual frequency.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
+
+    """
+
+    # resample the values
+    # arr = da.resample(time=freq,keep_attrs=True)
+    # Get max value for each period
+    # output1 = arr.max(dim='time')
+
+    # use custom resample function for now
+    grouper = dds(da, freq=freq)
+    output = grouper.max(dim='time', keep_attrs=True)
+
+    # add time coords to output and change dimension tags to time
+    time1 = dds(da.time, freq=freq).first()
+    output.coords['time'] = ('tags', time1.values)
+    output = output.swap_dims({'tags': 'time'})
+    output = output.sortby('time')
+
+    return output
 
 
 # @check_is_dataarray
