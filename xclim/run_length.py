@@ -1,10 +1,10 @@
 import numpy as np
 
-"""Run length algorithms.
-
-Need to benchmark and adapt for xarray.
-
-"""
+# Dev Notes
+# ---------
+# Run length algorithms
+#
+# Need to benchmark and adapt for xarray.
 
 
 def rle(arr):
@@ -34,14 +34,15 @@ def rle(arr):
     """
     ia = np.asarray(arr)
     n = len(ia)
+
     if n == 0:
         return None, None, None
-    else:
-        y = np.array(ia[1:] != ia[:-1])         # pairwise unequal (string safe)
-        i = np.append(np.where(y), n - 1)       # must include last element position
-        rl = np.diff(np.append(-1, i))          # run lengths
-        pos = np.cumsum(np.append(0, rl))[:-1]  # positions
-        return ia[i], rl, pos
+
+    y = np.array(ia[1:] != ia[:-1])         # pairwise unequal (string safe)
+    i = np.append(np.where(y), n - 1)       # must include last element position
+    rl = np.diff(np.append(-1, i))          # run lengths
+    pos = np.cumsum(np.append(0, rl))[:-1]  # positions
+    return ia[i], rl, pos
 
 
 def windowed_run_count(arr, window):

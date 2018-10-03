@@ -118,7 +118,7 @@ class Test_cooling_degree_days():
         assert cdd.standard_name == 'cooling_degree_days'
         assert cdd.long_name == 'cooling degree days'
         assert cdd.units == 'K*day'
-        assert len(cdd.description) > 0
+        assert cdd.description
 
 
 class Test_prcptotal():
