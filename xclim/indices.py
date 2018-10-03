@@ -664,7 +664,7 @@ def tn_min(tasmin, freq='YS'):
 
 # @check_daily_monotonic # TODO create daily timestep check
 # @convert_precip_units   # TODO create units checker / converter
-def max_1day_precipitation_amount(da, freq='YS'):
+def max_1day_precipitation_amount(da, freq='YS',skipna=False):
     """Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitaiton temperature series by taking the max over each period.
@@ -700,7 +700,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
 
     # use custom resample function for now
     grouper = dds(da, freq=freq)
-    output = grouper.max(dim='time', keep_attrs=True)
+    output = grouper.max(dim='time', keep_attrs=True,skipna=skipna)
 
     # add time coords to output and change dimension tags to time
     time1 = dds(da.time, freq=freq).first()
