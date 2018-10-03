@@ -41,7 +41,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
     out = types.ModuleType(name, doc)
 
     for key, obj in objs.items():
-        if type(obj) == str and source is not None:
+        if isinstance(obj, str) and source is not None:
             f = getattr(source, obj, None)
         else:
             f = obj
@@ -68,7 +68,7 @@ def __build_icclim(mode='warn'):
     #   'TX90p', 'TN90p', 'WSDI', 'CSDI', 'R75p', 'R75pTOT', 'R95p', 'R95pTOT', 'R99p', 'R99pTOT']
 
     # Use partials to specify default value ?
-    # TODO : Complete
+    # TODO : Complete mappings for ICCLIM indices
     mapping = {'TG': indices.tg_mean,
                'TX': indices.tx_mean,
                'TN': indices.tn_mean,
