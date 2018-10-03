@@ -5,17 +5,15 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-"""
-Dev notes
----------
 
-I suggest we use `check` for weak checking, and `assert` for strong checking.
-Weak checking would log problems in a log, while strong checking would raise an error.
-
-`functools.wraps` is used to copy the docstring and the function's original name from the source
-function to the decorated function. This allows sphinx to correctly find and document
-functions.
-"""
+# Dev notes
+# ---------
+#
+# I suggest we use `check` for weak checking, and `assert` for strong checking.
+# Weak checking would log problems in a log, while strong checking would raise an error.
+#
+# `functools.wraps` is used to copy the docstring and the function's original name from the source
+# function to the decorated function. This allows sphinx to correctly find and document functions.
 
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
@@ -24,9 +22,11 @@ def check_valid(var, key, expected):
     """Check that a variable's attribute has the expected value. Warn user otherwise."""
     att = getattr(var, key, None)
     if att is None:
-        warn('Variable does not have a `{}` attribute.'.format(key))
+        e = 'Variable does not have a `{}` attribute.'.format(key)
+        warn(e)
     elif att != expected:
-        warn('Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected))
+        e = 'Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected)
+        warn(e)
 
 
 def assert_daily(var):

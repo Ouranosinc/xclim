@@ -2,6 +2,12 @@
 History
 =======
 
+0.6-alpha (2018-10-03)
+----------------------
+* File attributes checks
+* Added daily downsampler function
+* Better documentation on ICCLIM indices
+
 0.5-alpha (2018-09-26)
 ----------------------
 * Added total precipitation indicator
