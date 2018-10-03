@@ -73,8 +73,6 @@ class Test_max_1day_precipitation_amount():
         rx1day = xci.max_1day_precipitation_amount(a)
         assert np.isnan(rx1day)
 
-
-
 class Test_consecutive_frost_days():
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
