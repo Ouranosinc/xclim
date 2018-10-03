@@ -67,6 +67,13 @@ class Test_max_1day_precipitation_amount():
         assert rx1day.time.dt.year == 2000
         assert len(rx1day) == 1
 
+    # test nan behavior
+    def test_nan_max(self):
+        a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
+        rx1day = xci.max_1day_precipitation_amount(a)
+        assert np.isnan(rx1day)
+
+
 
 class Test_consecutive_frost_days():
     def time_series(self, values):
