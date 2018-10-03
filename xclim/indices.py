@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Main module.
+"""
+Main module
 """
 from functools import wraps
+
 import six
-if six.PY2:
-    from funcsigs import signature
-elif six.PY3:
-    from inspect import signature
 import numpy as np
 import xarray as xr
 import re
@@ -19,6 +17,11 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
+
+if six.PY2:
+    from funcsigs import signature
+elif six.PY3:
+    from inspect import signature
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -42,10 +45,8 @@ def first_paragraph(txt):
     return txt.split('\n\n')[0]
 
 
-attrs_mapping = {'cell_methods':
-                     {'YS': 'years',
-                      }
-                 }
+attrs_mapping = {'cell_methods': {'YS': 'years'}, }
+
 
 def format_kwargs(attrs, params):
     """Update entries in place with argument values.
@@ -59,10 +60,11 @@ def format_kwargs(attrs, params):
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
     for key, val in attrs.items():
-        m = re.findall("\{(\w+)\}", val)
+        m = re.findall("{(\w+)\}", val)
         for name in m:
             repl = attrs_mapping[key][params[name]]
             attrs[key] = re.sub("{\w+}", repl, val)
+
 
 def with_attrs(**func_attrs):
     r"""Set attributes in the decorated function at definition time,
@@ -857,7 +859,8 @@ def tx_mean(tasmax, freq='YS'):
     return arr.mean(dim='time')
 
 
-@with_attrs(standard_name='tx_min', long_name='Minimum of daily maximum temperature', cell_methods='time: minimum within {freq}')
+@with_attrs(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+            cell_methods='time: minimum within {freq}')
 @valid_daily_max_temperature
 def tx_min(tasmax, freq='YS'):
     """Lowest max temperature

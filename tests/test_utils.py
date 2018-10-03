@@ -26,7 +26,6 @@ import xarray as xr
 from xclim.utils import daily_downsampler
 from xclim.indices import format_kwargs
 
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
@@ -110,10 +109,10 @@ class Test_daily_downsampler():
             target = {'YS': target_year, 'MS': target_month, 'QS-DEC': target_season}[freq]
             assert (np.allclose(x2.values, target))
 
+
 def test_format_kwargs():
     attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
-                cell_methods='time: minimum within {freq}')
+                 cell_methods='time: minimum within {freq}')
 
     format_kwargs(attrs, {'freq': 'YS'})
     assert attrs['cell_methods'] == 'time: minimum within years'
-
