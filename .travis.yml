@@ -29,8 +29,8 @@ matrix:
       python: 2.7
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: 
-  - pip install -U tox-travis 
+install:
+  - pip install -U tox-travis
 
 # Command to run tests, e.g. python setup.py test
 script: travis_wait tox -e $TOXENV
