@@ -148,7 +148,7 @@ class Test_tx_min():
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
-                                   'cell_methods': 'time: mean within days',
+                                   'cell_methods': 'time: maximum within days',
                                    'units': 'K'})
 
     def test_attrs(self):

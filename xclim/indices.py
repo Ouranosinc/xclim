@@ -60,10 +60,14 @@ def format_kwargs(attrs, params):
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
     for key, val in attrs.items():
-        m = re.findall("{(\w+)\}", val)
+        m = re.findall("{(\w+)}", val)
         for name in m:
-            repl = attrs_mapping[key][params[name]]
-            attrs[key] = re.sub("{\w+}", repl, val)
+            if name in params:
+                v = params.get(name)
+                if v is None:
+                    raise ValueError("{0} is not a valid function argument.".format(name))
+                repl = attrs_mapping[key][v]
+                attrs[key] = re.sub("{%s}" % name, repl, val)
 
 
 def with_attrs(**func_attrs):
@@ -318,9 +322,8 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 #
 #     return group.apply(func)
 
-
-@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
+@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 def cooling_degree_days(tas, thresh=18, freq='YS'):
     r"""Cooling degree days above threshold."""
 
@@ -859,9 +862,9 @@ def tx_mean(tasmax, freq='YS'):
     return arr.mean(dim='time')
 
 
+@valid_daily_max_temperature
 @with_attrs(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
             cell_methods='time: minimum within {freq}')
-@valid_daily_max_temperature
 def tx_min(tasmax, freq='YS'):
     """Lowest max temperature
 
