@@ -40,13 +40,13 @@ class Test_daily_downsampler():
 
         for freq in 'YS MS QS-DEC'.split():
             resampler = da_std.resample(time=freq)
-            grouper = daily_downsampler(da_std, freq=freq)
+            grouper = daily_downsampler(da_std, time=freq)
 
             x1 = resampler.mean()
             x2 = grouper.mean()
 
             # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_std.time, freq=freq).first()
+            time1 = daily_downsampler(da_std.time, time=freq).first()
             x2.coords['time'] = ('tags', time1.values)
             x2 = x2.swap_dims({'tags': 'time'})
             x2 = x2.sortby('time')
@@ -67,13 +67,13 @@ class Test_daily_downsampler():
 
         for freq in 'YS MS QS-DEC'.split():
             resampler = da_std.resample(time=freq)
-            grouper = daily_downsampler(da_365, freq=freq)
+            grouper = daily_downsampler(da_365, time=freq)
 
             x1 = resampler.mean()
             x2 = grouper.mean()
 
             # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_365.time, freq=freq).first()
+            time1 = daily_downsampler(da_365.time, time=freq).first()
             x2.coords['time'] = ('tags', time1.values)
             x2 = x2.swap_dims({'tags': 'time'})
             x2 = x2.sortby('time')
@@ -91,12 +91,12 @@ class Test_daily_downsampler():
         da_360 = xr.DataArray(np.arange(1, time_360.size + 1), coords=[time_360], dims='time', name='data')
 
         for freq in 'YS MS QS-DEC'.split():
-            grouper = daily_downsampler(da_360, freq=freq)
+            grouper = daily_downsampler(da_360, time=freq)
 
             x2 = grouper.mean()
 
             # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_360.time, freq=freq).first()
+            time1 = daily_downsampler(da_360.time, time=freq).first()
             x2.coords['time'] = ('tags', time1.values)
             x2 = x2.swap_dims({'tags': 'time'})
             x2 = x2.sortby('time')
