@@ -71,7 +71,7 @@ class Test_max_1day_precipitation_amount():
     def test_non_standard_calendar(self):
         n = 360
         times = xr.cftime_range('2000-01-01', periods=n, freq='D', calendar='360_day')
-        da = xarray.DataArray(range(n), [('time', times)])
+        da = xr.DataArray(range(n), [('time', times)])
         out = xci.max_1day_precipitation_amount(da, freq='M')
         np.testing.assert_array_equal(out.data, da[29::30])
 
