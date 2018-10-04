@@ -873,7 +873,7 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-def wet_days(pr, pr_min=1., freq='YS', skipna=False):
+def wet_days_bugged(pr, pr_min=1., freq='YS', skipna=False):
     r"""wet days
 
     compute the number of days with precipitation over pr_min and accumulates over periods.
@@ -920,6 +920,11 @@ def wet_days(pr, pr_min=1., freq='YS', skipna=False):
 
         # get data from each group
         g = groups[tag]
+
+        #
+        # *** BUG ***
+        #
+        # this does not work if first dim is not time ....
         prg = pr[g]
 
         # find wet days, keeping nans and sum
@@ -951,6 +956,59 @@ def wet_days(pr, pr_min=1., freq='YS', skipna=False):
     output['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
 
     return output
+
+@with_attrs(standard_name = 'wet_days', units = 'days', long_name = 'number of wet days')
+def wet_days(pr, pr_min=1., freq='YS', skipna=False):
+    r"""wet days
+
+    compute the number of days with precipitation over pr_min and accumulates over periods.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm]
+    pr_min : float
+      precipitation value over which a day is considered wet
+    freq : str, optional
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+    skipna : str, optional
+      if True, NaN values are ignored
+      if False NaN values are expanded
+      This is used for the computation of the sum of wet days. See
+      http://xarray.pydata.org/en/stable/generated/xarray.DataArray.sum.html for details
+
+
+    Returns
+    -------
+    xarray.DataArray
+      The number of wet days for each period [day]
+
+    Notes
+    -----
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the number days
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> wd = wet_days(pr, pr_min = 5., freq="QS-DEC")
+
+    """
+
+    wd = (pr >= pr_min) * 1
+    wd = xr.where(np.isnan(pr), np.nan, wd)
+    wd_sum = wd.resample(time=freq).sum(dim='time', skipna = skipna)
+
+    # sum returns 0 if all nans and skipna is True
+    mask_all_nan = (wd.resample(time=freq).count(dim='time') == 0)
+    wd_sum = xr.where(mask_all_nan, np.nan, wd_sum)
+
+    # add details about wet days definition
+    wd_sum['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
+
+    return wd_sum
 
 
 def daily_intensity(pr, pr_min=1., freq='YS', skipna=False):
