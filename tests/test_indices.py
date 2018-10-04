@@ -152,44 +152,35 @@ class Test_prcptotal():
 class Test_wet_days_and_daily_intensity():
     # testing of wet_day and daily_intensity, both are related
 
-    nc_file = ('testdata/CanESM2_365day/pr_day_CanESM2_rcp85_r1i1p1_'
-               'na10kgrid_qm-moving-50bins-detrend_2095.nc')
+    nc_file = 'testdata/NRCANdaily/nrcan_canada_daily_pr_1990.nc'
 
-    def test_nans(self):
+    def test_3d_data_with_nans(self):
+
+        # test with 3d data
         pr = xr.open_dataset(self.nc_file).pr
         pr = pr * 86400.
         pr['units'] = 'mm'
+        # put a nan somewhere
+        pr.values[10, 1, 0] = np.nan
+
+        # compute wet days with skipna False and True
         pr_min = 5.
-
-        # put a nan in pr[35,2,0]
-        pr.values[35, 2, 0] = np.nan
-
-        # compute wet_days and daily intensity with both skipna values
-        wd = xci.wet_days(pr, pr_min=pr_min, freq='MS')
+        wd = xci.wet_days(pr, pr_min=pr_min, freq='MS', skipna=False)
         wds = xci.wet_days(pr, pr_min=pr_min, freq='MS', skipna=True)
-        di = xci.daily_intensity(pr, pr_min=pr_min, freq='MS')
-        dis = xci.daily_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
 
-        # check values for Feb
-        x1 = pr[31:59, 0, 0]  # no nan
-        # notice that pr[31:59, 1, 0] are all nan
-        x3 = pr[31:59, 2, 0]  # one nan
+        # check some vector with and without a nan
+        x1 = pr[:31, 0, 0].values
+        x2 = pr[:31, 1, 0].values
+        wd1 = ((x1 >= pr_min) * 1).sum()
+        wd2 = ((x2 >= pr_min) * 1).sum()
+        assert (wd1 == wd.values[0, 0, 0])
+        assert (wd1 == wds.values[0, 0, 0])
+        assert (np.isnan(wd.values[0, 1, 0]))
+        assert (wd2 == wds.values[0, 1, 0])
 
-        # wet days
-        assert (np.allclose(wd[1, 0, 0].values, x1[x1 >= pr_min].size))
-        assert (np.allclose(wds[1, 0, 0].values, x1[x1 >= pr_min].size))
-        assert (np.isnan(wd[1, 1, 0].values))
-        assert (np.isnan(wds[1, 1, 0].values))
-        assert (np.isnan(wd[1, 2, 0].values))
-        assert (np.allclose(wds[1, 2, 0].values, x3[x3 >= pr_min].size))
-
-        # daily intensity
-        assert (np.allclose(di[1, 0, 0].values, x1[x1 >= pr_min].mean()))
-        assert (np.allclose(dis[1, 0, 0].values, x1[x1 >= pr_min].mean()))
-        assert (np.isnan(dis[1, 1, 0].values))
-        assert (np.isnan(dis[1, 1, 0].values))
-        assert (np.isnan(di[1, 2, 0].values))
-        assert (np.allclose(dis[1, 2, 0].values, x3[x3 >= pr_min].mean()))
+        # make sure that vecotre with all nans gives nans wathever skipna
+        assert (np.isnan(wd.values[0, -1, -1]))
+        assert (np.isnan(wds.values[0, -1, -1]))
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
