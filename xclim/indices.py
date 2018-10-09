@@ -792,7 +792,7 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
         .sum(dim='time')
 
 
-@valid_daily_max_temperature
+#@valid_daily_max_temperature
 def tx_max(tasmax, freq='YS'):
     r"""Highest max temperature
 
