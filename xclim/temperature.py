@@ -1,9 +1,10 @@
-from . utils import Indicator
-from . import indices
 from . import checks
+from . import indices
+from .utils import Indicator
+
 
 class TxMax(Indicator):
-    identifier='tx_max'
+    identifier = 'tx_max'
     required_units = 'K'
     long_name = 'Maximum temperature'
     standard_name = 'tasmax'
@@ -14,7 +15,7 @@ class TxMax(Indicator):
         return indices.tx_max(tasmax, freq)
 
     def convert_units(self, tas):
-        return (checks.convert_temp(tas, self.required_units), )
+        return (checks.convert_temp(tas, self.required_units),)
 
     def cfprobe(self, tas):
         checks.check_valid(tas, 'cell_methods', 'time: maximum within days')
@@ -27,8 +28,3 @@ class TxMax(Indicator):
         """An aggregated value is missing if any value in the group is missing."""
         g = tas.notnull().resample(time=freq)
         return g.sum(dim='time')
-
-
-
-
-

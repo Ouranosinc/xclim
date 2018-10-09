@@ -140,8 +140,8 @@ def check_is_dataarray(comp):
 
     return func
 
-def convert_temp(da, required_units='K'):
 
+def convert_temp(da, required_units='K'):
     if da.units == required_units:
         return da
     elif da.units == 'C' and required_units == 'K':
