@@ -9,11 +9,14 @@ import six
 import numpy as np
 import xarray as xr
 import re
+import operator
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
 from .utils import daily_downsampler as dds
+from .utils import get_daily_events
+
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -744,6 +747,53 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     output = output.sortby('time')
 
     return output
+
+def heavy_prcp_days(pr, pr_min=20, freq='YS', skipna = False):
+    r"""Number of days with heavy precipitation
+
+        Find days with precipitation over a given value and sum them over each period
+
+        Resample the original daily mean precipitation flux and accumulate over each period
+
+        Parameters
+        ----------
+        pr : xarray.DataArray
+          Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+        pr_min : float, optional
+          Treshold precipitation to define heavy precipitation
+        freq : str, optional
+          Resampling frequency as defined in
+          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+        skipna: Boolean, optional
+          XXX
+
+        Returns
+        -------
+        xarray.DataArray
+          Number of days with heavy precipitation
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr_day.nc` the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+    >>> pr_day = xr.open_dataset('pr_day.nc').pr
+    >>> hpd = heayv_prcp_days(pr_day, pr_min=20., freq="QS-DEC")
+
+    """
+    # get daily events of heavy precipitation
+    hpd = get_daily_events(pr, pr_min, operator.ge)
+
+    # keep mask of when all events are nan
+    mask_all_nan = (hpd.resample(time=freq).count(dim='time') == 0)
+
+    # resample and use mask because sum returns 0 if all nans and skipna is True
+    hpd = hpd.resample(time=freq).sum(dim = 'time', skipna=skipna)
+    hpd = hpd.where(~mask_all_nan, np.nan)
+
+    hpd.attrs['long_name'] = 'number of heavy precipitation days'
+    hpd.attrs['units'] = 'days'
+    hpd.attrs['details'] = 'heavy precipitation days defined as day with precipitation > {:6.2f}'.format(pr_min)
+    return hpd
 
 
 # @check_is_dataarray
