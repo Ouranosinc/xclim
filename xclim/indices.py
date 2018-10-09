@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Main module.
+"""
+Main module
 """
 from functools import wraps
 
+import six
 import numpy as np
 import xarray as xr
+import re
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
@@ -14,6 +17,11 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
+
+if six.PY2:
+    from funcsigs import signature
+elif six.PY3:
+    from inspect import signature
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -37,6 +45,31 @@ def first_paragraph(txt):
     return txt.split('\n\n')[0]
 
 
+attrs_mapping = {'cell_methods': {'YS': 'years'}, }
+
+
+def format_kwargs(attrs, params):
+    """Update entries in place with argument values.
+
+    Parameters
+    ----------
+    attrs : dict
+      Attributes to be assigned to function output. The values of the attributes in braces will be replaced the
+      the corresponding args values.
+    params : dict
+      A BoundArguments.arguments dictionary storing a function's arguments.
+    """
+    for key, val in attrs.items():
+        m = re.findall("{(\w+)}", val)
+        for name in m:
+            if name in params:
+                v = params.get(name)
+                if v is None:
+                    raise ValueError("{0} is not a valid function argument.".format(name))
+                repl = attrs_mapping[key][v]
+                attrs[key] = re.sub("{%s}" % name, repl, val)
+
+
 def with_attrs(**func_attrs):
     r"""Set attributes in the decorated function at definition time,
     and assign these attributes to the function output at the
@@ -54,6 +87,9 @@ def with_attrs(**func_attrs):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             out = fn(*args, **kwargs)
+            # Bind the arguments
+            ba = signature(fn).bind(*args, **kwargs)
+            format_kwargs(func_attrs, ba.arguments)
             out.attrs.update(func_attrs)
             return out
 
@@ -286,9 +322,8 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 #
 #     return group.apply(func)
 
-
-@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
+@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 def cooling_degree_days(tas, thresh=18, freq='YS'):
     r"""Cooling degree days above threshold."""
 
@@ -828,6 +863,8 @@ def tx_mean(tasmax, freq='YS'):
 
 
 @valid_daily_max_temperature
+@with_attrs(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+            cell_methods='time: minimum within {freq}')
 def tx_min(tasmax, freq='YS'):
     """Lowest max temperature
 
