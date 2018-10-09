@@ -15,11 +15,11 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 ftomm = np.nan
+
 
 # TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
 
@@ -873,91 +873,7 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-def wet_days_bugged(pr, pr_min=1., freq='YS', skipna=False):
-    r"""wet days
-
-    compute the number of days with precipitation over pr_min and accumulates over periods.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-      Daily precipitation [mm]
-    pr_min : float
-      precipitation value over which a day is considered wet
-    freq : str, optional
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-    skipna : str, optional
-      if True, NaN values are ignored
-      if False NaN values are expanded
-      This is used for the computation of the sum of wet days. See
-      http://xarray.pydata.org/en/stable/generated/xarray.DataArray.sum.html for details
-
-
-    Returns
-    -------
-    xarray.DataArray
-      The number of wet days for each period [day]
-
-    Notes
-    -----
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the number days
-    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-
-    >>> pr = xr.open_dataset('pr.day.nc')
-    >>> wd = wet_days(pr, pr_min = 5., freq="QS-DEC")
-
-    """
-
-    # group the data according to the frequency
-    groups = daily_downsampler(pr, freq=freq).groups
-
-    # split data according to frequency
-    for n_t, tag in enumerate(groups):
-
-        # get data from each group
-        g = groups[tag]
-
-        #
-        # *** BUG ***
-        #
-        # this does not work if first dim is not time ....
-        prg = pr[g]
-
-        # find wet days, keeping nans and sum
-        wd = xr.where(prg >= pr_min, 1, 0)
-        wd = xr.where(np.isnan(prg), np.nan, wd)
-        wd_sum = wd.sum(dim='time', skipna=skipna)
-
-        # force nans when all values are nans because
-        # sum returns 0 in that case if skipna == True
-        wd_sum = xr.where(wd.count(dim='time') == 0, np.nan, wd_sum)
-        wd = wd_sum
-
-        # keep tag and start time of group and add time dim
-        wd.coords['tags'] = tag
-        wd.coords['time'] = prg.time.values[0]
-        wd = wd.expand_dims('time')
-
-        # accumulate the results in output DataArray
-        if n_t == 0:
-            output = wd
-        else:
-            output = xr.concat((output, wd), dim='time', coords=['tags'])
-
-    # set units, and name attributes
-    output = output.rename('wet_days')
-    output['units'] = 'days'
-    output['name'] = 'wet_days'
-    output['long_name'] = 'number of wet days'
-    output['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
-
-    return output
-
-@with_attrs(standard_name = 'wet_days', units = 'days', long_name = 'number of wet days')
+@with_attrs(standard_name='wet_days', units='days', long_name='number of wet days')
 def wet_days(pr, pr_min=1., freq='YS', skipna=False):
     r"""wet days
 
@@ -999,7 +915,7 @@ def wet_days(pr, pr_min=1., freq='YS', skipna=False):
 
     wd = (pr >= pr_min) * 1
     wd = xr.where(np.isnan(pr), np.nan, wd)
-    wd_sum = wd.resample(time=freq).sum(dim='time', skipna = skipna)
+    wd_sum = wd.resample(time=freq).sum(dim='time', skipna=skipna)
 
     # sum returns 0 if all nans and skipna is True
     mask_all_nan = (wd.resample(time=freq).count(dim='time') == 0)
@@ -1011,6 +927,7 @@ def wet_days(pr, pr_min=1., freq='YS', skipna=False):
     return wd_sum
 
 
+@with_attrs(standard_name='daily_intensity', long_name='daily intensity over wet days')
 def daily_intensity(pr, pr_min=1., freq='YS', skipna=False):
     r"""daily intensity
 
@@ -1051,42 +968,17 @@ def daily_intensity(pr, pr_min=1., freq='YS', skipna=False):
 
     """
 
-    # group the data according to the frequency
-    groups = daily_downsampler(pr, freq=freq).groups
+    # put pr=0 for non wet-days
+    pr_wd = xr.where(pr >= pr_min, pr, 0)
 
-    # split data according to frequency
-    for n_t, tag in enumerate(groups):
-        # get data from each group
-        g = groups[tag]
-        prg = pr[g]
-
-        # put precip null on non-wet days
-        prg_wd = xr.where(prg < pr_min, 0, prg)
-
-        # sum pr over wetdays
-        prg_wd_sum = prg_wd.sum(dim='time', skipna=skipna)
-
-        # find number of wet days
-        wd = wet_days(prg, pr_min=pr_min, freq=freq, skipna=skipna)
-        wd = wd.isel(time=0)
-
-        # compute average over wet days
-        di = prg_wd_sum / wd
-
-        # keep tag and start time of group and add time dim
-        di.coords['tags'] = tag
-        di.coords['time'] = prg.time.values[0]
-
-        # accumulate the results in output DataArray
-        if n_t == 0:
-            output = di
-        else:
-            output = xr.concat((output, di), dim='time', coords=['tags'])
+    # sum over wanted period
+    s = pr_wd.resample(time=freq).sum(dim='time', skipna=skipna)
+    # get number of wet_days over period
+    wd = wet_days(pr, pr_min=pr_min, freq=freq, skipna=skipna)
+    output = s / wd
 
     # set units, and name attributes
     output = output.rename('daily_intensity')
-    output['name'] = 'daily_intensity'
-    output['long_name'] = 'daily intensity over wet days'
-    output['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
+    output.attrs['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
 
     return output
