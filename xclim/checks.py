@@ -139,3 +139,14 @@ def check_is_dataarray(comp):
         return comp(data_array, *args, **kwds)
 
     return func
+
+
+def convert_temp(da, required_units='K'):
+    if da.units == required_units:
+        return da
+    elif da.units == 'C' and required_units == 'K':
+        return da + 273.15
+    elif da.units == 'K' and required_units == 'C':
+        return da - 273.15
+    else:
+        raise AttributeError(da.units)

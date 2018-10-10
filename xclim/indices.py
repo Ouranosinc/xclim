@@ -17,7 +17,6 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-
 if six.PY2:
     from funcsigs import signature
 elif six.PY3:
@@ -27,6 +26,7 @@ elif six.PY3:
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
 ftomm = np.nan
+
 
 # TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
 
@@ -816,7 +816,7 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
         .sum(dim='time')
 
 
-@valid_daily_max_temperature
+# @valid_daily_max_temperature
 def tx_max(tasmax, freq='YS'):
     r"""Highest max temperature
 
