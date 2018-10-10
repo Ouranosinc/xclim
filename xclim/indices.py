@@ -671,11 +671,12 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
       daily precipitation values.
     freq : str, optional
-      Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
-
+      Resampling frequency : Default 'YS' (yearly)
+    skipna : boolean, optional
+      NaN value treatment flag, default=False : where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
 
     Returns
     -------
@@ -688,25 +689,15 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
     at an annual frequency.
 
-    >>> pr = xr.open_dataset('pr.day.nc')
-    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
+    >>> da = xr.open_dataset('pr.day.nc')
+    >>> rx1day = max_1day_precipitation_amount(da, freq="YS")
 
     """
 
     # resample the values
-    # arr = da.resample(time=freq,keep_attrs=True)
-    # Get max value for each period
-    # output1 = arr.max(dim='time')
-
-    # use custom resample function for now
-    grouper = dds(da, freq=freq)
-    output = grouper.max(dim='time', keep_attrs=True, skipna=skipna)
-
-    # add time coords to output and change dimension tags to time
-    time1 = dds(da.time, freq=freq).first()
-    output.coords['time'] = ('tags', time1.values)
-    output = output.swap_dims({'tags': 'time'})
-    output = output.sortby('time')
+    arr = da.resample(time=freq,keep_attrs=True,skipna=skipna)
+    #Get max value for each period
+    output = arr.max(dim='time')
 
     return output
 
