@@ -149,6 +149,20 @@ class Test_prcptotal():
         assert (np.allclose(target, out_std.values))
 
 
+class Test_tx_min():
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_attrs(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        txm = xci.tx_min(a, freq='YS')
+        assert txm.cell_methods == 'time: minimum within years'
+
+
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
 class TestTG():
