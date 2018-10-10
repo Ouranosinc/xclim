@@ -730,9 +730,7 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     """
 
     # resample the values
-    arr = da.resample(time=freq,keep_attrs=True,skipna=skipna)
-    #Get max value for each period
-    output = arr.max(dim='time')
+    output = da.resample(time=freq,keep_attrs=True).max(dim='time',skipna=skipna)
 
     return output
 
