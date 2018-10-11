@@ -19,7 +19,6 @@ def tas_series():
 
 
 class Test_TxMax():
-
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
         tx_obj = TxMax()
