@@ -28,10 +28,20 @@ ftomm = np.nan
 
 
 # TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
-
 # TODO: Move utility functions to another file.
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
+
+
+def apply_vector_func(x, window=0):
+    xr.apply_ufunc(rl.windowed_run_count,
+                   x,
+                   input_core_dims=[['time'], ],
+                   vectorize=True,
+                   dask='parallelized',
+                   output_dtypes=[np.int, ],
+                   keep_attrs=True,
+                   kwargs={'window': window})
 
 
 def first_paragraph(txt):
@@ -164,20 +174,11 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     --------
     percentile_doy
     """
-
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': 6})
+    window = 6
 
     return tasmin.pipe(lambda x: x - tn10) \
         .resample(time=freq) \
-        .apply(func)
+        .apply(apply_vector_func(window=window))
 
 
 @valid_daily_mean_temperature
@@ -189,17 +190,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     over = tas < K2C + thresh
     group = over.resample(time=freq)
 
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': window})
-
-    return group.apply(func)
+    return group.apply(apply_vector_func(window=window))
 
 
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
@@ -480,17 +471,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': window})
-
-    return group.apply(func)
+    return group.apply(apply_vector_func(window=window))
 
 
 @valid_daily_mean_temperature
