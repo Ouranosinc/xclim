@@ -35,6 +35,38 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
+class Test_max_n_day_precipitation_amount():
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'precipitation_flux',
+                                   'cell_methods': 'time: sum (interval: 1 day)',
+                                   'units': 'mm'})
+
+    # test 2 day max precip
+    def test_single_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, 2)
+        assert rxnday == 40
+        assert rxnday.time.dt.year == 2000
+
+    # test whether sum over entire length is resolved
+    def test_sumlength_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, len(a))
+        assert rxnday == a.sum('time')
+        assert rxnday.time.dt.year == 2000
+
+    # test whether non-unique maxes are resolved
+    def test_multi_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 15, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, 2)
+        assert rxnday == 40
+        assert len(rxnday) == 1
+        assert rxnday.time.dt.year == 2000
+
+
 class Test_max_1day_precipitation_amount():
 
     def time_series(self, values):

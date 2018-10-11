@@ -3,17 +3,16 @@
 """
 Main module
 """
+import re
 from functools import wraps
 
-import six
 import numpy as np
+import six
 import xarray as xr
-import re
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
-from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -697,12 +696,60 @@ def tn_min(tasmin, freq='YS'):
     return tasmin.resample(time=freq).min(dim='time')
 
 
+# add 'n_window_size' dynamic attribute e.g. n_window_size="%s%s" % (str(window), ' day window')
+@with_attrs(standard_name='maximum_n_day_total_precipitation',
+            long_name='maximum n day total precipitation')
+def max_n_day_precipitation_amount(da, window, freq='YS'):
+    """Highest precipitation amount cumulated over a n-day moving window for a given period (frequency).
+
+    Calculate the N-day rolling sum of the original daily total precipitation series
+     and determine the maximum value for each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      daily precipitation values.
+    window : int
+      window size in days
+    freq : str, optional
+      Resampling frequency : Default 'YS' (yearly)
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated N-day precipitation value at the given time frequency.
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
+    at an annual frequency.
+
+    >>> da = xr.open_dataset('pr.day.nc')
+    >>> window = 5
+    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
+
+    """
+
+    # rolling sum of the values
+    arr = da.rolling(time=window, center=False).sum(dim='time')
+    output = arr.resample(time=freq).max(dim='time')
+    # 'keep_attrs=True' does not seem to work with rolling? copy original
+    output.attrs.update(da.attrs)
+
+    # rename variable name to "%s%s%s" % ('rx',str(window),'day')
+
+    return output
+
+
 # @check_daily_monotonic # TODO create daily timestep check
 # @convert_precip_units   # TODO create units checker / converter
+@with_attrs(standard_name='maximum_1_day_total_precipitation',
+            long_name='maximum 1 day total precipitation')
 def max_1day_precipitation_amount(da, freq='YS', skipna=False):
-    """Highest 1-day precipitation amount for a period (frequency).
+    """Highest 1-day precipitation amount for the provided frequency.
 
-    Resample the original daily total precipitaiton temperature series by taking the max over each period.
+    Resample the original daily total precipitaiton series by taking the max over each period.
 
     Parameters
     ----------
@@ -711,7 +758,8 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     freq : str, optional
       Resampling frequency : Default 'YS' (yearly)
     skipna : boolean, optional
-      NaN value treatment flag, default=False : where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
+      NaN value treatment flag, default=False :
+      where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
 
     Returns
     -------
@@ -730,7 +778,10 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     """
 
     # resample the values
-    output = da.resample(time=freq,keep_attrs=True).max(dim='time',skipna=skipna)
+    arr = da.resample(time=freq)
+    output = arr.max(dim='time', skipna=skipna, keep_attrs=True)
+
+    # rename variable to 'rx1day' in indicator Class
 
     return output
 
