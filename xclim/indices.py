@@ -3,17 +3,17 @@
 """
 Main module
 """
+import re
 from functools import wraps
 
-import six
 import numpy as np
+import six
 import xarray as xr
-import re
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
-from .utils import daily_downsampler as dds
+# from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -711,7 +711,8 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     freq : str, optional
       Resampling frequency : Default 'YS' (yearly)
     skipna : boolean, optional
-      NaN value treatment flag, default=False : where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
+      NaN value treatment flag, default=False :
+      where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
 
     Returns
     -------
@@ -730,7 +731,7 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     """
 
     # resample the values
-    output = da.resample(time=freq,keep_attrs=True).max(dim='time',skipna=skipna)
+    output = da.resample(time=freq, keep_attrs=True).max(dim='time', skipna=skipna)
 
     return output
 
