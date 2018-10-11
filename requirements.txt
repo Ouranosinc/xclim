@@ -6,3 +6,4 @@ bottleneck
 netCDF4
 pandas
 funcsigs
+pint

@@ -62,70 +62,16 @@ def check_valid_discharge(var):
     check_valid(var, 'units', 'm3 s-1')
 
 
-def valid_daily_min_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
-
-    @wraps(comp)
-    def func(tasmin, *args, **kwds):
-        check_valid_temperature(tasmin, units)
-        check_valid(tasmin, 'cell_methods', 'time: minimum within days')
-        return comp(tasmin, **kwds)
-
-    return func
-
-
-def valid_daily_mean_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
-
-    @wraps(comp)
-    def func(tas, *args, **kwds):
-        check_valid_temperature(tas, units)
-        check_valid(tas, 'cell_methods', 'time: mean within days')
-        return comp(tas, *args, **kwds)
-
-    return func
-
-
-def valid_daily_max_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
-
-    @wraps(comp)
-    def func(tasmax, *args, **kwds):
-        check_valid_temperature(tasmax, units)
-        check_valid(tasmax, 'cell_methods', 'time: maximum within days')
-        return comp(tasmax, *args, **kwds)
-
-    return func
-
-
-def valid_daily_max_min_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on valid min and max temperature datasets."""
-
-    @wraps(comp)
-    def func(tasmax, tasmin, **kwds):
-        valid_daily_max_temperature(tasmax, units)
-        valid_daily_min_temperature(tasmin, units)
-
-        return comp(tasmin, tasmax, **kwds)
-
-    return func
-
-
-def valid_daily_mean_discharge(comp):
-    """Decorator to check that a computation runs on valid discharge data."""
-
-    @wraps(comp)
-    def func(q, **kwds):
-        check_valid_discharge(q)
-        return comp(q, **kwds)
-
-    return func
-
-
 def valid_missing_data_threshold(comp, threshold=0):
     """Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
     pass
+
+
+def missing_any(da, freq):
+    """Return a boolean DataArray indicating whether any group contains missing data."""
+    # TODO: Handle cases where the series does not fill an entire month or year.
+    return da.isnull().resample(time=freq).any()
 
 
 def check_is_dataarray(comp):
@@ -141,12 +87,6 @@ def check_is_dataarray(comp):
     return func
 
 
-def convert_temp(da, required_units='K'):
-    if da.units == required_units:
-        return da
-    elif da.units == 'C' and required_units == 'K':
-        return da + 273.15
-    elif da.units == 'K' and required_units == 'C':
-        return da - 273.15
-    else:
-        raise AttributeError(da.units)
+# TODO: Define a unit conversion system precipitation [mm h-1, Kg m-2 s-1] metrics.
+def convert_pr(da, required_units='mm'):
+    raise NotImplementedError

@@ -2,13 +2,16 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from xclim.indices import tg_mean
+from xclim.temperature import TGMean
+from xclim import checks
+from common import tas_series
 
 
 def test_assert_daily():
-    n = 365  # one day short of a full year
+    tg_mean = TGMean()
+    n = 365.  # one day short of a full year
     times = pd.date_range('2000-01-01', freq='1D', periods=n)
-    da = xr.DataArray(np.arange(n), [('time', times)])
+    da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'degK'})
     tg_mean(da)
 
     # Bad frequency
@@ -30,3 +33,14 @@ def test_assert_daily():
         times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))
         da = xr.DataArray(np.arange(2*n), [('time', times)])
         tg_mean(da)
+
+
+def test_missing_any(tas_series):
+    a = np.arange(360.)
+    a[5:10] = np.nan
+
+    ts = tas_series(a)
+
+    out = checks.missing_any(ts, freq='MS')
+    assert out[0]
+    assert not out[1]
