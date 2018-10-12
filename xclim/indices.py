@@ -469,7 +469,7 @@ def growing_degree_days(tas, thresh=277.16, freq='YS', skipna=False):
     gdd = (gd * (tas - thresh)).resample(time=freq).sum(dim='time', skipna=skipna)
     gdd = gdd.where(~mask_all_nan, np.nan)
 
-    gdd.attra['standard_name'] = 'growing_degree_days'
+    gdd.attrs['standard_name'] = 'growing_degree_days'
     gdd.attrs['long_name'] = 'growing degree days'
     gdd.attrs['units'] = 'K'
     gdd.attrs['details'] = 'degree days defined as day with tas > {:6.2f} K'.format(thresh)

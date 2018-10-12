@@ -145,7 +145,7 @@ class Test_frost_days():
         x2 = tasmin.values[:, 1, 0]
 
         fd1 = (x1[x1 < thresh]).size
-        fd2 = (x2[x2 > thresh]).size
+        fd2 = (x2[x2 < thresh]).size
 
         assert (np.allclose(fd1, fd.values[0, 0, 0]))
         assert (np.allclose(fd1, fds.values[0, 0, 0]))
@@ -252,3 +252,6 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
+
+# x = Test_frost_days()
+# print('done')
