@@ -3,21 +3,21 @@
 """
 Main module
 """
+import re
 from functools import wraps
 
 import six
 import numpy as np
 import xarray as xr
 import re
-import operator
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
 from .utils import daily_downsampler as dds
-from .utils import get_daily_events
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
+
 
 if six.PY2:
     from funcsigs import signature
@@ -379,113 +379,38 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     return i.resample(time=freq).min(dim='time')
 
 
-def frost_days(tasmin, thresh=273.16, freq='YS', skipna=False):
-    r"""Number of frost days
+@valid_daily_min_temperature
+def frost_days(tasmin, freq='YS'):
+    r"""Frost days index
 
-        Find days with minimum daily temperature under a threshold (typically zero deg. Celsius)
-        and sum over periods
+    Number of days where daily minimum temperatures are below 0℃.
 
-        Parameters
-        ----------
-        tasmin : xarray.DataArray
-          daily minimum temperature [K]
-        thresh : float, optional
-          daily mimimum temperature defining a frost day
-        freq : str, optional
-          Resampling frequency as defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-        skipna: Boolean, optional
-          True: nans are ignored
-          False: any nan values gives a nan result
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    freq : str, optional
+      Resampling frequency
 
-        Returns
-        -------
-        xarray.DataArray
-          Number of frost days over period
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `tasmin_day.nc` the total
-    number of frost days at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-    >>> tasmin_day = xr.open_dataset('tasmin_day.nc').tasmin
-    >>> fd = frost_days(tasmin_day, thresh=273.16, freq="QS-DEC")
-
+    Returns
+    -------
+    xarray.DataArray
+      Frost days index.
     """
-    # get daily events of frost days
-    fd = get_daily_events(tasmin, thresh, operator.lt)
-
-    # keep mask of when all events are nan
-    mask_all_nan = (fd.resample(time=freq).count(dim='time') == 0)
-
-    # resample and use mask because sum returns 0 if all nans and skipna is True
-    fd = fd.resample(time=freq).sum(dim='time', skipna=skipna)
-    fd = fd.where(~mask_all_nan, np.nan)
-
-    fd.attrs['long_name'] = 'number of frost days'
-    fd.attrs['units'] = 'days'
-    fd.attrs['details'] = 'frost days defined as day with tasmin < :6.2f} K'.format(thresh)
-    return fd
+    f = (tasmin < K2C) * 1
+    return f.resample(time=freq).sum(dim='time')
 
 
-def growing_degree_days(tas, thresh=277.16, freq='YS', skipna=False):
-    r"""Sum of growing degree days
+@valid_daily_mean_temperature
+def growing_degree_days(tas, thresh=4, freq='YS'):
+    r"""Growing degree days over 4℃.
 
-        Sum mean daily temperature over periods for days with mean daily temperature over
-        a temperature threshold (typically 4 deg C)
-
-        Parameters
-        ----------
-        tas : xarray.DataArray
-          daily mean temperature [K]
-        thresh : float, optional
-          daily mean temperature defining a growing day [K]
-        freq : str, optional
-          Resampling frequency as defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-        skipna: Boolean, optional
-          True: nans are ignored
-          False: any nan values gives a nan result
-
-        Returns
-        -------
-        xarray.DataArray
-          Number of growing days over period
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `tas_day.nc` the total
-    number of growing days at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-    >>> tas_day = xr.open_dataset('tas_day.nc').tas
-    >>> gdd = frost_days(tas_day, thresh=277.16, freq="QS-DEC")
-
+    The sum of degree-days over 4℃.
     """
-    # get growing days
-    gd = get_daily_events(tas, thresh, operator.gt)
-
-    # keep mask of when all events are nan
-    mask_all_nan = (gd.resample(time=freq).count(dim='time') == 0)
-
-    # resample and use mask because sum returns 0 if all nans and skipna is True
-    gdd = (gd * (tas - thresh)).resample(time=freq).sum(dim='time', skipna=skipna)
-    gdd = gdd.where(~mask_all_nan, np.nan)
-
-    gdd.attrs['standard_name'] = 'growing_degree_days'
-    gdd.attrs['long_name'] = 'growing degree days'
-    gdd.attrs['units'] = 'K'
-    gdd.attrs['details'] = 'degree days defined as day with tas > {:6.2f} K'.format(thresh)
-    return gdd
-
-
-# @valid_daily_mean_temperature
-# def growing_degree_days(tas, thresh=4, freq='YS'):
-#     r"""Growing degree days over 4℃.
-#
-#     The sum of degree-days over 4℃.
-#     """
-#     return tas.pipe(lambda x: x - thresh - K2C) \
-#         .clip(min=0) \
-#         .resample(time=freq) \
-#         .sum(dim='time')
+    return tas.pipe(lambda x: x - thresh - K2C) \
+        .clip(min=0) \
+        .resample(time=freq) \
+        .sum(dim='time')
 
 
 @valid_daily_mean_temperature
@@ -821,101 +746,6 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     output = output.sortby('time')
 
     return output
-
-
-def heavy_prcp_days(pr, pr_min=20, freq='YS', skipna=False):
-    r"""Number of days with heavy precipitation
-
-        Find days with precipitation over a given value and sum them over each period
-
-        Resample the original daily mean precipitation flux and accumulate over each period
-
-        Parameters
-        ----------
-        pr : xarray.DataArray
-          Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-        pr_min : float, optional
-          Treshold precipitation to define heavy precipitation
-        freq : str, optional
-          Resampling frequency as defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-        skipna: Boolean, optional
-          XXX
-
-        Returns
-        -------
-        xarray.DataArray
-          Number of days with heavy precipitation
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr_day.nc` the total
-    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-    >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> hpd = heayv_prcp_days(pr_day, pr_min=20., freq="QS-DEC")
-
-    """
-    # get daily events of heavy precipitation
-    hpd = get_daily_events(pr, pr_min, operator.ge)
-
-    # keep mask of when all events are nan
-    mask_all_nan = (hpd.resample(time=freq).count(dim='time') == 0)
-
-    # resample and use mask because sum returns 0 if all nans and skipna is True
-    hpd = hpd.resample(time=freq).sum(dim='time', skipna=skipna)
-    hpd = hpd.where(~mask_all_nan, np.nan)
-
-    hpd.attrs['long_name'] = 'number of heavy precipitation days'
-    hpd.attrs['units'] = 'days'
-    hpd.attrs['details'] = 'heavy precipitation days defined as day with precipitation > {:6.2f}'.format(pr_min)
-    return hpd
-
-
-def frost_days(tasmin, thresh=273.16, freq='YS', skipna=False):
-    r"""Number of frost days
-
-        Find days with minimmum daily temperature under zero deg Celsius and sum over periods
-
-        Parameters
-        ----------
-        tasmin : xarray.DataArray
-          daily minimum temperature [K]
-        thresh : float, optional
-          daily mimimum temperature defining a frost day
-        freq : str, optional
-          Resampling frequency as defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-        skipna: Boolean, optional
-          True: nans are ignored
-          False: any nan values gives a nan result
-
-        Returns
-        -------
-        xarray.DataArray
-          Number of frost days over period
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `tasmin_day.nc` the total
-    number of frost days at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-    >>> tasmin_day = xr.open_dataset('tasmin_day.nc').pr
-    >>> fd = frost_days(tasmin_day, thresh=273.16, freq="QS-DEC")
-
-    """
-    # get daily events of frost days
-    fd = get_daily_events(tasmin, thresh, operator.lt)
-
-    # keep mask of when all events are nan
-    mask_all_nan = (fd.resample(time=freq).count(dim='time') == 0)
-
-    # resample and use mask because sum returns 0 if all nans and skipna is True
-    fd = fd.resample(time=freq).sum(dim='time', skipna=skipna)
-    fd = fd.where(~mask_all_nan, np.nan)
-
-    fd.attrs['long_name'] = 'number of frost days'
-    fd.attrs['units'] = 'days'
-    fd.attrs['details'] = 'frost days defined as day with tasmin < {:6.2f} K'.format(thresh)
-    return fd
 
 
 # @check_is_dataarray
