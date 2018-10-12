@@ -5,6 +5,7 @@ import xarray as xr
 from xclim.indices import tg_mean
 from xclim import checks
 
+
 def test_assert_daily():
     n = 365  # one day short of a full year
     times = pd.date_range('2000-01-01', freq='1D', periods=n)
@@ -33,24 +34,17 @@ def test_assert_daily():
 
 
 def test_missing_any_fill():
-    n = 36  # one day short of a full year
-    times = pd.date_range('2000-01-01', freq='1D', periods=n)
+    n = 66
+    times = pd.date_range('2001-12-30', freq='1D', periods=n)
     da = xr.DataArray(np.arange(n), [('time', times)])
-
     miss = checks.missing_any_fill(da, 'MS')
-    assert not miss[0]
-    assert miss[1]
+    np.testing.assert_array_equal(miss, [True, False, False, True])
 
-    n = 378  # one day short of a full year
-    times = pd.date_range('2000-01-01', freq='1D', periods=n)
+    n = 378
+    times = pd.date_range('2001-12-31', freq='1D', periods=n)
     da = xr.DataArray(np.arange(n), [('time', times)])
-
     miss = checks.missing_any_fill(da, 'YS')
-    assert not miss[0]
-    assert miss[1]
+    np.testing.assert_array_equal(miss, [True, False, True])
 
-    miss = checks.missing_any_fill(da, 'QS-DEC')
-    assert miss[0]
-    # assert not miss[1] This should be True. There is probably a bug in xarray or pandas.
-
-
+    miss = checks.missing_any_fill(da, 'Q-NOV')
+    np.testing.assert_array_equal(miss, [True, False, False, False, True])
