@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
 
-"""Main module.
 """
+Main module
+"""
+import re
 from functools import wraps
 
 import numpy as np
+import six
 import xarray as xr
 
 from xclim.utils import daily_downsampler
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
     valid_daily_max_temperature, valid_daily_mean_discharge
-from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
+
+if six.PY2:
+    from funcsigs import signature
+elif six.PY3:
+    from inspect import signature
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -38,6 +45,31 @@ def first_paragraph(txt):
     return txt.split('\n\n')[0]
 
 
+attrs_mapping = {'cell_methods': {'YS': 'years'}, }
+
+
+def format_kwargs(attrs, params):
+    """Update entries in place with argument values.
+
+    Parameters
+    ----------
+    attrs : dict
+      Attributes to be assigned to function output. The values of the attributes in braces will be replaced the
+      the corresponding args values.
+    params : dict
+      A BoundArguments.arguments dictionary storing a function's arguments.
+    """
+    for key, val in attrs.items():
+        m = re.findall("{(\w+)}", val)
+        for name in m:
+            if name in params:
+                v = params.get(name)
+                if v is None:
+                    raise ValueError("{0} is not a valid function argument.".format(name))
+                repl = attrs_mapping[key][v]
+                attrs[key] = re.sub("{%s}" % name, repl, val)
+
+
 def with_attrs(**func_attrs):
     r"""Set attributes in the decorated function at definition time,
     and assign these attributes to the function output at the
@@ -55,6 +87,9 @@ def with_attrs(**func_attrs):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             out = fn(*args, **kwargs)
+            # Bind the arguments
+            ba = signature(fn).bind(*args, **kwargs)
+            format_kwargs(func_attrs, ba.arguments)
             out.attrs.update(func_attrs)
             return out
 
@@ -287,9 +322,8 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 #
 #     return group.apply(func)
 
-
-@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 @valid_daily_mean_temperature
+@with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
 def cooling_degree_days(tas, thresh=18, freq='YS'):
     r"""Cooling degree days above threshold."""
 
@@ -663,20 +697,70 @@ def tn_min(tasmin, freq='YS'):
     return tasmin.resample(time=freq).min(dim='time')
 
 
-# @check_daily_monotonic # TODO create daily timestep check
-# @convert_precip_units   # TODO create units checker / converter
-def max_1day_precipitation_amount(da, freq='YS', skipna=False):
-    """Highest 1-day precipitation amount for a period (frequency).
+# add 'n_window_size' dynamic attribute e.g. n_window_size="%s%s" % (str(window), ' day window')
+@with_attrs(standard_name='maximum_n_day_total_precipitation',
+            long_name='maximum n day total precipitation')
+def max_n_day_precipitation_amount(da, window, freq='YS'):
+    """Highest precipitation amount cumulated over a n-day moving window for a given period (frequency).
 
-    Resample the original daily total precipitaiton temperature series by taking the max over each period.
+    Calculate the N-day rolling sum of the original daily total precipitation series
+     and determine the maximum value for each period.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
+      daily precipitation values.
+    window : int
+      window size in days
+    freq : str, optional
+      Resampling frequency : Default 'YS' (yearly)
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated N-day precipitation value at the given time frequency.
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
+    at an annual frequency.
+
+    >>> da = xr.open_dataset('pr.day.nc')
+    >>> window = 5
+    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
+
+    """
+
+    # rolling sum of the values
+    arr = da.rolling(time=window, center=False).sum(dim='time')
+    output = arr.resample(time=freq).max(dim='time')
+    # 'keep_attrs=True' does not seem to work with rolling? copy original
+    output.attrs.update(da.attrs)
+
+    # rename variable name to "%s%s%s" % ('rx',str(window),'day')
+
+    return output
+
+
+# @check_daily_monotonic # TODO create daily timestep check
+# @convert_precip_units   # TODO create units checker / converter
+@with_attrs(standard_name='maximum_1_day_total_precipitation',
+            long_name='maximum 1 day total precipitation')
+def max_1day_precipitation_amount(da, freq='YS', skipna=False):
+    """Highest 1-day precipitation amount for the provided frequency.
+
+    Resample the original daily total precipitaiton series by taking the max over each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
       daily precipitation values.
     freq : str, optional
-      Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
-
+      Resampling frequency : Default 'YS' (yearly)
+    skipna : boolean, optional
+      NaN value treatment flag, default=False :
+      where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
 
     Returns
     -------
@@ -689,25 +773,16 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
     at an annual frequency.
 
-    >>> pr = xr.open_dataset('pr.day.nc')
-    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
+    >>> da = xr.open_dataset('pr.day.nc')
+    >>> rx1day = max_1day_precipitation_amount(da, freq="YS")
 
     """
 
     # resample the values
-    # arr = da.resample(time=freq,keep_attrs=True)
-    # Get max value for each period
-    # output1 = arr.max(dim='time')
+    arr = da.resample(time=freq)
+    output = arr.max(dim='time', skipna=skipna, keep_attrs=True)
 
-    # use custom resample function for now
-    grouper = dds(da, freq=freq)
-    output = grouper.max(dim='time', keep_attrs=True, skipna=skipna)
-
-    # add time coords to output and change dimension tags to time
-    time1 = dds(da.time, freq=freq).first()
-    output.coords['time'] = ('tags', time1.values)
-    output = output.swap_dims({'tags': 'time'})
-    output = output.sortby('time')
+    # rename variable to 'rx1day' in indicator Class
 
     return output
 
@@ -733,15 +808,14 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     xarray.DataArray
       The total daily precipitation at the given time frequency in [mm].
 
-    # FIXME: Update the prcp_tot ReST math formula
-    # Note
-    # ----
-    # Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    # day `a` and finishing on day `b`
-    #
-    # .. math::
-    #
-    #    TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    Note
+    ----
+    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       out_p = \sum_{i=a}^{b} pr_i
 
 
     Examples
@@ -793,7 +867,7 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
         .sum(dim='time')
 
 
-@valid_daily_max_temperature
+# @valid_daily_max_temperature
 def tx_max(tasmax, freq='YS'):
     r"""Highest max temperature
 
@@ -829,6 +903,8 @@ def tx_mean(tasmax, freq='YS'):
 
 
 @valid_daily_max_temperature
+@with_attrs(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+            cell_methods='time: minimum within {freq}')
 def tx_min(tasmax, freq='YS'):
     """Lowest max temperature
 

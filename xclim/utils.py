@@ -67,3 +67,57 @@ def daily_downsampler(da, freq='YS'):
 
     # return groupby according to tags
     return buffer.groupby('tags')
+
+
+class Indicator(object):
+    identifier = ''
+    units = ''
+    required_units = ''
+    long_name = ''
+    standard_name = ''
+    description = ''
+    keywords = ''
+
+    def compute(self, *args, **kwds):
+        """Index computation method. To be subclassed"""
+        raise NotImplementedError
+
+    def convert_units(self, *args):
+        """Return DataArray with correct units, defined by `self.required_units`."""
+        raise NotImplementedError
+
+    def cfprobe(self, *args):
+        """Check input data compliance to expectations.
+        Warn of potential issues."""
+        raise NotImplementedError
+
+    def validate(self, *args):
+        """Validate input data requirements.
+        Raise error if conditions are not met."""
+        raise NotImplementedError
+
+    def decorate(self, da):
+        """Modify output's attributes in place."""
+        da.attrs.update(self.attrs)
+
+    def missing(self, *args, **kwds):
+        """Return boolean DataArray . To be subclassed"""
+        raise NotImplementedError
+
+    def __init__(self):
+        # Extract DataArray arguments from compute signature.
+        self.attrs = {'long_name': self.long_name,
+                      'units': self.units,
+                      'standard_name': self.standard_name
+                      }
+
+    def __call__(self, *args, **kwds):
+        self.validate(*args)
+        self.cfprobe(*args)
+
+        cargs = self.convert_units(*args)
+
+        out = self.compute(*cargs, **kwds)
+        self.decorate(out)
+
+        return out.where(self.missing(*cargs, freq=kwds['freq']))  # Won't work if keyword is passed as positional arg.
