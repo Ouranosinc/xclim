@@ -4,7 +4,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-import xarray as xr
+
 
 # Dev notes
 # ---------
@@ -151,6 +151,7 @@ def convert_temp(da, required_units='K'):
     else:
         raise AttributeError(da.units)
 
+
 def missing_any_fill(da, freq):
     """Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
@@ -168,14 +169,5 @@ def missing_any_fill(da, freq):
     """
     c = da.notnull().resample(time=freq).sum(dim='time')
     p = c.indexes['time'].to_period()
-    if 'M' in freq:
-        m = c.values != p.days_in_month
-    elif 'Y' in freq:
-        m = c.values != p.day_of_year
-    else:
-        raise NotImplementedError
-
-    return xr.DataArray(m, coords=c.coords, dims='time')
-
-
-
+    n = (p.end_time - p.start_time).days + 1
+    return c != n

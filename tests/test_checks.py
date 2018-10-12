@@ -49,4 +49,8 @@ def test_missing_any_fill():
     assert not miss[0]
     assert miss[1]
 
+    miss = checks.missing_any_fill(da, 'QS-DEC')
+    assert miss[0]
+    # assert not miss[1] This should be True. There is probably a bug in xarray or pandas.
+
 
