@@ -18,7 +18,6 @@ from .utils import daily_downsampler as dds
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-
 if six.PY2:
     from funcsigs import signature
 elif six.PY3:
