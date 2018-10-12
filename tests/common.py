@@ -10,6 +10,6 @@ def tas_series():
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'tasmax',
                                    'cell_methods': 'time: maximum within days',
-                                   'units': 'degK'})
+                                   'units': 'K'})
 
     return _tas_series

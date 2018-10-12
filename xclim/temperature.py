@@ -8,11 +8,11 @@ from .utils import UnivariateIndicator
 
 class TGMean(UnivariateIndicator):
     identifier = 'tg_mean'
-    units = 'degK'
-    required_units = 'degK'
+    units = 'K'
+    required_units = 'K'
     long_name = "{freq} mean temperature"
     standard_name = "{freq} mean temperature"
-    description = "{freq} of faily mean temperature."
+    description = "{freq} of daily mean temperature."
     keywords = ''
 
     def compute(self, da, freq='YS'):
@@ -28,8 +28,8 @@ class TGMean(UnivariateIndicator):
 
 class TxMax(UnivariateIndicator):
     identifier = 'tx_max'
-    units = 'degK'
-    required_units = 'degK'
+    units = 'K'
+    required_units = 'K'
     long_name = 'Maximum temperature'
     standard_name = 'tasmax'
     description = 'Maximum daily maximum temperature.'

@@ -15,7 +15,8 @@ units.define('degrees_north = degree = degrees_N = degreesN = degree_north = deg
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
 hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
-hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
+                         lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
 units.enable_contexts(hydro)
 
 

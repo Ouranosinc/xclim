@@ -11,7 +11,7 @@ def test_assert_daily():
     tg_mean = TGMean()
     n = 365.  # one day short of a full year
     times = pd.date_range('2000-01-01', freq='1D', periods=n)
-    da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'degK'})
+    da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'K'})
     tg_mean(da)
 
     # Bad frequency

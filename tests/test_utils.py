@@ -113,8 +113,8 @@ class Test_daily_downsampler():
 
 class UniInd(UnivariateIndicator):
     identifier = 'tmin'
-    units = 'degK'
-    required_units = 'degK'
+    units = 'K'
+    required_units = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
