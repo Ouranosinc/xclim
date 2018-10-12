@@ -807,15 +807,14 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     xarray.DataArray
       The total daily precipitation at the given time frequency in [mm].
 
-    # FIXME: Update the prcp_tot ReST math formula
-    # Note
-    # ----
-    # Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    # day `a` and finishing on day `b`
-    #
-    # .. math::
-    #
-    #    TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    Note
+    ----
+    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       out_p = \sum_{i=a}^{b} pr_i
 
 
     Examples
