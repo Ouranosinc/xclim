@@ -52,7 +52,7 @@ class TxMax(UnivariateIndicator):
 
 
 class ColdSpellDurationIndex(UnivariateIndicator):
-    standard_name = 'cold_spell_duration_index',
+    standard_name = 'cold_spell_duration_index'
     units = 'days'
 
     def cfprobe(self, da):

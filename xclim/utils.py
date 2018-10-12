@@ -120,8 +120,8 @@ class UnivariateIndicator(object):
             b = da.copy()
             b.values = (da.values * fu).to(tu)
             return b
-        else:
-            return da
+
+        return da
 
     def cfprobe(self, da):
         """Check input data compliance to expectations.
@@ -144,7 +144,7 @@ class UnivariateIndicator(object):
             mba = {}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in self._ba.arguments.items():
-                if type(v) in six.string_types and v in self._attrs_mapping.get(key, {}).keys():
+                if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{' + v + '}'
                 else:
                     mba[k] = v
