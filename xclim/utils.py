@@ -4,7 +4,20 @@ from functools import wraps
 import pint
 from . import checks
 
-units = pint.UnitRegistry()
+units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
+units.define(pint.unit.UnitDefinition('percent', '%', (),
+             pint.converters.ScaleConverter(0.01)))
+
+# Define commonly encountered units not defined by pint
+units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
+             '= degreeN')
+units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
+hydro = pint.Context('hydro')
+hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+units.enable_contexts(hydro)
+
 
 if six.PY2:
     from funcsigs import signature
@@ -100,8 +113,8 @@ class UnivariateIndicator(object):
 
     def convert_units(self, da):
         """Return DataArray with correct units, defined by `self.required_units`."""
-        fu = units.parse_units(da.attrs['units'])
-        tu = units.parse_units(self.required_units)
+        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
+        tu = units.parse_units(self.required_units.replace('-', '**-'))
         if fu != tu:
             b = da.copy()
             b.values = (da.values * fu).to(tu)
