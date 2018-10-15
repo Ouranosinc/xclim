@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Main module
+Indices module
 """
 import numpy as np
 import xarray as xr
 
 from . import run_length as rl
 from .utils import with_attrs
-
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -577,10 +576,60 @@ def tn_min(tasmin, freq='YS'):
     return tasmin.resample(time=freq).min(dim='time')
 
 
-def max_1day_precipitation_amount(da, freq='YS'):
-    """Highest 1-day precipitation amount for a period (frequency).
+@with_attrs(standard_name='maximum_{window}_day_total_precipitation',
+            long_name='maximum {window} day total precipitation',
+            window_size='{window}')
+def max_n_day_precipitation_amount(da, window, freq='YS'):
+    """Highest precipitation amount cumulated over a n-day moving window for a given period (frequency).
 
-    Resample the original daily total precipitation temperature series by taking the max over each period.
+    Calculate the N-day rolling sum of the original daily total precipitation series
+     and determine the maximum value for each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      daily precipitation values.
+    window : int
+      window size in days
+    freq : str, optional
+      Resampling frequency : Default 'YS' (yearly)
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated N-day precipitation value at the given time frequency.
+
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
+    at an annual frequency.
+
+    >>> da = xr.open_dataset('pr.day.nc')
+    >>> window = 5
+    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
+
+    """
+
+    # rolling sum of the values
+    arr = da.rolling(time=window, center=False).sum(dim='time')
+    output = arr.resample(time=freq).max(dim='time')
+    # 'keep_attrs=True' does not seem to work with rolling? copy original
+    output.attrs.update(da.attrs)
+
+    # rename variable name to "%s%s%s" % ('rx',str(window),'day')
+
+    return output
+
+
+# @check_daily_monotonic # TODO create daily timestep check
+# @convert_precip_units   # TODO create units checker / converter
+@with_attrs(standard_name='maximum_1_day_total_precipitation',
+            long_name='maximum 1 day total precipitation')
+def max_1day_precipitation_amount(da, freq='YS', skipna=False):
+    """Highest 1-day precipitation amount for the provided frequency.
+
+    Resample the original daily total precipitaiton series by taking the max over each period.
 
     Parameters
     ----------
@@ -588,6 +637,10 @@ def max_1day_precipitation_amount(da, freq='YS'):
       daily precipitation values.
     freq : str, optional
       Resampling frequency : Default 'YS' (yearly)
+    skipna : boolean, optional
+      NaN value treatment flag, default=False :
+      where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
+
 
     Returns
     -------
@@ -606,7 +659,10 @@ def max_1day_precipitation_amount(da, freq='YS'):
     """
 
     # resample the values
-    output = da.resample(time=freq, keep_attrs=True).max(dim='time')
+    arr = da.resample(time=freq)
+    output = arr.max(dim='time', skipna=skipna, keep_attrs=True)
+
+    # rename variable to 'rx1day' in indicator Class
 
     return output
 
@@ -631,15 +687,14 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     xarray.DataArray
       The total daily precipitation at the given time frequency in [mm].
 
-    # FIXME: Update the prcp_tot ReST math formula
-    # Note
-    # ----
-    # Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    # day `a` and finishing on day `b`
-    #
-    # .. math::
-    #
-    #    TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    Note
+    ----
+    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       out_p = \sum_{i=a}^{b} pr_i
 
 
     Examples

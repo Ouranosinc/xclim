@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Statistical distribution fit"""
+"""
+Statistical distribution fit module
+"""
 
 import dask
 import xarray as xr

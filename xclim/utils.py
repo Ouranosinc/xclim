@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+"""
+xclim xarray.DataArray utilities module
+"""
+
 import numpy as np
 import six
 from functools import wraps
@@ -94,7 +100,10 @@ def daily_downsampler(da, freq='YS'):
     return buffer.groupby('tags')
 
 
+
 class UnivariateIndicator(object):
+    r"""xclim indicator class"""
+
     identifier = ''
     units = ''
     required_units = ''
@@ -209,16 +218,16 @@ def format_kwargs(attrs, params):
     attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
                      'long_name': {'YS': 'Annual', 'MS': 'Monthly'}}
 
-    import re
     for key, val in attrs.items():
-        m = re.findall("{(\w+)}", val)
-        for name in m:
-            if name in params:
-                v = params.get(name)
-                if v is None:
-                    raise ValueError("{0} is not a valid function argument.".format(name))
-                repl = attrs_mapping[key][v]
-                attrs[key] = re.sub("{%s}" % name, repl, val)
+        mba = {}
+        # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
+        for k, v in params.items():
+            if isinstance(v, six.string_types) and v in attrs_mapping.get(key, {}).keys():
+                mba[k] = '{' + v + '}'
+            else:
+                mba[k] = v
+
+        attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
 def with_attrs(**func_attrs):

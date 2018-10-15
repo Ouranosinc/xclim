@@ -35,7 +35,39 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
-class Test_max_1day_precipitation_amount():
+class TestMaxNDayPrecipitationAmount:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'precipitation_flux',
+                                   'cell_methods': 'time: sum (interval: 1 day)',
+                                   'units': 'mm'})
+
+    # test 2 day max precip
+    def test_single_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, 2)
+        assert rxnday == 40
+        assert rxnday.time.dt.year == 2000
+
+    # test whether sum over entire length is resolved
+    def test_sumlength_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, len(a))
+        assert rxnday == a.sum('time')
+        assert rxnday.time.dt.year == 2000
+
+    # test whether non-unique maxes are resolved
+    def test_multi_max(self):
+        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 15, 25, 0, 0]))
+        rxnday = xci.max_n_day_precipitation_amount(a, 2)
+        assert rxnday == 40
+        assert len(rxnday) == 1
+        assert rxnday.time.dt.year == 2000
+
+
+class TestMax1DayPrecipitationAmount:
 
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
@@ -77,7 +109,7 @@ class Test_max_1day_precipitation_amount():
         assert np.isnan(rx1day)
 
 
-class Test_consecutive_frost_days():
+class TestConsecutiveFrostDays:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -103,7 +135,7 @@ class Test_consecutive_frost_days():
         assert cfd == 365
 
 
-class Test_cooling_degree_days():
+class TestCoolingDegreeDays:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -130,7 +162,7 @@ class Test_cooling_degree_days():
         assert cdd.description
 
 
-class Test_prcptotal():
+class TestPrcpTotal:
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -152,7 +184,7 @@ class Test_prcptotal():
         assert (np.allclose(target, out_std.values))
 
 
-class Test_tx_min():
+class TestTxMin:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -163,7 +195,7 @@ class Test_tx_min():
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
-class TestTG():
+class TestTG:
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
         pass

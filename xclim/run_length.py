@@ -1,10 +1,9 @@
+# -*- coding: utf-8 -*-
+"""Run length algorithms module"""
+
 import numpy as np
 
-# Dev Notes
-# ---------
-# Run length algorithms
-#
-# Need to benchmark and adapt for xarray.
+# TODO: Need to benchmark and adapt for xarray.
 
 
 def rle(arr):

@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.utils import daily_downsampler, UnivariateIndicator
+from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
 
 from common import tas_series
 
@@ -31,7 +31,7 @@ TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
-class Test_daily_downsampler():
+class TestDailyDownsampler:
 
     def test_std_calendar(self):
 
@@ -130,3 +130,14 @@ class TestUnivariateIndicator():
         ind = UniInd()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within years'
+
+
+class TestKwargs:
+
+    def test_format_kwargs(self):
+        attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+                     cell_methods='time: minimum within {freq}')
+
+        format_kwargs(attrs, {'freq': 'YS'})
+        assert attrs['cell_methods'] == 'time: minimum within years'
+
