@@ -63,3 +63,14 @@ class TestMissingAnyFills:
         da = xr.DataArray(np.arange(n), [('time', times)])
         miss = checks.missing_any_fill(da, 'Q-NOV')
         np.testing.assert_array_equal(miss, [True, False, False, False, True])
+
+
+# TODO: Add tests for check_is_dataarray() using functools
+# class TestValidDataFormat:
+#
+#     def time_series(self, values):
+#         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+#         return xr.DataArray(values, coords=[coords, ], dims='time',
+#                             attrs={'standard_name': 'precipitation_flux',
+#                                    'cell_methods': 'time: sum (interval: 1 day)',
+#                                    'units': 'mm'})
