@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from xclim.indices import tg_mean
+
 from xclim import checks
+from xclim.indices import tg_mean
 
 
 class TestDateHandling:
@@ -28,7 +29,7 @@ class TestDateHandling:
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2001-01-01', freq='1D', periods=n))
-            da = xr.DataArray(np.arange(2*n), [('time', times)])
+            da = xr.DataArray(np.arange(2 * n), [('time', times)])
             tg_mean(da)
 
     # Duplicate dates
@@ -37,7 +38,7 @@ class TestDateHandling:
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))
-            da = xr.DataArray(np.arange(2*n), [('time', times)])
+            da = xr.DataArray(np.arange(2 * n), [('time', times)])
             tg_mean(da)
 
 
@@ -63,7 +64,6 @@ class TestMissingAnyFills:
         da = xr.DataArray(np.arange(n), [('time', times)])
         miss = checks.missing_any_fill(da, 'Q-NOV')
         np.testing.assert_array_equal(miss, [True, False, False, False, True])
-
 
 # TODO: Add tests for check_is_dataarray() using functools
 # class TestValidDataFormat:

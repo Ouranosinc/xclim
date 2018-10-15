@@ -218,14 +218,14 @@ class TestTxMaxTxMinIndices:
 
     def tmax_tmin_time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
-        tas_plus10 = xr.DataArray(values+10, coords=[coords, ], dims='time',
-                     attrs={'standard_name': 'air_temperature',
-                            'cell_methods': 'time: maximum within days',
-                            'units': 'K'})
-        tas_minus10 = xr.DataArray(values-10, coords=[coords, ], dims='time',
-                     attrs={'standard_name': 'air_temperature',
-                            'cell_methods': 'time: minimum within days',
-                            'units': 'K'})
+        tas_plus10 = xr.DataArray(values + 10, coords=[coords, ], dims='time',
+                                  attrs={'standard_name': 'air_temperature',
+                                         'cell_methods': 'time: maximum within days',
+                                         'units': 'K'})
+        tas_minus10 = xr.DataArray(values - 10, coords=[coords, ], dims='time',
+                                   attrs={'standard_name': 'air_temperature',
+                                          'cell_methods': 'time: minimum within days',
+                                          'units': 'K'})
         return tas_plus10, tas_minus10
 
     def test_daily_temperature_range(self):
