@@ -107,6 +107,7 @@ class TestMax1DayPrecipitationAmount:
 
 
 class TestConsecutiveFrostDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -133,6 +134,7 @@ class TestConsecutiveFrostDays:
 
 
 class TestCoolingDegreeDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -182,6 +184,7 @@ class TestPrcpTotal:
 
 
 class TestTxMin:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -193,6 +196,52 @@ class TestTxMin:
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         txm = xci.tx_min(a, freq='YS')
         assert txm.cell_methods == 'time: minimum within years'
+
+
+@pytest.mark.skip
+class TestTxMean:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_attrs(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        txm = xci.tx_mean(a, freq='YS')
+        assert txm.cell_methods == 'time: mean within years'
+
+
+class TestTxMaxTxMinIndices:
+
+    def tmax_tmin_time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        tas_plus10 = xr.DataArray(values+10, coords=[coords, ], dims='time',
+                     attrs={'standard_name': 'air_temperature',
+                            'cell_methods': 'time: maximum within days',
+                            'units': 'K'})
+        tas_minus10 = xr.DataArray(values-10, coords=[coords, ], dims='time',
+                     attrs={'standard_name': 'air_temperature',
+                            'cell_methods': 'time: minimum within days',
+                            'units': 'K'})
+        return tas_plus10, tas_minus10
+
+    def test_daily_temperature_range(self):
+        temp_values = np.random.uniform(-30, 30, size=800)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([dtr.mean()], [-20])
+
+    @pytest.mark.skip("Find out why this test doesn't return values")
+    def test_freeze_thaw_cycles(self):
+        temp_values = np.zeros(365)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([np.mean(ft)], [365])
+
+    # def test_
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
