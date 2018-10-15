@@ -214,10 +214,26 @@ class TestTxMean:
         assert txm.cell_methods == 'time: mean within years'
 
 
+@pytest.mark.skip
+class TestTxMax:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_attrs(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        txm = xci.tx_max(a, freq='YS')
+        assert txm.cell_methods == 'time: maximum within years'
+
+
 class TestTxMaxTxMinIndices:
 
     def tmax_tmin_time_series(self, values):
-        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range('1/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         tas_plus10 = xr.DataArray(values + 10, coords=[coords, ], dims='time',
                                   attrs={'standard_name': 'air_temperature',
                                          'cell_methods': 'time: maximum within days',
@@ -228,23 +244,30 @@ class TestTxMaxTxMinIndices:
                                           'units': 'K'})
         return tas_plus10, tas_minus10
 
-    def test_daily_temperature_range(self):
-        temp_values = np.random.uniform(-30, 30, size=800)
+    def test_static_daily_temperature_range(self):
+        temp_values = np.random.uniform(-30, 30, size=1095)
         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
         dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
         np.testing.assert_array_equal([dtr.mean()], [20])
 
-    def test_freeze_thaw_cycles(self):
+    def test_all_freeze_thaw_cycles(self):
         temp_values = np.zeros(365)
         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
-        np.testing.assert_array_equal([np.mean(ft)], [365/2])
+        np.testing.assert_array_equal([np.sum(ft)], [365])
 
-    # def test_
+    def test_random_freeze_thaw_cycles(self):
+        runs = np.array([])
+        for i in range(10):
+            temp_values = np.random.uniform(-30, 30, 365)
+            tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+            ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+            runs = np.append(runs, ft)
+        np.testing.assert_allclose(np.mean(runs), 120, atol=20)
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
-@pytest.mark.skip('')
+@pytest.mark.skip
 class TestTG:
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
