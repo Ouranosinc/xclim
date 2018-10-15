@@ -18,7 +18,6 @@ def tas_series():
     return _tas_series
 
 
-
 class TestTxMax:
 
     def test_simple(self, tas_series):

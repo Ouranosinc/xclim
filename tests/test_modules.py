@@ -2,7 +2,7 @@ from xclim import build_module
 import unittest
 
 
-class Test_build_modules(unittest.TestCase):
+class TestBuildModules(unittest.TestCase):
 
     def test_nonexistent_process_build_failure(self):
         name = ""
