@@ -7,7 +7,6 @@ from common import tas_series
 from xclim import checks
 
 
-
 def test_assert_daily():
     tg_mean = TGMean()
     n = 365.  # one day short of a full year
@@ -34,7 +33,6 @@ def test_assert_daily():
         times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))
         da = xr.DataArray(np.arange(2*n), [('time', times)])
         tg_mean(da)
-
 
 
 def test_missing_any(tas_series):

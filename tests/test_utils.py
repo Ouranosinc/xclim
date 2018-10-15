@@ -123,13 +123,22 @@ class UniInd(UnivariateIndicator):
         return da.resample(time=freq).mean()
 
 
-class TestUnivariateIndicator():
+class TestUnivariateIndicator:
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))
         ind = UniInd()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within years'
+
+    def test_unit_conversion(self, tas_series):
+        a = tas_series(np.arange(360))
+        ind = UniInd()
+        txk = ind(a, freq='YS')
+        ind.units = 'degC'
+        txc = ind(a, freq='YS')
+
+        np.testing.assert_array_almost_equal(txk, txc+273.15)
 
 
 class TestKwargs:
@@ -140,4 +149,3 @@ class TestKwargs:
 
         format_kwargs(attrs, {'freq': 'YS'})
         assert attrs['cell_methods'] == 'time: minimum within years'
-

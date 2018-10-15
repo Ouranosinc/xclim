@@ -23,6 +23,8 @@ hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
                          lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
+                         lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3))
 units.enable_contexts(hydro)
 
 
@@ -100,7 +102,6 @@ def daily_downsampler(da, freq='YS'):
     return buffer.groupby('tags')
 
 
-
 class UnivariateIndicator(object):
     r"""xclim indicator class"""
 
@@ -127,7 +128,7 @@ class UnivariateIndicator(object):
         tu = units.parse_units(self.required_units.replace('-', '**-'))
         if fu != tu:
             b = da.copy()
-            b.values = (da.values * fu).to(tu)
+            b.values = (da.values * fu).to(tu, 'hydro')
             return b
 
         return da

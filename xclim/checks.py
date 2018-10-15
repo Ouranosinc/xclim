@@ -121,6 +121,7 @@ def valid_daily_mean_discharge(comp):
 
     return func
 
+
 def valid_missing_data_threshold(comp, threshold=0):
     r"""Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
@@ -159,4 +160,3 @@ def missing_any(da, freq):
     p = c.indexes['time'].to_period()
     n = (p.end_time - p.start_time).days + 1
     return c != n
-
