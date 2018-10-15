@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Main module
+Indices module
 """
 import re
 from functools import wraps
@@ -69,7 +69,7 @@ def format_kwargs(attrs, params):
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
     for key, val in attrs.items():
-        m = re.findall("{(\w+)}", val)
+        m = re.findall(r"{(\w+)}", val)
         for name in m:
             if name in params:
                 v = params.get(name)
@@ -788,15 +788,14 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     xarray.DataArray
       The total daily precipitation at the given time frequency in [mm].
 
-    # FIXME: Update the prcp_tot ReST math formula
-    # Note
-    # ----
-    # Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    # day `a` and finishing on day `b`
-    #
-    # .. math::
-    #
-    #    TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+    Note
+    ----
+    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
+    day `a` and finishing on day `b`
+
+    .. math::
+
+       out_p = \sum_{i=a}^{b} pr_i
 
 
     Examples

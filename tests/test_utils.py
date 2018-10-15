@@ -30,7 +30,7 @@ TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
-class Test_daily_downsampler():
+class TestDailyDownsampler:
 
     def test_std_calendar(self):
 
@@ -110,9 +110,11 @@ class Test_daily_downsampler():
             assert (np.allclose(x2.values, target))
 
 
-def test_format_kwargs():
-    attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
-                 cell_methods='time: minimum within {freq}')
+class TestKwargs:
 
-    format_kwargs(attrs, {'freq': 'YS'})
-    assert attrs['cell_methods'] == 'time: minimum within years'
+    def test_format_kwargs(self):
+        attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+                     cell_methods='time: minimum within {freq}')
+
+        format_kwargs(attrs, {'freq': 'YS'})
+        assert attrs['cell_methods'] == 'time: minimum within years'

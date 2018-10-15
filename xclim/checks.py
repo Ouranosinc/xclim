@@ -19,7 +19,7 @@ import pandas as pd
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
 
 def check_valid(var, key, expected):
-    """Check that a variable's attribute has the expected value. Warn user otherwise."""
+    r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
     att = getattr(var, key, None)
     if att is None:
         e = 'Variable does not have a `{}` attribute.'.format(key)
@@ -30,7 +30,7 @@ def check_valid(var, key, expected):
 
 
 def assert_daily(var):
-    """Assert that the series is daily and monotonic (no jumps in time index).
+    r"""Assert that the series is daily and monotonic (no jumps in time index).
 
     A ValueError is raised otherwise."""
     t0, t1 = var.time[:2]
@@ -49,21 +49,21 @@ def assert_daily(var):
 
 
 def check_valid_temperature(var, units):
-    """Check that variable is a temperature."""
+    r"""Check that variable is a temperature."""
     check_valid(var, 'standard_name', 'air_temperature')
     check_valid(var, 'units', units)
     assert_daily(var)
 
 
 def check_valid_discharge(var):
-    """Check that the variable is a discharge."""
+    r"""Check that the variable is a discharge."""
     #
     check_valid(var, 'standard_name', 'water_volume_transport_in_river_channel')
     check_valid(var, 'units', 'm3 s-1')
 
 
 def valid_daily_min_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
+    r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmin, *args, **kwds):
@@ -75,7 +75,7 @@ def valid_daily_min_temperature(comp, units='K'):
 
 
 def valid_daily_mean_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
+    r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tas, *args, **kwds):
@@ -87,7 +87,7 @@ def valid_daily_mean_temperature(comp, units='K'):
 
 
 def valid_daily_max_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on a valid temperature dataset."""
+    r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmax, *args, **kwds):
@@ -99,7 +99,7 @@ def valid_daily_max_temperature(comp, units='K'):
 
 
 def valid_daily_max_min_temperature(comp, units='K'):
-    """Decorator to check that a computation runs on valid min and max temperature datasets."""
+    r"""Decorator to check that a computation runs on valid min and max temperature datasets."""
 
     @wraps(comp)
     def func(tasmax, tasmin, **kwds):
@@ -112,7 +112,7 @@ def valid_daily_max_min_temperature(comp, units='K'):
 
 
 def valid_daily_mean_discharge(comp):
-    """Decorator to check that a computation runs on valid discharge data."""
+    r"""Decorator to check that a computation runs on valid discharge data."""
 
     @wraps(comp)
     def func(q, **kwds):
@@ -123,25 +123,26 @@ def valid_daily_mean_discharge(comp):
 
 
 def valid_missing_data_threshold(comp, threshold=0):
-    """Check that the relative number of missing data points does not exceed a threshold."""
+    r"""Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
     pass
 
 
 def check_is_dataarray(comp):
-    """Decorator to check that a computation has an instance of xarray.DataArray
+    r"""Decorator to check that a computation has an instance of xarray.DataArray
      as first argument."""
 
     @wraps(comp)
     def func(data_array, *args, **kwds):
         import xarray as xr
-        assert (isinstance(data_array, xr.DataArray))
+        assert isinstance(data_array, xr.DataArray)
         return comp(data_array, *args, **kwds)
 
     return func
 
 
 def convert_temp(da, required_units='K'):
+    r"""Converts temperature units of xarray.DataArray. Defaults to Kelvin ('K')"""
     if da.units == required_units:
         return da
     elif da.units == 'C' and required_units == 'K':
@@ -150,3 +151,24 @@ def convert_temp(da, required_units='K'):
         return da - 273.15
     else:
         raise AttributeError(da.units)
+
+
+def missing_any_fill(da, freq):
+    """Return a boolean DataArray indicating whether there are missing days in the resampled array.
+
+    Parameters
+    ----------
+    da : DataArray
+      Input array at daily frequency.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    out : DataArray
+      A boolean array set to True if any month or year has missing values.
+    """
+    c = da.notnull().resample(time=freq).sum(dim='time')
+    p = c.indexes['time'].to_period()
+    n = (p.end_time - p.start_time).days + 1
+    return c != n
