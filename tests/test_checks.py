@@ -41,18 +41,25 @@ class TestDateHandling:
             tg_mean(da)
 
 
-def test_missing_any_fill():
-    n = 66
-    times = pd.date_range('2001-12-30', freq='1D', periods=n)
-    da = xr.DataArray(np.arange(n), [('time', times)])
-    miss = checks.missing_any_fill(da, 'MS')
-    np.testing.assert_array_equal(miss, [True, False, False, True])
+class TestMissingAnyFills:
 
-    n = 378
-    times = pd.date_range('2001-12-31', freq='1D', periods=n)
-    da = xr.DataArray(np.arange(n), [('time', times)])
-    miss = checks.missing_any_fill(da, 'YS')
-    np.testing.assert_array_equal(miss, [True, False, True])
+    def test_missing_months(self):
+        n = 66
+        times = pd.date_range('2001-12-30', freq='1D', periods=n)
+        da = xr.DataArray(np.arange(n), [('time', times)])
+        miss = checks.missing_any_fill(da, 'MS')
+        np.testing.assert_array_equal(miss, [True, False, False, True])
 
-    miss = checks.missing_any_fill(da, 'Q-NOV')
-    np.testing.assert_array_equal(miss, [True, False, False, False, True])
+    def test_missing_years(self):
+        n = 378
+        times = pd.date_range('2001-12-31', freq='1D', periods=n)
+        da = xr.DataArray(np.arange(n), [('time', times)])
+        miss = checks.missing_any_fill(da, 'YS')
+        np.testing.assert_array_equal(miss, [True, False, True])
+
+    def test_missing_season(self):
+        n = 378
+        times = pd.date_range('2001-12-31', freq='1D', periods=n)
+        da = xr.DataArray(np.arange(n), [('time', times)])
+        miss = checks.missing_any_fill(da, 'Q-NOV')
+        np.testing.assert_array_equal(miss, [True, False, False, False, True])
