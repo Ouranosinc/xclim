@@ -232,14 +232,13 @@ class TestTxMaxTxMinIndices:
         temp_values = np.random.uniform(-30, 30, size=800)
         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
         dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
-        np.testing.assert_array_equal([dtr.mean()], [-20])
+        np.testing.assert_array_equal([dtr.mean()], [20])
 
-    @pytest.mark.skip("Find out why this test doesn't return values")
     def test_freeze_thaw_cycles(self):
         temp_values = np.zeros(365)
         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
-        np.testing.assert_array_equal([np.mean(ft)], [365])
+        np.testing.assert_array_equal([np.mean(ft)], [365/2])
 
     # def test_
 
