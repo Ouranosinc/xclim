@@ -6,10 +6,9 @@ Main module
 import re
 from functools import wraps
 
-import six
 import numpy as np
+import six
 import xarray as xr
-import re
 
 from . import run_length as rl
 from .checks import valid_daily_mean_temperature, valid_daily_max_min_temperature, valid_daily_min_temperature, \
