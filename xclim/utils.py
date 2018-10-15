@@ -1,5 +1,5 @@
 import numpy as np
-import xarray as xr
+
 
 def get_daily_events(da, da_value, operator):
     r"""
@@ -21,10 +21,11 @@ def get_daily_events(da, da_value, operator):
     xarray.DataArray
 
     """
-    events = operator(da, da_value)*1
+    events = operator(da, da_value) * 1
     events = events.where(~np.isnan(da))
     events = events.rename('events')
     return events
+
 
 def daily_downsampler(da, freq='YS'):
     r"""Daily climate data downsampler
