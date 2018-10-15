@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+"""
+xclim xarray.DataArray utilities module
+"""
+
 import numpy as np
 
 
@@ -70,6 +76,7 @@ def daily_downsampler(da, freq='YS'):
 
 
 class Indicator(object):
+    r"""xclim indicator class"""
     identifier = ''
     units = ''
     required_units = ''
@@ -108,8 +115,7 @@ class Indicator(object):
         # Extract DataArray arguments from compute signature.
         self.attrs = {'long_name': self.long_name,
                       'units': self.units,
-                      'standard_name': self.standard_name
-                      }
+                      'standard_name': self.standard_name}
 
     def __call__(self, *args, **kwds):
         self.validate(*args)

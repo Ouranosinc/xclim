@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Main module
+Indices module
 """
 import re
 from functools import wraps
@@ -59,7 +59,7 @@ def format_kwargs(attrs, params):
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
     for key, val in attrs.items():
-        m = re.findall("{(\w+)}", val)
+        m = re.findall(r"{(\w+)}", val)
         for name in m:
             if name in params:
                 v = params.get(name)
