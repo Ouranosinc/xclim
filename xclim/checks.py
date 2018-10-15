@@ -151,3 +151,24 @@ def convert_temp(da, required_units='K'):
         return da - 273.15
     else:
         raise AttributeError(da.units)
+
+
+def missing_any_fill(da, freq):
+    """Return a boolean DataArray indicating whether there are missing days in the resampled array.
+
+    Parameters
+    ----------
+    da : DataArray
+      Input array at daily frequency.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    out : DataArray
+      A boolean array set to True if any month or year has missing values.
+    """
+    c = da.notnull().resample(time=freq).sum(dim='time')
+    p = c.indexes['time'].to_period()
+    n = (p.end_time - p.start_time).days + 1
+    return c != n
