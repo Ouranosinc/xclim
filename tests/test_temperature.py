@@ -18,7 +18,7 @@ def tas_series():
     return _tas_series
 
 
-class Test_TxMax():
+class TestTxMax:
 
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
@@ -26,7 +26,8 @@ class Test_TxMax():
         tx_obj(ts, freq='Y')
 
 
-class Text_TxMin():
+class TestTxMin:
+
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
         tx_obj = TxMin()

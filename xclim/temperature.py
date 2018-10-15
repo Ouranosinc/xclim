@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Indicator and data consistency checking module
+"""
+
 from . import checks
 from . import indices
 from .utils import Indicator
