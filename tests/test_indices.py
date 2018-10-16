@@ -101,8 +101,11 @@ class TestMax1DayPrecipitationAmount:
 
     # test nan behavior
     def test_nan_max(self):
+        from xclim.precip import R1Max
+
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        rx1day = xci.max_1day_precipitation_amount(a)
+        r1max = R1Max()
+        rx1day = r1max(a)
         assert np.isnan(rx1day)
 
 
@@ -191,11 +194,6 @@ class TestTxMin:
                             attrs={'standard_name': 'air_temperature',
                                    'cell_methods': 'time: maximum within days',
                                    'units': 'K'})
-
-    def test_attrs(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        txm = xci.tx_min(a, freq='YS')
-        assert txm.cell_methods == 'time: minimum within years'
 
 
 @pytest.mark.skip

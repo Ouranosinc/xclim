@@ -23,8 +23,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.utils import daily_downsampler
-from xclim.indices import format_kwargs
+from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
+
+from common import tas_series
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
@@ -108,6 +109,36 @@ class TestDailyDownsampler:
             target_season = [30.5] + [(n - 1) * 30 + 15.5 for n in [4, 7, 10, 12]]
             target = {'YS': target_year, 'MS': target_month, 'QS-DEC': target_season}[freq]
             assert (np.allclose(x2.values, target))
+
+
+class UniInd(UnivariateIndicator):
+    identifier = 'tmin'
+    units = 'K'
+    required_units = 'K'
+    long_name = '{freq} mean surface temperature'
+    standard_name = '{freq} mean temperature'
+    cell_methods = 'time: mean within {freq}'
+
+    def compute(self, da, freq):
+        return da.resample(time=freq).mean()
+
+
+class TestUnivariateIndicator:
+
+    def test_attrs(self, tas_series):
+        a = tas_series(np.arange(360))
+        ind = UniInd()
+        txm = ind(a, freq='YS')
+        assert txm.cell_methods == 'time: mean within years'
+
+    def test_unit_conversion(self, tas_series):
+        a = tas_series(np.arange(360))
+        ind = UniInd()
+        txk = ind(a, freq='YS')
+        ind.units = 'degC'
+        txc = ind(a, freq='YS')
+
+        np.testing.assert_array_almost_equal(txk, txc+273.15)
 
 
 class TestKwargs:

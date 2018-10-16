@@ -14,11 +14,11 @@ with open('HISTORY.rst') as history_file:
 # with open('requirements.txt') as req_file:
 #    requirements = req_file.read().split('\n')
 
-requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', 'funcsigs']
+requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', 'pint', 'inspect2']
 
 setup_requirements = ['pytest-runner', ]
 
-test_requirements = ['pytest', 'tox']
+test_requirements = ['pytest', 'tox', ]
 
 docs_requirements = ['Sphinx', 'guzzle-sphinx-theme', ]
 
