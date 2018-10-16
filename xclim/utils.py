@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 import pandas as pd
+import time
 
 
 def daily_downsampler(da, freq='YS'):
@@ -157,8 +158,8 @@ def get_ev_length(ev, verbose=1, method=2):
                 i0 = 0
                 d = np.zeros_like(v)
                 for i in ind:
-                    l = i - i0
-                    d[i0:i] = l
+                    ll = i - i0
+                    d[i0:i] = ll
                     i0 = i
                 d[i:] = d.size - i
                 ev_l.isel(z=z).values[:] = d
@@ -173,6 +174,7 @@ def get_ev_length(ev, verbose=1, method=2):
         # go back to original shape and return event length
         ev_l = ev_l.unstack('z')
         return ev_l
+
 
 def get_ev_end(ev):
     r"""
@@ -196,6 +198,7 @@ def get_ev_end(ev):
     ev_end = xr.concat((ev_end, ev.isel(time=-1)), 'time')
     return ev_end
 
+
 def get_ev_start(ev):
     r"""
     function flaging places when an event sequence starts
@@ -215,7 +218,6 @@ def get_ev_start(ev):
     # copy first timestep of ev to catch those start
     ev_start = xr.concat((ev.isel(time=0), ev_start), 'time')
     return ev_start
-
 
 
 class Indicator(object):
