@@ -13,8 +13,8 @@ class TestDateHandling:
         tg_mean = TGMean()
         n = 365  # one day short of a full year
         times = pd.date_range('2000-01-01', freq='1D', periods=n)
-        da = xr.DataArray(np.arange(n), [('time', times)])
-        assert tg_mean(da)
+        da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'K'})
+        tg_mean(da)
 
     # Bad frequency
     def test_bad_frequency(self):
@@ -48,7 +48,7 @@ class TestDateHandling:
 
 class TestMissingAnyFills:
 
-    def test_missing_days(self):
+    def test_missing_days(self, tas_series):
         a = np.arange(360.)
         a[5:10] = np.nan
         ts = tas_series(a)
