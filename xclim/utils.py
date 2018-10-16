@@ -9,6 +9,7 @@ import six
 from functools import wraps
 import pint
 from . import checks
+from inspect2 import signature
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -26,12 +27,6 @@ hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
 hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
                          lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3))
 units.enable_contexts(hydro)
-
-
-if six.PY2:
-    from funcsigs import signature
-elif six.PY3:
-    from inspect import signature
 
 
 def daily_downsampler(da, freq='YS'):
@@ -178,8 +173,7 @@ class UnivariateIndicator(object):
     def __call__(self, *args, **kwds):
         # Bind call arguments
         self._ba = signature(self.compute).bind(*args, **kwds)
-        if six.PY3:
-            self._ba.apply_defaults()
+        self._ba.apply_defaults()
 
         self.validate(args[0])
         self.cfprobe(args[0])
