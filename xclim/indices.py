@@ -21,6 +21,8 @@ if six.PY2:
 elif six.PY3:
     from inspect import signature
 
+from xclim.utils import get_ev_length
+
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 K2C = 273.15
@@ -349,6 +351,88 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     return dtr.resample(time=freq).mean(dim='time')
 
 
+def extreme_hot_day_frequency(tasmax, thresh=35, freq='YS'):
+    r"""Frequency of extreme warm days
+
+        Return the number of days with tasmax > thresh per period
+
+        Parameters
+        ----------
+        tasmax : xarray.DataArray
+          Mean daily temperature [℃] or [K]
+        thresh : float
+          Threshold temperature on which to base evaluation [℃] or [K]
+        freq : str, optional
+          Resampling frequency
+
+    """
+    events = (tasmax > thresh) * 1
+    return events.resample(time=freq).sum(dim='time')
+
+
+def extreme_hot_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin=22,
+                                                          thresh_tasmax=30, freq='YS'):
+    r"""Frequency days with hot maximum and minimum temperature
+
+        Return the number of days with tasmin > thresh_tasmin
+                                   and tasmax > thresh_tasamax per period
+
+        Parameters
+        ----------
+        tasmin : xarray.DataArray
+          Minimum daily temperature [℃] or [K]
+        tasmax : xarray.DataArray
+          Maximum daily temperature [℃] or [K]
+        thresh_tasmin : float
+          Threshold temperature for tasmin on which to base evaluation [℃] or [K]
+        thresh_tasmax : float
+          Threshold temperature for tasmax on which to base evaluation [℃] or [K]
+        freq : str, optional
+          Resampling frequency
+
+    """
+    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+    return events.resample(time=freq).sum(dim='time')
+
+
+def extreme_warm_day_frequency(tasmax, thresh=30, freq='YS'):
+    r"""Frequency of extreme warm days
+
+        Return the number of days with tasmax > thresh per period
+
+        Parameters
+        ----------
+        tasmax : xarray.DataArray
+          Mean daily temperature [℃] or [K]
+        thresh : float
+          Threshold temperature on which to base evaluation [℃] or [K]
+        freq : str, optional
+          Resampling frequency
+
+    """
+    events = (tasmax > thresh) * 1
+    return events.resample(time=freq).sum(dim='time')
+
+
+def extreme_warm_night_frequency(tasmin, thresh=22, freq='YS'):
+    r"""Frequency of extreme warm nights
+
+        Return the number of days with tasmin > thresh per period
+
+        Parameters
+        ----------
+        tasmin : xarray.DataArray
+          Minimum daily temperature [℃] or [K]
+        thresh : float
+          Threshold temperature on which to base evaluation [℃] or [K]
+        freq : str, optional
+          Resampling frequency
+
+    """
+    events = (tasmin > thresh) * 1
+    return events.resample(time=freq).sum(dim='time')
+
+
 @valid_daily_mean_temperature
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     r"""First day consistently exceeding threshold temperature.
@@ -450,6 +534,53 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     d = i2 - i11
 
     return d.resample(time=freq).max(dim='time')
+
+
+def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
+                        window=3, freq='YS'):
+    r"""Heat wave frequency
+
+    Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
+
+    Parameters
+    ----------
+
+    tasmin : xarrray.DataArray
+      Minimum daily temperature [℃] or [K[
+    tasmax : xarrray.DataArray
+      Maximum daily temperature [℃] or [K[
+    thresh_tasmin : float
+      Threshold temperature for tasmin on which to designate a heatwave [℃] or [K[
+    thresh : float
+      Threshold temperature for tasmax on which to designate a heatwave [℃] or [K[
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    DataArray
+      Heat wave frequency.
+    """
+
+    ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+    ev_l = get_ev_length(ev)
+    # only keep events as long as window
+    ev = ev.where((ev == 1) & (ev_l >= window), 0)
+
+    # find when events finish and mask all other event points
+    d = ev.diff(dim='time')
+    ev_end = xr.where(d == -1, 1, 0)
+
+    # shift end of events back for proper time alignment
+    ev_end['time'] = ev.time[:-1]
+    # deal with cases when last timestep is end of period
+    ev_end = xr.concat((ev_end, ev.isel(time=-1)), 'time')
+
+    # sum events over period
+    hwf = ev_end.resample(time=freq).sum()
+    return hwf
 
 
 @valid_daily_max_temperature
