@@ -174,6 +174,49 @@ def get_ev_length(ev, verbose=1, method=2):
         ev_l = ev_l.unstack('z')
         return ev_l
 
+def get_ev_end(ev):
+    r"""
+    function flaging places when an event sequence ends
+
+    :param ev: xarray DataArray
+        array containing 1 for events and 0 for non-events
+    :return: ev_end
+
+    e.g. input = [0,0,1,1,1,0,0,1] returns [0,0,0,0,1,0,0,1]
+
+    """
+
+    # find when events finish and mask all other event points
+    d = ev.diff(dim='time')
+    ev_end = xr.where(d == -1, 1, 0)
+
+    # shift end of events back for proper time alignment
+    ev_end['time'] = ev.time[:-1]
+    # deal with cases when last timestep is end of period
+    ev_end = xr.concat((ev_end, ev.isel(time=-1)), 'time')
+    return ev_end
+
+def get_ev_start(ev):
+    r"""
+    function flaging places when an event sequence starts
+
+    :param ev: xarray DataArray
+        array containing 1 for events and 0 for non-events
+    :return: ev_end
+
+    e.g. input = [1,0,1,1,1,0,0,1] returns [1,0,1,0,0,0,0,1]
+
+    """
+
+    # find when events finish and mask all other event points
+    d = ev.diff(dim='time')
+    ev_start = xr.where(d == 1, 1, 0)
+
+    # copy first timestep of ev to catch those start
+    ev_start = xr.concat((ev.isel(time=0), ev_start), 'time')
+    return ev_start
+
+
 
 class Indicator(object):
     identifier = ''

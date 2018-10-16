@@ -22,6 +22,7 @@ elif six.PY3:
     from inspect import signature
 
 from xclim.utils import get_ev_length
+from xclim.utils import get_ev_end
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -569,14 +570,8 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     # only keep events as long as window
     ev = ev.where((ev == 1) & (ev_l >= window), 0)
 
-    # find when events finish and mask all other event points
-    d = ev.diff(dim='time')
-    ev_end = xr.where(d == -1, 1, 0)
-
-    # shift end of events back for proper time alignment
-    ev_end['time'] = ev.time[:-1]
-    # deal with cases when last timestep is end of period
-    ev_end = xr.concat((ev_end, ev.isel(time=-1)), 'time')
+    # flag only the end of every event
+    ev_end = get_ev_end(ev)
 
     # sum events over period
     hwf = ev_end.resample(time=freq).sum()
