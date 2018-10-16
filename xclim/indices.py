@@ -19,15 +19,39 @@ ftomm = np.nan
 
 
 # TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
-
 # TODO: Move utility functions to another file.
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
+def windowed_run_count_ufunc(x, window):
+    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
+    array for runs at least as long as given duration.
+
+    Parameters
+    ----------
+    x : bool array
+      Input array
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
+    xr.apply_ufunc(rl.windowed_run_count,
+                   x,
+                   input_core_dims=[['time'], ],
+                   vectorize=True,
+                   dask='parallelized',
+                   output_dtypes=[np.int, ],
+                   keep_attrs=True,
+                   kwargs={'window': window})
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
+
 
 def base_flow_index(q, freq='YS'):
     r"""Base flow index
@@ -84,20 +108,11 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     --------
     percentile_doy
     """
-
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': 6})
+    window = 6
 
     return tasmin.pipe(lambda x: x - tn10) \
         .resample(time=freq) \
-        .apply(func)
+        .apply(windowed_run_count_ufunc, window=window)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -108,17 +123,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     over = tas < K2C + thresh
     group = over.resample(time=freq)
 
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': window})
-
-    return group.apply(func)
+    return group.apply(windowed_run_count_ufunc, window=window)
 
 
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
@@ -370,17 +375,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 
-    def func(x):
-        xr.apply_ufunc(rl.windowed_run_count,
-                       x,
-                       input_core_dims=[['time'], ],
-                       vectorize=True,
-                       dask='parallelized',
-                       output_dtypes=[np.int, ],
-                       keep_attrs=True,
-                       kwargs={'window': window})
-
-    return group.apply(func)
+    return group.apply(windowed_run_count_ufunc, window=window)
 
 
 def heating_degree_days(tas, freq='YS', thresh=17):
@@ -641,7 +636,6 @@ def max_1day_precipitation_amount(da, freq='YS', skipna=False):
     skipna : boolean, optional
       NaN value treatment flag, default=False :
       where NaN values are not ignored in the operation (results in NaN value for any period where a NaN is present)
-
 
     Returns
     -------

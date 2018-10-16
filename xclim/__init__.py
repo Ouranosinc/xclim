@@ -38,7 +38,11 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
     import types
     import warnings
 
-    out = types.ModuleType(name, doc)
+    try:
+        out = types.ModuleType(name, doc)
+    except TypeError:
+        msg = "Module '{}' is not properly formatted".format(name)
+        raise TypeError(msg)
 
     for key, obj in objs.items():
         if isinstance(obj, str) and source is not None:
@@ -52,11 +56,15 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
                 raise NotImplementedError(msg)
             elif mode == 'warn':
                 warnings.warn(msg)
+                raise Warning(msg)
 
         else:
             out.__dict__[key] = module_mappings
-            module_mappings.__module__ = 'xclim.'+name
-
+            try:
+                module_mappings.__module__ = 'xclim.'+name
+            except AttributeError:
+                msg = "{} is not a function".format(module_mappings)
+                raise AttributeError(msg)
     return out
 
 

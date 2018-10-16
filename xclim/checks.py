@@ -106,7 +106,7 @@ def valid_daily_max_min_temperature(comp, units='K'):
         valid_daily_max_temperature(tasmax, units)
         valid_daily_min_temperature(tasmin, units)
 
-        return comp(tasmin, tasmax, **kwds)
+        return comp(tasmax, tasmin, **kwds)
 
     return func
 

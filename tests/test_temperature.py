@@ -1,8 +1,9 @@
 import numpy as np
 
-from common import tas_series
-
+from xclim.testing.common import tas_series
 from xclim.temperature import TxMax, TxMin
+
+TAS_SERIES = tas_series()
 
 
 class TestTxMax:

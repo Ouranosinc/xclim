@@ -25,8 +25,9 @@ import xarray as xr
 
 from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
 
-from common import tas_series
+from xclim.testing.common import tas_series
 
+TAS_SERIES = tas_series()
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
