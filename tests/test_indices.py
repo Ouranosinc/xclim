@@ -35,7 +35,7 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
-class Test_max_n_day_precipitation_amount():
+class TestMaxNDayPrecipitationAmount:
 
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
@@ -67,7 +67,7 @@ class Test_max_n_day_precipitation_amount():
         assert rxnday.time.dt.year == 2000
 
 
-class Test_max_1day_precipitation_amount():
+class TestMax1DayPrecipitationAmount:
 
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
@@ -101,12 +101,15 @@ class Test_max_1day_precipitation_amount():
 
     # test nan behavior
     def test_nan_max(self):
+        from xclim.precip import R1Max
+
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        rx1day = xci.max_1day_precipitation_amount(a)
+        r1max = R1Max()
+        rx1day = r1max(a)
         assert np.isnan(rx1day)
 
 
-class Test_consecutive_frost_days():
+class TestConsecutiveFrostDays:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -132,7 +135,7 @@ class Test_consecutive_frost_days():
         assert cfd == 365
 
 
-class Test_cooling_degree_days():
+class TestCoolingDegreeDays:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -159,7 +162,7 @@ class Test_cooling_degree_days():
         assert cdd.description
 
 
-class Test_prcptotal():
+class TestPrcpTotal:
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -217,7 +220,7 @@ class Test_wet_days():
 class Test_daily_intensity():
     # testing of wet_day and daily_intensity, both are related
 
-    nc_file = 'testdata/NRCANdaily/nrcan_canada_daily_pr_1990.nc'
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily/nrcan_canada_daily_pr_1990.nc')
 
     def test_3d_data_with_nans(self):
 
@@ -248,8 +251,8 @@ class Test_daily_intensity():
         assert (np.isnan(di.values[0, -1, -1]))
         assert (np.isnan(dis.values[0, -1, -1]))
 
-        
-class Test_tx_min():
+
+class TestTxMin:
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -257,15 +260,10 @@ class Test_tx_min():
                                    'cell_methods': 'time: maximum within days',
                                    'units': 'K'})
 
-    def test_attrs(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        txm = xci.tx_min(a, freq='YS')
-        assert txm.cell_methods == 'time: minimum within years'
-
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip('')
-class TestTG():
+class TestTG:
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
         pass

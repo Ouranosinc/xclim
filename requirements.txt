@@ -5,4 +5,5 @@ scipy
 bottleneck
 netCDF4
 pandas
-funcsigs
+inspect2
+pint

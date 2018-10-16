@@ -6,9 +6,9 @@ __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
 __version__ = '0.6-alpha'
 
+from functools import partial
 from . import indices
 # from .stats import fit, test
-from functools import partial
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
@@ -42,11 +42,11 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
 
     for key, obj in objs.items():
         if isinstance(obj, str) and source is not None:
-            f = getattr(source, obj, None)
+            module_mappings = getattr(source, obj, None)
         else:
-            f = obj
+            module_mappings = obj
 
-        if f is None:
+        if module_mappings is None:
             msg = "{} has not been implemented.".format(obj)
             if mode == 'raise':
                 raise NotImplementedError(msg)
@@ -54,8 +54,8 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
                 warnings.warn(msg)
 
         else:
-            out.__dict__[key] = f
-            f.__module__ = 'xclim.'+name
+            out.__dict__[key] = module_mappings
+            module_mappings.__module__ = 'xclim.'+name
 
     return out
 
@@ -88,8 +88,7 @@ def __build_icclim(mode='warn'):
                'CWD': indices.consecutive_wet_days,
                # 'PRCPTOT': indices.prec_total,
                # 'RR1': indices.wet_days,
-               'DTR': indices.daily_temperature_range,
-               }
+               'DTR': indices.daily_temperature_range, }
 
     mod = build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
     sys.modules['xclim.icclim'] = mod
