@@ -3,14 +3,12 @@ import sys
 from xclim import build_module
 
 if sys.version_info < (3, 0):
-    import unittest2
-    from unittest2 import TestCase
+    import unittest2 as unittest
 else:
     import unittest
-    from unittest import TestCase
 
 
-class TestBuildModules(TestCase):
+class TestBuildModules(unittest.TestCase):
 
     def test_nonexistent_process_build_failure(self):
         name = ""
@@ -29,7 +27,4 @@ class TestBuildModules(TestCase):
 
 
 if __name__ == '__main__':
-    if sys.version_info < (3, 0):
-        unittest2.main()
-    else:
-        unittest.main()
+    unittest.main()
