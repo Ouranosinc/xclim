@@ -11,14 +11,14 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-#with open('requirements.txt') as req_file:
+# with open('requirements.txt') as req_file:
 #    requirements = req_file.read().split('\n')
 
-requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', ]
+requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', 'pint', 'inspect2']
 
 setup_requirements = ['pytest-runner', ]
 
-test_requirements = ['pytest', ]
+test_requirements = ['pytest', 'tox', ]
 
 docs_requirements = ['Sphinx', 'guzzle-sphinx-theme', ]
 

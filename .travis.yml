@@ -5,16 +5,17 @@ sudo: false
 
 matrix:
   include:
-#    - env: TOXENV=py37
-#      python: 3.7
-#      sudo: required
-#      dist: xenial
     - env:
         - TOXENV=docs
       python: 3.6
     - env:
         - TOXENV=flake8
       python: 3.6
+    - env:
+        - TOXENV=py37
+      python: 3.7
+      sudo: required
+      dist: xenial
     - env:
         - TOXENV=py36
       python: 3.6
@@ -27,6 +28,15 @@ matrix:
     - env:
         - TOXENV=py27
       python: 2.7
+  allow_failures:
+    - env:
+        - TOXENV=py37
+      python: 3.7
+      sudo: required
+      dist: xenial
+    - env:
+        - TOXENV=py34
+      python: 3.4
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
