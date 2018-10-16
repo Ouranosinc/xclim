@@ -196,7 +196,6 @@ class TestTxMin:
                                    'units': 'K'})
 
 
-@pytest.mark.skip
 class TestTxMean:
 
     def time_series(self, values):
@@ -207,12 +206,11 @@ class TestTxMean:
                                    'units': 'K'})
 
     def test_attrs(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        a = self.time_series(np.array([20, 21, 22, 23, 24]) + K2C)
         txm = xci.tx_mean(a, freq='YS')
-        assert txm.cell_methods == 'time: mean within years'
+        assert txm == 22 + K2C
 
 
-@pytest.mark.skip
 class TestTxMax:
 
     def time_series(self, values):
@@ -222,10 +220,10 @@ class TestTxMax:
                                    'cell_methods': 'time: maximum within days',
                                    'units': 'K'})
 
-    def test_attrs(self):
+    def test_simple(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         txm = xci.tx_max(a, freq='YS')
-        assert txm.cell_methods == 'time: maximum within years'
+        assert txm == 25 + K2C
 
 
 class TestTxMaxTxMinIndices:
