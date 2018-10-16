@@ -123,7 +123,7 @@ class UniInd(UnivariateIndicator):
         return da.resample(time=freq).mean()
 
 
-class TestUnivariateIndicator(tas_series):
+class TestUnivariateIndicator:
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))

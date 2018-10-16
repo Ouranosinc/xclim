@@ -46,7 +46,7 @@ class TestDateHandling:
             tg_mean(da)
 
 
-class TestMissingAnyFills(tas_series):
+class TestMissingAnyFills:
 
     def test_missing_days(self):
         a = np.arange(360.)
@@ -76,4 +76,3 @@ class TestMissingAnyFills(tas_series):
         da = xr.DataArray(np.arange(n), [('time', times)])
         miss = checks.missing_any(da, 'Q-NOV')
         np.testing.assert_array_equal(miss, [True, False, False, False, True])
-
