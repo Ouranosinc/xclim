@@ -4,11 +4,11 @@ Statistical distribution fit module
 """
 
 import dask
-import logging
+# import logging
 import xarray as xr
 from scipy import stats
 
-logging.basicConfig(filename='./log/stats.txt', filemode='w')
+# log = logging.getLogger(__name__)
 
 
 def fit(arr, dist='norm'):
@@ -21,7 +21,6 @@ def fit(arr, dist='norm'):
     dc = getattr(stats, dist, None)
     if dc is None:
         e = "Statistical distribution {} is not in scipy.stats.".format(dist)
-        logging.exception(ValueError(e))
         raise ValueError(e)
 
     # Fit the parameters (lazy computation)

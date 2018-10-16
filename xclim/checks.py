@@ -2,13 +2,10 @@ import datetime as dt
 from functools import wraps
 from warnings import warn
 import logging
-
-logging.basicConfig(filename='./logs/checks.txt', filemode='w')
-logging.captureWarnings(True)
-
 import numpy as np
 import pandas as pd
 
+logging.captureWarnings(True)
 
 # Dev notes
 # ---------
