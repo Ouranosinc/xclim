@@ -141,19 +141,7 @@ def check_is_dataarray(comp):
     return func
 
 
-def convert_temp(da, required_units='K'):
-    r"""Converts temperature units of xarray.DataArray. Defaults to Kelvin ('K')"""
-    if da.units == required_units:
-        return da
-    elif da.units == 'C' and required_units == 'K':
-        return da + 273.15
-    elif da.units == 'K' and required_units == 'C':
-        return da - 273.15
-    else:
-        raise AttributeError(da.units)
-
-
-def missing_any_fill(da, freq):
+def missing_any(da, freq):
     """Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters
