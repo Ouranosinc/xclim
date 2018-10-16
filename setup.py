@@ -57,4 +57,3 @@ setup(
     version='0.6-alpha',
     zip_safe=False,
 )
-
