@@ -2,13 +2,9 @@
 
 language: python
 sudo: false
-env:
+
 matrix:
   include:
-#    - env: TOXENV=py37
-#      python: 3.7
-#      sudo: required
-#      dist: xenial
     - env:
         - TOXENV=docs
       python: 3.6
@@ -28,6 +24,11 @@ matrix:
         - TOXENV=py27
       python: 2.7
   allow_failures:
+    - env:
+        - TOXENV=py37
+      python: 3.7
+      sudo: required
+      dist: xenial
     - env:
         - TOXENV=py34
       python: 3.4
