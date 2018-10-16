@@ -189,7 +189,7 @@ class TestPrcpTotal:
 class Test_wet_days():
     # testing of wet_day and daily_intensity, both are related
 
-    nc_file = 'testdata/NRCANdaily/nrcan_canada_daily_pr_1990.nc'
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
 
     def test_3d_data_with_nans(self):
 
@@ -222,7 +222,7 @@ class Test_wet_days():
 class Test_daily_intensity():
     # testing of wet_day and daily_intensity, both are related
 
-    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily/nrcan_canada_daily_pr_1990.nc')
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
 
     def test_3d_data_with_nans(self):
 
