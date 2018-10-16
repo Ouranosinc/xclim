@@ -7,3 +7,4 @@ netCDF4
 pandas
 inspect2
 pint
+unittest2

@@ -2,10 +2,13 @@
 """Run length algorithms module"""
 
 import numpy as np
+import logging
+from warnings import warn
+
+logging.captureWarnings(True)
+
 
 # TODO: Need to benchmark and adapt for xarray.
-
-
 def rle(arr):
     """Return the length, starting position and value of consecutive identical values.
 
@@ -35,6 +38,8 @@ def rle(arr):
     n = len(ia)
 
     if n == 0:
+        e = 'run length array empty'
+        warn(e)
         return None, None, None
 
     y = np.array(ia[1:] != ia[:-1])         # pairwise unequal (string safe)

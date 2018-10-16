@@ -1,10 +1,11 @@
 import datetime as dt
 from functools import wraps
 from warnings import warn
-
+import logging
 import numpy as np
 import pandas as pd
 
+logging.captureWarnings(True)
 
 # Dev notes
 # ---------

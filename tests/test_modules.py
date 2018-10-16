@@ -1,5 +1,11 @@
+import sys
+
 from xclim import build_module
-import unittest
+
+if sys.version_info < (3, 0):
+    import unittest2 as unittest
+else:
+    import unittest
 
 
 class TestBuildModules(unittest.TestCase):
@@ -17,7 +23,7 @@ class TestBuildModules(unittest.TestCase):
     def test_loud_build_failure(self):
         name = ""
         objs = {'k1': None, 'k2': None}
-        self.assertRaises(Warning, build_module, name, objs, mode='warn')
+        self.assertWarns(Warning, build_module, name, objs, mode='warn')
 
 
 if __name__ == '__main__':
