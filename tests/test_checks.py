@@ -3,8 +3,10 @@ import pandas as pd
 import pytest
 import xarray as xr
 from xclim.temperature import TGMean
-from tests.common import tas_series
+from xclim.testing.common import tas_series
 from xclim import checks
+
+TAS_SERIES = tas_series()
 
 
 class TestDateHandling:
