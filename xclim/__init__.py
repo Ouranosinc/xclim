@@ -36,7 +36,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
 
     """
     import types
-    from warnings import warn
+    import warnings
     import logging
 
     logging.captureWarnings(capture=True)
@@ -58,7 +58,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
             if mode == 'raise':
                 raise NotImplementedError(msg)
             elif mode == 'warn':
-                raise warn(msg)
+                warnings.warn(msg)
 
         else:
             out.__dict__[key] = module_mappings

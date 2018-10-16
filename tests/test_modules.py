@@ -1,8 +1,16 @@
+import sys
+
 from xclim import build_module
-import unittest
+
+if sys.version_info < (3, 0):
+    import unittest2
+    from unittest2 import TestCase
+else:
+    import unittest
+    from unittest import TestCase
 
 
-class TestBuildModules(unittest.TestCase):
+class TestBuildModules(TestCase):
 
     def test_nonexistent_process_build_failure(self):
         name = ""
@@ -17,8 +25,11 @@ class TestBuildModules(unittest.TestCase):
     def test_loud_build_failure(self):
         name = ""
         objs = {'k1': None, 'k2': None}
-        self.assertRaises(Warning, build_module, name, objs, mode='warn')
+        self.assertWarns(Warning, build_module, name, objs, mode='warn')
 
 
 if __name__ == '__main__':
-    unittest.main()
+    if sys.version_info < (3, 0):
+        unittest2.main()
+    else:
+        unittest.main()
