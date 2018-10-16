@@ -110,6 +110,7 @@ class TestMax1DayPrecipitationAmount:
 
 
 class TestConsecutiveFrostDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -136,6 +137,7 @@ class TestConsecutiveFrostDays:
 
 
 class TestCoolingDegreeDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -185,6 +187,7 @@ class TestPrcpTotal:
 
 
 class TestTxMin:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -193,8 +196,74 @@ class TestTxMin:
                                    'units': 'K'})
 
 
+class TestTxMean:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_attrs(self):
+        a = self.time_series(np.array([20, 21, 22, 23, 24]) + K2C)
+        txm = xci.tx_mean(a, freq='YS')
+        assert txm == 22 + K2C
+
+
+class TestTxMax:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_simple(self):
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        txm = xci.tx_max(a, freq='YS')
+        assert txm == 25 + K2C
+
+
+class TestTxMaxTxMinIndices:
+
+    def tmax_tmin_time_series(self, values):
+        coords = pd.date_range('1/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        tas_plus10 = xr.DataArray(values + 10, coords=[coords, ], dims='time',
+                                  attrs={'standard_name': 'air_temperature',
+                                         'cell_methods': 'time: maximum within days',
+                                         'units': 'K'})
+        tas_minus10 = xr.DataArray(values - 10, coords=[coords, ], dims='time',
+                                   attrs={'standard_name': 'air_temperature',
+                                          'cell_methods': 'time: minimum within days',
+                                          'units': 'K'})
+        return tas_plus10, tas_minus10
+
+    def test_static_daily_temperature_range(self):
+        temp_values = np.random.uniform(-30, 30, size=1095)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([dtr.mean()], [20])
+
+    def test_all_freeze_thaw_cycles(self):
+        temp_values = np.zeros(365)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([np.sum(ft)], [365])
+
+    def test_random_freeze_thaw_cycles(self):
+        runs = np.array([])
+        for i in range(10):
+            temp_values = np.random.uniform(-30, 30, 365)
+            tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+            ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+            runs = np.append(runs, ft)
+        np.testing.assert_allclose(np.mean(runs), 120, atol=20)
+
+
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
-@pytest.mark.skip('')
+@pytest.mark.skip
 class TestTG:
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
