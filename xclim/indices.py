@@ -23,6 +23,21 @@ ftomm = np.nan
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 def windowed_run_count_ufunc(x, window):
+    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
+    array for runs at least as long as given duration.
+
+    Parameters
+    ----------
+    x : bool array
+      Input array
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
     xr.apply_ufunc(rl.windowed_run_count,
                    x,
                    input_core_dims=[['time'], ],
