@@ -5,8 +5,6 @@ Indices module
 """
 import numpy as np
 import xarray as xr
-
-from xclim.utils import daily_downsampler
 from . import run_length as rl
 from .utils import with_attrs
 
@@ -818,25 +816,20 @@ def percentile_doy(arr, window=5, per=.1):
 
 
 @with_attrs(standard_name='wet_days', units='days', long_name='number of wet days')
-def wet_days(pr, pr_min=1., freq='YS', skipna=False):
-    r"""wet days
+def wet_days(pr, thresh=1., freq='YS'):
+    r"""Wet days
 
-    compute the number of days with precipitation over pr_min and accumulates over periods.
+    Return the total number of days during period with precipitation over threshold.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation [mm]
-    pr_min : float
+    thresh : float
       precipitation value over which a day is considered wet
     freq : str, optional
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-    skipna : str, optional
-      if True, NaN values are ignored
-      if False NaN values are expanded
-      This is used for the computation of the sum of wet days. See
-      http://xarray.pydata.org/en/stable/generated/xarray.DataArray.sum.html for details
 
 
     Returns
@@ -857,26 +850,14 @@ def wet_days(pr, pr_min=1., freq='YS', skipna=False):
 
     """
 
-    wd = (pr >= pr_min) * 1
-    wd = xr.where(np.isnan(pr), np.nan, wd)
-    wd_sum = wd.resample(time=freq).sum(dim='time', skipna=skipna)
-
-    # sum returns 0 if all nans and skipna is True
-    mask_all_nan = (wd.resample(time=freq).count(dim='time') == 0)
-    wd_sum = xr.where(mask_all_nan, np.nan, wd_sum)
-
-    # add details about wet days definition
-    wd_sum['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
-
-    return wd_sum
+    wd = (pr >= thresh) * 1
+    return wd.resample(time=freq).sum(dim='time')
 
 
-@with_attrs(standard_name='daily_intensity', long_name='daily intensity over wet days')
-def daily_intensity(pr, pr_min=1., freq='YS', skipna=False):
-    r"""daily intensity
+def daily_intensity(pr, thresh=1., freq='YS'):
+    r"""Average daily precipitation intensity
 
-    compute simple daily intensity index by averaging the precipitation over wet_days
-    for a given period
+    Return the average precipitation over wet days.
 
     Parameters
     ----------
@@ -908,21 +889,17 @@ def daily_intensity(pr, pr_min=1., freq='YS', skipna=False):
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.
 
     >>> pr = xr.open_dataset('pr.day.nc')
-    >>> daily_int = daily_intensity(pr, pr_min = 5., freq="QS-DEC")
+    >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
 
     """
 
     # put pr=0 for non wet-days
-    pr_wd = xr.where(pr >= pr_min, pr, 0)
+    pr_wd = xr.where(pr >= thresh, pr, 0)
 
     # sum over wanted period
-    s = pr_wd.resample(time=freq).sum(dim='time', skipna=skipna)
+    s = pr_wd.resample(time=freq).sum(dim='time')
+
     # get number of wet_days over period
-    wd = wet_days(pr, pr_min=pr_min, freq=freq, skipna=skipna)
-    output = s / wd
+    wd = wet_days(pr, thresh=thresh, freq=freq)
 
-    # set units, and name attributes
-    output = output.rename('daily_intensity')
-    output.attrs['details'] = 'wet day defined as a day with pr >= {:5.2f} mm'.format(pr_min)
-
-    return output
+    return s / wd

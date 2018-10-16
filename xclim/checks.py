@@ -4,7 +4,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-
+import xarray as xr
 
 # Dev notes
 # ---------
@@ -159,4 +159,5 @@ def missing_any(da, freq):
     c = da.notnull().resample(time=freq).sum(dim='time')
     p = c.indexes['time'].to_period()
     n = (p.end_time - p.start_time).days + 1
-    return c != n
+    nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
+    return c != nda
