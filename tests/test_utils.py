@@ -25,7 +25,7 @@ import xarray as xr
 
 from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
 
-from common import tas_series
+from tests.common import tas_series
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
@@ -123,7 +123,7 @@ class UniInd(UnivariateIndicator):
         return da.resample(time=freq).mean()
 
 
-class TestUnivariateIndicator:
+class TestUnivariateIndicator(tas_series):
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))

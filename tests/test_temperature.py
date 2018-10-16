@@ -1,11 +1,11 @@
 import numpy as np
 
-from common import tas_series
+from tests.common import tas_series
 
 from xclim.temperature import TxMax, TxMin
 
 
-class TestTxMax:
+class TestTxMax(tas_series):
 
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
@@ -13,7 +13,7 @@ class TestTxMax:
         tx_obj(ts, freq='Y')
 
 
-class TestTxMin:
+class TestTxMin(tas_series):
 
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
