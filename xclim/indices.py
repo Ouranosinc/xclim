@@ -5,8 +5,14 @@ Indices module
 """
 import numpy as np
 import xarray as xr
+from warnings import warn
+import logging
+
 from . import run_length as rl
 from .utils import with_attrs
+
+logging.basicConfig(level=logging.DEBUG)
+logging.captureWarnings(True)
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -218,7 +224,8 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
       Resampling frequency
     """
     if np.all(pr, freq) or thresh:  # Added bunk variable call to satisfy the PEP8 overlords
-        pass
+        e = "function not implemented: {}".format(consecutive_frost_days.__name__)
+        warn(e)
     raise NotImplementedError
 
 
@@ -709,12 +716,14 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     # unit conversion as needed
     if units == 'kg m-2 s-1':
         # convert from km m-2 s-1 to mm day-1
+        e = 'units converted from [kg m-2 s-1] to [mm day-1]'
+        warn(e)
         output *= 86400  # number of sec in 24h
     elif units == 'mm':
         # nothing to do
         pass
     else:
-        raise RuntimeError('non conform units')
+        raise RuntimeError('non-conforming units')
     return output
 
 
