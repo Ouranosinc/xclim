@@ -5,7 +5,6 @@ Indices module
 """
 import numpy as np
 import xarray as xr
-
 from warnings import warn
 import logging
 
@@ -823,3 +822,93 @@ def percentile_doy(arr, window=5, per=.1):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
     return p
+
+
+@with_attrs(standard_name='wet_days', units='days', long_name='number of wet days')
+def wet_days(pr, thresh=1., freq='YS'):
+    r"""Wet days
+
+    Return the total number of days during period with precipitation over threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm]
+    thresh : float
+      precipitation value over which a day is considered wet
+    freq : str, optional
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+
+    Returns
+    -------
+    xarray.DataArray
+      The number of wet days for each period [day]
+
+    Notes
+    -----
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the number days
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> wd = wet_days(pr, pr_min = 5., freq="QS-DEC")
+
+    """
+
+    wd = (pr >= thresh) * 1
+    return wd.resample(time=freq).sum(dim='time')
+
+
+def daily_intensity(pr, thresh=1., freq='YS'):
+    r"""Average daily precipitation intensity
+
+    Return the average precipitation over wet days.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm]
+    pr_min : float
+      precipitation value over which a day is considered wet
+    freq : str, optional
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+    skipna : str, optional
+      if True, NaN values are ignored
+      if False NaN values are expanded
+      This is used for the computation of the sum of wet days. See
+      http://xarray.pydata.org/en/stable/generated/xarray.DataArray.sum.html for details
+
+    Returns
+    -------
+    xarray.DataArray
+      The average precipitation over wet days for each period
+
+    Notes
+    -----
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the average
+    precipitation fallen over days with precipitation >= 5 mm at seasonal
+    frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
+
+    """
+
+    # put pr=0 for non wet-days
+    pr_wd = xr.where(pr >= thresh, pr, 0)
+
+    # sum over wanted period
+    s = pr_wd.resample(time=freq).sum(dim='time')
+
+    # get number of wet_days over period
+    wd = wet_days(pr, thresh=thresh, freq=freq)
+
+    return s / wd

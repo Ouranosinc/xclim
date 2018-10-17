@@ -25,9 +25,10 @@ import xarray as xr
 
 from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
 
-from xclim.testing.common import tas_series
+from xclim.testing.common import tas_series, pr_series
 
 TAS_SERIES = tas_series()
+PR_SERIES = pr_series()
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
@@ -112,7 +113,7 @@ class TestDailyDownsampler:
             assert (np.allclose(x2.values, target))
 
 
-class UniInd(UnivariateIndicator):
+class UniIndTemp(UnivariateIndicator):
     identifier = 'tmin'
     units = 'K'
     required_units = 'K'
@@ -124,22 +125,44 @@ class UniInd(UnivariateIndicator):
         return da.resample(time=freq).mean()
 
 
+class UniIndPr(UnivariateIndicator):
+    identifier = 'prmax'
+    units = 'kg m-2 s-1'
+    required_units = 'kg m-2 s-1'
+
+    def compute(self, da, freq):
+        return da.resample(time=freq).mean()
+
+
 class TestUnivariateIndicator:
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))
-        ind = UniInd()
+        ind = UniIndTemp()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within years'
 
-    def test_unit_conversion(self, tas_series):
+    def test_temp_unit_conversion(self, tas_series):
         a = tas_series(np.arange(360))
-        ind = UniInd()
+        ind = UniIndTemp()
         txk = ind(a, freq='YS')
+
+        ind.required_units = 'degC'
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
         np.testing.assert_array_almost_equal(txk, txc+273.15)
+
+    def test_pr_unit_conversion(self, pr_series):
+        a = pr_series(np.arange(360))
+        ind = UniIndPr()
+        txk = ind(a, freq='YS')
+
+        ind.required_units = 'mm/day'
+        ind.units = 'mm'
+        txm = ind(a, freq='YS')
+
+        np.testing.assert_array_almost_equal(txk, txm/86400)
 
 
 class TestKwargs:
