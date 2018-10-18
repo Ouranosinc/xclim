@@ -24,37 +24,38 @@ xclim
         :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
         :alt: CodeFactor
 
-.. image:: https://readthedocs.org/projects/xclim/badge/?version=latest
-        :target: https://xclim.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/xclim/badge
+        :target: https://xclim.readthedocs.io/en/latest
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/bird-house/birdhouse-docs/blob/master/LICENSE
         :alt: License
 
-``xclim`` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with little to no boilerplate.
+``xclim`` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with very little boilerplate.
 
-For example, the following would compute seasonal mean temperature from daily mean temperature:
+For example, the following would compute monthly mean temperature from daily mean temperature:
 
 .. code-block:: python
 
   import xclim
   import xarray as xr
   ds = xr.open_dataset(filename)
-  tg = xclim.icclim.TG(ds, freq='QS-DEC')
+  tg = xclim.icclim.TG(ds.tas, freq='YS')
+
+For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.  
+
+``xclim`` is in intense development at the moment and is absolutely not production ready. We're aiming for an alpha release in December 2019. If you're interested in participating to the development, please leave us a message on the issue tracker. 
 
 
 * Free software: Apache Software License 2.0
 * Documentation: https://xclim.readthedocs.io.
 
 
-Features
---------
-
-* TODO
-
 Credits
 -------
+
+This work is made possible by the Canadian Center for Climate Services. 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
