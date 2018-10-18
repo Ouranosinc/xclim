@@ -27,6 +27,7 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
+from xclim.testing.common import pr_series
 
 xr.set_options(enable_cftimeindex=True)
 
@@ -162,6 +163,23 @@ class TestCoolingDegreeDays:
         assert cdd.long_name == 'cooling degree days'
         assert cdd.units == 'K*day'
         assert cdd.description
+
+
+class TestMaximumConsecutiveDryDays:
+
+    def test_simple(self, pr_series):
+        a = np.zeros(365) + 10
+        a[5:15] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(pr, freq='M')
+        assert out[0] == 10
+
+    def test_run_start_at_0(self, pr_series):
+        a = np.zeros(365) + 10
+        a[:10] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(pr, freq='M')
+        assert out[0] == 10
 
 
 class TestPrcpTotal:

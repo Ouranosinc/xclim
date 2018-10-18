@@ -52,6 +52,29 @@ def windowed_run_count_ufunc(x, window):
                    keep_attrs=True,
                    kwargs={'window': window})
 
+
+def longest_run_ufunc(x):
+    """Dask-parallel version of longest_run, ie the maximum number of consecutive true values in
+    array.
+
+    Parameters
+    ----------
+    x : bool array
+      Input array
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
+    xr.apply_ufunc(rl.longest_run,
+                   x,
+                   input_core_dims=[['time'], ],
+                   vectorize=True,
+                   dask='parallelized',
+                   output_dtypes=[np.int, ],
+                   keep_attrs=True,
+                   )
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
@@ -157,6 +180,30 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     return c.resample(time=freq).sum(dim='time')
 
 
+def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
+    r"""Maximum number of consecutive dry days
+
+    Return the maximum number of consecutive days within the period where precipitation
+    is below a certain threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [mm]
+    thresh : float
+      Threshold precipitation on which to base evaluation [mm]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive dry days.
+
+    """
+    return rl.xr_longest_run(pr < thresh, freq)
+
+
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
     r"""Maximum number of consecutive frost days (Tmin < 0℃).
 
@@ -189,27 +236,10 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     where run_l returns the length of each consecutive series of true values.
 
     """
-
-    # TODO: Deal with start and end boundaries
-    # TODO: Check that input array has no missing dates (holes)
-
-    # Create an monotonously increasing index [0,1,2,...] along the time dimension.
-    i = xr.DataArray(np.arange(tasmin.time.size), dims='time')
-    ind = xr.broadcast(i, tasmin)[0]
-
-    # Mask index  values where tasmin > K2C
-    d = ind.where(tasmin > K2C)
-
-    # Fill NaNs with the following valid value
-    b = d.bfill(dim='time')
-
-    # Find the difference between start and end indices
-    d = b.diff(dim='time') - 1
-
-    return d.resample(time=freq).max(dim='time')
+    return rl.xr_longest_run(tasmin < K2C, freq)
 
 
-def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
+def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
