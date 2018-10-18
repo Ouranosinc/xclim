@@ -27,9 +27,13 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
+from xclim.testing.common import tas_series, tasmax_series, tasmin_series
 
 xr.set_options(enable_cftimeindex=True)
 
+TAS_SERIES = tas_series
+TASMAX_SERIES = tasmax_series
+TASMIN_SERIES = tasmin_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
@@ -155,16 +159,17 @@ class TestCoolingDegreeDays:
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
-    def test_attrs(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        cdd = xci.cooling_degree_days(a)
-        assert cdd.standard_name == 'cooling_degree_days'
-        assert cdd.long_name == 'cooling degree days'
-        assert cdd.units == 'K*day'
-        assert cdd.description
+
+class TestGrowingDegreeDays:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[0] = K2C + 5  # default thresh at 4
+        da = tas_series(a)
+        assert xci.growing_degree_days(da)[0] == 1
 
 
 class TestPrcpTotal:
+
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -295,3 +300,6 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
+
+# x = Test_frost_days()
+# print('done')

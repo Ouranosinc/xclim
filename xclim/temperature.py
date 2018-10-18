@@ -11,10 +11,36 @@ from .utils import UnivariateIndicator
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 
-class TGMean(UnivariateIndicator):
+class Tas(UnivariateIndicator):
+    """Class for univariate indices using mean daily temperature as the input."""
+    required_units = 'K'
+
+    def cfprobe(self, da):
+        checks.check_valid(da, 'cell_methods', 'time: mean within days')
+        checks.check_valid(da, 'standard_name', 'air_temperature')
+
+
+class Tasmin(UnivariateIndicator):
+    """Class for univariate indices using min daily temperature as the input."""
+    required_units = 'K'
+
+    def cfprobe(self, da):
+        checks.check_valid(da, 'cell_methods', 'time: minimum within days')
+        checks.check_valid(da, 'standard_name', 'air_temperature')
+
+
+class Tasmax(UnivariateIndicator):
+    """Class for univariate indices using max daily temperature as the input."""
+    required_units = 'K'
+
+    def cfprobe(self, da):
+        checks.check_valid(da, 'cell_methods', 'time: maximum within days')
+        checks.check_valid(da, 'standard_name', 'air_temperature')
+
+
+class TGMean(Tas):
     identifier = 'tg_mean'
     units = 'K'
-    required_units = 'K'
     long_name = "{freq} mean temperature"
     standard_name = "{freq} mean temperature"
     description = "{freq} of daily mean temperature."
@@ -23,17 +49,9 @@ class TGMean(UnivariateIndicator):
     def compute(self, da, freq='YS'):
         return _ind.tg_mean(da, freq)
 
-    def validate(self, da):
-        checks.assert_daily(da)
 
-    def cfprobe(self, da):
-        checks.check_valid(da, 'cell_methods', 'time: mean within days')
-        checks.check_valid(da, 'standard_name', 'air_temperature')
-
-
-class TxMax(UnivariateIndicator):
+class TxMax(Tasmax):
     identifier = 'tx_max'
-    units = 'K'
     required_units = 'K'
     long_name = 'Maximum temperature'
     standard_name = 'tasmax'
@@ -43,31 +61,17 @@ class TxMax(UnivariateIndicator):
     def compute(self, da, freq='YS'):
         return _ind.tx_max(da, freq)
 
-    def cfprobe(self, da):
-        checks.check_valid(da, 'cell_methods', 'time: maximum within days')
-        checks.check_valid(da, 'standard_name', 'air_temperature')
 
-    def validate(self, da):
-        checks.assert_daily(da)
-
-    def missing(self, da, freq):
-        """An aggregated value is missing if any value in the group is missing."""
-        g = da.notnull().resample(time=freq)
-        return g.sum(dim='time')
-
-
-class ColdSpellDurationIndex(UnivariateIndicator):
+class ColdSpellDurationIndex(Tasmin):
+    identifier = 'cold_spell_duration'
     standard_name = 'cold_spell_duration_index'
     units = 'days'
-
-    def cfprobe(self, da):
-        checks.check_valid(da, 'cell_methods', 'time: minimum within days')
 
     def compute(self, da, tn10, freq='YS'):
         _ind.cold_spell_duration_index(da, tn10, freq)
 
 
-class TxMin(TxMax):
+class TxMin(Tasmax):
     identifier = 'tx_min'
     long_name = 'Minimum maximum temperature'
     standard_name = 'tx_min'
@@ -76,3 +80,31 @@ class TxMin(TxMax):
 
     def compute(self, da, freq='YS'):
         return _ind.tx_min(da, freq)
+
+
+class CoolingDegreeDays(Tas):
+    identifier = 'cooling_dd'
+    long_name = 'cooling degree days above {thresh}'
+    standard_name = 'cooling degree days above {thresh}'
+    units = 'K days'
+
+    def compute(self, da, thresh=18, freq='YS'):
+        return _ind.cooling_degree_days(da, thresh, freq)
+
+
+class FrostDays(Tasmin):
+    identifier = 'frost_days'
+    long_name = 'number of days below 0C'
+    standard_name = 'number of frost days'
+    units = 'days'
+
+    def compute(self, da, freq='YS'):
+        return _ind.frost_days(da, freq)
+
+
+class GrowingDegreeDays(Tas):
+    identifier = 'growing_degree_days'
+    units = 'K days'
+
+    def compute(self, da, thresh=4, freq='YS'):
+        return _ind.growing_degree_days(da, thresh, freq)
