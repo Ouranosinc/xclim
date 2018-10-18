@@ -163,7 +163,7 @@ class UnivariateIndicator(object):
     def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        pass
+        checks.assert_daily(da)
 
     def decorate(self, da):
         """Modify output's attributes in place.

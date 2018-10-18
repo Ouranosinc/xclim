@@ -27,6 +27,7 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
+from xclim.testing.common import tas_series, tasmax_series, tasmin_series
 
 xr.set_options(enable_cftimeindex=True)
 
@@ -154,6 +155,14 @@ class TestCoolingDegreeDays:
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
+
+
+class TestGrowingDegreeDays:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[0] = K2C + 5  # default thresh at 4
+        da = tas_series(a)
+        assert xci.growing_degree_days(da)[0] == 1
 
 
 class TestPrcpTotal:

@@ -9,7 +9,6 @@ from warnings import warn
 import logging
 
 from . import run_length as rl
-from .utils import with_attrs
 
 logging.basicConfig(level=logging.DEBUG)
 logging.captureWarnings(True)
@@ -224,7 +223,7 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
       Resampling frequency
     """
     if np.all(pr, freq) or thresh:  # Added bunk variable call to satisfy the PEP8 overlords
-        e = "function not implemented: {}".format(consecutive_frost_days.__name__)
+        e = "function not implemented: {}".format(consecutive_wet_days.__name__)
         warn(e)
     raise NotImplementedError
 
