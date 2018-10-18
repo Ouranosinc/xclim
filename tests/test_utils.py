@@ -23,14 +23,17 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.utils import daily_downsampler
-from xclim.indices import format_kwargs
+from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
 
+from xclim.testing.common import tas_series, pr_series
+
+TAS_SERIES = tas_series()
+PR_SERIES = pr_series()
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
-class Test_daily_downsampler():
+class TestDailyDownsampler:
 
     def test_std_calendar(self):
 
@@ -110,9 +113,63 @@ class Test_daily_downsampler():
             assert (np.allclose(x2.values, target))
 
 
-def test_format_kwargs():
-    attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
-                 cell_methods='time: minimum within {freq}')
+class UniIndTemp(UnivariateIndicator):
+    identifier = 'tmin'
+    units = 'K'
+    required_units = 'K'
+    long_name = '{freq} mean surface temperature'
+    standard_name = '{freq} mean temperature'
+    cell_methods = 'time: mean within {freq}'
 
-    format_kwargs(attrs, {'freq': 'YS'})
-    assert attrs['cell_methods'] == 'time: minimum within years'
+    def compute(self, da, freq):
+        return da.resample(time=freq).mean()
+
+
+class UniIndPr(UnivariateIndicator):
+    identifier = 'prmax'
+    units = 'kg m-2 s-1'
+    required_units = 'kg m-2 s-1'
+
+    def compute(self, da, freq):
+        return da.resample(time=freq).mean()
+
+
+class TestUnivariateIndicator:
+
+    def test_attrs(self, tas_series):
+        a = tas_series(np.arange(360))
+        ind = UniIndTemp()
+        txm = ind(a, freq='YS')
+        assert txm.cell_methods == 'time: mean within years'
+
+    def test_temp_unit_conversion(self, tas_series):
+        a = tas_series(np.arange(360))
+        ind = UniIndTemp()
+        txk = ind(a, freq='YS')
+
+        ind.required_units = 'degC'
+        ind.units = 'degC'
+        txc = ind(a, freq='YS')
+
+        np.testing.assert_array_almost_equal(txk, txc+273.15)
+
+    def test_pr_unit_conversion(self, pr_series):
+        a = pr_series(np.arange(360))
+        ind = UniIndPr()
+        txk = ind(a, freq='YS')
+
+        ind.required_units = 'mm/day'
+        ind.units = 'mm'
+        txm = ind(a, freq='YS')
+
+        np.testing.assert_array_almost_equal(txk, txm/86400)
+
+
+class TestKwargs:
+
+    def test_format_kwargs(self):
+        attrs = dict(standard_name='tx_min', long_name='Minimum of daily maximum temperature',
+                     cell_methods='time: minimum within {freq}')
+
+        format_kwargs(attrs, {'freq': 'YS'})
+        assert attrs['cell_methods'] == 'time: minimum within years'

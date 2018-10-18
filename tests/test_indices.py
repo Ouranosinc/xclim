@@ -35,7 +35,7 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
-class Test_max_n_day_precipitation_amount():
+class TestMaxNDayPrecipitationAmount:
 
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
@@ -67,7 +67,7 @@ class Test_max_n_day_precipitation_amount():
         assert rxnday.time.dt.year == 2000
 
 
-class Test_max_1day_precipitation_amount():
+class TestMax1DayPrecipitationAmount:
 
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
@@ -101,12 +101,16 @@ class Test_max_1day_precipitation_amount():
 
     # test nan behavior
     def test_nan_max(self):
+        from xclim.precip import R1Max
+
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        rx1day = xci.max_1day_precipitation_amount(a)
+        r1max = R1Max()
+        rx1day = r1max(a)
         assert np.isnan(rx1day)
 
 
-class Test_consecutive_frost_days():
+class TestConsecutiveFrostDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -132,7 +136,8 @@ class Test_consecutive_frost_days():
         assert cfd == 365
 
 
-class Test_cooling_degree_days():
+class TestCoolingDegreeDays:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -150,72 +155,9 @@ class Test_cooling_degree_days():
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
-    def test_attrs(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        cdd = xci.cooling_degree_days(a)
-        assert cdd.standard_name == 'cooling_degree_days'
-        assert cdd.long_name == 'cooling degree days'
-        assert cdd.units == 'K*day'
-        assert cdd.description
 
+class TestPrcpTotal:
 
-class Test_frost_days():
-    nc_file = 'testdata/NRCANdaily/nrcan_canada_daily_tasmin_1990.nc'
-
-    def test_3d_data_with_nans(self):
-        # test with 3d data
-        tasmin = xr.open_dataset(self.nc_file).tasmin
-        # put a nan somewhere
-        tasmin.values[180, 1, 0] = np.nan
-
-        # compute with both skipna options
-        thresh = 273.16
-        fd = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=False)
-        fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
-
-        x1 = tasmin.values[:, 0, 0]
-        x2 = tasmin.values[:, 1, 0]
-
-        fd1 = (x1[x1 < thresh]).size
-        fd2 = (x2[x2 < thresh]).size
-
-        assert (np.allclose(fd1, fd.values[0, 0, 0]))
-        assert (np.allclose(fd1, fds.values[0, 0, 0]))
-        assert (np.isnan(fd.values[0, 1, 0]))
-        assert (np.allclose(fd2, fds.values[0, 1, 0]))
-        assert (np.isnan(fd.values[0, -1, -1]))
-        assert (np.isnan(fds.values[0, -1, -1]))
-
-
-class Test_growing_degree_days():
-    nc_file = 'testdata/NRCANdaily/nrcan_canada_daily_tasmax_1990.nc'
-
-    def test_3d_data_with_nans(self):
-        # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
-        # put a nan somewhere
-        tas.values[180, 1, 0] = np.nan
-
-        # compute with both skipna options
-        thresh = 277.16
-        gdd = xci.growing_degree_days(tas, thresh=thresh, freq='YS', skipna=False)
-        gdds = xci.growing_degree_days(tas, thresh=thresh, freq='YS', skipna=True)
-
-        x1 = tas.values[:, 0, 0]
-        x2 = tas.values[:, 1, 0]
-
-        gdd1 = (x1[x1 > thresh] - thresh).sum()
-        gdd2 = (x2[x2 > thresh] - thresh).sum()
-
-        assert (np.allclose(gdd1, gdd.values[0, 0, 0]))
-        assert (np.allclose(gdd1, gdds.values[0, 0, 0]))
-        assert (np.isnan(gdd.values[0, 1, 0]))
-        assert (np.allclose(gdd2, gdds.values[0, 1, 0]))
-        assert (np.isnan(gdd.values[0, -1, -1]))
-        assert (np.isnan(gdds.values[0, -1, -1]))
-
-
-class Test_prcptotal():
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -237,7 +179,18 @@ class Test_prcptotal():
         assert (np.allclose(target, out_std.values))
 
 
-class Test_tx_min():
+class TestTxMin:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+
+class TestTxMean:
+
     def time_series(self, values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
@@ -246,14 +199,65 @@ class Test_tx_min():
                                    'units': 'K'})
 
     def test_attrs(self):
+        a = self.time_series(np.array([20, 21, 22, 23, 24]) + K2C)
+        txm = xci.tx_mean(a, freq='YS')
+        assert txm == 22 + K2C
+
+
+class TestTxMax:
+
+    def time_series(self, values):
+        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(values, coords=[coords, ], dims='time',
+                            attrs={'standard_name': 'air_temperature',
+                                   'cell_methods': 'time: maximum within days',
+                                   'units': 'K'})
+
+    def test_simple(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
-        txm = xci.tx_min(a, freq='YS')
-        assert txm.cell_methods == 'time: minimum within years'
+        txm = xci.tx_max(a, freq='YS')
+        assert txm == 25 + K2C
+
+
+class TestTxMaxTxMinIndices:
+
+    def tmax_tmin_time_series(self, values):
+        coords = pd.date_range('1/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
+        tas_plus10 = xr.DataArray(values + 10, coords=[coords, ], dims='time',
+                                  attrs={'standard_name': 'air_temperature',
+                                         'cell_methods': 'time: maximum within days',
+                                         'units': 'K'})
+        tas_minus10 = xr.DataArray(values - 10, coords=[coords, ], dims='time',
+                                   attrs={'standard_name': 'air_temperature',
+                                          'cell_methods': 'time: minimum within days',
+                                          'units': 'K'})
+        return tas_plus10, tas_minus10
+
+    def test_static_daily_temperature_range(self):
+        temp_values = np.random.uniform(-30, 30, size=1095)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([dtr.mean()], [20])
+
+    def test_all_freeze_thaw_cycles(self):
+        temp_values = np.zeros(365)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_equal([np.sum(ft)], [365])
+
+    def test_random_freeze_thaw_cycles(self):
+        runs = np.array([])
+        for i in range(10):
+            temp_values = np.random.uniform(-30, 30, 365)
+            tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+            ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+            runs = np.append(runs, ft)
+        np.testing.assert_allclose(np.mean(runs), 120, atol=20)
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
-@pytest.mark.skip('')
-class TestTG():
+@pytest.mark.skip
+class TestTG:
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
         pass
