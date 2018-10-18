@@ -114,8 +114,56 @@ def xr_longest_run(da, freq):
 
     # Find the longest run by period - but it does not work if all values are True.
     run = diff_ind.resample(time=freq).max(dim='time')
+    return run
     g = da.resample(time=freq)
     return run.where(~g.all(dim='time'), g.count(dim='time'))
 
 
+def windowed_run_count_ufunc(x, window):
+    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
+    array for runs at least as long as given duration.
 
+    Parameters
+    ----------
+    x : bool array
+      Input array
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
+    return xr.apply_ufunc(windowed_run_count,
+                          x,
+                          input_core_dims=[['time'], ],
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.int, ],
+                          keep_attrs=True,
+                          kwargs={'window': window})
+
+
+def longest_run_ufunc(x):
+    """Dask-parallel version of longest_run, ie the maximum number of consecutive true values in
+    array.
+
+    Parameters
+    ----------
+    x : bool array
+      Input array
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
+    return xr.apply_ufunc(longest_run,
+                          x,
+                          input_core_dims=[['time'], ],
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.int, ],
+                          keep_attrs=True,
+                          )

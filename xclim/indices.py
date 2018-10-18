@@ -27,54 +27,7 @@ ftomm = np.nan
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
-def windowed_run_count_ufunc(x, window):
-    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
-    array for runs at least as long as given duration.
 
-    Parameters
-    ----------
-    x : bool array
-      Input array
-    window : int
-      Minimum duration of consecutive run to accumulate values.
-
-    Returns
-    -------
-    out : func
-      A function operating along the time dimension of a dask-array.
-    """
-    xr.apply_ufunc(rl.windowed_run_count,
-                   x,
-                   input_core_dims=[['time'], ],
-                   vectorize=True,
-                   dask='parallelized',
-                   output_dtypes=[np.int, ],
-                   keep_attrs=True,
-                   kwargs={'window': window})
-
-
-def longest_run_ufunc(x):
-    """Dask-parallel version of longest_run, ie the maximum number of consecutive true values in
-    array.
-
-    Parameters
-    ----------
-    x : bool array
-      Input array
-
-    Returns
-    -------
-    out : func
-      A function operating along the time dimension of a dask-array.
-    """
-    xr.apply_ufunc(rl.longest_run,
-                   x,
-                   input_core_dims=[['time'], ],
-                   vectorize=True,
-                   dask='parallelized',
-                   output_dtypes=[np.int, ],
-                   keep_attrs=True,
-                   )
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
@@ -139,7 +92,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
     return tasmin.pipe(lambda x: x - tn10) \
         .resample(time=freq) \
-        .apply(windowed_run_count_ufunc, window=window)
+        .apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -150,7 +103,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     over = tas < K2C + thresh
     group = over.resample(time=freq)
 
-    return group.apply(windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
@@ -201,7 +154,8 @@ def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
       The maximum number of consecutive dry days.
 
     """
-    return rl.xr_longest_run(pr < thresh, freq)
+    group = (pr < thresh).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
@@ -236,7 +190,8 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     where run_l returns the length of each consecutive series of true values.
 
     """
-    return rl.xr_longest_run(tasmin < K2C, freq)
+    group = (tasmin < K2C).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
 def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
@@ -253,10 +208,8 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     freq : str, optional
       Resampling frequency
     """
-    if np.all(pr, freq) or thresh:  # Added bunk variable call to satisfy the PEP8 overlords
-        e = "function not implemented: {}".format(consecutive_frost_days.__name__)
-        warn(e)
-    raise NotImplementedError
+    group = (pr > thresh).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
 @with_attrs(standard_name='cooling_degree_days', long_name='cooling degree days', units='K*day')
@@ -410,7 +363,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 
-    return group.apply(windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def heating_degree_days(tas, freq='YS', thresh=17):
