@@ -30,6 +30,32 @@ units.add_context(hydro)
 units.enable_contexts(hydro)
 
 
+def get_daily_events(da, da_value, operator):
+    r"""
+    function that returns a 0/1 mask when a condtion is True or False
+
+    the function returns 1 where operator(da, da_value) is True
+                         0 where operator(da, da_value) is False
+                         nan where da is nan
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+    da_value : float
+    operator : string
+
+
+    Returns
+    -------
+    xarray.DataArray
+
+    """
+    events = operator(da, da_value) * 1
+    events = events.where(~np.isnan(da))
+    events = events.rename('events')
+    return events
+
+
 def daily_downsampler(da, freq='YS'):
     r"""Daily climate data downsampler
 
@@ -137,7 +163,7 @@ class UnivariateIndicator(object):
     def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        pass
+        checks.assert_daily(da)
 
     def decorate(self, da):
         """Modify output's attributes in place.

@@ -34,3 +34,14 @@ class DailyIntensity(UnivariateIndicator):
 
     def compute(self, da, thresh=1, freq='YS'):
         return _ind.daily_intensity(da, thresh, freq)
+
+
+class MaxNDayPrecipitationAmount(UnivariateIndicator):
+    identifier = 'max_n_day_precipitation_amount'
+    standard_name = 'maximum_{window}_day_total_precipitation'
+    long_name = 'maximum {window} day total precipitation',
+    units = 'mm'
+    required_units = 'mm/day'
+
+    def compute(self, da, window=5, freq='YS'):
+        return _ind.max_n_day_precipitation_amount(da, window, freq)
