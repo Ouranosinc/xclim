@@ -25,7 +25,7 @@ xclim
         :alt: CodeFactor
 
 .. image:: https://readthedocs.org/projects/xclim/badge
-        :target: https://xclim.readthedocs.io/en
+        :target: https://xclim.readthedocs.io/en/latest
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
