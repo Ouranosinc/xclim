@@ -24,8 +24,8 @@ xclim
         :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
         :alt: CodeFactor
 
-.. image:: https://readthedocs.org/projects/xclim/badge/?version=latest
-        :target: https://xclim.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/xclim/badge
+        :target: https://xclim.readthedocs.io/en
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
