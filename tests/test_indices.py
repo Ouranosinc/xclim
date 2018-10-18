@@ -31,6 +31,9 @@ from xclim.testing.common import tas_series, tasmax_series, tasmin_series
 
 xr.set_options(enable_cftimeindex=True)
 
+TAS_SERIES = tas_series
+TASMAX_SERIES = tasmax_series
+TASMIN_SERIES = tasmin_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
