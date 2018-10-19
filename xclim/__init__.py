@@ -6,9 +6,9 @@ __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
 __version__ = '0.6-alpha'
 
+from functools import partial
 from . import indices
 # from .stats import fit, test
-from functools import partial
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
@@ -37,16 +37,23 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
     """
     import types
     import warnings
+    import logging
 
-    out = types.ModuleType(name, doc)
+    logging.captureWarnings(capture=True)
+
+    try:
+        out = types.ModuleType(name, doc)
+    except TypeError:
+        msg = "Module '{}' is not properly formatted".format(name)
+        raise TypeError(msg)
 
     for key, obj in objs.items():
         if isinstance(obj, str) and source is not None:
-            f = getattr(source, obj, None)
+            module_mappings = getattr(source, obj, None)
         else:
-            f = obj
+            module_mappings = obj
 
-        if f is None:
+        if module_mappings is None:
             msg = "{} has not been implemented.".format(obj)
             if mode == 'raise':
                 raise NotImplementedError(msg)
@@ -54,9 +61,12 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
                 warnings.warn(msg)
 
         else:
-            out.__dict__[key] = f
-            f.__module__ = 'xclim.'+name
-
+            out.__dict__[key] = module_mappings
+            try:
+                module_mappings.__module__ = 'xclim.'+name
+            except AttributeError:
+                msg = "{} is not a function".format(module_mappings)
+                raise AttributeError(msg)
     return out
 
 
@@ -85,11 +95,10 @@ def __build_icclim(mode='warn'):
                'ID': indices.ice_days,
                'HD17': indices.heating_degree_days,
                # 'CDD': indices.consecutive_dry_days,
-               'CWD': indices.consecutive_wet_days,
+               'CWD': indices.maximum_consecutive_wet_days,
                # 'PRCPTOT': indices.prec_total,
                # 'RR1': indices.wet_days,
-               'DTR': indices.daily_temperature_range,
-               }
+               'DTR': indices.daily_temperature_range, }
 
     mod = build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
     sys.modules['xclim.icclim'] = mod

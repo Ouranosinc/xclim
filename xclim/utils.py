@@ -1,7 +1,62 @@
+# -*- coding: utf-8 -*-
+
+"""
+xclim xarray.DataArray utilities module
+"""
+
 import numpy as np
 import xarray as xr
 import pandas as pd
 import time
+import six
+from functools import wraps
+import pint
+from . import checks
+from inspect2 import signature
+
+units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
+units.define(pint.unit.UnitDefinition('percent', '%', (),
+             pint.converters.ScaleConverter(0.01)))
+
+# Define commonly encountered units not defined by pint
+units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
+             '= degreeN')
+units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
+hydro = pint.Context('hydro')
+hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
+                         lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
+                         lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3))
+units.add_context(hydro)
+units.enable_contexts(hydro)
+
+
+def get_daily_events(da, da_value, operator):
+    r"""
+    function that returns a 0/1 mask when a condtion is True or False
+
+    the function returns 1 where operator(da, da_value) is True
+                         0 where operator(da, da_value) is False
+                         nan where da is nan
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+    da_value : float
+    operator : string
+
+
+    Returns
+    -------
+    xarray.DataArray
+
+    """
+    events = operator(da, da_value) * 1
+    events = events.where(~np.isnan(da))
+    events = events.rename('events')
+    return events
 
 
 def daily_downsampler(da, freq='YS'):
@@ -71,6 +126,9 @@ def daily_downsampler(da, freq='YS'):
     # return groupby according to tags
     return buffer.groupby('tags')
 
+
+class UnivariateIndicator(object):
+    r"""xclim indicator class"""
 
 def get_ev_length(ev, verbose=1, method=2):
     r"""Function computing event length
@@ -228,47 +286,151 @@ class Indicator(object):
     standard_name = ''
     description = ''
     keywords = ''
+    cell_methods = ''
 
-    def compute(self, *args, **kwds):
+    _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
+                      'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
+                      'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
+
+    def compute(self, da, *args, **kwds):
         """Index computation method. To be subclassed"""
         raise NotImplementedError
 
-    def convert_units(self, *args):
+    def convert_units(self, da):
         """Return DataArray with correct units, defined by `self.required_units`."""
-        raise NotImplementedError
+        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
+        tu = units.parse_units(self.required_units.replace('-', '**-'))
+        if fu != tu:
+            b = da.copy()
+            b.values = (da.values * fu).to(tu, 'hydro')
+            return b
 
-    def cfprobe(self, *args):
+        return da
+
+    def cfprobe(self, da):
         """Check input data compliance to expectations.
         Warn of potential issues."""
-        raise NotImplementedError
+        pass
 
-    def validate(self, *args):
+    def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        raise NotImplementedError
+        checks.assert_daily(da)
 
     def decorate(self, da):
-        """Modify output's attributes in place."""
-        da.attrs.update(self.attrs)
+        """Modify output's attributes in place.
 
-    def missing(self, *args, **kwds):
-        """Return boolean DataArray . To be subclassed"""
-        raise NotImplementedError
+        If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
+        """
+
+        attrs = {}
+        for key, val in self.attrs.items():
+            mba = {}
+            # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
+            for k, v in self._ba.arguments.items():
+                if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
+                    mba[k] = '{' + v + '}'
+                else:
+                    mba[k] = v
+
+            attrs[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
+
+        da.attrs.update(attrs)
+
+    def missing(self, da, **kwds):
+        """Return boolean DataArray."""
+        return checks.missing_any(da, kwds['freq'])
 
     def __init__(self):
         # Extract DataArray arguments from compute signature.
         self.attrs = {'long_name': self.long_name,
                       'units': self.units,
-                      'standard_name': self.standard_name
+                      'standard_name': self.standard_name,
+                      'cell_methods': self.cell_methods,
                       }
 
     def __call__(self, *args, **kwds):
-        self.validate(*args)
-        self.cfprobe(*args)
+        # Bind call arguments
+        self._ba = signature(self.compute).bind(*args, **kwds)
+        self._ba.apply_defaults()
 
-        cargs = self.convert_units(*args)
+        self.validate(args[0])
+        self.cfprobe(args[0])
 
-        out = self.compute(*cargs, **kwds)
+        da = self.convert_units(args[0])
+
+        out = self.compute(da, *args[1:], **kwds).rename(self.identifier.format(self._ba.arguments))
+
         self.decorate(out)
 
-        return out.where(self.missing(*cargs, freq=kwds['freq']))  # Won't work if keyword is passed as positional arg.
+        # The missing method should be given the same `freq` as compute. It will be in args or kwds if given
+        # explicitly, but if not, we pass the default from `compute`.
+        return out.where(~self.missing(**self._ba.arguments))
+
+
+def first_paragraph(txt):
+    r"""Return the first paragraph of a text
+
+    Parameters
+    ----------
+    txt : str
+    """
+    return txt.split('\n\n')[0]
+
+
+def format_kwargs(attrs, params):
+    """Modify attribute with argument values.
+
+    Parameters
+    ----------
+    attrs : dict
+      Attributes to be assigned to function output. The values of the attributes in braces will be replaced the
+      the corresponding args values.
+    params : dict
+      A BoundArguments.arguments dictionary storing a function's arguments.
+    """
+    attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
+                     'long_name': {'YS': 'Annual', 'MS': 'Monthly'}}
+
+    for key, val in attrs.items():
+        mba = {}
+        # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
+        for k, v in params.items():
+            if isinstance(v, six.string_types) and v in attrs_mapping.get(key, {}).keys():
+                mba[k] = '{' + v + '}'
+            else:
+                mba[k] = v
+
+        attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
+
+
+def with_attrs(**func_attrs):
+    r"""Set attributes in the decorated function at definition time,
+    and assign these attributes to the function output at the
+    execution time.
+
+    Note
+    ----
+    Assumes the output has an attrs dictionary attribute (e.g. xarray.DataArray).
+    """
+
+    def attr_decorator(fn):
+        # Use the docstring as the description attribute.
+        func_attrs['description'] = first_paragraph(fn.__doc__)
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            out = fn(*args, **kwargs)
+            # Bind the arguments
+            ba = signature(fn).bind(*args, **kwargs)
+            format_kwargs(func_attrs, ba.arguments)
+            out.attrs.update(func_attrs)
+            return out
+
+        # Assign the attributes to the function itself
+        for attr, value in func_attrs.items():
+            setattr(wrapper, attr, value)
+
+        return wrapper
+
+    return attr_decorator
