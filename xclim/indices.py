@@ -26,30 +26,6 @@ ftomm = np.nan
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
-def windowed_run_count_ufunc(x, window):
-    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
-    array for runs at least as long as given duration.
-
-    Parameters
-    ----------
-    x : bool array
-      Input array
-    window : int
-      Minimum duration of consecutive run to accumulate values.
-
-    Returns
-    -------
-    out : func
-      A function operating along the time dimension of a dask-array.
-    """
-    xr.apply_ufunc(rl.windowed_run_count,
-                   x,
-                   input_core_dims=[['time'], ],
-                   vectorize=True,
-                   dask='parallelized',
-                   output_dtypes=[np.int, ],
-                   keep_attrs=True,
-                   kwargs={'window': window})
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
@@ -115,7 +91,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
     return tasmin.pipe(lambda x: x - tn10) \
         .resample(time=freq) \
-        .apply(windowed_run_count_ufunc, window=window)
+        .apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -126,7 +102,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     over = tas < K2C + thresh
     group = over.resample(time=freq)
 
-    return group.apply(windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
@@ -154,6 +130,31 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
 
     c = (c1 * c2) * 1
     return c.resample(time=freq).sum(dim='time')
+
+
+def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
+    r"""Maximum number of consecutive dry days
+
+    Return the maximum number of consecutive days within the period where precipitation
+    is below a certain threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [mm]
+    thresh : float
+      Threshold precipitation on which to base evaluation [mm]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive dry days.
+
+    """
+    group = (pr < thresh).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
@@ -188,27 +189,11 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     where run_l returns the length of each consecutive series of true values.
 
     """
-
-    # TODO: Deal with start and end boundaries
-    # TODO: Check that input array has no missing dates (holes)
-
-    # Create an monotonously increasing index [0,1,2,...] along the time dimension.
-    i = xr.DataArray(np.arange(tasmin.time.size), dims='time')
-    ind = xr.broadcast(i, tasmin)[0]
-
-    # Mask index  values where tasmin > K2C
-    d = ind.where(tasmin > K2C)
-
-    # Fill NaNs with the following valid value
-    b = d.bfill(dim='time')
-
-    # Find the difference between start and end indices
-    d = b.diff(dim='time') - 1
-
-    return d.resample(time=freq).max(dim='time')
+    group = (tasmin < K2C).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
-def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
+def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
@@ -222,10 +207,8 @@ def consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     freq : str, optional
       Resampling frequency
     """
-    if np.all(pr, freq) or thresh:  # Added bunk variable call to satisfy the PEP8 overlords
-        e = "function not implemented: {}".format(consecutive_wet_days.__name__)
-        warn(e)
-    raise NotImplementedError
+    group = (pr > thresh).resample(time=freq)
+    return group.apply(rl.longest_run_ufunc)
 
 
 def cooling_degree_days(tas, thresh=18, freq='YS'):
@@ -378,7 +361,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 
-    return group.apply(windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def heating_degree_days(tas, freq='YS', thresh=17):

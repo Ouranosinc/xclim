@@ -27,13 +27,15 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim.testing.common import tas_series, tasmax_series, tasmin_series
+from xclim.testing.common import tas_series, tasmax_series, tasmin_series, pr_series
+
 
 xr.set_options(enable_cftimeindex=True)
 
 TAS_SERIES = tas_series
 TASMAX_SERIES = tasmax_series
 TASMIN_SERIES = tasmin_series
+PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
@@ -133,7 +135,6 @@ class TestConsecutiveFrostDays:
         cfd = xci.consecutive_frost_days(a)
         assert cfd == 0
 
-    @pytest.mark.skip("This is probably badly defined anyway...")
     def test_all_year_freeze(self):
         a = self.time_series(np.zeros(365) + K2C - 10)
         cfd = xci.consecutive_frost_days(a)
@@ -166,6 +167,23 @@ class TestGrowingDegreeDays:
         a[0] = K2C + 5  # default thresh at 4
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
+
+
+class TestMaximumConsecutiveDryDays:
+
+    def test_simple(self, pr_series):
+        a = np.zeros(365) + 10
+        a[5:15] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(pr, freq='M')
+        assert out[0] == 10
+
+    def test_run_start_at_0(self, pr_series):
+        a = np.zeros(365) + 10
+        a[:10] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(pr, freq='M')
+        assert out[0] == 10
 
 
 class TestPrcpTotal:

@@ -95,7 +95,7 @@ def __build_icclim(mode='warn'):
                'ID': indices.ice_days,
                'HD17': indices.heating_degree_days,
                # 'CDD': indices.consecutive_dry_days,
-               'CWD': indices.consecutive_wet_days,
+               'CWD': indices.maximum_consecutive_wet_days,
                # 'PRCPTOT': indices.prec_total,
                # 'RR1': indices.wet_days,
                'DTR': indices.daily_temperature_range, }
