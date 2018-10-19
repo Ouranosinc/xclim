@@ -86,6 +86,8 @@ def longest_run(arr):
     return np.where(v, rl, 0).max()
 
 
+# DO NOT USE #
+# This function does not work for some corner cases.
 def xr_longest_run(da, freq):
     """Return the length of the longest run of true values along the time dimension.
 
@@ -114,7 +116,8 @@ def xr_longest_run(da, freq):
 
     # Find the longest run by period - but it does not work if all values are True.
     run = diff_ind.resample(time=freq).max(dim='time')
-    return run
+
+    # Replace periods where all values are true by the item count
     g = da.resample(time=freq)
     return run.where(~g.all(dim='time'), g.count(dim='time'))
 
