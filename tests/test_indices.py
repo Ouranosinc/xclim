@@ -284,6 +284,16 @@ class TestTxMaxTxMinIndices:
             runs = np.append(runs, ft)
         np.testing.assert_allclose(np.mean(runs), 120, atol=20)
 
+class TestWarmDaysFrequency:
+
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[100:110] = 31
+        a[120:130] = 31
+        da = tasmax(a)
+        wdf = xci.warm_days_frequency(tasmax, freq = 'MS')
+        print(wdf)
+        1/0
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip

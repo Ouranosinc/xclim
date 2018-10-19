@@ -15,10 +15,10 @@ logging.captureWarnings(True)
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-if six.PY2:
-    from funcsigs import signature
-elif six.PY3:
-    from inspect import signature
+# if six.PY2:
+#     from funcsigs import signature
+# elif six.PY3:
+#     from inspect import signature
 
 from xclim.utils import get_ev_length
 from xclim.utils import get_ev_end
@@ -343,11 +343,13 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
-                        window=3, freq='YS'):
+                        window=3, freq='YS', use_rl = True, **kwds):
     #Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
-    Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
+    Number of heat wave over a given period. A heat wave is defined as an event
+    of un number days with tasmin and tasmax over thresh_tasmin and thresh_tasmax
+    respectively. That number of days has to be greater or equal to window.
 
     Parameters
     ----------
@@ -373,7 +375,9 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     """
 
     ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    ev_l = get_ev_length(ev)
+    if use_rl:
+        ev_l =
+    ev_l = get_ev_length(ev, **kwds)
     # only keep events as long as window
     ev = ev.where((ev == 1) & (ev_l >= window), 0)
 
@@ -381,11 +385,11 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     ev_end = get_ev_end(ev)
 
     # sum events over period
-    hwf = ev_end.resample(time=freq).sum()
+    hwf = ev_end.resample(time=freq).sum(dim='time')
     return hwf
 
 
-@valid_daily_max_temperature
+#@valid_daily_max_temperature
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     r"""Heat wave index.
 

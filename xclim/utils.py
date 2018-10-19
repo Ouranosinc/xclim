@@ -225,6 +225,25 @@ def get_ev_length(ev, verbose=1, method=2):
                     if z % 500 == 0:
                         msg = 'in get_ev_lenght {:}/{:}'.format(z, nz)
                         print(msg)
+        elif method == 3:
+            def toto(v):
+                u, ind = np.unique(v, return_index=True)
+                i0 = 0
+                d = np.zeros_like(v)
+                for i in ind:
+                    ll = i = i0
+                    d[i0:i] = ll
+                    i0 = i
+                d[i:] = d.size - i
+                return d
+
+            ev_l =  xr.apply_ufunc(toto,
+                 diff_cumsum,
+                 input_core_dims=[['time'], ],
+                 vectorize=True,
+                 dask='parallelized',
+                 output_dtypes=[np.int, ],
+                 keep_attrs=True)
 
         if verbose:
             print('loop in get_ev_length done in {:10.2f}s'.format(time.time() - time0))
