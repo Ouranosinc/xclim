@@ -3,10 +3,11 @@
 """
 Indices module
 """
+import logging
+from warnings import warn
+
 import numpy as np
 import xarray as xr
-from warnings import warn
-import logging
 
 from . import run_length as rl
 
@@ -233,7 +234,7 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
     r"""Mean of daily temperature range."""
 
-    dtr = abs(tasmax - tasmin)
+    dtr = tasmax - tasmin
     return dtr.resample(time=freq).mean(dim='time')
 
 
