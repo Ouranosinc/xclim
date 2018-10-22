@@ -16,6 +16,10 @@ matrix:
       python: 3.7
       sudo: required
       dist: xenial
+      addons:
+        apt:
+            packages:
+                - libnetcdf-c++4
     - env:
         - TOXENV=py36
       python: 3.6
@@ -34,9 +38,15 @@ matrix:
       python: 3.7
       sudo: required
       dist: xenial
+      addons:
+          apt:
+              packages:
+              - libnetcdf-c++4
     - env:
         - TOXENV=py34
       python: 3.4
+
+before_install:
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
