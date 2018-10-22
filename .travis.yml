@@ -46,8 +46,6 @@ matrix:
         - TOXENV=py34
       python: 3.4
 
-before_install:
-
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - pip install -U tox-travis
