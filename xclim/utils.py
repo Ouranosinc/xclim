@@ -13,22 +13,23 @@ from functools import wraps
 import pint
 from . import checks
 from inspect2 import signature
+import dask
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
 units.define(pint.unit.UnitDefinition('percent', '%', (),
-             pint.converters.ScaleConverter(0.01)))
+                                      pint.converters.ScaleConverter(0.01)))
 
 # Define commonly encountered units not defined by pint
 units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
              '= degreeN')
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
 hydro = pint.Context('hydro')
-hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
-                         lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3))
+                         lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
-                         lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3))
+                         lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3))
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
@@ -130,7 +131,8 @@ def daily_downsampler(da, freq='YS'):
 class UnivariateIndicator(object):
     r"""xclim indicator class"""
 
-def get_ev_length(ev, verbose=1, method=2):
+
+def get_ev_length(ev, verbose=1, method=2, timing=True, using_dask_loop=True):
     r"""Function computing event length
 
     :param ev: xarray DataArray
@@ -156,9 +158,14 @@ def get_ev_length(ev, verbose=1, method=2):
     # inspire/copy of :
     # https://stackoverflow.com/questions/45886518/identify-consecutive-same-values-in-pandas-dataframe-with-a-groupby
     """
+    # TODO: when using the using_dask_loop=True option, transpose dimension to be identical to input DataArray
 
     # make sure we have a time dimension
     assert ('time' in ev.dims)
+
+    # echo option values to output
+    if verbose:
+        print('get_ev_lenght options : method={:}, using_dask_loop={:}'.format(method, using_dask_loop))
 
     # create mask of event change, 1 if no change and 0 otherwise
     # fill first value with 1
@@ -176,80 +183,85 @@ def get_ev_length(ev, verbose=1, method=2):
     # make cumulative sum
     diff_cumsum = ev_diff.cumsum(dim='time')
 
+    # define method of treating vectors of events
+    # tests suggest method2 is faster, followed by method3
+    # method1 is noticeably slower ...
+    #
+    def method1(v):
+        # using the pd.Series.value_counts()
+        s = pd.Series(v)
+        d = s.map(s.value_counts())
+        return d
+
+    def method2(v):
+        # using np.unique
+        useless, ind = np.unique(v, return_index=True)
+        i0 = 0
+        d = np.zeros_like(v)
+        for i in ind:
+            ll = i - i0
+            d[i0:i] = ll
+            i0 = i
+        d[i:] = d.size - i
+        return d
+
+    def method3(v):
+        # variation of method2
+        useless, ind = np.unique(v, return_index=True)
+        ind = np.append(ind, v.size)
+        dur = np.diff(ind)
+        d = np.zeros_like(v)
+        im = 0
+        for idur, id in enumerate(ind[1:]):
+            d[im:id] = dur[idur]
+            im = id
+        return d
+
+    vec_method = {1: method1, 2: method2, 3: method3}[method]
+
+    if timing: time0 = time.time()
     # treatment depends on number fo dimensions
     if ev.ndim == 1:
         ev_l = ev.copy()
         v = diff_cumsum.values
-        s = pd.Series(v)
-        d = s.map(s.value_counts())
-        ev_l.values[:] = d
+        ev_l.values = vec_method(v)
         return ev_l
     else:
+        #
+        # two way to loop the arrays. Using dask is noticeably faster.
+        #
+        if not using_dask_loop:
+            # multidimension case
+            #
+            # reshape in 2D to simplify loop using stack
+            #
+            non_time_dims = [d for d in diff_cumsum.dims if d != 'time']
+            mcumsum = diff_cumsum.stack(z=non_time_dims)
+            nz = mcumsum.sizes['z']
 
-        # reshape in 2D to simplify loop
-        non_time_dims = [d for d in diff_cumsum.dims if d != 'time']
-        mcumsum = diff_cumsum.stack(z=non_time_dims)
-        nz = mcumsum.sizes['z']
-        time0 = time.time()
+            # prepare output
+            ev_l = mcumsum.copy()
 
-        # prepare output
-        ev_l = mcumsum.copy()
-
-        # loop and try different methods. Method 2 seems faster by 50%
-
-        if verbose:
-            print('get_ev_lenght method {:}'.format(method))
-        if method == 1:
+            # loop on stacked array
             for z in range(nz):
                 v = mcumsum.isel(z=z).values
-                s = pd.Series(v)
-                d = s.map(s.value_counts())
-                ev_l.isel(z=z).values[:] = d
-                if verbose == 1:
-                    if z % 500 == 0:
-                        msg = 'in get_ev_lenght {:}/{:}'.format(z, nz)
-                        print(msg)
-        elif method == 2:
-            for z in range(nz):
-                v = mcumsum.isel(z=z).values
-                u, ind = np.unique(v, return_index=True)
-                i0 = 0
-                d = np.zeros_like(v)
-                for i in ind:
-                    ll = i - i0
-                    d[i0:i] = ll
-                    i0 = i
-                d[i:] = d.size - i
-                ev_l.isel(z=z).values[:] = d
-                if verbose == 1:
-                    if z % 500 == 0:
-                        msg = 'in get_ev_lenght {:}/{:}'.format(z, nz)
-                        print(msg)
-        elif method == 3:
-            def toto(v):
-                u, ind = np.unique(v, return_index=True)
-                i0 = 0
-                d = np.zeros_like(v)
-                for i in ind:
-                    ll = i = i0
-                    d[i0:i] = ll
-                    i0 = i
-                d[i:] = d.size - i
-                return d
+                ll = vec_method(v)
+                ev_l.isel(z=z).values[:] = ll
 
-            ev_l =  xr.apply_ufunc(toto,
-                 diff_cumsum,
-                 input_core_dims=[['time'], ],
-                 vectorize=True,
-                 dask='parallelized',
-                 output_dtypes=[np.int, ],
-                 keep_attrs=True)
+            # go back to original shape and return event length
+            ev_l = ev_l.unstack('z')
+        else:
 
-        if verbose:
-            print('loop in get_ev_length done in {:10.2f}s'.format(time.time() - time0))
+            # loop with apply_along_axis
+            data = dask.array.apply_along_axis(vec_method, diff_cumsum.get_axis_num('time'),
+                                               diff_cumsum).compute()
+            diff_cumsum.values = data
 
-        # go back to original shape and return event length
-        ev_l = ev_l.unstack('z')
+            ev_l = diff_cumsum
+
+        if timing:
+            print('timing for get_ev_length done in {:10.2f}s'.format(time.time() - time0))
+
         return ev_l
 
 

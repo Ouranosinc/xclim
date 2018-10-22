@@ -375,8 +375,8 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     """
 
     ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    if use_rl:
-        ev_l =
+    #if use_rl:
+    #    ev_l =
     ev_l = get_ev_length(ev, **kwds)
     # only keep events as long as window
     ev = ev.where((ev == 1) & (ev_l >= window), 0)
