@@ -235,6 +235,14 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     return dtr.resample(time=freq).mean(dim='time')
 
 
+def extreme_temperature_range(tasmax, tasmin, freq='YS'):
+    r"""Extreme intra-period temperature range."""
+
+    tx_max = tasmax.resample(time=freq).max(dim='time')
+    tn_min = tasmin.resample(time=freq).min(dim='time')
+    return [tx_max - tn_min]
+
+
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     r"""First day consistently exceeding threshold temperature.
 
