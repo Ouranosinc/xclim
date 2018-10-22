@@ -225,14 +225,23 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
     """
+
     ft = (tasmin < K2C) * (tasmax > K2C) * 1
     return ft.resample(time=freq).sum(dim='time')
 
 
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
     r"""Mean of daily temperature range."""
-    dtr = tasmax - tasmin
+
+    dtr = abs(tasmax - tasmin)
     return dtr.resample(time=freq).mean(dim='time')
+
+
+def variable_daily_temperature_range(tasmax, tasmin, freq="YS"):
+    r"""Mean absolute day-to-day variation in daily temperature range"""
+
+    vdtr = abs((tasmax - tasmin).diff(dim='time'))
+    return vdtr.resample(time=freq).mean(dim='time')
 
 
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
@@ -253,6 +262,7 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
       Resampling frequency
 
     """
+
     i = xr.DataArray(np.arange(tas.time.size), dims='time')
     ind = xr.broadcast(i, tas)[0]
 

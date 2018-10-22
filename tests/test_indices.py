@@ -269,6 +269,13 @@ class TestTxMaxTxMinIndices:
         dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
         np.testing.assert_array_equal([dtr.mean()], [20])
 
+    def test_static_variable_daily_temperature_range(self):
+        temp_values = np.random.uniform(-30, 30, size=1095)
+        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        vdtr = xci.variable_daily_temperature_range(tasmax, tasmin, freq="YS")
+        np.testing.assert_array_less([vdtr.mean()], [10])
+        np.testing.assert_array_less([0], [vdtr.mean()])
+
     def test_all_freeze_thaw_cycles(self):
         temp_values = np.zeros(365)
         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
