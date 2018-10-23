@@ -8,8 +8,7 @@ class R1Max(UnivariateIndicator):
     units = 'mm'
     required_units = 'mm'
 
-    def compute(self, da, freq='YS'):
-        return _ind.max_1day_precipitation_amount(da, freq)
+    compute = _ind.max_1day_precipitation_amount
 
 
 class WetDays(UnivariateIndicator):
@@ -20,8 +19,7 @@ class WetDays(UnivariateIndicator):
     long_name = 'number of wet days per period'
     description = 'Number of days with daily precipitation over {thresh} mm'
 
-    def compute(self, da, thresh=1, freq='YS'):
-        return _ind.wet_days(da, thresh, freq)
+    compute =_ind.wet_days
 
 
 class DailyIntensity(UnivariateIndicator):
@@ -32,8 +30,7 @@ class DailyIntensity(UnivariateIndicator):
     required_units = 'mm/day'
     description = "Average precipitation for days with daily precipitation over {thresh} mm"
 
-    def compute(self, da, thresh=1, freq='YS'):
-        return _ind.daily_intensity(da, thresh, freq)
+    compute = _ind.daily_intensity
 
 
 class MaxNDayPrecipitationAmount(UnivariateIndicator):
@@ -43,5 +40,4 @@ class MaxNDayPrecipitationAmount(UnivariateIndicator):
     units = 'mm'
     required_units = 'mm/day'
 
-    def compute(self, da, window=5, freq='YS'):
-        return _ind.max_n_day_precipitation_amount(da, window, freq)
+    compute = _ind.max_n_day_precipitation_amount

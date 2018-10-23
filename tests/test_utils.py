@@ -121,8 +121,7 @@ class UniIndTemp(UnivariateIndicator):
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
 
-    def compute(self, da, freq):
-        return da.resample(time=freq).mean()
+    compute = lambda da, freq: da.resample(time=freq).mean()
 
 
 class UniIndPr(UnivariateIndicator):
@@ -130,8 +129,7 @@ class UniIndPr(UnivariateIndicator):
     units = 'kg m-2 s-1'
     required_units = 'kg m-2 s-1'
 
-    def compute(self, da, freq):
-        return da.resample(time=freq).mean()
+    compute = lambda da, freq: da.resample(time=freq).mean()
 
 
 class TestUnivariateIndicator:

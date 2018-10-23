@@ -9,7 +9,7 @@ import six
 from functools import wraps
 import pint
 from . import checks
-from inspect2 import signature
+from inspect import signature
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -125,7 +125,12 @@ def daily_downsampler(da, freq='YS'):
 
 
 class UnivariateIndicator(object):
-    r"""xclim indicator class"""
+    r"""Univariate indicator
+
+    This class needs to be subclassed by individual indicator classes defining metadata information, compute and
+    missing functions.
+
+    """
 
     identifier = ''
     units = ''
@@ -140,9 +145,20 @@ class UnivariateIndicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
-    def compute(self, da, *args, **kwds):
-        """Index computation method. To be subclassed"""
-        raise NotImplementedError
+    compute = lambda x: None  # signature: (da, *args, freq='Y', **kwds)
+    missing = checks.missing_any  # signature: (da, freq='Y')
+
+    def __init__(self):
+        # Extract DataArray arguments from compute signature.
+        self.attrs = {'long_name': self.long_name,
+                      'units': self.units,
+                      'standard_name': self.standard_name,
+                      'cell_methods': self.cell_methods,
+                      }
+
+        self.sig = signature(self.__class__.compute)
+        self._parameters = tuple(self.sig.parameters.keys())
+
 
     def convert_units(self, da):
         """Return DataArray with correct units, defined by `self.required_units`."""
@@ -165,7 +181,7 @@ class UnivariateIndicator(object):
         Raise error if conditions are not met."""
         checks.assert_daily(da)
 
-    def decorate(self, da):
+    def decorate(self, da, args={}):
         """Modify output's attributes in place.
 
         If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
@@ -175,7 +191,7 @@ class UnivariateIndicator(object):
         for key, val in self.attrs.items():
             mba = {}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-            for k, v in self._ba.arguments.items():
+            for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{' + v + '}'
                 else:
@@ -185,35 +201,40 @@ class UnivariateIndicator(object):
 
         da.attrs.update(attrs)
 
-    def missing(self, da, **kwds):
-        """Return boolean DataArray."""
-        return checks.missing_any(da, kwds['freq'])
-
-    def __init__(self):
-        # Extract DataArray arguments from compute signature.
-        self.attrs = {'long_name': self.long_name,
-                      'units': self.units,
-                      'standard_name': self.standard_name,
-                      'cell_methods': self.cell_methods,
-                      }
-
     def __call__(self, *args, **kwds):
-        # Bind call arguments
-        self._ba = signature(self.compute).bind(*args, **kwds)
-        self._ba.apply_defaults()
+        # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
+        # argument.
+        ba = self.sig.bind(*args, **kwds)
+        ba.apply_defaults()
 
-        self.validate(args[0])
-        self.cfprobe(args[0])
+        # Assume the first argument is always the DataArray.
+        da = ba.arguments.pop(self._parameters[0])
 
-        da = self.convert_units(args[0])
+        # Pre-computation validation checks
+        self.validate(da)
+        self.cfprobe(da)
 
-        out = self.compute(da, *args[1:], **kwds).rename(self.identifier.format(self._ba.arguments))
+        # Convert units if necessary
+        da = self.convert_units(da)
 
-        self.decorate(out)
+        # Compute the indicator values, ignoring NaNs.
+        out = self.__class__.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
 
-        # The missing method should be given the same `freq` as compute. It will be in args or kwds if given
-        # explicitly, but if not, we pass the default from `compute`.
-        return out.where(~self.missing(**self._ba.arguments))
+        # Set metadata attributes to the output according to class attributes.
+        self.decorate(out, ba.arguments)
+
+        # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
+        mba = signature(self.__class__.missing).bind(da, **ba.arguments)
+
+        # Mask results that do not meet criteria defined by the `missing` method.
+        return out.where(~self.__class__.missing(**mba.arguments))
+
+    @property
+    def json(self):
+        attrs = 'identifier', 'units', 'long_name', 'standard_name', 'description', 'keywords'
+        out = {key: getattr(self, key) for key in attrs}
+
+        return out
 
 
 def first_paragraph(txt):

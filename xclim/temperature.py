@@ -46,8 +46,7 @@ class TGMean(Tas):
     description = "{freq} of daily mean temperature."
     keywords = ''
 
-    def compute(self, da, freq='YS'):
-        return _ind.tg_mean(da, freq)
+    compute = _ind.tg_mean
 
 
 class TxMax(Tasmax):
@@ -58,8 +57,7 @@ class TxMax(Tasmax):
     description = 'Maximum daily maximum temperature.'
     keywords = ''
 
-    def compute(self, da, freq='YS'):
-        return _ind.tx_max(da, freq)
+    compute = _ind.tx_max
 
 
 class ColdSpellDurationIndex(Tasmin):
@@ -67,8 +65,7 @@ class ColdSpellDurationIndex(Tasmin):
     standard_name = 'cold_spell_duration_index'
     units = 'days'
 
-    def compute(self, da, tn10, freq='YS'):
-        _ind.cold_spell_duration_index(da, tn10, freq)
+    compute = _ind.cold_spell_duration_index
 
 
 class TxMin(Tasmax):
@@ -78,8 +75,7 @@ class TxMin(Tasmax):
     description = 'Minimum daily maximum temperature over the period'
     cell_methods = 'time: minimum within {freq}'
 
-    def compute(self, da, freq='YS'):
-        return _ind.tx_min(da, freq)
+    compute = _ind.tx_min
 
 
 class CoolingDegreeDays(Tas):
@@ -88,8 +84,7 @@ class CoolingDegreeDays(Tas):
     standard_name = 'cooling degree days above {thresh}'
     units = 'K days'
 
-    def compute(self, da, thresh=18, freq='YS'):
-        return _ind.cooling_degree_days(da, thresh, freq)
+    compute = _ind.cooling_degree_days
 
 
 class FrostDays(Tasmin):
@@ -98,13 +93,11 @@ class FrostDays(Tasmin):
     standard_name = 'number of frost days'
     units = 'days'
 
-    def compute(self, da, freq='YS'):
-        return _ind.frost_days(da, freq)
+    compute = _ind.frost_days
 
 
 class GrowingDegreeDays(Tas):
     identifier = 'growing_degree_days'
     units = 'K days'
 
-    def compute(self, da, thresh=4, freq='YS'):
-        return _ind.growing_degree_days(da, thresh, freq)
+    compute = _ind.growing_degree_days
