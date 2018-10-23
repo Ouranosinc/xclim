@@ -158,6 +158,7 @@ class UnivariateIndicator(object):
 
         self.sig = signature(self.__class__.compute)
         self._parameters = tuple(self.sig.parameters.keys())
+        self.__doc__ = self.compute.__doc__
 
 
     def convert_units(self, da):
@@ -231,11 +232,42 @@ class UnivariateIndicator(object):
 
     @property
     def json(self):
+        """Return a dictionary representation of the class.
+
+        Notes
+        -----
+        This is meant to be used by a third-party library wanting to wrap this class into another interface. 
+
+        """
         attrs = 'identifier', 'units', 'long_name', 'standard_name', 'description', 'keywords'
         out = {key: getattr(self, key) for key in attrs}
-
+        out['parameters'] = {key: p.default for (key, p) in self.sig.parameters.items()}
+        out.update(parse_doc(self))
         return out
 
+
+def parse_doc(obj):
+    """Crude regex parsing."""
+    import re
+
+    sections = obj.__doc__.split('\n\n')
+
+    patterns = {'returns': '^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
+                'notes': '^\s+Note.\n\s+----.*\n(.*)'}
+
+    out = {}
+    for i, sec in enumerate(sections):
+        if i == 0:
+            out['description'] = sec.strip()
+        elif i == 1:
+            out['abstract'] = sec.strip()
+        else:
+            for key, pat in patterns.items():
+                m = re.match(pat, sec)
+                if m:
+                    out[key] = m.groups()[0]
+
+    return out
 
 def first_paragraph(txt):
     r"""Return the first paragraph of a text
