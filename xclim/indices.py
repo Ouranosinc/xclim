@@ -343,8 +343,8 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
-                        window=3, freq='YS', use_rl = True, **kwds):
-    #Dev note : we should decide if it is deg K or C
+                        window=3, freq='YS', use_rl=True, **kwds):
+    # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
     Number of heat wave over a given period. A heat wave is defined as an event
@@ -369,15 +369,13 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
 
     Returns
     -------
-    DataArray
-      Heat wave frequency.
+    xarray.DataArray
+      Number of heatwave at the wanted frequency
 
     """
 
     ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    #if use_rl:
-    #    ev_l =
-    ev_l = get_ev_length(ev, **kwds)
+    ev_l = get_ev_length(ev)
     # only keep events as long as window
     ev = ev.where((ev == 1) & (ev_l >= window), 0)
 
@@ -389,7 +387,7 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     return hwf
 
 
-#@valid_daily_max_temperature
+# @valid_daily_max_temperature
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     r"""Heat wave index.
 
@@ -830,7 +828,7 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
 
 
 def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin=22,
-                                                          thresh_tasmax=30, freq='YS'):
+                                                   thresh_tasmax=30, freq='YS'):
     r"""Frequency days with hot maximum and minimum temperature
 
         Return the number of days with tasmin > thresh_tasmin
@@ -853,6 +851,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
     return events.resample(time=freq).sum(dim='time')
 
+
 def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     r"""Frequency of extreme warm nights
 
@@ -870,7 +869,6 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     """
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
-
 
 
 def percentile_doy(arr, window=5, per=.1):

@@ -132,23 +132,29 @@ class UnivariateIndicator(object):
     r"""xclim indicator class"""
 
 
-def get_ev_length(ev, verbose=1, method=2, timing=True, using_dask_loop=True):
-    r"""Function computing event length
+def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True):
+    r"""Function computing event/non-event length
 
-    :param ev: xarray DataArray
-       multi dimensional array with time dimension and different values
-       for different events
-    verbose : int
-      verbose flag, 1 makes the function verbose
-    method : int
-      two method of computing are in the code. Method 2 is faster by 50%
-      but keeping method 1 in case.
+    Parameters
+    ----------
+    ev : xarray.DataArray
+       array of 0/1 values indicating events/non-events with time dimension
+    verbose : Logical
+       make the program verbose
+    method : int, optional
+       choice of method to do the computing. See comments in code.
+    timing : logical, optional
+       if True print timing information
+    using_dask_loop : logical, optional
+       if True code uses dask to loop the array
 
-    :return: xarray DataArray
-       Array with lengths of each event sequence
+    Returns
+    -------
+    xarray.DataArray
+       array containing length of every event/non-event sequences
 
-
-    e.g
+    Note
+    ----
 
     with input = [0,0,1,1,1,0,0,1,1,1,1], output = [2,2,3,3,3,2,2,4,4,4,4]
          input = [0,1,1,2,2,0,0,0], output = [1,2,2,2,2,3,3,3]

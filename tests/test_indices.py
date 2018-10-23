@@ -29,7 +29,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.testing.common import tas_series, tasmax_series, tasmin_series, pr_series
 
-
 xr.set_options(enable_cftimeindex=True)
 
 TAS_SERIES = tas_series
@@ -110,7 +109,7 @@ class TestMax1DayPrecipitationAmount:
         from xclim.precip import R1Max
 
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        r1max = R1Max()
+        r1max = R1Max
         rx1day = r1max(a)
         assert np.isnan(rx1day)
 
@@ -169,6 +168,29 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+class TestHeatWaveFrequency:
+
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        # some hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30)
+        assert (np.allclose(hwf.values, 2))
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30, window=4)
+        assert (np.allclose(hwf.values, 1))
+        # one long hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=10,
+                                      thresh_tasmax=10)
+        assert (np.allclose(hwf.values, 1))
+        # no hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=40,
+                                      thresh_tasmax=40)
+        assert (np.allclose(hwf.values, 0))
+
+
 class TestMaximumConsecutiveDryDays:
 
     def test_simple(self, pr_series):
@@ -187,7 +209,6 @@ class TestMaximumConsecutiveDryDays:
 
 
 class TestPrcpTotal:
-
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -284,16 +305,53 @@ class TestTxMaxTxMinIndices:
             runs = np.append(runs, ft)
         np.testing.assert_allclose(np.mean(runs), 120, atol=20)
 
-class TestWarmDaysFrequency:
 
-    def test_simple(self, tasmax_series):
-        a = np.zeros(365)
-        a[100:110] = 31
-        a[120:130] = 31
-        da = tasmax(a)
-        wdf = xci.warm_days_frequency(tasmax, freq = 'MS')
-        print(wdf)
-        1/0
+class TestWarmDayFrequency:
+
+    def test_1d(self, tasmax_series):
+        a = np.zeros(35)
+        a[25:] = 31
+        da = tasmax_series(a)
+        wdf = xci.warm_day_frequency(da, freq='MS')
+        assert (np.allclose(wdf.values, [6, 4]))
+        wdf = xci.warm_day_frequency(da, freq='YS')
+        assert (np.allclose(wdf.values, [10]))
+        wdf = xci.warm_day_frequency(da, thresh=-1)
+        assert (np.allclose(wdf.values, [35]))
+        wdf = xci.warm_day_frequency(da, thresh=50)
+        assert (np.allclose(wdf.values, [0]))
+
+
+class TestWarmNightFrequency:
+
+    def test_1d(self, tasmin_series):
+        a = np.zeros(35)
+        a[25:] = 23
+        da = tasmin_series(a)
+        wnf = xci.warm_night_frequency(da, freq='MS')
+        assert (np.allclose(wnf.values, [6, 4]))
+        wnf = xci.warm_night_frequency(da, freq='YS')
+        assert (np.allclose(wnf.values, [10]))
+        wnf = xci.warm_night_frequency(da, thresh=-1)
+        assert (np.allclose(wnf.values, [35]))
+        wnf = xci.warm_night_frequency(da, thresh=50)
+        assert (np.allclose(wnf.values, [0]))
+
+
+class TestWarmMinimumAndMaximumTemperatureFrequency:
+
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx)
+        assert (np.allclose(wmmtf.values, [7]))
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=50)
+        assert (np.allclose(wmmtf.values, [0]))
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=0,
+                                                                   thresh_tasmin=0)
+        assert (np.allclose(wmmtf.values, [10]))
+
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip
