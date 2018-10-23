@@ -136,7 +136,6 @@ def check_is_dataarray(comp):
 
     @wraps(comp)
     def func(data_array, *args, **kwds):
-        import xarray as xr
         assert isinstance(data_array, xr.DataArray)
         return comp(data_array, *args, **kwds)
 
