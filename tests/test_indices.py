@@ -29,7 +29,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.testing.common import tas_series, tasmax_series, tasmin_series, pr_series
 
-
 xr.set_options(enable_cftimeindex=True)
 
 TAS_SERIES = tas_series
@@ -43,7 +42,8 @@ K2C = 273.15
 
 class TestMaxNDayPrecipitationAmount:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'precipitation_flux',
@@ -75,7 +75,8 @@ class TestMaxNDayPrecipitationAmount:
 
 class TestMax1DayPrecipitationAmount:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'precipitation_flux',
@@ -117,7 +118,8 @@ class TestMax1DayPrecipitationAmount:
 
 class TestConsecutiveFrostDays:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
@@ -143,7 +145,8 @@ class TestConsecutiveFrostDays:
 
 class TestCoolingDegreeDays:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
@@ -187,7 +190,6 @@ class TestMaximumConsecutiveDryDays:
 
 
 class TestPrcpTotal:
-
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -211,7 +213,8 @@ class TestPrcpTotal:
 
 class TestTxMin:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
@@ -221,7 +224,8 @@ class TestTxMin:
 
 class TestTxMean:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
@@ -251,38 +255,77 @@ class TestTxMax:
 
 class TestTxMaxTxMinIndices:
 
-    def tmax_tmin_time_series(self, values):
-        coords = pd.date_range('1/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
-        tas_plus10 = xr.DataArray(values + 10, coords=[coords, ], dims='time',
-                                  attrs={'standard_name': 'air_temperature',
-                                         'cell_methods': 'time: maximum within days',
-                                         'units': 'K'})
-        tas_minus10 = xr.DataArray(values - 10, coords=[coords, ], dims='time',
-                                   attrs={'standard_name': 'air_temperature',
-                                          'cell_methods': 'time: minimum within days',
-                                          'units': 'K'})
-        return tas_plus10, tas_minus10
+    @staticmethod
+    def random_tmax_tmin_setup(length, tasmax_series, tasmin_series):
+        max_values = np.random.uniform(-20, 40, length)
+        min_values = []
+        for i in range(length):
+            min_values.append(np.random.uniform(-40, max_values[i]))
+        tasmax = tasmax_series(np.add(max_values, K2C))
+        tasmin = tasmin_series(np.add(min_values, K2C))
+        return tasmax, tasmin
 
-    def test_static_daily_temperature_range(self):
-        temp_values = np.random.uniform(-30, 30, size=1095)
-        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+    @staticmethod
+    def static_tmax_tmin_setup(tasmax_series, tasmin_series):
+        max_values = np.add([22, 10, 35.2, 25.1, 18.9, 12, 16], K2C)
+        min_values = np.add([17, 3.5, 22.7, 16, 12.4, 7, 12], K2C)
+        tasmax = tasmax_series(max_values)
+        tasmin = tasmin_series(min_values)
+        return tasmax, tasmin
+
+    # def test_random_daily_temperature_range(self, tasmax_series, tasmin_series):
+    #     days = 365
+    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
+    #     dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+    #
+    #     np.testing.assert_array_less(-dtr, [0, 0])
+    #     np.testing.assert_allclose([dtr.mean()], [20], atol=10)
+
+    def test_static_daily_temperature_range(self, tasmax_series, tasmin_series):
+        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
         dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
-        np.testing.assert_array_equal([dtr.mean()], [20])
+        output = np.mean(tasmax - tasmin)
 
-    def test_all_freeze_thaw_cycles(self):
+        np.testing.assert_equal(dtr, output)
+
+    # def test_random_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
+    #     days = 1095
+    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
+    #     vdtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
+    #
+    #     np.testing.assert_allclose(vdtr.mean(), 20, atol=10)
+    #     np.testing.assert_array_less(-vdtr, [0, 0, 0, 0])
+
+    def test_static_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
+        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
+        dtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
+
+        np.testing.assert_almost_equal(dtr.mean(), 2.667, decimal=3)
+
+    def test_uniform_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
         temp_values = np.zeros(365)
-        tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+        tasmax, tasmin = tasmax_series(temp_values + 5 + K2C), tasmin_series(temp_values - 5 + K2C)
         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+
         np.testing.assert_array_equal([np.sum(ft)], [365])
 
-    def test_random_freeze_thaw_cycles(self):
-        runs = np.array([])
-        for i in range(10):
-            temp_values = np.random.uniform(-30, 30, 365)
-            tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
-            ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
-            runs = np.append(runs, ft)
-        np.testing.assert_allclose(np.mean(runs), 120, atol=20)
+    def test_static_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
+        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
+        tasmin = np.subtract(tasmin, 15)
+        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+
+        np.testing.assert_array_equal([np.sum(ft)], [4])
+
+    # TODO: Write a better random_freezethaw_cycles test
+    # def test_random_freeze_thaw_cycles(self):
+    #     runs = np.array([])
+    #     for i in range(10):
+    #         temp_values = np.random.uniform(-30, 30, 365)
+    #         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
+    #         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+    #         runs = np.append(runs, ft)
+    #
+    #     np.testing.assert_allclose(np.mean(runs), 120, atol=20)
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
