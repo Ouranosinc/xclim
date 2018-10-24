@@ -121,7 +121,9 @@ class UniIndTemp(UnivariateIndicator):
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
 
-    compute = lambda da, freq: da.resample(time=freq).mean()
+    @staticmethod
+    def compute(da, freq):
+        return da.resample(time=freq).mean()
 
 
 class UniIndPr(UnivariateIndicator):
@@ -129,7 +131,9 @@ class UniIndPr(UnivariateIndicator):
     units = 'kg m-2 s-1'
     required_units = 'kg m-2 s-1'
 
-    compute = lambda da, freq: da.resample(time=freq).mean()
+    @staticmethod
+    def compute(da, freq):
+        return da.resample(time=freq).mean()
 
 
 class TestUnivariateIndicator:
@@ -163,15 +167,13 @@ class TestUnivariateIndicator:
         np.testing.assert_array_almost_equal(txk, txm/86400)
 
     def test_json(self, pr_series):
-        a = pr_series(np.arange(360))
         ind = UniIndPr()
         meta = ind.json
 
         expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
-                'parameters'}
+                    'parameters'}
 
         assert set(meta.keys()).issubset(expected)
-
 
     def test_factory(self, pr_series):
         attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
@@ -182,6 +184,7 @@ class TestUnivariateIndicator:
         assert issubclass(cls, UnivariateIndicator)
         da = pr_series(np.arange(365))
         cls()(da)
+
 
 class TestKwargs:
 
@@ -196,5 +199,4 @@ class TestKwargs:
 class TestParseDoc:
 
     def test_simple(self):
-        attrs = parse_doc(ind.tg_mean)
-
+        parse_doc(ind.tg_mean)

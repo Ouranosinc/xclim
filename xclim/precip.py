@@ -19,7 +19,7 @@ class WetDays(UnivariateIndicator):
     long_name = 'number of wet days per period'
     description = 'Number of days with daily precipitation over {thresh} mm'
 
-    compute =_ind.wet_days
+    compute = _ind.wet_days
 
 
 class DailyIntensity(UnivariateIndicator):

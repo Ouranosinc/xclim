@@ -153,11 +153,17 @@ class UnivariateIndicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
-    # The actual indicator function
-    compute = lambda x: None  # signature: (da, *args, freq='Y', **kwds)
+    @staticmethod
+    def compute(da, freq='Y', *args, **kwds):
+        """The function computing the indicator."""
+        pass
 
-    # The function determining whether an output is considered missing or not.
-    missing = checks.missing_any  # signature: (da, freq='Y')
+    @staticmethod
+    def missing(da, freq='Y', *args, **kwds):
+        """The function determining whether an output is considered missing or not."""
+        pass
+
+    #missing = checks.missing_any  # signature: (da, freq='Y')
 
     def __init__(self):
 
@@ -261,7 +267,7 @@ class UnivariateIndicator(object):
 
         Notes
         -----
-        This is meant to be used by a third-party library wanting to wrap this class into another interface. 
+        This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
         names = ['identifier', 'abstract', 'keywords']
@@ -278,7 +284,6 @@ class UnivariateIndicator(object):
         """Create a subclass from the attributes dictionary."""
         name = attrs['identifier'].capitalize()
         return type(name, (cls,), attrs)
-
 
 
 def parse_doc(obj):
@@ -305,6 +310,7 @@ def parse_doc(obj):
                     out[key] = m.groups()[0]
 
     return out
+
 
 def first_paragraph(txt):
     r"""Return the first paragraph of a text
