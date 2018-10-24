@@ -161,6 +161,10 @@ class UnivariateIndicator(object):
 
     def __init__(self):
 
+        # Sanity checks
+        if self.required_units == '':
+            raise AttributeError('Define required_units')
+
         # Extract information from the `compute` function.
         # The signature
         self._sig = signature(self.__class__.compute)
@@ -268,6 +272,13 @@ class UnivariateIndicator(object):
         out.update(self.attrs)
 
         return out
+
+    @classmethod
+    def factory(cls, attrs):
+        """Create a subclass from the attributes dictionary."""
+        name = attrs['identifier'].capitalize()
+        return type(name, (cls,), attrs)
+
 
 
 def parse_doc(obj):

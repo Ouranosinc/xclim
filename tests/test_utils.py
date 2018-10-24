@@ -167,11 +167,21 @@ class TestUnivariateIndicator:
         ind = UniIndPr()
         meta = ind.json
 
-        expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract', \
+        expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
                 'parameters'}
-        
+
         assert set(meta.keys()).issubset(expected)
 
+
+    def test_factory(self, pr_series):
+        attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
+                     standard_name='standard name',
+                     compute=ind.wet_days)
+        cls = UnivariateIndicator.factory(attrs)
+
+        assert issubclass(cls, UnivariateIndicator)
+        da = pr_series(np.arange(365))
+        cls()(da)
 
 class TestKwargs:
 
