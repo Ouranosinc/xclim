@@ -345,9 +345,9 @@ def frost_days(tasmin, freq='YS'):
 
 
 def growing_degree_days(tas, thresh=4.0, freq='YS'):
-    r"""Growing degree-days over 4℃.
+    r"""Growing degree-days over threshold temperature value [℃].
 
-    The sum of degree-days over 4℃.
+    The sum of degree-days over the threshold temperature.
 
     Parameters
     ---------
