@@ -344,10 +344,30 @@ def frost_days(tasmin, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
-def growing_degree_days(tas, thresh=4, freq='YS'):
-    r"""Growing degree days over 4℃.
+def growing_degree_days(tas, thresh=4.0, freq='YS'):
+    r"""Growing degree-days over 4℃.
 
     The sum of degree-days over 4℃.
+
+    Parameters
+    ---------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K[
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 4℃.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The sum of growing degree-days above 4℃
+
+    Note
+    ----
+
+
+
     """
     return tas.pipe(lambda x: x - thresh - K2C) \
         .clip(min=0) \
@@ -369,7 +389,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K[
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 5℃.
     window : int
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     freq : str, optional
@@ -406,7 +426,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K[
     thresh : float
-      Threshold temperature on which to designate a heatwave [℃] or [K[
+      Threshold temperature on which to designate a heatwave [℃] or [K]. Default: 25℃.
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
@@ -426,7 +446,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     return group.apply(rl.windowed_run_count_ufunc, window=window)
 
 
-def heating_degree_days(tas, freq='YS', thresh=17):
+def heating_degree_days(tas, freq='YS', thresh=17.0):
     r"""Heating degree days
 
     Sum of daily positive values for a temperature threshold minus mean daily temperature.
@@ -436,7 +456,7 @@ def heating_degree_days(tas, freq='YS', thresh=17):
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 17℃.
     freq : str, optional
       Resampling frequency
 
@@ -451,7 +471,7 @@ def heating_degree_days(tas, freq='YS', thresh=17):
         .sum(dim='time')
 
 
-def hot_days(tasmax, thresh=30, freq='YS'):
+def hot_days(tasmax, thresh=30.0, freq='YS'):
     r"""Number of very hot days.
 
     Number of days with max temperature exceeding a base threshold.
@@ -461,7 +481,7 @@ def hot_days(tasmax, thresh=30, freq='YS'):
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 30℃.
     freq : str, optional
       Resampling frequency
 
@@ -495,7 +515,7 @@ def ice_days(tasmax, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
-def summer_days(tasmax, thresh=25, freq='YS'):
+def summer_days(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
     Number of days where daily maximum temperature exceeds 25℃.
@@ -505,7 +525,7 @@ def summer_days(tasmax, thresh=25, freq='YS'):
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 25℃
     freq : str, optional
       Resampling frequency
 
@@ -657,7 +677,7 @@ def max_n_day_precipitation_amount(da, window, freq='YS'):
     return arr.resample(time=freq).max(dim='time')
 
 
-def max_1day_precipitation_amount(da, freq='YS'):
+def max_1day_precipitation_amount(pr, freq='YS'):
     """Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
@@ -685,7 +705,7 @@ def max_1day_precipitation_amount(da, freq='YS'):
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
 
     """
-    return da.resample(time=freq).max(dim='time')
+    return pr.resample(time=freq).max(dim='time')
 
 
 def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
@@ -747,7 +767,7 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     return output
 
 
-def tropical_nights(tasmin, thresh=20, freq='YS'):
+def tropical_nights(tasmin, thresh=20.0, freq='YS'):
     r"""Tropical nights
 
     Number of days with minimum daily temperature above threshold.
@@ -757,7 +777,7 @@ def tropical_nights(tasmin, thresh=20, freq='YS'):
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: 20℃.
     freq : str, optional
       Resampling frequency
     """
@@ -844,7 +864,7 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-def wet_days(pr, thresh=1., freq='YS'):
+def wet_days(pr, thresh=1.0, freq='YS'):
     r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
@@ -854,19 +874,15 @@ def wet_days(pr, thresh=1., freq='YS'):
     pr : xarray.DataArray
       Daily precipitation [mm]
     thresh : float
-      precipitation value over which a day is considered wet
+      Precipitation value over which a day is considered wet. Default: 1mm.
     freq : str, optional
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-
 
     Returns
     -------
     xarray.DataArray
       The number of wet days for each period [day]
-
-    Notes
-    -----
 
     Examples
     --------
@@ -882,7 +898,7 @@ def wet_days(pr, thresh=1., freq='YS'):
     return wd.resample(time=freq).sum(dim='time')
 
 
-def daily_intensity(pr, thresh=1., freq='YS'):
+def daily_intensity(pr, thresh=1.0, freq='YS'):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -891,24 +907,16 @@ def daily_intensity(pr, thresh=1., freq='YS'):
     ----------
     pr : xarray.DataArray
       Daily precipitation [mm]
-    pr_min : float
-      precipitation value over which a day is considered wet
+    thresh : float
+      precipitation value over which a day is considered wet. Default: 1mm.
     freq : str, optional
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-    skipna : str, optional
-      if True, NaN values are ignored
-      if False NaN values are expanded
-      This is used for the computation of the sum of wet days. See
-      http://xarray.pydata.org/en/stable/generated/xarray.DataArray.sum.html for details
 
     Returns
     -------
     xarray.DataArray
       The average precipitation over wet days for each period
-
-    Notes
-    -----
 
     Examples
     --------
