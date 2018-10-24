@@ -131,35 +131,56 @@ class UnivariateIndicator(object):
     missing functions.
 
     """
-
+    # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
-    units = ''
-    required_units = ''
-    long_name = ''
+
+    # CF-Convention metadata to be attributed to output. May use tags {<tag>} that will be formatted at runtime.
     standard_name = ''
-    description = ''
-    keywords = ''
+    long_name = ''  # Scraped from compute.__doc.__
+    units = ''
     cell_methods = ''
 
+    # The units expected by the function. Used to convert input units to the required_units.
+    required_units = ''
+
+    # Additional information.
+    title = ''  # Scraped from compute.__doc.__
+    abstract = ''  # Scraped from compute.__doc.__
+    keywords = ''  # Comma separated list of keywords
+
+    # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
+    # The actual indicator function
     compute = lambda x: None  # signature: (da, *args, freq='Y', **kwds)
+
+    # The function determining whether an output is considered missing or not.
     missing = checks.missing_any  # signature: (da, freq='Y')
 
     def __init__(self):
-        # Extract DataArray arguments from compute signature.
-        self.attrs = {'long_name': self.long_name,
-                      'units': self.units,
-                      'standard_name': self.standard_name,
-                      'cell_methods': self.cell_methods,
-                      }
 
-        self.sig = signature(self.__class__.compute)
-        self._parameters = tuple(self.sig.parameters.keys())
-        self.__doc__ = self.compute.__doc__
+        # Extract information from the `compute` function.
+        # The signature
+        self._sig = signature(self.__class__.compute)
 
+        # The input parameter names
+        self._parameters = tuple(self._sig.parameters.keys())
+
+        # The docstring
+        self.__call__.__func__.__doc__ = self.compute.__doc__
+
+        # Fill in missing metadata from the doc
+        meta = parse_doc(self.compute)
+        for key in ['abstract', 'title', 'long_name']:
+            setattr(self, key, getattr(self, key) or meta.get(key, ''))
+
+    @property
+    def attrs(self):
+        """CF-Convention attributes of the output value."""
+        names = ['standard_name', 'long_name', 'units', 'cell_methods']
+        return {k: getattr(self, k) for k in names}
 
     def convert_units(self, da):
         """Return DataArray with correct units, defined by `self.required_units`."""
@@ -205,7 +226,7 @@ class UnivariateIndicator(object):
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
-        ba = self.sig.bind(*args, **kwds)
+        ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
         # Assume the first argument is always the DataArray.
@@ -239,26 +260,31 @@ class UnivariateIndicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface. 
 
         """
-        attrs = 'identifier', 'units', 'long_name', 'standard_name', 'description', 'keywords'
-        out = {key: getattr(self, key) for key in attrs}
-        out['parameters'] = {key: p.default for (key, p) in self.sig.parameters.items()}
-        out.update(parse_doc(self))
+        names = ['identifier', 'abstract', 'keywords']
+        out = {key: getattr(self, key) for key in names}
+
+        out['parameters'] = {key: p.default for (key, p) in self._sig.parameters.items()}
+
+        out.update(self.attrs)
+
         return out
 
 
 def parse_doc(obj):
     """Crude regex parsing."""
     import re
+    if obj.__doc__ is None:
+        return {}
 
     sections = obj.__doc__.split('\n\n')
 
-    patterns = {'returns': '^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
-                'notes': '^\s+Note.\n\s+----.*\n(.*)'}
+    patterns = {'long_name': '^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
+                'notes': '^\s+Notes.\n\s+----.*\n(.*)'}
 
     out = {}
     for i, sec in enumerate(sections):
         if i == 0:
-            out['description'] = sec.strip()
+            out['title'] = sec.strip()
         elif i == 1:
             out['abstract'] = sec.strip()
         else:

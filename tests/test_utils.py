@@ -23,9 +23,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs
-
+from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs, parse_doc
 from xclim.testing.common import tas_series, pr_series
+from xclim import indices as ind
 
 TAS_SERIES = tas_series()
 PR_SERIES = pr_series()
@@ -162,6 +162,16 @@ class TestUnivariateIndicator:
 
         np.testing.assert_array_almost_equal(txk, txm/86400)
 
+    def test_json(self, pr_series):
+        a = pr_series(np.arange(360))
+        ind = UniIndPr()
+        meta = ind.json
+
+        expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract', \
+                'parameters'}
+        
+        assert set(meta.keys()).issubset(expected)
+
 
 class TestKwargs:
 
@@ -171,3 +181,10 @@ class TestKwargs:
 
         format_kwargs(attrs, {'freq': 'YS'})
         assert attrs['cell_methods'] == 'time: minimum within years'
+
+
+class TestParseDoc:
+
+    def test_simple(self):
+        attrs = parse_doc(ind.tg_mean)
+
