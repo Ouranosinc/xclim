@@ -273,13 +273,13 @@ class TestTxMaxTxMinIndices:
         tasmin = tasmin_series(min_values)
         return tasmax, tasmin
 
-    def test_random_daily_temperature_range(self, tasmax_series, tasmin_series):
-        days = 365
-        tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
-        dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
-
-        np.testing.assert_array_less(-dtr, [0, 0])
-        np.testing.assert_allclose([dtr.mean()], [20], atol=10)
+    # def test_random_daily_temperature_range(self, tasmax_series, tasmin_series):
+    #     days = 365
+    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
+    #     dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+    #
+    #     np.testing.assert_array_less(-dtr, [0, 0])
+    #     np.testing.assert_allclose([dtr.mean()], [20], atol=10)
 
     def test_static_daily_temperature_range(self, tasmax_series, tasmin_series):
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
