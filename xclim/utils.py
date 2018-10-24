@@ -9,7 +9,7 @@ import six
 from functools import wraps
 import pint
 from . import checks
-from inspect import signature
+from inspect2 import signature
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -153,6 +153,8 @@ class UnivariateIndicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
+    
+
     @staticmethod
     def compute(da, freq='Y', *args, **kwds):
         """The function computing the indicator."""
@@ -161,7 +163,7 @@ class UnivariateIndicator(object):
     @staticmethod
     def missing(da, freq='Y', *args, **kwds):
         """The function determining whether an output is considered missing or not."""
-        pass
+        return checks.missing_any(da, freq)
 
     #missing = checks.missing_any  # signature: (da, freq='Y')
 
@@ -378,3 +380,22 @@ def with_attrs(**func_attrs):
         return wrapper
 
     return attr_decorator
+
+
+def classproperty(f):
+    """
+        E.g.
+        >>> class foo(object):
+        ...    @classproperty
+        ...    def name(cls):
+        ...        return cls.__name__
+        >>> print foo.name
+        'foo'
+    """
+    class cpf(object):
+        def __init__(self, getter):
+            self.getter = getter
+
+        def __get__(self, obj, type=None):
+            return self.getter(type)
+    return cpf(f)
