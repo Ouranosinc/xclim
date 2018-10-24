@@ -232,14 +232,65 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
 
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
-    r"""Mean of daily temperature range."""
+    r"""Mean of daily temperature range.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature values [℃] or [K]
+    tasmin : xarray.DataArray
+      Minimum daily temperature values [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The average variation in daily temperature range for the given time period.
+
+    Note
+    ----
+    Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`{i}`
+    of period :math:`{j}`. Then the mean diurnal temperature range in period :math:`{j}` is:
+
+    .. math::
+
+        DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
+
+    """
 
     dtr = tasmax - tasmin
     return dtr.resample(time=freq).mean(dim='time')
 
 
-def variable_daily_temperature_range(tasmax, tasmin, freq="YS"):
-    r"""Mean absolute day-to-day variation in daily temperature range"""
+def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
+    r"""Mean absolute day-to-day variation in daily temperature range.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature values [℃] or [K]
+    tasmin : xarray.DataArray
+      Minimum daily temperature values [℃] or [K]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The average day-to-day variation in daily temperature range for the given time period.
+
+    Note
+    ----
+    Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at
+    day :math:`i` of period :math:`j`. Then calculated is the absolute day-to-day differences in
+    period :math:`j` is:
+
+    .. math::
+
+       vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
+
+    """
 
     vdtr = abs((tasmax - tasmin).diff(dim='time'))
     return vdtr.resample(time=freq).mean(dim='time')
@@ -248,7 +299,7 @@ def variable_daily_temperature_range(tasmax, tasmin, freq="YS"):
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     r"""First day consistently exceeding threshold temperature.
 
-    Return first day of year when a temperature threshold is exceeded
+    Returns first day of year when a temperature threshold is exceeded
     over a given number of days.
 
     Parameters
