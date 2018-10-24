@@ -164,14 +164,13 @@ def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True)
     # inspire/copy of :
     # https://stackoverflow.com/questions/45886518/identify-consecutive-same-values-in-pandas-dataframe-with-a-groupby
     """
-    # TODO: when using the using_dask_loop=True option, transpose dimension to be identical to input DataArray
 
     # make sure we have a time dimension
     assert ('time' in ev.dims)
 
     # echo option values to output
     if verbose:
-        print('get_ev_lenght options : method={:}, using_dask_loop={:}'.format(method, using_dask_loop))
+        print('get_ev_length options : method={:}, using_dask_loop={:}'.format(method, using_dask_loop))
 
     # create mask of event change, 1 if no change and 0 otherwise
     # fill first value with 1
@@ -264,6 +263,9 @@ def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True)
             diff_cumsum.values = data
 
             ev_l = diff_cumsum
+
+            # reorder dimensions as ev
+            ev, ev_l = xr.broadcast(ev, ev_l)
 
         if timing:
             print('timing for get_ev_length done in {:10.2f}s'.format(time.time() - time0))
