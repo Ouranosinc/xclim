@@ -98,7 +98,9 @@ def __build_icclim(mode='warn'):
                'CWD': indices.maximum_consecutive_wet_days,
                # 'PRCPTOT': indices.prec_total,
                # 'RR1': indices.wet_days,
-               'DTR': indices.daily_temperature_range, }
+               'DTR': indices.daily_temperature_range,
+               'vDTR': indices.daily_temperature_range_variability,
+               }
 
     mod = build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
     sys.modules['xclim.icclim'] = mod

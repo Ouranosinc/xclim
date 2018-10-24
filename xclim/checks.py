@@ -22,6 +22,7 @@ logging.captureWarnings(True)
 
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
+
     att = getattr(var, key, None)
     if att is None:
         e = 'Variable does not have a `{}` attribute.'.format(key)
@@ -35,6 +36,7 @@ def assert_daily(var):
     r"""Assert that the series is daily and monotonic (no jumps in time index).
 
     A ValueError is raised otherwise."""
+
     t0, t1 = var.time[:2]
 
     # This won't work for non-standard calendars. Needs to be implemented in xarray.
@@ -51,7 +53,8 @@ def assert_daily(var):
 
 
 def check_valid_temperature(var, units):
-    r"""Check that variable is a temperature."""
+    r"""Check that variable is air temperature."""
+
     check_valid(var, 'standard_name', 'air_temperature')
     check_valid(var, 'units', units)
     assert_daily(var)
@@ -143,7 +146,7 @@ def check_is_dataarray(comp):
 
 
 def missing_any(da, freq, **kwds):
-    """Return a boolean DataArray indicating whether there are missing days in the resampled array.
+    r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters
     ----------
@@ -157,6 +160,7 @@ def missing_any(da, freq, **kwds):
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
+
     c = da.notnull().resample(time=freq).sum(dim='time')
     p = c.indexes['time'].to_period()
     n = (p.end_time - p.start_time).days + 1
