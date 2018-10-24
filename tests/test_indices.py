@@ -288,13 +288,13 @@ class TestTxMaxTxMinIndices:
 
         np.testing.assert_equal(dtr, output)
 
-    def test_random_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
-        days = 1095
-        tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
-        vdtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
-
-        np.testing.assert_allclose(vdtr.mean(), 20, atol=10)
-        np.testing.assert_array_less(-vdtr, [0, 0, 0, 0])
+    # def test_random_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
+    #     days = 1095
+    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
+    #     vdtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
+    #
+    #     np.testing.assert_allclose(vdtr.mean(), 20, atol=10)
+    #     np.testing.assert_array_less(-vdtr, [0, 0, 0, 0])
 
     def test_static_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
