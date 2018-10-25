@@ -129,6 +129,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
 
     return group.apply(rl.windowed_run_count_ufunc, window=window)
 
+
 # TODO: mix up in docsring for tas
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     r"""Cold and dry days.
