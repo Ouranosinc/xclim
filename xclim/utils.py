@@ -155,23 +155,16 @@ class UnivariateIndicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
-    @abc.abstractmethod
-    def compute(da, freq='Y', *args, **kwds):
-        """The function computing the indicator."""
-
-    @staticmethod
-    def missing(da, freq='Y', *args, **kwds):
-        """The function determining whether an output is considered missing or not."""
-        return checks.missing_any(da, freq)
-
     def __init__(self, **kwds):
 
         for key, val in kwds.items():
             setattr(self, key, val)
 
         # Sanity checks
-        if self.required_units == '':
-            raise AttributeError('Define required_units')
+        required = ['compute', 'required_units']
+        for key in required:
+            if not getattr(self, key):
+                raise ValueError("{} needs to be defined during instantiation.".format(key))
 
         # Extract information from the `compute` function.
         # The signature
@@ -187,53 +180,6 @@ class UnivariateIndicator(object):
         meta = parse_doc(self.compute)
         for key in ['abstract', 'title', 'long_name']:
             setattr(self, key, getattr(self, key) or meta.get(key, ''))
-
-    @property
-    def attrs(self):
-        """CF-Convention attributes of the output value."""
-        names = ['standard_name', 'long_name', 'units', 'cell_methods']
-        return {k: getattr(self, k) for k in names}
-
-    def convert_units(self, da):
-        """Return DataArray with correct units, defined by `self.required_units`."""
-        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
-        tu = units.parse_units(self.required_units.replace('-', '**-'))
-        if fu != tu:
-            b = da.copy()
-            b.values = (da.values * fu).to(tu, 'hydro')
-            return b
-
-        return da
-
-    def cfprobe(self, da):
-        """Check input data compliance to expectations.
-        Warn of potential issues."""
-        pass
-
-    def validate(self, da):
-        """Validate input data requirements.
-        Raise error if conditions are not met."""
-        checks.assert_daily(da)
-
-    def decorate(self, da, args={}):
-        """Modify output's attributes in place.
-
-        If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
-        """
-
-        attrs = {}
-        for key, val in self.attrs.items():
-            mba = {}
-            # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-            for k, v in args.items():
-                if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
-                    mba[k] = '{' + v + '}'
-                else:
-                    mba[k] = v
-
-            attrs[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
-
-        da.attrs.update(attrs)
 
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
@@ -258,10 +204,16 @@ class UnivariateIndicator(object):
         self.decorate(out, ba.arguments)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
-        mba = signature(self.__class__.missing).bind(da, **ba.arguments)
+        mba = signature(self.missing).bind(da, **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
-        return out.where(~self.__class__.missing(**mba.arguments))
+        return out.where(~self.missing(**mba.arguments))
+
+    @property
+    def attrs(self):
+        """CF-Convention attributes of the output value."""
+        names = ['standard_name', 'long_name', 'units', 'cell_methods']
+        return {k: getattr(self, k) for k in names}
 
     @property
     def json(self):
@@ -280,6 +232,57 @@ class UnivariateIndicator(object):
         out.update(self.attrs)
 
         return out
+
+    def cfprobe(self, da):
+        """Check input data compliance to expectations.
+        Warn of potential issues."""
+        pass
+
+    @abc.abstractmethod
+    def compute(da, freq='Y', *args, **kwds):
+        """The function computing the indicator."""
+
+    def convert_units(self, da):
+        """Return DataArray with correct units, defined by `self.required_units`."""
+        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
+        tu = units.parse_units(self.required_units.replace('-', '**-'))
+        if fu != tu:
+            b = da.copy()
+            b.values = (da.values * fu).to(tu, 'hydro')
+            return b
+
+        return da
+
+    def decorate(self, da, args=None):
+        """Modify output's attributes in place.
+
+        If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
+        """
+        if args is None:
+            return
+
+        attrs = {}
+        for key, val in self.attrs.items():
+            mba = {}
+            # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
+            for k, v in args.items():
+                if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
+                    mba[k] = '{' + v + '}'
+                else:
+                    mba[k] = v
+
+            attrs[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
+
+        da.attrs.update(attrs)
+
+    def missing(self, da, freq='Y', *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        return checks.missing_any(da, freq)
+
+    def validate(self, da):
+        """Validate input data requirements.
+        Raise error if conditions are not met."""
+        checks.assert_daily(da)
 
     @classmethod
     def factory(cls, attrs):
