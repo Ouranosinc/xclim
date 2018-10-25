@@ -30,7 +30,7 @@ class TestTxMin:
         tx_obj(ts, freq='Y')
 
 
-class Test_frost_days():
+class TestFrostDays:
 
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
 
@@ -59,7 +59,7 @@ class Test_frost_days():
         # assert (np.isnan(fds.values[0, -1, -1]))
 
 
-class Test_growing_degree_days():
+class TestGrowingDegreeDays:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
 
     def test_3d_data_with_nans(self):

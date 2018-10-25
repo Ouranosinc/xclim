@@ -25,6 +25,11 @@ class TestBuildModules(unittest.TestCase):
         objs = {'k1': None, 'k2': None}
         self.assertWarns(Warning, build_module, name, objs, mode='warn')
 
+    def test_raise_build_failure(self):
+        name = ""
+        objs = {'k1': None, 'k2': None}
+        self.assertRaises(NotImplementedError, build_module, name, objs, mode='raise')
+
 
 if __name__ == '__main__':
     unittest.main()
