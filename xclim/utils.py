@@ -128,10 +128,6 @@ def daily_downsampler(da, freq='YS'):
     return buffer.groupby('tags')
 
 
-class UnivariateIndicator(object):
-    r"""xclim indicator class"""
-
-
 def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True):
     r"""Function computing event/non-event length
 
@@ -317,7 +313,10 @@ def get_ev_start(ev):
     return ev_start
 
 
-class Indicator(object):
+
+class UnivariateIndicator(object):
+    r"""xclim indicator class"""
+
     identifier = ''
     units = ''
     required_units = ''
