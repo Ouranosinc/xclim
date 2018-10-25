@@ -129,7 +129,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
 
     return group.apply(rl.windowed_run_count_ufunc, window=window)
 
-
+# TODO: mix up in docsring for tas
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     r"""Cold and dry days.
 
@@ -237,7 +237,24 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 
 
 def cooling_degree_days(tas, thresh=18, freq='YS'):
-    r"""Cooling degree days above threshold."""
+    r"""Cooling degree days
+
+    Sum of degree days above the temperature threshold at which spaces are cooled.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : float
+      Temperature threshold above which air is cooled.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Cooling degree days
+    """
 
     return tas.pipe(lambda x: x - thresh - K2C) \
         .clip(min=0) \
@@ -253,8 +270,8 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     Parameters
     ----------
-    tasmax : xarrray.DataArray
-      Maximum daily temperature [℃] or [K[
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
     freq : str
@@ -451,7 +468,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
 def heating_degree_days(tas, freq='YS', thresh=17):
     r"""Heating degree days
 
-    Sum of daily positive values for a temperature threshold minus mean daily temperature.
+    Sum of degree days below the temperature threshold at which spaces are heated.
 
     Parameters
     ----------
