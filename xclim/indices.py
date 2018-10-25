@@ -347,9 +347,9 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
-    Number of heat wave over a given period. A heat wave is defined as an event
-    of un number days with tasmin and tasmax over thresh_tasmin and thresh_tasmax
-    respectively. That number of days has to be greater or equal to window.
+    Number of heat waves over a given period. A heat wave is defined as an event
+    where the minimum and maximum daily temperature both exceeds specific thresholds
+    over a minimum number of days.
 
     Parameters
     ----------
@@ -359,9 +359,9 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K[
     thresh_tasmin : float
-      Threshold temperature for tasmin on which to designate a heatwave [℃] or [K[
-    thresh : float
-      Threshold temperature for tasmax on which to designate a heatwave [℃] or [K[
+      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]
+    thresh_tasmax : float
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str, optional
