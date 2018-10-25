@@ -220,7 +220,8 @@ def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True)
 
     vec_method = {1: method1, 2: method2, 3: method3}[method]
 
-    if timing: time0 = time.time()
+    if timing:
+        time0 = time.time()
     # treatment depends on number fo dimensions
     if ev.ndim == 1:
         ev_l = ev.copy()
@@ -311,7 +312,6 @@ def get_ev_start(ev):
     # copy first timestep of ev to catch those start
     ev_start = xr.concat((ev.isel(time=0), ev_start), 'time')
     return ev_start
-
 
 
 class UnivariateIndicator(object):

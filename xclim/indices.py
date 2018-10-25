@@ -7,6 +7,8 @@ import numpy as np
 import xarray as xr
 from warnings import warn
 import logging
+from xclim.utils import get_ev_length
+from xclim.utils import get_ev_end
 
 from . import run_length as rl
 
@@ -20,8 +22,6 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # elif six.PY3:
 #     from inspect import signature
 
-from xclim.utils import get_ev_length
-from xclim.utils import get_ev_end
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
