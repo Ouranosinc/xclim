@@ -387,7 +387,6 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     return hwf
 
 
-# @valid_daily_max_temperature
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     r"""Heat wave index.
 
@@ -409,9 +408,6 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     DataArray
       Heat wave index.
     """
-    # TODO: Deal better with boundary effects.
-    # TODO: Deal with attributes
-
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 

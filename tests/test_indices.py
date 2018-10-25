@@ -167,6 +167,19 @@ class TestGrowingDegreeDays:
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
 
+class TestHeatWaveIndex:
+
+    def test_simple(self, tasmax_series):
+
+        a = np.zeros(365) + K2C
+        a[10:20] += 30  # 10 days
+        a[40:43] += 50  # too short -> 0
+        a[80:100] += 30  # at the end and beginning
+        da = tasmax_series(a)
+
+        out = xci.heat_wave_index(da, thresh=25., freq='M')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+
 
 class TestHeatWaveFrequency:
 
