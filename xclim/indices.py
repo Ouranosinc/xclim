@@ -364,7 +364,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     Parameters
     ---------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K[
+      Mean daily temperature [℃] or [K]
     thresh : float
       Threshold temperature on which to base evaluation [℃] or [K]
     window : int
@@ -406,9 +406,9 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     ----------
 
     tasmin : xarrray.DataArray
-      Minimum daily temperature [℃] or [K[
+      Minimum daily temperature [℃] or [K]
     tasmax : xarrray.DataArray
-      Maximum daily temperature [℃] or [K[
+      Maximum daily temperature [℃] or [K]
     thresh_tasmin : float
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]
     thresh_tasmax : float
@@ -446,9 +446,9 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     Parameters
     ----------
     tasmax : xarrray.DataArray
-      Maximum daily temperature [℃] or [K[
+      Maximum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to designate a heatwave [℃] or [K[
+      Threshold temperature on which to designate a heatwave [℃] or [K]
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
@@ -565,7 +565,7 @@ def tg_mean(tas, freq='YS'):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K[
+      Mean daily temperature [℃] or [K]
     freq : str, optional
       Resampling frequency
 
