@@ -467,7 +467,7 @@ def heating_degree_days(tas, freq='YS', thresh=17):
     xarray.DataArray
       Heating degree days index.
     """
-    return tas.pipe(lambda x: thresh - x) \
+    return tas.pipe(lambda x: K2C + thresh - x) \
         .clip(0) \
         .resample(time=freq) \
         .sum(dim='time')
