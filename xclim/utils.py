@@ -383,22 +383,3 @@ def with_attrs(**func_attrs):
         return wrapper
 
     return attr_decorator
-
-
-def classproperty(f):
-    """
-        E.g.
-        >>> class foo(object):
-        ...    @classproperty
-        ...    def name(cls):
-        ...        return cls.__name__
-        >>> print foo.name
-        'foo'
-    """
-    class cpf(object):
-        def __init__(self, getter):
-            self.getter = getter
-
-        def __get__(self, obj, type=None):
-            return self.getter(type)
-    return cpf(f)
