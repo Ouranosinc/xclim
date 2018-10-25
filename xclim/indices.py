@@ -105,7 +105,24 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     r"""Cold spell index
 
-    Days that are part of a cold spell (5 or more consecutive days with Tavg < -10°C)
+    Number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
+    temperature below < -10°C.
+
+    Parameters
+    ----------
+    tas : xarrray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature below which a cold spell begins [℃] or [K]
+    window : int
+      Minimum number of days with temperature below threshold to qualify as a cold spell.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    DataArray
+      Cold spell index
     """
     over = tas < K2C + thresh
     group = over.resample(time=freq)
@@ -229,9 +246,26 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
 
 
 def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
-    r"""Number of freeze-thaw cycle days.
+    r"""Number of days with a diurnal freeze-thaw cycle
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
+
+
+    Parameters
+    ----------
+    tasmax : xarrray.DataArray
+      Maximum daily temperature [℃] or [K[
+    tasmin : xarray.DataArray
+      Minimum daily temperature values [℃] or [K]
+    freq : str
+      Resampling frequency
+
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days with a diurnal freeze-thaw cycle
+
     """
     ft = (tasmin < K2C) * (tasmax > K2C) * 1
     return ft.resample(time=freq).sum(dim='time')

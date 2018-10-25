@@ -40,6 +40,8 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
+# PLEASE MAINTAIN ALPHABETICAL ORDER
+
 class TestMaxNDayPrecipitationAmount:
 
     def time_series(self, values):
@@ -169,6 +171,27 @@ class TestCoolingDegreeDays:
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
+
+
+class DailyFreezeThawCycles:
+
+    def test_simple(self, tasmin_series, tasmax_series):
+        mn = np.zeros(365) + K2C
+        mx = np.zeros(365) + K2C
+
+        # 5 days in 1st month
+        mn[10:20] -= 1
+        mx[10:5] += 1
+
+        # 1 day in 2nd month
+        mn[40:44] += [1, 1, -1, -1]
+        mx[40:44] += [1, -1, 1, -1]
+
+        mn = tasmin_series(mn)
+        mx = tasmin_series(mx)
+        out = xci.daily_freezethaw_cycles(mn, mx, 'M')
+        np.testing.assert_array_equal(out[:2], [5,1])
+        np.testing.assert_array_equal(out[2:], 0)
 
 
 class TestGrowingDegreeDays:
