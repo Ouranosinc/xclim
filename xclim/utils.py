@@ -10,6 +10,8 @@ from functools import wraps
 import pint
 from . import checks
 from inspect2 import signature
+import abc
+
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -153,21 +155,19 @@ class UnivariateIndicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
-    
-
-    @staticmethod
+    @abc.abstractmethod
     def compute(da, freq='Y', *args, **kwds):
         """The function computing the indicator."""
-        pass
 
     @staticmethod
     def missing(da, freq='Y', *args, **kwds):
         """The function determining whether an output is considered missing or not."""
         return checks.missing_any(da, freq)
 
-    #missing = checks.missing_any  # signature: (da, freq='Y')
+    def __init__(self, **kwds):
 
-    def __init__(self):
+        for key, val in kwds.items():
+            setattr(self, key, val)
 
         # Sanity checks
         if self.required_units == '':
@@ -175,7 +175,7 @@ class UnivariateIndicator(object):
 
         # Extract information from the `compute` function.
         # The signature
-        self._sig = signature(self.__class__.compute)
+        self._sig = signature(self.compute)
 
         # The input parameter names
         self._parameters = tuple(self._sig.parameters.keys())
@@ -252,7 +252,7 @@ class UnivariateIndicator(object):
         da = self.convert_units(da)
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.__class__.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
+        out = self.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
 
         # Set metadata attributes to the output according to class attributes.
         self.decorate(out, ba.arguments)
