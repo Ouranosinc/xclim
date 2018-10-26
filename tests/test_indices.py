@@ -198,6 +198,26 @@ class TestDailyFreezeThawCycles:
         np.testing.assert_array_equal(out[2:], 0)
 
 
+class TestFreshetStart:
+
+    def test_simple(self, tas_series):
+        tg = np.zeros(365) + K2C - 1
+        w = 5
+
+        i = 10
+        tg[i:i+w-1] += 6  # too short
+
+        i = 20
+        tg[i:i+w] += 6  # ok
+
+        i = 30
+        tg[i:i+w+1] += 6  # Second valid condition, should be ignored.
+
+        tg = tas_series(tg, start='1/1/2000')
+        out = xci.freshet_start(tg, window=w)
+        assert out[0] == 20
+
+
 class TestGrowingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365)

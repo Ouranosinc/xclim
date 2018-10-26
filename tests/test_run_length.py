@@ -1,5 +1,5 @@
 from xclim import run_length as rl
-
+from xclim.testing.common import tas_series
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -64,3 +64,11 @@ class TestLongestRun:
         n = da.resample(time='M').count(dim='time')
         np.testing.assert_array_equal(lt[0], n[0])
         np.testing.assert_array_equal(lt[1], 26)
+
+
+class TestFirstRun:
+    def test_simple(self):
+        a = np.zeros(100, bool)
+        a[10:20] = 1
+        i = rl.first_run(a, 5)
+        assert 10 == i

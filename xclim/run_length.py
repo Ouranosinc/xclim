@@ -69,6 +69,26 @@ def windowed_run_count(arr, window):
     return np.where(v * rl >= window, rl, 0).sum()
 
 
+def first_run(arr, window):
+    """Return the index of the first item of a run of at least a given length.
+
+    Parameters
+    ----------
+    ----------
+    arr : bool array
+      Input array
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    int
+      Index of first item in first valid run.
+    """
+    v, rl, pos = rle(arr)
+    return np.where(v * rl >= window, pos, np.inf).min()
+
+
 def longest_run(arr):
     """Return the length of the longest consecutive run of identical values.
 
@@ -170,3 +190,15 @@ def longest_run_ufunc(x):
                           output_dtypes=[np.int, ],
                           keep_attrs=True,
                           )
+
+def first_run_ufunc(x, window):
+    i = xr.apply_ufunc(first_run,
+                       x,
+                       input_core_dims=[['time'], ],
+                       vectorize=True,
+                       dask='parallelized',
+                       output_dtypes=[np.int, ],
+                       keep_attrs=True,
+                       kwargs={'window': window}
+                       )
+    return i

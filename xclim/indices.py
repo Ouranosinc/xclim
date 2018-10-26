@@ -375,14 +375,15 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     freq : str, optional
       Resampling frequency
 
+    Returns
+    -------
+    int
+      Day of the year when temperature exceeds threshold over a given number of days.
+
     """
-
-    i = xr.DataArray(np.arange(tas.time.size), dims='time')
-    ind = xr.broadcast(i, tas)[0]
-
-    over = ((tas > K2C + thresh) * 1).rolling(time=window).sum(dim='time')
-    i = ind.where(over == window)
-    return i.resample(time=freq).min(dim='time')
+    over = (tas > K2C + thresh)
+    group = over.resample(time=freq)
+    return group.apply(rl.first_run_ufunc, window=window)
 
 
 def frost_days(tasmin, freq='YS'):
@@ -533,11 +534,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : float
-<<<<<<< HEAD
-      Threshold temperature on which to designate a heatwave [℃] or [K]
-=======
       Threshold temperature on which to designate a heatwave [℃] or [K]. Default: 25℃.
->>>>>>> master
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
