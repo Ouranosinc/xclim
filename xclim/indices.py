@@ -3,12 +3,15 @@
 """
 Indices module
 """
-
 import logging
 from warnings import warn
 
 import numpy as np
 import xarray as xr
+
+from .utils import get_ev_length
+from .utils import get_ev_end
+
 
 from xclim.utils import get_ev_end
 from xclim.utils import get_ev_length
