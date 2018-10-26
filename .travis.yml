@@ -16,6 +16,12 @@ matrix:
       python: 3.7
       sudo: required
       dist: xenial
+      addons:
+        apt:
+            packages:
+                - libhdf5-serial-dev
+                - netcdf-bin
+                - libnetcdf-dev
     - env:
         - TOXENV=py36
       python: 3.6
