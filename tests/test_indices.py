@@ -177,7 +177,7 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
-class DailyFreezeThawCycles:
+class TestDailyFreezeThawCycles:
 
     def test_simple(self, tasmin_series, tasmax_series):
         mn = np.zeros(365) + K2C
@@ -185,16 +185,16 @@ class DailyFreezeThawCycles:
 
         # 5 days in 1st month
         mn[10:20] -= 1
-        mx[10:5] += 1
+        mx[10:15] += 1
 
         # 1 day in 2nd month
         mn[40:44] += [1, 1, -1, -1]
         mx[40:44] += [1, -1, 1, -1]
 
         mn = tasmin_series(mn)
-        mx = tasmin_series(mx)
-        out = xci.daily_freezethaw_cycles(mn, mx, 'M')
-        np.testing.assert_array_equal(out[:2], [5,1])
+        mx = tasmax_series(mx)
+        out = xci.daily_freezethaw_cycles(mx, mn, 'M')
+        np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 
 

@@ -361,7 +361,7 @@ def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
     r"""First day consistently exceeding threshold temperature.
 
-    Returns first day of year when a temperature threshold is exceeded
+    Returns first day of period where a temperature threshold is exceeded
     over a given number of days.
 
     Parameters
