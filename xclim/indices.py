@@ -375,6 +375,8 @@ def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
 def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     r"""Extreme intra-period temperature range.
 
+    The maximum of max temperature (TXx) minus the minimum of min temperature (TNn) for the given time period.
+
     Parameters
     ----------
     tasmax : xarray.DataArray
@@ -387,7 +389,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     Returns
     -------
     xarray.DataArray
-      The extreme intra-period temperature range for the given time period.
+      Extreme intra-period temperature range for the given time period.
 
     Note
     ----
@@ -402,7 +404,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     tx_max = tasmax.resample(time=freq).max(dim='time')
     tn_min = tasmin.resample(time=freq).min(dim='time')
 
-    return [tx_max - tn_min]
+    return tx_max - tn_min
 
 
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
@@ -1154,16 +1156,16 @@ def tx_min(tasmax, freq='YS'):
 def warm_day_frequency(tasmax, thresh=30, freq='YS'):
     r"""Frequency of extreme warm days
 
-        Return the number of days with tasmax > thresh per period
+    Return the number of days with tasmax > thresh per period
 
-        Parameters
-        ----------
-        tasmax : xarray.DataArray
-          Mean daily temperature [℃] or [K]
-        thresh : float
-          Threshold temperature on which to base evaluation [℃] or [K]
-        freq : str, optional
-          Resampling frequency
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency
     """
 
     events = (tasmax > thresh) * 1
@@ -1174,21 +1176,21 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
                                                    thresh_tasmax=30, freq='YS'):
     r"""Frequency days with hot maximum and minimum temperature
 
-        Return the number of days with tasmin > thresh_tasmin
-                                   and tasmax > thresh_tasamax per period
+    Return the number of days with tasmin > thresh_tasmin
+                               and tasmax > thresh_tasamax per period
 
-        Parameters
-        ----------
-        tasmin : xarray.DataArray
-          Minimum daily temperature [℃] or [K]
-        tasmax : xarray.DataArray
-          Maximum daily temperature [℃] or [K]
-        thresh_tasmin : float
-          Threshold temperature for tasmin on which to base evaluation [℃] or [K]
-        thresh_tasmax : float
-          Threshold temperature for tasmax on which to base evaluation [℃] or [K]
-        freq : str, optional
-          Resampling frequency
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmin : float
+      Threshold temperature for tasmin on which to base evaluation [℃] or [K]
+    thresh_tasmax : float
+      Threshold temperature for tasmax on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency
 
     """
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
@@ -1198,16 +1200,16 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
 def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     r"""Frequency of extreme warm nights
 
-        Return the number of days with tasmin > thresh per period
+    Return the number of days with tasmin > thresh per period
 
-        Parameters
-        ----------
-        tasmin : xarray.DataArray
-          Minimum daily temperature [℃] or [K]
-        thresh : float
-          Threshold temperature on which to base evaluation [℃] or [K]
-        freq : str, optional
-          Resampling frequency
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] or [K]
+    freq : str, optional
+      Resampling frequency
 
     """
     events = (tasmin > thresh) * 1

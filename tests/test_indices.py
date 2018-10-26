@@ -394,7 +394,13 @@ class TestTxMaxTxMinIndices:
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
         dtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
 
-        np.testing.assert_almost_equal(dtr.mean(), 2.667, decimal=3)
+        np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
+
+    def test_static_extreme_temperature_range(self, tasmax_series, tasmin_series):
+        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
+        etr = xci.extreme_temperature_range(tasmax, tasmin)
+
+        np.testing.assert_array_almost_equal(etr, 31.7)
 
     def test_uniform_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
         temp_values = np.zeros(365)
