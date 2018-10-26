@@ -117,9 +117,9 @@ class TestMax1DayPrecipitationAmount:
         rx1day = r1max(a)
         assert np.isnan(rx1day)
 
+
 class TestColdSpellIndex:
     def test_simple(self, tas_series):
-
         a = np.zeros(365) + K2C
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
@@ -128,6 +128,7 @@ class TestColdSpellIndex:
 
         out = xci.cold_spell_index(da, thresh=-10., freq='M')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+
 
 class TestConsecutiveFrostDays:
 
@@ -239,7 +240,6 @@ class TestHeatingDegreeDays:
 class TestHeatWaveIndex:
 
     def test_simple(self, tasmax_series):
-
         a = np.zeros(365) + K2C
         a[10:20] += 30  # 10 days
         a[40:43] += 50  # too short -> 0
@@ -272,6 +272,7 @@ class TestHeatWaveFrequency:
                                       thresh_tasmax=40)
         np.testing.assert_allclose(hwf.values, 0)
 
+
 class TestHotDays:
 
     def test_simple(self, tasmax_series):
@@ -282,6 +283,7 @@ class TestHotDays:
         out = xci.hot_days(mx, thresh=30.)
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
 
 class TestMaximumConsecutiveDryDays:
 
@@ -351,7 +353,8 @@ class TestTxMean:
 
 class TestTxMax:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',

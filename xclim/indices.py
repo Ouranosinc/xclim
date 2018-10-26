@@ -8,11 +8,9 @@ from warnings import warn
 
 import numpy as np
 import xarray as xr
-from warnings import warn
-import logging
+
 from .utils import get_ev_length
 from .utils import get_ev_end
-
 from . import run_length as rl
 
 logging.basicConfig(level=logging.DEBUG)
