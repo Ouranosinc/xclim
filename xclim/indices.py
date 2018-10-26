@@ -10,8 +10,8 @@ import numpy as np
 import xarray as xr
 from warnings import warn
 import logging
-from xclim.utils import get_ev_length
-from xclim.utils import get_ev_end
+from .utils import get_ev_length
+from .utils import get_ev_end
 
 from . import run_length as rl
 
@@ -159,6 +159,49 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
 
     c = (c1 * c2) * 1
     return c.resample(time=freq).sum(dim='time')
+
+
+def daily_intensity(pr, thresh=1.0, freq='YS'):
+    r"""Average daily precipitation intensity
+
+    Return the average precipitation over wet days.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm]
+    thresh : float
+      precipitation value over which a day is considered wet. Default: 1mm.
+    freq : str, optional
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray
+      The average precipitation over wet days for each period
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the average
+    precipitation fallen over days with precipitation >= 5 mm at seasonal
+    frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+
+    >>> pr = xr.open_dataset('pr.day.nc')
+    >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
+
+    """
+
+    # put pr=0 for non wet-days
+    pr_wd = xr.where(pr >= thresh, pr, 0)
+
+    # sum over wanted period
+    s = pr_wd.resample(time=freq).sum(dim='time')
+
+    # get number of wet_days over period
+    wd = wet_days(pr, thresh=thresh, freq=freq)
+
+    return s / wd
 
 
 def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
@@ -620,6 +663,71 @@ def ice_days(tasmax, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
+def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
+    """
+    Ratio of rainfall to total precipitation
+
+    The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
+    then precipitation is assumed solid if the temperature is below 0°C.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    prsn : xarray.DataArray
+      Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    freq : str
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Ratio of rainfall to total precipitation
+
+    See also
+    --------
+    winter_rain_ratio
+    """
+    if prsn is None:
+        prsn = pr.where(tas < K2C, 0)
+
+    tot = pr.resample(time=freq).sum()
+    rain = tot - prsn.resample(time=freq).sum()
+    ratio = rain/tot
+    return ratio
+
+
+
+def percentile_doy(arr, window=5, per=.1):
+    """Percentile day of year
+
+    Returns the climatological percentile over a moving window
+    around the day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+    window : int
+    per : float
+    """
+
+    # TODO: Support percentile array, store percentile in attributes.
+    rr = arr.rolling(1, center=True, time=window).construct('window')
+
+    # Create empty percentile array
+    g = rr.groupby('time.dayofyear')
+    c = g.count(dim=('time', 'window'))
+
+    p = xr.full_like(c, np.nan).astype(float).load()
+
+    for doy, ind in rr.groupby('time.dayofyear'):
+        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+
+    return p
+
+
 def summer_days(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
@@ -1004,34 +1112,6 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     return events.resample(time=freq).sum(dim='time')
 
 
-def percentile_doy(arr, window=5, per=.1):
-    """Percentile day of year
-
-    Returns the climatological percentile over a moving window
-    around the day of the year.
-
-    Parameters
-    ----------
-    arr : xarray.DataArray
-    window : int
-    per : float
-    """
-
-    # TODO: Support percentile array, store percentile in attributes.
-    rr = arr.rolling(1, center=True, time=window).construct('window')
-
-    # Create empty percentile array
-    g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
-
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
-
-    return p
-
-
 def wet_days(pr, thresh=1.0, freq='YS'):
     r"""Wet days
 
@@ -1066,44 +1146,30 @@ def wet_days(pr, thresh=1.0, freq='YS'):
     return wd.resample(time=freq).sum(dim='time')
 
 
-def daily_intensity(pr, thresh=1.0, freq='YS'):
-    r"""Average daily precipitation intensity
 
-    Return the average precipitation over wet days.
+def winter_rain_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
+    """
+    Ratio of rainfall to total precipitation during winter
+
+    The ratio of total liquid precipitation over the total precipitation over the winter months (DJF. If solid
+    precipitation is not provided, then precipitation is assumed solid if the temperature is below 0°C.
 
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation [mm]
-    thresh : float
-      precipitation value over which a day is considered wet. Default: 1mm.
-    freq : str, optional
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    prsn : xarray.DataArray
+      Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    freq : str
+      Resampling frequency
 
     Returns
     -------
     xarray.DataArray
-      The average precipitation over wet days for each period
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the average
-    precipitation fallen over days with precipitation >= 5 mm at seasonal
-    frequency, ie DJF, MAM, JJA, SON, DJF, etc.
-
-    >>> pr = xr.open_dataset('pr.day.nc')
-    >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
-
+      Ratio of rainfall to total precipitation during winter months (DJF)
     """
-
-    # put pr=0 for non wet-days
-    pr_wd = xr.where(pr >= thresh, pr, 0)
-
-    # sum over wanted period
-    s = pr_wd.resample(time=freq).sum(dim='time')
-
-    # get number of wet_days over period
-    wd = wet_days(pr, thresh=thresh, freq=freq)
-
-    return s / wd
+    ratio = liquid_precip_ratio(pr, prsn, tas, freq='QS-DEC')
+    winter = ratio.indexes['time'] == 12
+    return ratio[winter]

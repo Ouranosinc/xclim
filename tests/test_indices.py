@@ -225,6 +225,7 @@ class TestGrowingDegreeDays:
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
 
+
 class TestHeatingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C + 17
@@ -233,6 +234,7 @@ class TestHeatingDegreeDays:
         out = xci.heating_degree_days(da)
         np.testing.assert_array_equal(out[:1], 6)
         np.testing.assert_array_equal(out[1:], 0)
+
 
 class TestHeatWaveIndex:
 
