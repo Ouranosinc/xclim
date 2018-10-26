@@ -4,6 +4,8 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 
+TAS_SERIES = tas_series
+
 
 class TestRLE:
     def test_dataarray(self):

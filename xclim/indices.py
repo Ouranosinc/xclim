@@ -4,7 +4,6 @@
 Indices module
 """
 import logging
-from warnings import warn
 
 import numpy as np
 import xarray as xr
@@ -469,13 +468,15 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
 
     Returns
     -------
-    int
-      Day of the year when temperature exceeds threshold over a given number of days.
+    float
+      Day of the year when temperature exceeds threshold over a given number of days for the first time. If there are
+      no such day, return np.nan.
 
     """
+
     over = (tas > K2C + thresh)
     group = over.resample(time=freq)
-    return group.apply(rl.first_run_ufunc, window=window)
+    return group.apply(rl.first_run_ufunc, window=window, index='dayofyear')
 
 
 def frost_days(tasmin, freq='YS'):
@@ -801,7 +802,6 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     return ratio
 
 
-
 def percentile_doy(arr, window=5, per=.1):
     """Percentile day of year
 
@@ -1077,7 +1077,7 @@ def max_1day_precipitation_amount(pr, freq='YS'):
     return pr.resample(time=freq).max(dim='time')
 
 
-def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
+def precip_accumulation(pr, freq='YS'):
     r"""Accumulated total (liquid + solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
@@ -1089,13 +1089,11 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     freq : str, optional
       Resampling frequency as defined in
       http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-    units: str, optional
-      Units of the precipitation data. Must be within ['kg m-2 s-2', 'mm']
 
     Returns
     -------
     xarray.DataArray
-      The total daily precipitation at the given time frequency in [mm].
+      The total daily precipitation at the given time frequency.
 
     Note
     ----
@@ -1112,27 +1110,10 @@ def prcp_tot(pr, freq='YS', units='kg m-2 s-1'):
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
 
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> prcp_tot_seasonal = prcp_tot(pr_day, freq="QS-DEC")
+    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
 
-    # TODO deal with the time_boundaries
-
-    # resample the precipitation to the wanted frequency
-    arr = pr.resample(time=freq)
-    # cumulate the values over the season
-    output = arr.sum(dim='time')
-    # unit conversion as needed
-    if units == 'kg m-2 s-1':
-        # convert from km m-2 s-1 to mm day-1
-        e = 'units converted from [kg m-2 s-1] to [mm day-1]'
-        warn(e)
-        output *= 86400  # number of sec in 24h
-    elif units == 'mm':
-        # nothing to do
-        pass
-    else:
-        raise RuntimeError('non-conforming units')
-    return output
+    return pr.resample(time=freq).sum(dim='time')
 
 
 def tropical_nights(tasmin, thresh=20.0, freq='YS'):
@@ -1357,8 +1338,7 @@ def wet_days(pr, thresh=1.0, freq='YS'):
     return wd.resample(time=freq).sum(dim='time')
 
 
-
-def winter_rain_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
+def winter_rain_ratio(pr, prsn=None, tas=None):
     """
     Ratio of rainfall to total precipitation during winter
 
@@ -1382,5 +1362,5 @@ def winter_rain_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
       Ratio of rainfall to total precipitation during winter months (DJF)
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq='QS-DEC')
-    winter = ratio.indexes['time'] == 12
+    winter = ratio.indexes['time'].month == 12
     return ratio[winter]
