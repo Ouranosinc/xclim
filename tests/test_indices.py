@@ -110,10 +110,9 @@ class TestMax1DayPrecipitationAmount:
 
     # test nan behavior
     def test_nan_max(self):
-        from xclim.precip import R1Max
+        from xclim.precip import r1max
 
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        r1max = R1Max()
         rx1day = r1max(a)
         assert np.isnan(rx1day)
 

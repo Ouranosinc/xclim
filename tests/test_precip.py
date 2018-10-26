@@ -21,9 +21,8 @@ class TestWetDays():
         # put a nan somewhere
         pr.values[10, 1, 0] = np.nan
 
-        wet_days = precip.WetDays()
         pr_min = 5
-        wd = wet_days(pr, thresh=pr_min, freq='MS')
+        wd = precip.wet_days(pr, thresh=pr_min, freq='MS')
 
         # wds = wet_days(pr, pr_min=pr_min, freq='MS', skipna=False)
 
@@ -57,11 +56,10 @@ class TestDailyIntensity():
         pr.values[10, 1, 0] = np.nan
 
         # compute with both skipna options
-        daily_intensity = precip.DailyIntensity()
         pr_min = 2.
         # dis = daily_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
 
-        di = daily_intensity(pr, thresh=pr_min, freq='MS')
+        di = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
 
         x1 = pr[:31, 0, 0].values
         # x2 = pr[:31, 1, 0].values

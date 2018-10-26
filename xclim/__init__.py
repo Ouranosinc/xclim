@@ -2,13 +2,13 @@
 
 """Top-level package for xclim."""
 
-__author__ = """Travis Logan"""
-__email__ = 'logan.travis@ouranos.ca'
-__version__ = '0.6-alpha'
-
 from functools import partial
 from . import indices
 # from .stats import fit, test
+
+__author__ = """Travis Logan"""
+__email__ = 'logan.travis@ouranos.ca'
+__version__ = '0.6-alpha'
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
