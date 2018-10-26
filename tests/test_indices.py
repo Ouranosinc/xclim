@@ -110,10 +110,9 @@ class TestMax1DayPrecipitationAmount:
 
     # test nan behavior
     def test_nan_max(self):
-        from xclim.precip import R1Max
+        from xclim.precip import r1max
 
         a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        r1max = R1Max()
         rx1day = r1max(a)
         assert np.isnan(rx1day)
 
@@ -292,12 +291,13 @@ class TestLiquidPrecipitationRatio:
         pr = pr_series(pr)
 
         tas = np.zeros(100) + K2C
-        tas[:16] -= -10
+        tas[:14] -= 20
         tas[14:] += 10
         tas = tas_series(tas)
 
         out = xci.liquid_precip_ratio(pr, tas=tas, freq='M')
-        np.testing.assert_almost_equal(out, [.6,])
+        np.testing.assert_almost_equal(out[:1], [.6,])
+
 
 class TestMaximumConsecutiveDryDays:
 
@@ -428,7 +428,13 @@ class TestTxMaxTxMinIndices:
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
         dtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
 
-        np.testing.assert_almost_equal(dtr.mean(), 2.667, decimal=3)
+        np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
+
+    def test_static_extreme_temperature_range(self, tasmax_series, tasmin_series):
+        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
+        etr = xci.extreme_temperature_range(tasmax, tasmin)
+
+        np.testing.assert_array_almost_equal(etr, 31.7)
 
     def test_uniform_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
         temp_values = np.zeros(365)

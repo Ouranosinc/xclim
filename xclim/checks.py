@@ -145,7 +145,7 @@ def check_is_dataarray(comp):
     return func
 
 
-def missing_any(da, freq):
+def missing_any(da, freq, **kwds):
     r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters

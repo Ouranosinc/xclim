@@ -13,6 +13,7 @@ from functools import wraps
 import pint
 from . import checks
 from inspect2 import signature
+import abc
 import dask
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -315,24 +316,120 @@ def get_ev_start(ev):
 
 
 class UnivariateIndicator(object):
-    r"""xclim indicator class"""
+    r"""Univariate indicator
 
+    This class needs to be subclassed by individual indicator classes defining metadata information, compute and
+    missing functions.
+
+    """
+    # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
-    units = ''
-    required_units = ''
-    long_name = ''
+
+    # CF-Convention metadata to be attributed to output. May use tags {<tag>} that will be formatted at runtime.
     standard_name = ''
-    description = ''
-    keywords = ''
+    long_name = ''  # Scraped from compute.__doc.__
+    units = ''
     cell_methods = ''
 
+    # The units expected by the function. Used to convert input units to the required_units.
+    required_units = ''
+
+    # Additional information.
+    title = ''  # Scraped from compute.__doc.__
+    abstract = ''  # Scraped from compute.__doc.__
+    keywords = ''  # Comma separated list of keywords
+
+    # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
                       'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
 
-    def compute(self, da, *args, **kwds):
-        """Index computation method. To be subclassed"""
-        raise NotImplementedError
+    def __init__(self, **kwds):
+
+        for key, val in kwds.items():
+            setattr(self, key, val)
+
+        # Sanity checks
+        required = ['compute', 'required_units']
+        for key in required:
+            if not getattr(self, key):
+                raise ValueError("{} needs to be defined during instantiation.".format(key))
+
+        # Extract information from the `compute` function.
+        # The signature
+        self._sig = signature(self.compute)
+
+        # The input parameter names
+        self._parameters = tuple(self._sig.parameters.keys())
+
+        # The docstring
+        self.__call__.__func__.__doc__ = self.compute.__doc__
+
+        # Fill in missing metadata from the doc
+        meta = parse_doc(self.compute)
+        for key in ['abstract', 'title', 'long_name']:
+            setattr(self, key, getattr(self, key) or meta.get(key, ''))
+
+    def __call__(self, *args, **kwds):
+        # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
+        # argument.
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
+
+        # Assume the first argument is always the DataArray.
+        da = ba.arguments.pop(self._parameters[0])
+
+        # Pre-computation validation checks
+        self.validate(da)
+        self.cfprobe(da)
+
+        # Convert units if necessary
+        da = self.convert_units(da)
+
+        # Compute the indicator values, ignoring NaNs.
+        out = self.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
+
+        # Set metadata attributes to the output according to class attributes.
+        self.decorate(out, ba.arguments)
+
+        # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
+        mba = signature(self.missing).bind(da, **ba.arguments)
+
+        # Mask results that do not meet criteria defined by the `missing` method.
+        return out.where(~self.missing(**mba.arguments))
+
+    @property
+    def attrs(self):
+        """CF-Convention attributes of the output value."""
+        names = ['standard_name', 'long_name', 'units', 'cell_methods']
+        return {k: getattr(self, k) for k in names}
+
+    @property
+    def json(self):
+        """Return a dictionary representation of the class.
+
+        Notes
+        -----
+        This is meant to be used by a third-party library wanting to wrap this class into another interface.
+
+        """
+        names = ['identifier', 'abstract', 'keywords']
+        out = {key: getattr(self, key) for key in names}
+
+        out['parameters'] = {key: p.default for (key, p) in self._sig.parameters.items()}
+
+        out.update(self.attrs)
+
+        return out
+
+    def cfprobe(self, da):
+        """Check input data compliance to expectations.
+        Warn of potential issues."""
+        pass
+
+    @abc.abstractmethod
+    def compute(da, freq='Y', *args, **kwds):
+        """The function computing the indicator."""
 
     def convert_units(self, da):
         """Return DataArray with correct units, defined by `self.required_units`."""
@@ -345,27 +442,19 @@ class UnivariateIndicator(object):
 
         return da
 
-    def cfprobe(self, da):
-        """Check input data compliance to expectations.
-        Warn of potential issues."""
-        pass
-
-    def validate(self, da):
-        """Validate input data requirements.
-        Raise error if conditions are not met."""
-        checks.assert_daily(da)
-
-    def decorate(self, da):
+    def decorate(self, da, args=None):
         """Modify output's attributes in place.
 
         If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
         """
+        if args is None:
+            return
 
         attrs = {}
         for key, val in self.attrs.items():
             mba = {}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-            for k, v in self._ba.arguments.items():
+            for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{' + v + '}'
                 else:
@@ -375,35 +464,46 @@ class UnivariateIndicator(object):
 
         da.attrs.update(attrs)
 
-    def missing(self, da, **kwds):
-        """Return boolean DataArray."""
-        return checks.missing_any(da, kwds['freq'])
+    def missing(self, da, freq='Y', *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        return checks.missing_any(da, freq)
 
-    def __init__(self):
-        # Extract DataArray arguments from compute signature.
-        self.attrs = {'long_name': self.long_name,
-                      'units': self.units,
-                      'standard_name': self.standard_name,
-                      'cell_methods': self.cell_methods,
-                      }
+    def validate(self, da):
+        """Validate input data requirements.
+        Raise error if conditions are not met."""
+        checks.assert_daily(da)
 
-    def __call__(self, *args, **kwds):
-        # Bind call arguments
-        self._ba = signature(self.compute).bind(*args, **kwds)
-        self._ba.apply_defaults()
+    @classmethod
+    def factory(cls, attrs):
+        """Create a subclass from the attributes dictionary."""
+        name = attrs['identifier'].capitalize()
+        return type(name, (cls,), attrs)
 
-        self.validate(args[0])
-        self.cfprobe(args[0])
 
-        da = self.convert_units(args[0])
+def parse_doc(obj):
+    """Crude regex parsing."""
+    import re
+    if obj.__doc__ is None:
+        return {}
 
-        out = self.compute(da, *args[1:], **kwds).rename(self.identifier.format(self._ba.arguments))
+    sections = obj.__doc__.split('\n\n')
 
-        self.decorate(out)
+    patterns = {'long_name': '^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
+                'notes': '^\s+Notes.\n\s+----.*\n(.*)'}
 
-        # The missing method should be given the same `freq` as compute. It will be in args or kwds if given
-        # explicitly, but if not, we pass the default from `compute`.
-        return out.where(~self.missing(**self._ba.arguments))
+    out = {}
+    for i, sec in enumerate(sections):
+        if i == 0:
+            out['title'] = sec.strip()
+        elif i == 1:
+            out['abstract'] = sec.strip()
+        else:
+            for key, pat in patterns.items():
+                m = re.match(pat, sec)
+                if m:
+                    out[key] = m.groups()[0]
+
+    return out
 
 
 def first_paragraph(txt):
