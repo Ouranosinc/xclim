@@ -11,10 +11,6 @@ import xarray as xr
 
 from .utils import get_ev_length
 from .utils import get_ev_end
-
-
-from xclim.utils import get_ev_end
-from xclim.utils import get_ev_length
 from . import run_length as rl
 
 logging.basicConfig(level=logging.DEBUG)
