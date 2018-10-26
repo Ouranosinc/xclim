@@ -3,16 +3,15 @@
 """
 Indices module
 """
+
 import logging
 from warnings import warn
 
 import numpy as np
 import xarray as xr
-from warnings import warn
-import logging
-from xclim.utils import get_ev_length
-from xclim.utils import get_ev_end
 
+from xclim.utils import get_ev_end
+from xclim.utils import get_ev_length
 from . import run_length as rl
 
 logging.basicConfig(level=logging.DEBUG)
@@ -533,11 +532,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : float
-<<<<<<< HEAD
-      Threshold temperature on which to designate a heatwave [℃] or [K]
-=======
       Threshold temperature on which to designate a heatwave [℃] or [K]. Default: 25℃.
->>>>>>> master
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
