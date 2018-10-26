@@ -40,6 +40,8 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
 
 
+# PLEASE MAINTAIN ALPHABETICAL ORDER
+
 class TestMaxNDayPrecipitationAmount:
 
     @staticmethod
@@ -115,6 +117,18 @@ class TestMax1DayPrecipitationAmount:
         assert np.isnan(rx1day)
 
 
+class TestColdSpellIndex:
+    def test_simple(self, tas_series):
+        a = np.zeros(365) + K2C
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:100] -= 30  # at the end and beginning
+        da = tas_series(a)
+
+        out = xci.cold_spell_index(da, thresh=-10., freq='M')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
 class TestConsecutiveFrostDays:
 
     @staticmethod
@@ -163,12 +177,56 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
+class TestDailyFreezeThawCycles:
+
+    def test_simple(self, tasmin_series, tasmax_series):
+        mn = np.zeros(365) + K2C
+        mx = np.zeros(365) + K2C
+
+        # 5 days in 1st month
+        mn[10:20] -= 1
+        mx[10:15] += 1
+
+        # 1 day in 2nd month
+        mn[40:44] += [1, 1, -1, -1]
+        mx[40:44] += [1, -1, 1, -1]
+
+        mn = tasmin_series(mn)
+        mx = tasmax_series(mx)
+        out = xci.daily_freezethaw_cycles(mx, mn, 'M')
+        np.testing.assert_array_equal(out[:2], [5, 1])
+        np.testing.assert_array_equal(out[2:], 0)
+
+
 class TestGrowingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a[0] = K2C + 5  # default thresh at 4
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
+
+
+class TestHeatingDegreeDays:
+    def test_simple(self, tas_series):
+        a = np.zeros(365) + K2C + 17
+        a[:7] += [-3, -2, -1, 0, 1, 2, 3]
+        da = tas_series(a)
+        out = xci.heating_degree_days(da)
+        np.testing.assert_array_equal(out[:1], 6)
+        np.testing.assert_array_equal(out[1:], 0)
+
+
+class TestHeatWaveIndex:
+
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365) + K2C
+        a[10:20] += 30  # 10 days
+        a[40:43] += 50  # too short -> 0
+        a[80:100] += 30  # at the end and beginning
+        da = tasmax_series(a)
+
+        out = xci.heat_wave_index(da, thresh=25., freq='M')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestHeatWaveFrequency:
@@ -192,6 +250,18 @@ class TestHeatWaveFrequency:
         hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=40,
                                       thresh_tasmax=40)
         np.testing.assert_allclose(hwf.values, 0)
+
+
+class TestHotDays:
+
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365) + K2C
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a)
+
+        out = xci.hot_days(mx, thresh=30.)
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
 
 
 class TestMaximumConsecutiveDryDays:
@@ -262,7 +332,8 @@ class TestTxMean:
 
 class TestTxMax:
 
-    def time_series(self, values):
+    @staticmethod
+    def time_series(values):
         coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'air_temperature',
