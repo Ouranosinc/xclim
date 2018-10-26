@@ -285,6 +285,20 @@ class TestHotDays:
         np.testing.assert_array_equal(out[1:], [0])
 
 
+class TestLiquidPrecipitationRatio:
+    def test_simple(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[10:20] = 1
+        pr = pr_series(pr)
+
+        tas = np.zeros(100) + K2C
+        tas[:16] -= -10
+        tas[14:] += 10
+        tas = tas_series(tas)
+
+        out = xci.liquid_precip_ratio(pr, tas=tas, freq='M')
+        np.testing.assert_almost_equal(out, [.6,])
+
 class TestMaximumConsecutiveDryDays:
 
     def test_simple(self, pr_series):
