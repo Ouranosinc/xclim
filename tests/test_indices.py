@@ -172,6 +172,29 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+class TestHeatWaveFrequency:
+
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        # some hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30)
+        np.testing.assert_allclose(hwf.values, 2)
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30, window=4)
+        np.testing.assert_allclose(hwf.values, 1)
+        # one long hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=10,
+                                      thresh_tasmax=10)
+        np.testing.assert_allclose(hwf.values, 1)
+        # no hw
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=40,
+                                      thresh_tasmax=40)
+        np.testing.assert_allclose(hwf.values, 0)
+
+
 class TestMaximumConsecutiveDryDays:
 
     def test_simple(self, pr_series):
@@ -208,7 +231,7 @@ class TestPrcpTotal:
         out_std = xci.prcp_tot(da_std, units='mm')
         # l_years = np.unique(da_std.time.dt.year) TODO: Unused local variables are a PEP8 violation
         target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
-        assert (np.allclose(target, out_std.values))
+        np.testing.assert_allclose(target, out_std.values)
 
 
 class TestTxMin:
@@ -326,6 +349,53 @@ class TestTxMaxTxMinIndices:
     #         runs = np.append(runs, ft)
     #
     #     np.testing.assert_allclose(np.mean(runs), 120, atol=20)
+
+
+class TestWarmDayFrequency:
+
+    def test_1d(self, tasmax_series):
+        a = np.zeros(35)
+        a[25:] = 31
+        da = tasmax_series(a)
+        wdf = xci.warm_day_frequency(da, freq='MS')
+        np.testing.assert_allclose(wdf.values, [6, 4])
+        wdf = xci.warm_day_frequency(da, freq='YS')
+        np.testing.assert_allclose(wdf.values, [10])
+        wdf = xci.warm_day_frequency(da, thresh=-1)
+        np.testing.assert_allclose(wdf.values, [35])
+        wdf = xci.warm_day_frequency(da, thresh=50)
+        np.testing.assert_allclose(wdf.values, [0])
+
+
+class TestWarmNightFrequency:
+
+    def test_1d(self, tasmin_series):
+        a = np.zeros(35)
+        a[25:] = 23
+        da = tasmin_series(a)
+        wnf = xci.warm_night_frequency(da, freq='MS')
+        np.testing.assert_allclose(wnf.values, [6, 4])
+        wnf = xci.warm_night_frequency(da, freq='YS')
+        np.testing.assert_allclose(wnf.values, [10])
+        wnf = xci.warm_night_frequency(da, thresh=-1)
+        np.testing.assert_allclose(wnf.values, [35])
+        wnf = xci.warm_night_frequency(da, thresh=50)
+        np.testing.assert_allclose(wnf.values, [0])
+
+
+class TestWarmMinimumAndMaximumTemperatureFrequency:
+
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx)
+        np.testing.assert_allclose(wmmtf.values, [7])
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=50)
+        np.testing.assert_allclose(wmmtf.values, [0])
+        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=0,
+                                                                   thresh_tasmin=0)
+        np.testing.assert_allclose(wmmtf.values, [10])
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
