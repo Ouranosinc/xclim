@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.testing.common import tas_series
-from xclim import temperature as temp
+import xclim.temperature as temp
 
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
