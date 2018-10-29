@@ -464,7 +464,8 @@ class UnivariateIndicator(object):
 
         da.attrs.update(attrs)
 
-    def missing(self, da, freq='Y', *args, **kwds):
+    @staticmethod
+    def missing(da, freq='Y', *args, **kwds):
         """Return whether an output is considered missing or not."""
         return checks.missing_any(da, freq)
 
