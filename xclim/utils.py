@@ -488,8 +488,8 @@ def parse_doc(obj):
 
     sections = obj.__doc__.split('\n\n')
 
-    patterns = {'long_name': '^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
-                'notes': '^\s+Notes.\n\s+----.*\n(.*)'}
+    patterns = {'long_name': r'^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
+                'notes': r'^\s+Notes.\n\s+----.*\n(.*)'}
 
     out = {}
     for i, sec in enumerate(sections):
