@@ -47,10 +47,10 @@ class Tasmax(UnivariateIndicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-tg_mean = Tas(identifier='tg_mean',
+tmmean = Tas(identifier='tmmean',
               units='K',
-              long_name="{freq} mean temperature",
-              standard_name="{freq} mean temperature",
+              long_name="Mean daily mean temperature",
+              standard_name="air_temperature",
               description="{freq} of daily mean temperature.",
               keywords='',
               compute=_ind.tg_mean,)

@@ -387,7 +387,8 @@ class UnivariateIndicator(object):
         da = self.convert_units(da)
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
+        out = self.compute(da, **ba.arguments)
+        #out.name = self.identifier.format(ba.arguments)
 
         # Set metadata attributes to the output according to class attributes.
         self.decorate(out, ba.arguments)
@@ -396,7 +397,8 @@ class UnivariateIndicator(object):
         mba = signature(self.missing).bind(da, **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
-        return out.where(~self.missing(**mba.arguments))
+        maout = out.where(~self.missing(**mba.arguments))
+        return maout.rename(self.identifier.format(ba.arguments))
 
     @property
     def attrs(self):
@@ -413,10 +415,10 @@ class UnivariateIndicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'abstract', 'keywords']
+        names = ['identifier', 'abstract', 'keywords', 'long_name']
         out = {key: getattr(self, key) for key in names}
 
-        out['parameters'] = {key: p.default for (key, p) in self._sig.parameters.items()}
+        out['parameters'] = {key: {'default': p.default, 'desc': ''} for (key, p) in self._sig.parameters.items()}
 
         out.update(self.attrs)
 
