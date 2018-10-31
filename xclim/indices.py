@@ -8,8 +8,6 @@ import logging
 import numpy as np
 import xarray as xr
 
-from .utils import get_ev_length
-from .utils import get_ev_end
 from . import run_length as rl
 
 logging.basicConfig(level=logging.DEBUG)
@@ -610,7 +608,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
-                        window=3, freq='YS', use_rl=True, **kwds):
+                        window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
@@ -639,19 +637,16 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     xarray.DataArray
       Number of heatwave at the wanted frequency
 
+    References
+    ----------
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F)
+    See Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
 
-    ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    ev_l = get_ev_length(ev)
-    # only keep events as long as window
-    ev = ev.where((ev == 1) & (ev_l >= window), 0)
-
-    # flag only the end of every event
-    ev_end = get_ev_end(ev)
-
-    # sum events over period
-    hwf = ev_end.resample(time=freq).sum(dim='time')
-    return hwf
+    cond = (tasmin > thresh_tasmin + K2C) & (tasmax > thresh_tasmax + K2C)
+    group = cond.resample(time=freq)
+    return group.apply(rl.windowed_run_events_ufunc, window=window)
 
 
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
@@ -807,33 +802,6 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     rain = tot - prsn.resample(time=freq).sum()
     ratio = rain/tot
     return ratio
-
-
-def percentile_doy(arr, window=5, per=.1):
-    """Percentile value for each day of the year
-
-    Returns the climatological percentile over a moving window around each day of the year.
-
-    Parameters
-    ----------
-    arr : xarray.DataArray
-    window : int
-    per : float
-    """
-
-    # TODO: Support percentile array, store percentile in attributes.
-    rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
-
-    # Create empty percentile array
-    g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
-
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
-
-    return p
 
 
 def summer_days(tasmax, thresh=25.0, freq='YS'):

@@ -111,40 +111,23 @@ def longest_run(arr):
     return np.where(v, rl, 0).max()
 
 
-# DO NOT USE #
-# This function does not work for some corner cases.
-def xr_longest_run(da, freq):
-    """Return the length of the longest run of true values along the time dimension.
+def windowed_run_events(arr, window):
+    """Return the number of runs of a minimum length.
 
     Parameters
     ----------
-    da : xarray.DataArray
-      Boolean array with time coordinates.
-    freq : str
-      Resampling frequency.
+    arr : bool array
+      Input array
+    window : int
+      Minimum run length.
 
+    Returns
+    -------
+    out : func
+      Number of distinct runs of a minimum length.
     """
-    # Create an monotonously increasing index [0,1,2,...] along the time dimension.
-    i = xr.DataArray(np.arange(da.time.size), dims='time')
-    index = xr.broadcast(i, da)[0]
-
-    ini = xr.DataArray([-1], coords={'time': da.time[:1]}, dims='time')
-    end = xr.DataArray([da.time.size], coords={'time': da.time[-1:]}, dims='time')
-
-    masked_da = xr.concat((ini, index.where(~da), end), dim='time')
-
-    # Fill NaNs with the following valid value
-    nan_filled_da = masked_da.bfill(dim='time')
-
-    # Find the difference between start and end indices
-    diff_ind = nan_filled_da.diff(dim='time') - 1
-
-    # Find the longest run by period - but it does not work if all values are True.
-    run = diff_ind.resample(time=freq).max(dim='time')
-
-    # Replace periods where all values are true by the item count
-    g = da.resample(time=freq)
-    return run.where(~g.all(dim='time'), g.count(dim='time'))
+    v, rl, pos = rle(arr)
+    return (v * rl >= window).sum()
 
 
 def windowed_run_count_ufunc(x, window):
@@ -164,6 +147,31 @@ def windowed_run_count_ufunc(x, window):
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(windowed_run_count,
+                          x,
+                          input_core_dims=[['time'], ],
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.int, ],
+                          keep_attrs=True,
+                          kwargs={'window': window})
+
+
+def windowed_run_events_ufunc(x, window):
+    """Dask-parallel version of windowed_run_events, ie the number of runs at least as long as given duration.
+
+    Parameters
+    ----------
+    x : bool array
+      Input array
+    window : int
+      Minimum run length
+
+    Returns
+    -------
+    out : func
+      A function operating along the time dimension of a dask-array.
+    """
+    return xr.apply_ufunc(windowed_run_events,
                           x,
                           input_core_dims=[['time'], ],
                           vectorize=True,

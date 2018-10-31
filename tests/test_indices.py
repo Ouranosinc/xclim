@@ -28,6 +28,7 @@ import xarray as xr
 
 import xclim.indices as xci
 from xclim.testing.common import tas_series, tasmax_series, tasmin_series, pr_series
+from xclim.utils import percentile_doy
 
 xr.set_options(enable_cftimeindex=True)
 
@@ -125,7 +126,7 @@ class TestColdSpellDurationIndex:
         tn = np.zeros(i) + K2C + A * np.sin(np.arange(i)/365. * 2 * np.pi) + .1*np.random.rand(i)
         tn[10:20] -= 2
         tn = tasmin_series(tn)
-        tn10 = xci.percentile_doy(tn, per=.1)
+        tn10 = percentile_doy(tn, per=.1)
 
         out = xci.cold_spell_duration_index(tn, tn10, 'YS')
         assert out[0] == 10
@@ -272,8 +273,8 @@ class TestHeatWaveIndex:
 class TestHeatWaveFrequency:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C
 
         # some hw
         hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
@@ -544,7 +545,7 @@ class TestWarmSpellDurationIndex:
         tx = np.zeros(i) + K2C + A * np.sin(np.arange(i)/365. * 2 * np.pi) + .1*np.random.rand(i)
         tx[10:20] += 2
         tx = tasmax_series(tx)
-        tx90 = xci.percentile_doy(tx, per=.9)
+        tx90 = percentile_doy(tx, per=.9)
 
         out = xci.warm_spell_duration_index(tx, tx90, 'YS')
         assert out[0] == 10
