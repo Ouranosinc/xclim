@@ -522,6 +522,34 @@ class TestWarmMinimumAndMaximumTemperatureFrequency:
         np.testing.assert_allclose(wmmtf.values, [10])
 
 
+class TestWarmSpellDurationIndex:
+    def test_simple(self, tasmax_series):
+        tx = np.zeros(365) + K2C
+        tx90 = 330.
+
+        tx[10:20] += tx90 + 1
+        tx = tasmax_series(tx)
+
+        out = xci.warm_spell_duration_index(tx, tx90, 'YS')
+        assert out[0] == 10
+
+    def test_hole(self, tasmax_series):
+        tx = np.zeros(365) + K2C
+        tx90 = 330.
+
+        tx[10:15] += tx90 + 1
+        tx[17:20] += tx90 + 1
+        tx = tasmax_series(tx)
+
+        out = xci.warm_spell_duration_index(tx, tx90, 'YS')
+        assert out[0] == 0
+
+    @pytest.mark.skip("not implemented")
+    def test_doy(self, tasmax_series):
+        """Compute doy tx90 then compute WSDI"""
+        raise NotImplementedError
+
+
 class TestWinterRainRatio:
     def test_simple(self, pr_series, tas_series):
         pr = np.ones(450)

@@ -1265,7 +1265,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
     r"""Frequency days with hot maximum and minimum temperature
 
     Return the number of days with tasmin > thresh_tasmin
-                               and tasmax > thresh_tasamax per period
+                               and tasmax > thresh_tasmax per period
 
     Parameters
     ----------
@@ -1302,6 +1302,33 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     """
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
+
+
+def warm_spell_duration_index(tasmax, tx90, freq='YS'):
+    """Warm spell duration index
+
+    Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
+    percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
+    1961-1990 period.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    tx90 : float
+      90th percentile of daily maximum temperature [K]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    xarray.DataArray
+      Count of days with at least six consecutive days with daily maximum temperature is above the 90th percentile [
+      days].
+
+    """
+    # TODO: This only works for a fixed tx90. Need to have it work with an array for each doy.
+    above = (tasmax > tx90)
+    return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=6)
 
 
 def wet_days(pr, thresh=1.0, freq='YS'):
