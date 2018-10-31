@@ -128,7 +128,7 @@ class TestColdSpellDurationIndex:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = xci.cold_spell_duration_index(tn, tn10, 'YS')
+        out = xci.cold_spell_duration_index(tn, tn10, freq='YS')
         assert out[0] == 10
 
 
@@ -547,7 +547,7 @@ class TestWarmSpellDurationIndex:
         tx = tasmax_series(tx)
         tx90 = percentile_doy(tx, per=.9)
 
-        out = xci.warm_spell_duration_index(tx, tx90, 'YS')
+        out = xci.warm_spell_duration_index(tx, tx90, freq='YS')
         assert out[0] == 10
 
 

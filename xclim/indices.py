@@ -63,7 +63,7 @@ def base_flow_index(q, freq='YS'):
     return m7m / mq.mean(dim='time')
 
 
-def cold_spell_duration_index(tasmin, tn10, freq='YS'):
+def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
@@ -106,7 +106,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
     below = (tasmin < thresh)
 
-    return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=6)
+    return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -637,10 +637,23 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     xarray.DataArray
       Number of heatwave at the wanted frequency
 
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
     References
     ----------
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F)
-    See Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
 
@@ -1278,7 +1291,7 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     return events.resample(time=freq).sum(dim='time')
 
 
-def warm_spell_duration_index(tasmax, tx90, freq='YS'):
+def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
     r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
@@ -1319,7 +1332,7 @@ def warm_spell_duration_index(tasmax, tx90, freq='YS'):
 
     above = (tasmax > thresh)
 
-    return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=6)
+    return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def wet_days(pr, thresh=1.0, freq='YS'):
