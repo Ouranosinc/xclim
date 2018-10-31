@@ -1,7 +1,53 @@
 # -*- coding: utf-8 -*-
 
 """
-Indices module
+Indices library
+===============
+
+This module describe climate indicator functions. Functions are listed in alphabetical order and describe the raw
+computation performed over xarray.DataArrays that are assumed to be valid and with the correct units. The output's
+attributes (CF-Convention) are not modified. Validation checks, output attributes and unit conversion are handled by
+indicator classes described in files named by the physical variable (temperature, precip, streamflow).
+
+Notes for docstring
+-------------------
+
+The docstrings adhere to the `NumPy`_ style convention and is also meant as a way to store CF-Convention metadata as
+dwell as information relevant to third party libraries (such as a WPS server).
+
+The first line of the docstring (the short summary), will be assigned to the output's `long_name` attribute. The
+`long_name` attribute is defined by the NetCDF User Guide to contain a long descriptive name which may, for example,
+be used for labeling plots.
+
+The second paragraph will be considered as the `abstract`, or the CF global `comment` (Miscellaneous information
+about the data or methods used to produce it).
+
+The third and fourth sections are the "`Parameters`" and "`Returns`" sections describing the input and output values
+respectively.
+
+.. code-block::
+
+   Parameters
+   ----------
+   <standard_name> : xarray.DataArray
+     Long name of variable [acceptable units].
+   threshold : float
+     Description of the threshold and units. For example the 10th percentile of historical temperature [K].
+   freq : str, optional
+     Resampling frequency.
+
+   Returns
+   -------
+   xarray.DataArray
+     Output's <long_name> [units]
+
+
+The next sections would be "`Note`" where the mathematical equation is described, and "`References`" to include
+citations of key sources.
+
+
+.. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
+
 """
 import logging
 
