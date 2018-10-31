@@ -117,6 +117,20 @@ class TestMax1DayPrecipitationAmount:
         assert np.isnan(rx1day)
 
 
+class TestColdSpellDurationIndex:
+    def test_simple(self, tasmin_series):
+
+        i = 3650
+        A = 10.
+        tn = np.zeros(i) + K2C + A * np.sin(np.arange(i)/365. * 2 * np.pi) + .1*np.random.rand(i)
+        tn[10:20] -= 2
+        tn = tasmin_series(tn)
+        tn10 = xci.percentile_doy(tn, per=.1)
+
+        out = xci.cold_spell_duration_index(tn, tn10, 'YS')
+        assert out[0] == 10
+
+
 class TestColdSpellIndex:
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C

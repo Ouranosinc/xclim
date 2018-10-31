@@ -66,42 +66,49 @@ def base_flow_index(q, freq='YS'):
 
 
 def cold_spell_duration_index(tasmin, tn10, freq='YS'):
-    r"""Cold spell duration index
+    r"""Warm spell duration index
 
-    Resamples the daily minimum temperature series by returning the number of days per
-    period where the temperature is below the calendar day 10th percentile (calculated
-    over a centered 5-day window for values during a 30-year reference period) for a
-    minimum of at least six consecutive days.
+    Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
+    percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the
+    1961-1990 period.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [C] or [K]
-    tn10 : xarray.DataArray
-      The daily climatological 10th percentile (using a centered 5-day window) of minimum daily temperature for
-      a 30-year reference period.
+      Minimum daily temperature [℃] or [K]
+    tn10 : float
+      10th percentile of daily minimum temperature [K]
     freq : str, optional
       Resampling frequency
 
     Returns
     -------
     xarray.DataArray
-      Cold spell duration index.
+      Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
+      percentile [days].
 
-    Note
-    ----
-    # TODO: Add a formula or example to better illustrate the cold spell duration metric
+    References
+    ----------
+    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
 
-    See also
-    --------
-    percentile_doy
+    Example
+    -------
+    >>> tn10 = percentile_doy(historical_tasmin, per=.1)
+    >>> cold_spell_duration_index(reference_tasmin, tn10)
     """
+    if 'dayofyear' not in tn10.coords.keys():
+        raise AttributeError("tn10 should have dayofyear coordinates.")
 
-    window = 6
+    # The day of year value of the tasmax series.
+    doy = tasmin.indexes['time'].dayofyear
 
-    return tasmin.pipe(lambda x: x - tn10) \
-        .resample(time=freq) \
-        .apply(rl.windowed_run_count_ufunc, window=window)
+    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
+    thresh = xr.full_like(tasmin, np.nan)
+    thresh.data = tn10.sel(dayofyear=doy)
+
+    below = (tasmin < thresh)
+
+    return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=6)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -803,10 +810,9 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 
 
 def percentile_doy(arr, window=5, per=.1):
-    """Percentile day of year
+    """Percentile value for each day of the year
 
-    Returns the climatological percentile over a moving window
-    around the day of the year.
+    Returns the climatological percentile over a moving window around each day of the year.
 
     Parameters
     ----------
@@ -816,7 +822,7 @@ def percentile_doy(arr, window=5, per=.1):
     """
 
     # TODO: Support percentile array, store percentile in attributes.
-    rr = arr.rolling(1, center=True, time=window).construct('window')
+    rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
 
     # Create empty percentile array
     g = rr.groupby('time.dayofyear')
@@ -1305,7 +1311,7 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
 
 
 def warm_spell_duration_index(tasmax, tx90, freq='YS'):
-    """Warm spell duration index
+    r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
     percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
@@ -1321,9 +1327,16 @@ def warm_spell_duration_index(tasmax, tx90, freq='YS'):
       Resampling frequency
 
     Returns
+    -------
     xarray.DataArray
-      Count of days with at least six consecutive days with daily maximum temperature is above the 90th percentile [
-      days].
+      Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
+      percentile [days].
+
+    References
+    ----------
+    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
+    Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
+    precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
     if 'dayofyear' not in tx90.coords.keys():
