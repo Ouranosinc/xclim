@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.testing.common import tas_series
-from xclim import temperature as temp
+import xclim.temperature as temp
 
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
@@ -18,16 +18,14 @@ class TestTxMax:
 
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
-        tx_obj = temp.TxMax()
-        tx_obj(ts, freq='Y')
+        temp.tx_max(ts, freq='Y')
 
 
 class TestTxMin:
 
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(720))
-        tx_obj = temp.TxMin()
-        tx_obj(ts, freq='Y')
+        temp.tx_min(ts, freq='Y')
 
 
 class TestFrostDays:
@@ -42,7 +40,7 @@ class TestFrostDays:
 
         # compute with both skipna options
         thresh = 273.16
-        fd = temp.FrostDays()(tasmin, freq='YS')
+        fd = temp.frost_days(tasmin, freq='YS')
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tasmin.values[:, 0, 0]
@@ -70,7 +68,7 @@ class TestGrowingDegreeDays:
 
         # compute with both skipna options
         thresh = K2C + 4
-        gdd = temp.GrowingDegreeDays()(tas, freq='YS')
+        gdd = temp.growing_degree_days(tas, freq='YS')
         # gdds = xci.growing_degree_days(tas, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]

@@ -12,8 +12,7 @@ class BaseFlowIndex(UnivariateIndicator):
     description = 'Maximum daily maximum temperature over period.'
     keywords = ''
 
-    def compute(self, q, freq='YS'):
-        return _ind.base_flow_index(q, freq)
+    compute = _ind.base_flow_index
 
     def cfprobe(self, q):
         checks.check_valid(q, 'standard_name', 'water_volume_transport_in_river_channel')

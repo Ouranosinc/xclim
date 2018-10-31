@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Indicator and data consistency checking module
+Indicator calculation instances
+===============================
+
+While the `indices` module stores the computing functions, this module defines Indicator classes and instances that
+include a number of functionalities, such as input validation, unit conversion, output meta-data handling,
+and missing value masking.
+
+The concept followed here is to define UnivariateIndicator subclasses for each input variable, then create instances
+for each indicator.
+
 """
 
 from . import checks
@@ -38,73 +47,54 @@ class Tasmax(UnivariateIndicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-class TGMean(Tas):
-    identifier = 'tg_mean'
-    units = 'K'
-    long_name = "{freq} mean temperature"
-    standard_name = "{freq} mean temperature"
-    description = "{freq} of daily mean temperature."
-    keywords = ''
-
-    def compute(self, da, freq='YS'):
-        return _ind.tg_mean(da, freq)
+tg_mean = Tas(identifier='tg_mean',
+              units='K',
+              long_name="{freq} mean temperature",
+              standard_name="{freq} mean temperature",
+              description="{freq} of daily mean temperature.",
+              keywords='',
+              compute=_ind.tg_mean,)
 
 
-class TxMax(Tasmax):
-    identifier = 'tx_max'
-    required_units = 'K'
-    long_name = 'Maximum temperature'
-    standard_name = 'tasmax'
-    description = 'Maximum daily maximum temperature.'
-    keywords = ''
-
-    def compute(self, da, freq='YS'):
-        return _ind.tx_max(da, freq)
+tx_max = Tasmax(identifier='tx_max',
+                required_units='K',
+                long_name='Maximum temperature',
+                standard_name='tasmax',
+                description='Maximum daily maximum temperature.',
+                keywords='',
+                compute=_ind.tx_max,
+                )
 
 
-class ColdSpellDurationIndex(Tasmin):
-    identifier = 'cold_spell_duration'
-    standard_name = 'cold_spell_duration_index'
-    units = 'days'
+cold_spell_duration = Tasmin(identifier='cold_spell_duration',
+                             standard_name='cold_spell_duration_index',
+                             units='days',
+                             compute=_ind.cold_spell_duration_index,
+                             )
 
-    def compute(self, da, tn10, freq='YS'):
-        _ind.cold_spell_duration_index(da, tn10, freq)
+tx_min = Tasmax(identifier='tx_min',
+                long_name='Minimum maximum temperature',
+                standard_name='tx_min',
+                description='Minimum daily maximum temperature over the period',
+                cell_methods='time: minimum within {freq}',
+                compute=_ind.tx_min,
+                )
 
+cooling_dd = Tas(identifier='cooling_dd',
+                 long_name='cooling degree days above {thresh}',
+                 standard_name='cooling degree days above {thresh}',
+                 units='K days',
+                 compute=_ind.cooling_degree_days,
+                 )
 
-class TxMin(Tasmax):
-    identifier = 'tx_min'
-    long_name = 'Minimum maximum temperature'
-    standard_name = 'tx_min'
-    description = 'Minimum daily maximum temperature over the period'
-    cell_methods = 'time: minimum within {freq}'
+frost_days = Tasmin(identifier='frost_days',
+                    long_name='number of days below 0C',
+                    standard_name='number of frost days',
+                    units='days',
+                    compute=_ind.frost_days,
+                    )
 
-    def compute(self, da, freq='YS'):
-        return _ind.tx_min(da, freq)
-
-
-class CoolingDegreeDays(Tas):
-    identifier = 'cooling_dd'
-    long_name = 'cooling degree days above {thresh}'
-    standard_name = 'cooling degree days above {thresh}'
-    units = 'K days'
-
-    def compute(self, da, thresh=18, freq='YS'):
-        return _ind.cooling_degree_days(da, thresh, freq)
-
-
-class FrostDays(Tasmin):
-    identifier = 'frost_days'
-    long_name = 'number of days below 0C'
-    standard_name = 'number of frost days'
-    units = 'days'
-
-    def compute(self, da, freq='YS'):
-        return _ind.frost_days(da, freq)
-
-
-class GrowingDegreeDays(Tas):
-    identifier = 'growing_degree_days'
-    units = 'K days'
-
-    def compute(self, da, thresh=4, freq='YS'):
-        return _ind.growing_degree_days(da, thresh, freq)
+growing_degree_days = Tas(identifier='growing_degree_days',
+                          units='K days',
+                          compute=_ind.growing_degree_days,
+                          )

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from xclim.temperature import TGMean
+from xclim.temperature import tg_mean
 from xclim.testing.common import tas_series
 from xclim import checks
 
@@ -12,7 +12,6 @@ TAS_SERIES = tas_series()
 class TestDateHandling:
 
     def test_assert_daily(self):
-        tg_mean = TGMean()
         n = 365  # one day short of a full year
         times = pd.date_range('2000-01-01', freq='1D', periods=n)
         da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'K'})
@@ -21,7 +20,6 @@ class TestDateHandling:
     # Bad frequency
     def test_bad_frequency(self):
         with pytest.raises(ValueError):
-            tg_mean = TGMean()
             n = 365
             times = pd.date_range('2000-01-01', freq='12H', periods=n)
             da = xr.DataArray(np.arange(n), [('time', times)])
@@ -30,7 +28,6 @@ class TestDateHandling:
     # Missing one day between the two years
     def test_missing_one_day_between_two_years(self):
         with pytest.raises(ValueError):
-            tg_mean = TGMean()
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2001-01-01', freq='1D', periods=n))
@@ -40,7 +37,6 @@ class TestDateHandling:
     # Duplicate dates
     def test_duplicate_dates(self):
         with pytest.raises(ValueError):
-            tg_mean = TGMean()
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))

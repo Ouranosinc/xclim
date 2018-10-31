@@ -2,13 +2,13 @@
 
 """Top-level package for xclim."""
 
-__author__ = """Travis Logan"""
-__email__ = 'logan.travis@ouranos.ca'
-__version__ = '0.6-alpha'
-
 from functools import partial
 from . import indices
 # from .stats import fit, test
+
+__author__ = """Travis Logan"""
+__email__ = 'logan.travis@ouranos.ca'
+__version__ = '0.6-alpha'
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
@@ -82,6 +82,8 @@ def __build_icclim(mode='warn'):
     mapping = {'TG': indices.tg_mean,
                'TX': indices.tx_mean,
                'TN': indices.tn_mean,
+               # 'TGx': indices.tg_max,
+               # 'TGn': indices.tg_min,
                'TXx': indices.tx_max,
                'TXn': indices.tx_min,
                'TNx': indices.tn_max,
@@ -98,6 +100,7 @@ def __build_icclim(mode='warn'):
                'CWD': indices.maximum_consecutive_wet_days,
                # 'PRCPTOT': indices.prec_total,
                # 'RR1': indices.wet_days,
+               'ETR': indices.extreme_temperature_range,
                'DTR': indices.daily_temperature_range,
                'vDTR': indices.daily_temperature_range_variability,
                }
