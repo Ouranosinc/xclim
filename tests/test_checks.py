@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from xclim.temperature import tg_mean
+from xclim.temperature import tmmean as tg_mean
 from xclim.testing.common import tas_series
 from xclim import checks
 

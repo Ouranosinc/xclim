@@ -388,7 +388,6 @@ class UnivariateIndicator(object):
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(da, **ba.arguments)
-        #out.name = self.identifier.format(ba.arguments)
 
         # Set metadata attributes to the output according to class attributes.
         self.decorate(out, ba.arguments)
@@ -397,8 +396,9 @@ class UnivariateIndicator(object):
         mba = signature(self.missing).bind(da, **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
-        maout = out.where(~self.missing(**mba.arguments))
-        return maout.rename(self.identifier.format(ba.arguments))
+        ma_out = out.where(~self.missing(**mba.arguments))
+
+        return ma_out.rename(self.identifier.format(ba.arguments))
 
     @property
     def attrs(self):

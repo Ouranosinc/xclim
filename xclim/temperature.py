@@ -48,12 +48,12 @@ class Tasmax(UnivariateIndicator):
 
 
 tmmean = Tas(identifier='tmmean',
-              units='K',
-              long_name="Mean daily mean temperature",
-              standard_name="air_temperature",
-              description="{freq} of daily mean temperature.",
-              keywords='',
-              compute=_ind.tg_mean,)
+             units='K',
+             long_name="Mean daily mean temperature",
+             standard_name="air_temperature",
+             description="{freq} of daily mean temperature.",
+             keywords='',
+             compute=_ind.tg_mean,)
 
 
 tx_max = Tasmax(identifier='tx_max',
