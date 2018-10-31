@@ -14,7 +14,7 @@ with open('HISTORY.rst') as history_file:
 # with open('requirements.txt') as req_file:
 #    requirements = req_file.read().split('\n')
 
-requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', 'pint', 'inspect2', 'unittest2']
+requirements = ['dask', 'numpy', 'scipy', 'xarray', 'netcdf4', 'pandas', 'pint', 'inspect2', 'unittest2', 'six']
 
 setup_requirements = ['pytest-runner', ]
 

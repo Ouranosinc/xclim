@@ -5,6 +5,7 @@ scipy
 bottleneck
 netCDF4
 pandas
-inspect2
 pint
+inspect2
 unittest2
+six

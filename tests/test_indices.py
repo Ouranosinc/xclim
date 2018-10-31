@@ -198,6 +198,32 @@ class TestDailyFreezeThawCycles:
         np.testing.assert_array_equal(out[2:], 0)
 
 
+class TestFreshetStart:
+
+    def test_simple(self, tas_series):
+        tg = np.zeros(365) + K2C - 1
+        w = 5
+
+        i = 10
+        tg[i:i+w-1] += 6  # too short
+
+        i = 20
+        tg[i:i+w] += 6  # ok
+
+        i = 30
+        tg[i:i+w+1] += 6  # Second valid condition, should be ignored.
+
+        tg = tas_series(tg, start='1/1/2000')
+        out = xci.freshet_start(tg, window=w)
+        assert out[0] == tg.indexes['time'][20].dayofyear
+
+    def test_no_start(self, tas_series):
+        tg = np.zeros(365) + K2C - 1
+        tg = tas_series(tg, start='1/1/2000')
+        out = xci.freshet_start(tg)
+        np.testing.assert_equal(out, [np.nan, ])
+
+
 class TestGrowingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365)
@@ -264,6 +290,21 @@ class TestHotDays:
         np.testing.assert_array_equal(out[1:], [0])
 
 
+class TestLiquidPrecipitationRatio:
+    def test_simple(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[10:20] = 1
+        pr = pr_series(pr)
+
+        tas = np.zeros(100) + K2C
+        tas[:14] -= 20
+        tas[14:] += 10
+        tas = tas_series(tas)
+
+        out = xci.liquid_precip_ratio(pr, tas=tas, freq='M')
+        np.testing.assert_almost_equal(out[:1], [.6, ])
+
+
 class TestMaximumConsecutiveDryDays:
 
     def test_simple(self, pr_series):
@@ -281,7 +322,7 @@ class TestMaximumConsecutiveDryDays:
         assert out[0] == 10
 
 
-class TestPrcpTotal:
+class TestPrecipAccumulation:
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -295,10 +336,17 @@ class TestPrcpTotal:
     # da_365 = xr.DataArray(np.arange(time_365.size), coords=[time_365], dims='time')
     # da_360 = xr.DataArray(np.arange(time_360.size), coords=[time_360], dims='time')
 
+    def test_simple(self, pr_series):
+        pr = np.zeros(100)
+        pr[5:10] = 1
+        pr = pr_series(pr)
+
+        out = xci.precip_accumulation(pr, freq='M')
+        np.testing.assert_equal(out[:1], [5, ])
+
     def test_yearly(self):
         da_std = self.da_std
-        out_std = xci.prcp_tot(da_std, units='mm')
-        # l_years = np.unique(da_std.time.dt.year) TODO: Unused local variables are a PEP8 violation
+        out_std = xci.precip_accumulation(da_std)
         target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
         np.testing.assert_allclose(target, out_std.values)
 
@@ -472,6 +520,19 @@ class TestWarmMinimumAndMaximumTemperatureFrequency:
         wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=0,
                                                                    thresh_tasmin=0)
         np.testing.assert_allclose(wmmtf.values, [10])
+
+
+class TestWinterRainRatio:
+    def test_simple(self, pr_series, tas_series):
+        pr = np.ones(450)
+        pr = pr_series(pr, start='12/1/2000')
+
+        tas = np.zeros(450) + K2C - 1
+        tas[10:20] += 10
+        tas = tas_series(tas, start='12/1/2000')
+
+        out = xci.winter_rain_ratio(pr, tas=tas)
+        np.testing.assert_almost_equal(out, [10./(31+31+28), 0])
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.

@@ -21,6 +21,7 @@ import os
 import cftime
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs, parse_doc
@@ -58,6 +59,7 @@ class TestDailyDownsampler:
             # assert the values of resampler and grouper are the same
             assert (np.allclose(x1.values, x2.values))
 
+    @pytest.mark.skip
     def test_365_day(self):
 
         # 365_day calendar
