@@ -1162,6 +1162,40 @@ def precip_accumulation(pr, freq='YS'):
     return pr.resample(time=freq).sum(dim='time')
 
 
+def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
+    """Number of rain on frozen ground events
+
+    Number of days with rain above a threshold after a series of seven days below freezing temperature.
+    Precipitation is assumed to be rain when the temperature is above 0C.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : float
+      Precipitation threshold to consider a day as a rain event [mm]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The number of rain on frozen ground events per period [days]
+
+    """
+    def func(x, axis):
+        """Check that temperature conditions are below 0 for seven days and above after."""
+        frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
+        return frozen.all(axis=axis)
+
+    tcond = (tas > K2C).rolling(time=8).reduce(func)
+    pcond = (pr > thresh)
+
+    return (tcond * pcond * 1).resample(time=freq).sum()
+
+
 def tropical_nights(tasmin, thresh=20.0, freq='YS'):
     r"""Tropical nights
 
