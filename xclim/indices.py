@@ -22,7 +22,7 @@ be used for labeling plots.
 The second paragraph will be considered as the `abstract`, or the CF global `comment` (Miscellaneous information
 about the data or methods used to produce it).
 
-The third and fourth sections are the `Parameters` and `Returns` sections describing the input and output values
+The third and fourth sections are the "`Parameters`" and "`Returns`" sections describing the input and output values
 respectively.
 
 .. code-block::
@@ -42,7 +42,7 @@ respectively.
      Output's <long_name> [units]
 
 
-The next sections would be `Notes` where the mathematical equation is described, and `References` to include
+The next sections would be "`Note`" where the mathematical equation is described, and "`References`" to include
 citations of key sources.
 
 
