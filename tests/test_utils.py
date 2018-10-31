@@ -173,7 +173,7 @@ class TestUnivariateIndicator:
         meta = ind.json
 
         expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
-                    'parameters'}
+                    'parameters', 'description'}
 
         assert set(meta.keys()).issubset(expected)
 
