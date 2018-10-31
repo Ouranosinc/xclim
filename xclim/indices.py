@@ -1326,8 +1326,18 @@ def warm_spell_duration_index(tasmax, tx90, freq='YS'):
       days].
 
     """
-    # TODO: This only works for a fixed tx90. Need to have it work with an array for each doy.
-    above = (tasmax > tx90)
+    if 'dayofyear' not in tx90.coords.keys():
+        raise AttributeError("tx90 should have dayofyear coordinates.")
+
+    # The day of year value of the tasmax series.
+    doy = tasmax.indexes['time'].dayofyear
+
+    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
+    thresh = xr.full_like(tasmax, np.nan)
+    thresh.data = tx90.sel(dayofyear=doy)
+
+    above = (tasmax > thresh)
+
     return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=6)
 
 
