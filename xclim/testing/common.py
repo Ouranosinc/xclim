@@ -7,8 +7,8 @@ import xarray as xr
 def tas_series():
     def _tas_series(values, start='7/1/2000'):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                            attrs={'standard_name': 'tas',
+        return xr.DataArray(values, coords=[coords, ], dims='time', name='tas',
+                            attrs={'standard_name': 'air_temperature',
                                    'cell_methods': 'time: mean within days',
                                    'units': 'K'})
 
@@ -19,8 +19,8 @@ def tas_series():
 def tasmax_series():
     def _tasmax_series(values, start='7/1/2000'):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                            attrs={'standard_name': 'tasmax',
+        return xr.DataArray(values, coords=[coords, ], dims='time', name='tasmax',
+                            attrs={'standard_name': 'air_temperature',
                                    'cell_methods': 'time: maximum within days',
                                    'units': 'K'})
 
@@ -31,8 +31,8 @@ def tasmax_series():
 def tasmin_series():
     def _tasmin_series(values, start='7/1/2000'):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                            attrs={'standard_name': 'tasmin',
+        return xr.DataArray(values, coords=[coords, ], dims='time', name='tasmin',
+                            attrs={'standard_name': 'air_temperature',
                                    'cell_methods': 'time: minimum within days',
                                    'units': 'K'})
 
@@ -43,8 +43,8 @@ def tasmin_series():
 def pr_series():
     def _pr_series(values, start='7/1/2000'):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                            attrs={'standard_name': 'pr',
+        return xr.DataArray(values, coords=[coords, ], dims='time', name='pr',
+                            attrs={'standard_name': 'precipitation_flux',
                                    'cell_methods': 'time: sum over day',
                                    'units': 'kg m-2 s-1'})
 

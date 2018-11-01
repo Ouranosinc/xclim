@@ -165,23 +165,25 @@ class UnivariateIndicator(object):
     identifier = ''
 
     # CF-Convention metadata to be attributed to output. May use tags {<tag>} that will be formatted at runtime.
-    standard_name = ''
-    long_name = ''  # Scraped from compute.__doc.__
-    units = ''
-    cell_methods = ''
+    standard_name = ''  # The set of permissible standard names is contained in the standard name table.
+    long_name = ''  # Scraped from compute.__doc.__.
+    units = ''  # Representative units of the physical quantity.
+    cell_methods = ''  # List of blank-separated words of the form "name: method"
+    description = ''  # The description is meant to clarify the qualifiers of the fundamental quantities such a which
+    #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The units expected by the function. Used to convert input units to the required_units.
     required_units = ''
 
-    # Additional information.
+    # Additional information made available to third party libraries.
     title = ''  # Scraped from compute.__doc.__
     abstract = ''  # Scraped from compute.__doc.__
     keywords = ''  # Comma separated list of keywords
 
     # Tag mappings between keyword arguments and long-form text.
-    _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
-                      'long_name': {'YS': 'Annual', 'MS': 'Monthly'},
-                      'standard_name': {'YS': 'Annual', 'MS': 'Monthly'}, }
+    _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
+                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'},
+                      'description':  {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
 
     def __init__(self, **kwds):
 
@@ -226,7 +228,7 @@ class UnivariateIndicator(object):
         da = self.convert_units(da)
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(da, **ba.arguments).rename(self.identifier.format(ba.arguments))
+        out = self.compute(da, **ba.arguments)
 
         # Set metadata attributes to the output according to class attributes.
         self.decorate(out, ba.arguments)
@@ -235,12 +237,14 @@ class UnivariateIndicator(object):
         mba = signature(self.missing).bind(da, **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
-        return out.where(~self.missing(**mba.arguments))
+        ma_out = out.where(~self.missing(**mba.arguments))
+
+        return ma_out.rename(self.identifier.format(ba.arguments))
 
     @property
-    def attrs(self):
+    def cf_attrs(self):
         """CF-Convention attributes of the output value."""
-        names = ['standard_name', 'long_name', 'units', 'cell_methods']
+        names = ['standard_name', 'long_name', 'units', 'cell_methods', 'description']
         return {k: getattr(self, k) for k in names}
 
     @property
@@ -252,12 +256,12 @@ class UnivariateIndicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'abstract', 'keywords']
+        names = ['identifier', 'abstract', 'keywords', ]
         out = {key: getattr(self, key) for key in names}
 
-        out['parameters'] = {key: p.default for (key, p) in self._sig.parameters.items()}
+        out['parameters'] = {key: {'default': p.default, 'desc': ''} for (key, p) in self._sig.parameters.items()}
 
-        out.update(self.attrs)
+        out.update(self.cf_attrs)
 
         return out
 
@@ -290,7 +294,7 @@ class UnivariateIndicator(object):
             return
 
         attrs = {}
-        for key, val in self.attrs.items():
+        for key, val in self.cf_attrs.items():
             mba = {}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
