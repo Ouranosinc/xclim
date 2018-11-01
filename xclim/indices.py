@@ -42,21 +42,37 @@ respectively.
    xarray.DataArray
      Output's <long_name> [units]
 
-The next sections would be **Note**:
+The next sections would be **Notes** with references :
 
 .. code-block:: python
 
-    Note
-    ----
-    This is where the mathematical equation is described
+    Notes
+    -----
+    This is where the mathematical equation is described.
+    At the end of the description, convention suggests to add a reference [eg]_:
 
-Followed by  **References**:
+        .. math::
 
-.. code-block:: python
+            3987^12 + 4365^12 = 4472^12
 
-    References
-    ----------
-    This is where the citations of key sources is described
+    .. [eg] Smith, T.J. and Huard, D. (2018). "CF Docstrings: A manifesto on conventions
+        and the interconnected nature of documentation aesthetics." Climate Aesthetics,
+        vol. 1, pp. 121-155.
+
+Notes
+-----
+This is where the mathematical equation is described.
+At the end of the description, convention suggests to add a reference [notes]_:
+
+    .. math::
+
+        3987^{12} + 4365^{12} = 4472^{12}
+
+.. [notes] Smith, T.J. and Huard, D. (2018). "CF Docstrings: A manifesto on conventions
+    and the interconnected nature of documentation aesthetics." Climate Aesthetics,
+    vol. 1, pp. 121-155.
+
+
 
 Indice descriptions
 ===================
@@ -147,7 +163,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
     xarray.DataArray
       Cold spell duration index.
 
-    Note
+    Notes
     ----
     # TODO: Add a formula or example to better illustrate the cold spell duration metric
 
@@ -166,7 +182,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     r"""Cold spell index
 
-    Number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
+    The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
     temperature below < -10°C.
 
     Parameters
@@ -208,13 +224,17 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     freq : str, optional
       Resampling frequency
 
-    Note
-    ----
-    TBD
+    Returns
+    -------
+    xarray.DataArray
+      The total number of days where "Cold" and "Dry conditions coincide.
 
-    References
-    ----------
-    See Beniston (2009) for more details. https://doi.org/10.1029/2008GL037119
+    Notes
+    -----
+    Formula to be written [cold_dry_days]_.
+
+    .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
+        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
 
     c1 = tas < tgin25
