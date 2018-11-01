@@ -123,11 +123,35 @@ def windowed_run_events(arr, window):
 
     Returns
     -------
-    out : func
+    int
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle(arr)
     return (v * rl >= window).sum()
+
+
+def suspicious_run(arr, window=10, thresh=None):
+    """Return True if the array contains a run of identical values.
+
+     Parameters
+     ----------
+     arr : sequence
+      Array of values to be parsed.
+     window : int
+       Minimum run length
+     thresh : float
+       Threshold above which values are checked for identical values.
+
+     Returns
+     -------
+     bool
+       Whether or not the series contains a run of identical values.
+     """
+    v, rl, pos = rle(arr)
+    if thresh:
+        return ((v > thresh) * rl >= window).any()
+    else:
+        return (rl >= window).any()
 
 
 def windowed_run_count_ufunc(x, window):

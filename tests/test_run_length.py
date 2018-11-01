@@ -82,3 +82,8 @@ class TestWindowedRunEvents:
         a[4:7] = True
         a[34:45] = True
         assert rl.windowed_run_events(a, 3) == 2
+
+
+class TestSuspiciousRun:
+    def test_simple(self):
+        assert False

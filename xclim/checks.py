@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
-
+from . import run_length as rl
 logging.captureWarnings(True)
 
 # Dev notes
@@ -50,6 +50,24 @@ def assert_daily(var):
     # Check that the series has the same time step throughout
     if not var.time.to_pandas().is_monotonic_increasing:
         raise ValueError("time index is not monotonically increasing.")
+
+
+def icclim_precipitation_flags():
+    """Return a dictionary of conditions that would flag a suspicious precipitation time series.
+    """
+    conditions = {}
+    conditions['negative'] = lambda x: (x < 0).any()
+    conditions['too large (> 300)'] = lambda x: (x > 300).any()
+    conditions['repetitions 1mm'] = lambda x: rl.suspicious_run(x, window=10, thresh=1.)
+    conditions['repetitions 5mm'] = lambda x: rl.suspicious_run(x, window=5, thresh=5.)
+    # conditions['dry days'] =   the amount of dry days lies outside a 14·bivariate standard deviation
+    return conditions
+
+
+def check_valid_precipitation(var, units):
+    check_valid(var, 'standard_name', 'precipitation_flux')
+    check_valid(var, 'units', units)
+    assert_daily(var)
 
 
 def check_valid_temperature(var, units):
@@ -166,3 +184,5 @@ def missing_any(da, freq, **kwds):
     n = (p.end_time - p.start_time).days + 1
     nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
     return c != nda
+
+

@@ -175,6 +175,9 @@ class UnivariateIndicator(object):
     # The units expected by the function. Used to convert input units to the required_units.
     required_units = ''
 
+    # A dictionary of suspect flag-raising criteria
+    flag = {'no-check': lambda x: False}
+
     # Additional information made available to third party libraries.
     title = ''  # Scraped from compute.__doc.__
     abstract = ''  # Scraped from compute.__doc.__
@@ -221,11 +224,16 @@ class UnivariateIndicator(object):
         da = ba.arguments.pop(self._parameters[0])
 
         # Pre-computation validation checks
-        self.validate(da)
+        checks.assert_daily(da)
         self.cfprobe(da)
 
         # Convert units if necessary
         da = self.convert_units(da)
+
+        # Flag suspicious time series
+        flags = self.validate(da, self.flag)
+        if any(flags.values()):
+            da.attrs['flags'] = ', '.join([key for key, val in flags.items() if val])
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(da, **ba.arguments)
@@ -312,10 +320,15 @@ class UnivariateIndicator(object):
         """Return whether an output is considered missing or not."""
         return checks.missing_any(da, freq)
 
-    def validate(self, da):
-        """Validate input data requirements.
-        Raise error if conditions are not met."""
-        checks.assert_daily(da)
+    def validate(self, da, conditions):
+        """Flag the output as suspect if one of the conditions are not met.
+        """
+        flags = {}
+        for key, func in conditions.items():
+            flags[key] = func(da)
+
+        return flags
+
 
     @classmethod
     def factory(cls, attrs):
