@@ -74,3 +74,11 @@ class TestFirstRun:
         a[10:20] = 1
         i = rl.first_run(a, 5)
         assert 10 == i
+
+
+class TestWindowedRunEvents:
+    def test_simple(self):
+        a = np.zeros(50, bool)
+        a[4:7] = True
+        a[34:45] = True
+        assert rl.windowed_run_events(a, 3) == 2

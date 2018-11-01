@@ -6,15 +6,13 @@ xclim xarray.DataArray utilities module
 
 import numpy as np
 import xarray as xr
-import pandas as pd
-import time
 import six
 from functools import wraps
 import pint
 from . import checks
 from inspect2 import signature
 import abc
-import dask
+
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -33,6 +31,33 @@ hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
                          lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3))
 units.add_context(hydro)
 units.enable_contexts(hydro)
+
+
+def percentile_doy(arr, window=5, per=.1):
+    """Percentile value for each day of the year
+
+    Returns the climatological percentile over a moving window around each day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+    window : int
+    per : float
+    """
+
+    # TODO: Support percentile array, store percentile in attributes.
+    rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
+
+    # Create empty percentile array
+    g = rr.groupby('time.dayofyear')
+    c = g.count(dim=('time', 'window'))
+
+    p = xr.full_like(c, np.nan).astype(float).load()
+
+    for doy, ind in rr.groupby('time.dayofyear'):
+        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+
+    return p
 
 
 def get_daily_events(da, da_value, operator):
@@ -127,192 +152,6 @@ def daily_downsampler(da, freq='YS'):
 
     # return groupby according to tags
     return buffer.groupby('tags')
-
-
-def get_ev_length(ev, verbose=True, method=2, timing=True, using_dask_loop=True):
-    r"""Function computing event/non-event length
-
-    Parameters
-    ----------
-    ev : xarray.DataArray
-       array of 0/1 values indicating events/non-events with time dimension
-    verbose : Logical
-       make the program verbose
-    method : int, optional
-       choice of method to do the computing. See comments in code.
-    timing : logical, optional
-       if True print timing information
-    using_dask_loop : logical, optional
-       if True code uses dask to loop the array
-
-    Returns
-    -------
-    xarray.DataArray
-       array containing length of every event/non-event sequences
-
-    Note
-    ----
-
-    with input = [0,0,1,1,1,0,0,1,1,1,1], output = [2,2,3,3,3,2,2,4,4,4,4]
-         input = [0,1,1,2,2,0,0,0], output = [1,2,2,2,2,3,3,3]
-
-    Has been tested with 1D and 3D DataArray
-
-    # inspire/copy of :
-    # https://stackoverflow.com/questions/45886518/identify-consecutive-same-values-in-pandas-dataframe-with-a-groupby
-    """
-
-    # make sure we have a time dimension
-    assert ('time' in ev.dims)
-
-    # echo option values to output
-    if verbose:
-        print('get_ev_length options : method={:}, using_dask_loop={:}'.format(method, using_dask_loop))
-
-    # create mask of event change, 1 if no change and 0 otherwise
-    # fill first value with 1
-    start = ev.isel(time=0)
-    if ev.ndim == 1:
-        # special 1d case
-        start.values = 1
-    else:
-        start.values[:] = 1
-    # compute difference and apply mask
-    ev_diff = (ev.diff(dim='time') != 0) * 1
-    # add start
-    ev_diff = xr.concat((start, ev_diff), dim='time')
-
-    # make cumulative sum
-    diff_cumsum = ev_diff.cumsum(dim='time')
-
-    # define method of treating vectors of events
-    # tests suggest method2 is faster, followed by method3
-    # method1 is noticeably slower ...
-    #
-    def method1(v):
-        # using the pd.Series.value_counts()
-        s = pd.Series(v)
-        d = s.map(s.value_counts())
-        return d
-
-    def method2(v):
-        # using np.unique
-        useless, ind = np.unique(v, return_index=True)
-        i0 = 0
-        d = np.zeros_like(v)
-        for i in ind:
-            ll = i - i0
-            d[i0:i] = ll
-            i0 = i
-        d[i:] = d.size - i
-        return d
-
-    def method3(v):
-        # variation of method2
-        useless, ind = np.unique(v, return_index=True)
-        ind = np.append(ind, v.size)
-        dur = np.diff(ind)
-        d = np.zeros_like(v)
-        im = 0
-        for idur, id in enumerate(ind[1:]):
-            d[im:id] = dur[idur]
-            im = id
-        return d
-
-    vec_method = {1: method1, 2: method2, 3: method3}[method]
-
-    if timing:
-        time0 = time.time()
-    # treatment depends on number fo dimensions
-    if ev.ndim == 1:
-        ev_l = ev.copy()
-        v = diff_cumsum.values
-        ev_l.values = vec_method(v)
-        return ev_l
-    else:
-        #
-        # two way to loop the arrays. Using dask is noticeably faster.
-        #
-        if not using_dask_loop:
-            # multidimension case
-            #
-            # reshape in 2D to simplify loop using stack
-            #
-            non_time_dims = [d for d in diff_cumsum.dims if d != 'time']
-            mcumsum = diff_cumsum.stack(z=non_time_dims)
-            nz = mcumsum.sizes['z']
-
-            # prepare output
-            ev_l = mcumsum.copy()
-
-            # loop on stacked array
-            for z in range(nz):
-                v = mcumsum.isel(z=z).values
-                ll = vec_method(v)
-                ev_l.isel(z=z).values[:] = ll
-
-            # go back to original shape and return event length
-            ev_l = ev_l.unstack('z')
-        else:
-
-            # loop with apply_along_axis
-            data = dask.array.apply_along_axis(vec_method, diff_cumsum.get_axis_num('time'),
-                                               diff_cumsum).compute()
-            diff_cumsum.values = data
-
-            ev_l = diff_cumsum
-
-            # reorder dimensions as ev
-            ev, ev_l = xr.broadcast(ev, ev_l)
-
-        if timing:
-            print('timing for get_ev_length done in {:10.2f}s'.format(time.time() - time0))
-
-        return ev_l
-
-
-def get_ev_end(ev):
-    r"""
-    function flaging places when an event sequence ends
-
-    :param ev: xarray DataArray
-        array containing 1 for events and 0 for non-events
-    :return: ev_end
-
-    e.g. input = [0,0,1,1,1,0,0,1] returns [0,0,0,0,1,0,0,1]
-
-    """
-
-    # find when events finish and mask all other event points
-    d = ev.diff(dim='time')
-    ev_end = xr.where(d == -1, 1, 0)
-
-    # shift end of events back for proper time alignment
-    ev_end['time'] = ev.time[:-1]
-    # deal with cases when last timestep is end of period
-    ev_end = xr.concat((ev_end, ev.isel(time=-1)), 'time')
-    return ev_end
-
-
-def get_ev_start(ev):
-    r"""
-    function flaging places when an event sequence starts
-
-    :param ev: xarray DataArray
-        array containing 1 for events and 0 for non-events
-    :return: ev_end
-
-    e.g. input = [1,0,1,1,1,0,0,1] returns [1,0,1,0,0,0,0,1]
-
-    """
-
-    # find when events finish and mask all other event points
-    d = ev.diff(dim='time')
-    ev_start = xr.where(d == 1, 1, 0)
-
-    # copy first timestep of ev to catch those start
-    ev_start = xr.concat((ev.isel(time=0), ev_start), 'time')
-    return ev_start
 
 
 class UnivariateIndicator(object):

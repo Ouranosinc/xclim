@@ -72,8 +72,6 @@ import logging
 import numpy as np
 import xarray as xr
 
-from .utils import get_ev_length
-from .utils import get_ev_end
 from . import run_length as rl
 
 logging.basicConfig(level=logging.DEBUG)
@@ -129,43 +127,50 @@ def base_flow_index(q, freq='YS'):
     return m7m / mq.mean(dim='time')
 
 
-def cold_spell_duration_index(tasmin, tn10, freq='YS'):
-    r"""Cold spell duration index
+def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
+    r"""Warm spell duration index
 
-    Resamples the daily minimum temperature series by returning the number of days per
-    period where the temperature is below the calendar day 10th percentile (calculated
-    over a centered 5-day window for values during a 30-year reference period) for a
-    minimum of at least six consecutive days.
+    Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
+    percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the
+    1961-1990 period.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [C] or [K]
-    tn10 : xarray.DataArray
-      The daily climatological 10th percentile (using a centered 5-day window) of minimum daily temperature for
-      a 30-year reference period.
+      Minimum daily temperature [℃] or [K]
+    tn10 : float
+      10th percentile of daily minimum temperature [K]
     freq : str, optional
       Resampling frequency
 
     Returns
     -------
     xarray.DataArray
-      Cold spell duration index.
+      Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
+      percentile [days].
 
-    Notes
-    ----
-    TODO: Add a formula or example to better illustrate the cold spell duration metric
+    References
+    ----------
+    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
 
-    See also
-    --------
-    percentile_doy
+    Example
+    -------
+    >>> tn10 = percentile_doy(historical_tasmin, per=.1)
+    >>> cold_spell_duration_index(reference_tasmin, tn10)
     """
+    if 'dayofyear' not in tn10.coords.keys():
+        raise AttributeError("tn10 should have dayofyear coordinates.")
 
-    window = 6
+    # The day of year value of the tasmax series.
+    doy = tasmin.indexes['time'].dayofyear
 
-    return tasmin.pipe(lambda x: x - tn10) \
-        .resample(time=freq) \
-        .apply(rl.windowed_run_count_ufunc, window=window)
+    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
+    thresh = xr.full_like(tasmin, np.nan)
+    thresh.data = tn10.sel(dayofyear=doy)
+
+    below = (tasmin < thresh)
+
+    return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -677,7 +682,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
-                        window=3, freq='YS', use_rl=True, **kwds):
+                        window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
@@ -706,19 +711,29 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     xarray.DataArray
       Number of heatwave at the wanted frequency
 
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    References
+    ----------
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
 
-    ev = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    ev_l = get_ev_length(ev)
-    # only keep events as long as window
-    ev = ev.where((ev == 1) & (ev_l >= window), 0)
-
-    # flag only the end of every event
-    ev_end = get_ev_end(ev)
-
-    # sum events over period
-    hwf = ev_end.resample(time=freq).sum(dim='time')
-    return hwf
+    cond = (tasmin > thresh_tasmin + K2C) & (tasmax > thresh_tasmax + K2C)
+    group = cond.resample(time=freq)
+    return group.apply(rl.windowed_run_events_ufunc, window=window)
 
 
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
@@ -874,48 +889,6 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     rain = tot - prsn.resample(time=freq).sum()
     ratio = rain/tot
     return ratio
-
-
-def percentile_doy(arr, window=5, per=.1):
-    """Percentile day of year
-
-    Returns the climatological percentile over a moving window
-    around the day of the year.
-
-    Parameters
-    ----------
-    arr : xarray.DataArray
-      A generic xarray.DataArray containing a climate variable.
-    window : int
-      Window size in days.
-    per : float
-
-    Returns
-    -------
-    TODO
-
-    Notes
-    -----
-    TODO
-
-    Examples
-    --------
-    TODO
-    """
-
-    # TODO: Support percentile array, store percentile in attributes.
-    rr = arr.rolling(1, center=True, time=window).construct('window')
-
-    # Create empty percentile array
-    g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
-
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
-
-    return p
 
 
 def summer_days(tasmax, thresh=25.0, freq='YS'):
@@ -1383,7 +1356,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
     r"""Frequency days with hot maximum and minimum temperature
 
     Returns the number of days with tasmin > thresh_tasmin
-                               and tasmax > thresh_tasamax per period
+                               and tasmax > thresh_tasmax per period
 
     Parameters
     ----------
@@ -1430,6 +1403,50 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     """
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
+
+
+def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
+    r"""Warm spell duration index
+
+    Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
+    percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
+    1961-1990 period.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    tx90 : float
+      90th percentile of daily maximum temperature [K]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
+      percentile [days].
+
+    References
+    ----------
+    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
+    Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
+    precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
+
+    """
+    if 'dayofyear' not in tx90.coords.keys():
+        raise AttributeError("tx90 should have dayofyear coordinates.")
+
+    # The day of year value of the tasmax series.
+    doy = tasmax.indexes['time'].dayofyear
+
+    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
+    thresh = xr.full_like(tasmax, np.nan)
+    thresh.data = tx90.sel(dayofyear=doy)
+
+    above = (tasmax > thresh)
+
+    return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
 def wet_days(pr, thresh=1.0, freq='YS'):
