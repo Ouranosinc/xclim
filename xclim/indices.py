@@ -17,7 +17,7 @@ well as information relevant to third party libraries (such as a WPS server).
 
 The first line of the docstring (the short summary), will be assigned to the output's `long_name` attribute. The
 `long_name` attribute is defined by the NetCDF User Guide to contain a long descriptive name which may, for example,
-be used for labeling plots.
+be used for labeling plots
 
 The second paragraph will be considered as the "*abstract*", or the CF global "*comment*" (miscellaneous information
 about the data or methods used to produce it).
@@ -42,37 +42,26 @@ respectively.
    xarray.DataArray
      Output's <long_name> [units]
 
-The next sections would be **Notes** with references :
+The next sections would be **Notes** and **References**:
 
 .. code-block:: python
 
     Notes
     -----
     This is where the mathematical equation is described.
-    At the end of the description, convention suggests to add a reference [eg]_:
+    At the end of the description, convention suggests
+    to add a reference [example]_:
 
         .. math::
 
             3987^12 + 4365^12 = 4472^12
 
-    .. [eg] Smith, T.J. and Huard, D. (2018). "CF Docstrings: A manifesto on conventions
-        and the interconnected nature of documentation aesthetics." Climate Aesthetics,
+    References
+    ----------
+    .. [example] Smith, T.J. and Huard, D. (2018). "CF Docstrings:
+        A manifesto on conventions and the metaphysical nature
+        of ontological python documentation." Climate Aesthetics,
         vol. 1, pp. 121-155.
-
-Notes
------
-This is where the mathematical equation is described.
-At the end of the description, convention suggests to add a reference [notes]_:
-
-    .. math::
-
-        3987^{12} + 4365^{12} = 4472^{12}
-
-.. [notes] Smith, T.J. and Huard, D. (2018). "CF Docstrings: A manifesto on conventions
-    and the interconnected nature of documentation aesthetics." Climate Aesthetics,
-    vol. 1, pp. 121-155.
-
-
 
 Indice descriptions
 ===================
@@ -165,7 +154,7 @@ def cold_spell_duration_index(tasmin, tn10, freq='YS'):
 
     Notes
     ----
-    # TODO: Add a formula or example to better illustrate the cold spell duration metric
+    TODO: Add a formula or example to better illustrate the cold spell duration metric
 
     See also
     --------
@@ -233,6 +222,8 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     -----
     Formula to be written [cold_dry_days]_.
 
+    References
+    ----------
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
@@ -268,7 +259,7 @@ def daily_intensity(pr, thresh=1.0, freq='YS'):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the average
     precipitation fallen over days with precipitation >= 5 mm at seasonal
-    frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+    frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr = xr.open_dataset('pr.day.nc')
     >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
@@ -330,8 +321,8 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     xarray.DataArray
       The maximum number of consecutive days below the freezing point.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`Tmin_i` be the minimum daily temperature of day :math:`i`, then for a period :math:`p` starting at
     day :math:`a` and finishing on day :math:`b`
 
@@ -367,8 +358,8 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     xarray.DataArray
       The maximum number of consecutive wet days.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`RR_{ij}` be the daily precipitation amount for day :math:`i` of period :math:`j`. Then
     counted is the largest number of consecutive days where:
 
@@ -451,8 +442,8 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     xarray.DataArray
       The average variation in daily temperature range for the given time period.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`i`
     of period :math:`j`. Then the mean diurnal temperature range in period :math:`j` is:
 
@@ -482,8 +473,8 @@ def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
     xarray.DataArray
       The average day-to-day variation in daily temperature range for the given time period.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at
     day :math:`i` of period :math:`j`. Then calculated is the absolute day-to-day differences in
     period :math:`j` is:
@@ -516,8 +507,8 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     xarray.DataArray
       Extreme intra-period temperature range for the given time period.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`i`
     of period :math:`j`. Then the extreme temperature range in period :math:`j` is:
 
@@ -579,8 +570,8 @@ def frost_days(tasmin, freq='YS'):
     xarray.DataArray
       Frost days index.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
     counted is the number of days where:
 
@@ -612,8 +603,8 @@ def growing_degree_days(tas, thresh=4.0, freq='YS'):
     xarray.DataArray
       The sum of growing degree-days above 4℃
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
     growing degree days are:
 
@@ -653,8 +644,8 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     xarray.DataArray
       Growing season length.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TG_{ij}` be the mean temperature at day :math:`i` of period :math:`j`. Then counted is
     the number of days between the first occurrence of at least 6 consecutive days with:
 
@@ -777,8 +768,8 @@ def heating_degree_days(tas, freq='YS', thresh=17.0):
     xarray.DataArray
       Heating degree days index.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
     heating degree days are:
 
@@ -834,8 +825,8 @@ def ice_days(tasmax, freq='YS'):
     xarray.DataArray
       Number of ice/freezing days.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
     counted is the number of days where:
 
@@ -894,8 +885,22 @@ def percentile_doy(arr, window=5, per=.1):
     Parameters
     ----------
     arr : xarray.DataArray
+      A generic xarray.DataArray containing a climate variable.
     window : int
+      Window size in days.
     per : float
+
+    Returns
+    -------
+    TODO
+
+    Notes
+    -----
+    TODO
+
+    Examples
+    --------
+    TODO
     """
 
     # TODO: Support percentile array, store percentile in attributes.
@@ -932,8 +937,8 @@ def summer_days(tasmax, thresh=25.0, freq='YS'):
     xarray.DataArray
       Number of summer days.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
     counted is the number of days where:
 
@@ -964,8 +969,8 @@ def tg_mean(tas, freq='YS'):
       The mean daily temperature at the given time frequency
 
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
     day `a` and finishing on day `b`
 
@@ -977,7 +982,7 @@ def tg_mean(tas, freq='YS'):
     Examples
     --------
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
-    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> t = xr.open_dataset('tas.day.nc')
     >>> tg = tg_mean(t, freq="QS-DEC")
@@ -1019,8 +1024,8 @@ def tn_max(tasmin, freq='YS'):
     xarray.DataArray
       Maximum of daily minimum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TN_{ij}` be the minimum temperature at day :math:`i` of period :math:`j`. Then the maximum
     daily minimum temperature for period :math:`j` is:
 
@@ -1049,8 +1054,8 @@ def tn_mean(tasmin, freq='YS'):
     xarray.DataArray
       Mean of daily minimum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TN_{ij}` be the minimum temperature at day :math:`i` of period :math:`j`. Then mean
     values in period :math:`j` are given by:
 
@@ -1080,8 +1085,8 @@ def tn_min(tasmin, freq='YS'):
     xarray.DataArray
       Minimum of daily minimum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TN_{ij}` be the minimum temperature at day :math:`i` of period :math:`j`. Then the minimum
     daily minimum temperature for period :math:`j` is:
 
@@ -1113,11 +1118,10 @@ def max_n_day_precipitation_amount(da, window, freq='YS'):
     xarray.DataArray
       The highest cumulated n-day precipitation value at the given time frequency.
 
-
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
-    at an annual frequency.
+    at an annual frequency:
 
     >>> da = xr.open_dataset('pr.day.nc').pr
     >>> window = 5
@@ -1141,17 +1145,15 @@ def max_1day_precipitation_amount(pr, freq='YS'):
     freq : str, optional
       Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
 
-
     Returns
     -------
     xarray.DataArray
       The highest 1-day precipitation value at the given time frequency.
 
-
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
-    at an annual frequency.
+    at an annual frequency:
 
     >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
@@ -1178,9 +1180,8 @@ def precip_accumulation(pr, freq='YS'):
     xarray.DataArray
       The total daily precipitation at the given time frequency.
 
-    Note
-    ----
-
+    Notes
+    -----
     Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
     day `a` and finishing on day `b`
 
@@ -1190,7 +1191,7 @@ def precip_accumulation(pr, freq='YS'):
     Examples
     --------
     The following would compute for each grid cell of file `pr_day.nc` the total
-    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
@@ -1252,8 +1253,8 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
     xarray.DataArray
       Number of days with minimum daily temperature above threshold.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
     counted is the number of days where:
 
@@ -1284,8 +1285,8 @@ def tx_max(tasmax, freq='YS'):
     xarray.DataArray
       Maximum value of daily maximum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j`. Then the maximum
     daily maximum temperature for period :math:`j` is:
 
@@ -1314,8 +1315,8 @@ def tx_mean(tasmax, freq='YS'):
     xarray.DataArray
       Mean of daily maximum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j`. Then mean
     values in period :math:`j` are given by:
 
@@ -1345,8 +1346,8 @@ def tx_min(tasmax, freq='YS'):
     xarray.DataArray
       Minimum of daily maximum temperature.
 
-    Note
-    ----
+    Notes
+    -----
     Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j`. Then the minimum
     daily maximum temperature for period :math:`j` is:
 
@@ -1381,7 +1382,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
                                                    thresh_tasmax=30, freq='YS'):
     r"""Frequency days with hot maximum and minimum temperature
 
-    Return the number of days with tasmin > thresh_tasmin
+    Returns the number of days with tasmin > thresh_tasmin
                                and tasmax > thresh_tasamax per period
 
     Parameters
@@ -1397,7 +1398,13 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
     freq : str, optional
       Resampling frequency
 
+    Returns
+    -------
+    xarray.DataArray
+      the number of days with tasmin > thresh_tasmin and
+      tasmax > thresh_tasamax per period
     """
+
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
     return events.resample(time=freq).sum(dim='time')
 
@@ -1416,6 +1423,10 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     freq : str, optional
       Resampling frequency
 
+    Returns
+    -------
+    xarray.DataArray
+      The number of days with tasmin > thresh per period
     """
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
@@ -1444,11 +1455,10 @@ def wet_days(pr, thresh=1.0, freq='YS'):
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the number days
-    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr = xr.open_dataset('pr.day.nc')
     >>> wd = wet_days(pr, pr_min = 5., freq="QS-DEC")
-
     """
 
     wd = (pr >= thresh) * 1
