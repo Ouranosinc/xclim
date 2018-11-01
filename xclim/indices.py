@@ -1356,7 +1356,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
     r"""Frequency days with hot maximum and minimum temperature
 
     Returns the number of days with tasmin > thresh_tasmin
-                               and tasmax > thresh_tasamax per period
+                               and tasmax > thresh_tasmax per period
 
     Parameters
     ----------
