@@ -16,7 +16,6 @@ from . import checks
 from . import indices as _ind
 from .utils import Indicator
 
-Indicator = BivariateIndicator = Indicator
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
