@@ -51,7 +51,7 @@ class TestFrostDays:
 
         fd1 = (x1[x1 < thresh]).size
         # fd2 = (x2[x2 < thresh]).size
-        
+
         assert (np.allclose(fd1, fd.values[0, 0, 0]))
         # assert (np.allclose(fd1, fds.values[0, 0, 0]))
         assert (np.isnan(fd.values[0, 1, 0]))
@@ -100,18 +100,18 @@ class TestHeatWaveFrequency:
 
         # some hw
         hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                      thresh_tasmax=30)
+                                       thresh_tasmax=30)
         np.testing.assert_allclose(hwf.values[:1], 2)
 
         hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                      thresh_tasmax=30, window=4)
+                                       thresh_tasmax=30, window=4)
         np.testing.assert_allclose(hwf.values[:1], 1)
 
         # one long hw
         hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=10,
-                                      thresh_tasmax=10)
+                                       thresh_tasmax=10)
         np.testing.assert_allclose(hwf.values[:1], 1)
         # no hw
         hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=40,
-                                      thresh_tasmax=40)
+                                       thresh_tasmax=40)
         np.testing.assert_allclose(hwf.values[:1], 0)

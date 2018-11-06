@@ -7,7 +7,6 @@ xclim xarray.DataArray utilities module
 import numpy as np
 import xarray as xr
 import six
-from functools import wraps
 import pint
 from . import checks
 from inspect2 import signature
@@ -393,4 +392,3 @@ def format_kwargs(attrs, params):
                 mba[k] = v
 
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
-
