@@ -51,7 +51,7 @@ class TestFrostDays:
 
         fd1 = (x1[x1 < thresh]).size
         # fd2 = (x2[x2 < thresh]).size
-
+        
         assert (np.allclose(fd1, fd.values[0, 0, 0]))
         # assert (np.allclose(fd1, fds.values[0, 0, 0]))
         assert (np.isnan(fd.values[0, 1, 0]))

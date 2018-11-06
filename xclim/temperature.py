@@ -7,20 +7,21 @@ While the `indices` module stores the computing functions, this module defines I
 include a number of functionalities, such as input validation, unit conversion, output meta-data handling,
 and missing value masking.
 
-The concept followed here is to define UnivariateIndicator subclasses for each input variable, then create instances
+The concept followed here is to define Indicator subclasses for each input variable, then create instances
 for each indicator.
 
 """
 
 from . import checks
 from . import indices as _ind
-from .utils import UnivariateIndicator, BivariateIndicator
+from .utils import Indicator
 
+Indicator = BivariateIndicator = Indicator
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 
-class Tas(UnivariateIndicator):
+class Tas(Indicator):
     """Class for univariate indices using mean daily temperature as the input."""
     required_units = 'K'
 
@@ -29,7 +30,7 @@ class Tas(UnivariateIndicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-class Tasmin(UnivariateIndicator):
+class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
     required_units = 'K'
 
@@ -38,7 +39,7 @@ class Tasmin(UnivariateIndicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-class Tasmax(UnivariateIndicator):
+class Tasmax(Indicator):
     """Class for univariate indices using max daily temperature as the input."""
     required_units = 'K'
 

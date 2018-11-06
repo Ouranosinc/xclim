@@ -24,7 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs, parse_doc
+from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -115,7 +115,7 @@ class TestDailyDownsampler:
             assert (np.allclose(x2.values, target))
 
 
-class UniIndTemp(UnivariateIndicator):
+class UniIndTemp(Indicator):
     identifier = 'tmin'
     units = 'K'
     required_units = 'K'
@@ -128,10 +128,11 @@ class UniIndTemp(UnivariateIndicator):
         return da.resample(time=freq).mean()
 
 
-class UniIndPr(UnivariateIndicator):
+class UniIndPr(Indicator):
     identifier = 'prmax'
     units = 'kg m-2 s-1'
     required_units = 'kg m-2 s-1'
+    context = 'hydro'
 
     @staticmethod
     def compute(da, freq):
@@ -151,7 +152,7 @@ class TestUnivariateIndicator:
         ind = UniIndTemp()
         txk = ind(a, freq='YS')
 
-        ind.required_units = 'degC'
+        ind.required_units = ('degC',)
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
@@ -162,7 +163,7 @@ class TestUnivariateIndicator:
         ind = UniIndPr()
         txk = ind(a, freq='YS')
 
-        ind.required_units = 'mm/day'
+        ind.required_units = ('mm/day',)
         ind.units = 'mm'
         txm = ind(a, freq='YS')
 
@@ -179,11 +180,11 @@ class TestUnivariateIndicator:
 
     def test_factory(self, pr_series):
         attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
-                     standard_name='standard name',
+                     standard_name='standard name', context='hydro'
                      )
-        cls = UnivariateIndicator.factory(attrs)
+        cls = Indicator.factory(attrs)
 
-        assert issubclass(cls, UnivariateIndicator)
+        assert issubclass(cls, Indicator)
         da = pr_series(np.arange(365))
         cls(compute=ind.wet_days)(da)
 
