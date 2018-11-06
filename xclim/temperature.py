@@ -14,7 +14,7 @@ for each indicator.
 
 from . import checks
 from . import indices as _ind
-from .utils import UnivariateIndicator
+from .utils import UnivariateIndicator, BivariateIndicator
 
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
@@ -46,6 +46,21 @@ class Tasmax(UnivariateIndicator):
         checks.check_valid(da, 'cell_methods', 'time: maximum within days')
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
+class TasminTasmax(BivariateIndicator):
+    required_units = ('K', 'K')
+    
+    def cfprobe(self, dan, dax):
+        for da in (dan, dax):
+            checks.check_valid(da, 'cell_methods', 'time: maximum within days')
+            checks.check_valid(da, 'standard_name', 'air_temperature')
+
+heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
+                                   units='', 
+                                   long_name='Number of heat wave events',
+                                   standard_name='events',
+                                   description="Number of spells meeting criteria for health impacting heat wave.",
+                                   keywords="health,",
+                                   compute=_ind.heat_wave_frequency)
 
 tmmean = Tas(identifier='tmmean',
              units='K',

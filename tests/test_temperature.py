@@ -2,7 +2,7 @@ import os
 import numpy as np
 import xarray as xr
 
-from xclim.testing.common import tas_series
+from xclim.testing.common import tas_series, tasmin_series, tasmax_series
 import xclim.temperature as temp
 
 
@@ -11,6 +11,9 @@ TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
 TAS_SERIES = tas_series()
+TASMIN_SERIES = tasmin_series()
+TASMAX_SERIES = tasmax_series()
+
 K2C = 273.15
 
 
@@ -83,3 +86,32 @@ class TestGrowingDegreeDays:
         # assert (np.allclose(gdd2, gdds.values[0, 1, 0]))
         assert (np.isnan(gdd.values[0, -1, -1]))
         # assert (np.isnan(gdds.values[0, -1, -1]))
+
+
+class TestHeatWaveFrequency:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = np.zeros(366)
+        tx = np.zeros(366)
+        tn[:10] = np.array([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn + K2C, start='1/1/2000')
+        tx = tasmax_series(tx + K2C, start='1/1/2000')
+
+        # some hw
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30)
+        np.testing.assert_allclose(hwf.values[:1], 2)
+
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
+                                      thresh_tasmax=30, window=4)
+        np.testing.assert_allclose(hwf.values[:1], 1)
+
+        # one long hw
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=10,
+                                      thresh_tasmax=10)
+        np.testing.assert_allclose(hwf.values[:1], 1)
+        # no hw
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=40,
+                                      thresh_tasmax=40)
+        np.testing.assert_allclose(hwf.values[:1], 0)

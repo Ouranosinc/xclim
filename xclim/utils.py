@@ -196,6 +196,12 @@ class UnivariateIndicator(object):
             if not getattr(self, key):
                 raise ValueError("{} needs to be defined during instantiation.".format(key))
 
+        # Infer number of variables from `required_units`.
+        if isinstance(self.required_units, six.string_types):
+            self._nvar = 1
+        else:
+            self._nvar = len(self.required_units)
+
         # Extract information from the `compute` function.
         # The signature
         self._sig = signature(self.compute)
@@ -322,6 +328,70 @@ class UnivariateIndicator(object):
         """Create a subclass from the attributes dictionary."""
         name = attrs['identifier'].capitalize()
         return type(name, (cls,), attrs)
+
+
+class BivariateIndicator(UnivariateIndicator):
+    required_units = ('', '')
+
+    def __call__(self, *args, **kwds):
+        # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
+        # argument.
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
+
+        # Assume the two first arguments are always the DataArray.
+        das = tuple((ba.arguments.pop(self._parameters[i]) for i in range(self._nvar)))
+
+        # Pre-computation validation checks
+        for da in das:
+            self.validate(da)
+        self.cfprobe(*das)
+
+        # Convert units if necessary
+        das = tuple((self.convert_units(da, ru) for (da, ru) in zip(das, self.required_units)))
+
+        # Compute the indicator values, ignoring NaNs.
+        out = self.compute(*das, **ba.arguments)
+
+        # Set metadata attributes to the output according to class attributes.
+        self.decorate(out, ba.arguments)
+
+        # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
+        mba = signature(self.missing).bind(*das, **ba.arguments)
+
+        # Mask results that do not meet criteria defined by the `missing` method.
+        mask = self.missing(**mba.arguments)
+        ma_out = out.where(~mask)
+
+        return ma_out.rename(self.identifier.format(ba.arguments))
+
+    def cfprobe(self, *das):
+        """Check input data compliance to expectations.
+        Warn of potential issues."""
+        pass
+
+    @abc.abstractmethod
+    def compute(da1, da2, freq='Y', *args, **kwds):
+        """The function computing the indicator."""
+
+    @staticmethod
+    def convert_units(da, req_units):
+        """Return DataArray converted to unit."""
+        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
+        tu = units.parse_units(req_units.replace('-', '**-'))
+        if fu != tu:
+            b = da.copy()
+            b.values = (da.values * fu).to(tu, 'hydro')
+            return b
+
+        return da
+
+    @staticmethod
+    def missing(da1, da2, freq='Y', *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        m1 = checks.missing_any(da1, freq)
+        m2 = checks.missing_any(da2, freq)
+        return m1 + m2
 
 
 def parse_doc(obj):
