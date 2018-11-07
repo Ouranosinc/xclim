@@ -55,12 +55,60 @@ def assert_daily(var):
 def icclim_precipitation_flags():
     """Return a dictionary of conditions that would flag a suspicious precipitation time series.
     """
-    conditions = {}
-    conditions['negative'] = lambda x: (x < 0).any()
-    conditions['too large (> 300)'] = lambda x: (x > 300).any()
-    conditions['repetitions 1mm'] = lambda x: rl.suspicious_run(x, window=10, thresh=1.)
-    conditions['repetitions 5mm'] = lambda x: rl.suspicious_run(x, window=5, thresh=5.)
-    # conditions['dry days'] =   the amount of dry days lies outside a 14·bivariate standard deviation
+    conditions = {
+        'Contains negative values': lambda x: (x < 0).any(),
+        'Values too large (> 300mm)' : lambda x: (x > 300).any(),
+        'Many 1mm repetitions': lambda x: rl.suspicious_run(x, window=10, thresh=1.),
+        'Many 5mm repetitions': lambda x: rl.suspicious_run(x, window=5, thresh=5.)
+        # TODO: Create a check for dry days in precipitation runs
+        # 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
+    }
+
+    return conditions
+
+
+def icclim_tasmean_flags():
+    """Return a dictionary of conditions that would flag a suspicious tas time series.
+    """
+    conditions = {
+        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
+        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
+        'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
+        'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
+        # TODO: Create a function to check for identical values in a moving window
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+    }
+
+    return conditions
+
+
+def icclim_tasmax_flags():
+    """Return a dictionary of conditions that would flag a suspicious tasmax time series.
+    """
+    conditions = {
+        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
+        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
+        'Below mean temperature': lambda x, tas: (x < tas).any(),
+        'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
+        # TODO: Create a function to check for identical values in a moving window
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+    }
+
+    return conditions
+
+
+def icclim_tasmin_flags():
+    """Return a dictionary of conditions that would flag a suspicious tasmin time series.
+    """
+    conditions = {
+        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
+        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
+        'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
+        'Exceeds mean temperature': lambda x, tas: (x > tas).any(),
+        # TODO: Create a function to check for identical values in a moving window
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+    }
+
     return conditions
 
 
