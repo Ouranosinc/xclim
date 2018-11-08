@@ -1210,7 +1210,6 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
 
 def tg10p(tas, t10, freq='YS'):
     r"""
-
     Number of days with daily mean temperature below the 10th percentile. The 10th percentile
     should be computed for a 5 day window centered on each calendar day for a reference period.
 
