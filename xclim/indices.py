@@ -1283,7 +1283,7 @@ def tg90p(tas, t90, freq='YS'):
     Example
     -------
     >>> t90 = percentile_doy(historical_tas, per=0.9)
-    >>> hot_days = tg10p(tas, t90)
+    >>> hot_days = tg90p(tas, t90)
     """
     if 'dayofyear' not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
