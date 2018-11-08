@@ -57,6 +57,11 @@ def percentile_doy(arr, window=5, per=.1):
     for doy, ind in rr.groupby('time.dayofyear'):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
+    # #
+    # # drop percentile for dayofyear 366 since it is computed with reduced set
+    # #
+    # p = p.where(p.dayofyear < 366, drop=True)
+
     return p
 
 
