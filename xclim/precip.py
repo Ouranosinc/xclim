@@ -1,9 +1,10 @@
 from . import indices as _ind
-from .utils import UnivariateIndicator
+from .utils import Indicator
 
 
-class Pr(UnivariateIndicator):
+class Pr(Indicator):
     required_units = 'mm'
+    context = 'hydro'
 
 
 r1max = Pr(identifier='r1max',

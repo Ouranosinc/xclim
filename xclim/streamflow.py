@@ -1,9 +1,9 @@
 from . import checks
 from . import indices as _ind
-from .utils import UnivariateIndicator
+from .utils import Indicator
 
 
-class BaseFlowIndex(UnivariateIndicator):
+class BaseFlowIndex(Indicator):
     identifier = 'tx_max'
     units = 'm3 s-1'
     required_units = 'K'
