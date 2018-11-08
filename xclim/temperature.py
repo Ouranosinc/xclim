@@ -47,7 +47,7 @@ class Tasmax(Indicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-class TasminTasmax(BivariateIndicator):
+class TasminTasmax(Indicator):
     required_units = ('K', 'K')
 
     def cfprobe(self, dan, dax):
