@@ -66,7 +66,7 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-def adjust_doy_calendar(da_original, da_target):
+def adjust_doy_calendar(source, target):
     r"""Interpolate from one set of dayofyear range to another
 
     takes an array defined over a dayofyear range and interpolates it to cover
@@ -75,24 +75,25 @@ def adjust_doy_calendar(da_original, da_target):
     Parameters
     ----------
 
-    da_original : xarray.DataArray
+    source : xarray.DataArray
       original array with dayofyear coord
-    da_target : xarray.DataArray
+    target : xarray.DataArray
       array with time coords covering the wanted dayofyear range
 
 
     """
-    if 'dayofyear' not in da_original.coords.keys():
-        raise AttributeError("da_original should have dayofyear coordinates.")
+    if 'dayofyear' not in source.coords.keys():
+        raise AttributeError("source should have dayofyear coordinates.")
 
 
-    # interpolation of da_original to da_target dayofyear range
-    doy_max_start = da_original.dayofyear.values.max()
-    doy_max_target = da_target.time.dt.dayofyear.values.max()
+    # interpolation of source to target dayofyear range
+    doy_max_source = source.dayofyear.values.max()
+    doy_max_target = target.time.dt.dayofyear.values.max()
     # interpolate to fill na values
-    buffer = da_original.interpolate_na(dim='dayofyear')
+    buffer = source.interpolate_na(dim='dayofyear')
     # interpolate to target dayofyear range
-    buffer.coords['dayofyear'] = np.linspace(1, doy_max_target, doy_max_start)
+    buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
+                                             num=doy_max_source)
     return buffer.interp(dayofyear=range(1, doy_max_target+1))
 
 
