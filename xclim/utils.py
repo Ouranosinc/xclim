@@ -56,12 +56,44 @@ def percentile_doy(arr, window=5, per=.1):
     for doy, ind in rr.groupby('time.dayofyear'):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
-    # #
-    # # drop percentile for dayofyear 366 since it is computed with reduced set
-    # #
-    # p = p.where(p.dayofyear < 366, drop=True)
+    #
+    # if presence of percentile for dayofyear 366, drop it and
+    # reinterpolate de percentile from 1-365 doy range to 1-366
+    #
+    if p.dayofyear.max() == 366:
+        p = adjust_doy_calendar(p.loc[p.dayofyear<366], arr)
 
     return p
+
+
+def adjust_doy_calendar(da_original, da_target):
+    r"""Interpolate from one set of dayofyear range to another
+
+    takes an array defined over a dayofyear range and interpolates it to cover
+    the dayofyear range defined by another array
+
+    Parameters
+    ----------
+
+    da_original : xarray.DataArray
+      original array with dayofyear coord
+    da_target : xarray.DataArray
+      array with time coords covering the wanted dayofyear range
+
+
+    """
+    if 'dayofyear' not in da_original.coords.keys():
+        raise AttributeError("da_original should have dayofyear coordinates.")
+
+
+    # interpolation of da_original to da_target dayofyear range
+    doy_max_start = da_original.dayofyear.values.max()
+    doy_max_target = da_target.time.dt.dayofyear.values.max()
+    # interpolate to fill na values
+    buffer = da_original.interpolate_na(dim='dayofyear')
+    # interpolate to target dayofyear range
+    buffer.coords['dayofyear'] = np.linspace(1, doy_max_target, doy_max_start)
+    return buffer.interp(dayofyear=range(1, doy_max_target+1))
 
 
 def get_daily_events(da, da_value, operator):

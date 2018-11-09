@@ -70,6 +70,7 @@ Indice descriptions
 import logging
 
 import numpy as np
+from . import utils
 import xarray as xr
 
 from . import run_length as rl
@@ -1237,14 +1238,8 @@ def tg10p(tas, t10, freq='YS'):
     if 'dayofyear' not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
-    # # interpolation of percentile to tas year length
-    # doy_max_start = t10.dayofyear.values.max()
-    # doy_max_target = tas.time.dt.dayofyear.values.max()
-    # interpolate to fill na values
-    # t10 = t10.interpolate_na(dim='dayofyear')
-    # # interpolate to tas year range
-    # t10.coords['dayofyear'] = np.linspace(1, doy_max_target, doy_max_start)
-    # t10 = t10.interp(dayofyear=range(1, doy_max_target+1))
+    # adjustment of t10 to tas doy range
+    t10 = utils.adjust_doy_calendar(t10, tas)
 
     # create array of percentile with tas shape and coords
     thresh = xr.full_like(tas, np.nan)
@@ -1287,14 +1282,8 @@ def tg90p(tas, t90, freq='YS'):
     if 'dayofyear' not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
-    # # interpolation of percentile to tas year length
-    # doy_max_start = t90.dayofyear.values.max()
-    # doy_max_target = tas.time.dt.dayofyear.values.max()
-    # interpolate to fill na values
-    # t90 = t90.interpolate_na(dim='dayofyear')
-    # # interpolate to tas year range
-    # t90.coords['dayofyear'] = np.linspace(1, doy_max_target, doy_max_start)
-    # t90 = t90.interp(dayofyear=range(1, doy_max_target+1))
+    # adjustment of t90 to tas doy range
+    t90 = utils.adjust_doy_calendar(t90, tas)
 
     # create array of percentile with tas shape and coords
     thresh = xr.full_like(tas, np.nan)
