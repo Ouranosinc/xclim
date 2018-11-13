@@ -12,7 +12,6 @@ from . import checks
 from inspect2 import signature
 import abc
 
-
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
 units.define(pint.unit.UnitDefinition('percent', '%', (),
@@ -61,7 +60,7 @@ def percentile_doy(arr, window=5, per=.1):
     # reinterpolate de percentile from 1-365 doy range to 1-366
     #
     if p.dayofyear.max() == 366:
-        p = adjust_doy_calendar(p.loc[p.dayofyear<366], arr)
+        p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
 
     return p
 
@@ -85,7 +84,6 @@ def adjust_doy_calendar(source, target):
     if 'dayofyear' not in source.coords.keys():
         raise AttributeError("source should have dayofyear coordinates.")
 
-
     # interpolation of source to target dayofyear range
     doy_max_source = source.dayofyear.values.max()
     doy_max_target = target.time.dt.dayofyear.values.max()
@@ -94,7 +92,7 @@ def adjust_doy_calendar(source, target):
     # interpolate to target dayofyear range
     buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
                                              num=doy_max_source)
-    return buffer.interp(dayofyear=range(1, doy_max_target+1))
+    return buffer.interp(dayofyear=range(1, doy_max_target + 1))
 
 
 def get_daily_events(da, da_value, operator):
@@ -223,7 +221,7 @@ class Indicator(object):
     # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'},
-                      'description':  {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
+                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
 
     def __init__(self, **kwds):
 
