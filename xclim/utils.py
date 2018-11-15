@@ -205,6 +205,30 @@ def daily_downsampler(da, freq='YS'):
     return buffer.groupby('tags')
 
 
+def walk_map(d, func):
+    """Apply a function recursively to values of dictionary.
+
+    Parameters
+    ----------
+    d : dict
+      Input dictionary, possibly nested.
+    func : function
+      Function to apply to dictionary values.
+
+    Returns
+    -------
+    dict
+      Dictionary whose values are the output of the given function.
+    """
+    out = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            out[k] = walk_map(v, func)
+        else:
+            out[k] = func(v)
+    return out
+
+
 class Indicator(object):
     r"""Indicator class
 
@@ -325,6 +349,10 @@ class Indicator(object):
 
         out.update(self.cf_attrs)
 
+        # Make sure all strings are unicode
+        if six.PY2:
+            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
+
         return out
 
     def cfprobe(self, *das):
@@ -380,7 +408,7 @@ class Indicator(object):
 
         freq = kwds.get('freq')
         miss = (checks.missing_any(da, freq) for da in args)
-        return reduce(xr.ufuncs.logical_or, miss)
+        return reduce(np.logical_or, miss)
 
     def validate(self, da):
         """Validate input data requirements.

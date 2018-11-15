@@ -24,7 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, adjust_doy_calendar
+from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -215,3 +215,12 @@ class TestAdjustDoyCalendar:
 
         assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
         assert out.sel(dayofyear=366) == source.sel(dayofyear=360)
+
+
+class TestWalkMap:
+
+    def test_simple(self):
+        d = {'a': -1, 'b': {'c': -2}}
+        o = walk_map(d, lambda x: 0)
+        assert o['a'] == 0
+        assert o['b']['c'] == 0
