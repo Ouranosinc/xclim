@@ -24,7 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc
+from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -203,3 +203,12 @@ class TestParseDoc:
 
     def test_simple(self):
         parse_doc(ind.tg_mean)
+
+
+class TestWalkMap:
+
+    def test_simple(self):
+        d = {'a': -1, 'b': {'c': -2}}
+        o = walk_map(d, lambda x: 0)
+        assert o['a'] == 0
+        assert o['b']['c'] == 0

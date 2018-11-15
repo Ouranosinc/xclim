@@ -1071,7 +1071,7 @@ def tn_min(tasmin, freq='YS'):
     return tasmin.resample(time=freq).min(dim='time')
 
 
-def max_n_day_precipitation_amount(da, window, freq='YS'):
+def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
@@ -1102,7 +1102,7 @@ def max_n_day_precipitation_amount(da, window, freq='YS'):
     """
 
     # rolling sum of the values
-    arr = da.rolling(time=window, center=False).sum(dim='time')
+    arr = pr.rolling(time=window, center=False).sum(dim='time')
     return arr.resample(time=freq).max(dim='time')
 
 
