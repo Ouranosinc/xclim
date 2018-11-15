@@ -34,16 +34,24 @@ units.enable_contexts(hydro)
 def percentile_doy(arr, window=5, per=.1):
     """Percentile value for each day of the year
 
-    Returns the climatological percentile over a moving window around each day of the year.
+    Return the climatological percentile over a moving window around each day of the year.
 
     Parameters
     ----------
     arr : xarray.DataArray
+      Input data.
     window : int
+      Number of days around each day of the year to include in the calculation.
     per : float
+      Percentile [0,100]
+
+    Returns
+    -------
+    xarray.DataArray
+      The percentiles indexed by the day of the year.
     """
 
-    # TODO: Support percentile array, store percentile in attributes.
+    # TODO: Support percentile array, store percentile in attributes (or coordinates ?)
     rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
 
     # Create empty percentile array
@@ -55,41 +63,49 @@ def percentile_doy(arr, window=5, per=.1):
     for doy, ind in rr.groupby('time.dayofyear'):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
-    #
-    # if presence of percentile for dayofyear 366, drop it and
-    # reinterpolate de percentile from 1-365 doy range to 1-366
-    #
+    # The percentile for the 366th day has a sample size of 1/4 of the other days.
+    # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
     if p.dayofyear.max() == 366:
         p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
 
     return p
 
 
+# TODO: I'd like this function to use calendar instead of target (ie target calendar.)
+# Depends on https://github.com/pydata/xarray/issues/2436
 def adjust_doy_calendar(source, target):
     r"""Interpolate from one set of dayofyear range to another
 
-    takes an array defined over a dayofyear range and interpolates it to cover
-    the dayofyear range defined by another array
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
+    to 365).
 
     Parameters
     ----------
-
     source : xarray.DataArray
-      original array with dayofyear coord
+      Array with `dayofyear` coordinates.
     target : xarray.DataArray
-      array with time coords covering the wanted dayofyear range
+      Array with `time` coordinates the source should be mapped to.
 
+    Returns
+    -------
+    xarray.DataArray
+      Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
     if 'dayofyear' not in source.coords.keys():
         raise AttributeError("source should have dayofyear coordinates.")
 
-    # interpolation of source to target dayofyear range
+    # Interpolation of source to target dayofyear range
+    # When https://github.com/pydata/xarray/issues/2436 will be fixed, we might want to use calendar instead.
     doy_max_source = source.dayofyear.values.max()
     doy_max_target = target.time.dt.dayofyear.values.max()
-    # interpolate to fill na values
+    if doy_max_target not in [360, 365, 366]:
+        raise ValueError("The target array's calendar is not recognized")
+
+    # Interpolate to fill na values
     buffer = source.interpolate_na(dim='dayofyear')
-    # interpolate to target dayofyear range
+
+    # Interpolate to target dayofyear range
     buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
                                              num=doy_max_source)
     return buffer.interp(dayofyear=range(1, doy_max_target + 1))

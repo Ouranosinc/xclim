@@ -24,7 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc
+from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, adjust_doy_calendar
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -203,3 +203,15 @@ class TestParseDoc:
 
     def test_simple(self):
         parse_doc(ind.tg_mean)
+
+
+class TestAdjustDoyCalendar:
+
+    def test_360_to_366(self):
+        source = xr.DataArray(np.arange(360), coords=[np.arange(1, 361), ], dims='dayofyear')
+        time = pd.date_range('2000-01-01', '2001-12-31', freq='D')
+        target = xr.DataArray(np.arange(len(time)), coords=[time, ], dims='time')
+        out = adjust_doy_calendar(source, target)
+
+        assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
+        assert out.sel(dayofyear=366) == source.sel(dayofyear=360)
