@@ -407,6 +407,39 @@ class TestRainOnFrozenGround:
         assert out[0] == 1
 
 
+class TestTg10p:
+    def test_simple(self, tas_series):
+
+        i = 366
+        tas = np.array(range(i))
+        tas = tas_series(tas, start='1/1/2000')
+        t10 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tg10p(tas, t10, freq='MS')
+        assert out[0] == 1
+        assert out[5] == 5
+
+
+class TestTg90p:
+    def test_simple(self, tas_series):
+
+        i = 366
+        tas = np.array(range(i))
+        tas = tas_series(tas, start='1/1/2000')
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tg90p(tas, t90, freq='MS')
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+
 class TestTxMin:
 
     @staticmethod
