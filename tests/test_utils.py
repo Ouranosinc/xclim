@@ -24,6 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind

@@ -162,7 +162,19 @@ def missing_any(da, freq, **kwds):
     """
 
     c = da.notnull().resample(time=freq).sum(dim='time')
-    p = c.indexes['time'].to_period()
-    n = (p.end_time - p.start_time).days + 1
+
+    if '-' in freq:
+        pfreq, anchor = freq.split('-')
+    else:
+        pfreq = freq
+
+    if pfreq.endswith('S'):
+        start_time = c.indexes['time']
+        end_time = start_time.shift(1)
+    else:
+        end_time = c.indexes['time']
+        start_time = end_time.shift(-1)
+
+    n = (end_time - start_time).days
     nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
     return c != nda

@@ -83,7 +83,7 @@ tx_max = Tasmax(identifier='tx_max',
                 )
 consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 standard_name='spell_length_of_days_with_air_temperature_below_threshold',
-                                long_name = 'Maximum number of consecutive days with Tmin < 0C',
+                                long_name='Maximum number of consecutive days with Tmin < 0C',
                                 units='days',
                                 cell_methods= 'time: min within days time: maximum over days',
                                 compute=_ind.consecutive_frost_days,
