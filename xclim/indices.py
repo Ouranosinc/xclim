@@ -103,7 +103,7 @@ ftomm = np.nan
 
 
 def base_flow_index(q, freq='YS'):
-    ur"""Base flow index
+    r"""Base flow index
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
 
@@ -128,7 +128,7 @@ def base_flow_index(q, freq='YS'):
 
 
 def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
-    ur"""Warm spell duration index
+    r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
     percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the
@@ -174,7 +174,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
 
 
 def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
-    ur"""Cold spell index
+    r"""Cold spell index
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
     temperature below < -10°C.
@@ -204,7 +204,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
 
 # TODO: mix up in docsring for tas
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
-    ur"""Cold and dry days.
+    r"""Cold and dry days.
 
     Returns the total number of days where "Cold" and "Dry" conditions coincide.
 
@@ -241,7 +241,7 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
 
 
 def daily_intensity(pr, thresh=1.0, freq='YS'):
-    ur"""Average daily precipitation intensity
+    r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
 
@@ -284,7 +284,7 @@ def daily_intensity(pr, thresh=1.0, freq='YS'):
 
 
 def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
-    ur"""Maximum number of consecutive dry days
+    r"""Maximum number of consecutive dry days
 
     Return the maximum number of consecutive days within the period where precipitation
     is below a certain threshold.
@@ -309,7 +309,7 @@ def maximum_consecutive_dry_days(pr, thresh=1, freq='YS'):
 
 
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
-    ur"""Maximum number of consecutive frost days (Tmin < 0℃).
+    r"""Maximum number of consecutive frost days (Tmin < 0℃).
 
     Resample the daily minimum temperature series by computing the maximum number
     of days below the freezing point over each period.
@@ -345,7 +345,7 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
 
 def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
-    ur"""Consecutive wet days.
+    r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
 
@@ -378,7 +378,7 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 
 
 def cooling_degree_days(tas, thresh=18, freq='YS'):
-    ur"""Cooling degree days
+    r"""Cooling degree days
 
     Sum of degree days above the temperature threshold at which spaces are cooled.
 
@@ -404,7 +404,7 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
 
 
 def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
-    ur"""Number of days with a diurnal freeze-thaw cycle
+    r"""Number of days with a diurnal freeze-thaw cycle
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
 
@@ -431,7 +431,7 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
 
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
-    ur"""Mean of daily temperature range.
+    r"""Mean of daily temperature range.
 
     Parameters
     ----------
@@ -462,7 +462,7 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
 
 
 def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
-    ur"""Mean absolute day-to-day variation in daily temperature range.
+    r"""Mean absolute day-to-day variation in daily temperature range.
 
     Parameters
     ----------
@@ -494,7 +494,7 @@ def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
 
 
 def extreme_temperature_range(tasmax, tasmin, freq='YS'):
-    ur"""Extreme intra-period temperature range.
+    r"""Extreme intra-period temperature range.
 
     The maximum of max temperature (TXx) minus the minimum of min temperature (TNn) for the given time period.
 
@@ -529,7 +529,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
 
 
 def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
-    ur"""First day consistently exceeding threshold temperature.
+    r"""First day consistently exceeding threshold temperature.
 
     Returns first day of period where a temperature threshold is exceeded
     over a given number of days.
@@ -559,7 +559,7 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
 
 
 def frost_days(tasmin, freq='YS'):
-    ur"""Frost days index
+    r"""Frost days index
 
     Number of days where daily minimum temperatures are below 0℃.
 
@@ -590,7 +590,7 @@ def frost_days(tasmin, freq='YS'):
 
 
 def growing_degree_days(tas, thresh=4.0, freq='YS'):
-    ur"""Growing degree-days over threshold temperature value [℃].
+    r"""Growing degree-days over threshold temperature value [℃].
 
     The sum of degree-days over the threshold temperature.
 
@@ -625,7 +625,7 @@ def growing_degree_days(tas, thresh=4.0, freq='YS'):
 
 
 def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
-    ur"""Growing season length.
+    r"""Growing season length.
 
     The number of days between the first occurrence of at least
     six consecutive days with mean daily temperature over 5℃ and
@@ -684,7 +684,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
                         window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
-    ur"""Heat wave frequency
+    r"""Heat wave frequency
 
     Number of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
@@ -737,7 +737,7 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
 
 
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
-    ur"""Heat wave index.
+    r"""Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
 
@@ -765,7 +765,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
 
 
 def heating_degree_days(tas, freq='YS', thresh=17.0):
-    ur"""Heating degree days
+    r"""Heating degree days
 
     Sum of degree days below the temperature threshold at which spaces are heated.
 
@@ -800,7 +800,7 @@ def heating_degree_days(tas, freq='YS', thresh=17.0):
 
 
 def hot_days(tasmax, thresh=30.0, freq='YS'):
-    ur"""Number of very hot days.
+    r"""Number of very hot days.
 
     Number of days with max temperature exceeding a base threshold.
 
@@ -824,7 +824,7 @@ def hot_days(tasmax, thresh=30.0, freq='YS'):
 
 
 def ice_days(tasmax, freq='YS'):
-    ur"""Number of ice/freezing days
+    r"""Number of ice/freezing days
 
     Number of days where daily maximum temperatures are below 0℃.
 
@@ -855,7 +855,7 @@ def ice_days(tasmax, freq='YS'):
 
 
 def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
-    ur"""
+    r"""
     Ratio of rainfall to total precipitation
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
@@ -892,7 +892,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 
 
 def summer_days(tasmax, thresh=25.0, freq='YS'):
-    ur"""Number of summer days
+    r"""Number of summer days
 
     Number of days where daily maximum temperature exceeds 25℃.
 
@@ -925,7 +925,7 @@ def summer_days(tasmax, thresh=25.0, freq='YS'):
 
 
 def tg_mean(tas, freq='YS'):
-    ur"""Mean of daily average temperature.
+    r"""Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
 
@@ -966,7 +966,7 @@ def tg_mean(tas, freq='YS'):
 
 
 def tn10p(tasmin, p10, freq='YS'):
-    ur"""Days with daily minimum temperature below the 10th percentile of the reference period.
+    r"""Days with daily minimum temperature below the 10th percentile of the reference period.
 
     Parameters
     ----------
@@ -981,7 +981,7 @@ def tn10p(tasmin, p10, freq='YS'):
 
 
 def tn_max(tasmin, freq='YS'):
-    ur"""Highest minimum temperature.
+    r"""Highest minimum temperature.
 
     The maximum of daily minimum temperature.
 
@@ -1011,7 +1011,7 @@ def tn_max(tasmin, freq='YS'):
 
 
 def tn_mean(tasmin, freq='YS'):
-    ur"""Mean minimum temperature.
+    r"""Mean minimum temperature.
 
     Mean of daily minimum temperature.
 
@@ -1042,7 +1042,7 @@ def tn_mean(tasmin, freq='YS'):
 
 
 def tn_min(tasmin, freq='YS'):
-    ur"""Lowest minimum temperature
+    r"""Lowest minimum temperature
 
     Minimum of daily minimum temperature.
 
@@ -1072,7 +1072,7 @@ def tn_min(tasmin, freq='YS'):
 
 
 def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
-    ur"""Highest precipitation amount cumulated over a n-day moving window.
+    r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
     and determine the maximum value over each period.
@@ -1107,7 +1107,7 @@ def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
 
 
 def max_1day_precipitation_amount(pr, freq='YS'):
-    ur"""Highest 1-day precipitation amount for a period (frequency).
+    r"""Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
 
@@ -1136,7 +1136,7 @@ def max_1day_precipitation_amount(pr, freq='YS'):
 
 
 def precip_accumulation(pr, freq='YS'):
-    ur"""Accumulated total (liquid + solid) precipitation.
+    r"""Accumulated total (liquid + solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
 
@@ -1208,7 +1208,7 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
 
 
 def tropical_nights(tasmin, thresh=20.0, freq='YS'):
-    ur"""Tropical nights
+    r"""Tropical nights
 
     The number of days with minimum daily temperature above threshold.
 
@@ -1242,7 +1242,7 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
 
 
 def tx_max(tasmax, freq='YS'):
-    ur"""Highest max temperature
+    r"""Highest max temperature
 
     The maximum value of daily maximum temperature.
 
@@ -1272,7 +1272,7 @@ def tx_max(tasmax, freq='YS'):
 
 
 def tx_mean(tasmax, freq='YS'):
-    ur"""Mean max temperature
+    r"""Mean max temperature
 
     The mean of daily maximum temperature.
 
@@ -1303,7 +1303,7 @@ def tx_mean(tasmax, freq='YS'):
 
 
 def tx_min(tasmax, freq='YS'):
-    ur"""Lowest max temperature
+    r"""Lowest max temperature
 
     The minimum of daily maximum temperature.
 
@@ -1333,7 +1333,7 @@ def tx_min(tasmax, freq='YS'):
 
 
 def warm_day_frequency(tasmax, thresh=30, freq='YS'):
-    ur"""Frequency of extreme warm days
+    r"""Frequency of extreme warm days
 
     Return the number of days with tasmax > thresh per period
 
@@ -1353,7 +1353,7 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
 
 def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin=22,
                                                    thresh_tasmax=30, freq='YS'):
-    ur"""Frequency days with hot maximum and minimum temperature
+    r"""Frequency days with hot maximum and minimum temperature
 
     Returns the number of days with tasmin > thresh_tasmin
                                and tasmax > thresh_tasmax per period
@@ -1383,7 +1383,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
 
 
 def warm_night_frequency(tasmin, thresh=22, freq='YS'):
-    ur"""Frequency of extreme warm nights
+    r"""Frequency of extreme warm nights
 
     Return the number of days with tasmin > thresh per period
 
@@ -1406,7 +1406,7 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
 
 
 def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
-    ur"""Warm spell duration index
+    r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
     percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
@@ -1450,7 +1450,7 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
 
 
 def wet_days(pr, thresh=1.0, freq='YS'):
-    ur"""Wet days
+    r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
 
