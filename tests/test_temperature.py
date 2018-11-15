@@ -5,10 +5,8 @@ import xarray as xr
 from xclim.testing.common import tas_series, tasmin_series, tasmax_series
 import xclim.temperature as temp
 
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
-
 
 TAS_SERIES = tas_series()
 TASMIN_SERIES = tasmin_series()
@@ -31,8 +29,52 @@ class TestTxMin:
         temp.tx_min(ts, freq='Y')
 
 
-class TestFrostDays:
+class TestConsecutiveFrostDays:
 
+    def test_one_freeze_day(self, tasmin_series):
+        a = np.zeros(365) + K2C + 5.0
+        a[2] -= 20
+
+        ts = tasmin_series(a)
+        out = temp.consecutive_frost_days(ts)
+        np.testing.assert_array_equal(out, [1])
+
+
+
+class TestColdSpellIndex:
+
+    def test_simple(self, tas_series):
+        a = np.zeros(365) + K2C
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:100] -= 30  # at the end and beginning
+        ts = tas_series(a)
+        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    def test_convert_units(self, tas_series):
+        a = np.zeros(365)
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:100] -= 30  # at the end and beginning
+        ts = tas_series(a)
+        ts.attrs['units'] = 'C'
+        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    def test_nan_presence(self, tas_series):
+        a = np.zeros(365) + K2C
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:100] -= 30  # at the end and beginning
+        a[-1] = np.nan
+        ts = tas_series(a)
+
+        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
+
+
+class TestFrostDays:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
 
     def test_3d_data_with_nans(self):

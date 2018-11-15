@@ -22,6 +22,7 @@ units.define(pint.unit.UnitDefinition('percent', '%', (),
 units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
              '= degreeN')
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
+units.define("degC = kelvin; offset: 273.15 = celsius = C") # add 'C' as an abbrev for celsius (default Coulombe)
 hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',

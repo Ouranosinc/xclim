@@ -81,13 +81,28 @@ tx_max = Tasmax(identifier='tx_max',
                 keywords='',
                 compute=_ind.tx_max,
                 )
-
+consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
+                                standard_name='spell_length_of_days_with_air_temperature_below_threshold',
+                                long_name = 'Maximum number of consecutive days with Tmin < 0C',
+                                units='days',
+                                cell_methods= 'time: min within days time: maximum over days',
+                                compute=_ind.consecutive_frost_days,
+                                )
 
 cold_spell_duration = Tasmin(identifier='cold_spell_duration',
                              standard_name='cold_spell_duration_index',
                              units='days',
                              compute=_ind.cold_spell_duration_index,
                              )
+
+cold_spell_index = Tas( identifier='cold_spell_index',
+                        standard_name='cold_spell_index',
+                        long_name = 'cold spell index',
+                        units='days',
+                        description='{freq} number of days that are part of a cold spell, defined as {window} or more consecutive days with mean daily '
+                                    'temperature below  {thresh} °C',
+                        compute=_ind.cold_spell_index,
+                        )
 
 tx_min = Tasmax(identifier='tx_min',
                 long_name='Minimum maximum temperature',
