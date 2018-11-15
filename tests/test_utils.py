@@ -212,5 +212,3 @@ class TestWalkMap:
         o = walk_map(d, lambda x: 0)
         assert o['a'] == 0
         assert o['b']['c'] == 0
-
-
