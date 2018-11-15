@@ -1263,8 +1263,8 @@ def tg90p(tas, t90, freq='YS'):
 
     tas : xarray.DataArray
       Mean daily temperature
-    t10 : xarray.DataArray
-      10th percentile of daily mean temperature
+    t90 : xarray.DataArray
+      90th percentile of daily mean temperature
     freq : str, optional
       Resampling frequency
 
