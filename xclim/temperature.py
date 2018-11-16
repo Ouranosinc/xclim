@@ -142,7 +142,7 @@ cooling_dd = Tas(identifier='cddcold',
                  )
 
 heating_dd = Tas(identifier='hddheat',
-                 # identifier='cddcold{thresh}',TODO: custom variable name fails
+                 # identifier='cddcold{thresh}',#,TODO: custom variable name fails
                  long_name='Heating Degree Days (Tmean < {thresh}C)',
                  standard_name='integral_of_air_temperature_deficit_wrt_time',
                  units='K days',
@@ -150,8 +150,7 @@ heating_dd = Tas(identifier='hddheat',
                  compute=_ind.heating_degree_days,
                  )
 
-growing_dd = Tas(identifier='gddgrow',
-                 # identifier='gddgrow{thresh}', TODO: custom variable name fails
+growing_dd = Tas(identifier='gddgrow{thresh}',
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  long_name='growing degree days above {thresh}',
                  units='K days',

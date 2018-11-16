@@ -326,7 +326,7 @@ class Indicator(object):
         mask = self.missing(*mba.args, **mba.kwargs)
         ma_out = out.where(~mask)
 
-        return ma_out.rename(self.identifier.format(ba.arguments))
+        return ma_out.rename(self.identifier.format(**ba.arguments))
 
     @property
     def cf_attrs(self):
