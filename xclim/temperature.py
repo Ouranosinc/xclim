@@ -123,7 +123,7 @@ tx_min = Tasmax(identifier='tx_min',
                 )
 
 cooling_dd = Tas(identifier='cddcold',
-                 #identifier='cddcold{thresh}',
+                 #identifier='cddcold{thresh}',TODO: custom variable name fails
                  long_name='cooling degree days above {thresh}',
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  units='K days',
@@ -132,7 +132,7 @@ cooling_dd = Tas(identifier='cddcold',
                  )
 
 growing_dd = Tas(identifier='gddgrow',
-                #identifier='gddgrow{thresh}',
+                #identifier='gddgrow{thresh}', TODO: custom variable name fails
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  long_name='growing degree days above {thresh}',
                  units='K days',
