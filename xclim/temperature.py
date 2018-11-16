@@ -69,7 +69,8 @@ heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
 heat_wave_index = Tasmax(identifier='heat_wave_index',
                          # indentifier='heat_wave_index{thresh}',TODO: custom variable name fails
                          units='days',
-                         description='Number of days that are part of a heatwave, defined as five or more consecutive days over {thresh}℃',
+                         description='Number of days that are part of a heatwave, '
+                                     'defined as five or more consecutive days over {thresh}℃',
                          long_name='Number of days that are part of a heatwave',
                          short_name='heat_wave_index',
                          compute=_ind.heat_wave_index,
