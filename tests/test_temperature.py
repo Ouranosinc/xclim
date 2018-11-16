@@ -215,7 +215,6 @@ class TestHeatingDegreeDays:
 
         assert (np.isnan(hdd.values[0, -1, -1]))
 
-
     def test_convert_units(self):
         # test with 3d data
         tas = xr.open_dataset(self.nc_file).tasmax
@@ -293,16 +292,17 @@ class TestHeatWaveFrequency:
                                        thresh_tasmax=40)
         np.testing.assert_allclose(hwf.values[:1], 0)
 
+
 class TestHeatWaveIndex:
 
-    def test_simple(self,tasmax_series):
+    def test_simple(self, tasmax_series):
         tx = np.zeros(366)
         tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
         tx = tasmax_series(tx + K2C, start='1/1/2000')
         hwi = temp.heat_wave_index(tx, freq='YS')
         np.testing.assert_array_equal(hwi, [10])
 
-    def test_convert_units(self,tasmax_series):
+    def test_convert_units(self, tasmax_series):
         tx = np.zeros(366)
         tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
         tx = tasmax_series(tx, start='1/1/2000')
@@ -310,14 +310,16 @@ class TestHeatWaveIndex:
         hwi = temp.heat_wave_index(tx, freq='YS')
         np.testing.assert_array_equal(hwi, [10])
 
-    def test_nan_presence(self,tasmax_series):
+    def test_nan_presence(self, tasmax_series):
         tx = np.zeros(366)
         tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
         tx[-1] = np.nan
-        tx = tasmax_series(tx+K2C, start='1/1/2000')
+        tx = tasmax_series(tx + K2C, start='1/1/2000')
 
         hwi = temp.heat_wave_index(tx, freq='YS')
         np.testing.assert_array_equal(hwi, [np.nan])
+
+
 class TestDailyFreezeThaw:
     nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
     nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
