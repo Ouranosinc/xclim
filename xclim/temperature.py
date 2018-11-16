@@ -66,8 +66,7 @@ heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    compute=_ind.heat_wave_frequency,
                                    )
 
-heat_wave_index = Tasmax(identifier='heat_wave_index',
-                         # indentifier='heat_wave_index{thresh}',TODO: custom variable name fails
+heat_wave_index = Tasmax(identifier='hw_index{thresh}',
                          units='days',
                          description='Number of days that are part of a heatwave, '
                                      'defined as five or more consecutive days over {thresh}℃',
@@ -107,7 +106,7 @@ cold_spell_duration = Tasmin(identifier='cold_spell_duration',
                              compute=_ind.cold_spell_duration_index,
                              )
 
-cold_spell_index = Tas(identifier='cold_spell_index',
+cold_spell_index = Tas(identifier='cs_index{thresh}',
                        standard_name='cold_spell_index',
                        long_name='cold spell index',
                        units='days',
@@ -133,8 +132,7 @@ tx_min = Tasmax(identifier='tx_min',
                 compute=_ind.tx_min,
                 )
 
-cooling_dd = Tas(identifier='cddcold',
-                 # identifier='cddcold{thresh}',TODO: custom variable name fails
+cooling_dd = Tas(identifier='cddcold{thresh}',
                  long_name='Cooling Degree Days (Tmean > {thresh}C)',
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  units='K days',
@@ -142,8 +140,7 @@ cooling_dd = Tas(identifier='cddcold',
                  compute=_ind.cooling_degree_days,
                  )
 
-heating_dd = Tas(identifier='hddheat',
-                 # identifier='cddcold{thresh}',#,TODO: custom variable name fails
+heating_dd = Tas(identifier='hddheat{thresh}',
                  long_name='Heating Degree Days (Tmean < {thresh}C)',
                  standard_name='integral_of_air_temperature_deficit_wrt_time',
                  units='K days',
