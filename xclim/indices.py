@@ -70,6 +70,7 @@ Indice descriptions
 import logging
 
 import numpy as np
+from . import utils
 import xarray as xr
 
 from . import run_length as rl
@@ -128,7 +129,7 @@ def base_flow_index(q, freq='YS'):
 
 
 def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
-    r"""Warm spell duration index
+    r"""Cold spell duration index
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
     percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the
@@ -161,10 +162,10 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     if 'dayofyear' not in tn10.coords.keys():
         raise AttributeError("tn10 should have dayofyear coordinates.")
 
-    # The day of year value of the tasmax series.
+    # The day of year value of the tasmin series.
     doy = tasmin.indexes['time'].dayofyear
 
-    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
+    # Create an array with the shape and coords of tasmin, but with values set to tx90 according to the doy index.
     thresh = xr.full_like(tasmin, np.nan)
     thresh.data = tn10.sel(dayofyear=doy)
 
@@ -887,7 +888,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 
     tot = pr.resample(time=freq).sum()
     rain = tot - prsn.resample(time=freq).sum()
-    ratio = rain/tot
+    ratio = rain / tot
     return ratio
 
 
@@ -1196,6 +1197,7 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
       The number of rain on frozen ground events per period [days]
 
     """
+
     def func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
@@ -1205,6 +1207,93 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
     pcond = (pr > thresh)
 
     return (tcond * pcond * 1).resample(time=freq).sum()
+
+
+def tg10p(tas, t10, freq='YS'):
+    r"""
+    Number of days with daily mean temperature below the 10th percentile. The 10th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Parameters
+    ----------
+
+    tas : xarray.DataArray
+      Mean daily temperature
+    t10 : xarray.DataArray
+      10th percentile of daily mean temperature
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+
+    xarray.DataArray
+      Count of days with daily mean temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> cold_days = tg10p(tas, t10)
+    """
+    if 'dayofyear' not in t10.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t10 to tas doy range
+    t10 = utils.adjust_doy_calendar(t10, tas)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tas, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t10.sel(dayofyear=doy)
+
+    # compute the cold days
+    below = (tas < thresh)
+
+    return below.resample(time=freq).sum(dim='time')
+
+
+def tg90p(tas, t90, freq='YS'):
+    r"""
+
+    Number of days with daily mean temperature over the 90th percentile. The 90th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Parameters
+    ----------
+
+    tas : xarray.DataArray
+      Mean daily temperature
+    t90 : xarray.DataArray
+      90th percentile of daily mean temperature
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+
+    xarray.DataArray
+      Count of days with daily mean temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t90 = percentile_doy(historical_tas, per=0.9)
+    >>> hot_days = tg90p(tas, t90)
+    """
+    if 'dayofyear' not in t90.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t90 to tas doy range
+    t90 = utils.adjust_doy_calendar(t90, tas)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tas, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t90.sel(dayofyear=doy)
+
+    # compute the cold days
+    over = (tas > thresh)
+
+    return over.resample(time=freq).sum(dim='time')
 
 
 def tropical_nights(tasmin, thresh=20.0, freq='YS'):
