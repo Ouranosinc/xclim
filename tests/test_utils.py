@@ -140,7 +140,7 @@ class UniIndPr(Indicator):
         return da.resample(time=freq).mean()
 
 
-class TestUnivariateIndicator:
+class TestIndicator:
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))
@@ -240,3 +240,9 @@ class TestUnits:
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree
+
+    def test_pcic(self):
+        with units.context('hydro'):
+            fu = units.parse_units("kilogram / d / meter ** 2")
+            tu = units.parse_units("mm/day")
+            np.isclose(1 * fu, 1 * tu)

@@ -3,13 +3,13 @@ from .utils import Indicator
 
 
 class Pr(Indicator):
-    required_units = 'mm'
+    required_units = 'mm/day'
     context = 'hydro'
 
 
 r1max = Pr(identifier='r1max',
            long_name='',
-           units='mm',
+           units='mm/day',
            compute=_ind.max_1day_precipitation_amount,
            )
 
