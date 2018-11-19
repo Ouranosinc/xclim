@@ -158,9 +158,9 @@ daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
                                                    units='K',
                                                    standard_name='air_temperature',
                                                    cell_methods='time range within days time: difference over days time: mean over days',
-                                                   description='{freq} mean diurnal temparature range variability :'
-                                                               'The average day-to-day variation in daily temperature range '
-                                                               'for the given time period.',
+                                                   description='{freq} mean diurnal temparature range variability ('
+                                                               'defined as the average day-to-day variation in daily temperature range '
+                                                               'for the given time period)',
                                                    compute=_ind.daily_temperature_range_variability,
                                                    )
 
@@ -173,18 +173,14 @@ extreme_temperature_range = TasminTasmax(identifier='etr',
                                          compute=_ind.extreme_temperature_range,
                                          )
 
-consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
-                                standard_name='spell_length_of_days_with_air_temperature_below_threshold',
-                                long_name='Maximum number of consecutive days with Tmin < 0C',
-                                units='days',
-                                cell_methods='time: min within days time: maximum over days',
-                                compute=_ind.consecutive_frost_days,
-                                )
-
-cold_spell_duration = Tasmin(identifier='csdi',
+cold_spell_duration = Tasmin(identifier='csdi{window}',
                              standard_name='cold_spell_duration_index',
                              long_name='Cold Spell Duration Index, count of days with at '
-                                       'least 6 consecutive days when Tmin < 10th percentile',
+                                       'least {window} consecutive days when Tmin < 10th percentile',
+                             descrition='{freq} number of days with at least {window} consecutive days'
+                                        ' where the daily minimum temperature is below the 10th '
+                                        'percentile. The 10th percentile should be computed for '
+                                        'a 5-day window centred on each calendar day in the  1961-1990 period',
                              units='days',
                              compute=_ind.cold_spell_duration_index,
                              )
@@ -195,14 +191,14 @@ cold_spell_index = Tas(identifier='cs_index{thresh}',
                        units='days',
                        description='{freq} number of days that are part of a cold spell, defined as {window} '
                                    'or more consecutive days with mean daily '
-                                   'temperature below  {thresh} °C',
+                                   'temperature below  {thresh}°C',
                        compute=_ind.cold_spell_index,
                        )
 
 daily_freezethaw_cycles = TasminTasmax(identifier='dly_frzthw',
                                        standard_name='daily_freezethaw_cycles',
                                        long_name='daily freezethaw cycles',
-                                       description='Number of days with a diurnal freeze-thaw cycle '
+                                       description='{freq} number of days with a diurnal freeze-thaw cycle '
                                                    ': Tmax > 0℃ and Tmin < 0℃',
                                        compute=_ind.daily_freezethaw_cycles,
                                        units='days'
@@ -212,6 +208,7 @@ cooling_dd = Tas(identifier='cddcold{thresh}',
                  long_name='Cooling Degree Days (Tmean > {thresh}C)',
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  units='K days',
+                 description='{freq} cooling degree days above {thresh}°C',
                  cell_methods='time: mean within days time: sum over days',
                  compute=_ind.cooling_degree_days,
                  )
@@ -220,6 +217,7 @@ heating_dd = Tas(identifier='hddheat{thresh}',
                  long_name='Heating Degree Days (Tmean < {thresh}C)',
                  standard_name='integral_of_air_temperature_deficit_wrt_time',
                  units='K days',
+                 description='{freq} heating degree days below {thresh}°C',
                  cell_methods='time: mean within days time: sum over days',
                  compute=_ind.heating_degree_days,
                  )
@@ -228,13 +226,39 @@ growing_dd = Tas(identifier='gddgrow{thresh}',
                  standard_name='integral_of_air_temperature_excess_wrt_time',
                  long_name='growing degree days above {thresh}',
                  units='K days',
+                 description='{freq} growing degree days above {thresh}°C',
                  cell_methods='time: mean within days time: sum over days',
                  compute=_ind.growing_degree_days,
                  )
 
 frost_days = Tasmin(identifier='frost_days',
                     long_name='number of days below 0C',
-                    standard_name='number of frost days',
+                    standard_name='days_with_air_temperature_below_threshold',
                     units='days',
+                    cell_methods='time: minimum within days time: sum over days',
+                    description='{freq} number of days with minimum daily '
+                                'temperature below 0°C',
                     compute=_ind.frost_days,
                     )
+
+consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
+                                standard_name='spell_length_of_days_with_air_temperature_below_threshold',
+                                long_name='Maximum number of consecutive days with Tmin < 0C',
+                                units='days',
+                                description='{freq} maximum number of consecutive days with '
+                                            'minimum daily temperature below 0°C',
+                                cell_methods='time: min within days time: maximum over days',
+                                compute=_ind.consecutive_frost_days,
+                                )
+growing_season_length = Tas(identifier='gsl{thresh}',
+                            standard_name='growing_season_length',
+                            long_name='ETCCDI Growing Season Length (Tmean > {thresh}C)',
+                            units='days',
+                            description='{freq} number of days between the first occurrence of at least '
+                                        'six consecutive days with mean daily temperature over {thresh}℃ and '
+                                        'the first occurrence of at least {window} consecutive days with '
+                                        'mean daily temperature below {thresh}℃ after July 1st in the northern '
+                                        'hemisphere and January 1st in the southern hemisphere',
+                            cell_methods='',
+                            compute=_ind.growing_season_length,
+                            )

@@ -118,6 +118,7 @@ class TestDTRVar:
 
         assert (np.isnan(dtr.values[0, -1, -1]))
 
+
 class TestETR:
     nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
     nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
@@ -362,19 +363,23 @@ class TestFrostDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tasmin = xr.open_dataset(self.nc_file).tasmin
+        tasminC = xr.open_dataset(self.nc_file).tasmin
+        tasminC -= K2C
+        tasminC.attrs['units'] = 'C'
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
-
+        tasminC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16
         fd = temp.frost_days(tasmin, freq='YS')
+        fdC = temp.frost_days(tasminC, freq='YS')
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tasmin.values[:, 0, 0]
-        # x2 = tasmin.values[:, 1, 0]
 
         fd1 = (x1[x1 < thresh]).size
-        # fd2 = (x2[x2 < thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
 
         assert (np.allclose(fd1, fd.values[0, 0, 0]))
         # assert (np.allclose(fd1, fds.values[0, 0, 0]))
@@ -607,3 +612,57 @@ class TestDailyFreezeThaw:
         assert (np.isnan(frzthw.values[0, 1, 0]))
 
         assert (np.isnan(frzthw.values[0, -1, -1]))
+
+
+class TestGrowingSeasonLength:
+    def test_single_year(self, tas_series):
+        a = np.zeros(366) + K2C
+        ts = tas_series(a,start='1/1/2000')
+        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, tt.sum())
+
+    def test_convert_units(self, tas_series):
+        a = np.zeros(366)
+
+        ts = tas_series(a,start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, tt.sum())
+
+    def test_nan_presence(self, tas_series):
+        a = np.zeros(366)
+        a[50] = np.nan
+        ts = tas_series(a,start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, [np.nan])
+
+    def test_multiyear(self, tas_series):
+        a = np.zeros(366*10)
+
+        ts = tas_series(a,start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out[3], tt[0:366].sum().values)
