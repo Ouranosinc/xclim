@@ -17,18 +17,30 @@ TASMAX_SERIES = tasmax_series()
 K2C = 273.15
 
 
-class TestTxMax:
+class TestTx:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    def test_simple(self):
+        tasmax = xr.open_dataset(self.nc_file).tasmax
+        tasmax_C = xr.open_dataset(self.nc_file).tasmax
+        tasmax_C
+        tasmax_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmax.values[180, 1, 0] = np.nan
+        txmean = temp.txmean(tasmax)
+        txmax = temp.txmax(tasmax)
+        txmin = temp.txmin(tasmax)
+        no_nan = ~np.isnan(txmean).values & ~np.isnan(txmax).values & ~np.isnan(txmin).values
 
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(720))
-        temp.tx_max(ts, freq='Y')
+        # test maxes always greater than mean and mean alwyas greater than min (non nan values only)
+        assert(np.all(txmax.values[no_nan]>txmean.values[no_nan]) & np.all(txmean.values[no_nan]>txmin.values[no_nan]))
 
 
-class TestTxMin:
-
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(720))
-        temp.tx_min(ts, freq='Y')
+        x1 = tasmax.values[:, 0, 0]
+        txmean1 = x1.mean()
+        # test single point vs manual
+        assert (np.allclose(txmean1, txmean.values[0, 0, 0]))
+        # test single nan point
+        assert (np.allclose(txmean1, txmean.values[0, 0, 0]))
 
 
 class TestFrostDays:

@@ -16,6 +16,7 @@ from . import checks
 from . import indices as _ind
 from .utils import Indicator
 
+
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
@@ -68,34 +69,76 @@ tmmean = Tas(identifier='tmmean',
              units='K',
              long_name="Mean daily mean temperature",
              standard_name="air_temperature",
+             cell_methods='time: mean within days time: mean over days',
              description="{freq} mean of daily mean temperature.",
              keywords='',
-             compute=_ind.tg_mean,)
+             compute=_ind.tg_mean, )
 
-
-tx_max = Tasmax(identifier='tx_max',
+txmean = Tasmax(identifier='txmean',
                 required_units='K',
-                long_name='Maximum temperature',
-                standard_name='tasmax',
-                description='Maximum daily maximum temperature.',
+                long_name='Mean daily maximum temperature',
+                standard_name='air_temperature',
+                cell_methods='time: maximum within days time: mean over days',
+                description='{freq} mean of daily maximum temperature.',
                 keywords='',
-                compute=_ind.tx_max,
+                compute=_ind.tx_mean,
                 )
 
+txmax = Tasmax(identifier='txmax',
+               required_units='K',
+               long_name='Maximum daily maximum temperature',
+               standard_name='air_temperature',
+               cell_methods='time: maximum within days time: maximum over days',
+               description='{freq} maximum of daily maximum temperature.',
+               keywords='',
+               compute=_ind.tx_max,
+               )
+
+txmin = Tasmax(identifier='txmin',
+               required_units='K',
+               long_name='Minimum daily maximum temperature',
+               standard_name='air_temperature',
+               cell_methods='time: maximum within days time: minimum over days',
+               description='{freq} minimum of daily maximum temperature.',
+               keywords='',
+               compute=_ind.tx_min,
+               )
+
+tnmean = Tasmin(identifier='tnmean',
+                required_units='K',
+                long_name='Mean daily minimum temperature',
+                standard_name='air_temperature',
+                cell_methods='time: minimum within days time: mean over days',
+                description='{freq} mean of daily minimum temperature.',
+                keywords='',
+                compute=_ind.tn_mean,
+                )
+
+tnmax = Tasmin(identifier='tnmax',
+               required_units='K',
+               long_name='Maximum daily minimum temperature',
+               standard_name='air_temperature',
+               cell_methods='time: minimum within days time: maximum over days',
+               description='{freq} maximum of daily minimum temperature.',
+               keywords='',
+               compute=_ind.tn_max,
+               )
+
+tnmin = Tasmin(identifier='tnmin',
+               required_units='K',
+               long_name='Minimum daily minimum temperature',
+               standard_name='air_temperature',
+               cell_methods='time: minimum within days time: minimum over days',
+               description='{freq} minimum of daily minimum temperature.',
+               keywords='',
+               compute=_ind.tn_min,
+               )
 
 cold_spell_duration = Tasmin(identifier='cold_spell_duration',
                              standard_name='cold_spell_duration_index',
                              units='days',
                              compute=_ind.cold_spell_duration_index,
                              )
-
-tx_min = Tasmax(identifier='tx_min',
-                long_name='Minimum maximum temperature',
-                standard_name='tx_min',
-                description='Minimum daily maximum temperature over the period',
-                cell_methods='time: minimum within {freq}',
-                compute=_ind.tx_min,
-                )
 
 cooling_dd = Tas(identifier='cooling_dd',
                  long_name='cooling degree days above {thresh}',
