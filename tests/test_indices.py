@@ -120,10 +120,9 @@ class TestMax1DayPrecipitationAmount:
 
 class TestColdSpellDurationIndex:
     def test_simple(self, tasmin_series):
-
         i = 3650
         A = 10.
-        tn = np.zeros(i) + K2C + A * np.sin(np.arange(i)/365. * 2 * np.pi) + .1*np.random.rand(i)
+        tn = np.zeros(i) + K2C + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
         tn[10:20] -= 2
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
@@ -220,13 +219,13 @@ class TestFreshetStart:
         w = 5
 
         i = 10
-        tg[i:i+w-1] += 6  # too short
+        tg[i:i + w - 1] += 6  # too short
 
         i = 20
-        tg[i:i+w] += 6  # ok
+        tg[i:i + w] += 6  # ok
 
         i = 30
-        tg[i:i+w+1] += 6  # Second valid condition, should be ignored.
+        tg[i:i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg, start='1/1/2000')
         out = xci.freshet_start(tg, window=w)
@@ -613,10 +612,9 @@ class TestWarmMinimumAndMaximumTemperatureFrequency:
 
 class TestWarmSpellDurationIndex:
     def test_simple(self, tasmax_series):
-
         i = 3650
         A = 10.
-        tx = np.zeros(i) + K2C + A * np.sin(np.arange(i)/365. * 2 * np.pi) + .1*np.random.rand(i)
+        tx = np.zeros(i) + K2C + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
         tx[10:20] += 2
         tx = tasmax_series(tx)
         tx90 = percentile_doy(tx, per=.9)
@@ -635,7 +633,7 @@ class TestWinterRainRatio:
         tas = tas_series(tas, start='12/1/2000')
 
         out = xci.winter_rain_ratio(pr, tas=tas)
-        np.testing.assert_almost_equal(out, [10./(31+31+28), 0])
+        np.testing.assert_almost_equal(out, [10. / (31 + 31 + 28), 0])
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.

@@ -178,7 +178,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     r"""Cold spell index
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
-    temperature below < -10°C.
+    temperature below a threshold in °C.
 
     Parameters
     ----------

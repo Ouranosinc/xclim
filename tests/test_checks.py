@@ -3,10 +3,13 @@ import pandas as pd
 import pytest
 import xarray as xr
 from xclim.temperature import tmmean as tg_mean
-from xclim.testing.common import tas_series
+from xclim.testing.common import tas_series, tasmin_series
 from xclim import checks
 
 TAS_SERIES = tas_series()
+TASMIN_SERIES = tasmin_series()
+
+K2C = 273.15
 
 
 class TestDateHandling:
@@ -74,3 +77,17 @@ class TestMissingAnyFills:
         da = xr.DataArray(np.arange(n), [('time', times)])
         miss = checks.missing_any(da, 'Q-NOV')
         np.testing.assert_array_equal(miss, [True, False, False, False, True])
+
+    def test_to_period_start(self, tasmin_series):
+        a = np.zeros(365) + K2C + 5.0
+        a[2] -= 20
+        ts = tasmin_series(a)
+        miss = checks.missing_any(ts, freq='AS-JUL')
+        np.testing.assert_equal(miss, [False])
+
+    def test_to_period_end(self, tasmin_series):
+        a = np.zeros(365) + K2C + 5.0
+        a[2] -= 20
+        ts = tasmin_series(a)
+        miss = checks.missing_any(ts, freq='A-JUN')
+        np.testing.assert_equal(miss, [False])
