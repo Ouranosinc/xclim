@@ -164,6 +164,15 @@ daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
                                                    compute=_ind.daily_temperature_range_variability,
                                                    )
 
+extreme_temperature_range = TasminTasmax(identifier='etr',
+                                         long_name='Intra-period Extreme Temperature Range',
+                                         units='K',
+                                         standard_name='air_temperature',
+                                         description='{freq} range between the maximum of max temperature (TXx)'
+                                                     ' and the minimum of min temperature (TNn)',
+                                         compute=_ind.extreme_temperature_range,
+                                         )
+
 consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 standard_name='spell_length_of_days_with_air_temperature_below_threshold',
                                 long_name='Maximum number of consecutive days with Tmin < 0C',

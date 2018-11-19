@@ -118,6 +118,37 @@ class TestDTRVar:
 
         assert (np.isnan(dtr.values[0, -1, -1]))
 
+class TestETR:
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_dtr_var_3d_data_with_nans(self):
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C -= K2C
+        tasmax_C.attrs['units'] = 'C'
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C -= K2C
+        tasmin_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmin.values[32, 1, 0] = np.nan
+        tasmin_C.values[32, 1, 0] = np.nan
+
+        etr = temp.extreme_temperature_range(tasmax, tasmin, freq='MS')
+        etrC = temp.extreme_temperature_range(tasmax_C, tasmin_C, freq='MS')
+        min1 = tasmin.values[:, 0, 0]
+        max1 = tasmax.values[:, 0, 0]
+
+        np.testing.assert_array_equal(etr, etrC)
+
+        etr1 = max1[0:31].max() - min1[0:31].min()
+        assert (np.allclose(etr1, etr.values[0, 0, 0], etrC.values[0, 0, 0]))
+
+        assert (np.isnan(etr.values[1, 1, 0]))
+
+        assert (np.isnan(etr.values[0, -1, -1]))
+
 
 class TestTmean:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
