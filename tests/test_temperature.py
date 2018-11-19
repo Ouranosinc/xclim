@@ -617,8 +617,8 @@ class TestDailyFreezeThaw:
 class TestGrowingSeasonLength:
     def test_single_year(self, tas_series):
         a = np.zeros(366) + K2C
-        ts = tas_series(a,start='1/1/2000')
-        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        ts = tas_series(a, start='1/1/2000')
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
 
@@ -629,9 +629,9 @@ class TestGrowingSeasonLength:
     def test_convert_units(self, tas_series):
         a = np.zeros(366)
 
-        ts = tas_series(a,start='1/1/2000')
+        ts = tas_series(a, start='1/1/2000')
         ts.attrs['units'] = 'C'
-        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
 
@@ -642,9 +642,9 @@ class TestGrowingSeasonLength:
     def test_nan_presence(self, tas_series):
         a = np.zeros(366)
         a[50] = np.nan
-        ts = tas_series(a,start='1/1/2000')
+        ts = tas_series(a, start='1/1/2000')
         ts.attrs['units'] = 'C'
-        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
 
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
@@ -654,11 +654,11 @@ class TestGrowingSeasonLength:
         np.testing.assert_array_equal(out, [np.nan])
 
     def test_multiyear(self, tas_series):
-        a = np.zeros(366*10)
+        a = np.zeros(366 * 10)
 
-        ts = tas_series(a,start='1/1/2000')
+        ts = tas_series(a, start='1/1/2000')
         ts.attrs['units'] = 'C'
-        tt = (ts.time.dt.month>=5) & (ts.time.dt.month<=8)
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
 
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
