@@ -157,9 +157,11 @@ daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
                                                    long_name='Mean Diurnal Temperature Range Variability',
                                                    units='K',
                                                    standard_name='air_temperature',
-                                                   cell_methods='time range within days time: difference over days time: mean over days',
+                                                   cell_methods='time range within days time: difference '
+                                                                'over days time: mean over days',
                                                    description='{freq} mean diurnal temparature range variability ('
-                                                               'defined as the average day-to-day variation in daily temperature range '
+                                                               'defined as the average day-to-day variation '
+                                                               'in daily temperature range '
                                                                'for the given time period)',
                                                    compute=_ind.daily_temperature_range_variability,
                                                    )
