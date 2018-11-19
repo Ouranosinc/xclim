@@ -75,74 +75,95 @@ heat_wave_index = Tasmax(identifier='hw_index{thresh}',
                          compute=_ind.heat_wave_index,
                          )
 
-tmmean = Tas(identifier='tmmean',
-             units='K',
-             long_name="Mean daily mean temperature",
-             standard_name="air_temperature",
-             cell_methods='time: mean within days time: mean over days',
-             description="{freq} mean of daily mean temperature.",
-             keywords='',
-             compute=_ind.tg_mean, )
+tm_mean = Tas(identifier='tmmean',
+              long_name="Mean daily mean temperature",
+              units='K',
+              standard_name="air_temperature",
+              cell_methods='time: mean within days time: mean over days',
+              description="{freq} mean of daily mean temperature.",
+              keywords='',
+              compute=_ind.tg_mean, )
 
-txmean = Tasmax(identifier='txmean',
-                required_units='K',
-                long_name='Mean daily maximum temperature',
+tx_mean = Tasmax(identifier='txmean',
+                 long_name='Mean daily maximum temperature',
+                 units='K',
+                 standard_name='air_temperature',
+                 cell_methods='time: maximum within days time: mean over days',
+                 description='{freq} mean of daily maximum temperature.',
+                 keywords='',
+                 compute=_ind.tx_mean,
+                 )
+
+tx_max = Tasmax(identifier='txmax',
+                long_name='Maximum daily maximum temperature',
+                units='K',
                 standard_name='air_temperature',
-                cell_methods='time: maximum within days time: mean over days',
-                description='{freq} mean of daily maximum temperature.',
+                cell_methods='time: maximum within days time: maximum over days',
+                description='{freq} maximum of daily maximum temperature.',
                 keywords='',
-                compute=_ind.tx_mean,
+                compute=_ind.tx_max,
                 )
 
-txmax = Tasmax(identifier='txmax',
-               required_units='K',
-               long_name='Maximum daily maximum temperature',
-               standard_name='air_temperature',
-               cell_methods='time: maximum within days time: maximum over days',
-               description='{freq} maximum of daily maximum temperature.',
-               keywords='',
-               compute=_ind.tx_max,
-               )
-
-txmin = Tasmax(identifier='txmin',
-               required_units='K',
-               long_name='Minimum daily maximum temperature',
-               standard_name='air_temperature',
-               cell_methods='time: maximum within days time: minimum over days',
-               description='{freq} minimum of daily maximum temperature.',
-               keywords='',
-               compute=_ind.tx_min,
-               )
-
-tnmean = Tasmin(identifier='tnmean',
-                required_units='K',
-                long_name='Mean daily minimum temperature',
+tx_min = Tasmax(identifier='txmin',
+                long_name='Minimum daily maximum temperature',
+                units='K',
                 standard_name='air_temperature',
-                cell_methods='time: minimum within days time: mean over days',
-                description='{freq} mean of daily minimum temperature.',
+                cell_methods='time: maximum within days time: minimum over days',
+                description='{freq} minimum of daily maximum temperature.',
                 keywords='',
-                compute=_ind.tn_mean,
+                compute=_ind.tx_min,
                 )
 
-tnmax = Tasmin(identifier='tnmax',
-               required_units='K',
-               long_name='Maximum daily minimum temperature',
-               standard_name='air_temperature',
-               cell_methods='time: minimum within days time: maximum over days',
-               description='{freq} maximum of daily minimum temperature.',
-               keywords='',
-               compute=_ind.tn_max,
-               )
+tn_mean = Tasmin(identifier='tnmean',
+                 long_name='Mean daily minimum temperature',
+                 units='K',
+                 standard_name='air_temperature',
+                 cell_methods='time: minimum within days time: mean over days',
+                 description='{freq} mean of daily minimum temperature.',
+                 keywords='',
+                 compute=_ind.tn_mean,
+                 )
 
-tnmin = Tasmin(identifier='tnmin',
-               required_units='K',
-               long_name='Minimum daily minimum temperature',
-               standard_name='air_temperature',
-               cell_methods='time: minimum within days time: minimum over days',
-               description='{freq} minimum of daily minimum temperature.',
-               keywords='',
-               compute=_ind.tn_min,
-               )
+tn_max = Tasmin(identifier='tnmax',
+                long_name='Maximum daily minimum temperature',
+                units='K',
+                standard_name='air_temperature',
+                cell_methods='time: minimum within days time: maximum over days',
+                description='{freq} maximum of daily minimum temperature.',
+                keywords='',
+                compute=_ind.tn_max,
+                )
+
+tn_min = Tasmin(identifier='tnmin',
+                long_name='Minimum daily minimum temperature',
+                units='K',
+                standard_name='air_temperature',
+                cell_methods='time: minimum within days time: minimum over days',
+                description='{freq} minimum of daily minimum temperature.',
+                keywords='',
+                compute=_ind.tn_min,
+                )
+
+daily_temperature_range = TasminTasmax(identifier='dtr',
+                                       long_name='Mean Diurnal Temperature Range',
+                                       units='K',
+                                       standard_name='air_temperature',
+                                       cell_methods='time range within days time: mean over days',
+                                       description='{freq} mean diurnal temparature range',
+                                       compute=_ind.daily_temperature_range,
+                                       )
+
+daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
+                                                   long_name='Mean Diurnal Temperature Range Variability',
+                                                   units='K',
+                                                   standard_name='air_temperature',
+                                                   cell_methods='time range within days time: difference over days time: mean over days',
+                                                   description='{freq} mean diurnal temparature range variability :'
+                                                               'The average day-to-day variation in daily temperature range '
+                                                               'for the given time period.',
+                                                   compute=_ind.daily_temperature_range_variability,
+                                                   )
+
 consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 standard_name='spell_length_of_days_with_air_temperature_below_threshold',
                                 long_name='Maximum number of consecutive days with Tmin < 0C',
@@ -151,8 +172,10 @@ consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 compute=_ind.consecutive_frost_days,
                                 )
 
-cold_spell_duration = Tasmin(identifier='cold_spell_duration',
+cold_spell_duration = Tasmin(identifier='csdi',
                              standard_name='cold_spell_duration_index',
+                             long_name='Cold Spell Duration Index, count of days with at '
+                                       'least 6 consecutive days when Tmin < 10th percentile',
                              units='days',
                              compute=_ind.cold_spell_duration_index,
                              )
@@ -173,15 +196,8 @@ daily_freezethaw_cycles = TasminTasmax(identifier='dly_frzthw',
                                        description='Number of days with a diurnal freeze-thaw cycle '
                                                    ': Tmax > 0℃ and Tmin < 0℃',
                                        compute=_ind.daily_freezethaw_cycles,
+                                       units='days'
                                        )
-
-tx_min = Tasmax(identifier='tx_min',
-                long_name='Minimum maximum temperature',
-                standard_name='tx_min',
-                description='Minimum daily maximum temperature over the period',
-                cell_methods='time: minimum within {freq}',
-                compute=_ind.tx_min,
-                )
 
 cooling_dd = Tas(identifier='cddcold{thresh}',
                  long_name='Cooling Degree Days (Tmean > {thresh}C)',
