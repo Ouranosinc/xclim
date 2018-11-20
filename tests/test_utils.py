@@ -25,6 +25,7 @@ import pytest
 import xarray as xr
 
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
+from xclim.utils import units
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -139,7 +140,7 @@ class UniIndPr(Indicator):
         return da.resample(time=freq).mean()
 
 
-class TestUnivariateIndicator:
+class TestIndicator:
 
     def test_attrs(self, tas_series):
         a = tas_series(np.arange(360))
@@ -224,3 +225,25 @@ class TestWalkMap:
         o = walk_map(d, lambda x: 0)
         assert o['a'] == 0
         assert o['b']['c'] == 0
+
+
+class TestUnits:
+
+    def test_temperature(self):
+        assert 4 * units.d == 4 * units.day
+        Q_ = units.Quantity
+        assert Q_(1, units.C) == Q_(1, units.degC)
+
+    def test_hydro(self):
+        with units.context('hydro'):
+            q = 1 * units.kg / units.m**2 / units.s
+            assert q.to('mm/day') == q.to('mm/d')
+
+    def test_lat_lon(self):
+        assert 100 * units.degreeN == 100 * units.degree
+
+    def test_pcic(self):
+        with units.context('hydro'):
+            fu = units.parse_units("kilogram / d / meter ** 2")
+            tu = units.parse_units("mm/day")
+            np.isclose(1 * fu, 1 * tu)

@@ -84,7 +84,7 @@ class TestMax1DayPrecipitationAmount:
         return xr.DataArray(values, coords=[coords, ], dims='time',
                             attrs={'standard_name': 'precipitation_flux',
                                    'cell_methods': 'time: sum (interval: 1 day)',
-                                   'units': 'mm'})
+                                   'units': 'mm/day'})
 
     # test max precip
     def test_single_max(self):
