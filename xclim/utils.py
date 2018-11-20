@@ -44,8 +44,6 @@ units.enable_contexts(hydro)
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
 
-
-
 def percentile_doy(arr, window=5, per=.1):
     """Percentile value for each day of the year
 
