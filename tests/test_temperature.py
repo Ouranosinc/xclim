@@ -4,6 +4,7 @@ import xarray as xr
 
 from xclim.testing.common import tas_series, tasmin_series, tasmax_series
 import xclim.temperature as temp
+from xclim.utils import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
@@ -15,18 +16,259 @@ TASMAX_SERIES = tasmax_series()
 K2C = 273.15
 
 
-class TestTxMax:
+class TestCSDI:
+    def test_simple(self, tasmin_series):
+        i = 3650
+        A = 10.
+        tn = np.zeros(i) + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
+        tn += K2C
+        tn[10:20] -= 2
+        tn = tasmin_series(tn)
+        tn10 = percentile_doy(tn, per=.1)
 
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(720))
-        temp.tx_max(ts, freq='Y')
+        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        assert out[0] == 10
+
+    def test_convert_units(self, tasmin_series):
+        i = 3650
+        A = 10.
+        tn = np.zeros(i) + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
+        tn[10:20] -= 2
+        tn = tasmin_series(tn)
+        tn.attrs['units'] = 'C'
+        tn10 = percentile_doy(tn + K2C, per=.1)
+
+        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        assert out[0] == 10
+
+    def test_nan_presence(self, tasmin_series):
+        i = 3650
+        A = 10.
+        tn = np.zeros(i) + K2C + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
+        tn[10:20] -= 2
+        tn[9] = np.nan
+        tn = tasmin_series(tn)
+        tn10 = percentile_doy(tn, per=.1)
+
+        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        assert np.isnan(out[0])
 
 
-class TestTxMin:
+class TestDTR:
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
 
-    def test_simple(self, tas_series):
-        ts = tas_series(np.arange(720))
-        temp.tx_min(ts, freq='Y')
+    def test_DTR_3d_data_with_nans(self):
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C -= K2C
+        tasmax_C.attrs['units'] = 'C'
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C -= K2C
+        tasmin_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmin.values[32, 1, 0] = np.nan
+        tasmin_C.values[32, 1, 0] = np.nan
+        dtr = temp.daily_temperature_range(tasmax, tasmin, freq='MS')
+        dtrC = temp.daily_temperature_range(tasmax_C, tasmin_C, freq='MS')
+        min1 = tasmin.values[:, 0, 0]
+        max1 = tasmax.values[:, 0, 0]
+
+        dtr1 = (max1 - min1)
+
+        np.testing.assert_array_equal(dtr, dtrC)
+
+        assert (np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0]))
+
+        assert (np.isnan(dtr.values[1, 1, 0]))
+
+        assert (np.isnan(dtr.values[0, -1, -1]))
+
+
+class TestDTRVar:
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_dtr_var_3d_data_with_nans(self):
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C -= K2C
+        tasmax_C.attrs['units'] = 'C'
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C -= K2C
+        tasmin_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmin.values[32, 1, 0] = np.nan
+        tasmin_C.values[32, 1, 0] = np.nan
+        dtr = temp.daily_temperature_range_variability(tasmax, tasmin, freq='MS')
+        dtrC = temp.daily_temperature_range_variability(tasmax_C, tasmin_C, freq='MS')
+        min1 = tasmin.values[:, 0, 0]
+        max1 = tasmax.values[:, 0, 0]
+
+        dtr1a = (max1 - min1)
+        dtr1 = abs(np.diff(dtr1a))
+        np.testing.assert_array_equal(dtr, dtrC)
+
+        # first month jan use 0:30 (n==30) because of day to day diff
+        assert (np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0]))
+
+        assert (np.isnan(dtr.values[1, 1, 0]))
+
+        assert (np.isnan(dtr.values[0, -1, -1]))
+
+
+class TestETR:
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_dtr_var_3d_data_with_nans(self):
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax_C -= K2C
+        tasmax_C.attrs['units'] = 'C'
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin_C -= K2C
+        tasmin_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmin.values[32, 1, 0] = np.nan
+        tasmin_C.values[32, 1, 0] = np.nan
+
+        etr = temp.extreme_temperature_range(tasmax, tasmin, freq='MS')
+        etrC = temp.extreme_temperature_range(tasmax_C, tasmin_C, freq='MS')
+        min1 = tasmin.values[:, 0, 0]
+        max1 = tasmax.values[:, 0, 0]
+
+        np.testing.assert_array_equal(etr, etrC)
+
+        etr1 = max1[0:31].max() - min1[0:31].min()
+        assert (np.allclose(etr1, etr.values[0, 0, 0], etrC.values[0, 0, 0]))
+
+        assert (np.isnan(etr.values[1, 1, 0]))
+
+        assert (np.isnan(etr.values[0, -1, -1]))
+
+
+class TestTmean:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+
+    def test_Tmean_3d_data(self):
+        tas = xr.open_dataset(self.nc_file).tasmax
+        tas_C = xr.open_dataset(self.nc_file).tasmax
+        tas_C.values -= K2C
+        tas_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tas_C.values[180, 1, 0] = np.nan
+        tmmean = temp.tm_mean(tas)
+        tmmeanC = temp.tm_mean(tas_C)
+        x1 = tas.values[:, 0, 0]
+        tmmean1 = x1.mean()
+
+        np.testing.assert_array_equal(tmmeanC, tmmean)
+        # test single point vs manual
+        assert (np.allclose(tmmean1, tmmean.values[0, 0, 0], tmmeanC.values[0, 0, 0]))
+        # test single nan point
+        assert (np.isnan(tmmean.values[0, 1, 0]))
+        # test all nan point
+        assert (np.isnan(tmmean.values[0, -1, -1]))
+
+
+class TestTx:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+
+    def test_TX_3d_data(self):
+        tasmax = xr.open_dataset(self.nc_file).tasmax
+        tasmax_C = xr.open_dataset(self.nc_file).tasmax
+        tasmax_C.values -= K2C
+        tasmax_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmax.values[180, 1, 0] = np.nan
+        tasmax_C.values[180, 1, 0] = np.nan
+        txmean = temp.tx_mean(tasmax)
+        txmax = temp.tx_max(tasmax)
+        txmin = temp.tx_min(tasmax)
+
+        txmeanC = temp.tx_mean(tasmax_C)
+        txmaxC = temp.tx_max(tasmax_C)
+        txminC = temp.tx_min(tasmax_C)
+
+        no_nan = ~np.isnan(txmean).values & ~np.isnan(txmax).values & ~np.isnan(txmin).values
+
+        # test maxes always greater than mean and mean alwyas greater than min (non nan values only)
+        assert (np.all(txmax.values[no_nan] > txmean.values[no_nan]) & np.all(
+            txmean.values[no_nan] > txmin.values[no_nan]))
+
+        np.testing.assert_array_equal(txmeanC, txmean)
+        np.testing.assert_array_equal(txminC, txmin)
+        np.testing.assert_array_equal(txmaxC, txmax)
+        x1 = tasmax.values[:, 0, 0]
+        txmean1 = x1.mean()
+        txmin1 = x1.min()
+        txmax1 = x1.max()
+
+        # test single point vs manual
+        assert (np.allclose(txmean1, txmean.values[0, 0, 0], txmeanC.values[0, 0, 0]))
+        assert (np.allclose(txmax1, txmax.values[0, 0, 0], txmaxC.values[0, 0, 0]))
+        assert (np.allclose(txmin1, txmin.values[0, 0, 0], txminC.values[0, 0, 0]))
+        # test single nan point
+        assert (np.isnan(txmean.values[0, 1, 0]))
+        assert (np.isnan(txmin.values[0, 1, 0]))
+        assert (np.isnan(txmax.values[0, 1, 0]))
+        # test all nan point
+        assert (np.isnan(txmean.values[0, -1, -1]))
+        assert (np.isnan(txmin.values[0, -1, -1]))
+        assert (np.isnan(txmax.values[0, -1, -1]))
+
+
+class TestTn:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_TN_3d_data(self):
+        tasmin = xr.open_dataset(self.nc_file).tasmin
+        tasmin_C = xr.open_dataset(self.nc_file).tasmin
+        tasmin_C.values -= K2C
+        tasmin_C.attrs['units'] = 'C'
+        # put a nan somewhere
+        tasmin.values[180, 1, 0] = np.nan
+        tasmin_C.values[180, 1, 0] = np.nan
+        tnmean = temp.tn_mean(tasmin)
+        tnmax = temp.tn_max(tasmin)
+        tnmin = temp.tn_min(tasmin)
+
+        tnmeanC = temp.tn_mean(tasmin_C)
+        tnmaxC = temp.tn_max(tasmin_C)
+        tnminC = temp.tn_min(tasmin_C)
+
+        no_nan = ~np.isnan(tnmean).values & ~np.isnan(tnmax).values & ~np.isnan(tnmin).values
+
+        # test maxes always greater than mean and mean alwyas greater than min (non nan values only)
+        assert (np.all(tnmax.values[no_nan] > tnmean.values[no_nan]) & np.all(
+            tnmean.values[no_nan] > tnmin.values[no_nan]))
+
+        np.testing.assert_array_equal(tnmeanC, tnmean)
+        np.testing.assert_array_equal(tnminC, tnmin)
+        np.testing.assert_array_equal(tnmaxC, tnmax)
+
+        x1 = tasmin.values[:, 0, 0]
+        txmean1 = x1.mean()
+        txmin1 = x1.min()
+        txmax1 = x1.max()
+
+        # test single point vs manual
+        assert (np.allclose(txmean1, tnmean.values[0, 0, 0], tnmeanC.values[0, 0, 0]))
+        assert (np.allclose(txmax1, tnmax.values[0, 0, 0], tnmaxC.values[0, 0, 0]))
+        assert (np.allclose(txmin1, tnmin.values[0, 0, 0], tnminC.values[0, 0, 0]))
+        # test single nan point
+        assert (np.isnan(tnmean.values[0, 1, 0]))
+        assert (np.isnan(tnmin.values[0, 1, 0]))
+        assert (np.isnan(tnmax.values[0, 1, 0]))
+        # test all nan point
+        assert (np.isnan(tnmean.values[0, -1, -1]))
+        assert (np.isnan(tnmin.values[0, -1, -1]))
+        assert (np.isnan(tnmax.values[0, -1, -1]))
 
 
 class TestConsecutiveFrostDays:
@@ -121,19 +363,23 @@ class TestFrostDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tasmin = xr.open_dataset(self.nc_file).tasmin
+        tasminC = xr.open_dataset(self.nc_file).tasmin
+        tasminC -= K2C
+        tasminC.attrs['units'] = 'C'
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
-
+        tasminC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16
         fd = temp.frost_days(tasmin, freq='YS')
+        fdC = temp.frost_days(tasminC, freq='YS')
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tasmin.values[:, 0, 0]
-        # x2 = tasmin.values[:, 1, 0]
 
         fd1 = (x1[x1 < thresh]).size
-        # fd2 = (x2[x2 < thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
 
         assert (np.allclose(fd1, fd.values[0, 0, 0]))
         # assert (np.allclose(fd1, fds.values[0, 0, 0]))
@@ -366,3 +612,57 @@ class TestDailyFreezeThaw:
         assert (np.isnan(frzthw.values[0, 1, 0]))
 
         assert (np.isnan(frzthw.values[0, -1, -1]))
+
+
+class TestGrowingSeasonLength:
+    def test_single_year(self, tas_series):
+        a = np.zeros(366) + K2C
+        ts = tas_series(a, start='1/1/2000')
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, tt.sum())
+
+    def test_convert_units(self, tas_series):
+        a = np.zeros(366)
+
+        ts = tas_series(a, start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, tt.sum())
+
+    def test_nan_presence(self, tas_series):
+        a = np.zeros(366)
+        a[50] = np.nan
+        ts = tas_series(a, start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
+
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out, [np.nan])
+
+    def test_multiyear(self, tas_series):
+        a = np.zeros(366 * 10)
+
+        ts = tas_series(a, start='1/1/2000')
+        ts.attrs['units'] = 'C'
+        tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
+
+        offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
+        ts[tt] = ts[tt] + offset
+
+        out = temp.growing_season_length(ts)
+
+        np.testing.assert_array_equal(out[3], tt[0:366].sum().values)

@@ -679,7 +679,8 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
     d = i2 - i11
 
-    return d.resample(time=freq).max(dim='time')
+    # take min value (first occurence after july)
+    return d.resample(time=freq).min(dim='time')
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
