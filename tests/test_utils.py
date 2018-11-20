@@ -226,7 +226,7 @@ class TestWalkMap:
         assert o['a'] == 0
         assert o['b']['c'] == 0
 
-        
+
 class TestUnits:
 
     def test_temperature(self):
