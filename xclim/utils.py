@@ -32,18 +32,18 @@ hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
-# Those are the changes that could be included in a units definition file.
-"""
-degrees_north = degree = degrees_N = degreesN = degree_north = degree_N = degreeN
-degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE
-degC = kelvin; offset: 273.15 = celsius = C
-day = 24 * hour = d
-@context hydro
-    [mass] / [length]**2 -> [length]: value / 1000 / kg / m ** 3
-    [mass] / [length]**2 / [time] -> [length] / [time] : value / 1000 / kg * m ** 3
-    [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
-@end
-"""
+# These are the changes that could be included in a units definition file.
+
+#degrees_north = degree = degrees_N = degreesN = degree_north = degree_N = degreeN
+#degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE
+#degC = kelvin; offset: 273.15 = celsius = C
+#day = 24 * hour = d
+#@context hydro
+#    [mass] / [length]**2 -> [length]: value / 1000 / kg / m ** 3
+#    [mass] / [length]**2 / [time] -> [length] / [time] : value / 1000 / kg * m ** 3
+#    [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
+#@end
+
 
 
 def percentile_doy(arr, window=5, per=.1):
