@@ -896,7 +896,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 def summer_days(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
-    Number of days where daily maximum temperature exceeds 25℃.
+    Number of days where daily maximum temperature exceeds a theshold temperatue in ℃.
 
     Parameters
     ----------
@@ -926,7 +926,7 @@ def summer_days(tasmax, thresh=25.0, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
-def tg_mean(tas, freq='YS'):
+def tm_mean(tas, freq='YS'):
     r"""Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
@@ -960,7 +960,7 @@ def tg_mean(tas, freq='YS'):
     at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> t = xr.open_dataset('tas.day.nc')
-    >>> tg = tg_mean(t, freq="QS-DEC")
+    >>> tg = tm_mean(t, freq="QS-DEC")
     """
 
     arr = tas.resample(time=freq) if freq else tas
