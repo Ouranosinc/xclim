@@ -12,6 +12,7 @@ from . import checks
 from inspect2 import signature
 import abc
 from collections import defaultdict
+import datetime as dt
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -326,12 +327,12 @@ class Indicator(object):
                 attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
                 attrs[attr] += getattr(ba.arguments[p], attr, '')
                 if attrs[attr]:
-                    attrs[attr] += " "
+                    attrs[attr] += "\n" if attr == 'history' else " "
 
         # Update attributes
         out_attrs = self.json(ba.arguments)
         formatted_id = out_attrs.pop('identifier')
-        attrs['history'] += (formatted_id + str(ba.signature))
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}{}'.format(dt.datetime.now(), formatted_id, ba.signature)
         attrs['cell_methods'] += out_attrs.pop('cell_methods')
         attrs.update(out_attrs)
 

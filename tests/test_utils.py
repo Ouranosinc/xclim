@@ -143,11 +143,12 @@ class UniIndPr(Indicator):
 class TestIndicator:
 
     def test_attrs(self, tas_series):
+        import datetime as dt
         a = tas_series(np.arange(360))
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
-        assert txm.attrs['history'] == "tmin0(da, thresh=0.0, freq='YS')"
+        assert txm.attrs['history'] == "[{:%Y-%m-%d %H:%M:%S}] tmin0(da, thresh=0.0, freq='YS')".format(dt.datetime.now())
         assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
