@@ -79,7 +79,7 @@ def __build_icclim(mode='warn'):
 
     # Use partials to specify default value ?
     # TODO : Complete mappings for ICCLIM indices
-    mapping = {'TG': indices.tg_mean,
+    mapping = {'TG': indices.tm_mean,
                'TX': indices.tx_mean,
                'TN': indices.tn_mean,
                # 'TGx': indices.tg_max,
