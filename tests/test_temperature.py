@@ -389,6 +389,36 @@ class TestFrostDays:
         # assert (np.isnan(fds.values[0, -1, -1]))
 
 
+class TestIceDays:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        # test with 3d data
+        tas = xr.open_dataset(self.nc_file).tasmax
+        tasC = xr.open_dataset(self.nc_file).tasmax
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tasC.values[180, 1, 0] = np.nan
+        # compute with both skipna options
+        thresh = 273.16
+        fd = temp.ice_days(tas, freq='YS')
+        fdC = temp.ice_days(tasC, freq='YS')
+
+        x1 = tas.values[:, 0, 0]
+
+        fd1 = (x1[x1 < thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
+
+        assert (np.allclose(fd1, fd.values[0, 0, 0]))
+
+        assert (np.isnan(fd.values[0, 1, 0]))
+
+        assert (np.isnan(fd.values[0, -1, -1]))
+
+
 class TestCoolingDegreeDays:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
 
@@ -400,7 +430,7 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18 + K2C
-        cdd = temp.cooling_dd(tas, thresh=18, freq='YS')
+        cdd = temp.cooling_degree_days(tas, thresh=18, freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -422,7 +452,7 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18
-        cdd = temp.cooling_dd(tas, thresh=18, freq='YS')
+        cdd = temp.cooling_degree_days(tas, thresh=18, freq='YS')
 
         x1 = tas.values[:, 0, 0]
         # x2 = tas.values[:, 1, 0]
@@ -449,7 +479,7 @@ class TestHeatingDegreeDays:
 
         # compute with both skipna options
         thresh = 17 + K2C
-        hdd = temp.heating_dd(tas, freq='YS')
+        hdd = temp.heating_degree_days(tas, freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -470,7 +500,7 @@ class TestHeatingDegreeDays:
         tas.attrs['units'] = 'C'
         # compute with both skipna options
         thresh = 17
-        hdd = temp.heating_dd(tas, freq='YS')
+        hdd = temp.heating_degree_days(tas, freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -494,7 +524,7 @@ class TestGrowingDegreeDays:
 
         # compute with both skipna options
         thresh = K2C + 4
-        gdd = temp.growing_dd(tas, freq='YS')
+        gdd = temp.growing_degree_days(tas, freq='YS')
         # gdds = xci.growing_degree_days(tas, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
@@ -666,3 +696,65 @@ class TestGrowingSeasonLength:
         out = temp.growing_season_length(ts)
 
         np.testing.assert_array_equal(out[3], tt[0:366].sum().values)
+
+
+class TestSummerDays:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        # test with 3d data
+        tas = xr.open_dataset(self.nc_file).tasmax
+        tasC = xr.open_dataset(self.nc_file).tasmax
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tasC.values[180, 1, 0] = np.nan
+        # compute with both skipna options
+        thresh = 273.16 + 25
+        fd = temp.summer_days(tas, freq='YS')
+        fdC = temp.summer_days(tasC, freq='YS')
+        # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
+
+        x1 = tas.values[:, 0, 0]
+
+        fd1 = (x1[x1 > thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
+
+        assert (np.allclose(fd1, fd.values[0, 0, 0]))
+
+        assert (np.isnan(fd.values[0, 1, 0]))
+
+        assert (np.isnan(fd.values[0, -1, -1]))
+
+
+class TestTropicalNights:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        # test with 3d data
+        tas = xr.open_dataset(self.nc_file).tasmin
+        tasC = xr.open_dataset(self.nc_file).tasmin
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tasC.values[180, 1, 0] = np.nan
+        # compute with both skipna options
+        thresh = 273.16 + 20
+        out = temp.tropical_nights(tas, freq='YS')
+        outC = temp.tropical_nights(tasC, freq='YS')
+        # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
+
+        x1 = tas.values[:, 0, 0]
+
+        out1 = (x1[x1 > thresh]).size
+
+        np.testing.assert_array_equal(out, outC)
+
+        assert (np.allclose(out1, out.values[0, 0, 0]))
+
+        assert (np.isnan(out.values[0, 1, 0]))
+
+        assert (np.isnan(out.values[0, -1, -1]))

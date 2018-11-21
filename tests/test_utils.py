@@ -205,7 +205,7 @@ class TestKwargs:
 class TestParseDoc:
 
     def test_simple(self):
-        parse_doc(ind.tg_mean)
+        parse_doc(ind.tm_mean)
 
 
 class TestAdjustDoyCalendar:
