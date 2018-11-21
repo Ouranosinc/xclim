@@ -117,7 +117,7 @@ class TestDailyDownsampler:
 
 
 class UniIndTemp(Indicator):
-    identifier = 'tmin'
+    identifier = 'tmin{thresh}'
     units = 'K'
     required_units = 'K'
     long_name = '{freq} mean surface temperature'
@@ -125,8 +125,8 @@ class UniIndTemp(Indicator):
     cell_methods = 'time: mean within {freq}'
 
     @staticmethod
-    def compute(da, freq):
-        return da.resample(time=freq).mean()
+    def compute(da, thresh=0., freq='YS'):
+        return da.resample(time=freq).mean() - thresh
 
 
 class UniIndPr(Indicator):
@@ -146,7 +146,9 @@ class TestIndicator:
         a = tas_series(np.arange(360))
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
-        assert txm.cell_methods == 'time: mean within years'
+        assert txm.cell_methods == 'time: mean within days time: mean within years'
+        assert txm.attrs['history'] == "tmin0(da, thresh=0.0, freq='YS')"
+        assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
         a = tas_series(np.arange(360))
@@ -172,10 +174,10 @@ class TestIndicator:
 
     def test_json(self, pr_series):
         ind = UniIndPr()
-        meta = ind.json
+        meta = ind.json()
 
         expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
-                    'parameters', 'description'}
+                    'parameters', 'description', 'history', 'references', 'comment'}
 
         assert set(meta.keys()).issubset(expected)
 

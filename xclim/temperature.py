@@ -125,7 +125,7 @@ tn_mean = Tasmin(identifier='tnmean',
                  )
 
 tn_max = Tasmin(identifier='tnmax',
-                long_name='Maximum daily minimum temperature',
+                long_nafrostme='Maximum daily minimum temperature',
                 units='K',
                 standard_name='air_temperature',
                 cell_methods='time: minimum within days time: maximum over days',
