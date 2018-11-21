@@ -179,8 +179,8 @@ extreme_temperature_range = TasminTasmax(identifier='etr',
                                          long_name='Intra-period Extreme Temperature Range',
                                          units='K',
                                          standard_name='air_temperature',
-                                         description='{freq} range between the maximum of daily max temperature (tx_max)'
-                                                     ' and the minimum of daily min temperature (tn_min)',
+                                         description='{freq} range between the maximum of daily max temperature '
+                                                     '(tx_max) and the minimum of daily min temperature (tn_min)',
                                          compute=_ind.extreme_temperature_range,
                                          )
 
