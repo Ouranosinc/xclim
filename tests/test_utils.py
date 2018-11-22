@@ -148,7 +148,8 @@ class TestIndicator:
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
-        assert txm.attrs['history'] == "[{:%Y-%m-%d %H:%M:%S}] tmin0(da, thresh=0.0, freq='YS')".format(dt.datetime.now())
+        assert txm.attrs['history'] == "[{:%Y-%m-%d %H:%M:%S}] tmin0(da, thresh=0.0, freq='YS')"\
+            .format(dt.datetime.now())
         assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
