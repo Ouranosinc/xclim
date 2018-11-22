@@ -9,3 +9,4 @@ pint
 inspect2
 unittest2
 six
+cftime

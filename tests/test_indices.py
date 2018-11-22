@@ -408,7 +408,6 @@ class TestRainOnFrozenGround:
 
 class TestTg10p:
     def test_simple(self, tas_series):
-
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start='1/1/2000')
@@ -424,7 +423,6 @@ class TestTg10p:
 
 class TestTg90p:
     def test_simple(self, tas_series):
-
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start='1/1/2000')
