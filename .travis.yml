@@ -5,25 +5,23 @@ sudo: false
 
 matrix:
   include:
-    - env:
-        - TOXENV=docs
+    - env: TOXENV=docs
       python: 3.6
-    - env:
-        - TOXENV=flake8
+    - env: TOXENV=flake8
       python: 3.6
-    - env:
-          - TOXENV=py38-dev
+    - env: TOXENV=py38-dev
       python: 3.8-dev
       sudo: required
       dist: xenial
       addons:
           apt:
               packages:
+                  - liblapack-dev
+                  - libblas-dev
                   - libhdf5-serial-dev
                   - netcdf-bin
                   - libnetcdf-dev
-    - env:
-        - TOXENV=py37
+    - env: TOXENV=py37
       python: 3.7
       sudo: required
       dist: xenial
@@ -33,32 +31,18 @@ matrix:
                 - libhdf5-serial-dev
                 - netcdf-bin
                 - libnetcdf-dev
-    - env:
-        - TOXENV=py36
+    - env: TOXENV=py36
       python: 3.6
-    - env:
-        - TOXENV=py35
+    - env: TOXENV=py35
       python: 3.5
-    - env:
-        - TOXENV=py34
+    - env: TOXENV=py34
       python: 3.4
-    - env:
-        - TOXENV=py27
+    - env: TOXENV=py27
       python: 2.7
   allow_failures:
-    - env:
-        - TOXENV=py38-dev
-      python: 3.8-dev
-      sudo: required
-      dist: xenial
-    - env:
-        - TOXENV=py37
-      python: 3.7
-      sudo: required
-      dist: xenial
-    - env:
-        - TOXENV=py34
-      python: 3.4
+    - env: TOXENV=py38-dev
+    - env: TOXENV=py37
+    - env: TOXENV=py34
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
@@ -78,10 +62,10 @@ branches:
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
-  user: tlogan2000
+  user: Zeitsperre
   password:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
     repo: Ouranosinc/xclim
-    python: 3.6
+    python: 3.7
