@@ -1,9 +1,10 @@
 import os
+
 import numpy as np
 import xarray as xr
 
-from xclim.testing.common import tas_series, tasmin_series, tasmax_series
 import xclim.temperature as temp
+from xclim.testing.common import tas_series, tasmin_series, tasmax_series
 from xclim.utils import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
