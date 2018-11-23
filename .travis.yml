@@ -24,7 +24,7 @@ matrix:
                 - libnetcdf-dev
     - env:
           - TOXENV=py38-dev
-      python: 3.8
+      python: 3.8-dev
       sudo: required
       dist: xenial
       addons:
@@ -47,8 +47,8 @@ matrix:
       python: 2.7
   allow_failures:
     - env:
-        - TOXENV=3.8-dev
-      python: 3.8
+        - TOXENV=py38-dev
+      python: 3.8-dev
       sudo: required
       dist: xenial
     - env:
