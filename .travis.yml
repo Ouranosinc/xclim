@@ -1,13 +1,16 @@
 language: python
+
 sudo: false
+
 matrix:
   include:
-  - env: TOXENV=docs
-    python: 3.6
-  - env: TOXENV=flake8
-    python: 3.6
-  - env: TOXENV=py38-dev
-    python: 3.8-dev
+  - python: 3.6
+    env:
+      - TOXENV=docs
+      - TOXENV=flake8
+      - TOXENV=py36
+  - python: 3.8-dev
+    env: TOXENV=py38-dev
     sudo: required
     dist: xenial
     addons:
@@ -18,8 +21,8 @@ matrix:
         - libhdf5-serial-dev
         - netcdf-bin
         - libnetcdf-dev
-  - env: TOXENV=py37
-    python: 3.7
+  - python: 3.7
+    env: TOXENV=py37
     sudo: required
     dist: xenial
     addons:
@@ -28,24 +31,26 @@ matrix:
         - libhdf5-serial-dev
         - netcdf-bin
         - libnetcdf-dev
-  - env: TOXENV=py36
-    python: 3.6
-  - env: TOXENV=py35
-    python: 3.5
-  - env: TOXENV=py34
-    python: 3.4
-  - env: TOXENV=py27
-    python: 2.7
+  - python: 3.5
+    env: TOXENV=py35
+  - python: 3.4
+    env: TOXENV=py34
+  - python: 2.7
+    env: TOXENV=py27
   allow_failures:
   - env: TOXENV=py38-dev
   - env: TOXENV=py37
   - env: TOXENV=py34
+
 install:
 - pip install -U tox-travis
+
 script: travis_wait 30 tox -e $TOXENV
+
 branches:
   only:
   - master
+
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
