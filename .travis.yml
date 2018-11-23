@@ -5,10 +5,9 @@ sudo: false
 matrix:
   include:
   - python: 3.6
-    env:
-      - TOXENV=docs
-      - TOXENV=flake8
-      - TOXENV=py36
+    env: TOXENV=docs
+  - python: 3.6
+    env: TOXENV=flake8
   - python: 3.8-dev
     env: TOXENV=py38-dev
     sudo: required
@@ -31,6 +30,8 @@ matrix:
         - libhdf5-serial-dev
         - netcdf-bin
         - libnetcdf-dev
+  - python: 3.6
+    env: TOXENV=py36
   - python: 3.5
     env: TOXENV=py35
   - python: 3.4
