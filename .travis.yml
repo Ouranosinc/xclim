@@ -23,6 +23,17 @@ matrix:
                 - netcdf-bin
                 - libnetcdf-dev
     - env:
+          - TOXENV=py38-dev
+      python: 3.8
+      sudo: required
+      dist: xenial
+      addons:
+          apt:
+              packages:
+                  - libhdf5-serial-dev
+                  - netcdf-bin
+                  - libnetcdf-dev
+    - env:
         - TOXENV=py36
       python: 3.6
     - env:
@@ -35,6 +46,11 @@ matrix:
         - TOXENV=py27
       python: 2.7
   allow_failures:
+    - env:
+        - TOXENV=3.8-dev
+      python: 3.8
+      sudo: required
+      dist: xenial
     - env:
         - TOXENV=py37
       python: 3.7
