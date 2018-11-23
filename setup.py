@@ -11,8 +11,21 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-with open('requirements.txt') as req_file:
-    requirements = req_file.read().split('\n')
+# with open('requirements.txt') as req_file:
+#     requirements = req_file.read().split('\n')
+
+requirements = ['numpy>=1.15',
+                'scipy>=1.1',
+                'pandas>=0.23',
+                'cftime>=1.0',
+                'netCDF4>=1.4',
+                'dask>=0.18',
+                'xarray>=0.10',
+                'bottleneck>=1.2',
+                'pint>=0.8',
+                'inspect2>=0.1',
+                'unittest2>=1.1',
+                'six>=1.11']
 
 setup_requirements = ['pytest-runner', ]
 
