@@ -11,6 +11,8 @@ import pint
 from . import checks
 from inspect2 import signature
 import abc
+from collections import defaultdict
+import datetime as dt
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
@@ -253,7 +255,7 @@ class Indicator(object):
     # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
 
-    # CF-Convention metadata to be attributed to output. May use tags {<tag>} that will be formatted at runtime.
+    # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
     standard_name = ''  # The set of permissible standard names is contained in the standard name table.
     long_name = ''  # Scraped from compute.__doc.__.
     units = ''  # Representative units of the physical quantity.
@@ -267,10 +269,12 @@ class Indicator(object):
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = None
 
-    # Additional information made available to third party libraries.
-    title = ''  # Scraped from compute.__doc.__
+    # Additional information that can be used by third party libraries or to describe the file content.
+    title = ''  # A succinct description of what is in the dataset. Default scraped from compute.__doc.__
     abstract = ''  # Scraped from compute.__doc.__
     keywords = ''  # Comma separated list of keywords
+    references = ''  # Published or web-based references that describe the data or methods used to produce it.
+    comment = ''  # Miscellaneous information about the data or methods used to produce it.
 
     # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
@@ -315,7 +319,24 @@ class Indicator(object):
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
-        # Assume the two first arguments are always the DataArray.
+        # Get history and cell method attributes from source data
+        attrs = defaultdict(str)
+        for i in range(self._nvar):
+            p = self._parameters[i]
+            for attr in ['history', 'cell_methods']:
+                attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
+                attrs[attr] += getattr(ba.arguments[p], attr, '')
+                if attrs[attr]:
+                    attrs[attr] += "\n" if attr == 'history' else " "
+
+        # Update attributes
+        out_attrs = self.json(ba.arguments)
+        formatted_id = out_attrs.pop('identifier')
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}{}'.format(dt.datetime.now(), formatted_id, ba.signature)
+        attrs['cell_methods'] += out_attrs.pop('cell_methods')
+        attrs.update(out_attrs)
+
+        # Assume the first arguments are always the DataArray.
         das = tuple((ba.arguments.pop(self._parameters[i]) for i in range(self._nvar)))
 
         # Pre-computation validation checks
@@ -328,9 +349,7 @@ class Indicator(object):
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.arguments)
-
-        # Set metadata attributes to the output according to class attributes.
-        self.decorate(out, ba.arguments)
+        out.attrs.update(attrs)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
         mba = signature(self.missing).bind(*das, **ba.arguments)
@@ -339,16 +358,16 @@ class Indicator(object):
         mask = self.missing(*mba.args, **mba.kwargs)
         ma_out = out.where(~mask)
 
-        return ma_out.rename(self.identifier.format(**ba.arguments))
+        return ma_out.rename(formatted_id)
 
     @property
     def cf_attrs(self):
         """CF-Convention attributes of the output value."""
-        names = ['standard_name', 'long_name', 'units', 'cell_methods', 'description']
-        return {k: getattr(self, k) for k in names}
+        names = ['standard_name', 'long_name', 'units', 'cell_methods', 'description', 'comment',
+                 'references']
+        return {k: getattr(self, k, '') for k in names}
 
-    @property
-    def json(self):
+    def json(self, args=None):
         """Return a dictionary representation of the class.
 
         Notes
@@ -356,16 +375,12 @@ class Indicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'abstract', 'keywords', ]
+        names = ['identifier', 'abstract', 'keywords']
         out = {key: getattr(self, key) for key in names}
+        out.update(self.cf_attrs)
+        out = self.format(out, args)
 
         out['parameters'] = {key: {'default': p.default, 'desc': ''} for (key, p) in self._sig.parameters.items()}
-
-        out.update(self.cf_attrs)
-
-        # Make sure all strings are unicode
-        if six.PY2:
-            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
 
         return out
 
@@ -393,27 +408,27 @@ class Indicator(object):
 
         return da
 
-    def decorate(self, da, args=None):
-        """Modify output's attributes in place.
-
-        If attribute's value contain formatting markup such {<name>}, they are replaced by call arguments.
-        """
+    def format(self, attrs, args=None):
+        """Format attributes including {} tags with arguments."""
         if args is None:
-            return
+            return attrs
 
-        attrs = {}
-        for key, val in self.cf_attrs.items():
+        out = {}
+        for key, val in attrs.items():
             mba = {}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{' + v + '}'
                 else:
-                    mba[k] = v
+                    mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 
-            attrs[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
+            out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
-        da.attrs.update(attrs)
+        if six.PY2:
+            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
+
+        return out
 
     @staticmethod
     def missing(*args, **kwds):
