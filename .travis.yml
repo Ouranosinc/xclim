@@ -12,17 +12,6 @@ matrix:
         - TOXENV=flake8
       python: 3.6
     - env:
-        - TOXENV=py37
-      python: 3.7
-      sudo: required
-      dist: xenial
-      addons:
-        apt:
-            packages:
-                - libhdf5-serial-dev
-                - netcdf-bin
-                - libnetcdf-dev
-    - env:
           - TOXENV=py38-dev
       python: 3.8-dev
       sudo: required
@@ -33,6 +22,17 @@ matrix:
                   - libhdf5-serial-dev
                   - netcdf-bin
                   - libnetcdf-dev
+    - env:
+        - TOXENV=py37
+      python: 3.7
+      sudo: required
+      dist: xenial
+      addons:
+        apt:
+            packages:
+                - libhdf5-serial-dev
+                - netcdf-bin
+                - libnetcdf-dev
     - env:
         - TOXENV=py36
       python: 3.6
@@ -65,7 +65,7 @@ install:
   - pip install -U tox-travis
 
 # Command to run tests, e.g. python setup.py test
-script: travis_wait tox -e $TOXENV
+script: travis_wait 30 tox -e $TOXENV
 
 branches:
   only:

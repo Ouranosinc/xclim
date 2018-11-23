@@ -14,9 +14,9 @@ with open('HISTORY.rst') as history_file:
 # with open('requirements.txt') as req_file:
 #     requirements = req_file.read().split('\n')
 
-requirements = ['numpy>=1.15',
-                'scipy>=1.1',
-                'pandas>=0.23',
+requirements = ['numpy~=1.15',
+                'scipy~=1.1',
+                'pandas~=0.23',
                 'cftime>=1.0',
                 'netCDF4>=1.4',
                 'dask>=0.18',
