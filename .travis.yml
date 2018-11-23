@@ -3,62 +3,63 @@ language: python
 sudo: false
 
 matrix:
-  include:
-  - python: 3.6
-    env: TOXENV=docs
-  - python: 3.6
-    env: TOXENV=flake8
-  - python: 3.8-dev
-    env: TOXENV=py38-dev
-    sudo: required
-    dist: xenial
-    addons:
-      apt:
-        packages:
-        - liblapack-dev
-        - libblas-dev
-        - libhdf5-serial-dev
-        - netcdf-bin
-        - libnetcdf-dev
-  - python: 3.7
-    env: TOXENV=py37
-    sudo: required
-    dist: xenial
-    addons:
-      apt:
-        packages:
-        - libhdf5-serial-dev
-        - netcdf-bin
-        - libnetcdf-dev
-  - python: 3.6
-    env: TOXENV=py36
-  - python: 3.5
-    env: TOXENV=py35
-  - python: 3.4
-    env: TOXENV=py34
-  - python: 2.7
-    env: TOXENV=py27
-  allow_failures:
-  - env: TOXENV=py38-dev
-  - env: TOXENV=py37
-  - env: TOXENV=py34
+    fast_finish: true
+    include:
+        - python: 3.6
+        env: TOXENV=docs
+        - python: 3.6
+        env: TOXENV=flake8
+        - python: 3.8-dev
+        env: TOXENV=py38-dev
+        sudo: required
+        dist: xenial
+        addons:
+            apt:
+                packages:
+                    - liblapack-dev
+                    - libblas-dev
+                    - libhdf5-serial-dev
+                    - netcdf-bin
+                    - libnetcdf-dev
+        - python: 3.7
+        env: TOXENV=py37
+        sudo: required
+        dist: xenial
+        addons:
+            apt:
+                packages:
+                    - libhdf5-serial-dev
+                    - netcdf-bin
+                    - libnetcdf-dev
+        - python: 3.6
+        env: TOXENV=py36
+        - python: 3.5
+        env: TOXENV=py35
+        - python: 3.4
+        env: TOXENV=py34
+        - python: 2.7
+        env: TOXENV=py27
+    allow_failures:
+        - env: TOXENV=py38-dev
+        - env: TOXENV=py37
+        - env: TOXENV=py34
 
 install:
-- pip install -U tox-travis
+    - pip install -U tox-travis
 
 script: travis_wait 30 tox -e $TOXENV
 
 branches:
-  only:
-  - master
+    only:
+        - master
 
 deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: Zeitsperre
-  password:
-    secure: Fk0EFrbBumFHXWoCdTCdrsTp9lSnrksqhEbsXLYFhmfnsFtzQ9z4Uhs4sgyzNeA0VsIJ3q2RnPaSrgDXxDzguzSrm9R2tKjgSoZxrdaMKOaHwkJjkF+5DKqBUpjhGQmlLVt0u31vGBS3u8OE18cP4CxZOuPM2Dx2dnHLB9mVZAC8dlt5SBxS2HtC8J8IYilR/v4fkTt6niZPnaozsViBCiybnzyrylJsYeVhTj7p1buscw/yogZPylNV+O1Dn8GLXe7Viw3ZO5kIyEq96NMTBwpXtbgQmUClcGB6m1J+mx6wE0nh9abo69EtGOuaiCY9XqEgO7J8zZNIG2hC3Smy3+o96ltPopl3C2ZJebvM3aVqNx+GHnSkmAYw/VYtGb9Psd5IzafixTIQkBP6Qab8GGj2+iaeriLgTFqUEvxtywZZovQKHtXgPyy1kcztGSY/hygObQu4Ixvx8BjkzATfMKKkc3B8MBOeFnsxm7gn5IAhukbIh8JHTU4t2sHHJUVAbor3p7luGkZUp6ygoOuYsKNpER+cr39GLVV5p+IAY2Lm69aKSXkJe0tvPRouii2TNfnNU+S8ygbZ/6fqK5VTS1eLG0ehXXCxSDBkqt4xw4IFsoDFwObsjVSzKzcOP0UAqDWZhiHoiPLDxUfW/nA2JoTHrM3tBiXzWAZenS5y7Pc=
-  on:
-    tags: true
-    repo: Ouranosinc/xclim
-    python: 3.7
+    provider: pypi
+    distributions: sdist bdist_wheel
+    user: Zeitsperre
+    password:
+        secure: Fk0EFrbBumFHXWoCdTCdrsTp9lSnrksqhEbsXLYFhmfnsFtzQ9z4Uhs4sgyzNeA0VsIJ3q2RnPaSrgDXxDzguzSrm9R2tKjgSoZxrdaMKOaHwkJjkF+5DKqBUpjhGQmlLVt0u31vGBS3u8OE18cP4CxZOuPM2Dx2dnHLB9mVZAC8dlt5SBxS2HtC8J8IYilR/v4fkTt6niZPnaozsViBCiybnzyrylJsYeVhTj7p1buscw/yogZPylNV+O1Dn8GLXe7Viw3ZO5kIyEq96NMTBwpXtbgQmUClcGB6m1J+mx6wE0nh9abo69EtGOuaiCY9XqEgO7J8zZNIG2hC3Smy3+o96ltPopl3C2ZJebvM3aVqNx+GHnSkmAYw/VYtGb9Psd5IzafixTIQkBP6Qab8GGj2+iaeriLgTFqUEvxtywZZovQKHtXgPyy1kcztGSY/hygObQu4Ixvx8BjkzATfMKKkc3B8MBOeFnsxm7gn5IAhukbIh8JHTU4t2sHHJUVAbor3p7luGkZUp6ygoOuYsKNpER+cr39GLVV5p+IAY2Lm69aKSXkJe0tvPRouii2TNfnNU+S8ygbZ/6fqK5VTS1eLG0ehXXCxSDBkqt4xw4IFsoDFwObsjVSzKzcOP0UAqDWZhiHoiPLDxUfW/nA2JoTHrM3tBiXzWAZenS5y7Pc=
+    on:
+        tags: true
+        repo: Ouranosinc/xclim
+        python: 3.7
