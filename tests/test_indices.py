@@ -494,7 +494,7 @@ class TestTGXN90p:
         # create cold spell in june
         tas[175:180] = 1
 
-        out = xci.tx90p(tas, t90, freq='MS')
+        out = xci.tn90p(tas, t90, freq='MS')
         assert out[0] == 30
         assert out[1] == 29
         assert out[5] == 25
