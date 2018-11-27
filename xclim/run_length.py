@@ -90,8 +90,7 @@ def first_run(arr, window):
 
     if np.isinf(ind):
         return np.nan
-    else:
-        return ind
+    return ind
 
 
 def longest_run(arr):

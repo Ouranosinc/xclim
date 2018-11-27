@@ -65,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'xclim'
-copyright = u"2018, Travis Logan"
+# copyright = u"2018, Travis Logan"
 author = u"Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
