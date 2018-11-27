@@ -149,7 +149,9 @@ class TestIndicator:
         txm = ind(a, freq='YS')
         ts = "[{:%Y-%m-%d %H:%M:%S}] tmin0(da, thresh=0.0, freq='YS')"
         assert txm.cell_methods == 'time: mean within days time: mean within years'
-        assert txm.attrs['history'] in (ts.format(dt.datetime.now()),
+        assert txm.attrs['history'] in (ts.format(dt.datetime.now() + dt.timedelta(seconds=-2)),
+                                        ts.format(dt.datetime.now() + dt.timedelta(seconds=-1)),
+                                        ts.format(dt.datetime.now()),
                                         ts.format(dt.datetime.now() + dt.timedelta(seconds=1)),
                                         ts.format(dt.datetime.now() + dt.timedelta(seconds=2)))
         assert txm.name == "tmin0"
