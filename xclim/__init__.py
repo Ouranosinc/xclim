@@ -79,11 +79,11 @@ def __build_icclim(mode='warn'):
 
     # Use partials to specify default value ?
     # TODO : Complete mappings for ICCLIM indices
-    mapping = {'TG': indices.tm_mean,
+    mapping = {'TG': indices.tg_mean,
                'TX': indices.tx_mean,
                'TN': indices.tn_mean,
-               # 'TGx': indices.tg_max,
-               # 'TGn': indices.tg_min,
+               'TGx': indices.tg_max,
+               'TGn': indices.tg_min,
                'TXx': indices.tx_max,
                'TXn': indices.tx_min,
                'TNx': indices.tn_max,
@@ -96,10 +96,10 @@ def __build_icclim(mode='warn'):
                'GSL': indices.growing_season_length,
                'ID': indices.ice_days,
                'HD17': indices.heating_degree_days,
-               # 'CDD': indices.consecutive_dry_days,
+               'CDD': indices.maximum_consecutive_dry_days,
                'CWD': indices.maximum_consecutive_wet_days,
-               # 'PRCPTOT': indices.prec_total,
-               # 'RR1': indices.wet_days,
+               'PRCPTOT': indices.precip_accumulation,
+               'RR1': indices.wet_days,
                'ETR': indices.extreme_temperature_range,
                'DTR': indices.daily_temperature_range,
                'vDTR': indices.daily_temperature_range_variability,
