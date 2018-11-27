@@ -3,39 +3,40 @@ language: python
 sudo: false
 
 matrix:
+  fast_finish: false
   include:
     - env: TOXENV=docs
-    python: 3.6
+      python: 3.6
     - env: TOXENV=flake8
-    python: 3.6
+      python: 3.6
     - env: TOXENV=py38-dev
-    python: 3.8-dev
-    dist: xenial
-    addons:
-      apt:
-        packages:
+      python: 3.8-dev
+      dist: xenial
+      addons:
+        apt:
+          packages:
           - liblapack-dev
           - libblas-dev
           - libhdf5-serial-dev
           - netcdf-bin
           - libnetcdf-dev
     - env: TOXENV=py37
-    python: 3.7
-    dist: xenial
-    addons:
-      apt:
-        packages:
-          - libhdf5-serial-dev
-          - netcdf-bin
-          - libnetcdf-dev
+      python: 3.7
+      dist: xenial
+      addons:
+        apt:
+          packages:
+            - libhdf5-serial-dev
+            - netcdf-bin
+            - libnetcdf-dev
     - env: TOXENV=py36
-    python: 3.6
+      python: 3.6
     - env: TOXENV=py35
-    python: 3.5
+      python: 3.5
     - env: TOXENV=py34
-    python: 3.4
+      python: 3.4
     - env: TOXENV=py27
-    python: 2.7
+      python: 2.7
   allow_failures:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37
