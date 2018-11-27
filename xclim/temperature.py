@@ -84,14 +84,14 @@ heat_wave_index = Tasmax(identifier='hwi_{thresh}',
                          compute=_ind.heat_wave_index,
                          )
 
-tm_mean = Tas(identifier='tm_mean',
+tg_mean = Tas(identifier='tg_mean',
               long_name="Mean daily mean temperature",
               units='K',
               standard_name="air_temperature",
               cell_methods='time: mean within days time: mean over days',
               description="{freq} mean of daily mean temperature.",
               keywords='',
-              compute=_ind.tm_mean, )
+              compute=_ind.tg_mean, )
 
 tx_mean = Tasmax(identifier='tx_mean',
                  long_name='Mean daily maximum temperature',

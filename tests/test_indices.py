@@ -119,6 +119,7 @@ class TestMax1DayPrecipitationAmount:
 
 
 class TestColdSpellDurationIndex:
+
     def test_simple(self, tasmin_series):
         i = 3650
         A = 10.
@@ -132,6 +133,7 @@ class TestColdSpellDurationIndex:
 
 
 class TestColdSpellIndex:
+
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C
         a[10:20] -= 15  # 10 days
@@ -239,6 +241,7 @@ class TestFreshetStart:
 
 
 class TestGrowingDegreeDays:
+
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a[0] = K2C + 5  # default thresh at 4
@@ -247,6 +250,7 @@ class TestGrowingDegreeDays:
 
 
 class TestHeatingDegreeDays:
+
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C + 17
         a[:7] += [-3, -2, -1, 0, 1, 2, 3]
@@ -305,6 +309,7 @@ class TestHotDays:
 
 
 class TestLiquidPrecipitationRatio:
+
     def test_simple(self, pr_series, tas_series):
         pr = np.zeros(100)
         pr[10:20] = 1
@@ -337,6 +342,7 @@ class TestMaximumConsecutiveDryDays:
 
 
 class TestPrecipAccumulation:
+
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -366,6 +372,7 @@ class TestPrecipAccumulation:
 
 
 class TestRainOnFrozenGround:
+
     def test_simple(self, tas_series, pr_series):
         tas = np.zeros(30) + K2C - 1
         pr = np.zeros(30)
@@ -406,8 +413,9 @@ class TestRainOnFrozenGround:
         assert out[0] == 1
 
 
-class TestTg10p:
-    def test_simple(self, tas_series):
+class TestTGXN10p:
+
+    def test_tg10p_simple(self, tas_series):
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start='1/1/2000')
@@ -420,9 +428,36 @@ class TestTg10p:
         assert out[0] == 1
         assert out[5] == 5
 
+    def test_tx10p_simple(self, tasmax_series):
+        i = 366
+        tas = np.array(range(i))
+        tas = tasmax_series(tas, start='1/1/2000')
+        t10 = percentile_doy(tas, per=.1)
 
-class TestTg90p:
-    def test_simple(self, tas_series):
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tx10p(tas, t10, freq='MS')
+        assert out[0] == 1
+        assert out[5] == 5
+
+    def test_tn10p_simple(self, tas_series):
+        i = 366
+        tas = np.array(range(i))
+        tas = tas_series(tas, start='1/1/2000')
+        t10 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tn10p(tas, t10, freq='MS')
+        assert out[0] == 1
+        assert out[5] == 5
+
+
+class TestTGXN90p:
+
+    def test_tg90p_simple(self, tas_series):
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start='1/1/2000')
@@ -432,6 +467,34 @@ class TestTg90p:
         tas[175:180] = 1
 
         out = xci.tg90p(tas, t90, freq='MS')
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+    def test_tx90p_simple(self, tasmax_series):
+        i = 366
+        tas = np.array(range(i))
+        tas = tasmax_series(tas, start='1/1/2000')
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tx90p(tas, t90, freq='MS')
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+    def test_tn90p_simple(self, tasmin_series):
+        i = 366
+        tas = np.array(range(i))
+        tas = tasmin_series(tas, start='1/1/2000')
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+
+        out = xci.tn90p(tas, t90, freq='MS')
         assert out[0] == 30
         assert out[1] == 29
         assert out[5] == 25
@@ -480,7 +543,7 @@ class TestTxMax:
         assert txm == 25 + K2C
 
 
-class TestTxMaxTxMinIndices:
+class TestTgMaxTgMinIndices:
 
     @staticmethod
     def random_tmax_tmin_setup(length, tasmax_series, tasmin_series):
@@ -609,6 +672,7 @@ class TestWarmMinimumAndMaximumTemperatureFrequency:
 
 
 class TestWarmSpellDurationIndex:
+
     def test_simple(self, tasmax_series):
         i = 3650
         A = 10.
@@ -622,6 +686,7 @@ class TestWarmSpellDurationIndex:
 
 
 class TestWinterRainRatio:
+
     def test_simple(self, pr_series, tas_series):
         pr = np.ones(450)
         pr = pr_series(pr, start='12/1/2000')
@@ -637,6 +702,7 @@ class TestWinterRainRatio:
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 @pytest.mark.skip
 class TestTG:
+
     def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
         # rd = xci.TG(cmip3_day_tas)
         pass
@@ -663,6 +729,7 @@ def response():
     # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
 
 
+@pytest.mark.skip
 def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
