@@ -147,13 +147,8 @@ class TestIndicator:
         a = tas_series(np.arange(360))
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
-        ts = "[{:%Y-%m-%d %H:%M:%S}] tmin0(da, thresh=0.0, freq='YS')"
         assert txm.cell_methods == 'time: mean within days time: mean within years'
-        assert txm.attrs['history'] in (ts.format(dt.datetime.now() + dt.timedelta(seconds=-2)),
-                                        ts.format(dt.datetime.now() + dt.timedelta(seconds=-1)),
-                                        ts.format(dt.datetime.now()),
-                                        ts.format(dt.datetime.now() + dt.timedelta(seconds=1)),
-                                        ts.format(dt.datetime.now() + dt.timedelta(seconds=2)))
+        assert '{:%Y-%m-%d %H}'.format(dt.datetime.now()) in txm.attrs['history']
         assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
