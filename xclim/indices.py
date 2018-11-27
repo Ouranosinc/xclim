@@ -1065,7 +1065,6 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
 
 def tg90p(tas, t90, freq='YS'):
     r"""
-
     Number of days with daily mean temperature over the 90th percentile. The 90th percentile
     should be computed for a 5 day window centered on each calendar day for a reference period.
 
@@ -1251,19 +1250,89 @@ def tg_min(tas, freq='YS'):
     return tas.resample(time=freq).min(dim='time')
 
 
-def tn10p(tasmin, p10, freq='YS'):
-    r"""Days with daily minimum temperature below the 10th percentile of the reference period.
+def tn90p(tasmin, t90, freq='YS'):
+    r"""
+    Number of days with daily minimum temperature over the 90th percentile. The 90th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Parameters
     ----------
+
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
-    p10 : float
+      Minimum daily temperature
+    t90 : xarray.DataArray
+      90th percentile of daily minimum temperature
     freq : str, optional
       Resampling frequency
-    """
 
-    return (tasmin.groupby('time.dayofyear') < p10).resample(time=freq).sum(dim='time')
+    Returns
+    -------
+
+    xarray.DataArray
+      Count of days with daily minimum temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t90 = percentile_doy(historical_tas, per=0.9)
+    >>> hot_days = tg90p(tas, t90)
+    """
+    if 'dayofyear' not in t90.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t90 to tas doy range
+    t90 = utils.adjust_doy_calendar(t90, tasmin)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tasmin, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t90.sel(dayofyear=doy)
+
+    # compute the cold days
+    over = (tasmin > thresh)
+
+    return over.resample(time=freq).sum(dim='time')
+
+
+def tn10p(tasmin, t10, freq='YS'):
+    r"""
+    Number of days with daily minimum temperature below the 10th percentile. The 10th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Parameters
+    ----------
+
+    tasmin : xarray.DataArray
+      Mean daily temperature
+    t10 : xarray.DataArray
+      10th percentile of daily minimum temperature
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Count of days with daily minimum temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> cold_days = tg10p(tas, t10)
+    """
+    if 'dayofyear' not in t10.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t10 to tas doy range
+    t10 = utils.adjust_doy_calendar(t10, tasmin)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tasmin, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t10.sel(dayofyear=doy)
+
+    # compute the cold days
+    below = (tasmin < thresh)
+
+    return below.resample(time=freq).sum(dim='time')
 
 
 def tn_max(tasmin, freq='YS'):
@@ -1389,6 +1458,92 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
     return tasmin.pipe(lambda x: (tasmin > thresh + K2C) * 1) \
         .resample(time=freq) \
         .sum(dim='time')
+
+
+def tx90p(tasmax, t90, freq='YS'):
+    r"""
+    Number of days with daily maximum temperature over the 90th percentile. The 90th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Parameters
+    ----------
+
+    tasmax : xarray.DataArray
+      Maximum daily temperature
+    t90 : xarray.DataArray
+      90th percentile of daily maximum temperature
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+
+    xarray.DataArray
+      Count of days with daily maximum temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t90 = percentile_doy(historical_tas, per=0.9)
+    >>> hot_days = tg90p(tas, t90)
+    """
+    if 'dayofyear' not in t90.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t90 to tas doy range
+    t90 = utils.adjust_doy_calendar(t90, tasmax)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tasmax, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t90.sel(dayofyear=doy)
+
+    # compute the cold days
+    over = (tasmax > thresh)
+
+    return over.resample(time=freq).sum(dim='time')
+
+
+def tx10p(tasmax, t10, freq='YS'):
+    r"""
+    Number of days with daily maximum temperature below the 10th percentile. The 10th percentile
+    should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Parameters
+    ----------
+
+    tas : xarray.DataArray
+      Maximum daily temperature
+    t10 : xarray.DataArray
+      10th percentile of daily maximum temperature
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+
+    xarray.DataArray
+      Count of days with daily maximum temperature below the 10th percentile [days]
+
+    Example
+    -------
+    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> cold_days = tg10p(tas, t10)
+    """
+    if 'dayofyear' not in t10.coords.keys():
+        raise AttributeError("t10 should have dayofyear coordinates.")
+
+    # adjustment of t10 to tas doy range
+    t10 = utils.adjust_doy_calendar(t10, tasmax)
+
+    # create array of percentile with tas shape and coords
+    thresh = xr.full_like(tasmax, np.nan)
+    doy = thresh.time.dt.dayofyear.values
+    thresh.data = t10.sel(dayofyear=doy)
+
+    # compute the cold days
+    below = (tasmax < thresh)
+
+    return below.resample(time=freq).sum(dim='time')
 
 
 def tx_max(tasmax, freq='YS'):
