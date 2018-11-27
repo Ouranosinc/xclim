@@ -3,7 +3,6 @@ language: python
 sudo: false
 
 matrix:
-  fast_finish: true
   include:
     - env: TOXENV=docs
     python: 3.6
