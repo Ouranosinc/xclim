@@ -869,7 +869,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     return ratio
 
 
-def tx_days_above(tasmax, thresh=25.0, freq='YS'):
+def tx_frequency_above(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
     Number of days where daily maximum temperature exceeding or equal to a theshold temperature in ℃.
@@ -1632,8 +1632,8 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
     return events.resample(time=freq).sum(dim='time')
 
 
-def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin=22,
-                                                   thresh_tasmax=30, freq='YS'):
+def tx_tn_frequency_above(tasmin, tasmax, thresh_tasmin=22,
+                          thresh_tasmax=30, freq='YS'):
     r"""Frequency days with hot maximum and minimum temperature
 
     Returns the number of days with tasmin > thresh_tasmin
@@ -1659,7 +1659,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
       tasmax > thresh_tasamax per period
     """
 
-    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+    events = ((tasmin > (thresh_tasmin + K2C)) & (tasmax > (thresh_tasmax + K2C))) * 1
     return events.resample(time=freq).sum(dim='time')
 
 

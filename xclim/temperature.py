@@ -57,14 +57,24 @@ class TasminTasmax(Indicator):
             checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-tx_days_above = Tasmax(identifier='txgt_{thresh}',
-                       units='days',
-                       long_name='Number of Hot Days (Tmax > {thresh}C)',
-                       cell_methods='time: maximum within days time: sum over days',
-                       standard_name='number_of_days_with_air_temperature_above_threshold',
-                       description="{freq} number of days where daily maximum temperature exceeds {thresh}℃",
-                       compute=_ind.tx_days_above,
-                       )
+tx_frequency_above = Tasmax(identifier='txgt_{thresh}',
+                            units='days',
+                            long_name='Number of days with Tmax > {thresh}C',
+                            cell_methods='time: maximum within days time: sum over days',
+                            standard_name='number_of_days_with_air_temperature_above_threshold',
+                            description="{freq} number of days where daily maximum temperature exceeds {thresh}℃",
+                            compute=_ind.tx_frequency_above,
+                            )
+
+tx_tn_frequency_above = TasminTasmax(identifier='txdt_{thresh_tasmax}_tngt_{thresh_tasmin}',
+                                     units='days',
+                                     long_name='Number of days with Tmax > {thresh_tasmax}C and Tmin > {thresh_tasmin}C',
+                                     standard_name='number_of_days_with_air_temperature_above_threshold',
+                                     description="{freq} number of days where daily maximum temperature exceeds"
+                                                 " {thresh_tasmax}℃ and minimum temperature exceeds {thresh_tasmin}℃",
+                                     compute=_ind.tx_tn_frequency_above,
+
+                                     )
 
 heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    units='',

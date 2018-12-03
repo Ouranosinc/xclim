@@ -699,7 +699,7 @@ class TestGrowingSeasonLength:
         np.testing.assert_array_equal(out[3], tt[0:366].sum().values)
 
 
-class TestSummerDays:
+class TestTxDaysAbove:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
 
     def test_3d_data_with_nans(self):
@@ -713,9 +713,8 @@ class TestSummerDays:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 25
-        fd = temp.tx_days_above(tas, freq='YS')
-        fdC = temp.tx_days_above(tasC, freq='YS')
-        # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
+        fd = temp.tx_frequency_above(tas, freq='YS')
+        fdC = temp.tx_frequency_above(tasC, freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -755,6 +754,41 @@ class TestTropicalNights:
         np.testing.assert_array_equal(out, outC)
 
         assert (np.allclose(out1, out.values[0, 0, 0]))
+
+        assert (np.isnan(out.values[0, 1, 0]))
+
+        assert (np.isnan(out.values[0, -1, -1]))
+
+
+class TestTxTnDaysAbove:
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+
+        tasmaxC = xr.open_dataset(self.nc_tasmax).tasmax
+        tasminC = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmaxC -= K2C
+        tasmaxC.attrs['units'] = 'C'
+        tasminC -= K2C
+        tasminC.attrs['units'] = 'C'
+
+        # put a nan somewhere
+        tasmin.values[180, 1, 0] = np.nan
+        tasminC.values[180, 1, 0] = np.nan
+
+        out = temp.tx_tn_frequency_above(tasmin, tasmax, thresh_tasmax=25, thresh_tasmin=18)
+        outC = temp.tx_tn_frequency_above(tasminC, tasmaxC, thresh_tasmax=25, thresh_tasmin=18)
+        np.testing.assert_array_equal(out, outC, )
+
+        min1 = tasmin.values[:, 53, 76]
+        max1 = tasmax.values[:, 53, 76]
+
+        out1 = ((min1 > (K2C + 18)) * (max1 > (K2C + 25)) * 1.0).sum()
+
+        assert (np.allclose(out1, out.values[0, 53, 76]))
 
         assert (np.isnan(out.values[0, 1, 0]))
 
