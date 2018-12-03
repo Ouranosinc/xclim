@@ -27,7 +27,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_convert_units(self, tasmin_series):
@@ -39,7 +39,7 @@ class TestCSDI:
         tn.attrs['units'] = 'C'
         tn10 = percentile_doy(tn + K2C, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_nan_presence(self, tasmin_series):
@@ -51,7 +51,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert np.isnan(out[0])
 
 

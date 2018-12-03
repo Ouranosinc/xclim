@@ -174,8 +174,8 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
-def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
-    r"""Cold spell index
+def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
+    r"""Cold spell days
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
     temperature below a threshold in °C.
@@ -194,7 +194,7 @@ def cold_spell_index(tas, thresh=-10, window=5, freq='AS-JUL'):
     Returns
     -------
     DataArray
-      Cold spell index
+      Cold spell days
     """
 
     over = tas < K2C + thresh
