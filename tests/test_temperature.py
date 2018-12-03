@@ -163,8 +163,8 @@ class TestTmean:
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas_C.values[180, 1, 0] = np.nan
-        tmmean = temp.tm_mean(tas)
-        tmmeanC = temp.tm_mean(tas_C)
+        tmmean = temp.tg_mean(tas)
+        tmmeanC = temp.tg_mean(tas_C)
         x1 = tas.values[:, 0, 0]
         tmmean1 = x1.mean()
 
