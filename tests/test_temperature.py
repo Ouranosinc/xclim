@@ -27,7 +27,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_convert_units(self, tasmin_series):
@@ -39,7 +39,7 @@ class TestCSDI:
         tn.attrs['units'] = 'C'
         tn10 = percentile_doy(tn + K2C, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_nan_presence(self, tasmin_series):
@@ -51,7 +51,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert np.isnan(out[0])
 
 
@@ -325,7 +325,7 @@ class TestConsecutiveFrostDays:
         np.testing.assert_array_equal(out, [np.nan])
 
 
-class TestColdSpellIndex:
+class TestColdSpellDays:
 
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C
@@ -333,7 +333,7 @@ class TestColdSpellIndex:
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
-        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
@@ -343,7 +343,7 @@ class TestColdSpellIndex:
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
         ts.attrs['units'] = 'C'
-        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_nan_presence(self, tas_series):
@@ -354,7 +354,7 @@ class TestColdSpellIndex:
         a[-1] = np.nan
         ts = tas_series(a)
 
-        out = temp.cold_spell_index(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
