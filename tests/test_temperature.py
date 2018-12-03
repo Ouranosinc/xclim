@@ -761,7 +761,7 @@ class TestTropicalNights:
         assert (np.isnan(out.values[0, -1, -1]))
 
 
-class TestTg90p:
+class TestT90p:
 
     def test_tg90p_simple(self, tas_series):
         i = 366
@@ -783,4 +783,169 @@ class TestTg90p:
         assert out[1] == 29
         assert out[5] == 25
 
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tg90p(tas, t90, freq='MS')
+        outC = temp.tg90p(tasC, t90, freq='MS')
 
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert np.isnan(out[1])
+        assert out[5] == 25
+
+    def test_tn90p_simple(self, tasmin_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tasmin_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tn90p(tas, t90, freq='MS')
+        outC = temp.tn90p(tasC, t90, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tn90p(tas, t90, freq='MS')
+        outC = temp.tn90p(tasC, t90, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert np.isnan(out[1])
+        assert out[5] == 25
+
+    def test_tx90p_simple(self, tasmax_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tasmax_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tx90p(tas, t90, freq='MS')
+        outC = temp.tx90p(tasC, t90, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tx90p(tas, t90, freq='MS')
+        outC = temp.tx90p(tasC, t90, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert np.isnan(out[1])
+        assert out[5] == 25
+
+
+class TestT10p:
+
+    def test_tg10p_simple(self, tas_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tas_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t10 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tg10p(tas, t10, freq='MS')
+        outC = temp.tg10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+
+        assert out[0] == 1
+        assert out[5] == 5
+
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tg10p(tas, t10, freq='MS')
+        outC = temp.tg10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 1
+        assert np.isnan(out[1])
+        assert out[5] == 5
+
+    def test_tn10p_simple(self, tasmin_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tasmin_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t10 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tn10p(tas, t10, freq='MS')
+        outC = temp.tn10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 1
+        assert out[5] == 5
+
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tn10p(tas, t10, freq='MS')
+        outC = temp.tn10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 1
+        assert np.isnan(out[1])
+        assert out[5] == 5
+
+    def test_tx10p_simple(self, tasmax_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tasmax_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t10 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tx10p(tas, t10, freq='MS')
+        outC = temp.tx10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 1
+        assert out[5] == 5
+
+        # nan treatment
+        tas[33] = np.nan
+        tasC[33] = np.nan
+        out = temp.tx10p(tas, t10, freq='MS')
+        outC = temp.tx10p(tasC, t10, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 1
+        assert np.isnan(out[1])
+        assert out[5] == 5

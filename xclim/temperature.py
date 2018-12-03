@@ -57,7 +57,7 @@ class TasminTasmax(Indicator):
             checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-tx_days_above = Tasmax(identifier='txge_{thresh}',
+tx_days_above = Tasmax(identifier='txgt_{thresh}',
                        units='days',
                        long_name='Number of Hot Days (Tmax > {thresh}C)',
                        cell_methods='time: maximum within days time: sum over days',
@@ -318,24 +318,45 @@ tg10p = Tas(identifier='tg10p',
             )
 
 tx90p = Tasmax(identifier='tx90p',
-            standard_name='days_with_air_temperature_above_threshold',
-            long_name='Number of days when Tmax > 90th percentile',
-            units='days',
-            description='{freq} number of days with maximum daily temperature above the 90th percentile.'
-                        'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
-                        'for a reference period',
-            cell_methods='time: maximum within days time: sum over days',
-            compute=_ind.tx90p,
-            )
+               standard_name='days_with_air_temperature_above_threshold',
+               long_name='Number of days when Tmax > 90th percentile',
+               units='days',
+               description='{freq} number of days with maximum daily temperature above the 90th percentile.'
+                           'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
+                           'for a reference period',
+               cell_methods='time: maximum within days time: sum over days',
+               compute=_ind.tx90p,
+               )
 
 tx10p = Tasmax(identifier='tx10p',
-            standard_name='days_with_air_temperature_below_threshold',
-            long_name='Number of days when Tmax < 10th percentile',
-            units='days',
-            description='{freq} number of days with maximum daily temperature below the 10th percentile.'
-                        'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
-                        'for a reference period',
-            cell_methods='time: maximum within days time: sum over days',
-            compute=_ind.tx10p
-            )
+               standard_name='days_with_air_temperature_below_threshold',
+               long_name='Number of days when Tmax < 10th percentile',
+               units='days',
+               description='{freq} number of days with maximum daily temperature below the 10th percentile.'
+                           'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
+                           'for a reference period',
+               cell_methods='time: maximum within days time: sum over days',
+               compute=_ind.tx10p
+               )
 
+tn90p = Tasmin(identifier='tn90p',
+               standard_name='days_with_air_temperature_above_threshold',
+               long_name='Number of days when Tmin > 90th percentile',
+               units='days',
+               description='{freq} number of days with minimum daily temperature above the 90th percentile.'
+                           'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
+                           'for a reference period',
+               cell_methods='time: minimum within days time: sum over days',
+               compute=_ind.tn90p,
+               )
+
+tn10p = Tasmin(identifier='tx10p',
+               standard_name='days_with_air_temperature_below_threshold',
+               long_name='Number of days when Tmin < 10th percentile',
+               units='days',
+               description='{freq} number of days with minimum daily temperature below the 10th percentile.'
+                           'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
+                           'for a reference period',
+               cell_methods='time: minimum within days time: sum over days',
+               compute=_ind.tn10p
+               )
