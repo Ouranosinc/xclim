@@ -187,24 +187,24 @@ extreme_temperature_range = TasminTasmax(identifier='etr',
 cold_spell_duration_index = Tasmin(identifier='csdi_{window}',
                                    standard_name='cold_spell_duration_index',
                                    long_name='Cold Spell Duration Index, count of days with at '
-                                       'least {window} consecutive days when Tmin < 10th percentile',
+                                             'least {window} consecutive days when Tmin < 10th percentile',
                                    descrition='{freq} number of days with at least {window} consecutive days'
-                                        ' where the daily minimum temperature is below the 10th '
-                                        'percentile. The 10th percentile should be computed for '
-                                        'a 5-day window centred on each calendar day in the  1961-1990 period',
+                                              ' where the daily minimum temperature is below the 10th '
+                                              'percentile. The 10th percentile should be computed for '
+                                              'a 5-day window centred on each calendar day in the  1961-1990 period',
                                    units='days',
                                    compute=_ind.cold_spell_duration_index,
                                    )
 
-cold_spell_index = Tas(identifier='csi_{thresh}',
-                       standard_name='cold_spell_index',
-                       long_name='cold spell index',
-                       units='days',
-                       description='{freq} number of days that are part of a cold spell, defined as {window} '
-                                   'or more consecutive days with mean daily '
-                                   'temperature below  {thresh}°C',
-                       compute=_ind.cold_spell_index,
-                       )
+cold_spell_days = Tas(identifier='csi_{thresh}',
+                      standard_name='cold_spell_days',
+                      long_name='cold spell index',
+                      units='days',
+                      description='{freq} number of days that are part of a cold spell, defined as {window} '
+                                  'or more consecutive days with mean daily '
+                                  'temperature below  {thresh}°C',
+                      compute=_ind.cold_spell_days,
+                      )
 
 daily_freezethaw_cycles = TasminTasmax(identifier='dlyfrzthw',
                                        standard_name='daily_freezethaw_cycles',
