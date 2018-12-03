@@ -95,7 +95,7 @@ def __build_icclim(mode='warn'):
                'TN10p': indices.tn10p,
                'TNx': indices.tn_max,
                'TNn': indices.tn_min,
-               'SU': indices.tx_frequency_above,
+               'SU': indices.tx_days_above,
                'TR': indices.tropical_nights,
                # 'CSU': None,
                'GD4': partial(indices.growing_degree_days, thresh=4),

@@ -713,8 +713,8 @@ class TestTxDaysAbove:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 25
-        fd = temp.tx_frequency_above(tas, freq='YS')
-        fdC = temp.tx_frequency_above(tasC, freq='YS')
+        fd = temp.tx_days_above(tas, freq='YS')
+        fdC = temp.tx_days_above(tasC, freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -779,8 +779,8 @@ class TestTxTnDaysAbove:
         tasmin.values[180, 1, 0] = np.nan
         tasminC.values[180, 1, 0] = np.nan
 
-        out = temp.tx_tn_frequency_above(tasmin, tasmax, thresh_tasmax=25, thresh_tasmin=18)
-        outC = temp.tx_tn_frequency_above(tasminC, tasmaxC, thresh_tasmax=25, thresh_tasmin=18)
+        out = temp.tx_tn_days_above(tasmin, tasmax, thresh_tasmax=25, thresh_tasmin=18)
+        outC = temp.tx_tn_days_above(tasminC, tasmaxC, thresh_tasmax=25, thresh_tasmin=18)
         np.testing.assert_array_equal(out, outC, )
 
         min1 = tasmin.values[:, 53, 76]
