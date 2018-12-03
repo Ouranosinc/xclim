@@ -71,7 +71,7 @@ tx_tn_days_above = TasminTasmax(identifier='txdt_{thresh_tasmax}_tngt_{thresh_ta
                                 long_name='Number of days with Tmax > {thresh_tasmax}C and Tmin > {thresh_tasmin}C',
                                 standard_name='number_of_days_with_air_temperature_above_threshold',
                                 description="{freq} number of days where daily maximum temperature exceeds"
-                                                 " {thresh_tasmax}℃ and minimum temperature exceeds {thresh_tasmin}℃",
+                                            " {thresh_tasmax}℃ and minimum temperature exceeds {thresh_tasmin}℃",
                                 compute=_ind.tx_tn_days_above,
 
                                 )
