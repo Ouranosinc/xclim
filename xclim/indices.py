@@ -895,10 +895,10 @@ def tx_days_above(tasmax, thresh=25.0, freq='YS'):
 
     .. math::
 
-        TX_{ij} >= 25℃
+        TX_{ij} > 25℃
     """
 
-    f = (tasmax >= thresh + K2C) * 1
+    f = (tasmax > thresh + K2C) * 1
     return f.resample(time=freq).sum(dim='time')
 
 
