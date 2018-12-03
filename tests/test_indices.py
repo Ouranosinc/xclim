@@ -303,7 +303,7 @@ class TestHotDays:
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a)
 
-        out = xci.hot_days(mx, thresh=30.)
+        out = xci.tx_days_above(mx, thresh=30.)
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 

@@ -57,14 +57,14 @@ class TasminTasmax(Indicator):
             checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
-summer_days = Tasmax(identifier='su_{thresh}',
-                     units='days',
-                     long_name='Number of Summer Days (Tmax > {thresh}C)',
-                     cell_methods='time: maximum within days time: sum over days',
-                     standard_name='number_of_days_with_air_temperature_above_threshold',
-                     description="{freq} number of days where daily maximum temperature exceeds {thresh}℃",
-                     compute=_ind.summer_days,
-                     )
+tx_days_above = Tasmax(identifier='txge_{thresh}',
+                       units='days',
+                       long_name='Number of Hot Days (Tmax > {thresh}C)',
+                       cell_methods='time: maximum within days time: sum over days',
+                       standard_name='number_of_days_with_air_temperature_above_threshold',
+                       description="{freq} number of days where daily maximum temperature exceeds {thresh}℃",
+                       compute=_ind.tx_days_above,
+                       )
 
 heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    units='',
@@ -184,17 +184,17 @@ extreme_temperature_range = TasminTasmax(identifier='etr',
                                          compute=_ind.extreme_temperature_range,
                                          )
 
-cold_spell_duration = Tasmin(identifier='csdi_{window}',
-                             standard_name='cold_spell_duration_index',
-                             long_name='Cold Spell Duration Index, count of days with at '
+cold_spell_duration_index = Tasmin(identifier='csdi_{window}',
+                                   standard_name='cold_spell_duration_index',
+                                   long_name='Cold Spell Duration Index, count of days with at '
                                        'least {window} consecutive days when Tmin < 10th percentile',
-                             descrition='{freq} number of days with at least {window} consecutive days'
+                                   descrition='{freq} number of days with at least {window} consecutive days'
                                         ' where the daily minimum temperature is below the 10th '
                                         'percentile. The 10th percentile should be computed for '
                                         'a 5-day window centred on each calendar day in the  1961-1990 period',
-                             units='days',
-                             compute=_ind.cold_spell_duration_index,
-                             )
+                                   units='days',
+                                   compute=_ind.cold_spell_duration_index,
+                                   )
 
 cold_spell_index = Tas(identifier='csi_{thresh}',
                        standard_name='cold_spell_index',
@@ -288,8 +288,54 @@ growing_season_length = Tas(identifier='gsl_{thresh}',
 tropical_nights = Tasmin(identifier='tr_{thresh}',
                          standard_name='number_of_days_with_air_temperature_above_threshold',
                          cell_methods='time: minimum within days time: sum over days',
+                         units='days',
                          long_name='Number of Tropical Nights (Tmin > {thresh}C)',
                          description='{freq} number of Tropical Nights : defined as days with minimum daily temperature'
                                      ' above {thresh}℃',
                          compute=_ind.tropical_nights,
                          )
+
+tg90p = Tas(identifier='tg90p',
+            standard_name='days_with_air_temperature_above_threshold',
+            long_name='Number of days when Tmean > 90th percentile',
+            units='days',
+            description='{freq} number of days with mean daily temperature above the 90th percentile.'
+                        'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
+                        'for a reference period',
+            cell_methods='time: mean within days time: sum over days',
+            compute=_ind.tg90p,
+            )
+
+tg10p = Tas(identifier='tg10p',
+            standard_name='days_with_air_temperature_below_threshold',
+            long_name='Number of days when Tmean < 10th percentile',
+            units='days',
+            description='{freq} number of days with mean daily temperature below the 10th percentile.'
+                        'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
+                        'for a reference period',
+            cell_methods='time: mean within days time: sum over days',
+            compute=_ind.tg10p
+            )
+
+tx90p = Tasmax(identifier='tx90p',
+            standard_name='days_with_air_temperature_above_threshold',
+            long_name='Number of days when Tmax > 90th percentile',
+            units='days',
+            description='{freq} number of days with maximum daily temperature above the 90th percentile.'
+                        'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
+                        'for a reference period',
+            cell_methods='time: maximum within days time: sum over days',
+            compute=_ind.tx90p,
+            )
+
+tx10p = Tasmax(identifier='tx10p',
+            standard_name='days_with_air_temperature_below_threshold',
+            long_name='Number of days when Tmax < 10th percentile',
+            units='days',
+            description='{freq} number of days with maximum daily temperature below the 10th percentile.'
+                        'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
+                        'for a reference period',
+            cell_methods='time: maximum within days time: sum over days',
+            compute=_ind.tx10p
+            )
+

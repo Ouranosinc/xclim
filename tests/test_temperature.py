@@ -27,7 +27,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_convert_units(self, tasmin_series):
@@ -39,7 +39,7 @@ class TestCSDI:
         tn.attrs['units'] = 'C'
         tn10 = percentile_doy(tn + K2C, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10
 
     def test_nan_presence(self, tasmin_series):
@@ -51,7 +51,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
 
-        out = temp.cold_spell_duration(tn, tn10, freq='AS-JUL')
+        out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert np.isnan(out[0])
 
 
@@ -713,8 +713,8 @@ class TestSummerDays:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 25
-        fd = temp.summer_days(tas, freq='YS')
-        fdC = temp.summer_days(tasC, freq='YS')
+        fd = temp.tx_days_above(tas, freq='YS')
+        fdC = temp.tx_days_above(tasC, freq='YS')
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
@@ -759,3 +759,28 @@ class TestTropicalNights:
         assert (np.isnan(out.values[0, 1, 0]))
 
         assert (np.isnan(out.values[0, -1, -1]))
+
+
+class TestTg90p:
+
+    def test_tg90p_simple(self, tas_series):
+        i = 366
+        arr = np.asarray(np.arange(i), 'float')
+        tas = tas_series(arr, start='1/1/2000')
+        tasC = tas.copy()
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        t90 = percentile_doy(tas, per=.1)
+
+        # create cold spell in june
+        tas[175:180] = 1
+        tasC[175:180] = 1 - K2C
+        out = temp.tg90p(tas, t90, freq='MS')
+        outC = temp.tg90p(tasC, t90, freq='MS')
+
+        np.testing.assert_array_equal(out, outC)
+        assert out[0] == 30
+        assert out[1] == 29
+        assert out[5] == 25
+
+
