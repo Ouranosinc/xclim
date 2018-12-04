@@ -360,7 +360,7 @@ tn90p = Tasmin(identifier='tn90p',
                compute=_ind.tn90p,
                )
 
-tn10p = Tasmin(identifier='tx10p',
+tn10p = Tasmin(identifier='tn10p',
                standard_name='days_with_air_temperature_below_threshold',
                long_name='Number of days when Tmin < 10th percentile',
                units='days',
