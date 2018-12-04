@@ -4,6 +4,7 @@
 
 from functools import partial
 from . import indices
+
 # from .stats import fit, test
 
 __author__ = """Travis Logan"""
@@ -63,7 +64,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
         else:
             out.__dict__[key] = module_mappings
             try:
-                module_mappings.__module__ = 'xclim.'+name
+                module_mappings.__module__ = 'xclim.' + name
             except AttributeError:
                 msg = "{} is not a function".format(module_mappings)
                 raise AttributeError(msg)
@@ -94,7 +95,7 @@ def __build_icclim(mode='warn'):
                'TN10p': indices.tn10p,
                'TNx': indices.tn_max,
                'TNn': indices.tn_min,
-               'SU': indices.summer_days,
+               'SU': indices.tx_days_above,
                'TR': indices.tropical_nights,
                # 'CSU': None,
                'GD4': partial(indices.growing_degree_days, thresh=4),

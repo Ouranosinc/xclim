@@ -801,30 +801,6 @@ def heating_degree_days(tas, freq='YS', thresh=17.0):
         .sum(dim='time')
 
 
-def hot_days(tasmax, thresh=30.0, freq='YS'):
-    r"""Number of very hot days.
-
-    Number of days with max temperature exceeding a base threshold.
-
-    Parameters
-    ----------
-    tasmax : xarrray.DataArray
-      Maximum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 30℃.
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      Number of hot days.
-    """
-
-    hd = (tasmax > K2C + thresh) * 1
-    return hd.resample(time=freq).sum(dim='time')
-
-
 def ice_days(tasmax, freq='YS'):
     r"""Number of ice/freezing days
 
@@ -893,10 +869,10 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     return ratio
 
 
-def summer_days(tasmax, thresh=25.0, freq='YS'):
+def tx_days_above(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
-    Number of days where daily maximum temperature exceeds a theshold temperatue in ℃.
+    Number of days where daily maximum temperature exceeding or equal to a theshold temperature in ℃.
 
     Parameters
     ----------
@@ -1656,8 +1632,8 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
     return events.resample(time=freq).sum(dim='time')
 
 
-def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin=22,
-                                                   thresh_tasmax=30, freq='YS'):
+def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
+                     thresh_tasmax=30, freq='YS'):
     r"""Frequency days with hot maximum and minimum temperature
 
     Returns the number of days with tasmin > thresh_tasmin
@@ -1683,7 +1659,7 @@ def warm_minimum_and_maximum_temperature_frequency(tasmin, tasmax, thresh_tasmin
       tasmax > thresh_tasamax per period
     """
 
-    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+    events = ((tasmin > (thresh_tasmin + K2C)) & (tasmax > (thresh_tasmax + K2C))) * 1
     return events.resample(time=freq).sum(dim='time')
 
 

@@ -59,7 +59,7 @@ def percentile_doy(arr, window=5, per=.1):
     window : int
       Number of days around each day of the year to include in the calculation.
     per : float
-      Percentile [0,100]
+      Percentile between [0,1]
 
     Returns
     -------
