@@ -9,7 +9,7 @@ import xarray as xr
 import six
 import pint
 from . import checks
-from inspect2 import signature
+from inspect2 import signature, _empty
 import abc
 from collections import defaultdict
 import datetime as dt
@@ -59,7 +59,7 @@ def percentile_doy(arr, window=5, per=.1):
     window : int
       Number of days around each day of the year to include in the calculation.
     per : float
-      Percentile [0,100]
+      Percentile between [0,1]
 
     Returns
     -------
@@ -238,7 +238,7 @@ def walk_map(d, func):
     """
     out = {}
     for k, v in d.items():
-        if isinstance(v, dict):
+        if isinstance(v, (dict, defaultdict)):
             out[k] = walk_map(v, func)
         else:
             out[k] = func(v)
@@ -380,7 +380,11 @@ class Indicator(object):
         out.update(self.cf_attrs)
         out = self.format(out, args)
 
-        out['parameters'] = {key: {'default': p.default, 'desc': ''} for (key, p) in self._sig.parameters.items()}
+        out['parameters'] = str({key: {'default': p.default if p.default != _empty else None, 'desc': ''}
+                                 for (key, p) in self._sig.parameters.items()})
+
+        if six.PY2:
+            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
 
         return out
 
@@ -424,9 +428,6 @@ class Indicator(object):
                     mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
-
-        if six.PY2:
-            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
 
         return out
 

@@ -296,14 +296,14 @@ class TestHeatWaveFrequency:
         np.testing.assert_allclose(hwf.values, 0)
 
 
-class TestHotDays:
+class TestTxDaysAbove:
 
     def test_simple(self, tasmax_series):
         a = np.zeros(365) + K2C
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a)
 
-        out = xci.hot_days(mx, thresh=30.)
+        out = xci.tx_days_above(mx, thresh=30.)
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -342,7 +342,6 @@ class TestMaximumConsecutiveDryDays:
 
 
 class TestPrecipAccumulation:
-
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
     da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
@@ -656,18 +655,19 @@ class TestWarmNightFrequency:
         np.testing.assert_allclose(wnf.values, [0])
 
 
-class TestWarmMinimumAndMaximumTemperatureFrequency:
+class TestTxTnDaysAbove:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
 
-        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx)
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])+K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])+K2C)
+
+        wmmtf = xci.tx_tn_days_above(tn, tx)
         np.testing.assert_allclose(wmmtf.values, [7])
-        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=50)
+        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax=50)
         np.testing.assert_allclose(wmmtf.values, [0])
-        wmmtf = xci.warm_minimum_and_maximum_temperature_frequency(tn, tx, thresh_tasmax=0,
-                                                                   thresh_tasmin=0)
+        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax=0,
+                                     thresh_tasmin=0)
         np.testing.assert_allclose(wmmtf.values, [10])
 
 
