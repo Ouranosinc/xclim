@@ -700,9 +700,9 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh_tasmin : float
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]
+      The minimum temperature threshold needed to trigger a heatwave event [℃]
     thresh_tasmax : float
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]
+      The maximum temperature threshold needed to trigger a heatwave event [℃]
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str, optional
@@ -764,6 +764,64 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     group = over.resample(time=freq)
 
     return group.apply(rl.windowed_run_count_ufunc, window=window)
+
+
+def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
+                         window=3, freq='YS'):
+    # Dev note : we should decide if it is deg K or C
+    r"""Heat wave max length
+
+    Maximum length of heat waves over a given period. A heat wave is defined as an event
+    where the minimum and maximum daily temperature both exceeds specific thresholds
+    over a minimum number of days.
+
+    By definition heat_wave_max_length must be >= window.
+
+    Parameters
+    ----------
+
+    tasmin : xarrray.DataArray
+      Minimum daily temperature [℃] or [K]
+    tasmax : xarrray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmin : float
+      The minimum temperature threshold needed to trigger a heatwave event [℃]
+    thresh_tasmax : float
+      The maximum temperature threshold needed to trigger a heatwave event [℃]
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Maximum length of heatwave at the wanted frequency
+
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    References
+    ----------
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    """
+
+    cond = (tasmin > thresh_tasmin + K2C) & (tasmax > thresh_tasmax + K2C)
+    group = cond.resample(time=freq)
+    max_l = group.apply(rl.longest_run_ufunc)
+    return max_l.where(max_l >= window, 0)
 
 
 def heating_degree_days(tas, freq='YS', thresh=17.0):
