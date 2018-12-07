@@ -7,6 +7,7 @@ import pandas as pd
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
+
 class TestPrecipAccumulation():
     # TODO: replace by fixture
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
@@ -40,7 +41,6 @@ class TestPrecipAccumulation():
         assert (np.isnan(out1.values[0, 1, 0]))
 
         assert (np.isnan(out1.values[0, -1, -1]))
-        # assert (np.isnan(wds.values[0, -1, -1]))
 
 
 class TestWetDays():
