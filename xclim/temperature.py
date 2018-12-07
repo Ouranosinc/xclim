@@ -78,12 +78,31 @@ tx_tn_days_above = TasminTasmax(identifier='txdt_{thresh_tasmax}_tngt_{thresh_ta
 
 heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    units='',
-                                   long_name='Number of heat wave events',
-                                   standard_name='events',
-                                   description="Number of spells meeting criteria for health impacting heat wave.",
+                                   long_name='Number of heat wave events (Tmin > {thresh_tasmin}℃'
+                                             'and Tmax > {thresh_tasmax}℃ for >= {window} days)',
+                                   standard_name='heat_wave_events',
+                                   description="{freq} number of heat wave events over a given period. "
+                                               "An event occurs when the minimum and maximum daily "
+                                               "temperature both exceeds specific thresholds : "
+                                               "(Tmin > {thresh_tasmin}℃ and Tmax > {thresh_tasmax}℃) "
+                                               "over a minimum number of days ({window}).",
                                    keywords="health,",
                                    compute=_ind.heat_wave_frequency,
                                    )
+
+heat_wave_max_length = TasminTasmax(identifier='heat_wave_frequency',
+                                    units='days',
+                                    long_name='Maximum length of heat wave events (Tmin > {thresh_tasmin}℃'
+                                              'and Tmax > {thresh_tasmax}℃ for >= {window} days)',
+                                    standard_name='events',
+                                    description="{freq} maximum length of heat wave events occuring in a given period."
+                                                "An event occurs when the minimum and maximum daily "
+                                                "temperature both exceeds specific thresholds "
+                                                "(Tmin > {thresh_tasmin}℃ and Tmax > {thresh_tasmax}℃) over "
+                                                "a minimum number of days ({window}).",
+                                    keywords="health,",
+                                    compute=_ind.heat_wave_max_length,
+                                    )
 
 heat_wave_index = Tasmax(identifier='hwi_{thresh}',
                          units='days',
