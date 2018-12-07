@@ -7,34 +7,70 @@ class Pr(Indicator):
     context = 'hydro'
 
 
-r1max = Pr(identifier='r1max',
-           long_name='',
-           units='mm/day',
-           compute=_ind.max_1day_precipitation_amount,
-           )
+max_1day_precipitation_amount = Pr(identifier='rx1day',
+                                   standard_name='lwe_thickness_of_precipitation_amount',
+                                   long_name='maximum 1-day total precipitation',
+                                   units='mm/day',
+                                   cellmethods='time: sum within days time: maximum over days',
+                                   description="{freq} maximum 1-day total precipitation",
+                                   compute=_ind.max_1day_precipitation_amount,
+                                   )
 
-wet_days = Pr(identifier='wet_days',
-              standard_name='wet_days',
-              units='days',
-              required_units='mm/day',
-              long_name='number of wet days per period',
-              description='Number of days with daily precipitation over {thresh} mm',
-              compute=_ind.wet_days,
-              )
-
-daily_pr_intensity = Pr(identifier='daily_pr_intensity',
-                        standard_name='daily_intensity',
-                        long_name='daily precipitation intensity over wet days',
-                        units='mm/day',
-                        required_units='mm/day',
-                        description="Average precipitation for days with daily precipitation over {thresh} mm",
-                        compute=_ind.daily_intensity,
-                        )
-
-max_n_day_precipitation_amount = Pr(identifier='max_n_day_precipitation_amount',
-                                    standard_name='maximum_{window}_day_total_precipitation',
-                                    long_name='maximum {window} day total precipitation',
+max_n_day_precipitation_amount = Pr(identifier='rx{window}day',
+                                    standard_name='lwe_thickness_of_precipitation_amount',
+                                    long_name='maximum {window}-day total precipitation',
                                     units='mm',
-                                    required_units='mm/day',
+                                    cellmethods='time: sum within days time: maximum over days',
+                                    description="{freq} maximum {window}-day total precipitation",
                                     compute=_ind.max_n_day_precipitation_amount,
                                     )
+
+wetdays = Pr(identifier='wetdays',
+             standard_name='number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold',
+             units='days',
+             cell_methods='time: sum within days time: sum over days',
+             long_name='Number of Wet Days (precip >= {thresh} mm)',
+             description='{freq} number of days with daily precipitation over {thresh} mm',
+             compute=_ind.wetdays,
+             )
+
+maximum_consecutive_wet_days = Pr(identifier='cwd',
+                                  standard_name='number_of_days_with_lwe_thickness_of_'
+                                                'precipitation_amount_at_or_above_threshold',
+                                  units='days',
+                                  cell_methods='time: sum within days time: sum over days',
+                                  long_name='Maximum consecutive wet days (Precip >= {thresh}mm)',
+                                  description='{freq} maximum number of days with daily '
+                                              'precipitation over {thresh} mm',
+                                  compute=_ind.maximum_consecutive_wet_days,
+                                  )
+
+maximum_consecutive_dry_days = Pr(identifier='cdd',
+                                  standard_name='number_of_days_with_lwe_thickness_of_'
+                                                'precipitation_amount_below_threshold',
+                                  units='days',
+                                  cell_methods='time: sum within days time: sum over days',
+                                  long_name='Maximum consecutive wet days (Precip < {thresh}mm)',
+                                  description='{freq} maximum number of days with daily '
+                                              'precipitation below {thresh} mm',
+                                  compute=_ind.maximum_consecutive_dry_days,
+                                  )
+
+daily_pr_intensity = Pr(identifier='sdii',
+                        standard_name='lwe_thickness_of_precipitation_amount',
+                        long_name='Average precipitation during Wet Days (SDII)',
+                        units='mm/day',
+                        description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
+                                    "for days with daily precipitation over {thresh} mm",
+                        cell_methods='',
+                        compute=_ind.daily_pr_intensity,
+                        )
+
+precip_accumulation = Pr(identifier='prcptot',
+                         standard_name='lwe_thickness_of_precipitation_amount',
+                         long_name='Total precipitation',
+                         units='mm',
+                         description='{freq} total precipitation',
+                         cell_methods='time: sum within days time: sum over days',
+                         compute=_ind.precip_accumulation
+                         )

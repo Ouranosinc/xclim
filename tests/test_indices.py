@@ -109,14 +109,6 @@ class TestMax1DayPrecipitationAmount:
         assert rx1day.time.dt.year == 2000
         assert len(rx1day) == 1
 
-    # test nan behavior
-    def test_nan_max(self):
-        from xclim.precip import r1max
-
-        a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        rx1day = r1max(a)
-        assert np.isnan(rx1day)
-
 
 class TestColdSpellDurationIndex:
 

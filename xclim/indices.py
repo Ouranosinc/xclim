@@ -241,7 +241,7 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     return c.resample(time=freq).sum(dim='time')
 
 
-def daily_intensity(pr, thresh=1.0, freq='YS'):
+def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -268,7 +268,7 @@ def daily_intensity(pr, thresh=1.0, freq='YS'):
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr = xr.open_dataset('pr.day.nc')
-    >>> daily_int = daily_intensity(pr, thresh=5., freq="QS-DEC")
+    >>> daily_int = daily_pr_intensity(pr, thresh=5., freq="QS-DEC")
 
     """
 
@@ -278,8 +278,8 @@ def daily_intensity(pr, thresh=1.0, freq='YS'):
     # sum over wanted period
     s = pr_wd.resample(time=freq).sum(dim='time')
 
-    # get number of wet_days over period
-    wd = wet_days(pr, thresh=thresh, freq=freq)
+    # get number of wetdays over period
+    wd = wetdays(pr, thresh=thresh, freq=freq)
 
     return s / wd
 
@@ -1788,7 +1788,7 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
     return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
 
 
-def wet_days(pr, thresh=1.0, freq='YS'):
+def wetdays(pr, thresh=1.0, freq='YS'):
     r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
@@ -1814,7 +1814,7 @@ def wet_days(pr, thresh=1.0, freq='YS'):
     with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr = xr.open_dataset('pr.day.nc')
-    >>> wd = wet_days(pr, pr_min = 5., freq="QS-DEC")
+    >>> wd = wetdays(pr, pr_min = 5., freq="QS-DEC")
     """
 
     wd = (pr >= thresh) * 1
