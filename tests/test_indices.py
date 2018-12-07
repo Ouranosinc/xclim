@@ -85,7 +85,6 @@ class TestMax1DayPrecipitationAmount:
                             attrs={'standard_name': 'precipitation_flux',
                                    'cell_methods': 'time: sum (interval: 1 day)',
                                    'units': 'mm/day'})
-
     # test max precip
     def test_single_max(self):
         a = self.time_series(np.array([3, 4, 20, 0, 0]))
@@ -108,12 +107,6 @@ class TestMax1DayPrecipitationAmount:
         assert rx1day == 20
         assert rx1day.time.dt.year == 2000
         assert len(rx1day) == 1
-
-    # test nan behavior
-    def test_nan_max(self):
-        a = self.time_series(np.array([20, np.nan, 20, 20, 0]))
-        rx1day = xci.max_1day_precipitation_amount(a)
-        assert np.isnan(rx1day)
 
 
 class TestColdSpellDurationIndex:
