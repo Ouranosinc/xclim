@@ -85,6 +85,7 @@ class TestMax1DayPrecipitationAmount:
                             attrs={'standard_name': 'precipitation_flux',
                                    'cell_methods': 'time: sum (interval: 1 day)',
                                    'units': 'mm/day'})
+
     # test max precip
     def test_single_max(self):
         a = self.time_series(np.array([3, 4, 20, 0, 0]))
