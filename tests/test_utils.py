@@ -190,7 +190,7 @@ class TestIndicator:
 
         assert issubclass(cls, Indicator)
         da = pr_series(np.arange(365))
-        cls(compute=ind.wet_days)(da)
+        cls(compute=ind.wetdays)(da)
 
 
 class TestKwargs:
