@@ -21,7 +21,7 @@ class TestPrecipAccumulation():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+
         out1 = precip.precip_accumulation(pr, freq='MS')
         out2 = precip.precip_accumulation(prMM, freq='MS')
 
