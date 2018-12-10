@@ -7,6 +7,25 @@ class Pr(Indicator):
     context = 'hydro'
 
 
+class PrTas(Indicator):
+    required_units = ('mm/day', 'K')
+    context = 'hydro'
+
+
+rain_on_frozen_ground_days = PrTas(identifier='rain_frzgr',
+                                   standard_name='number_of_days_with_lwe_thickness_of_'
+                                                 'precipitation_amount_above_threshold',
+                                   long_name='Number of rain on frozen ground days',
+                                   units='days',
+                                   description="{freq} number of days with rain above {thresh} "
+                                               "after a series of seven days "
+                                               "with average daily temperature below 0℃. "
+                                               "Precipitation is assumed to be rain when the "
+                                               "daily average temperature is above 0℃.",
+                                   cell_methods='',
+                                   compute=_ind.rain_on_frozen_ground_days,
+                                   )
+
 max_1day_precipitation_amount = Pr(identifier='rx1day',
                                    standard_name='lwe_thickness_of_precipitation_amount',
                                    long_name='maximum 1-day total precipitation',

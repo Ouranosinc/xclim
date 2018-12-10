@@ -1062,7 +1062,7 @@ def precip_accumulation(pr, freq='YS'):
     return pr.resample(time=freq).sum(dim='time')
 
 
-def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
+def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
     """Number of rain on frozen ground events
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
@@ -1094,7 +1094,7 @@ def rain_on_frozen_ground(pr, tas, thresh=1, freq='YS'):
     tcond = (tas > K2C).rolling(time=8).reduce(func)
     pcond = (pr > thresh)
 
-    return (tcond * pcond * 1).resample(time=freq).sum()
+    return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
 
 
 def tg90p(tas, t90, freq='YS'):
