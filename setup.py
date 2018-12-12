@@ -25,7 +25,8 @@ requirements = ['numpy>=1.15',
                 'pint>=0.8',
                 'inspect2>=0.1',
                 'unittest2>=1.1',
-                'six>=1.11']
+                'six>=1.11',
+                'boltons>=18.0']
 
 setup_requirements = ['pytest-runner', ]
 

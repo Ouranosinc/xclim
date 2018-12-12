@@ -126,6 +126,7 @@ class UniIndTemp(Indicator):
 
     @staticmethod
     def compute(da, thresh=0., freq='YS'):
+        """Docstring"""
         return da.resample(time=freq).mean() - thresh
 
 
@@ -137,6 +138,7 @@ class UniIndPr(Indicator):
 
     @staticmethod
     def compute(da, freq):
+        """Docstring"""
         return da.resample(time=freq).mean()
 
 
@@ -191,6 +193,15 @@ class TestIndicator:
         assert issubclass(cls, Indicator)
         da = pr_series(np.arange(365))
         cls(compute=ind.wetdays)(da)
+
+    def test_signature(self):
+        from inspect2 import signature
+        ind = UniIndTemp()
+        assert signature(ind.compute) == signature(ind.__call__)
+
+    def test_doc(self):
+        ind = UniIndTemp()
+        assert ind.__call__.__doc__ == ind.compute.__doc__
 
 
 class TestKwargs:
