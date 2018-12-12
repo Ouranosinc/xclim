@@ -14,6 +14,8 @@ import abc
 from collections import defaultdict
 import datetime as dt
 
+from boltons.funcutils import wraps
+
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 
 units.define(pint.unit.UnitDefinition('percent', '%', (),
@@ -245,12 +247,10 @@ def walk_map(d, func):
     return out
 
 
+# This class needs to be subclassed by individual indicator classes defining metadata information, compute and
+# missing functions. It can handle indicators with any number of forcing fields.
 class Indicator(object):
-    r"""Indicator class
-
-    This class needs to be subclassed by individual indicator classes defining metadata information, compute and
-    missing functions. It can handle indicators with any number of forcing fields.
-
+    r"""Climate indicator based on xarray
     """
     # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
@@ -305,8 +305,9 @@ class Indicator(object):
         # The input parameter names
         self._parameters = tuple(self._sig.parameters.keys())
 
-        # The docstring
+        # Copy the docstring and signature
         self.__call__.__func__.__doc__ = self.compute.__doc__
+        self.__call__ = wraps(self.compute)(self.__call__)
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute)
