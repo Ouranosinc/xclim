@@ -306,8 +306,7 @@ class Indicator(object):
         self._parameters = tuple(self._sig.parameters.keys())
 
         # Copy the docstring and signature
-        self.__call__.__func__.__doc__ = self.compute.__doc__
-        self.__call__ = wraps(self.compute)(self.__call__)
+        self.__call__ = wraps(self.compute)(self.__call__.__func__)
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute)
