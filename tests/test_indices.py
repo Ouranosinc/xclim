@@ -400,7 +400,7 @@ class TestRainOnFrozenGround:
         tas = tas_series(tas)
         pr = pr_series(pr)
 
-        out = xci.rain_on_frozen_ground(pr, tas, freq='MS')
+        out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 1
 
     def test_small_rain(self, tas_series, pr_series):
@@ -413,7 +413,7 @@ class TestRainOnFrozenGround:
         tas = tas_series(tas)
         pr = pr_series(pr)
 
-        out = xci.rain_on_frozen_ground(pr, tas, freq='MS')
+        out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 0
 
     def test_consecutive_rain(self, tas_series, pr_series):
@@ -426,7 +426,7 @@ class TestRainOnFrozenGround:
         tas = tas_series(tas)
         pr = pr_series(pr)
 
-        out = xci.rain_on_frozen_ground(pr, tas, freq='MS')
+        out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 1
 
 

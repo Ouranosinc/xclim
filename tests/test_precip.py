@@ -6,6 +6,55 @@ import pandas as pd
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
+K2C = 273.15
+
+
+class TestRainOnFrozenGround():
+    nc_pr = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
+    nc_tasmax = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_tasmin = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        pr = xr.open_dataset(self.nc_pr).pr
+        prMM = pr.copy()
+        prMM.values *= 86400.
+        prMM.attrs['units'] = 'mm/day'
+
+        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tas = 0.5 * (tasmax + tasmin)
+        tas.attrs = tasmax.attrs
+        tasC = tas.copy()
+        tasC.values -= K2C
+
+        prMM.values[10, 1, 0] = np.nan
+        pr.values[10, 1, 0] = np.nan
+
+        out1 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
+        out2 = precip.rain_on_frozen_ground_days(prMM, tas, freq='MS')
+        out3 = precip.rain_on_frozen_ground_days(prMM, tasC, freq='MS')
+        out4 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
+        pr.attrs['units'] = 'kg m-2 s-1'
+        out5 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
+        out6 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
+        np.testing.assert_array_equal(out1, out2, out3, out4)
+        np.testing.assert_array_equal(out1, out5, out6)
+
+        assert (np.isnan(out1.values[0, 1, 0]))
+
+        assert (np.isnan(out1.values[0, -1, -1]))
+
+        # synthetic data
+        tas1 = tas[0:31, 47, 8] * 0 + K2C - 1
+        tas1.attrs = tas.attrs
+        pr1 = pr[0:31, 47, 8] * 0 + 25
+        pr1.attrs = pr.attrs
+        tas1[10] += 5
+        tas1[20] += 5
+
+        rfrz = precip.rain_on_frozen_ground_days(pr1, tas1, freq='MS')
+
+        np.testing.assert_array_equal(rfrz, 2)
 
 
 class TestPrecipAccumulation():
