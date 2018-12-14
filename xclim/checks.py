@@ -39,9 +39,9 @@ def assert_daily(var):
 
     t0, t1 = var.time[:2]
 
-    # This won't work for non-standard calendars. Needs to be implemented in xarray.
-    if pd.infer_freq(var.time.to_pandas()) != 'D':
-        raise ValueError("time series is not recognized as daily.")
+    # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now
+    # if pd.infer_freq(var.time.to_pandas()) != 'D':
+    #     raise ValueError("time series is not recognized as daily.")
 
     # Check that the first time step is one day.
     if np.timedelta64(dt.timedelta(days=1)) != (t1 - t0).data:
@@ -170,10 +170,10 @@ def missing_any(da, freq, **kwds):
 
     if pfreq.endswith('S'):
         start_time = c.indexes['time']
-        end_time = start_time.shift(1)
+        end_time = start_time.shift(1,freq=freq)
     else:
         end_time = c.indexes['time']
-        start_time = end_time.shift(-1)
+        start_time = end_time.shift(-1,freq=freq)
 
     n = (end_time - start_time).days
     nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
