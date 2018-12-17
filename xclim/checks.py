@@ -41,7 +41,7 @@ def assert_daily(var):
     t0, t1 = var.time[:2]
 
     # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now
-    if type(t0.values) is np.datetime64:
+    if isinstance(t0.values, np.datetime64):
         if pd.infer_freq(var.time.to_pandas()) != 'D':
             raise ValueError("time series is not recognized as daily.")
 
