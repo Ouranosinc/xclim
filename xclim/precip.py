@@ -45,7 +45,7 @@ max_n_day_precipitation_amount = Pr(identifier='rx{window}day',
                                     compute=_ind.max_n_day_precipitation_amount,
                                     )
 
-wetdays = Pr(identifier='wetdays',
+wetdays = Pr(identifier='r{thresh}mm',
              units='days',
              standard_name='number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold',
              long_name='Number of Wet Days (precip >= {thresh} mm)',
