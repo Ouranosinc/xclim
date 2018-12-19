@@ -66,7 +66,7 @@ tx_days_above = Tasmax(identifier='txgt_{thresh}',
                        compute=_ind.tx_days_above,
                        )
 
-tx_tn_days_above = TasminTasmax(identifier='txdt_{thresh_tasmax}_tngt_{thresh_tasmin}',
+tx_tn_days_above = TasminTasmax(identifier='txgt_{thresh_tasmax}_tngt_{thresh_tasmin}',
                                 units='days',
                                 standard_name='number_of_days_with_air_temperature_above_threshold',
                                 long_name='Number of days with Tmax > {thresh_tasmax}C and Tmin > {thresh_tasmin}C',
