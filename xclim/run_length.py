@@ -109,7 +109,7 @@ def first_run(da, window, dim='time'):
           Index of first item in first valid run. Returns np.nan if there are no valid run.
         """
     dims = list(da.dims)
-    if not 'time' in dims:
+    if 'time' not in dims:
         da['time'] = da[dim]
         da.swap_dims({dim: 'time'})
     da = da.astype('int')
