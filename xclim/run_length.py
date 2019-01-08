@@ -9,7 +9,118 @@ from warnings import warn
 logging.captureWarnings(True)
 
 
-# TODO: Need to benchmark and adapt for xarray.
+def Ndim_rle(da, dim='time'):
+    n = len(da[dim])
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    ind = xr.broadcast(i, da)[0]
+    b = ind.where(~da)  # find indexes where false
+
+    end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
+    start1 = da.where(b[dim] == b[dim][0], drop=True) * 0 - 1  # add additional start index (deal with end cases)
+    b = xr.concat([start1, b, end1], dim)
+    z = b.bfill(dim=dim)
+    z = z.where(~np.isnan(z), n)  # backfill not filling last sequence from end1?
+    d = z.diff(dim=dim) - 1
+    d = d.where(d >= 0)
+    return d
+
+
+def Ndim_longest_run(da, dim='time'):
+    """Return the length of the longest consecutive run of True values.
+
+        Parameters
+        ----------
+        arr : N-dimensional array (boolean)
+          Input array
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+        Returns
+        -------
+        N-dimensional array (int)
+          Length of longest run of True values along dimension
+        """
+
+    d = Ndim_rle(da, dim=dim)
+    rl_long = d.max(dim=dim)
+
+    return rl_long
+
+
+def Ndim_windowed_run_events(da, window, dim='time'):
+    """Return the number of runs of a minimum length.
+
+        Parameters
+        ----------
+        da: N-dimensional Xarray data array  (boolean)
+          Input data array
+        window : int
+          Minimum run length.
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+        Returns
+        -------
+        out : N-dimensional xarray data array (int)
+          Number of distinct runs of a minimum length.
+        """
+    d = Ndim_rle(da, dim=dim)
+    out = (d >= window).sum(dim=dim)
+    return out
+
+
+def Ndim_windowed_run_count(da, window, dim='time'):
+    """Return the number of consecutive true values in array for runs at least as long as given duration.
+
+        Parameters
+        ----------
+        da: N-dimensional Xarray data array  (boolean)
+          Input data array
+        window : int
+          Minimum run length.
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+
+        Returns
+        -------
+        out : N-dimensional xarray data array (int)
+          Total number of true values part of a consecutive runs of at least `window` long.
+        """
+    d = Ndim_rle(da, dim=dim)
+    out = d.where(d >= window, 0).sum(dim=dim)
+    return out
+
+
+def Ndim_first_run(da, window, dim='time'):
+    """Return the index of the first item of a run of at least a given length.
+
+        Parameters
+        ----------
+        ----------
+        arr : bool array
+          Input array
+        window : int
+          Minimum duration of consecutive run to accumulate values.
+
+        Returns
+        -------
+        int
+          Index of first item in first valid run. Returns np.nan if there are no valid run.
+        """
+    dims = list(da.dims)
+    if not 'time' in dims:
+        da['time'] = da[dim]
+        da.swap_dims({dim: 'time'})
+    da = da.astype('int')
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    ind = xr.broadcast(i, da)[0]
+    wind_sum = da.rolling(time=window).sum(dim=dim)
+    out = ind.where(wind_sum >= window).min(dim=dim) - (
+        window - 1)  # remove window -1 as rolling result index is last element of the moving window
+    return out
+
+
 def rle(arr):
     """Return the length, starting position and value of consecutive identical values.
 
@@ -43,9 +154,9 @@ def rle(arr):
         warn(e)
         return None, None, None
 
-    y = np.array(ia[1:] != ia[:-1])         # pairwise unequal (string safe)
-    i = np.append(np.where(y), n - 1)       # must include last element position
-    rl = np.diff(np.append(-1, i))          # run lengths
+    y = np.array(ia[1:] != ia[:-1])  # pairwise unequal (string safe)
+    i = np.append(np.where(y), n - 1)  # must include last element position
+    rl = np.diff(np.append(-1, i))  # run lengths
     pos = np.cumsum(np.append(0, rl))[:-1]  # positions
     return ia[i], rl, pos
 
@@ -117,6 +228,7 @@ def windowed_run_events(arr, window):
     ----------
     arr : bool array
       Input array
+
     window : int
       Minimum run length.
 
