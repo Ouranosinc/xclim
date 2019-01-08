@@ -14,19 +14,19 @@ with open('HISTORY.rst') as history_file:
 # with open('requirements.txt') as req_file:
 #     requirements = req_file.read().split('\n')
 
-requirements = ['numpy>=1.15',
-                'scipy>=1.1',
-                'pandas>=0.22',
-                'cftime>=1.0.3',
-                'netCDF4>=1.4',
-                'dask>=0.18',
-                # 'xarray>=0.10',
-                'bottleneck>=1.2',
-                'pint>=0.8',
-                'inspect2>=0.1',
-                'unittest2>=1.1',
-                'six>=1.11',
-                'boltons>=18.0']
+requirements = [
+    'scipy>=1.2',
+    'cftime>=1.0.3',
+    'netCDF4>=1.4',
+    'dask>=0.18',
+    # 'xarray>=0.10',
+    'bottleneck>=1.2',
+    'pint>=0.8',
+    'inspect2>=0.1',
+    'unittest2>=1.1',
+    'six>=1.11',
+    'boltons>=18.0'
+]
 
 setup_requirements = ['pytest-runner', ]
 
