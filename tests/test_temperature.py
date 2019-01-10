@@ -10,9 +10,9 @@ from xclim.utils import percentile_doy
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
-TAS_SERIES = tas_series()
-TASMIN_SERIES = tasmin_series()
-TASMAX_SERIES = tasmax_series()
+TAS_SERIES = tas_series
+TASMIN_SERIES = tasmin_series
+TASMAX_SERIES = tasmax_series
 
 K2C = 273.15
 

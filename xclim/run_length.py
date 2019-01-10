@@ -9,8 +9,119 @@ from warnings import warn
 logging.captureWarnings(True)
 
 
-# TODO: Need to benchmark and adapt for xarray.
-def rle(arr):
+def rle(da, dim='time'):
+    n = len(da[dim])
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    ind = xr.broadcast(i, da)[0]
+    b = ind.where(~da)  # find indexes where false
+
+    end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
+    start1 = da.where(b[dim] == b[dim][0], drop=True) * 0 - 1  # add additional start index (deal with end cases)
+    b = xr.concat([start1, b, end1], dim)
+    z = b.bfill(dim=dim)
+    z = z.where(~np.isnan(z), n)  # backfill not filling last sequence from end1?
+    d = z.diff(dim=dim) - 1
+    d = d.where(d >= 0)
+    return d
+
+
+def longest_run(da, dim='time'):
+    """Return the length of the longest consecutive run of True values.
+
+        Parameters
+        ----------
+        arr : N-dimensional array (boolean)
+          Input array
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+        Returns
+        -------
+        N-dimensional array (int)
+          Length of longest run of True values along dimension
+        """
+
+    d = rle(da, dim=dim)
+    rl_long = d.max(dim=dim)
+
+    return rl_long
+
+
+def windowed_run_events(da, window, dim='time'):
+    """Return the number of runs of a minimum length.
+
+        Parameters
+        ----------
+        da: N-dimensional Xarray data array  (boolean)
+          Input data array
+        window : int
+          Minimum run length.
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+        Returns
+        -------
+        out : N-dimensional xarray data array (int)
+          Number of distinct runs of a minimum length.
+        """
+    d = rle(da, dim=dim)
+    out = (d >= window).sum(dim=dim)
+    return out
+
+
+def windowed_run_count(da, window, dim='time'):
+    """Return the number of consecutive true values in array for runs at least as long as given duration.
+
+        Parameters
+        ----------
+        da: N-dimensional Xarray data array  (boolean)
+          Input data array
+        window : int
+          Minimum run length.
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
+
+
+        Returns
+        -------
+        out : N-dimensional xarray data array (int)
+          Total number of true values part of a consecutive runs of at least `window` long.
+        """
+    d = rle(da, dim=dim)
+    out = d.where(d >= window, 0).sum(dim=dim)
+    return out
+
+
+def first_run(da, window, dim='time'):
+    """Return the index of the first item of a run of at least a given length.
+
+        Parameters
+        ----------
+        ----------
+        arr : bool array
+          Input array
+        window : int
+          Minimum duration of consecutive run to accumulate values.
+
+        Returns
+        -------
+        int
+          Index of first item in first valid run. Returns np.nan if there are no valid run.
+        """
+    dims = list(da.dims)
+    if 'time' not in dims:
+        da['time'] = da[dim]
+        da.swap_dims({dim: 'time'})
+    da = da.astype('int')
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    ind = xr.broadcast(i, da)[0]
+    wind_sum = da.rolling(time=window).sum(dim=dim)
+    out = ind.where(wind_sum >= window).min(dim=dim) - (
+        window - 1)  # remove window -1 as rolling result index is last element of the moving window
+    return out
+
+
+def rle_1d(arr):
     """Return the length, starting position and value of consecutive identical values.
 
     Parameters
@@ -31,7 +142,7 @@ def rle(arr):
     Examples
     --------
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
-    >>> rle(a)
+    >>> rle_1d(a)
     (array([1, 2, 3]), array([2, 4, 6]), array([0, 2, 6]))
 
     """
@@ -43,14 +154,14 @@ def rle(arr):
         warn(e)
         return None, None, None
 
-    y = np.array(ia[1:] != ia[:-1])         # pairwise unequal (string safe)
-    i = np.append(np.where(y), n - 1)       # must include last element position
-    rl = np.diff(np.append(-1, i))          # run lengths
+    y = np.array(ia[1:] != ia[:-1])  # pairwise unequal (string safe)
+    i = np.append(np.where(y), n - 1)  # must include last element position
+    rl = np.diff(np.append(-1, i))  # run lengths
     pos = np.cumsum(np.append(0, rl))[:-1]  # positions
     return ia[i], rl, pos
 
 
-def windowed_run_count(arr, window):
+def windowed_run_count_1d(arr, window):
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
@@ -65,11 +176,11 @@ def windowed_run_count(arr, window):
     int
       Total number of true values part of a consecutive run at least `window` long.
     """
-    v, rl = rle(arr)[:2]
+    v, rl = rle_1d(arr)[:2]
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def first_run(arr, window):
+def first_run_1d(arr, window):
     """Return the index of the first item of a run of at least a given length.
 
     Parameters
@@ -85,7 +196,7 @@ def first_run(arr, window):
     int
       Index of first item in first valid run. Returns np.nan if there are no valid run.
     """
-    v, rl, pos = rle(arr)
+    v, rl, pos = rle_1d(arr)
     ind = np.where(v * rl >= window, pos, np.inf).min()
 
     if np.isinf(ind):
@@ -93,7 +204,7 @@ def first_run(arr, window):
     return ind
 
 
-def longest_run(arr):
+def longest_run_1d(arr):
     """Return the length of the longest consecutive run of identical values.
 
     Parameters
@@ -106,17 +217,18 @@ def longest_run(arr):
     int
       Length of longest run.
     """
-    v, rl = rle(arr)[:2]
+    v, rl = rle_1d(arr)[:2]
     return np.where(v, rl, 0).max()
 
 
-def windowed_run_events(arr, window):
+def windowed_run_events_1d(arr, window):
     """Return the number of runs of a minimum length.
 
     Parameters
     ----------
     arr : bool array
       Input array
+
     window : int
       Minimum run length.
 
@@ -125,12 +237,12 @@ def windowed_run_events(arr, window):
     out : func
       Number of distinct runs of a minimum length.
     """
-    v, rl, pos = rle(arr)
+    v, rl, pos = rle_1d(arr)
     return (v * rl >= window).sum()
 
 
 def windowed_run_count_ufunc(x, window):
-    """Dask-parallel version of windowed_run_count, ie the number of consecutive true values in
+    """Dask-parallel version of windowed_run_count_1d, ie the number of consecutive true values in
     array for runs at least as long as given duration.
 
     Parameters
@@ -145,7 +257,7 @@ def windowed_run_count_ufunc(x, window):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(windowed_run_count,
+    return xr.apply_ufunc(windowed_run_count_1d,
                           x,
                           input_core_dims=[['time'], ],
                           vectorize=True,
@@ -156,7 +268,7 @@ def windowed_run_count_ufunc(x, window):
 
 
 def windowed_run_events_ufunc(x, window):
-    """Dask-parallel version of windowed_run_events, ie the number of runs at least as long as given duration.
+    """Dask-parallel version of windowed_run_events_1d, ie the number of runs at least as long as given duration.
 
     Parameters
     ----------
@@ -170,7 +282,7 @@ def windowed_run_events_ufunc(x, window):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(windowed_run_events,
+    return xr.apply_ufunc(windowed_run_events_1d,
                           x,
                           input_core_dims=[['time'], ],
                           vectorize=True,
@@ -181,7 +293,7 @@ def windowed_run_events_ufunc(x, window):
 
 
 def longest_run_ufunc(x):
-    """Dask-parallel version of longest_run, ie the maximum number of consecutive true values in
+    """Dask-parallel version of longest_run_1d, ie the maximum number of consecutive true values in
     array.
 
     Parameters
@@ -194,7 +306,7 @@ def longest_run_ufunc(x):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(longest_run,
+    return xr.apply_ufunc(longest_run_1d,
                           x,
                           input_core_dims=[['time'], ],
                           vectorize=True,
@@ -205,7 +317,7 @@ def longest_run_ufunc(x):
 
 
 def first_run_ufunc(x, window, index=None):
-    ind = xr.apply_ufunc(first_run,
+    ind = xr.apply_ufunc(first_run_1d,
                          x,
                          input_core_dims=[['time'], ],
                          vectorize=True,

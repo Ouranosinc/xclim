@@ -29,8 +29,8 @@ from xclim.utils import units
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
-TAS_SERIES = tas_series()
-PR_SERIES = pr_series()
+TAS_SERIES = tas_series
+PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 

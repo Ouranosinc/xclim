@@ -31,16 +31,15 @@ matrix:
       python: 3.6
     - env: TOXENV=py35
       python: 3.5
-    - env: TOXENV=py34
-      python: 3.4
     - env: TOXENV=py27
       python: 2.7
   allow_failures:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37
-    - env: TOXENV=py34
-install: pip install -U tox-travis
-script: "if [[ $TOXENV == 'py34' ]]; then travis_wait tox -e $TOXENV; else tox -e $TOXENV; fi"
+install:
+    - sudo -H pip install --upgrade pip
+    - pip install -U tox-travis
+script: tox -e $TOXENV
 branches:
   only:
     - master
