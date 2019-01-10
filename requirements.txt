@@ -1,2 +1,2 @@
-# git+git://github.com/Ouranosinc/xarray@master
+git+git://github.com/Ouranosinc/xarray@master
 .
