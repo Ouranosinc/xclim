@@ -5,7 +5,6 @@ import numpy as np
 import xarray as xr
 import logging
 from warnings import warn
-
 logging.captureWarnings(True)
 
 
@@ -98,14 +97,16 @@ def first_run(da, window, dim='time'):
         Parameters
         ----------
         ----------
-        arr : bool array
+        arr : N-dimensional Xarray data array  (boolean)
           Input array
         window : int
           Minimum duration of consecutive run to accumulate values.
+        dim : Xarray dimension (default = 'time')
+          Dimension along which to calculate consecutive run
 
         Returns
         -------
-        int
+        out : N-dimensional xarray data array (int)
           Index of first item in first valid run. Returns np.nan if there are no valid run.
         """
     dims = list(da.dims)
