@@ -171,7 +171,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
 
     below = (tasmin < thresh)
 
-    return below.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
+    return below.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
 def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
@@ -197,10 +197,10 @@ def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
       Cold spell days
     """
 
-    over = tas < K2C + thresh
+    over = tas < (K2C + thresh)
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count, window=window, dim='time')
 
 
 # TODO: mix up in docsring for tas
@@ -306,7 +306,7 @@ def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
     """
 
     group = (pr < thresh).resample(time=freq)
-    return group.apply(rl.longest_run_ufunc)
+    return group.apply(rl.longest_run, dim='time')
 
 
 def consecutive_frost_days(tasmin, freq='AS-JUL'):
@@ -342,7 +342,7 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     """
 
     group = (tasmin < K2C).resample(time=freq)
-    return group.apply(rl.longest_run_ufunc)
+    return group.apply(rl.longest_run, dim='time')
 
 
 def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
@@ -375,7 +375,7 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
     """
 
     group = (pr > thresh).resample(time=freq)
-    return group.apply(rl.longest_run_ufunc)
+    return group.apply(rl.longest_run, dim='time')
 
 
 def cooling_degree_days(tas, thresh=18, freq='YS'):
@@ -735,7 +735,7 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
 
     cond = (tasmin > thresh_tasmin + K2C) & (tasmax > thresh_tasmax + K2C)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events_ufunc, window=window)
+    return group.apply(rl.windowed_run_events, window=window, dim='time')
 
 
 def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
@@ -763,7 +763,7 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     over = tasmax > K2C + thresh
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count_ufunc, window=window)
+    return group.apply(rl.windowed_run_count, window=window, dim='time')
 
 
 def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
@@ -820,7 +820,7 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
 
     cond = (tasmin > thresh_tasmin + K2C) & (tasmax > thresh_tasmax + K2C)
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run_ufunc)
+    max_l = group.apply(rl.longest_run, dim='time')
     return max_l.where(max_l >= window, 0)
 
 
@@ -1785,7 +1785,7 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
 
     above = (tasmax > thresh)
 
-    return above.resample(time=freq).apply(rl.windowed_run_count_ufunc, window=window)
+    return above.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
 def wetdays(pr, thresh=1.0, freq='YS'):
