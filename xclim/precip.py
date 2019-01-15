@@ -69,7 +69,7 @@ maximum_consecutive_dry_days = Pr(identifier='cdd',
                                   units='days',
                                   standard_name='number_of_days_with_lwe_thickness_of_'
                                                 'precipitation_amount_below_threshold',
-                                  long_name='Maximum consecutive wet days (Precip < {thresh}mm)',
+                                  long_name='Maximum consecutive dry days (Precip < {thresh}mm)',
                                   description='{freq} maximum number of days with daily '
                                               'precipitation below {thresh} mm',
                                   cell_methods='time: sum within days time: sum over days',
