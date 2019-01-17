@@ -91,7 +91,7 @@ heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    compute=_ind.heat_wave_frequency,
                                    )
 
-heat_wave_max_length = TasminTasmax(identifier='heat_wave_frequency',
+heat_wave_max_length = TasminTasmax(identifier='heat_wave_max_length',
                                     units='days',
                                     standard_name='spell_length_of_days_with_air_temperature_above_threshold',
                                     long_name='Maximum length of heat wave events (Tmin > {thresh_tasmin}℃'
