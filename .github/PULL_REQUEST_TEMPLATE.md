@@ -13,4 +13,4 @@
 * **Other information**:
 
 
-* When merging, please put `closes #{issue number}` in your comment to auto-close the issue that your PR addresses. Thanks!
+* When merging, please put `fixes #{issue number}` in your comment to auto-close the issue that your PR addresses. Thanks!
