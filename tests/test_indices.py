@@ -240,6 +240,41 @@ class TestGrowingDegreeDays:
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
 
+class TestGrowingSeasonLength:
+    def test_simple(self, tas_series):
+        # test for different growing length
+        a = np.zeros(366)
+        tas = tas_series(a, start='2000/1/1')
+
+        # growing season in June only
+        d1 = '6-1-2000'
+        d2 = '6-10-2000'
+        buffer = tas.sel(time = slice(d1, d2))
+        tas2 = tas.where(~tas.time.isin(buffer.time), 280)
+        #
+        # comment:
+        # correct answer should be 10 (i.e. there are 10 days
+        # with tas > 5 degC) but current definition imposes end
+        # of growing season to be equal or later than July 1st.
+        #
+        assert xci.growing_season_length(tas2)[0] == 25
+
+        # growing season in Aug only
+        d1 = '8-1-2000'
+        d2 = '8-10-2000'
+        buffer = tas.sel(time = slice(d1, d2))
+        tas2 = tas.where(~tas.time.isin(buffer.time), 280)
+        assert xci.growing_season_length(tas2)[0] == 10
+
+        # growing season from June to end of July
+        d1= '6-1-2000'
+        d2 = '7-31-2000'
+        buffer = tas.sel(time = slice(d1, d2))
+        tas2 = tas.where(~tas.time.isin(buffer.time), 280)
+        assert xci.growing_season_length(tas2)[0] == 61
+
+
+
 
 class TestHeatingDegreeDays:
 
