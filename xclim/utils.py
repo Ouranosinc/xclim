@@ -403,7 +403,8 @@ class Indicator(object):
         fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
         tu = units.parse_units(req_units.replace('-', '**-'))
         if fu != tu:
-            b = da.copy()
+            b = da.copy(deep=False)
+            # Explicit access to values forces a load operation.
             if context:
                 b.values = (da.values * fu).to(tu, context)
             else:

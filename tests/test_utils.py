@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+import dask
 
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
 from xclim.utils import units
@@ -202,6 +203,27 @@ class TestIndicator:
     def test_doc(self):
         ind = UniIndTemp()
         assert ind.__call__.__doc__ == ind.compute.__doc__
+
+    def test_delayed(self):
+        import dask
+        fn = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
+
+        # Load dataset as a dask array
+        ds = xr.open_dataset(fn, chunks={'time': 10}, cache=True)
+
+        tx = UniIndTemp()
+        txk = tx(ds.tas)
+
+        # Check that the calculations are delayed
+        assert isinstance(txk.data, dask.array.core.Array)
+
+        # Same with unit conversion
+        tx.required_units = ('C',)
+        tx.units = 'C'
+        txc = tx(ds.tas)
+
+        assert isinstance(txc.data, dask.array.core.Array)
+
 
 
 class TestKwargs:
