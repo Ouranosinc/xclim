@@ -47,6 +47,41 @@ units.enable_contexts(hydro)
 #     [mass] / [length]**2 / [time] -> [length] / [time] : value / 1000 / kg * m ** 3
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
+binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
+
+
+def threshold_count(da, op, thresh, freq):
+    """Count number of days above or below threshold.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data.
+    op : {>, <, >=, <=, gt, lt, ge, le }
+      Logical operator, e.g. arr > thresh.
+    thresh : float
+      Threshold value.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray
+      The number of days meeting the constraints for each period.
+    """
+    from xarray.core.ops import get_op
+
+    if op in binary_ops:
+        op = binary_ops[op]
+    elif op in binary_ops.values():
+        pass
+    else:
+        raise ValueError("Operation `{}` not recognized.".format(op))
+
+    func = getattr(da, '_binary_op')(get_op(op))
+    c = func(da, thresh) * 1
+    return c.resample(time=freq).sum(dim='time')
 
 
 def percentile_doy(arr, window=5, per=.1):
