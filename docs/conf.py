@@ -25,7 +25,7 @@ import guzzle_sphinx_theme
 sys.path.insert(0, os.path.abspath('..'))
 
 import xclim
-
+from itable import indicators  # This is included in the html_context below. 
 
 # -- General configuration ---------------------------------------------
 
@@ -41,7 +41,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.coverage',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'rstjinja',
 ]
 
 extensions.append("guzzle_sphinx_theme")
@@ -105,6 +106,8 @@ html_short_title = "XClim"
 
 html_theme_path = guzzle_sphinx_theme.html_theme_path()
 html_theme = 'guzzle_sphinx_theme'  # 'alabaster
+
+html_context = {'indicators': indicators}
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
