@@ -17,8 +17,9 @@ def rle(da, dim='time'):
     end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
     start1 = da.where(b[dim] == b[dim][0], drop=True) * 0 - 1  # add additional start index (deal with end cases)
     b = xr.concat([start1, b, end1], dim)
-    z = b.bfill(dim=dim)
-    z = z.where(~np.isnan(z), n)  # backfill not filling last sequence from end1?
+    b = b.chunk({dim:30})
+    z = b.bfill(dim=dim) # backfill nans
+    z = z.ffill(dim=dim) #forwardfill to double check
     d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
     return d
