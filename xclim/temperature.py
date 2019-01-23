@@ -15,7 +15,7 @@ for each indicator.
 from . import checks
 from . import indices as _ind
 from .utils import Indicator
-
+import abc
 
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
@@ -29,6 +29,10 @@ class Tas(Indicator):
         checks.check_valid(da, 'cell_methods', 'time: mean within days')
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
+    @abc.abstractmethod
+    def compute(*args, **kwds):
+        """The function computing the indicator."""
+
 
 class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
@@ -37,6 +41,10 @@ class Tasmin(Indicator):
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: minimum within days')
         checks.check_valid(da, 'standard_name', 'air_temperature')
+
+    @abc.abstractmethod
+    def compute(*args, **kwds):
+        """The function computing the indicator."""
 
 
 class Tasmax(Indicator):
@@ -47,6 +55,10 @@ class Tasmax(Indicator):
         checks.check_valid(da, 'cell_methods', 'time: maximum within days')
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
+    @abc.abstractmethod
+    def compute(*args, **kwds):
+        """The function computing the indicator."""
+
 
 class TasminTasmax(Indicator):
     required_units = ('K', 'K')
@@ -55,6 +67,10 @@ class TasminTasmax(Indicator):
         for da in (dan, dax):
             checks.check_valid(da, 'cell_methods', 'time: maximum within days')
             checks.check_valid(da, 'standard_name', 'air_temperature')
+
+    @abc.abstractmethod
+    def compute(*args, **kwds):
+        """The function computing the indicator."""
 
 
 tx_days_above = Tasmax(identifier='txgt_{thresh}',
@@ -182,7 +198,7 @@ daily_temperature_range = TasminTasmax(identifier='dtr',
                                        units='K',
                                        standard_name='air_temperature',
                                        long_name='Mean Diurnal Temperature Range',
-                                       description='{freq} mean diurnal temparature range',
+                                       description='{freq} mean diurnal temperature range',
                                        cell_methods='time range within days time: mean over days',
                                        compute=_ind.daily_temperature_range,
                                        )
