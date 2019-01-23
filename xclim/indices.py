@@ -463,6 +463,7 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     dtr = tasmax - tasmin
     return dtr.resample(time=freq).mean(dim='time')
 
+
 # TODO: Improve description.
 def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
     r"""Mean absolute day-to-day variation in daily temperature range.
@@ -1099,6 +1100,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
 
+
 # TODO: Improve description
 def tg90p(tas, t90, freq='YS'):
     r"""Number of days with daily mean temperature over the 90th percentile.
@@ -1293,6 +1295,7 @@ def tg_min(tas, freq='YS'):
 
     return tas.resample(time=freq).min(dim='time')
 
+
 # TODO: Improve description
 def tn90p(tasmin, t90, freq='YS'):
     r"""Number of days with daily minimum temperature over the 90th percentile.
@@ -1337,6 +1340,7 @@ def tn90p(tasmin, t90, freq='YS'):
     over = (tasmin > thresh)
 
     return over.resample(time=freq).sum(dim='time')
+
 
 # TODO: Improve description
 def tn10p(tasmin, t10, freq='YS'):
@@ -1554,6 +1558,7 @@ def tx90p(tasmax, t90, freq='YS'):
     over = (tasmax > thresh)
 
     return over.resample(time=freq).sum(dim='time')
+
 
 # TODO: Improve description
 def tx10p(tasmax, t10, freq='YS'):
