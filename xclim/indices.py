@@ -921,8 +921,8 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     if prsn is None:
         prsn = pr.where(tas < K2C, 0)
 
-    tot = pr.resample(time=freq).sum()
-    rain = tot - prsn.resample(time=freq).sum()
+    tot = pr.resample(time=freq).sum(dim='time')
+    rain = tot - prsn.resample(time=freq).sum(dim='time')
     ratio = rain / tot
     return ratio
 
@@ -992,7 +992,7 @@ def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
 
     # rolling sum of the values
     arr = pr.rolling(time=window, center=False).sum()
-    return arr.resample(time=freq).max()
+    return arr.resample(time=freq).max(dim='time')
 
 
 def max_1day_precipitation_amount(pr, freq='YS'):
