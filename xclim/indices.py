@@ -671,21 +671,52 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
         TG_{ij} < 5 ℃
     """
 
-    i = xr.DataArray(np.arange(tas.time.size), dims='time')
-    ind = xr.broadcast(i, tas)[0]
+    # i = xr.DataArray(np.arange(tas.time.size), dims='time')
+    # ind = xr.broadcast(i, tas)[0]
+    #
+    # c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
+    # i1 = ind.where(c == window).resample(time=freq).min(dim='time')
+    #
+    # # Resample sets the time to T00:00.
+    # i11 = i1.reindex_like(c, method='ffill')
+    #
+    # # TODO: Adjust for southern hemisphere
+    #
+    # #i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
+    # # add check to make sure indice of end of growing season is after growing season start
+    # i2 = ind.where((c==0) & (ind > i11)).where(tas.time.dt.month >= 7)
+    #
+    # d = i2 - i11
+    #
+    # # take min value (first occurence after july)
+    # gsl = d.resample(time=freq).min(dim='time')
+    #
+    # # turn nan into 0
+    # gsl = xr.where(np.isnan(gsl), 0, gsl)
+
+    # compute growth season length on resampled data
 
     c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
-    i1 = ind.where(c == window).resample(time=freq).min(dim='time')
 
-    # Resample sets the time to T00:00.
-    i11 = i1.reindex_like(c, method='ffill')
+    def compute_gsl(c):
+        nt = c.time.size
+        i = xr.DataArray(np.arange(nt), dims='time')
+        ind = xr.broadcast(i, c)[0]
 
-    # TODO: Adjust for southern hemisphere
-    i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
-    d = i2 - i11
+        i1 = ind.where(c == window).min(dim='time')
+        i1 = xr.where(np.isnan(i1), nt, i1)
 
-    # take min value (first occurence after july)
-    return d.resample(time=freq).min(dim='time')
+        i11 = i1.reindex_like(c, method='ffill')
+
+        i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
+        i2 = xr.where(np.isnan(i2), nt, i2)
+
+        d = (i2 - i1).min(dim='time')
+        return d
+
+    gsl = c.resample(time=freq).apply(compute_gsl)
+
+    return gsl
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
