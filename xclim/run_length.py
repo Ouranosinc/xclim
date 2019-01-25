@@ -24,7 +24,8 @@ def rle(da, dim='time',max_chunk=1000000):
     chunk_dim = b[dim].size
     # divide extra dims into equal size
     # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-    chunksize_ex_dims = np.round(np.power( max_chunk / chunk_dim, 1/(ndims-1)))
+    if ndims>1:
+        chunksize_ex_dims = np.round(np.power( max_chunk / chunk_dim, 1/(ndims-1)))
     chunks ={}
     chunks[dim] = -1
     for dd in b.dims:
