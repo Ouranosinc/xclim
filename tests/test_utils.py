@@ -180,7 +180,7 @@ class TestIndicator:
         meta = ind.json()
 
         expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
-                    'parameters', 'description', 'history', 'references', 'comment'}
+                    'parameters', 'description', 'history', 'references', 'comment', 'notes'}
 
         assert set(meta.keys()).issubset(expected)
 
@@ -217,7 +217,7 @@ class TestKwargs:
 class TestParseDoc:
 
     def test_simple(self):
-        parse_doc(ind.tg_mean)
+        parse_doc(ind.tg_mean.__doc__)
 
 
 class TestAdjustDoyCalendar:

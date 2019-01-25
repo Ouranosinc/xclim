@@ -257,7 +257,7 @@ class Indicator(object):
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
     standard_name = ''  # The set of permissible standard names is contained in the standard name table.
-    long_name = ''  # Scraped from compute.__doc.__.
+    long_name = ''  # Parsed.
     units = ''  # Representative units of the physical quantity.
     cell_methods = ''  # List of blank-separated words of the form "name: method"
     description = ''  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
@@ -270,11 +270,12 @@ class Indicator(object):
     context = None
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = ''  # A succinct description of what is in the dataset. Default scraped from compute.__doc.__
-    abstract = ''  # Scraped from compute.__doc.__
+    title = ''  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    abstract = ''  # Parsed
     keywords = ''  # Comma separated list of keywords
-    references = ''  # Published or web-based references that describe the data or methods used to produce it.
+    references = ''  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = ''  # Miscellaneous information about the data or methods used to produce it.
+    notes = ''  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
@@ -309,8 +310,8 @@ class Indicator(object):
         self.__call__ = wraps(self.compute)(self.__call__.__func__)
 
         # Fill in missing metadata from the doc
-        meta = parse_doc(self.compute)
-        for key in ['abstract', 'title', 'long_name']:
+        meta = parse_doc(self.compute.__doc__)
+        for key in ['abstract', 'title', 'long_name', 'notes', 'references']:
             setattr(self, key, getattr(self, key) or meta.get(key, ''))
 
     def __call__(self, *args, **kwds):
@@ -379,6 +380,8 @@ class Indicator(object):
         out = {key: getattr(self, key) for key in names}
         out.update(self.cf_attrs)
         out = self.format(out, args)
+
+        out['notes'] = self.notes
 
         out['parameters'] = str({key: {'default': p.default if p.default != _empty else None, 'desc': ''}
                                  for (key, p) in self._sig.parameters.items()})
@@ -452,28 +455,34 @@ class Indicator(object):
         return type(name, (cls,), attrs)
 
 
-def parse_doc(obj):
+def parse_doc(doc):
     """Crude regex parsing."""
     import re
-    if obj.__doc__ is None:
+    if doc is None:
         return {}
 
-    sections = obj.__doc__.split('\n\n')
-
-    patterns = {'long_name': r'^\s+Return.\n\s+------.*\n\s+xarray\.DataArray\s*(.*)',
-                'notes': r'^\s+Notes.\n\s+----.*\n(.*)'}
-
     out = {}
-    for i, sec in enumerate(sections):
-        if i == 0:
-            out['title'] = sec.strip()
-        elif i == 1:
-            out['abstract'] = sec.strip()
-        else:
-            for key, pat in patterns.items():
-                m = re.match(pat, sec)
-                if m:
-                    out[key] = m.groups()[0]
+
+    sections = re.split(r'(\w+)\n\s+-{4,50}', doc)  # obj.__doc__.split('\n\n')
+    intro = sections.pop(0)
+    if intro:
+        content = list(map(str.strip, intro.strip().split('\n\n')))
+        if len(content) == 1:
+            out['title'] = content[0]
+        elif len(content) == 2:
+            out['title'], out['abstract'] = content
+
+    for i in range(0, len(sections), 2):
+        header, content = sections[i:i+2]
+
+        if header in ['Notes', 'References']:
+            out[header.lower()] = content.replace('\n    ', '\n')
+        elif header == 'Parameters':
+            pass
+        elif header == 'Returns':
+            match = re.search(r'xarray\.DataArray\s*(.*)', content)
+            if match:
+                out['long_name'] = match.groups()[0]
 
     return out
 
