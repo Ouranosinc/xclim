@@ -4,15 +4,20 @@ Statistical distribution fit module
 """
 
 import dask
-# import logging
 import xarray as xr
 from scipy import stats
 
-# log = logging.getLogger(__name__)
-
 
 def fit(arr, dist='norm'):
-    """Fit an array to a distribution along the time dimension."""
+    """Fit an array to a distribution along the time dimension.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Time series to be fitted along the time dimension.
+    dist : str
+      Name of the distribution (see scipy.stats)
+    """
 
     # Note: stats.dist.shapes: comma separated names of shape parameters
     # The other parameters, common to all distribution, are loc and scale.
@@ -26,8 +31,10 @@ def fit(arr, dist='norm'):
     # Fit the parameters (lazy computation)
     data = dask.array.apply_along_axis(dc.fit, arr.get_axis_num('time'), arr)
 
-    # Create a DataArray with the desired dimensions to copy them over to the parameter array.
+    # Create a view to a DataArray with the desired dimensions to copy them over to the parameter array.
     mean = arr.mean(dim='time', keep_attrs=True)
+
+    # Create coordinate for the distribution parameters
     coords = dict(mean.coords.items())
     coords['dparams'] = ([] if dc.shapes is None else dc.shapes.split(',')) + ['loc', 'scale']
 
