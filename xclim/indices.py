@@ -121,7 +121,7 @@ def base_flow_index(q, freq='YS'):
       Base flow index.
     """
 
-    m7 = q.rolling(time=7, center=True).mean(dim='time').resample(time=freq)
+    m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim='time')
@@ -669,7 +669,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     i = xr.DataArray(np.arange(tas.time.size), dims='time')
     ind = xr.broadcast(i, tas)[0]
 
-    c = ((tas > thresh + K2C) * 1).rolling(time=window).sum(dim='time')
+    c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
     i1 = ind.where(c == window).resample(time=freq).min(dim='time')
 
     # Resample sets the time to T00:00.
@@ -921,8 +921,8 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     if prsn is None:
         prsn = pr.where(tas < K2C, 0)
 
-    tot = pr.resample(time=freq).sum()
-    rain = tot - prsn.resample(time=freq).sum()
+    tot = pr.resample(time=freq).sum(dim='time')
+    rain = tot - prsn.resample(time=freq).sum(dim='time')
     ratio = rain / tot
     return ratio
 
@@ -991,7 +991,7 @@ def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
     """
 
     # rolling sum of the values
-    arr = pr.rolling(time=window, center=False).sum(dim='time')
+    arr = pr.rolling(time=window, center=False).sum()
     return arr.resample(time=freq).max(dim='time')
 
 

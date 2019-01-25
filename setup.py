@@ -18,15 +18,16 @@ requirements = [
     'scipy>=1.2',
     'cftime>=1.0.3',
     'netCDF4>=1.4',
-    'dask>=0.18',
+    'dask[complete]',
     'bottleneck>=1.2.1',
-    'xarray',
+    # 'xarray',
     'pint>=0.8',
     'inspect2>=0.1',
     'unittest2>=1.1',
     'six>=1.11',
-    'boltons>=18.0'
+    'boltons>=18.0',
 ]
+
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', 'tox', ]
