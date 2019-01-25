@@ -32,7 +32,7 @@ xclim
         :target: https://github.com/bird-house/birdhouse-docs/blob/master/LICENSE
         :alt: License
 
-``xclim`` is a library of functions computing climate indices It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with very little boilerplate.
+``xclim`` is a library of functions computing climate indices. It is based on xarray and can benefit from the parallelization provided by dask. It's objective is to make it as simple as possible for users to compute indices from large climate datasets, and for scientists to write new indices with very little boilerplate.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -45,7 +45,7 @@ For example, the following would compute monthly mean temperature from daily mea
 
 For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.  
 
-``xclim`` is in intense development at the moment and is absolutely not production ready. We're aiming for an alpha release in December 2019. If you're interested in participating to the development, please leave us a message on the issue tracker. 
+``xclim`` is in intense development at the moment and is absolutely not production ready. We're aiming for an alpha release in Q1 2019. If you're interested in participating to the development, please leave us a message on the issue tracker.
 
 
 * Free software: Apache Software License 2.0
