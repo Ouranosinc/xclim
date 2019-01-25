@@ -690,24 +690,26 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     # gsl = xr.where(np.isnan(gsl), 0, gsl)
 
     # compute growth season length on resampled data
-    def compute_gsl(tas):
-        nt = tas.time.size
-        i = xr.DataArray(np.arange(nt), dims='time')
-        ind = xr.broadcast(i, tas)[0]
 
-        c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
+    c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
+
+    def compute_gsl(c):
+        nt = c.time.size
+        i = xr.DataArray(np.arange(nt), dims='time')
+        ind = xr.broadcast(i, c)[0]
+
         i1 = ind.where(c == window).min(dim='time')
         i1 = xr.where(np.isnan(i1), nt, i1)
 
         i11 = i1.reindex_like(c, method='ffill')
 
-        i2 = ind.where((c == 0) & (ind > i11)).where(tas.time.dt.month >= 7)
+        i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
         i2 = xr.where(np.isnan(i2), nt, i2)
 
-        d = (i2 - i1).min()
+        d = (i2 - i1).min(dim='time')
         return d
 
-    gsl = tas.resample(time=freq).apply(compute_gsl)
+    gsl = c.resample(time=freq).apply(compute_gsl)
 
     return gsl
 

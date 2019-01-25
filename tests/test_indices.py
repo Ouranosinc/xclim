@@ -252,7 +252,7 @@ class TestGrowingSeasonLength:
         # 2000 : no growing season
 
         # 2001 : growing season all year
-        d1 = '1-1-2001'
+        d1 = '25-12-2000'
         d2 = '31-12-2001'
         buffer = tas.sel(time=slice(d1, d2))
         tas = tas.where(~tas.time.isin(buffer.time), 280)
@@ -281,7 +281,7 @@ class TestGrowingSeasonLength:
         tas = tas.where(~tas.time.isin(buffer.time), 280)
 
         gsl = xci.growing_season_length(tas)
-        target = [0, 360, 25, 10, 61]
+        target = [0, 365, 25, 10, 61]
 
         np.testing.assert_array_equal(gsl, target)
 
