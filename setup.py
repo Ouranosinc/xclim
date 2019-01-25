@@ -19,20 +19,14 @@ requirements = [
     'cftime>=1.0.3',
     'netCDF4>=1.4',
     'dask>=0.18',
+    'bottleneck>=1.2.1',
     'xarray',
-    'bottleneck',
     'pint>=0.8',
     'inspect2>=0.1',
     'unittest2>=1.1',
     'six>=1.11',
     'boltons>=18.0'
 ]
-
-dependency_links = [
-    'git+https://github.com/astrofrog/bottleneck.git@pep-518',
-    'git+https://github.com/Ouranosinc/xarray@master'
-]
-
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', 'tox', ]
@@ -57,7 +51,6 @@ setup(
     ],
     description="Derived climate variables built with xarray.",
     install_requires=requirements,
-    dependency_links=dependency_links,
     license="Apache Software License 2.0",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
