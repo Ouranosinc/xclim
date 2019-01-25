@@ -19,15 +19,14 @@ requirements = [
     'cftime>=1.0.3',
     'netCDF4>=1.4',
     'dask>=0.18',
-    # 'xarray>=0.10',
-    # 'bottleneck>=1.2',
+    'bottleneck>=1.2.1',
+    'xarray',
     'pint>=0.8',
     'inspect2>=0.1',
     'unittest2>=1.1',
     'six>=1.11',
     'boltons>=18.0'
 ]
-
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', 'tox', ]
@@ -44,10 +43,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
