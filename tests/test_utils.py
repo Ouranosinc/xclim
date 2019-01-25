@@ -24,6 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
 from xclim.utils import units
 from xclim.testing.common import tas_series, pr_series
@@ -261,3 +262,11 @@ class TestUnits:
             fu = units.parse_units("kilogram / d / meter ** 2")
             tu = units.parse_units("mm/day")
             np.isclose(1 * fu, 1 * tu)
+
+
+class TestThresholdCount:
+
+    def test_simple(self, tas_series):
+        ts = tas_series(np.arange(365))
+        out = utils.threshold_count(ts, '<', 50, 'Y')
+        np.testing.assert_array_equal(out, [50, 0])
