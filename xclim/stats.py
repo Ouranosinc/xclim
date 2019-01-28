@@ -7,7 +7,7 @@ Statistical distribution fit module
 
 import dask
 import xarray as xr
-
+import numpy as np
 
 def get_dist(dist):
     """Return a distribution object from scipy.stats.
@@ -89,14 +89,17 @@ def fa(arr, t, dist='norm', mode='high'):
     Returns
     -------
     xarray.DataArray
-      An array of values with a 1/T probability of exceedance (if mode=='high').
+      An array of values with a 1/t probability of exceedance (if mode=='high').
     """
+    t = np.atleast_1d(t)
 
     # Get the distribution
     dc = get_dist(dist)
 
+    # Fit the parameters of the distribution
     p = fit(arr, dist)
 
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode == 'high':
         func = lambda x: dc.isf(1./t, *x)
     elif mode == 'low':
@@ -105,5 +108,30 @@ def fa(arr, t, dist='norm', mode='high'):
         raise ValueError("mode `{}` should be either 'high' or 'low'".format(mode))
 
     data = dask.array.apply_along_axis(func, p.get_axis_num('dparams'), p)
-    # TODO: Update attributes
-    return data
+
+    # Create coordinate for the return periods
+    coords = dict(p.coords.items())
+    coords.pop('dparams')
+    coords['return_period'] = t
+
+    # Create dimensions
+    dims = list(p.dims)
+    dims.remove('dparams')
+    dims.insert(0, u'return_period')
+
+    # TODO: add time and time_bnds coordinates (Low will work on this)
+    # time.attrs['climatology'] = 'climatology_bounds'
+    # coords['time'] =
+    # coords['climatology_bounds'] =
+
+    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out.attrs = p.attrs
+    out.attrs['standard_name'] = '{0} quantiles'.format(dist)
+    out.attrs['long_name'] = '{0} return period values for {1}'.format(dist, getattr(arr, 'standard_name', ''))
+    out.attrs['cell_methods'] = (out.attrs.get('cell_methods', '') + ' dparams: ppf').strip()
+    out.attrs['units'] = arr.attrs.get('units', '')
+    out.attrs['mode'] = mode
+    out.attrs['history'] = out.attrs.get('history', '') + "Compute values corresponding to return periods."
+
+    return out
+

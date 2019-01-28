@@ -66,7 +66,7 @@ def generic_max(da, freq):
     xarray.DataArray
       The maximum value for each period.
     """
-    return da.resample(time=freq).max(dim='time')
+    return da.resample(time=freq, keep_attrs=True).max(dim='time')
 
 
 def generic_min(da, freq):
@@ -85,7 +85,7 @@ def generic_min(da, freq):
     xarray.DataArray
       The minimum value for each period.
     """
-    return da.resample(time=freq).min(dim='time')
+    return da.resample(time=freq, keep_attrs=True).min(dim='time')
 
 
 def generic_frequency_analyis(da, freq, t, dist, mode):
@@ -93,7 +93,25 @@ def generic_frequency_analyis(da, freq, t, dist, mode):
 
     Parameters
     ----------
-    TODO
+    da : xarray.DataArray
+      Input data.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+    t : int or sequence
+      Return period. The period depends on the resolution of the input data. If the input array's resolution is
+      yearly, then the return period is in years.
+    dist : str
+      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      (see scipy.stats).
+    mode : {'low', 'high'}
+      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
+
     """
     from .stats import fa
 
@@ -140,7 +158,6 @@ def threshold_count(da, op, thresh, freq):
     func = getattr(da, '_binary_op')(get_op(op))
     c = func(da, thresh) * 1
     return c.resample(time=freq).sum(dim='time')
-
 
 
 def percentile_doy(arr, window=5, per=.1):
@@ -376,6 +393,9 @@ class Indicator(object):
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'},
                       'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
 
+    # Whether or not the compute function is a partial.
+    _partial = False
+
     def __init__(self, **kwds):
 
         for key, val in kwds.items():
@@ -411,8 +431,14 @@ class Indicator(object):
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
-        ba = self._sig.bind(*args, **kwds)
-        ba.apply_defaults()
+        if self._partial:
+            ba = self._sig.bind_partial(*args, **kwds)
+            for key, val in self.compute.keywords.items():
+                if key not in ba.arguments:
+                    ba.arguments[key] = val
+        else:
+            ba = self._sig.bind(*args, **kwds)
+            ba.apply_defaults()
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)

@@ -10,13 +10,15 @@ def wrapped_partial(func, *args, **kwargs):
 
 
 class Streamflow(Indicator):
-    required_units = 'm3 s-1'
-    units = 'm3 s-1',
+    required_units = 'm^3 s-1'
+    units = 'm^3 s-1'
     context = 'hydro'
-    standard_name = 'water_volume_transport_in_river_channel',
+    standard_name = 'streamflow'
+    _partial = True
+
 
     def cfprobe(self, q):
-        checks.check_valid(q, 'standard_name', 'water_volume_transport_in_river_channel')
+        checks.check_valid(q, 'standard_name', 'streamflow')
 
 
 base_flow_index = Streamflow(identifier='base_flow_index',
