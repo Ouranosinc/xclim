@@ -50,6 +50,64 @@ units.enable_contexts(hydro)
 binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
 
 
+def generic_max(da, freq):
+    """Return maximum over each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum value for each period.
+    """
+    return da.resample(time=freq).max(dim='time')
+
+
+def generic_min(da, freq):
+    """Return minimum over each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray
+      The minimum value for each period.
+    """
+    return da.resample(time=freq).min(dim='time')
+
+
+def generic_frequency_analyis(da, freq, t, dist, mode):
+    """Return the value corresponding to a return period.
+
+    Parameters
+    ----------
+    TODO
+    """
+    from .stats import fa
+
+    if mode in ['high', 'max']:
+        opt = generic_max(da, freq)
+    elif mode in ['low', 'min']:
+        opt = generic_min(da, freq)
+    else:
+        raise ValueError
+
+    out = fa(opt, t, dist, mode)
+    return out
+
+
 def threshold_count(da, op, thresh, freq):
     """Count number of days above or below threshold.
 
@@ -82,6 +140,7 @@ def threshold_count(da, op, thresh, freq):
     func = getattr(da, '_binary_op')(get_op(op))
     c = func(da, thresh) * 1
     return c.resample(time=freq).sum(dim='time')
+
 
 
 def percentile_doy(arr, window=5, per=.1):

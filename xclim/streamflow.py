@@ -1,8 +1,13 @@
 from . import checks
 from . import indices as _ind
-from .utils import Indicator
-from functools import partial
-from .stats import fa
+from .utils import Indicator, generic_frequency_analyis
+from functools import partial, update_wrapper
+
+def wrapped_partial(func, *args, **kwargs):
+    partial_func = partial(func, *args, **kwargs)
+    update_wrapper(partial_func, func)
+    return partial_func
+
 
 class Streamflow(Indicator):
     required_units = 'm3 s-1'
@@ -26,4 +31,5 @@ q_max = Streamflow(identifier='q_max',
 q1max2sp = Streamflow(identifier='Q1max2Sp',
                       title='2-year return period maximum spring flood peak',
                       description='Annual maximum [max] daily flow [Q1] of 2-year recurrence [2] in spring [Sp]',
-                      compute=partial(fa, T=2, dist='gumbel_r', mode='high'))
+                      compute=wrapped_partial(generic_frequency_analyis, freq='QS-MAR', t=2, dist='gumbel_r',
+                                              mode='high'))

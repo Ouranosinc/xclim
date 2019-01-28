@@ -70,14 +70,14 @@ def fit(arr, dist='norm'):
     return out
 
 
-def fa(arr, T, dist='norm', mode='high'):
+def fa(arr, t, dist='norm', mode='high'):
     """Return the value corresponding to the given return period.
 
     Parameters
     ----------
     arr : xarray.DataArray
-      Input data with a `time` dimension.
-    T : int or sequence
+      Maximized/minimized input data with a `time` dimension.
+    t : int or sequence
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
@@ -98,9 +98,9 @@ def fa(arr, T, dist='norm', mode='high'):
     p = fit(arr, dist)
 
     if mode == 'high':
-        func = lambda x: dc.isf(1./T, *x)
+        func = lambda x: dc.isf(1./t, *x)
     elif mode == 'low':
-        func = lambda x: dc.ppf(1./T, *x)
+        func = lambda x: dc.ppf(1./t, *x)
     else:
         raise ValueError("mode `{}` should be either 'high' or 'low'".format(mode))
 
