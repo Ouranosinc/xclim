@@ -30,6 +30,9 @@ q_max = Streamflow(identifier='q_max',
                    )
 
 
+# What I'm doing here is taking a generic function and assigning new defaults to it (for freq, t, dist, and mode).
+# You still can override these defaults when calling the function, which may not be great. I think some defaults
+# should be frozen (t, mode) while others could be left free (dist, freq). 
 q1max2sp = Streamflow(identifier='Q1max2Sp',
                       title='2-year return period maximum spring flood peak',
                       description='Annual maximum [max] daily flow [Q1] of 2-year recurrence [2] in spring [Sp]',
