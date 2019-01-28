@@ -250,8 +250,6 @@ class TestGrowingSeasonLength:
         tas = tas_series(a, start='2000/1/1')
 
         # 2000 : no growing season
-        #gsl = xci.growing_season_length(tas)
-        #target = [0, 0, 0, 0, 0]
 
         # 2001 : growing season all year
         d1 = '27-12-2000'
