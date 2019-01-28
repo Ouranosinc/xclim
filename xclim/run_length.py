@@ -5,10 +5,11 @@ import numpy as np
 import xarray as xr
 import logging
 from warnings import warn
+
 logging.captureWarnings(True)
 
 
-def rle(da, dim='time'):
+def rle(da, dim='time', max_chunk=1000000):
     n = len(da[dim])
     i = xr.DataArray(np.arange(da[dim].size), dims=dim)
     ind = xr.broadcast(i, da)[0]
@@ -17,8 +18,25 @@ def rle(da, dim='time'):
     end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
     start1 = da.where(b[dim] == b[dim][0], drop=True) * 0 - 1  # add additional start index (deal with end cases)
     b = xr.concat([start1, b, end1], dim)
+
+    # Ensure bfill operates on entire (unchunked) time dimension
+    # Determine appropraite chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
+    ndims = len(b.shape)
+    chunk_dim = b[dim].size
+    # divide extra dims into equal size
+    # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
+    if ndims > 1:
+        chunksize_ex_dims = np.round(np.power(max_chunk / chunk_dim, 1 / (ndims - 1)))
+    chunks = {}
+    chunks[dim] = -1
+    for dd in b.dims:
+        if dd != dim:
+            chunks[dd] = chunksize_ex_dims
+    b = b.chunk(chunks)
+
+    # back fill nans with first position after
     z = b.bfill(dim=dim)
-    z = z.where(~np.isnan(z), n)  # backfill not filling last sequence from end1?
+    # calculate lengths
     d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
     return d
