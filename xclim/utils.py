@@ -88,7 +88,7 @@ def generic_min(da, freq):
     return da.resample(time=freq, keep_attrs=True).min(dim='time')
 
 
-def generic_frequency_analyis(da, freq, t, dist, mode):
+def generic_frequency_analyis(da, freq, t, dist, mode, window=1):
     """Return the value corresponding to a return period.
 
     Parameters
@@ -106,6 +106,8 @@ def generic_frequency_analyis(da, freq, t, dist, mode):
       (see scipy.stats).
     mode : {'low', 'high'}
       Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
+    window : int
+      Averaging window length (days).
 
     Returns
     -------
@@ -114,6 +116,9 @@ def generic_frequency_analyis(da, freq, t, dist, mode):
 
     """
     from .stats import fa
+
+    if window > 1:
+        da = da.rolling(time=window, center=False).mean()
 
     if mode in ['high', 'max']:
         opt = generic_max(da, freq)
