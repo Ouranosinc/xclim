@@ -88,7 +88,7 @@ def generic_min(da, freq):
     return da.resample(time=freq, keep_attrs=True).min(dim='time')
 
 
-def generic_frequency_analyis(da, freq, t, dist, mode, window=1):
+def generic_frequency_analysis(da, freq, t, dist, mode, window=1):
     """Return the value corresponding to a return period.
 
     Parameters
