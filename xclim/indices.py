@@ -121,7 +121,7 @@ def base_flow_index(q, freq='YS'):
       Base flow index.
     """
 
-    m7 = q.rolling(time=7, center=True).mean(dim='time').resample(time=freq)
+    m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim='time')
@@ -434,6 +434,8 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 def daily_temperature_range(tasmax, tasmin, freq='YS'):
     r"""Mean of daily temperature range.
 
+    The mean difference between the daily maximum temperature and the daily minimum temperature.
+
     Parameters
     ----------
     tasmax : xarray.DataArray
@@ -462,8 +464,11 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     return dtr.resample(time=freq).mean(dim='time')
 
 
+# TODO: Improve description.
 def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
     r"""Mean absolute day-to-day variation in daily temperature range.
+
+    Mean absolute day-to-day variation in daily temperature range.
 
     Parameters
     ----------
@@ -666,21 +671,48 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
         TG_{ij} < 5 ℃
     """
 
-    i = xr.DataArray(np.arange(tas.time.size), dims='time')
-    ind = xr.broadcast(i, tas)[0]
+    # i = xr.DataArray(np.arange(tas.time.size), dims='time')
+    # ind = xr.broadcast(i, tas)[0]
+    #
+    # c = ((tas > thresh + K2C) * 1).rolling(time=window).sum()
+    # i1 = ind.where(c == window).resample(time=freq).min(dim='time')
+    #
+    # # Resample sets the time to T00:00.
+    # i11 = i1.reindex_like(c, method='ffill')
+    #
+    # # TODO: Adjust for southern hemisphere
+    #
+    # #i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
+    # # add check to make sure indice of end of growing season is after growing season start
+    # i2 = ind.where((c==0) & (ind > i11)).where(tas.time.dt.month >= 7)
+    #
+    # d = i2 - i11
+    #
+    # # take min value (first occurence after july)
+    # gsl = d.resample(time=freq).min(dim='time')
+    #
+    # # turn nan into 0
+    # gsl = xr.where(np.isnan(gsl), 0, gsl)
 
-    c = ((tas > thresh + K2C) * 1).rolling(time=window).sum(dim='time')
-    i1 = ind.where(c == window).resample(time=freq).min(dim='time')
+    # compute growth season length on resampled data
 
-    # Resample sets the time to T00:00.
-    i11 = i1.reindex_like(c, method='ffill')
+    c = ((tas > thresh + K2C) * 1).rolling(time=window).sum().chunk(tas.chunks)
 
-    # TODO: Adjust for southern hemisphere
-    i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
-    d = i2 - i11
+    def compute_gsl(c):
+        nt = c.time.size
+        i = xr.DataArray(np.arange(nt), dims='time').chunk({'time': 1})
+        ind = xr.broadcast(i, c)[0].chunk(c.chunks)
+        i1 = ind.where(c == window).min(dim='time')
+        i1 = xr.where(np.isnan(i1), nt, i1)
+        i11 = i1.reindex_like(c, method='ffill')
+        i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
+        i2 = xr.where(np.isnan(i2), nt, i2)
+        d = (i2 - i1).min(dim='time')
+        return d
 
-    # take min value (first occurence after july)
-    return d.resample(time=freq).min(dim='time')
+    gsl = c.resample(time=freq).apply(compute_gsl)
+
+    return gsl
 
 
 def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
@@ -891,8 +923,7 @@ def ice_days(tasmax, freq='YS'):
 
 
 def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
-    r"""
-    Ratio of rainfall to total precipitation
+    r"""Ratio of rainfall to total precipitation
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
     then precipitation is assumed solid if the temperature is below 0°C.
@@ -921,8 +952,8 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     if prsn is None:
         prsn = pr.where(tas < K2C, 0)
 
-    tot = pr.resample(time=freq).sum()
-    rain = tot - prsn.resample(time=freq).sum()
+    tot = pr.resample(time=freq).sum(dim='time')
+    rain = tot - prsn.resample(time=freq).sum(dim='time')
     ratio = rain / tot
     return ratio
 
@@ -930,7 +961,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 def tx_days_above(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
-    Number of days where daily maximum temperature exceeding or equal to a theshold temperature in ℃.
+    Number of days where daily maximum temperature exceed a threshold.
 
     Parameters
     ----------
@@ -991,7 +1022,7 @@ def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
     """
 
     # rolling sum of the values
-    arr = pr.rolling(time=window, center=False).sum(dim='time')
+    arr = pr.rolling(time=window, center=False).sum()
     return arr.resample(time=freq).max(dim='time')
 
 
@@ -1097,14 +1128,14 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
     return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
 
 
+# TODO: Improve description
 def tg90p(tas, t90, freq='YS'):
-    r"""
-    Number of days with daily mean temperature over the 90th percentile. The 90th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily mean temperature over the 90th percentile.
+
+    Number of days with daily mean temperature over the 90th percentile.
 
     Parameters
     ----------
-
     tas : xarray.DataArray
       Mean daily temperature
     t90 : xarray.DataArray
@@ -1117,6 +1148,11 @@ def tg90p(tas, t90, freq='YS'):
 
     xarray.DataArray
       Count of days with daily mean temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+
 
     Example
     -------
@@ -1140,14 +1176,14 @@ def tg90p(tas, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
+# TODO: Improve description
 def tg10p(tas, t10, freq='YS'):
-    r"""
-    Number of days with daily mean temperature below the 10th percentile. The 10th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily mean temperature below the 10th percentile.
+
+    Number of days with daily mean temperature below the 10th percentile.
 
     Parameters
     ----------
-
     tas : xarray.DataArray
       Mean daily temperature
     t10 : xarray.DataArray
@@ -1157,9 +1193,12 @@ def tg10p(tas, t10, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily mean temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Example
     -------
@@ -1284,14 +1323,14 @@ def tg_min(tas, freq='YS'):
     return tas.resample(time=freq).min(dim='time')
 
 
+# TODO: Improve description
 def tn90p(tasmin, t90, freq='YS'):
-    r"""
-    Number of days with daily minimum temperature over the 90th percentile. The 90th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily minimum temperature over the 90th percentile.
+
+    Number of days with daily minimum temperature over the 90th percentile.
 
     Parameters
     ----------
-
     tasmin : xarray.DataArray
       Minimum daily temperature
     t90 : xarray.DataArray
@@ -1301,9 +1340,12 @@ def tn90p(tasmin, t90, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily minimum temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Example
     -------
@@ -1327,10 +1369,11 @@ def tn90p(tasmin, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
+# TODO: Improve description
 def tn10p(tasmin, t10, freq='YS'):
-    r"""
-    Number of days with daily minimum temperature below the 10th percentile. The 10th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily minimum temperature below the 10th percentile.
+
+    Number of days with daily minimum temperature below the 10th percentile.
 
     Parameters
     ----------
@@ -1346,6 +1389,10 @@ def tn10p(tasmin, t10, freq='YS'):
     -------
     xarray.DataArray
       Count of days with daily minimum temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Example
     -------
@@ -1494,14 +1541,14 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
         .sum(dim='time')
 
 
+# TODO: Improve description
 def tx90p(tasmax, t90, freq='YS'):
-    r"""
-    Number of days with daily maximum temperature over the 90th percentile. The 90th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily maximum temperature over the 90th percentile.
+
+    Number of days with daily maximum temperature over the 90th percentile.
 
     Parameters
     ----------
-
     tasmax : xarray.DataArray
       Maximum daily temperature
     t90 : xarray.DataArray
@@ -1511,9 +1558,12 @@ def tx90p(tasmax, t90, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily maximum temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Example
     -------
@@ -1537,14 +1587,14 @@ def tx90p(tasmax, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
+# TODO: Improve description
 def tx10p(tasmax, t10, freq='YS'):
-    r"""
-    Number of days with daily maximum temperature below the 10th percentile. The 10th percentile
-    should be computed for a 5 day window centered on each calendar day for a reference period.
+    r"""Number of days with daily maximum temperature below the 10th percentile.
+
+    Number of days with daily maximum temperature below the 10th percentile.
 
     Parameters
     ----------
-
     tas : xarray.DataArray
       Maximum daily temperature
     t10 : xarray.DataArray
@@ -1554,9 +1604,12 @@ def tx10p(tasmax, t10, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily maximum temperature below the 10th percentile [days]
+
+    Notes
+    -----
+    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     Example
     -------
@@ -1692,10 +1745,9 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
 
 def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
                      thresh_tasmax=30, freq='YS'):
-    r"""Frequency days with hot maximum and minimum temperature
+    r"""Number of days with both hot maximum and minimum daily temperatures.
 
-    Returns the number of days with tasmin > thresh_tasmin
-                               and tasmax > thresh_tasmax per period
+    The number of days per period with tasmin above a threshold and tasmax above another threshold.
 
     Parameters
     ----------
@@ -1822,8 +1874,7 @@ def wetdays(pr, thresh=1.0, freq='YS'):
 
 
 def winter_rain_ratio(pr, prsn=None, tas=None):
-    """
-    Ratio of rainfall to total precipitation during winter
+    """Ratio of rainfall to total precipitation during winter
 
     The ratio of total liquid precipitation over the total precipitation over the winter months (DJF. If solid
     precipitation is not provided, then precipitation is assumed solid if the temperature is below 0°C.
