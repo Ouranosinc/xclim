@@ -700,20 +700,13 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
 
     def compute_gsl(c):
         nt = c.time.size
-        i = xr.DataArray(np.arange(nt), dims='time')
-        i = i.chunk({'time': 1})
-
-        ind = xr.broadcast(i, c)[0]
-        ind = ind.chunk(c.chunks)
-
+        i = xr.DataArray(np.arange(nt), dims='time').chunk({'time': 1})
+        ind = xr.broadcast(i, c)[0].chunk(c.chunks)
         i1 = ind.where(c == window).min(dim='time')
         i1 = xr.where(np.isnan(i1), nt, i1)
-
         i11 = i1.reindex_like(c, method='ffill')
-
         i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
         i2 = xr.where(np.isnan(i2), nt, i2)
-
         d = (i2 - i1).min(dim='time')
         return d
 
