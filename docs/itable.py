@@ -1,4 +1,5 @@
-import xclim
+import xclim.utils as xcu
+
 
 def _get_indicators(modules):
     """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
@@ -9,7 +10,7 @@ def _get_indicators(modules):
     out = []
     for obj in modules:
         for key, val in obj.__dict__.items():
-            if isinstance(val, xclim.utils.Indicator):
+            if isinstance(val, xcu.Indicator):
                 out.append(val)
 
     return out
