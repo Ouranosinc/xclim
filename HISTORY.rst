@@ -9,6 +9,7 @@ Major Changes:
 * Support for resampling of data structured using non-standard CF-Time calendars
 * Added several ICCLIM and other indicators
 * Dropped support for Python 2.7 and 3.4
+* Now under Apache v2.0 license
 * Stable PyPI-based dependencies
 * Dask optimizations for better memory management
 * Introduced class-based indicator calculations with data integrity verification and CF-Compliant-like metadata writing functionality
