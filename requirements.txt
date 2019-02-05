@@ -1,2 +1,8 @@
-git+git://github.com/Ouranosinc/xarray@master
-.
+scipy>=1.2
+cftime>=1.0.3
+netCDF4>=1.4
+dask[complete]
+bottleneck>=1.2.1
+xarray>=0.11.3
+pint>=0.8
+boltons>=18.0
