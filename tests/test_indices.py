@@ -359,6 +359,21 @@ class TestHeatWaveMaxLength:
         np.testing.assert_allclose(hwml.values, 0)
 
 
+class TestTnDaysBelow:
+
+    def test_simple(self, tasmin_series):
+        a = np.zeros(365) + K2C
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmin_series(a)
+
+        out = xci.tn_days_below(mx, thresh=-10)
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tn_days_below(mx, thresh=-30)
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
 class TestTxDaysAbove:
 
     def test_simple(self, tasmax_series):
