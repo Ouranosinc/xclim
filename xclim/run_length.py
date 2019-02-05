@@ -12,7 +12,9 @@ logging.captureWarnings(True)
 def rle(da, dim='time', max_chunk=1000000):
     n = len(da[dim])
     i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    i = i.chunk({'time': 1})
     ind = xr.broadcast(i, da)[0]
+    ind = ind.chunk(da.chunks)
     b = ind.where(~da)  # find indexes where false
 
     end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
@@ -133,7 +135,9 @@ def first_run(da, window, dim='time'):
         da.swap_dims({dim: 'time'})
     da = da.astype('int')
     i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    i = i.chunk({'time': 1})
     ind = xr.broadcast(i, da)[0]
+    ind = ind.chunk(da.chunks)
     wind_sum = da.rolling(time=window).sum()
     out = ind.where(wind_sum >= window).min(dim=dim) - (
         window - 1)  # remove window -1 as rolling result index is last element of the moving window
