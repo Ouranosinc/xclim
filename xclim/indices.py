@@ -961,12 +961,12 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
     r"""Number of days with tmin below a threshold in
 
-    Number of days where daily maximum temperature exceed a threshold.
+    Number of days where daily minimum temperature is below a threshold.
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
     thresh : float
       Threshold temperature on which to base evaluation [℃] . Default: -10℃.
     freq : str, optional
@@ -975,7 +975,7 @@ def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
     Returns
     -------
     xarray.DataArray
-      Number of summer days.
+      Number of days Tmin < threshold.
 
     Notes
     -----
