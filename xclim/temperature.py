@@ -17,6 +17,7 @@ from . import indices as _ind
 from .utils import Indicator
 import abc
 
+
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
@@ -72,6 +73,15 @@ class TasminTasmax(Indicator):
     def compute(*args, **kwds):
         """The function computing the indicator."""
 
+
+tn_days_below = Tasmin(identifier='tnlt_{thresh}',
+                       units='days',
+                       standard_name='number_of_days_with_air_temperature_below_threshold',
+                       long_name='Number of days with Tmin < {thresh}C',
+                       description="{freq} number of days where daily minimum temperature is below {thresh}℃",
+                       cell_methods='time: minimum within days time: sum over days',
+                       compute=_ind.tn_days_below,
+                       )
 
 tx_days_above = Tasmax(identifier='txgt_{thresh}',
                        units='days',

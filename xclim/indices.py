@@ -958,6 +958,38 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     return ratio
 
 
+def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
+    r"""Number of days with tmin below a threshold in
+
+    Number of days where daily maximum temperature exceed a threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh : float
+      Threshold temperature on which to base evaluation [℃] . Default: -10℃.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of summer days.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TX_{ij} < thresh [℃]
+    """
+    f1 = utils.threshold_count(tasmin, '<', thresh + K2C, freq)
+    return f1
+
+
 def tx_days_above(tasmax, thresh=25.0, freq='YS'):
     r"""Number of summer days
 
@@ -968,7 +1000,7 @@ def tx_days_above(tasmax, thresh=25.0, freq='YS'):
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 25℃.
+      Threshold temperature on which to base evaluation [℃]. Default: 25℃.
     freq : str, optional
       Resampling frequency
 
@@ -987,7 +1019,7 @@ def tx_days_above(tasmax, thresh=25.0, freq='YS'):
         TX_{ij} > 25℃
     """
 
-    f = (tasmax > thresh + K2C) * 1
+    f = (tasmax > (thresh + K2C)) * 1
     return f.resample(time=freq).sum(dim='time')
 
 
