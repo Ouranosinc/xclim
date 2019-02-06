@@ -6,6 +6,5 @@ flake8
 tox
 coverage
 twine
-
 pytest
 pytest-runner
