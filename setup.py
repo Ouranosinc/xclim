@@ -3,27 +3,19 @@
 
 """The setup script."""
 
+import pathlib
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
+HERE = pathlib.Path(__file__).parent
+
+with open(HERE / 'README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
+with open(HERE / 'HISTORY.rst') as history_file:
     history = history_file.read()
 
-with open('requirements.txt') as req_file:
+with open(HERE / 'requirements.txt') as req_file:
     requirements = req_file.read().split('\n')
-
-# requirements = [
-#     'scipy>=1.2',
-#     'cftime>=1.0.3',
-#     'netCDF4>=1.4',
-#     'dask[complete]',
-#     'bottleneck>=1.2.1',
-#     'xarray>=0.11.3',
-#     'pint>=0.8',
-#     'boltons>=18.0',
-# ]
 
 setup_requirements = ['pytest-runner', ]
 
