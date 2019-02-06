@@ -3,7 +3,6 @@
 
 """The setup script."""
 
-import os
 from setuptools import setup, find_packages
 
 with open('README.rst') as readme_file:
@@ -11,11 +10,9 @@ with open('README.rst') as readme_file:
 
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
-try:
-    with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as req_file:
-        requirements = req_file.read().split('\n')
-except FileNotFoundError:
-    requirements = []
+
+with open('requirements.txt') as req_file:
+    requirements = req_file.read().split('\n')
 
 setup_requirements = ['pytest-runner', ]
 
