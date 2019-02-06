@@ -21,6 +21,7 @@ requirements = [
     'pint>=0.8',
     'boltons>=18.0',
     'inspect2',
+    'unittest2',
     'six',
 ]
 
