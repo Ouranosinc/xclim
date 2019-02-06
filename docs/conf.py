@@ -23,9 +23,10 @@ import guzzle_sphinx_theme
 # absolute, like shown here.
 #
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 import xclim
-from itable import indicators  # This is included in the html_context below. 
+from itable import indicators  # This is included in the html_context below.
 
 # -- General configuration ---------------------------------------------
 
