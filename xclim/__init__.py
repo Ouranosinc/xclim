@@ -9,7 +9,7 @@ from . import indices
 
 __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
-__version__ = '0.8-beta'
+__version__ = '0.7-beta'
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
