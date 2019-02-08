@@ -205,7 +205,6 @@ class TestIndicator:
         assert ind.__call__.__doc__ == ind.compute.__doc__
 
     def test_delayed(self):
-        import dask
         fn = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
 
         # Load dataset as a dask array
@@ -223,7 +222,6 @@ class TestIndicator:
         txc = tx(ds.tas)
 
         assert isinstance(txc.data, dask.array.core.Array)
-
 
 
 class TestKwargs:
