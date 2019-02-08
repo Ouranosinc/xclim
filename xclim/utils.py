@@ -391,7 +391,7 @@ class Indicator(object):
     def cfprobe(self, *das):
         """Check input data compliance to expectations.
         Warn of potential issues."""
-        pass
+        return True
 
     @abc.abstractmethod
     def compute(*args, **kwds):
