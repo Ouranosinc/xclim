@@ -68,7 +68,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     $ mkvirtualenv xclim
     $ cd xclim/
-    $ python setup.py develop
+    $ pip install -e .    
 
 4. Create a branch for local development::
 

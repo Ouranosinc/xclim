@@ -4,6 +4,9 @@ import numpy as np
 import os
 import pandas as pd
 
+import pytest
+import sys
+
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 K2C = 273.15
@@ -241,6 +244,7 @@ class TestMaxNDay():
         assert (np.isnan(out1.values[0, -1, -1]))
 
 
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="too slow to evaluate on python2.7")
 class TestMaxConsecWetDays():
     # TODO: replace by fixture
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
@@ -279,6 +283,7 @@ class TestMaxConsecWetDays():
         # assert (np.isnan(wds.values[0, -1, -1]))
 
 
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="too slow to evaluate on python2.7")
 class TestMaxConsecDryDays():
     # TODO: replace by fixture
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')

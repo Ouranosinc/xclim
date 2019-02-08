@@ -23,9 +23,42 @@ import guzzle_sphinx_theme
 # absolute, like shown here.
 #
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 import xclim
+import xclim.utils as xcu
 
+
+def _get_indicators(modules):
+    """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
+
+    modules : sequence
+      Sequence of modules to inspect.
+    """
+    out = []
+    for obj in modules:
+        for key, val in obj.__dict__.items():
+            if isinstance(val, xcu.Indicator):
+                out.append(val)
+
+    return out
+
+
+def _indicator_table():
+    """Return a sequence of dicts storing metadata about all available indices."""
+    from xclim import temperature, precip
+    import inspect
+
+    inds = _get_indicators([temperature, precip])
+    table = []
+    for ind in inds:
+        # Apply default values
+        args = {name: p.default for (name, p) in ind._sig.parameters.items() if p.default != inspect._empty}
+        table.append(ind.json(args))
+    return table
+
+
+indicators = _indicator_table()
 
 # -- General configuration ---------------------------------------------
 
@@ -41,7 +74,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.coverage',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'rstjinja',
 ]
 
 extensions.append("guzzle_sphinx_theme")
@@ -105,6 +139,8 @@ html_short_title = "XClim"
 
 html_theme_path = guzzle_sphinx_theme.html_theme_path()
 html_theme = 'guzzle_sphinx_theme'  # 'alabaster
+
+html_context = {'indicators': indicators}
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
