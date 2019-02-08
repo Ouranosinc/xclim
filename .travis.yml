@@ -43,6 +43,9 @@ script: tox -e $TOXENV
 branches:
   only:
     - master
+before_deploy:
+    - export TRAVIS_TAG=$GIT_TAG
+    - echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
@@ -51,5 +54,7 @@ deploy:
     secure: Fk0EFrbBumFHXWoCdTCdrsTp9lSnrksqhEbsXLYFhmfnsFtzQ9z4Uhs4sgyzNeA0VsIJ3q2RnPaSrgDXxDzguzSrm9R2tKjgSoZxrdaMKOaHwkJjkF+5DKqBUpjhGQmlLVt0u31vGBS3u8OE18cP4CxZOuPM2Dx2dnHLB9mVZAC8dlt5SBxS2HtC8J8IYilR/v4fkTt6niZPnaozsViBCiybnzyrylJsYeVhTj7p1buscw/yogZPylNV+O1Dn8GLXe7Viw3ZO5kIyEq96NMTBwpXtbgQmUClcGB6m1J+mx6wE0nh9abo69EtGOuaiCY9XqEgO7J8zZNIG2hC3Smy3+o96ltPopl3C2ZJebvM3aVqNx+GHnSkmAYw/VYtGb9Psd5IzafixTIQkBP6Qab8GGj2+iaeriLgTFqUEvxtywZZovQKHtXgPyy1kcztGSY/hygObQu4Ixvx8BjkzATfMKKkc3B8MBOeFnsxm7gn5IAhukbIh8JHTU4t2sHHJUVAbor3p7luGkZUp6ygoOuYsKNpER+cr39GLVV5p+IAY2Lm69aKSXkJe0tvPRouii2TNfnNU+S8ygbZ/6fqK5VTS1eLG0ehXXCxSDBkqt4xw4IFsoDFwObsjVSzKzcOP0UAqDWZhiHoiPLDxUfW/nA2JoTHrM3tBiXzWAZenS5y7Pc=
   on:
     tags: true
+    all_branches: true
+    condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+b[0-9]
     repo: Ouranosinc/xclim
-    python: 3.7
+    python: 3.6
