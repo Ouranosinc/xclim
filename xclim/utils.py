@@ -49,6 +49,18 @@ units.enable_contexts(hydro)
 # @end
 binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
 
+# Maximum day of year in each calendar.
+calendars = {'standard': 366,
+             'gregorian': 366,
+             'proleptic_gregorian': 366,
+             'julian': 366,
+             'no_leap': 365,
+             '365_day': 365,
+             'all_leap': 366,
+             '366_day': 366,
+             'uniform30day': 360,
+             '360_day': 360}
+
 
 def threshold_count(da, op, thresh, freq):
     """Count number of days above or below threshold.
@@ -124,9 +136,36 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-# TODO: I'd like this function to use calendar instead of target (ie target calendar.)
-# Depends on https://github.com/pydata/xarray/issues/2436
-def adjust_doy_calendar(source, target):
+def infer_doy_max(arr):
+    """Return the largest doy allowed by calendar.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    int
+      The largest day of the year found in calendar.
+    """
+    cal = arr.time.encoding.get('calendar', None)
+    if cal in calendars:
+        doy_max = calendars[cal]
+    else:
+        # If source is an array with no calendar information and whose length is not at least of full year,
+        # then this inference could be wrong (
+        doy_max = arr.time.dt.dayofyear.max().data
+        if len(arr.time) < 360:
+            raise ValueError("Cannot infer the calendar from a series less than a year long.")
+        if doy_max not in [360, 365, 366]:
+            raise ValueError("The target array's calendar is not recognized")
+
+
+    return doy_max
+
+
+def interpolate_doy_calendar(source, doy_max):
     r"""Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -136,8 +175,8 @@ def adjust_doy_calendar(source, target):
     ----------
     source : xarray.DataArray
       Array with `dayofyear` coordinates.
-    target : xarray.DataArray
-      Array with `time` coordinates the source should be mapped to.
+    doy_max : int
+      Largest day of the year allowed by calendar.
 
     Returns
     -------
@@ -149,19 +188,43 @@ def adjust_doy_calendar(source, target):
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
-    # When https://github.com/pydata/xarray/issues/2436 will be fixed, we might want to use calendar instead.
-    doy_max_source = source.dayofyear.values.max()
-    doy_max_target = target.time.dt.dayofyear.values.max()
-    if doy_max_target not in [360, 365, 366]:
-        raise ValueError("The target array's calendar is not recognized")
+    doy_max_source = source.dayofyear.max()
 
     # Interpolate to fill na values
     buffer = source.interpolate_na(dim='dayofyear')
 
     # Interpolate to target dayofyear range
-    buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
+    buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max,
                                              num=doy_max_source)
-    return buffer.interp(dayofyear=range(1, doy_max_target + 1))
+    return buffer.interp(dayofyear=range(1, doy_max + 1))
+
+
+def adjust_doy_calendar(source, target):
+    r"""Interpolate from one set of dayofyear range to another
+
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
+    to 365).
+
+    Parameters
+    ----------
+    source : xarray.DataArray
+      Array with `dayofyear` coordinates.
+    target : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+      Interpolated source array over coordinates spanning the target `dayofyear` range.
+
+    """
+    doy_max_source = source.dayofyear.max()
+
+    doy_max = infer_doy_max(target)
+    if doy_max_source == doy_max:
+        return source
+    else:
+        return interpolate_doy_calendar(source, doy_max)
 
 
 def get_daily_events(da, da_value, operator):

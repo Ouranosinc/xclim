@@ -25,7 +25,8 @@ import pytest
 import xarray as xr
 
 from xclim import utils
-from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
+from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
+from xclim.utils import infer_doy_max, adjust_doy_calendar
 from xclim.utils import units
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
@@ -227,10 +228,26 @@ class TestAdjustDoyCalendar:
         source = xr.DataArray(np.arange(360), coords=[np.arange(1, 361), ], dims='dayofyear')
         time = pd.date_range('2000-01-01', '2001-12-31', freq='D')
         target = xr.DataArray(np.arange(len(time)), coords=[time, ], dims='time')
+
         out = adjust_doy_calendar(source, target)
 
         assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
         assert out.sel(dayofyear=366) == source.sel(dayofyear=360)
+
+    def test_infer_doy_max(self):
+        fn = os.path.join(TESTS_DATA, 'CanESM2_365day',
+                          'pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+        with xr.open_dataset(fn) as ds:
+            assert infer_doy_max(ds) == 365
+
+        fn = os.path.join(TESTS_DATA, 'HadGEM2-CC_360day',
+                          'pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+        with xr.open_dataset(fn) as ds:
+            assert infer_doy_max(ds) == 360
+
+        fn = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_pr_1990.nc')
+        with xr.open_dataset(fn) as ds:
+            assert infer_doy_max(ds) == 366
 
 
 class TestWalkMap:
