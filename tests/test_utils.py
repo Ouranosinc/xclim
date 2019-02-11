@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+import dask
 
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map, adjust_doy_calendar
@@ -203,6 +204,25 @@ class TestIndicator:
     def test_doc(self):
         ind = UniIndTemp()
         assert ind.__call__.__doc__ == ind.compute.__doc__
+
+    def test_delayed(self):
+        fn = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+
+        # Load dataset as a dask array
+        ds = xr.open_dataset(fn, chunks={'time': 10}, cache=True)
+
+        tx = UniIndTemp()
+        txk = tx(ds.tasmax)
+
+        # Check that the calculations are delayed
+        assert isinstance(txk.data, dask.array.core.Array)
+
+        # Same with unit conversion
+        tx.required_units = ('C',)
+        tx.units = 'C'
+        txc = tx(ds.tasmax)
+
+        assert isinstance(txc.data, dask.array.core.Array)
 
 
 class TestKwargs:
