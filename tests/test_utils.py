@@ -206,13 +206,13 @@ class TestIndicator:
         assert ind.__call__.__doc__ == ind.compute.__doc__
 
     def test_delayed(self):
-        fn = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
+        fn = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
 
         # Load dataset as a dask array
         ds = xr.open_dataset(fn, chunks={'time': 10}, cache=True)
 
         tx = UniIndTemp()
-        txk = tx(ds.tas)
+        txk = tx(ds.tasmax)
 
         # Check that the calculations are delayed
         assert isinstance(txk.data, dask.array.core.Array)
@@ -220,7 +220,7 @@ class TestIndicator:
         # Same with unit conversion
         tx.required_units = ('C',)
         tx.units = 'C'
-        txc = tx(ds.tas)
+        txc = tx(ds.tasmax)
 
         assert isinstance(txc.data, dask.array.core.Array)
 
