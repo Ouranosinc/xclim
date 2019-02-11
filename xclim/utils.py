@@ -5,7 +5,6 @@ xclim xarray.DataArray utilities module
 """
 
 import numpy as np
-import xarray as xr
 import six
 import pint
 from . import checks
@@ -156,7 +155,6 @@ def infer_doy_max(arr):
             raise ValueError("Cannot infer the calendar from a series less than a year long.")
         if doy_max not in [360, 365, 366]:
             raise ValueError("The target array's calendar is not recognized")
-
 
     return doy_max
 
