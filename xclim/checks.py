@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from . import run_length as rl
+from .utils import clim_mean_doy, within_bnds_doy
 logging.captureWarnings(True)
 
 # Dev notes
@@ -52,6 +53,12 @@ def assert_daily(var):
         raise ValueError("time index is not monotonically increasing.")
 
 
+def outside_climatology(arr, n=5):
+    """Check if any value is outside `n` standard deviations from the day of year mean."""
+    mu, sig = clim_mean_doy(arr, window=5)
+    return not within_bnds_doy(arr, mu + n * sig, mu - n * sig).all()
+
+
 def icclim_precipitation_flags():
     """Return a dictionary of conditions that would flag a suspicious precipitation time series.
     """
@@ -61,6 +68,8 @@ def icclim_precipitation_flags():
         'Many 1mm repetitions': lambda x: rl.suspicious_run(x, window=10, thresh=1.),
         'Many 5mm repetitions': lambda x: rl.suspicious_run(x, window=5, thresh=5.)
         # TODO: Create a check for dry days in precipitation runs
+        # . . . dry periods receive flag = 1 (suspect), if the amount of dry days lies
+        # outside a 14·bivariate standard deviation ?
         # 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
     }
 
@@ -75,8 +84,8 @@ def icclim_tasmean_flags():
         'Extremely high (> 60℃)': lambda x: (x > 60).any(),
         'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
         'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
-        # TODO: Create a function to check for identical values in a moving window
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
+        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
     }
 
     return conditions
@@ -90,8 +99,8 @@ def icclim_tasmax_flags():
         'Extremely high (> 60℃)': lambda x: (x > 60).any(),
         'Below mean temperature': lambda x, tas: (x < tas).any(),
         'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
-        # TODO: Create a function to check for identical values in a moving window
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
+        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
     }
 
     return conditions
@@ -105,11 +114,17 @@ def icclim_tasmin_flags():
         'Extremely high (> 60℃)': lambda x: (x > 60).any(),
         'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
         'Exceeds mean temperature': lambda x, tas: (x > tas).any(),
-        # TODO: Create a function to check for identical values in a moving window
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5)
+        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
+        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
     }
 
     return conditions
+
+
+def flag(arr, conditions):
+    for msg, func in conditions.items():
+        if func(arr):
+            UserWarning(msg)
 
 
 def check_valid_precipitation(var, units):

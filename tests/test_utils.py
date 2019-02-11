@@ -24,7 +24,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs, parse_doc
+from xclim.utils import daily_downsampler, UnivariateIndicator, format_kwargs, parse_doc, clim_mean_doy
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -202,3 +202,17 @@ class TestParseDoc:
 
     def test_simple(self):
         parse_doc(ind.tg_mean)
+
+
+def test_clim_mean_doy(tas_series):
+    da = tas_series(np.ones(365*10))
+    m, s = clim_mean_doy(da, window=1)
+    assert 'dayofyear' in m.coords
+    np.testing.assert_array_equal(m.values, 1)
+    np.testing.assert_array_equal(s.values, 0)
+
+    da = tas_series(np.arange(365*3), start='1/1/2001')
+    m, s = clim_mean_doy(da, window=3)
+    np.testing.assert_array_equal(m[1:-1], np.arange(365, 365*2)[1:-1])
+    np.testing.assert_array_almost_equal(s[1:-1], 298.0223, 4)
+

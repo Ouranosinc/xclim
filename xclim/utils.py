@@ -41,8 +41,11 @@ def percentile_doy(arr, window=5, per=.1):
     Parameters
     ----------
     arr : xarray.DataArray
+      Input array.
     window : int
+      Window size in days.
     per : float
+      Percentile [0, 1].
     """
 
     # TODO: Support percentile array, store percentile in attributes.
@@ -58,6 +61,68 @@ def percentile_doy(arr, window=5, per=.1):
         p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
 
     return p
+
+
+def clim_mean_doy(arr, window=5):
+    """The climatological mean and standard deviation for each day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Input array.
+    window : int
+      Window size in days.
+    """
+    rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
+
+    # Create empty percentile array
+    g = rr.groupby('time.dayofyear')
+
+    m = g.mean()
+    s = g.std()
+
+    return m, s
+
+
+def reshape_doy(doy, arr):
+    """Reshape day of the year values into a full series.
+
+    Return an array with the time index or `arr` with values corresponding to the `dayofyear` index
+    from `doy`.
+
+    Parameters
+    ----------
+    doy : xarray.DataArray
+      Values indexed by dayofyear instead of time.
+    arr : xarray.DataArray
+      Target array.
+    """
+
+    # The day of year value of the input series.
+    d = arr.indexes['time'].dayofyear
+
+    # Create an array with the shape and coords of input series. Fill values according to doy index.
+    out = xr.full_like(arr, np.nan)
+    out.data = doy.sel(dayofyear=d)
+
+    return out
+
+
+def within_bnds_doy(arr, low, high):
+    """Return whether or not array values are within bounds for each day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Input array.
+    low : xarray.DataArray
+      Low bound with dayofyear coordinate.
+    high : xarray.DataArray
+      High bound with dayofyear coordinate.
+    """
+    l = reshape_doy(low, arr)
+    h = reshape_doy(high, arr)
+    return (low < arr) * (arr < high)
 
 
 def get_daily_events(da, da_value, operator):

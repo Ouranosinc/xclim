@@ -29,6 +29,7 @@ class Tas(UnivariateIndicator):
         checks.check_valid(da, 'standard_name', 'air_temperature')
 
 
+
 class Tasmin(UnivariateIndicator):
     """Class for univariate indices using min daily temperature as the input."""
     required_units = 'K'
