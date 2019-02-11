@@ -115,18 +115,14 @@ def percentile_doy(arr, window=5, per=.1):
     xarray.DataArray
       The percentiles indexed by the day of the year.
     """
-
-    # TODO: Support percentile array, store percentile in attributes (or coordinates ?)
+    # TODO: Support percentile array, store percentile in coordinates.
+    #  This is supported by DataArray.quantile, but not by groupby.reduce.
     rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
 
     # Create empty percentile array
     g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
 
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+    p = g.reduce(np.nanpercentile, dim=('time', 'window'), q=per * 100)
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366

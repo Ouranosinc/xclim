@@ -532,6 +532,20 @@ class TestTGXN10p:
         assert out[5] == 5
 
 
+    def test_doy_interpolation(self):
+        # Just a smoke test
+        fn_clim = os.path.join(TESTS_DATA, 'CanESM2_365day',
+                          'tasmin_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+        fn = os.path.join(TESTS_DATA, 'HadGEM2-CC_360day',
+                            'tasmin_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+
+        with xr.open_dataset(fn_clim) as ds:
+            t10 = percentile_doy(ds.tasmin.isel(lat=0, lon=0), per=.1)
+
+        with xr.open_dataset(fn) as ds:
+            xci.tn10p(ds.tasmin.isel(lat=0, lon=0), t10, freq='MS')
+
+
 class TestTGXN90p:
 
     def test_tg90p_simple(self, tas_series):

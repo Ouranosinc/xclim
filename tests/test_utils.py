@@ -26,7 +26,7 @@ import xarray as xr
 
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
-from xclim.utils import infer_doy_max, adjust_doy_calendar
+from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
 from xclim.utils import units
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
@@ -220,6 +220,14 @@ class TestParseDoc:
 
     def test_simple(self):
         parse_doc(ind.tg_mean.__doc__)
+
+
+class TestPercentileDOY:
+
+    def test_simple(self, tas_series):
+        tas = tas_series(np.arange(365), start='1/1/2001')
+        p1 = percentile_doy(tas, window=5, per=.5)
+        assert p1.sel(dayofyear=3).data == 2
 
 
 class TestAdjustDoyCalendar:
