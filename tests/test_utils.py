@@ -212,7 +212,7 @@ class TestIndicator:
         ds = xr.open_dataset(fn, chunks={'time': 10}, cache=True)
 
         tx = UniIndTemp()
-        txk = tx(ds.tas)
+        txk = tx(ds.tasmax)
 
         # Check that the calculations are delayed
         assert isinstance(txk.data, dask.array.core.Array)
@@ -220,7 +220,7 @@ class TestIndicator:
         # Same with unit conversion
         tx.required_units = ('C',)
         tx.units = 'C'
-        txc = tx(ds.tas)
+        txc = tx(ds.tasmax)
 
         assert isinstance(txc.data, dask.array.core.Array)
 
