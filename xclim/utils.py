@@ -519,26 +519,24 @@ class Indicator(object):
     def cfprobe(self, *das):
         """Check input data compliance to expectations.
         Warn of potential issues."""
-        pass
+        return True
 
     @abc.abstractmethod
     def compute(*args, **kwds):
         """The function computing the indicator."""
 
-    @staticmethod
-    def convert_units(da, req_units, context=None):
+    def convert_units(self, da, req_units, context=None):
         """Return DataArray converted to unit."""
         fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
         tu = units.parse_units(req_units.replace('-', '**-'))
         if fu != tu:
-            b = da.copy()
-            if context:
-                b.values = (da.values * fu).to(tu, context)
+            if self.context:
+                with units.context(self.context):
+                    return units.convert(da, fu, tu)
             else:
-                b.values = (da.values * fu).to(tu)
-            return b
-
-        return da
+                return units.convert(da, fu, tu)
+        else:
+            return da
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments."""

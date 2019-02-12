@@ -740,6 +740,36 @@ class TestGrowingSeasonLength:
         np.testing.assert_array_equal(out[3], tt[0:366].sum().values)
 
 
+class TestTnDaysBelow:
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmin_1990.nc')
+
+    def test_3d_data_with_nans(self):
+        # test with 3d data
+        tas = xr.open_dataset(self.nc_file).tasmin
+        tasC = xr.open_dataset(self.nc_file).tasmin
+        tasC -= K2C
+        tasC.attrs['units'] = 'C'
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tasC.values[180, 1, 0] = np.nan
+        # compute with both skipna options
+        thresh = 273.16 + -10
+        fd = temp.tn_days_below(tas, freq='YS')
+        fdC = temp.tn_days_below(tasC, freq='YS')
+
+        x1 = tas.values[:, 0, 0]
+
+        fd1 = (x1[x1 < thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
+
+        assert (np.allclose(fd1, fd.values[0, 0, 0]))
+
+        assert (np.isnan(fd.values[0, 1, 0]))
+
+        assert (np.isnan(fd.values[0, -1, -1]))
+
+
 class TestTxDaysAbove:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
 

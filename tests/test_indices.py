@@ -241,6 +241,51 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+class TestGrowingSeasonLength:
+    def test_simple(self, tas_series):
+        # test for different growing length
+
+        # generate 5 years of data
+        a = np.zeros(366 * 2 + 365 * 3)
+        tas = tas_series(a, start='2000/1/1')
+
+        # 2000 : no growing season
+
+        # 2001 : growing season all year
+        d1 = '27-12-2000'
+        d2 = '31-12-2001'
+        buffer = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(buffer.time), 280)
+
+        # 2002 : growing season in June only
+        d1 = '6-1-2002'
+        d2 = '6-10-2002'
+        buffer = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(buffer.time), 280)
+        #
+        # comment:
+        # correct answer should be 10 (i.e. there are 10 days
+        # with tas > 5 degC) but current definition imposes end
+        # of growing season to be equal or later than July 1st.
+
+        # growing season in Aug only
+        d1 = '8-1-2003'
+        d2 = '8-10-2003'
+        buffer = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(buffer.time), 280)
+
+        # growing season from June to end of July
+        d1 = '6-1-2004'
+        d2 = '7-31-2004'
+        buffer = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(buffer.time), 280)
+
+        gsl = xci.growing_season_length(tas)
+        target = [0, 365, 25, 10, 61]
+
+        np.testing.assert_array_equal(gsl, target)
+
+
 class TestHeatingDegreeDays:
 
     def test_simple(self, tas_series):
@@ -312,6 +357,21 @@ class TestHeatWaveMaxLength:
         hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=22,
                                         thresh_tasmax=30, window=5)
         np.testing.assert_allclose(hwml.values, 0)
+
+
+class TestTnDaysBelow:
+
+    def test_simple(self, tasmin_series):
+        a = np.zeros(365) + K2C
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmin_series(a)
+
+        out = xci.tn_days_below(mx, thresh=-10)
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tn_days_below(mx, thresh=-30)
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
 
 
 class TestTxDaysAbove:

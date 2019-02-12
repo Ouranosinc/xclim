@@ -11,21 +11,18 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-# with open('requirements.txt') as req_file:
-#     requirements = req_file.read().split('\n')
-
 requirements = [
     'scipy>=1.2',
     'cftime>=1.0.3',
     'netCDF4>=1.4',
     'dask[complete]',
     'bottleneck>=1.2.1',
-    # 'xarray',
+    'xarray>=0.11.3',
     'pint>=0.8',
-    'inspect2>=0.1',
-    'unittest2>=1.1',
-    'six>=1.11',
     'boltons>=18.0',
+    'inspect2',
+    'unittest2',
+    'six',
 ]
 
 setup_requirements = ['pytest-runner', ]
@@ -40,10 +37,13 @@ setup(
     author="Travis Logan",
     author_email='logan.travis@ouranos.ca',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -54,6 +54,7 @@ setup(
     install_requires=requirements,
     license="Apache Software License 2.0",
     long_description=readme + '\n\n' + history,
+    long_description_content_type='text/markdown',
     include_package_data=True,
     keywords=KEYWORDS,
     name='xclim',
@@ -63,6 +64,6 @@ setup(
     tests_require=test_requirements,
     extras_require={'docs': docs_requirements},
     url='https://github.com/Ouranosinc/xclim',
-    version='0.6-alpha',
+    version='0.8-beta',
     zip_safe=False,
 )
