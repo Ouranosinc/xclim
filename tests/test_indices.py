@@ -794,6 +794,7 @@ class TestWinterRainRatio:
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
     def test_cmip3(self, cmip3_day_tas):
+        pytest.importorskip('xarray', '0.11.4')
         xci.tg_mean(cmip3_day_tas)
 
     def compare_against_icclim(self, cmip3_day_tas):
