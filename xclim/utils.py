@@ -189,7 +189,7 @@ def interpolate_doy_calendar(source, doy_max):
 
     # Interpolate to target dayofyear range
     tmp.coords['dayofyear'] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
-    
+
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
