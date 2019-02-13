@@ -238,10 +238,10 @@ def subset_gridpoint(da, lon, lat, year_bnds=''):
     if np.all(da.lon > 0) and lon < 0:
         lon += 360
 
-    try:
+    if len(da.lon.shape)==1 & len(da.lat.shape)==1:
         out = da.sel(lon=lon, lat=lat, method='nearest')
 
-    except:
+    else:
 
         dist = np.hypot(da.lat - lat, da.lon - lon)
         iy, ix = np.unravel_index(np.argmin(dist, axis=None), da.lat.shape)
