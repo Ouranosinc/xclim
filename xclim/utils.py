@@ -124,6 +124,78 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
+def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
+    """Subset a datarray spatially and temporally using a lat lon bounding box
+
+        Return a subsetted data array for grid points falling within a spatial bounding box
+        defined by longitude and latitudinal bounds and for years falling within provided year bounds
+
+        Parameters
+        ----------
+        arr : xarray.DataArray
+          Input data.
+        lon_bnds (optional) : list of floats
+          List of maximum and minimum longitudinal bounds. if absent defaults to all longitudes in original data-array
+        lat_bnds (optional) :  list of floats
+          List maximum and minimum longitudinal bounds.  Defaults to all latitudes
+          values in original data-array
+        year_bnds (optional) :  list of floats or float
+          List of maximum and minimum year bounds. If single float returns one year only.
+          Defaults to all years in original data-array
+
+
+        Returns
+        -------
+        xarray.DataArray
+          subsetted data array
+        """
+
+    if lon_bnds:
+        lon_bnds = np.asarray(lon_bnds)
+        lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
+    else:
+        lon_cond = (da.lon >= da.lon.min()) & (da.lon <= da.lon.max())
+
+    if lat_bnds:
+        lat_bnds = np.asarray(lat_bnds)
+        lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
+    else:
+        lat_cond = (da.lat >= da.lat.min()) & (da.lat <= da.lat.max())
+
+    if year_bnds:
+        year_bnds = np.asarray(year_bnds)
+        if len(year_bnds) == 1:
+            time_cond = da.time.dt.year == year_bnds
+        else:
+            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
+    else:
+        time_cond = (da.time.dt.year >= da.time.dt.year.min()) & (da.time.dt.year <= da.time.dt.year.max())
+
+    return da.where(lon_cond & lat_cond & time_cond, drop=True)
+
+
+def subset_gridpoint(da, lon, lat, year_bnds):
+    try:
+        out = da.sel(lon=lon,lat=lat, method='nearest')
+
+    except:
+
+        dist = np.hypot(da.lat - lat, da.lon - lon)
+        iy, ix = np.unravel_index(np.argmin(dist, axis=None), da.lat.shape)
+        out = da.isel(yc=iy, xc=ix)
+
+    if year_bnds:
+        year_bnds = np.asarray(year_bnds)
+        if len(year_bnds) == 1:
+            time_cond = da.time.dt.year == year_bnds
+        else:
+            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
+        out = out.where(time_cond,drop=True)
+
+    return out
+
+
+
 # TODO: I'd like this function to use calendar instead of target (ie target calendar.)
 # Depends on https://github.com/pydata/xarray/issues/2436
 def adjust_doy_calendar(source, target):
@@ -506,7 +578,7 @@ def parse_doc(doc):
             out['title'], out['abstract'] = content
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i:i+2]
+        header, content = sections[i:i + 2]
 
         if header in ['Notes', 'References']:
             out[header.lower()] = content.replace('\n    ', '\n')
