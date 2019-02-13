@@ -289,6 +289,15 @@ class TestSubsetGridPoint:
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
     nc_2dlonlat = os.path.join(TESTS_DATA, 'CRCM5', 'tasmax_bby_198406_se.nc')
 
+    def test_dataset(self):
+        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
+        lon = -72.4
+        lat = 46.1
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+        np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
+
     def test_simple(self):
         da = xr.open_dataset(self.nc_file).tasmax
         lon = -72.4
@@ -332,6 +341,15 @@ class TestSubsetBbox:
     nc_2dlonlat = os.path.join(TESTS_DATA, 'CRCM5', 'tasmax_bby_198406_se.nc')
     lon = [-72.4, -60]
     lat = [42, 46.1]
+
+    def test_dataset(self):
+        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
 
     def test_simple(self):
         da = xr.open_dataset(self.nc_file).tasmax
