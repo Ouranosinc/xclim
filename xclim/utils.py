@@ -198,8 +198,9 @@ def subset_gridpoint(da, lon, lat, year_bnds=''):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by year(s)
 
-            Return a subsetted data array (or dataset) for the grid point falling nearest the input longitude and latitude
-            coordinates. Optionally subset the data array for years falling within provided year bounds
+            Return a subsetted data array (or dataset) for the grid point falling nearest the input
+            longitude and latitudecoordinates. Optionally subset the data array for years falling
+            within provided year bounds
 
             Parameters
             ----------
