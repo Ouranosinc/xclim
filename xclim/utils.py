@@ -161,7 +161,7 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
         >>> prSub = utils.subset_bbox(ds.pr,year_bnds=1990) # one year only entire grid
         Subset mutliple variables in a single dataset
         >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
-        >>> dsSub = utils.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],year_bnds=[1990,1999]) # one year only entire grid
+        >>> dsSub = utils.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],year_bnds=[1990,1999])
         """
 
     if lon_bnds:
