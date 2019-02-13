@@ -164,7 +164,7 @@ class TestIndicator:
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
-        np.testing.assert_array_almost_equal(txk, txc+273.15)
+        np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
     def test_pr_unit_conversion(self, pr_series):
         a = pr_series(np.arange(360))
@@ -175,7 +175,7 @@ class TestIndicator:
         ind.units = 'mm'
         txm = ind(a, freq='YS')
 
-        np.testing.assert_array_almost_equal(txk, txm/86400)
+        np.testing.assert_array_almost_equal(txk, txm / 86400)
 
     def test_json(self, pr_series):
         ind = UniIndPr()
@@ -271,7 +271,7 @@ class TestUnits:
 
     def test_hydro(self):
         with units.context('hydro'):
-            q = 1 * units.kg / units.m**2 / units.s
+            q = 1 * units.kg / units.m ** 2 / units.s
             assert q.to('mm/day') == q.to('mm/d')
 
     def test_lat_lon(self):
@@ -282,6 +282,102 @@ class TestUnits:
             fu = units.parse_units("kilogram / d / meter ** 2")
             tu = units.parse_units("mm/day")
             np.isclose(1 * fu, 1 * tu)
+
+
+class TestSubsetGridPoint:
+    nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_2dlonlat = os.path.join(TESTS_DATA, 'CRCM5', 'tasmax_bby_198406_se.nc')
+
+    def test_simple(self):
+        da = xr.open_dataset(self.nc_file).tasmax
+        lon = -72.4
+        lat = 46.1
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
+        da = xr.open_dataset(self.nc_poslons).tas
+        da['lon'] -= 360
+        yr_st = 2050
+        yr_ed = 2059
+
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat, year_bnds=[yr_st, yr_ed])
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
+    def test_irregular(self):
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+        lon = -72.4
+        lat = 46.1
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
+    def test_positive_lons(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        lon = -72.4
+        lat = 46.1
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon + 360, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
+
+class TestSubsetBbox:
+    nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
+    nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')
+    nc_2dlonlat = os.path.join(TESTS_DATA, 'CRCM5', 'tasmax_bby_198406_se.nc')
+    lon = [-72.4, -60]
+    lat = [42, 46.1]
+
+    def test_simple(self):
+        da = xr.open_dataset(self.nc_file).tasmax
+
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+
+        da = xr.open_dataset(self.nc_poslons).tas
+        da['lon'] -= 360
+        yr_st = 2050
+        yr_ed = 2059
+
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, year_bnds=[yr_st, yr_ed])
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
+    def test_irregular(self):
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+
+        # for irregular lat lon grids data matrix remains rectangular in native proj
+        # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
+        # Check only non-nans gridcells using mask
+        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+
+        assert (np.all(out.lon.values[mask1] >= np.min(self.lon)))
+        assert (np.all(out.lon.values[mask1] <= np.max(self.lon)))
+        assert (np.all(out.lat.values[mask1] >= np.min(self.lat)))
+        assert (np.all(out.lat.values[mask1] <= np.max(self.lat)))
+
+    def test_positive_lons(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
+        assert (np.all(out.lon <= np.max(np.asarray(self.lon) + 360)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
 
 
 class TestThresholdCount:

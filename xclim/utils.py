@@ -135,12 +135,11 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
         arr : xarray.DataArray
           Input data.
         lon_bnds (optional) : list of floats
-          List of maximum and minimum longitudinal bounds. if absent defaults to all longitudes in original data-array
+          List of maximum and minimum longitudinal bounds. Defaults to all longitudes in original data-array
         lat_bnds (optional) :  list of floats
-          List maximum and minimum longitudinal bounds.  Defaults to all latitudes
-          values in original data-array
+          List maximum and minimum latitudinal bounds.  Defaults to all latitudes in original data-array
         year_bnds (optional) :  list of floats or float
-          List of maximum and minimum year bounds. If single float returns one year only.
+          List of maximum and minimum year bounds. If single float returns single year only.
           Defaults to all years in original data-array
 
 
@@ -151,7 +150,13 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
         """
 
     if lon_bnds:
+
         lon_bnds = np.asarray(lon_bnds)
+
+        # adjust for files with all postive longitudes if necessary
+        if np.all(da.lon > 0) and np.any(lon_bnds < 0):
+            lon_bnds[lon_bnds < 0] += 360
+
         lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
     else:
         lon_cond = (da.lon >= da.lon.min()) & (da.lon <= da.lon.max())
@@ -174,15 +179,48 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
     return da.where(lon_cond & lat_cond & time_cond, drop=True)
 
 
-def subset_gridpoint(da, lon, lat, year_bnds):
+def subset_gridpoint(da, lon, lat, year_bnds=''):
+    """Extract a nearest gridpoint from datarray based on lat lon coordinate.
+    Time series can optionally be subsetted by year(s)
+
+            Return a subsetted data array for the grid point falling nearest the input longitude and latitude
+            coordinates. Optionally subset the data array for years falling within provided year bounds
+
+            Parameters
+            ----------
+            arr : xarray.DataArray
+              Input data.
+            lon : float
+              longitude coordinate.
+            lat:  float
+              latitude coordinate.
+            year_bnds (optional) :  list of floats or float
+              List of maximum and minimum year bounds. If single float returns one year only.
+              Defaults to all years in original data-array
+
+
+            Returns
+            -------
+            xarray.DataArray
+              subsetted data array
+            """
+
+    # adjust for files with all postive longitudes if necessary
+    if np.all(da.lon > 0) and lon < 0:
+        lon += 360
+
     try:
-        out = da.sel(lon=lon,lat=lat, method='nearest')
+        out = da.sel(lon=lon, lat=lat, method='nearest')
 
     except:
 
         dist = np.hypot(da.lat - lat, da.lon - lon)
         iy, ix = np.unravel_index(np.argmin(dist, axis=None), da.lat.shape)
-        out = da.isel(yc=iy, xc=ix)
+        xydims = [x for x in da.dims if 'time' not in x]
+        args = {}
+        args[xydims[0]] = iy
+        args[xydims[1]] = ix
+        out = da.isel(**args)
 
     if year_bnds:
         year_bnds = np.asarray(year_bnds)
@@ -190,10 +228,9 @@ def subset_gridpoint(da, lon, lat, year_bnds):
             time_cond = da.time.dt.year == year_bnds
         else:
             time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
-        out = out.where(time_cond,drop=True)
+        out = out.where(time_cond, drop=True)
 
     return out
-
 
 
 # TODO: I'd like this function to use calendar instead of target (ie target calendar.)
