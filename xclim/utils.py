@@ -13,6 +13,7 @@ from inspect2 import signature, _empty
 import abc
 from collections import defaultdict
 import datetime as dt
+from pyproj import Geod
 
 from boltons.funcutils import wraps
 
@@ -124,7 +125,7 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
+def subset_bbox(da, lon_bnds='', lat_bnds='', start_yr='', end_yr=''):
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and years selection
 
         Return a subsetted data array for grid points falling within a spatial bounding box
@@ -182,8 +183,13 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
     else:
         lat_cond = (da.lat >= da.lat.min()) & (da.lat <= da.lat.max())
 
-    if year_bnds:
-        year_bnds = np.asarray(year_bnds)
+    if start_yr or end_yr:
+        if not start_yr:
+            start_yr = da.time.dt.year.min()
+        if not end_yr:
+            end_yr = da.time.dt.year.max()
+
+        year_bnds = np.asarray([start_yr, end_yr])
         if len(year_bnds) == 1:
             time_cond = da.time.dt.year == year_bnds
         else:
@@ -194,7 +200,7 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', year_bnds=''):
     return da.where(lon_cond & lat_cond & time_cond, drop=True)
 
 
-def subset_gridpoint(da, lon, lat, year_bnds=''):
+def subset_gridpoint(da, lon, lat, start_yr='', end_yr=''):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by year(s)
 
@@ -234,25 +240,38 @@ def subset_gridpoint(da, lon, lat, year_bnds=''):
         >>> dsSub = utils.subset_gridpoint(ds, lon=-75,lat=45,year_bnds=[1990,1999])
             """
 
+    g = Geod(ellps='WGS84')  # WGS84 ellipsoid - decent globaly
     # adjust for files with all postive longitudes if necessary
     if np.all(da.lon > 0) and lon < 0:
         lon += 360
 
-    if len(da.lon.shape)==1 & len(da.lat.shape)==1:
-        out = da.sel(lon=lon, lat=lat, method='nearest')
+    if len(da.lon.shape) == 1 & len(da.lat.shape) == 1:
+        # create a 2d grid of lon, lat values
+        lon1, lat1 = np.meshgrid(np.asarray(da.lon.values), np.asarray(da.lat.values))
 
     else:
+        lon1 = da.lon.values
+        lat1 = da.lat.values
+    shp_orig = lon1.shape
+    lon1 = np.reshape(lon1, (lon1.size))
+    lat1 = np.reshape(lat1, (lat1.size))
+    # calculate geodesic distance between grid points and point of interest
+    az12, az21, dist = g.inv(lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape))
+    dist = dist.reshape(shp_orig)
 
-        dist = np.hypot(da.lat - lat, da.lon - lon)
-        iy, ix = np.unravel_index(np.argmin(dist, axis=None), da.lat.shape)
-        xydims = [x for x in da.dims if 'time' not in x]
-        args = {}
-        args[xydims[0]] = iy
-        args[xydims[1]] = ix
-        out = da.isel(**args)
+    iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
+    xydims = [x for x in da.dims if 'time' not in x]
+    args = {}
+    args[xydims[0]] = iy
+    args[xydims[1]] = ix
+    out = da.isel(**args)
+    if start_yr or end_yr:
+        if not start_yr:
+            start_yr = da.time.dt.year.min()
+        if not end_yr:
+            end_yr = da.time.dt.year.max()
+        year_bnds = np.asarray([start_yr, end_yr])
 
-    if year_bnds:
-        year_bnds = np.asarray(year_bnds)
         if len(year_bnds) == 1:
             time_cond = da.time.dt.year == year_bnds
         else:

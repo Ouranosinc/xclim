@@ -311,7 +311,7 @@ class TestSubsetGridPoint:
         yr_st = 2050
         yr_ed = 2059
 
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat, year_bnds=[yr_st, yr_ed])
+        out = utils.subset_gridpoint(da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
@@ -365,7 +365,7 @@ class TestSubsetBbox:
         yr_st = 2050
         yr_ed = 2059
 
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, year_bnds=[yr_st, yr_ed])
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
