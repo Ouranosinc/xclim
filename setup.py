@@ -23,6 +23,7 @@ requirements = [
     'inspect2',
     'unittest2',
     'six',
+    'pyproj>=1.9.5.1'
 ]
 
 setup_requirements = ['pytest-runner', ]
