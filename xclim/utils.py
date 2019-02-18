@@ -157,7 +157,7 @@ def subset_bbox(da, lon_bnds='', lat_bnds='', start_yr='', end_yr=''):
         Subset lat lon and years
         >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
         Subset data array lat, lon and single year
-        >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1990) # one year only
+        >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1990)
         Subset dataarray single year keep entire lon, lat grid
         >>> prSub = utils.subset_bbox(ds.pr,start_yr=1990,end_yr=1990) # one year only entire grid
         Subset mutliple variables in a single dataset
@@ -234,7 +234,7 @@ def subset_gridpoint(da, lon, lat, start_yr='', end_yr=''):
         Subset lat lon point and multiple years
         >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1999)
         Subset lat, lon point and single year
-        >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990) # one year only
+        >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990)
          Subset mutliple variables in a single dataset
         >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
         >>> dsSub = utils.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
