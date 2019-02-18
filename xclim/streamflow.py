@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 from xclim import checks
 from xclim import indices as _ind
 from xclim.utils import Indicator, generic_frequency_analysis, generic_max
@@ -47,6 +48,15 @@ class Streamflow(Indicator):
 
     def cfprobe(self, q):
         checks.check_valid(q, 'standard_name', 'streamflow')
+
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        from functools import reduce
+
+        freq = kwds.get('freq', None) or getattr(self, 'freq')
+        # Si on besoin juste d'une saison, cette fonction va quand même checker les données pour toutes les saisons.
+        miss = (checks.missing_any(da, freq) for da in args)
+        return reduce(np.logical_or, miss)
 
 
 base_flow_index = Streamflow(identifier='base_flow_index',
@@ -150,11 +160,15 @@ def generate2(identifier, title, description, notes='', defaults={}, fixed={}):
                         )
 
     print(body)
-    return Streamflow(identifier=identifier,
-                      title=title,
-                      description=description,
-                      compute=f.get_func())
+    s = Streamflow(identifier=identifier,
+                   title=title,
+                   description=description,
+                   compute=f.get_func())
 
+    if 'freq' in fixed:
+        s.freq = eval(fixed['freq'])
+
+    return s
 
 # What I'm doing here is taking a generic function and assigning new defaults to it (for freq, t, dist, and mode).
 # You still can override these defaults when calling the function, which may not be great. I think some defaults

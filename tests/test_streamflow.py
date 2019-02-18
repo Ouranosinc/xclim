@@ -27,3 +27,8 @@ class TestStreamflow:
     def test_q1max2sp(self):
 
         out = streamflow.q1max2sp(self.da)
+
+
+    def test_q1max2sp2(self):
+
+        out = streamflow.q1max2sp_new(self.da)

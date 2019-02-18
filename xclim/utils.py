@@ -173,6 +173,7 @@ def generic_seasonal_stat_return_period(da, mode, t, seasons, window=1, dist='gu
         daw = da
 
     # select wanted seasons
+    # DH: Nice !
     daws = daw.sel(time=daw.time.dt.season.isin(seasons)).dropna(dim='time')
 
     # resample over years with wanted mode
