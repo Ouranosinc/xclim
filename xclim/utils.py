@@ -13,6 +13,7 @@ from inspect2 import signature, _empty
 import abc
 from collections import defaultdict
 import datetime as dt
+from xclim.stats import fa
 
 from boltons.funcutils import wraps
 
@@ -129,6 +130,62 @@ def generic_frequency_analysis(da, freq, t, dist, mode, window=1):
 
     out = fa(opt, t, dist, mode)
     return out
+
+
+def generic_seasonal_stat_return_period(da, mode, t, seasons, window=1, dist='gumbel_r',
+                                        freq='AS-Dec'):
+    """generic function computing return period of minimum or maximum of time series over given seasons
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data
+    mode : {'low', 'high'}
+      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
+    t : int or sequence
+      Return period. The period depends on the resolution of the input data. If the input array's resolution is
+      yearly, then the return period is in years.
+    seasons : list of string
+      list of the seasons considered among 'DJF', 'MAM', 'JJA', 'SON'
+    window : int
+      number of days over which streamflow is averaged
+    dist : str
+      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      (see scipy.stats).
+    freq : str
+      Resampling frequency used to split the wanted season(s) into different "years"
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of values with a 1/t probability of exceedance (if mode=='high').
+    """
+    # make sure seasons is a list
+    if not isinstance(seasons, list):
+        seasons = [seasons]
+
+    # mean over window if necessary
+    if window > 1:
+        daw = da.rolling(time=window).mean()
+    else:
+        daw = da
+
+    # select wanted seasons
+    daws = daw.sel(time=daw.time.dt.season.isin(seasons)).dropna(dim='time')
+
+    # resample over years with wanted mode
+    if mode == 'high':
+        dawsr = daws.resample(time=freq, keep_attrs=True).max(dim='time')
+    elif mode == 'low':
+        dawsr = daws.resample(time=freq, keep_attrs=True).min(dim='time')
+    else:
+        raise RuntimeError("mode {:} should be 'high' or 'low'".format(mode))
+
+    # compute return period
+    rp = fa(dawsr, t, dist, mode)
+    return rp
 
 
 def threshold_count(da, op, thresh, freq):
@@ -596,7 +653,7 @@ def parse_doc(doc):
             out['title'], out['abstract'] = content
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i:i+2]
+        header, content = sections[i:i + 2]
 
         if header in ['Notes', 'References']:
             out[header.lower()] = content.replace('\n    ', '\n')

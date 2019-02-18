@@ -4,6 +4,7 @@
 
 from functools import partial
 from . import indices
+from . import streamflow
 
 # from .stats import fit, test
 
