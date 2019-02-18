@@ -159,7 +159,7 @@ def infer_doy_max(arr):
     return doy_max
 
 
-def interpolate_doy_calendar(source, doy_max):
+def _interpolate_doy_calendar(source, doy_max):
     r"""Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -218,7 +218,7 @@ def adjust_doy_calendar(source, target):
     if doy_max_source == doy_max:
         return source
 
-    return interpolate_doy_calendar(source, doy_max)
+    return _interpolate_doy_calendar(source, doy_max)
 
 
 def get_daily_events(da, da_value, operator):
