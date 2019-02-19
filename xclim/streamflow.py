@@ -117,7 +117,8 @@ def generate(identifier, title, description, notes='', defaults={}, fixed={}):
                       compute=f.get_func())
 
 
-def generate2(identifier, title, description, notes='', defaults={}, fixed={}):
+def generate2(identifier, title, description, notes='', defaults={}, fixed={},
+              standard_name='', long_name=''):
     """Return a Streamflow instance based on the `generic_frequency_analysis` function.
 
     Parameters
@@ -162,7 +163,8 @@ def generate2(identifier, title, description, notes='', defaults={}, fixed={}):
     print(body)
     s = Streamflow(identifier=identifier,
                    title=title,
-                   description=description,
+                   standard_name=standard_name,
+                   long_name=long_name,
                    compute=f.get_func())
 
     if 'freq' in fixed:
@@ -170,17 +172,95 @@ def generate2(identifier, title, description, notes='', defaults={}, fixed={}):
 
     return s
 
+
 # What I'm doing here is taking a generic function and assigning new defaults to it (for freq, t, dist, and mode).
 # You still can override these defaults when calling the function, which may not be great. I think some defaults
 # should be frozen (t, mode) while others could be left free (dist, freq).
-q1max2sp = generate(identifier='Q1max2Sp',
-                    title='2-year return period maximum spring flood peak',
-                    description='Annual maximum [max] daily flow [Q1] of 2-year recurrence [2] in spring [Sp]',
-                    defaults=dict(freq='QS-MAR', dist='gumbel_r'),
-                    fixed=dict(t=2, mode="'high'"))
-
-q1max2sp_new = generate2(identifier='Q1max2Sp',
+q1max2sp_old = generate(identifier='Q1max2Sp',
                         title='2-year return period maximum spring flood peak',
                         description='Annual maximum [max] daily flow [Q1] of 2-year recurrence [2] in spring [Sp]',
-                        defaults=dict(dist='gumbel_r'),
-                        fixed=dict(t=2, mode="'high'", seasons="'MAM'", window=1, freq="'AS-Dec'"))
+                        defaults=dict(freq='QS-MAR', dist='gumbel_r'),
+                        fixed=dict(t=2, mode="'high'"))
+
+
+def QWindowModeTSeasons_generate2_wrapper(window, mode, t, seasons):
+    """functiong wrapping generate2 to automatize things for indices of the general form
+    QWindowModeTSeasons
+
+    Parameters
+    ----------
+    window : int
+      number of days over which streamflow is averaged
+    mode : {'max', 'min'}
+      Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+    t : int
+      Return period. The period depends on the resolution of the input data. If the input array's resolution is
+      yearly, then the return period is in years.
+    seasons : string
+      list of the seasons considered among 'sp', 'su', 'a', 'w', 'sua' corresponding to:
+      'spring', 'summer', 'autumn', 'winter', 'summer-autumn' respectively
+
+    """
+    # check coherence of arguments
+    assert (mode in 'min max'.split())
+    assert (seasons in 'sp su a w sua'.split())
+
+    long_name_mode = dict(min='minimum', max='maximum')[mode]
+    month_seasons = dict(zip('sp su a w sua'.split(),
+                             '"MAM" "JJA" "SON" "DJF"'.split() + ['JJA SON'.split()]))[seasons]
+    name_seasons = dict(zip('sp su a w sua'.split(),
+                            'spring summer automn winter summer-autumn'.split()))[seasons]
+
+    identifier = 'q{:}{:}{:}{:}'.format(window, mode, t, seasons)
+    title = '{:}-year return period {:} {:} {:}-day streamflow'.format(t, long_name_mode, name_seasons,
+                                                                       window)
+    description = 'Annual {:} [{:}] {:}-day flow [Q{:}] of {:}-year recurrence [{:}] in {:} [{:}]'.format(
+        long_name_mode, mode, window, window, t, t, name_seasons, seasons)
+    standard_name = '{:}-year_return_period_{:}_{:}_{:}-day_flow'.format(t, long_name_mode, name_seasons,
+                                                                         window)
+    long_name = '{:}-year return period {:} {:} {:}-day flow'.format(t, long_name_mode, name_seasons,
+                                                                     window)
+    mode_hl = '"{:s}"'.format(dict(max='high', min='low')[mode])
+
+    print(month_seasons)
+
+    gen2 = generate2(identifier=identifier,
+                     title=title,
+                     description=description,
+                     standard_name=standard_name,
+                     long_name=long_name,
+                     defaults=dict(dist='gumbel_r'),
+                     fixed=dict(t=t, mode=mode_hl, seasons=month_seasons, window=1, freq="'AS-Dec'"))
+
+    return gen2
+
+
+# q1max2sp = generate2(identifier='q1max2sp',
+#                      title='2-year return period maximum spring flood peak',
+#                      description='Annual maximum [max] daily flow [Q1] of 2-year recurrence [2] in spring [Sp]',
+#                      standard_name='2-year_return_period_maximum_spring_daily_flow',
+#                      long_name='2-year return period maximum spring daily flow',
+#                      defaults=dict(dist='gumbel_r'),
+#                      fixed=dict(t=2, mode="'high'", seasons="'MAM'", window=1, freq="'AS-Dec'"))
+
+q1max2sp = QWindowModeTSeasons_generate2_wrapper(1, 'max', 2, 'sp')
+
+q1max20sp = QWindowModeTSeasons_generate2_wrapper(1, 'max', 20, 'sp')
+
+q14max2sp = QWindowModeTSeasons_generate2_wrapper(14, 'max', 2, 'sp')
+
+q14max20sp = QWindowModeTSeasons_generate2_wrapper(14, 'max', 20, 'sp')
+
+q1max2sua = QWindowModeTSeasons_generate2_wrapper(1, 'max', 2, 'sua')
+
+q1max20sua = QWindowModeTSeasons_generate2_wrapper(1, 'max', 20, 'sua')
+
+q7min2su = QWindowModeTSeasons_generate2_wrapper(7, 'min', 2, 'su')
+
+q7min10su = QWindowModeTSeasons_generate2_wrapper(7, 'min', 10, 'su')
+
+q30min5su = QWindowModeTSeasons_generate2_wrapper(30, 'min', 5, 'su')
+
+q7min10w = QWindowModeTSeasons_generate2_wrapper(7, 'min', 10, 'w')
+
+q30min5w = QWindowModeTSeasons_generate2_wrapper(30, 'min', 5, 'w')
