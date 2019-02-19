@@ -165,6 +165,9 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     # The day of year value of the tasmin series.
     doy = tasmin.indexes['time'].dayofyear
 
+    # If calendar of `tn10` is different from `tasmin`, interpolate.
+    tn10 = utils.adjust_doy_calendar(tn10, tasmin)
+
     # Create an array with the shape and coords of tasmin, but with values set to tx90 according to the doy index.
     thresh = xr.full_like(tasmin, np.nan)
     thresh.data = tn10.sel(dayofyear=doy)
@@ -1862,6 +1865,9 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
 
     # The day of year value of the tasmax series.
     doy = tasmax.indexes['time'].dayofyear
+
+    # adjustment of tx90 to tasmax doy range
+    tx90 = utils.adjust_doy_calendar(tx90, tasmax)
 
     # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
     thresh = xr.full_like(tasmax, np.nan)
