@@ -264,3 +264,44 @@ q30min5su = QWindowModeTSeasons_generate2_wrapper(30, 'min', 5, 'su')
 q7min10w = QWindowModeTSeasons_generate2_wrapper(7, 'min', 10, 'w')
 
 q30min5w = QWindowModeTSeasons_generate2_wrapper(30, 'min', 5, 'w')
+
+
+def get_mean_doy_of_max(da, seasons=['JJA'], freq='AS'):
+    """function computing the multi-year mean of the 'day of year' of the maximum value during given seasons
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data
+    seasons : list of string
+      list of the seasons considered among 'DJF', 'MAM', 'JJA', 'SON'
+    freq : str
+      Resampling frequency used to split the wanted season(s) into different "years"
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Examples
+    --------
+    >>> q = xr.open_dataset('streampflow.nc')
+    >>> mdoy_of_max = get_mean_doy_of_max(q, seasons=["SON"])
+    """
+
+    das = da.sel(time=da.time.dt.season.isin(seasons)).dropna(dim='time')
+
+    def _get_doy_of_max(da):
+        i_time_max = da.argmax(dim='time')
+        doy_of_max = da.isel(time=i_time_max).time.dt.dayofyear
+        return doy_of_max
+
+    doy_of_max = das.resample(time=freq).apply(_get_doy_of_max)
+    doy_of_max_tavg = doy_of_max.mean(dim='time')
+    return doy_of_max_tavg
+
+
+doy_q1maxsp = Streamflow(identifier='doy_q1maxsp',
+                         units='day of year',
+                         standard_name='average_day_of_year_of_annual_maximum_spring_value',
+                         long_name='day of year of annual maximum spring value',
+                         description="",
+                         cell_methods='time: maximum within season time: mean over years',
+                         compute=get_mean_doy_of_max,
+                         )
