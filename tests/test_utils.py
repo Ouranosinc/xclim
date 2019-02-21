@@ -290,3 +290,52 @@ class TestThresholdCount:
         ts = tas_series(np.arange(365))
         out = utils.threshold_count(ts, '<', 50, 'Y')
         np.testing.assert_array_equal(out, [50, 0])
+
+
+from xarray.coding.cftimeindex import CFTimeIndex
+from xclim.utils import time_bnds
+from numpy.testing import assert_array_equal
+
+@pytest.fixture(
+    params=[dict(start='2004-01-01T12:07:01', periods=27, freq='3MS')],
+    ids=['3MS']
+)
+def time_range_kwargs(request):
+    return request.param
+
+
+@pytest.fixture()
+def datetime_index(time_range_kwargs):
+    return pd.date_range(**time_range_kwargs)
+
+
+@pytest.fixture()
+def cftime_index(time_range_kwargs):
+    return xr.cftime_range(**time_range_kwargs)
+
+
+def da(index):
+    return xr.DataArray(np.arange(100., 100. + index.size),
+                        coords=[index], dims=['time'])
+
+
+@pytest.mark.parametrize('freq', ['3A-MAY', '5Q-JUN', '7M', '6480H',
+                                  '302431T', '23144781S'])
+def test_time_bnds(freq, datetime_index, cftime_index):
+    da_datetime = da(datetime_index).resample(time=freq)
+    da_cftime = da(cftime_index).resample(time=freq)
+    cftime_bounds = time_bnds(da_cftime, freq=freq)
+    cftime_starts, cftime_ends = zip(*cftime_bounds)
+    cftime_starts = CFTimeIndex(cftime_starts).to_datetimeindex()
+    cftime_ends = CFTimeIndex(cftime_ends).to_datetimeindex()
+    # cftime resolution goes down to microsecond only, code below corrects
+    # that to allow for comparison with pandas datetime
+    cftime_ends += np.timedelta64(999, 'ns')
+    datetime_starts = da_datetime._full_index.to_period(freq).start_time
+    datetime_ends = da_datetime._full_index.to_period(freq).end_time
+    print(cftime_starts)
+    print(datetime_starts)
+    print(cftime_ends)
+    print(datetime_ends)
+    assert_array_equal(cftime_starts, datetime_starts)
+    assert_array_equal(cftime_ends, datetime_ends)

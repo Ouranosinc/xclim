@@ -544,3 +544,173 @@ def format_kwargs(attrs, params):
                 mba[k] = v
 
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
+
+
+from datetime import timedelta
+from xarray.coding.cftimeindex import CFTimeIndex
+from xarray.coding.cftime_offsets import (YearBegin, YearEnd,
+                                          QuarterBegin, QuarterEnd,
+                                          MonthBegin, MonthEnd, to_offset)
+from xarray.core.resample import DataArrayResample
+
+
+def cftime_start_time(date, freq):
+    """
+    Get the cftime.datetime for the start of a period. As we are not supplying
+    actual period objects, assumptions regarding the period are made based on
+    the given freq. IMPORTANT NOTE: this function cannot be used
+    on greater-than-day freq that start at the beginning of a month, e.g.,
+    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+
+    Parameters
+    __________
+    datetime : cftime.datetime
+        The original datetime object as a proxy representation for period.
+    freq : str
+        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
+
+    Returns
+    _______
+    cftime.datetime
+        The starting datetime of the period inferred from date and freq.
+    """
+
+    freq = to_offset(freq)
+    if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
+        raise ValueError('Invalid frequency: ' + freq.rule_code())
+    elif isinstance(freq, YearEnd):
+        month = freq.month
+        return date - YearEnd(n=1, month=month) + timedelta(days=1)
+    elif isinstance(freq, QuarterEnd):
+        month = freq.month
+        return date - QuarterEnd(n=1, month=month) + timedelta(days=1)
+    elif isinstance(freq, MonthEnd):
+        return date - MonthEnd(n=1) + timedelta(days=1)
+    else:
+        return date
+
+
+def cftime_end_time(date, freq):
+    """
+    Get the cftime.datetime for the end of a period. As we are not supplying
+    actual period objects, assumptions regarding the period are made based on
+    the given freq. IMPORTANT NOTE: this function cannot be used
+    on greater-than-day freq that start at the beginning of a month, e.g.,
+    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+
+    Parameters
+    __________
+    datetime : cftime.datetime
+        The original datetime object as a proxy representation for period.
+    freq : str
+        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
+
+    Returns
+    _______
+    cftime.datetime
+        The ending datetime of the period inferred from date and freq.
+    """
+    freq = to_offset(freq)
+    if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
+        raise ValueError('Invalid frequency: ' + freq.rule_code())
+    elif isinstance(freq, YearEnd):
+        mod_freq = YearBegin(n=freq.n, month=freq.month)
+    elif isinstance(freq, QuarterEnd):
+        mod_freq = QuarterBegin(n=freq.n, month=freq.month)
+    elif isinstance(freq, MonthEnd):
+        mod_freq = MonthBegin(n=freq.n)
+    else:
+        mod_freq = freq
+    return cftime_start_time(date + mod_freq, freq) - timedelta(microseconds=1)
+
+
+def cfindex_start_time(cfindex, freq):
+    """
+    Get the start of a period for a pseudo-period index. As we are using
+    datetime indices to stand in for period indices, assumptions regarding the
+    period are made based on the given freq. IMPORTANT NOTE: this function
+    cannot be used on greater-than-day freq that start at the beginning of a
+    month, e.g., 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+
+    Parameters
+    __________
+    cfindex : CFTimeIndex
+        CFTimeIndex as a proxy representation for CFPeriodIndex
+    freq : str
+        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
+
+    Returns
+    _______
+    CFTimeIndex
+        The starting datetimes of periods inferred from dates and freq
+    """
+    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])
+
+
+def cfindex_end_time(cfindex, freq):
+    """
+    Get the start of a period for a pseudo-period index. As we are using
+    datetime indices to stand in for period indices, assumptions regarding the
+    period are made based on the given freq. IMPORTANT NOTE: this function
+    cannot be used on greater-than-day freq that start at the beginning of a
+    month, e.g., 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+
+    Parameters
+    __________
+    cfindex : CFTimeIndex
+        CFTimeIndex as a proxy representation for CFPeriodIndex
+    freq : str
+        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
+
+    Returns
+    _______
+    CFTimeIndex
+        The ending datetimes of periods inferred from dates and freq
+    """
+    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])
+
+
+def time_bnds(group, freq):
+    """
+    Find the time bounds for a pseudo-period index. As we are using datetime
+    indices to stand in for period indices, assumptions regarding the period
+    are made based on the given freq. IMPORTANT NOTE: this function cannot be
+    used on greater-than-day freq that start at the beginning of a month, e.g.,
+    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+
+    Parameters
+    __________
+    group : CFTimeIndex or DataArrayResample
+        Object which contains CFTimeIndex as a proxy representation for
+        CFPeriodIndex
+    freq : str
+        String specifying the frequency/offset such as 'MS', '2D', or '3T'
+
+    Returns
+    _______
+    start_time : cftime.datetime
+        The start time of the period inferred from datetime and freq.
+
+    Examples
+    --------
+    >>> index = xr.cftime_range(start='2000-01-01', periods=3,
+                                freq='2QS', calendar='360_day')
+    >>> time_bnds(index, '2Q')
+    ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0, 1, 1),
+      cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999, 0, 91)),
+     (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0, 6, 181),
+      cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999, 5, 271)),
+     (cftime.Datetime360Day(2001, 1, 1, 0, 0, 0, 0, 4, 1),
+      cftime.Datetime360Day(2001, 3, 30, 23, 59, 59, 999999, 3, 91)))
+    """
+    if isinstance(group, CFTimeIndex):
+        cfindex = group
+    elif isinstance(group, DataArrayResample):
+        if isinstance(group._full_index, CFTimeIndex):
+            cfindex = group._full_index
+    else:
+        raise TypeError('index must be a CFTimeIndex, but got '
+                        'an instance of %r' % type(group).__name__)
+
+    return tuple(zip(cfindex_start_time(cfindex, freq),
+                     cfindex_end_time(cfindex, freq)))
