@@ -70,7 +70,7 @@ def calc_ens_perc(arr, p):
     if dims.index('time') != 1:
         dims1 = [dims[dims.index('sim')], dims[dims.index('time')]]
         for d in dims:
-            if not d in dims1:
+            if d not in dims1:
                 dims1.append(d)
         arr = arr.transpose(*dims1)
         dims = dims1
@@ -82,8 +82,8 @@ def calc_ens_perc(arr, p):
         # only use nanpercentile where we need it (slow performace compared to standard) :
         nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')]))
         for t in nan_index[0]:
-            if np.any((nan_count.sel(time=arr.time[t]) > 0) & (
-                nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):  # nan_count.sel(time=t):
+            if np.any((nan_count.sel(time=arr.time[t]) > 0)
+                      & (nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):
                 # nans present but not for all simulations - use nanpercentile
                 out[t,] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
 
@@ -160,7 +160,7 @@ def create_ensemble(ncfiles, dim='sim'):
     return ens
 
 
-def ensemble_statistics(ens, stats={'type': 'perc', 'values': [10, 50, 90], 'time_block': []}, ):
+def ensemble_percentiles(ens, values=[10, 50, 90], time_block=[]):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
             Returns a dataset containing ensemble statistics for input climate simulations.
@@ -213,86 +213,115 @@ def ensemble_statistics(ens, stats={'type': 'perc', 'values': [10, 50, 90], 'tim
         dims = ens[v].dims
         outdims = [x for x in dims if 'sim' not in x]
 
-        if stats['type'] == 'perc':
-            # Percentile calculation requires load to memory : automate size for large ensemble objects
-            if stats['time_block']:
-                time_block = stats['time_block']
-            else:
-                time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
+        # Percentile calculation requires load to memory : automate size for large ensemble objects
+        if not time_block:
+            time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
 
-            if time_block > len(ens[v].time):
+        if time_block > len(ens[v].time):
 
-                print('loading ensemble data to memory')
-                arr = ens[v].load()  # percentile calc requires loading the array
+            print('loading ensemble data to memory')
+            arr = ens[v].load()  # percentile calc requires loading the array
+            coords = {}
+            for c in outdims:
+                coords[c] = arr[c]
+            for p in values:
+                outvar = v + '_p' + str(p)
+
+                out1 = calc_ens_perc(arr, p)
+
+                dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
+                dsOut[outvar].attrs = ens[v].attrs
+                if 'description' in dsOut[outvar].attrs.keys():
+                    dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                         'th percentile of ensemble'
+                else:
+                    dsOut[outvar].attrs['description'] = str(p) + \
+                                                         'th percentile of ensemble'
+        else:
+            # loop through blocks
+            Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
+                    ' time-steps')
+            blocks = list(range(0, len(ens.time) + 1, int(time_block)))
+            if blocks[-1] != len(ens[v].time):
+                blocks.append(len(ens[v].time))
+            arr_p_all = {}
+            for t in range(0, len(blocks) - 1):
+                print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
+                time_sel = slice(blocks[t], blocks[t + 1])
+                arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
                 coords = {}
                 for c in outdims:
                     coords[c] = arr[c]
-                for p in stats['values']:
+                for p in values:
                     outvar = v + '_p' + str(p)
 
                     out1 = calc_ens_perc(arr, p)
 
-                    dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
-                    dsOut[outvar].attrs = ens[v].attrs
-                    if 'description' in dsOut[outvar].attrs.keys():
-                        dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                             'th percentile of ensemble'
+                    if t == 0:
+                        arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
                     else:
-                        dsOut[outvar].attrs['description'] = str(p) + \
-                                                             'th percentile of ensemble'
-            else:
-                # loop through blocks
-                Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
-                        ' time-steps')
-                blocks = list(range(0, len(ens.time) + 1, int(time_block)))
-                if blocks[-1] != len(ens[v].time):
-                    blocks.append(len(ens[v].time))
-                arr_p_all = {}
-                for t in range(0, len(blocks) - 1):
-                    print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
-                    time_sel = slice(blocks[t], blocks[t + 1])
-                    arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
-                    coords = {}
-                    for c in outdims:
-                        coords[c] = arr[c]
-                    for p in stats['values']:
-                        outvar = v + '_p' + str(p)
+                        arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
+                                                       xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
+            for p in values:
+                outvar = v + '_p' + str(p)
+                dsOut[outvar] = arr_p_all[str(p)]
+                dsOut[outvar].attrs = ens[v].attrs
+                if 'description' in dsOut[outvar].attrs.keys():
+                    dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                         'th percentile of ensemble'
+                else:
+                    dsOut[outvar].attrs['description'] = str(p) + \
+                                                         'th percentile of ensemble'
 
-                        out1 = calc_ens_perc(arr, p)
+        return dsOut
 
-                        if t == 0:
-                            arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
-                        else:
-                            arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
-                                                           xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
-                for p in stats['values']:
-                    outvar = v + '_p' + str(p)
-                    dsOut[outvar] = arr_p_all[str(p)]
-                    dsOut[outvar].attrs = ens[v].attrs
-                    if 'description' in dsOut[outvar].attrs.keys():
-                        dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                             'th percentile of ensemble'
-                    else:
-                        dsOut[outvar].attrs['description'] = str(p) + \
-                                                             'th percentile of ensemble'
 
-        elif stats['type'] == 'mean_std_min_max':
-            dsOut[v + '_mean'] = ens[v].mean(dim='sim')
-            dsOut[v + '_stdev'] = ens[v].std(dim='sim')
-            dsOut[v + '_max'] = ens[v].max(dim='sim')
-            dsOut[v + '_min'] = ens[v].min(dim='sim')
-            for vv in dsOut.data_vars:
-                dsOut[vv].attrs = ens[v].attrs
+def ensemble_mean_std_max_min(ens):
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
-                if 'description' in dsOut[vv].attrs.keys():
-                    vv.split()
-                    dsOut[vv].attrs['description'] = dsOut[vv].attrs['description'] + ' : ' + vv.split('_')[-1] + \
-                                                     ' of ensemble'
+            Returns a dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate simulations.
 
-        else:
-            raise (Exception(
-                "unknown statistics type specified : please specify "
-                "the statistics type as one of 'perc' or 'mean_std'"))
+
+
+            Parameters
+            ----------
+
+            ens : Ensemble dataset (see xclim.utils.create_ensemble)
+
+
+
+            Returns
+            -------
+            xarray dataset with containing data variables of ensemble statistics
+
+            Examples
+            --------
+
+            >>> from xclim import utils
+            >>> import glob
+            >>> ncfiles = glob.glob('/*tas*.nc')
+            Create ensemble dataset
+            >>> ens = utils.create_ensemble(ncfiles)
+            Calculate ensemble statistics
+            >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
+            >>> print(ens_mean_std['tas_mean'])
+
+
+            """
+    dsOut = ens.drop(ens.data_vars)
+    for v in ens.data_vars:
+
+        dsOut[v + '_mean'] = ens[v].mean(dim='sim')
+        dsOut[v + '_stdev'] = ens[v].std(dim='sim')
+        dsOut[v + '_max'] = ens[v].max(dim='sim')
+        dsOut[v + '_min'] = ens[v].min(dim='sim')
+        for vv in dsOut.data_vars:
+            dsOut[vv].attrs = ens[v].attrs
+
+            if 'description' in dsOut[vv].attrs.keys():
+                vv.split()
+                dsOut[vv].attrs['description'] = dsOut[vv].attrs['description'] + ' : ' + vv.split('_')[
+                    -1] + ' of ensemble'
 
         return dsOut
 
