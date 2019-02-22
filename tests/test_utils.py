@@ -25,7 +25,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 import dask
-
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy

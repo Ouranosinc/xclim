@@ -8,6 +8,7 @@ import numpy as np
 import six
 import pint
 import pandas as pd
+import xarray as xr
 from . import checks
 from inspect2 import signature, _empty
 import abc
