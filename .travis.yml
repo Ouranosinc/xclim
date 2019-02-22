@@ -42,6 +42,7 @@ matrix:
   allow_failures:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37
+    - env: TOXENV=py27
 
 install:
     - sudo -H pip install --upgrade pip

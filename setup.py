@@ -17,7 +17,7 @@ requirements = [
     'netCDF4>=1.4',
     'dask[complete]',
     'bottleneck>=1.2.1',
-    'xarray>=0.11.3',
+    'xarray @ https://api.github.com/repos/pydata/xarray/tarball/master',
     'pint>=0.8',
     'boltons>=18.0',
     'inspect2',

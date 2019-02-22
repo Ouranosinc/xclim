@@ -5,7 +5,6 @@ xclim xarray.DataArray utilities module
 """
 
 import numpy as np
-import xarray as xr
 import six
 import pint
 import pandas as pd
@@ -50,6 +49,18 @@ units.enable_contexts(hydro)
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
 binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
+
+# Maximum day of year in each calendar.
+calendars = {'standard': 366,
+             'gregorian': 366,
+             'proleptic_gregorian': 366,
+             'julian': 366,
+             'no_leap': 365,
+             '365_day': 365,
+             'all_leap': 366,
+             '366_day': 366,
+             'uniform30day': 360,
+             '360_day': 360}
 
 
 def calc_ens_perc(arr, p):
@@ -337,18 +348,14 @@ def percentile_doy(arr, window=5, per=.1):
     xarray.DataArray
       The percentiles indexed by the day of the year.
     """
-
-    # TODO: Support percentile array, store percentile in attributes (or coordinates ?)
+    # TODO: Support percentile array, store percentile in coordinates.
+    #  This is supported by DataArray.quantile, but not by groupby.reduce.
     rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
 
     # Create empty percentile array
     g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
 
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+    p = g.reduce(np.nanpercentile, dim=('time', 'window'), q=per * 100)
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -356,6 +363,96 @@ def percentile_doy(arr, window=5, per=.1):
         p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
 
     return p
+
+
+def infer_doy_max(arr):
+    """Return the largest doy allowed by calendar.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    int
+      The largest day of the year found in calendar.
+    """
+    cal = arr.time.encoding.get('calendar', None)
+    if cal in calendars:
+        doy_max = calendars[cal]
+    else:
+        # If source is an array with no calendar information and whose length is not at least of full year,
+        # then this inference could be wrong (
+        doy_max = arr.time.dt.dayofyear.max().data
+        if len(arr.time) < 360:
+            raise ValueError("Cannot infer the calendar from a series less than a year long.")
+        if doy_max not in [360, 365, 366]:
+            raise ValueError("The target array's calendar is not recognized")
+
+    return doy_max
+
+
+def _interpolate_doy_calendar(source, doy_max):
+    r"""Interpolate from one set of dayofyear range to another
+
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
+    to 365).
+
+    Parameters
+    ----------
+    source : xarray.DataArray
+      Array with `dayofyear` coordinates.
+    doy_max : int
+      Largest day of the year allowed by calendar.
+
+    Returns
+    -------
+    xarray.DataArray
+      Interpolated source array over coordinates spanning the target `dayofyear` range.
+
+    """
+    if 'dayofyear' not in source.coords.keys():
+        raise AttributeError("source should have dayofyear coordinates.")
+
+    # Interpolation of source to target dayofyear range
+    doy_max_source = source.dayofyear.max()
+
+    # Interpolate to fill na values
+    tmp = source.interpolate_na(dim='dayofyear')
+
+    # Interpolate to target dayofyear range
+    tmp.coords['dayofyear'] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+
+    return tmp.interp(dayofyear=range(1, doy_max + 1))
+
+
+def adjust_doy_calendar(source, target):
+    r"""Interpolate from one set of dayofyear range to another
+
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
+    to 365).
+
+    Parameters
+    ----------
+    source : xarray.DataArray
+      Array with `dayofyear` coordinates.
+    target : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+      Interpolated source array over coordinates spanning the target `dayofyear` range.
+
+    """
+    doy_max_source = source.dayofyear.max()
+
+    doy_max = infer_doy_max(target)
+    if doy_max_source == doy_max:
+        return source
+
+    return _interpolate_doy_calendar(source, doy_max)
 
 
 def subset_bbox(da, lon_bnds='', lat_bnds='', start_yr='', end_yr=''):
@@ -512,46 +609,6 @@ def subset_gridpoint(da, lon, lat, start_yr='', end_yr=''):
         out = out.where(time_cond, drop=True)
 
     return out
-
-
-# TODO: I'd like this function to use calendar instead of target (ie target calendar.)
-# Depends on https://github.com/pydata/xarray/issues/2436
-def adjust_doy_calendar(source, target):
-    r"""Interpolate from one set of dayofyear range to another
-
-    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
-    to 365).
-
-    Parameters
-    ----------
-    source : xarray.DataArray
-      Array with `dayofyear` coordinates.
-    target : xarray.DataArray
-      Array with `time` coordinates the source should be mapped to.
-
-    Returns
-    -------
-    xarray.DataArray
-      Interpolated source array over coordinates spanning the target `dayofyear` range.
-
-    """
-    if 'dayofyear' not in source.coords.keys():
-        raise AttributeError("source should have dayofyear coordinates.")
-
-    # Interpolation of source to target dayofyear range
-    # When https://github.com/pydata/xarray/issues/2436 will be fixed, we might want to use calendar instead.
-    doy_max_source = source.dayofyear.values.max()
-    doy_max_target = target.time.dt.dayofyear.values.max()
-    if doy_max_target not in [360, 365, 366]:
-        raise ValueError("The target array's calendar is not recognized")
-
-    # Interpolate to fill na values
-    buffer = source.interpolate_na(dim='dayofyear')
-
-    # Interpolate to target dayofyear range
-    buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
-                                             num=doy_max_source)
-    return buffer.interp(dayofyear=range(1, doy_max_target + 1))
 
 
 def get_daily_events(da, da_value, operator):

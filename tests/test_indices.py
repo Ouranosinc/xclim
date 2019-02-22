@@ -531,6 +531,21 @@ class TestTGXN10p:
         assert out[0] == 1
         assert out[5] == 5
 
+    def test_doy_interpolation(self):
+        pytest.importorskip('xarray', '0.11.4')
+
+        # Just a smoke test
+        fn_clim = os.path.join(TESTS_DATA, 'CanESM2_365day',
+                               'tasmin_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+        fn = os.path.join(TESTS_DATA, 'HadGEM2-CC_360day',
+                          'tasmin_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc')
+
+        with xr.open_dataset(fn_clim) as ds:
+            t10 = percentile_doy(ds.tasmin.isel(lat=0, lon=0), per=.1)
+
+        with xr.open_dataset(fn) as ds:
+            xci.tn10p(ds.tasmin.isel(lat=0, lon=0), t10, freq='MS')
+
 
 class TestTGXN90p:
 
@@ -777,12 +792,10 @@ class TestWinterRainRatio:
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
-@pytest.mark.skip
 class TestTG:
-
-    def test_cmip3(self, cmip3_day_tas):  # This fails, xarray chokes on the time dimension. Unclear why.
-        # rd = xci.TG(cmip3_day_tas)
-        pass
+    def test_cmip3(self, cmip3_day_tas):
+        pytest.importorskip('xarray', '0.11.4')
+        xci.tg_mean(cmip3_day_tas)
 
     def compare_against_icclim(self, cmip3_day_tas):
         pass
