@@ -18,6 +18,7 @@
 
 
 import os
+import glob
 import cftime
 import numpy as np
 import pandas as pd
@@ -35,6 +36,56 @@ TAS_SERIES = tas_series
 PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
+
+
+class TestEnsembleStats:
+    nc_files_simple = glob.glob(os.path.join(TESTS_DATA, 'EnsembleStats', '*1950-2100*.nc'))
+    nc_files = glob.glob(os.path.join(TESTS_DATA, 'EnsembleStats', '*.nc'))
+
+    def test_create_ensemble(self):
+        ens = utils.create_ensemble(self.nc_files_simple)
+        assert len(ens.sim) == len(self.nc_files_simple)
+
+    def test_create_unequal_times(self):
+        ens = utils.create_ensemble(self.nc_files)
+        assert len(ens.sim) == len(self.nc_files)
+        assert ens.time.dt.year.min() == 1970
+        assert ens.time.dt.year.max() == 2050
+
+    def test_calc_perc(self):
+        ens = utils.create_ensemble(self.nc_files_simple)
+        out1 = utils.ensemble_statistics(ens)
+        np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 10), out1['tg_mean_p10'][0, 5, 5])
+        np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 50), out1['tg_mean_p50'][0, 5, 5])
+        np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 90), out1['tg_mean_p90'][0, 5, 5])
+        assert np.all(out1['tg_mean_p90'] > out1['tg_mean_p50'])
+        assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
+
+    def test_calc_perc_blocks(self):
+        ens = utils.create_ensemble(self.nc_files_simple)
+        out1 = utils.ensemble_statistics(ens)
+        out2 = utils.ensemble_statistics(ens, stats={'type': 'perc', 'values': [10, 50, 90], 'time_block': 10})
+        np.testing.assert_array_equal(out1['tg_mean_p10'], out2['tg_mean_p10'])
+        np.testing.assert_array_equal(out1['tg_mean_p50'], out2['tg_mean_p50'])
+        np.testing.assert_array_equal(out1['tg_mean_p90'], out2['tg_mean_p90'])
+
+    def test_calc_perc_nans(self):
+        ens = utils.create_ensemble(self.nc_files_simple).load()
+
+        ens.tg_mean[2, 0, 5, 5] = np.nan
+        out1 = utils.ensemble_statistics(ens)
+        np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 10), np.nan)
+        np.testing.assert_array_equal(np.nanpercentile(ens['tg_mean'][:, 0, 5, 5], 10), out1['tg_mean_p10'][0, 5, 5])
+        assert np.all(out1['tg_mean_p90'] > out1['tg_mean_p50'])
+        assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
+
+    def test_calc_mean_std_min_max(self):
+        ens = utils.create_ensemble(self.nc_files_simple)
+        out1 = utils.ensemble_statistics(ens, stats={'type': 'mean_std_min_max'})
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].mean(dim='sim'), out1.tg_mean_mean[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].std(dim='sim'), out1.tg_mean_stdev[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].max(dim='sim'), out1.tg_mean_max[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].min(dim='sim'), out1.tg_mean_min[0, 5, 5])
 
 
 class TestDailyDownsampler:
