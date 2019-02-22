@@ -291,7 +291,8 @@ def ensemble_statistics(ens, stats={'type': 'perc', 'values': [10, 50, 90], 'tim
 
         else:
             raise (Exception(
-                "unknown statistics type specified : please specify the statistics type as one of 'perc' or 'mean_std'"))
+                "unknown statistics type specified : please specify "
+                "the statistics type as one of 'perc' or 'mean_std'"))
 
         return dsOut
 
