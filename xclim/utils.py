@@ -323,7 +323,7 @@ def ensemble_mean_std_max_min(ens):
                 dsOut[vv].attrs['description'] = dsOut[vv].attrs['description'] + ' : ' + vv.split('_')[
                     -1] + ' of ensemble'
 
-        return dsOut
+    return dsOut
 
 
 def threshold_count(da, op, thresh, freq):
