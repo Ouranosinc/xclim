@@ -291,7 +291,7 @@ def calc_perc(arr, p):
             if np.any((nan_count.sel(time=arr.time[t]) > 0)
                       & (nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):
                 # nans present but not for all simulations - use nanpercentile
-                out[t,] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
+                out[t, ] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
 
     return out
 
@@ -299,7 +299,8 @@ def calc_perc(arr, p):
 def ensemble_mean_std_max_min(ens):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
-            Returns a dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate simulations.
+            Returns a dataset containing ensemble mean, standard-deviation,
+            minimum and maximum for input climate simulations.
 
 
 
