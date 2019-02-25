@@ -239,7 +239,6 @@ def calc_percentiles_blocks(ens, v, values, time_block):
         for c in outdims:
             coords[c] = arr[c]
         for p in values:
-            outvar = v + '_p' + str(p)
 
             out1 = calc_perc(arr, p)
 
@@ -274,16 +273,12 @@ def calc_perc(arr, p):
 
     nan_count = np.isnan(arr).sum(axis=dims.index('sim'))
     out = np.percentile(arr, p, axis=dims.index('sim'))
-
     if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')])):
+        arr1 = arr.values.reshape(arr.shape[dims.index('sim')], int(arr.size / arr.shape[dims.index('sim')]))
         # only use nanpercentile where we need it (slow performace compared to standard) :
         nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')]))
-        for t in nan_index[0]:
-            if np.any((nan_count.sel(time=arr.time[t]) > 0)
-                      & (nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):
-                # nans present but not for all simulations - use nanpercentile
-                out[t, ] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
-
+        for t in np.ravel_multi_index(nan_index, nan_count.shape):
+            out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=dims.index('sim'))
     return out
 
 

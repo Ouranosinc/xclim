@@ -73,9 +73,12 @@ class TestEnsembleStats:
         ens = utils.create_ensemble(self.nc_files_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
+        ens.tg_mean[2, 7, 5, 5] = np.nan
         out1 = utils.ensemble_percentiles(ens)
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 10), np.nan)
+        np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 7, 5, 5], 10), np.nan)
         np.testing.assert_array_equal(np.nanpercentile(ens['tg_mean'][:, 0, 5, 5], 10), out1['tg_mean_p10'][0, 5, 5])
+        np.testing.assert_array_equal(np.nanpercentile(ens['tg_mean'][:, 7, 5, 5], 10), out1['tg_mean_p10'][7, 5, 5])
         assert np.all(out1['tg_mean_p90'] > out1['tg_mean_p50'])
         assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
 
