@@ -134,7 +134,7 @@ def create_ensemble(ncfiles, dim='sim'):
     return ens
 
 
-def ensemble_percentiles(ens, values=[10, 50, 90], time_block=[]):
+def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
             Returns a dataset containing ensemble statistics for input climate simulations.
