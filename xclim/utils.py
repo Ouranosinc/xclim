@@ -146,19 +146,10 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=[]):
 
             ens : Ensemble dataset (see xclim.utils.create_ensemble)
 
-            vari : data variable to calculate statistics for (string)
+            values (optional) : percentile values to calculate (default : 10,50, 90)
 
-            stats (optional) : Dictionary specifying type of statistics to perform.
-            One of :
-
-                stats = {'type':'perc', 'values':[perc1, perc2, ... percN]})
-                - (Default) Calculate percentiles defined in 'values'. Defaults to [10, 50, 90]
-                - For large ensembles - optionally specify a 'time_block' width (number of time steps) for iterative
-                 percentile calculation. If empty the function will try to automatically determine a manageable size
-
-                or
-
-                stats = {'type':'mean_std_min_max'} - Calculate ensemble mean, standard-deviation, minimum and maximum
+            time_block (optional) : for large ensembles iteratively calculate percentiles
+            in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
 
 
             Returns
