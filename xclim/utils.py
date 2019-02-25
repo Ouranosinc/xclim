@@ -285,36 +285,36 @@ def calc_perc(arr, p):
 def ensemble_mean_std_max_min(ens):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
-            Returns a dataset containing ensemble mean, standard-deviation,
-            minimum and maximum for input climate simulations.
+    Returns a dataset containing ensemble mean, standard-deviation,
+    minimum and maximum for input climate simulations.
 
 
 
-            Parameters
-            ----------
+    Parameters
+    ----------
 
-            ens : Ensemble dataset (see xclim.utils.create_ensemble)
-
-
-
-            Returns
-            -------
-            xarray dataset with containing data variables of ensemble statistics
-
-            Examples
-            --------
-
-            >>> from xclim import utils
-            >>> import glob
-            >>> ncfiles = glob.glob('/*tas*.nc')
-            Create ensemble dataset
-            >>> ens = utils.create_ensemble(ncfiles)
-            Calculate ensemble statistics
-            >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
-            >>> print(ens_mean_std['tas_mean'])
+    ens : Ensemble dataset (see xclim.utils.create_ensemble)
 
 
-            """
+
+    Returns
+    -------
+    xarray dataset with containing data variables of ensemble statistics
+
+    Examples
+    --------
+
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*tas*.nc')
+    Create ensemble dataset
+    >>> ens = utils.create_ensemble(ncfiles)
+    Calculate ensemble statistics
+    >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
+    >>> print(ens_mean_std['tas_mean'])
+
+
+    """
     dsOut = ens.drop(ens.data_vars)
     for v in ens.data_vars:
 
