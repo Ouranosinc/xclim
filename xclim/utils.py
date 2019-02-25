@@ -137,44 +137,44 @@ def create_ensemble(ncfiles, dim='sim'):
 def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
-            Returns a dataset containing ensemble statistics for input climate simulations.
-            Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
+    Returns a dataset containing ensemble statistics for input climate simulations.
+    Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
 
 
-            Parameters
-            ----------
+    Parameters
+    ----------
 
-            ens : Ensemble dataset (see xclim.utils.create_ensemble)
+    ens : Ensemble dataset (see xclim.utils.create_ensemble)
 
-            values (optional) : percentile values to calculate (default : 10,50, 90)
+    values (optional) : list of integers : percentile values to calculate (default : 10,50, 90)
 
-            time_block (optional) : for large ensembles iteratively calculate percentiles
-            in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
+    time_block (optional) : integer : for large ensembles iteratively calculate percentiles
+    in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
 
 
-            Returns
-            -------
-            xarray dataset with containing data variables of requested ensemble statistics
+    Returns
+    -------
+    xarray dataset with containing data variables of requested ensemble statistics
 
-            Examples
-            --------
+    Examples
+    --------
 
-            >>> from xclim import utils
-            >>> import glob
-            >>> ncfiles = glob.glob('/*tas*.nc')
-            Create ensemble dataset
-            >>> ens = utils.create_ensemble(ncfiles)
-            Calculate default ensemble percentiles
-            >>> ens_percs = utils.ensemble_statistics(ens)
-            >>> print(ens_percs['tas_p10'])
-            Calculate non-default percentiles (25th and 75th)
-            >>> ens_percs = utils.ensemble_statistics(ens, values=[25,75])
-            >>> print(ens_percs['tas_p25'])
-            Calculate by time blocks (n=10) if ensemble size is too large to load in memory
-            >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
-            >>> print(ens_percs['tas_p25'])
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*tas*.nc')
+    Create ensemble dataset
+    >>> ens = utils.create_ensemble(ncfiles)
+    Calculate default ensemble percentiles
+    >>> ens_percs = utils.ensemble_statistics(ens)
+    >>> print(ens_percs['tas_p10'])
+    Calculate non-default percentiles (25th and 75th)
+    >>> ens_percs = utils.ensemble_statistics(ens, values=[25,75])
+    >>> print(ens_percs['tas_p25'])
+    Calculate by time blocks (n=10) if ensemble size is too large to load in memory
+    >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
+    >>> print(ens_percs['tas_p25'])
 
-            """
+    """
 
     dsOut = ens.drop(ens.data_vars)
     dims = list(ens.dims)
