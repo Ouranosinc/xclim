@@ -64,32 +64,6 @@ calendars = {'standard': 366,
              '360_day': 360}
 
 
-def calc_ens_perc(arr, p):
-    dims = arr.dims
-    # make sure time is the second dimension
-    if dims.index('time') != 1:
-        dims1 = [dims[dims.index('sim')], dims[dims.index('time')]]
-        for d in dims:
-            if d not in dims1:
-                dims1.append(d)
-        arr = arr.transpose(*dims1)
-        dims = dims1
-
-    nan_count = np.isnan(arr).sum(axis=dims.index('sim'))
-    out = np.percentile(arr, p, axis=dims.index('sim'))
-
-    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')])):
-        # only use nanpercentile where we need it (slow performace compared to standard) :
-        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')]))
-        for t in nan_index[0]:
-            if np.any((nan_count.sel(time=arr.time[t]) > 0)
-                      & (nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):
-                # nans present but not for all simulations - use nanpercentile
-                out[t,] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
-
-    return out
-
-
 def create_ensemble(ncfiles, dim='sim'):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension (default=='sim')
@@ -153,7 +127,7 @@ def create_ensemble(ncfiles, dim='sim'):
         ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
 
         ds1.append(ds.drop('time'))
-    print('concatenating files : adding dimension {dim}')
+    print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
     # assign time coords
     ens = ens.assign_coords(time=ds.time.values)
@@ -171,6 +145,8 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=[]):
             ----------
 
             ens : Ensemble dataset (see xclim.utils.create_ensemble)
+
+            vari : data variable to calculate statistics for (string)
 
             stats (optional) : Dictionary specifying type of statistics to perform.
             One of :
@@ -200,80 +176,124 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=[]):
             Calculate default ensemble percentiles
             >>> ens_percs = utils.ensemble_statistics(ens)
             >>> print(ens_percs['tas_p10'])
-            Calculate ensemble mean and standard-deviation
-            >>> ens_means_std = utils.ensemble_statistics(ens, stats = {'type':'mean_std_min_max'} )
-            >>> print(ens_mean_std['tas_mean'])
             Calculate non-default percentiles (25th and 75th)
-            >>> ens_percs = utils.ensemble_statistics(ens, stats = {'type':'perc','values':[25, 75]})
+            >>> ens_percs = utils.ensemble_statistics(ens, values=[25,75])
+            >>> print(ens_percs['tas_p25'])
+            Calculate by time blocks (n=10) if ensemble size is too large to load in memory
+            >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
             >>> print(ens_percs['tas_p25'])
 
             """
-    dsOut = ens.drop(ens.data_vars)
-    for v in ens.data_vars:
-        dims = ens[v].dims
-        outdims = [x for x in dims if 'sim' not in x]
 
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens.dims)
+    for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
         if not time_block:
             time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
 
         if time_block > len(ens[v].time):
+            Out = calc_percentiles_simple(ens, v, values)
 
-            print('loading ensemble data to memory')
-            arr = ens[v].load()  # percentile calc requires loading the array
-            coords = {}
-            for c in outdims:
-                coords[c] = arr[c]
-            for p in values:
-                outvar = v + '_p' + str(p)
-
-                out1 = calc_ens_perc(arr, p)
-
-                dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
-                dsOut[outvar].attrs = ens[v].attrs
-                if 'description' in dsOut[outvar].attrs.keys():
-                    dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                         'th percentile of ensemble'
-                else:
-                    dsOut[outvar].attrs['description'] = str(p) + \
-                                                         'th percentile of ensemble'
         else:
             # loop through blocks
             Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
                     ' time-steps')
-            blocks = list(range(0, len(ens.time) + 1, int(time_block)))
-            if blocks[-1] != len(ens[v].time):
-                blocks.append(len(ens[v].time))
-            arr_p_all = {}
-            for t in range(0, len(blocks) - 1):
-                print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
-                time_sel = slice(blocks[t], blocks[t + 1])
-                arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
-                coords = {}
-                for c in outdims:
-                    coords[c] = arr[c]
-                for p in values:
-                    outvar = v + '_p' + str(p)
+            Out = calc_percentiles_blocks(ens, v, values, time_block)
+        for vv in Out.data_vars:
+            dsOut[vv] = Out[vv]
+    return dsOut
 
-                    out1 = calc_ens_perc(arr, p)
 
-                    if t == 0:
-                        arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
-                    else:
-                        arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
-                                                       xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
-            for p in values:
-                outvar = v + '_p' + str(p)
-                dsOut[outvar] = arr_p_all[str(p)]
-                dsOut[outvar].attrs = ens[v].attrs
-                if 'description' in dsOut[outvar].attrs.keys():
-                    dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                         'th percentile of ensemble'
-                else:
-                    dsOut[outvar].attrs['description'] = str(p) + \
-                                                         'th percentile of ensemble'
+def calc_percentiles_simple(ens, v, values):
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens[v].dims)
+    outdims = [x for x in dims if 'sim' not in x]
 
-        return dsOut
+    print('loading ensemble data to memory')
+    arr = ens[v].load()  # percentile calc requires loading the array
+    coords = {}
+    for c in outdims:
+        coords[c] = arr[c]
+    for p in values:
+        outvar = v + '_p' + str(p)
+
+        out1 = calc_perc(arr, p)
+
+        dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
+        dsOut[outvar].attrs = ens[v].attrs
+        if 'description' in dsOut[outvar].attrs.keys():
+            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                 'th percentile of ensemble'
+        else:
+            dsOut[outvar].attrs['description'] = str(p) + \
+                                                 'th percentile of ensemble'
+    return dsOut
+
+
+def calc_percentiles_blocks(ens, v, values, time_block):
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens[v].dims)
+    outdims = [x for x in dims if 'sim' not in x]
+
+    blocks = list(range(0, len(ens.time) + 1, int(time_block)))
+    if blocks[-1] != len(ens[v].time):
+        blocks.append(len(ens[v].time))
+    arr_p_all = {}
+    for t in range(0, len(blocks) - 1):
+        print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
+        time_sel = slice(blocks[t], blocks[t + 1])
+        arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
+        coords = {}
+        for c in outdims:
+            coords[c] = arr[c]
+        for p in values:
+            outvar = v + '_p' + str(p)
+
+            out1 = calc_perc(arr, p)
+
+            if t == 0:
+                arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
+            else:
+                arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
+                                               xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
+    for p in values:
+        outvar = v + '_p' + str(p)
+        dsOut[outvar] = arr_p_all[str(p)]
+        dsOut[outvar].attrs = ens[v].attrs
+        if 'description' in dsOut[outvar].attrs.keys():
+            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                 'th percentile of ensemble'
+        else:
+            dsOut[outvar].attrs['description'] = str(p) + \
+                                                 'th percentile of ensemble'
+    return dsOut
+
+
+def calc_perc(arr, p):
+    dims = arr.dims
+    # make sure time is the second dimension
+    if dims.index('time') != 1:
+        dims1 = [dims[dims.index('sim')], dims[dims.index('time')]]
+        for d in dims:
+            if d not in dims1:
+                dims1.append(d)
+        arr = arr.transpose(*dims1)
+        dims = dims1
+
+    nan_count = np.isnan(arr).sum(axis=dims.index('sim'))
+    out = np.percentile(arr, p, axis=dims.index('sim'))
+
+    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')])):
+        # only use nanpercentile where we need it (slow performace compared to standard) :
+        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')]))
+        for t in nan_index[0]:
+            if np.any((nan_count.sel(time=arr.time[t]) > 0)
+                      & (nan_count.sel(time=arr.time[t]) < arr.shape[dims.index('sim')])):
+                # nans present but not for all simulations - use nanpercentile
+                out[t,] = np.nanpercentile(arr.sel(time=arr.time[t]), p, axis=dims.index('sim'))
+
+    return out
 
 
 def ensemble_mean_std_max_min(ens):
