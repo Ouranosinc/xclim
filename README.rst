@@ -45,7 +45,7 @@ For example, the following would compute monthly mean temperature from daily mea
 
 For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.  
 
-``xclim`` is in intense development at the moment and is absolutely not production ready. We're aiming for an alpha release in Q1 2019. If you're interested in participating to the development, please leave us a message on the issue tracker.
+``xclim`` is still in active development at the moment, but is close to be production ready. We're are at a beta release (as of Q1 2019). If you're interested in participating to the development, please leave us a message on the issue tracker.
 
 
 * Free software: Apache Software License 2.0
