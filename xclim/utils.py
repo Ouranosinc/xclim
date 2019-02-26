@@ -64,42 +64,41 @@ calendars = {'standard': 366,
              '360_day': 360}
 
 
-def create_ensemble(ncfiles, dim='sim'):
+def create_ensemble(ncfiles):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
-    concatenated along a newly created data dimension (default=='sim')
+    concatenated along a newly created data dimension ('realization')
 
-                Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
-                a new dimension (default:'sim'). In the case where input files have unequal time dimensions output
-                ensemble dataset is created for overlapping time-steps common to all input files
+    Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
+    a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
+    ensemble dataset is created for overlapping time-steps common to all input files
 
-                Notes
-                -----
-                Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
-                If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
-
-
-                Parameters
-                ----------
-
-                ncfiles : list of netcdf file paths (list)
-
-                dim (optional) : name of added dataset dimension (string) .
+    Notes
+    -----
+    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
+    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
 
 
-                Returns
-                -------
-                xarray dataset containing concadated data from all input files
+    Parameters
+    ----------
 
-                Examples
-                --------
+    ncfiles : list of netcdf file paths (list)
 
-                >>> from xclim import utils
-                >>> import glob
-                >>> ncfiles = glob.glob('/*.nc')
-                >>> ens = utils.create_ensemble(ncfiles)
-                >>> print(ens)
 
-             """
+    Returns
+    -------
+    xarray dataset containing concadated data from all input files
+
+    Examples
+    --------
+
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*.nc')
+    >>> ens = utils.create_ensemble(ncfiles)
+    >>> print(ens)
+
+     """
+    dim = 'realization'
     ds1 = []
     start_end_flag = True
     print('finding common time-steps')
@@ -134,7 +133,7 @@ def create_ensemble(ncfiles, dim='sim'):
     return ens
 
 
-def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
+def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
     Returns a dataset containing ensemble statistics for input climate simulations.
@@ -143,12 +142,11 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
 
     Parameters
     ----------
-
     ens : Ensemble dataset (see xclim.utils.create_ensemble)
 
-    values (optional) : list of integers : percentile values to calculate (default : 10,50, 90)
+    values (optional) : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
 
-    time_block (optional) : integer : for large ensembles iteratively calculate percentiles
+    time_block (optional) : integer - for large ensembles iteratively calculate percentiles
     in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
 
 
@@ -168,7 +166,7 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
     >>> ens_percs = utils.ensemble_statistics(ens)
     >>> print(ens_percs['tas_p10'])
     Calculate non-default percentiles (25th and 75th)
-    >>> ens_percs = utils.ensemble_statistics(ens, values=[25,75])
+    >>> ens_percs = utils.ensemble_statistics(ens, values=(25,75))
     >>> print(ens_percs['tas_p25'])
     Calculate by time blocks (n=10) if ensemble size is too large to load in memory
     >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
@@ -199,7 +197,7 @@ def ensemble_percentiles(ens, values=[10, 50, 90], time_block=None):
 def calc_percentiles_simple(ens, v, values):
     dsOut = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
-    outdims = [x for x in dims if 'sim' not in x]
+    outdims = [x for x in dims if 'realization' not in x]
 
     print('loading ensemble data to memory')
     arr = ens[v].load()  # percentile calc requires loading the array
@@ -225,7 +223,7 @@ def calc_percentiles_simple(ens, v, values):
 def calc_percentiles_blocks(ens, v, values, time_block):
     dsOut = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
-    outdims = [x for x in dims if 'sim' not in x]
+    outdims = [x for x in dims if 'realization' not in x]
 
     blocks = list(range(0, len(ens.time) + 1, int(time_block)))
     if blocks[-1] != len(ens[v].time):
@@ -264,21 +262,23 @@ def calc_perc(arr, p):
     dims = arr.dims
     # make sure time is the second dimension
     if dims.index('time') != 1:
-        dims1 = [dims[dims.index('sim')], dims[dims.index('time')]]
+        dims1 = [dims[dims.index('realization')], dims[dims.index('time')]]
         for d in dims:
             if d not in dims1:
                 dims1.append(d)
         arr = arr.transpose(*dims1)
         dims = dims1
 
-    nan_count = np.isnan(arr).sum(axis=dims.index('sim'))
-    out = np.percentile(arr, p, axis=dims.index('sim'))
-    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')])):
-        arr1 = arr.values.reshape(arr.shape[dims.index('sim')], int(arr.size / arr.shape[dims.index('sim')]))
+    nan_count = np.isnan(arr).sum(axis=dims.index('realization'))
+    out = np.percentile(arr, p, axis=dims.index('realization'))
+    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')])):
+        arr1 = arr.values.reshape(arr.shape[dims.index('realization')],
+                                  int(arr.size / arr.shape[dims.index('realization')]))
         # only use nanpercentile where we need it (slow performace compared to standard) :
-        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('sim')]))
-        for t in np.ravel_multi_index(nan_index, nan_count.shape):
-            out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=dims.index('sim'))
+        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')]))
+        t = np.ravel_multi_index(nan_index, nan_count.shape)
+        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=dims.index('realization'))
+
     return out
 
 
@@ -318,10 +318,10 @@ def ensemble_mean_std_max_min(ens):
     dsOut = ens.drop(ens.data_vars)
     for v in ens.data_vars:
 
-        dsOut[v + '_mean'] = ens[v].mean(dim='sim')
-        dsOut[v + '_stdev'] = ens[v].std(dim='sim')
-        dsOut[v + '_max'] = ens[v].max(dim='sim')
-        dsOut[v + '_min'] = ens[v].min(dim='sim')
+        dsOut[v + '_mean'] = ens[v].mean(dim='realization')
+        dsOut[v + '_stdev'] = ens[v].std(dim='realization')
+        dsOut[v + '_max'] = ens[v].max(dim='realization')
+        dsOut[v + '_min'] = ens[v].min(dim='realization')
         for vv in dsOut.data_vars:
             dsOut[vv].attrs = ens[v].attrs
 

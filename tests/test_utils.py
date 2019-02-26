@@ -44,11 +44,11 @@ class TestEnsembleStats:
 
     def test_create_ensemble(self):
         ens = utils.create_ensemble(self.nc_files_simple)
-        assert len(ens.sim) == len(self.nc_files_simple)
+        assert len(ens.realization) == len(self.nc_files_simple)
 
     def test_create_unequal_times(self):
         ens = utils.create_ensemble(self.nc_files)
-        assert len(ens.sim) == len(self.nc_files)
+        assert len(ens.realization) == len(self.nc_files)
         assert ens.time.dt.year.min() == 1970
         assert ens.time.dt.year.max() == 2050
 
@@ -60,11 +60,13 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 90), out1['tg_mean_p90'][0, 5, 5])
         assert np.all(out1['tg_mean_p90'] > out1['tg_mean_p50'])
         assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
+        out1 = utils.ensemble_percentiles(ens, values=(25, 75))
+        assert np.all(out1['tg_mean_p75'] > out1['tg_mean_p25'])
 
     def test_calc_perc_blocks(self):
         ens = utils.create_ensemble(self.nc_files_simple)
         out1 = utils.ensemble_percentiles(ens)
-        out2 = utils.ensemble_percentiles(ens, values=[10, 50, 90], time_block=10)
+        out2 = utils.ensemble_percentiles(ens, values=(10, 50, 90), time_block=10)
         np.testing.assert_array_equal(out1['tg_mean_p10'], out2['tg_mean_p10'])
         np.testing.assert_array_equal(out1['tg_mean_p50'], out2['tg_mean_p50'])
         np.testing.assert_array_equal(out1['tg_mean_p90'], out2['tg_mean_p90'])
@@ -85,10 +87,10 @@ class TestEnsembleStats:
     def test_calc_mean_std_min_max(self):
         ens = utils.create_ensemble(self.nc_files_simple)
         out1 = utils.ensemble_mean_std_max_min(ens)
-        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].mean(dim='sim'), out1.tg_mean_mean[0, 5, 5])
-        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].std(dim='sim'), out1.tg_mean_stdev[0, 5, 5])
-        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].max(dim='sim'), out1.tg_mean_max[0, 5, 5])
-        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].min(dim='sim'), out1.tg_mean_min[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].mean(dim='realization'), out1.tg_mean_mean[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].std(dim='realization'), out1.tg_mean_stdev[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].max(dim='realization'), out1.tg_mean_max[0, 5, 5])
+        np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].min(dim='realization'), out1.tg_mean_min[0, 5, 5])
 
 
 class TestDailyDownsampler:
