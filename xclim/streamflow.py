@@ -54,9 +54,85 @@ class Streamflow(Indicator):
         from functools import reduce
 
         freq = kwds.get('freq', None) or getattr(self, 'freq')
+        # TODO
         # Si on besoin juste d'une saison, cette fonction va quand même checker les données pour toutes les saisons.
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
+
+
+class Streamflow_time_operator(Streamflow):
+
+    def __call__(self, *args, **kwds):
+        # necessary imports
+        import datetime as dt
+        from collections import defaultdict
+        from inspect2 import signature
+
+        # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
+        # argument.
+        if self._partial:
+            ba = self._sig.bind_partial(*args, **kwds)
+            for key, val in self.compute.keywords.items():
+                if key not in ba.arguments:
+                    ba.arguments[key] = val
+        else:
+            ba = self._sig.bind(*args, **kwds)
+            ba.apply_defaults()
+
+        # Get history and cell method attributes from source data
+        attrs = defaultdict(str)
+        for i in range(self._nvar):
+            p = self._parameters[i]
+            for attr in ['history', 'cell_methods']:
+                attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
+                attrs[attr] += getattr(ba.arguments[p], attr, '')
+                if attrs[attr]:
+                    attrs[attr] += "\n" if attr == 'history' else " "
+
+        # Update attributes
+        out_attrs = self.json(ba.arguments)
+        formatted_id = out_attrs.pop('identifier')
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}{}'.format(dt.datetime.now(), formatted_id, ba.signature)
+        attrs['cell_methods'] += out_attrs.pop('cell_methods')
+        attrs.update(out_attrs)
+
+        # Assume the first arguments are always the DataArray.
+        das = tuple((ba.arguments.pop(self._parameters[i]) for i in range(self._nvar)))
+
+        # Pre-computation validation checks
+        for da in das:
+            self.validate(da)
+        self.cfprobe(*das)
+
+        # Convert units if necessary
+        das = tuple((self.convert_units(da, ru, self.context) for (da, ru) in zip(das, self.required_units)))
+
+        # Compute the indicator values, ignoring NaNs.
+        out = self.compute(*das, **ba.arguments)
+        out.attrs.update(attrs)
+
+        # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
+        mba = signature(self.missing).bind(*das, **ba.arguments)
+
+        # Mask results that do not meet criteria defined by the `missing` method.
+        mask = self.missing(*mba.args, **mba.kwargs)
+        ma_out = out.where(~mask)
+
+        # apply time operator before returning output
+        out = ma_out.rename(formatted_id)
+
+        # TODO
+        # give time_operator a default value so we could add this code into utils.Indicator directly and
+        # would not need a special Indicator class
+
+        if self.time_operator == 'mean':
+            out_op = out.mean(dim='time')
+        elif self.time_operator == 'monthly_annual_cycle':
+            out_op = out.groupby(out.time.dt.month).mean(dim='time')
+        else:
+            raise RuntimeError('time_operator:{} not expected'.format(self.time_operator))
+
+        return out_op
 
 
 base_flow_index = Streamflow(identifier='base_flow_index',
@@ -117,7 +193,8 @@ def generate(identifier, title, description, notes='', defaults={}, fixed={}):
                       compute=f.get_func())
 
 
-def generate2(identifier, title, description, notes='', defaults={}, fixed={},
+def generate2(identifier, title, description, gfa_import='from xclim.utils import generic_seasonal_stat_return_period',
+              notes='', defaults={}, fixed={},
               standard_name='', long_name=''):
     """Return a Streamflow instance based on the `generic_frequency_analysis` function.
 
@@ -129,6 +206,9 @@ def generate2(identifier, title, description, notes='', defaults={}, fixed={},
       Brief description of function's intent.
     description : str
       One paragraph explanation of function's behavior.
+    gfa_import: str
+      string to use for the import of gfa
+      e.g from xclim.utils import generic_seasonal_stat_return_period
     notes : str
       Additional information, such as the mathematical formula.
     defaults : dict
@@ -145,8 +225,8 @@ def generate2(identifier, title, description, notes='', defaults={}, fixed={},
                ["{0}={0}".format(k) for k in defaults.keys()] + \
                ["{0}={1}".format(k, v) for (k, v) in fixed.items()]
 
-    body = """from xclim.utils import generic_seasonal_stat_return_period as gfa2\nreturn gfa2({})""".format(
-        ', '.join(gfa_args))
+    body = """{} as gfa2\nreturn gfa2({})""".format(gfa_import,
+                                                    ', '.join(gfa_args))
 
     f = FunctionBuilder(name=identifier.lower(),
                         doc=docstring_template.format(**{'identifier': identifier,
@@ -227,6 +307,7 @@ def QWindowModeTSeasons_generate2_wrapper(window, mode, t, seasons):
     gen2 = generate2(identifier=identifier,
                      title=title,
                      description=description,
+                     gfa_import='from xclim.utils import generic_seasonal_stat_return_period',
                      standard_name=standard_name,
                      long_name=long_name,
                      defaults=dict(dist='gumbel_r'),
@@ -266,8 +347,9 @@ q7min10w = QWindowModeTSeasons_generate2_wrapper(7, 'min', 10, 'w')
 q30min5w = QWindowModeTSeasons_generate2_wrapper(30, 'min', 5, 'w')
 
 
-def get_mean_doy_of_max(da, seasons=['JJA'], freq='AS'):
-    """function computing the multi-year mean of the 'day of year' of the maximum value during given seasons
+def get_doy_of_max(da, seasons=['JJA'], freq='AS'):
+    """function returning the 'day of year' of the maximum value of input data
+    occuing during given seasons
 
     Parameters
     ----------
@@ -293,15 +375,107 @@ def get_mean_doy_of_max(da, seasons=['JJA'], freq='AS'):
         return doy_of_max
 
     doy_of_max = das.resample(time=freq).apply(_get_doy_of_max)
-    doy_of_max_tavg = doy_of_max.mean(dim='time')
-    return doy_of_max_tavg
+    return doy_of_max
 
 
-doy_q1maxsp = Streamflow(identifier='doy_q1maxsp',
-                         units='day of year',
-                         standard_name='average_day_of_year_of_annual_maximum_spring_value',
-                         long_name='day of year of annual maximum spring value',
-                         description="",
-                         cell_methods='time: maximum within season time: mean over years',
-                         compute=get_mean_doy_of_max,
-                         )
+doy_q1maxsp = Streamflow_time_operator(identifier='doy_q1maxsp',
+                                       units='day of year',
+                                       standard_name='average_day_of_year_of_annual_maximum_spring_value',
+                                       long_name='day of year of annual maximum spring value',
+                                       description="",
+                                       cell_methods='time: maximum within season time: mean over years',
+                                       compute=get_doy_of_max,
+                                       time_operator='mean'
+                                       )
+
+
+def q_monthly_mean(q):
+    """Function computing the monthly averages of streamflow every year
+
+    :param q:
+    :return:
+    """
+    # split data into different months and compute mean
+    qrm = q.resample(time='MS').mean(dim='time')
+
+    return qrm
+
+
+def q_season_mean(q, seasons, freq='AS-DEC'):
+    """Function that computes yearly mean of streamflow over wanted seasons
+
+    :param q:
+    :param seasons:
+    :param freq:
+    :return:
+    """
+
+    # select streamflow over wanted seasons
+    qsr = q.sel(time=q.time.dt.season.isin(seasons)).dropna(dim='time')
+
+    # split the years and make the mean
+    qsm = qsr.resample(time=freq).mean(dim='time')
+
+    return qsm
+
+
+def _qavg(q):
+    return q_season_mean(q, seasons='DJF MAM JJA SON'.split(), freq='AS-JAN')
+
+
+def _qavgwsp(q):
+    return q_season_mean(q, seasons='DJF MAM'.split(), freq='AS-DEC')
+
+
+def _qavgsua(q):
+    return q_season_mean(q, seasons='JJA SON'.split(), freq='AS-DEC')
+
+
+def _qavg_1_12(q):
+    qm = q_monthly_mean(q)
+    return qm
+
+
+qavg = Streamflow_time_operator(identifier='qavg',
+                                units='m^3 s-1',
+                                standard_name='',
+                                long_name='',
+                                description="",
+                                cell_methods='',
+                                compute=_qavg,
+                                freq='AS-JAN',
+                                time_operator='mean'
+                                )
+
+qavgwsp = Streamflow_time_operator(identifier='qavgwsp',
+                                   units='m^3 s-1',
+                                   standard_name='',
+                                   long_name='',
+                                   description="",
+                                   cell_methods='',
+                                   compute=_qavgwsp,
+                                   freq='AS-DEC',
+                                   time_operator='mean'
+                                   )
+
+qavgsua = Streamflow_time_operator(identifier='qavgsua',
+                                   units='m^3 s-1',
+                                   standard_name='',
+                                   long_name='',
+                                   description="",
+                                   cell_methods='',
+                                   compute=_qavgsua,
+                                   freq='AS-DEC',
+                                   time_operator='mean'
+                                   )
+
+qavg_1_12 = Streamflow_time_operator(identifier='avg_1_12',
+                                     units='m^3 s-1',
+                                     standard_name='',
+                                     long_name='',
+                                     description="",
+                                     cell_methods='',
+                                     compute=_qavg_1_12,
+                                     freq='MS',
+                                     time_operator='monthly_annual_cycle'
+                                     )
