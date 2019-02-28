@@ -13,11 +13,11 @@ xclim Official Documentation
    contributing
    authors
    history
-
+   itable
 
 Indices and tables
 ==================
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-* :ref:`table`
+
