@@ -3,8 +3,6 @@
 Table of indicators
 ===================
 
-Click on the indicator name to get a full description of the indicator.
-
 .. raw:: html
 
    <table class="indices" style="width:100%">
@@ -14,7 +12,7 @@ Click on the indicator name to get a full description of the indicator.
    </tr>
    {% for ind in indicators %}
    <tr>
-   <td class="name"><a href="xclim.html#xclim.indices.{{ ind.standard_name | trim }}">{{ ind.long_name | safe }}</a></td>
+   <td class="name">{{ ind.long_name | safe }}</td>
    <td>{{ ind.description | safe }}</td>
    </tr>
    {% endfor %}
