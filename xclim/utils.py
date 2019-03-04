@@ -925,9 +925,13 @@ class Indicator(object):
         if fu != tu:
             if self.context:
                 with units.context(self.context):
-                    return units.convert(da, fu, tu)
+                    da = units.convert(da, fu, tu)
+                    da.attrs['units'] = req_units.replace('-', '**-')
+                    return da
             else:
-                return units.convert(da, fu, tu)
+                da = units.convert(da, fu, tu)
+                da.attrs['units'] = req_units.replace('-', '**-')
+                return da
         else:
             return da
 

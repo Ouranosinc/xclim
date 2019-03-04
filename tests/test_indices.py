@@ -115,7 +115,7 @@ class TestColdSpellDurationIndex:
     def test_simple(self, tasmin_series):
         i = 3650
         A = 10.
-        tn = np.zeros(i) + K2C + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
+        tn = np.zeros(i) + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
         tn[10:20] -= 2
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=.1)
@@ -127,7 +127,7 @@ class TestColdSpellDurationIndex:
 class TestColdSpellDays:
 
     def test_simple(self, tas_series):
-        a = np.zeros(365) + K2C
+        a = np.zeros(365)
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
@@ -159,7 +159,7 @@ class TestConsecutiveFrostDays:
         assert cfd == 0
 
     def test_all_year_freeze(self):
-        a = self.time_series(np.zeros(365) + K2C - 10)
+        a = self.time_series(np.zeros(365) - 10 + K2C)
         cfd = xci.consecutive_frost_days(a)
         assert cfd == 365
 
@@ -175,12 +175,12 @@ class TestCoolingDegreeDays:
                                    'units': 'K'})
 
     def test_no_cdd(self):
-        a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
+        a = self.time_series(np.array([10, 15, -5, 18]))
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
 
     def test_cdd(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        a = self.time_series(np.array([20, 25, -15, 19]))
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
@@ -188,8 +188,8 @@ class TestCoolingDegreeDays:
 class TestDailyFreezeThawCycles:
 
     def test_simple(self, tasmin_series, tasmax_series):
-        mn = np.zeros(365) + K2C
-        mx = np.zeros(365) + K2C
+        mn = np.zeros(365)
+        mx = np.zeros(365)
 
         # 5 days in 1st month
         mn[10:20] -= 1
@@ -199,8 +199,8 @@ class TestDailyFreezeThawCycles:
         mn[40:44] += [1, 1, -1, -1]
         mx[40:44] += [1, -1, 1, -1]
 
-        mn = tasmin_series(mn)
-        mx = tasmax_series(mx)
+        mn = tasmin_series(mn + K2C)
+        mx = tasmax_series(mx + K2C)
         out = xci.daily_freezethaw_cycles(mx, mn, 'M')
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -209,7 +209,7 @@ class TestDailyFreezeThawCycles:
 class TestFreshetStart:
 
     def test_simple(self, tas_series):
-        tg = np.zeros(365) + K2C - 1
+        tg = np.zeros(365) - 1
         w = 5
 
         i = 10
@@ -226,7 +226,7 @@ class TestFreshetStart:
         assert out[0] == tg.indexes['time'][20].dayofyear
 
     def test_no_start(self, tas_series):
-        tg = np.zeros(365) + K2C - 1
+        tg = np.zeros(365) - 1
         tg = tas_series(tg, start='1/1/2000')
         out = xci.freshet_start(tg)
         np.testing.assert_equal(out, [np.nan, ])
@@ -236,7 +236,7 @@ class TestGrowingDegreeDays:
 
     def test_simple(self, tas_series):
         a = np.zeros(365)
-        a[0] = K2C + 5  # default thresh at 4
+        a[0] = 5  # default thresh at 4
         da = tas_series(a)
         assert xci.growing_degree_days(da)[0] == 1
 
@@ -289,7 +289,7 @@ class TestGrowingSeasonLength:
 class TestHeatingDegreeDays:
 
     def test_simple(self, tas_series):
-        a = np.zeros(365) + K2C + 17
+        a = np.zeros(365) + 17
         a[:7] += [-3, -2, -1, 0, 1, 2, 3]
         da = tas_series(a)
         out = xci.heating_degree_days(da)
@@ -300,7 +300,7 @@ class TestHeatingDegreeDays:
 class TestHeatWaveIndex:
 
     def test_simple(self, tasmax_series):
-        a = np.zeros(365) + K2C
+        a = np.zeros(365)
         a[10:20] += 30  # 10 days
         a[40:43] += 50  # too short -> 0
         a[80:100] += 30  # at the end and beginning
@@ -313,8 +313,8 @@ class TestHeatWaveIndex:
 class TestHeatWaveFrequency:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
 
         # some hw
         hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
@@ -336,8 +336,8 @@ class TestHeatWaveFrequency:
 class TestHeatWaveMaxLength:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C
+        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
 
         # some hw
         hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=22,
@@ -362,7 +362,7 @@ class TestHeatWaveMaxLength:
 class TestTnDaysBelow:
 
     def test_simple(self, tasmin_series):
-        a = np.zeros(365) + K2C
+        a = np.zeros(365)
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmin_series(a)
 
@@ -377,7 +377,7 @@ class TestTnDaysBelow:
 class TestTxDaysAbove:
 
     def test_simple(self, tasmax_series):
-        a = np.zeros(365) + K2C
+        a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a)
 
@@ -393,10 +393,10 @@ class TestLiquidPrecipitationRatio:
         pr[10:20] = 1
         pr = pr_series(pr)
 
-        tas = np.zeros(100) + K2C
+        tas = np.zeros(100)
         tas[:14] -= 20
         tas[14:] += 10
-        tas = tas_series(tas)
+        tas = tas_series(tas + K2C)
 
         out = xci.liquid_precip_ratio(pr, tas=tas, freq='M')
         np.testing.assert_almost_equal(out[:1], [.6, ])
@@ -451,39 +451,39 @@ class TestPrecipAccumulation:
 class TestRainOnFrozenGround:
 
     def test_simple(self, tas_series, pr_series):
-        tas = np.zeros(30) + K2C - 1
+        tas = np.zeros(30) - 1
         pr = np.zeros(30)
 
         tas[10] += 5
         pr[10] += 2
 
-        tas = tas_series(tas)
+        tas = tas_series(tas + K2C)
         pr = pr_series(pr)
 
         out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 1
 
     def test_small_rain(self, tas_series, pr_series):
-        tas = np.zeros(30) + K2C - 1
+        tas = np.zeros(30) - 1
         pr = np.zeros(30)
 
         tas[10] += 5
         pr[10] += .5
 
-        tas = tas_series(tas)
+        tas = tas_series(tas + K2C)
         pr = pr_series(pr)
 
         out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 0
 
     def test_consecutive_rain(self, tas_series, pr_series):
-        tas = np.zeros(30) + K2C - 1
+        tas = np.zeros(30) - 1
         pr = np.zeros(30)
 
         tas[10:16] += 5
         pr[10:16] += 5
 
-        tas = tas_series(tas)
+        tas = tas_series(tas + K2C)
         pr = pr_series(pr)
 
         out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
@@ -614,9 +614,9 @@ class TestTxMean:
                                    'units': 'K'})
 
     def test_attrs(self):
-        a = self.time_series(np.array([20, 21, 22, 23, 24]) + K2C)
+        a = self.time_series(np.array([20, 21, 22, 23, 24]))
         txm = xci.tx_mean(a, freq='YS')
-        assert txm == 22 + K2C
+        assert txm == 22
 
 
 class TestTxMax:
@@ -630,9 +630,9 @@ class TestTxMax:
                                    'units': 'K'})
 
     def test_simple(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+        a = self.time_series(np.array([20, 25, -15, 19]))
         txm = xci.tx_max(a, freq='YS')
-        assert txm == 25 + K2C
+        assert txm == 25
 
 
 class TestTgMaxTgMinIndices:
@@ -751,8 +751,8 @@ class TestWarmNightFrequency:
 class TestTxTnDaysAbove:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]))
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]))
 
         wmmtf = xci.tx_tn_days_above(tn, tx)
         np.testing.assert_allclose(wmmtf.values, [7])
@@ -768,7 +768,7 @@ class TestWarmSpellDurationIndex:
     def test_simple(self, tasmax_series):
         i = 3650
         A = 10.
-        tx = np.zeros(i) + K2C + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
+        tx = np.zeros(i) + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
         tx[10:20] += 2
         tx = tasmax_series(tx)
         tx90 = percentile_doy(tx, per=.9)
@@ -783,9 +783,9 @@ class TestWinterRainRatio:
         pr = np.ones(450)
         pr = pr_series(pr, start='12/1/2000')
 
-        tas = np.zeros(450) + K2C - 1
+        tas = np.zeros(450) - 1
         tas[10:20] += 10
-        tas = tas_series(tas, start='12/1/2000')
+        tas = tas_series(tas + K2C, start='12/1/2000')
 
         out = xci.winter_rain_ratio(pr, tas=tas)
         np.testing.assert_almost_equal(out, [10. / (31 + 31 + 28), 0])
