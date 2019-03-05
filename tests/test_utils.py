@@ -303,6 +303,7 @@ class TestPercentileDOY:
         tas = tas_series(np.arange(365), start='1/1/2001')
         p1 = percentile_doy(tas, window=5, per=.5)
         assert p1.sel(dayofyear=3).data == 2
+        assert p1.attrs['units'] == 'K'
 
 
 class TestAdjustDoyCalendar:

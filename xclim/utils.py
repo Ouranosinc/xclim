@@ -11,6 +11,7 @@ import pandas as pd
 import xarray as xr
 from . import checks
 from inspect2 import signature, _empty
+import functools
 import abc
 from collections import defaultdict
 import datetime as dt
@@ -29,6 +30,11 @@ units.define('degrees_north = degree = degrees_N = degreesN = degree_north = deg
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
 units.define("degC = kelvin; offset: 273.15 = celsius = C")  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
+
+# Default context.
+null = pint.Context('none')
+units.add_context(null)
+
 hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
@@ -62,6 +68,60 @@ calendars = {'standard': 366,
              '366_day': 366,
              'uniform30day': 360,
              '360_day': 360}
+
+def cfunits2pint(da):
+    """Return the pint Unit for the DataArray units."""
+    return units.parse_units(da.attrs['units'].replace('-', '**-'))
+
+def convert_units_to(source, target, context=None):
+    """
+    Convert a mathematical expression into a value with the same units as a DataArray.
+
+    Parameters
+    ----------
+    source : str, pint.Quantity or xr.DataArray
+      The value to be converted, e.g. '4C' or '1 mm/d'.
+    target : str, pint.Unit or DataArray
+      Target array of values to which units must conform.
+
+    Returns
+    -------
+    out
+      The source value converted to target's units.
+    """
+    # Target units
+    if isinstance(target, str):
+        tu = units.parse_units(target)
+    elif isinstance(target, units.Unit):
+        tu = target
+    elif isinstance(target, xr.DataArray):
+        tu = cfunits2pint(target)
+    else:
+        raise NotImplementedError
+
+    if isinstance(source, str):
+        q = units.parse_expression(source)
+
+        # Return magnitude of converted quantity. This is going to fail if units are not compatible.
+        return q.to(tu).m
+
+    elif isinstance(source, units.Quantity):
+        return source.to(tu).m
+
+    elif isinstance(source, xr.DataArray):
+        fu = cfunits2pint(source)
+
+        if fu == tu:
+            return source
+        else:
+            tu_u = str(tu).replace('-', '**-')
+            with units.context(context or 'none'):
+                out = units.convert(source, fu, tu)
+                out.attrs['units'] = tu_u
+                return out
+
+    else:
+        raise NotImplementedError("source of type {} is not supported.".format(type(source)))
 
 
 def create_ensemble(ncfiles):
@@ -400,6 +460,7 @@ def percentile_doy(arr, window=5, per=.1):
     if p.dayofyear.max() == 366:
         p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
 
+    p.attrs.update(arr.attrs.copy())
     return p
 
 
@@ -466,7 +527,7 @@ def _interpolate_doy_calendar(source, doy_max):
 
 
 def adjust_doy_calendar(source, target):
-    r"""Interpolate from one set of dayofyear range to another
+    r"""Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -785,7 +846,7 @@ class Indicator(object):
     required_units = ''
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    context = None
+    context = 'none'
 
     # Additional information that can be used by third party libraries or to describe the file content.
     title = ''  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
@@ -863,8 +924,9 @@ class Indicator(object):
             self.validate(da)
         self.cfprobe(*das)
 
-        # Convert units if necessary
-        das = tuple((self.convert_units(da, ru, self.context) for (da, ru) in zip(das, self.required_units)))
+        # Check units
+        for (da, ru) in zip(das, self.required_units):
+            self.check_units(da, ru)
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.arguments)
@@ -918,22 +980,15 @@ class Indicator(object):
     def compute(*args, **kwds):
         """The function computing the indicator."""
 
-    def convert_units(self, da, req_units, context=None):
-        """Return DataArray converted to unit."""
-        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
-        tu = units.parse_units(req_units.replace('-', '**-'))
-        if fu != tu:
-            if self.context:
-                with units.context(self.context):
-                    da = units.convert(da, fu, tu)
-                    da.attrs['units'] = req_units.replace('-', '**-')
-                    return da
-            else:
-                da = units.convert(da, fu, tu)
-                da.attrs['units'] = req_units.replace('-', '**-')
-                return da
-        else:
-            return da
+    def check_units(self, da, req_units):
+        """Check that input units match expected units dimensions."""
+        u = cfunits2pint(da)
+
+        with units.context(self.context):
+            if u.dimensionality != units.get_dimensionality(req_units):
+                pass
+                #raise AttributeError("Units for {} ({}) don't match expected units: {}."\
+                # .format(da.name, da.attrs['units'], req_units))
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments."""

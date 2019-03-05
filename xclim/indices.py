@@ -5,9 +5,9 @@ Indices library
 ===============
 
 This module describes climate indicator functions. Functions are listed in alphabetical order and describe the raw
-computation performed over xarray.DataArrays that are assumed to be valid and with the correct units. The output's
-attributes (CF-Convention) are not modified. Validation checks, output attributes and unit conversion are handled by
-indicator classes described in files named by the physical variable (temperature, precip, streamflow).
+computation performed over xarray.DataArrays. DataArrays should carry unit information to allow for any needed
+unit conversions. The output's attributes (CF-Convention) are not modified. Validation checks and output attributes
+are handled by indicator classes described in files named by the physical variable (temperature, precip, streamflow).
 
 Notes for docstring
 -------------------
@@ -131,15 +131,14 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     r"""Cold spell duration index
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
-    percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the
-    1961-1990 period.
+    percentile.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     tn10 : float
-      10th percentile of daily minimum temperature [K]
+      10th percentile of daily minimum temperature.
     freq : str, optional
       Resampling frequency
 
@@ -148,6 +147,10 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     xarray.DataArray
       Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
       percentile [days].
+
+    Notes
+    -----
+    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
     References
     ----------
@@ -165,7 +168,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     doy = tasmin.indexes['time'].dayofyear
 
     # If calendar of `tn10` is different from `tasmin`, interpolate.
-    tn10 = utils.adjust_doy_calendar(tn10, tasmin)
+    tn10 = utils.adjust_doy_calendar(utils.convert_units_to(tn10, tasmin), tasmin)
 
     # Create an array with the shape and coords of tasmin, but with values set to tx90 according to the doy index.
     thresh = xr.full_like(tasmin, np.nan)
@@ -176,7 +179,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     return below.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
-def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
+def cold_spell_days(tas, thresh='-10 C', window=5, freq='AS-JUL'):
     r"""Cold spell days
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
@@ -186,8 +189,8 @@ def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
     ----------
     tas : xarrray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature below which a cold spell begins [℃] or [K] : default -10C
+    thresh : str
+      Threshold temperature below which a cold spell begins [℃] or [K].
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str, optional
@@ -198,14 +201,13 @@ def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
     DataArray
       Cold spell days
     """
-
-    over = tas < (thresh)
+    t = utils.convert_units_to(thresh, tas)
+    over = tas < t
     group = over.resample(time=freq)
 
     return group.apply(rl.windowed_run_count, window=window, dim='time')
 
 
-# TODO: mix up in docsring for tas
 def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     r"""Cold and dry days.
 
@@ -214,17 +216,20 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     Parameters
     ----------
     tas : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
+      Mean daily temperature values [℃] or [K]
+    tgin25 : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
-    tgin25 : unknown
-    wet25: unknown
+      Daily precipitation.
+    wet25 : xarray.DataArray
+      First quartile of daily total precipitation computed by month.
     freq : str, optional
       Resampling frequency
 
     Returns
     -------
     xarray.DataArray
-      The total number of days where "Cold" and "Dry conditions coincide.
+      The total number of days where cold and dry conditions coincide.
 
     Notes
     -----
@@ -235,15 +240,16 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-
-    c1 = tas < tgin25
-    c2 = (pr > 1 * ftomm) * (pr < wet25)
+    raise NotImplementedError
+    # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
+    c1 = tas < utils.convert_units_to(tgin25, tas)
+    c2 = (pr > utils.convert_units_to('1 mm', pr)) * (pr < utils.convert_units_to(wet25, pr))
 
     c = (c1 * c2) * 1
     return c.resample(time=freq).sum(dim='time')
 
 
-def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
+def daily_pr_intensity(pr, thresh='1 mm/d', freq='YS'):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -252,8 +258,8 @@ def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
     ----------
     pr : xarray.DataArray
       Daily precipitation [mm]
-    thresh : float
-      precipitation value over which a day is considered wet. Default: 1mm.
+    thresh : str
+      precipitation value over which a day is considered wet.
     freq : str, optional
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
@@ -273,9 +279,10 @@ def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
     >>> daily_int = daily_pr_intensity(pr, thresh=5., freq="QS-DEC")
 
     """
+    t = utils.convert_units_to(thresh, pr, 'hydro')
 
     # put pr=0 for non wet-days
-    pr_wd = xr.where(pr >= thresh, pr, 0)
+    pr_wd = xr.where(pr >= t, pr, 0)
 
     # sum over wanted period
     s = pr_wd.resample(time=freq).sum(dim='time')
@@ -286,7 +293,7 @@ def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
     return s / wd
 
 
-def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
+def maximum_consecutive_dry_days(pr, thresh='1 mm/d', freq='YS'):
     r"""Maximum number of consecutive dry days
 
     Return the maximum number of consecutive days within the period where precipitation
@@ -296,7 +303,7 @@ def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [mm]
-    thresh : float
+    thresh : str
       Threshold precipitation on which to base evaluation [mm]
     freq : str, optional
       Resampling frequency
@@ -306,8 +313,8 @@ def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
     xarray.DataArray
       The maximum number of consecutive dry days.
     """
-
-    group = (pr < thresh).resample(time=freq)
+    t = utils.convert_units_to(thresh, pr, 'hydro')
+    group = (pr < t).resample(time=freq)
     return group.apply(rl.longest_run, dim='time')
 
 
@@ -432,11 +439,7 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
       Number of days with a diurnal freeze-thaw cycle
 
     """
-    tu = units.parse_units(tasmax.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
+    frz = utils.convert_units_to('0 degC', tasmax)
     ft = (tasmin < frz) * (tasmax > frz) * 1
     return ft.resample(time=freq).sum(dim='time')
 
@@ -1148,7 +1151,7 @@ def precip_accumulation(pr, freq='YS'):
     return pr.resample(time=freq).sum(dim='time')
 
 
-def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
+def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
     """Number of rain on frozen ground events
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
@@ -1171,12 +1174,8 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
       The number of rain on frozen ground events per period [days]
 
     """
-
-    tu = units.parse_units(tas.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
+    t = utils.convert_units_to(thresh, pr)
+    frz = utils.convert_units_to('0 C', tas)
 
     def func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
@@ -1184,7 +1183,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
         return frozen.all(axis=axis)
 
     tcond = (tas > frz).rolling(time=8).reduce(func)
-    pcond = (pr > thresh)
+    pcond = (pr > t)
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
 

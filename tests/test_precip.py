@@ -297,7 +297,7 @@ class TestMaxConsecDryDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
         out2 = precip.maximum_consecutive_dry_days(prMM, thresh=pr_min, freq='MS')
 

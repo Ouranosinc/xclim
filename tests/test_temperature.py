@@ -35,9 +35,9 @@ class TestCSDI:
         A = 10.
         tn = np.zeros(i) + A * np.sin(np.arange(i) / 365. * 2 * np.pi) + .1 * np.random.rand(i)
         tn[10:20] -= 2
-        tn = tasmin_series(tn)
+        tn = tasmin_series(tn + K2C)
         tn.attrs['units'] = 'C'
-        tn10 = percentile_doy(tn + K2C, per=.1)
+        tn10 = percentile_doy(tn, per=.1)
 
         out = temp.cold_spell_duration_index(tn, tn10, freq='AS-JUL')
         assert out[0] == 10

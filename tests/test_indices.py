@@ -131,9 +131,9 @@ class TestColdSpellDays:
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
-        da = tas_series(a)
+        da = tas_series(a + K2C)
 
-        out = xci.cold_spell_days(da, thresh=-10., freq='M')
+        out = xci.cold_spell_days(da, thresh='-10. C', freq='M')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
 

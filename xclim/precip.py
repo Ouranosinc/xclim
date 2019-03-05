@@ -4,12 +4,12 @@ from .utils import Indicator
 
 
 class Pr(Indicator):
-    required_units = 'mm/day'
+    required_units = '[length] / [time]'
     context = 'hydro'
 
 
 class PrTas(Indicator):
-    required_units = ('mm/day', 'K')
+    required_units = ('[length] / [time]', '[temperature]')
     context = 'hydro'
 
 
