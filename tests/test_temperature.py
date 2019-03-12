@@ -198,7 +198,7 @@ class TestTx:
 
         no_nan = ~np.isnan(txmean).values & ~np.isnan(txmax).values & ~np.isnan(txmin).values
 
-        # test maxes always greater than mean and mean alwyas greater than min (non nan values only)
+        # test maxes always greater than mean and mean always greater than min (non nan values only)
         assert (np.all(txmax.values[no_nan] > txmean.values[no_nan]) & np.all(
             txmean.values[no_nan] > txmin.values[no_nan]))
 

@@ -144,6 +144,7 @@ heat_wave_index = Tasmax(identifier='hwi_{thresh}',
 
 tg_mean = Tas(identifier='tg_mean',
               units='K',
+              required_units='K',
               standard_name="air_temperature",
               long_name="Mean daily mean temperature",
               description="{freq} mean of daily mean temperature.",

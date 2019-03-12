@@ -139,6 +139,8 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
       Minimum daily temperature.
     tn10 : float
       10th percentile of daily minimum temperature.
+    window : int
+      Minimum number of days with temperature below threshold to qualify as a cold spell. Default: 6.
     freq : str, optional
       Resampling frequency
 
@@ -276,7 +278,7 @@ def daily_pr_intensity(pr, thresh='1 mm/d', freq='YS'):
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> pr = xr.open_dataset('pr.day.nc')
-    >>> daily_int = daily_pr_intensity(pr, thresh=5., freq="QS-DEC")
+    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
 
     """
     t = utils.convert_units_to(thresh, pr, 'hydro')
@@ -358,7 +360,7 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     return group.apply(rl.longest_run, dim='time')
 
 
-def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
+def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
     r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
@@ -386,12 +388,13 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 
         RR_{ij} ≥ 1 mm
     """
+    thresh = utils.convert_units_to(thresh, pr, 'hydro')
 
     group = (pr > thresh).resample(time=freq)
     return group.apply(rl.longest_run, dim='time')
 
 
-def cooling_degree_days(tas, thresh=18, freq='YS'):
+def cooling_degree_days(tas, thresh='18 C', freq='YS'):
     r"""Cooling degree days
 
     Sum of degree days above the temperature threshold at which spaces are cooled.
@@ -410,6 +413,7 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
     xarray.DataArray
       Cooling degree days
     """
+    thresh = utils.convert_units_to(tas, thresh)
 
     return tas.pipe(lambda x: x - thresh) \
         .clip(min=0) \
@@ -547,7 +551,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     return tx_max - tn_min
 
 
-def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
+def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
     r"""First day consistently exceeding threshold temperature.
 
     Returns first day of period where a temperature threshold is exceeded
@@ -571,7 +575,7 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
       no such day, return np.nan.
 
     """
-
+    thresh = utils.convert_units_to(tas, thresh)
     over = (tas > thresh)
     group = over.resample(time=freq)
     return group.apply(rl.first_run_ufunc, window=window, index='dayofyear')
@@ -612,7 +616,7 @@ def frost_days(tasmin, freq='YS'):
     return f.resample(time=freq).sum(dim='time')
 
 
-def growing_degree_days(tas, thresh=4.0, freq='YS'):
+def growing_degree_days(tas, thresh='4.0 degC', freq='YS'):
     r"""Growing degree-days over threshold temperature value [℃].
 
     The sum of degree-days over the threshold temperature.
@@ -640,14 +644,14 @@ def growing_degree_days(tas, thresh=4.0, freq='YS'):
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-
+    thresh = utils.convert_units_to(tas, thresh)
     return tas.pipe(lambda x: x - thresh) \
         .clip(min=0) \
         .resample(time=freq) \
         .sum(dim='time')
 
 
-def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
+def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
     r"""Growing season length.
 
     The number of days between the first occurrence of at least
@@ -712,6 +716,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     # gsl = xr.where(np.isnan(gsl), 0, gsl)
 
     # compute growth season length on resampled data
+    thresh = utils.convert_units_to(tas, thresh)
 
     c = ((tas > thresh) * 1).rolling(time=window).sum().chunk(tas.chunks)
 
@@ -732,7 +737,7 @@ def growing_season_length(tas, thresh=5.0, window=6, freq='YS'):
     return gsl
 
 
-def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
+def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax=30,
                         window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
@@ -781,13 +786,15 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
+    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
+    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
     return group.apply(rl.windowed_run_events, window=window, dim='time')
 
 
-def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
+def heat_wave_index(tasmax, thresh='25.0 degC', window=5, freq='YS'):
     r"""Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
@@ -808,14 +815,14 @@ def heat_wave_index(tasmax, thresh=25.0, window=5, freq='YS'):
     DataArray
       Heat wave index.
     """
-
+    thresh = utils.convert_units_to(tasmax, thresh)
     over = tasmax > thresh
     group = over.resample(time=freq)
 
     return group.apply(rl.windowed_run_count, window=window, dim='time')
 
 
-def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
+def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax='30 degC',
                          window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave max length
@@ -866,6 +873,8 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
+    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
+    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
@@ -873,7 +882,7 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     return max_l.where(max_l >= window, 0)
 
 
-def heating_degree_days(tas, freq='YS', thresh=17.0):
+def heating_degree_days(tas, freq='YS', thresh='17.0 degC'):
     r"""Heating degree days
 
     Sum of degree days below the temperature threshold at which spaces are heated.
@@ -901,6 +910,7 @@ def heating_degree_days(tas, freq='YS', thresh=17.0):
 
         HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij})
     """
+    thresh = utils.convert_units_to(tas, thresh)
 
     return tas.pipe(lambda x: thresh - x) \
         .clip(0) \
@@ -984,7 +994,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     return ratio
 
 
-def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
+def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
     r"""Number of days with tmin below a threshold in
 
     Number of days where daily minimum temperature is below a threshold.
@@ -1012,11 +1022,12 @@ def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
 
         TX_{ij} < thresh [℃]
     """
+    thresh = utils.convert_units_to(tasmin, thresh)
     f1 = utils.threshold_count(tasmin, '<', thresh, freq)
     return f1
 
 
-def tx_days_above(tasmax, thresh=25.0, freq='YS'):
+def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
     r"""Number of summer days
 
     Number of days where daily maximum temperature exceed a threshold.
@@ -1044,7 +1055,7 @@ def tx_days_above(tasmax, thresh=25.0, freq='YS'):
 
         TX_{ij} > 25℃
     """
-
+    thresh = utils.convert_units_to(tasmax, thresh)
     f = (tasmax > (thresh)) * 1
     return f.resample(time=freq).sum(dim='time')
 
@@ -1567,7 +1578,7 @@ def tn_min(tasmin, freq='YS'):
     return tasmin.resample(time=freq).min(dim='time')
 
 
-def tropical_nights(tasmin, thresh=20.0, freq='YS'):
+def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
     r"""Tropical nights
 
     The number of days with minimum daily temperature above threshold.
@@ -1595,7 +1606,7 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
 
         TN_{ij} > 20℃
     """
-
+    thresh = utils.convert_units_to(tasmin, tasmin)
     return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
         .resample(time=freq) \
         .sum(dim='time')
@@ -1655,7 +1666,7 @@ def tx10p(tasmax, t10, freq='YS'):
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     t10 : xarray.DataArray
       10th percentile of daily maximum temperature [℃] or [K]
@@ -1784,7 +1795,7 @@ def tx_min(tasmax, freq='YS'):
     return tasmax.resample(time=freq).min(dim='time')
 
 
-def warm_day_frequency(tasmax, thresh=30, freq='YS'):
+def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
     r"""Frequency of extreme warm days
 
     Return the number of days with tasmax > thresh per period
@@ -1798,7 +1809,7 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
     freq : str, optional
       Resampling frequency
     """
-
+    thresh = utils.convert_units_to(tasmax, thresh)
     events = (tasmax > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
 
@@ -1828,12 +1839,13 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
       the number of days with tasmin > thresh_tasmin and
       tasmax > thresh_tasamax per period
     """
-
+    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
+    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
     events = ((tasmin > (thresh_tasmin)) & (tasmax > (thresh_tasmax))) * 1
     return events.resample(time=freq).sum(dim='time')
 
 
-def warm_night_frequency(tasmin, thresh=22, freq='YS'):
+def warm_night_frequency(tasmin, thresh='22 degC', freq='YS'):
     r"""Frequency of extreme warm nights
 
     Return the number of days with tasmin > thresh per period
@@ -1852,6 +1864,7 @@ def warm_night_frequency(tasmin, thresh=22, freq='YS'):
     xarray.DataArray
       The number of days with tasmin > thresh per period
     """
+    thresh = utils.convert_units_to(tasmin, thresh)
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
 
@@ -1869,6 +1882,8 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
       Maximum daily temperature [℃] or [K]
     tx90 : float
       90th percentile of daily maximum temperature [℃] or [K]
+    window : int
+      Minimum number of days with temperature below threshold to qualify as a warm spell.
     freq : str, optional
       Resampling frequency
 
@@ -1903,7 +1918,7 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
     return above.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
-def wetdays(pr, thresh=1.0, freq='YS'):
+def wetdays(pr, thresh='1.0 mm/day', freq='YS'):
     r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
@@ -1931,6 +1946,7 @@ def wetdays(pr, thresh=1.0, freq='YS'):
     >>> pr = xr.open_dataset('pr.day.nc')
     >>> wd = wetdays(pr, pr_min = 5., freq="QS-DEC")
     """
+    thresh = utils.convert_units_to(thresh, pr, 'hydro')
 
     wd = (pr >= thresh) * 1
     return wd.resample(time=freq).sum(dim='time')

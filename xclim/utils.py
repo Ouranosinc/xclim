@@ -85,7 +85,8 @@ def convert_units_to(source, target, context=None):
       The value to be converted, e.g. '4C' or '1 mm/d'.
     target : str, pint.Unit or DataArray
       Target array of values to which units must conform.
-    context : None
+    context : str
+
 
     Returns
     -------
