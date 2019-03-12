@@ -175,12 +175,12 @@ class TestCoolingDegreeDays:
                                    'units': 'K'})
 
     def test_no_cdd(self):
-        a = self.time_series(np.array([10, 15, -5, 18]))
+        a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
 
     def test_cdd(self):
-        a = self.time_series(np.array([20, 25, -15, 19]))
+        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
@@ -221,7 +221,7 @@ class TestFreshetStart:
         i = 30
         tg[i:i + w + 1] += 6  # Second valid condition, should be ignored.
 
-        tg = tas_series(tg, start='1/1/2000')
+        tg = tas_series(tg + K2C, start='1/1/2000')
         out = xci.freshet_start(tg, window=w)
         assert out[0] == tg.indexes['time'][20].dayofyear
 
@@ -237,7 +237,7 @@ class TestGrowingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a[0] = 5  # default thresh at 4
-        da = tas_series(a)
+        da = tas_series(a + K2C)
         assert xci.growing_degree_days(da)[0] == 1
 
 
@@ -291,7 +291,7 @@ class TestHeatingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + 17
         a[:7] += [-3, -2, -1, 0, 1, 2, 3]
-        da = tas_series(a)
+        da = tas_series(a + K2C)
         out = xci.heating_degree_days(da)
         np.testing.assert_array_equal(out[:1], 6)
         np.testing.assert_array_equal(out[1:], 0)
@@ -304,58 +304,58 @@ class TestHeatWaveIndex:
         a[10:20] += 30  # 10 days
         a[40:43] += 50  # too short -> 0
         a[80:100] += 30  # at the end and beginning
-        da = tasmax_series(a)
+        da = tasmax_series(a + K2C)
 
-        out = xci.heat_wave_index(da, thresh=25., freq='M')
+        out = xci.heat_wave_index(da, thresh='25 C', freq='M')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestHeatWaveFrequency:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
         # some hw
-        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                      thresh_tasmax=30)
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin='22 C',
+                                      thresh_tasmax='30 C')
         np.testing.assert_allclose(hwf.values, 2)
-        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                      thresh_tasmax=30, window=4)
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin='22 C',
+                                      thresh_tasmax='30 C', window=4)
         np.testing.assert_allclose(hwf.values, 1)
         # one long hw
-        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=10,
-                                      thresh_tasmax=10)
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin='10 C',
+                                      thresh_tasmax='10 C')
         np.testing.assert_allclose(hwf.values, 1)
         # no hw
-        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin=40,
-                                      thresh_tasmax=40)
+        hwf = xci.heat_wave_frequency(tn, tx, thresh_tasmin='40 C',
+                                      thresh_tasmax='40 C')
         np.testing.assert_allclose(hwf.values, 0)
 
 
 class TestHeatWaveMaxLength:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
-        tx = tasmax_series([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
         # some hw
-        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=22,
-                                        thresh_tasmax=30)
+        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin='22 C',
+                                        thresh_tasmax='30 C')
         np.testing.assert_allclose(hwml.values, 4)
 
         # one long hw
-        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=10,
-                                        thresh_tasmax=10)
+        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin='10 C',
+                                        thresh_tasmax='10 C')
         np.testing.assert_allclose(hwml.values, 10)
 
         # no hw
-        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=40,
-                                        thresh_tasmax=40)
+        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin='40 C',
+                                        thresh_tasmax='40 C')
         np.testing.assert_allclose(hwml.values, 0)
 
-        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin=22,
-                                        thresh_tasmax=30, window=5)
+        hwml = xci.heat_wave_max_length(tn, tx, thresh_tasmin='22 C',
+                                        thresh_tasmax='30 C', window=5)
         np.testing.assert_allclose(hwml.values, 0)
 
 
@@ -364,12 +364,12 @@ class TestTnDaysBelow:
     def test_simple(self, tasmin_series):
         a = np.zeros(365)
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
-        mx = tasmin_series(a)
+        mx = tasmin_series(a + K2C)
 
-        out = xci.tn_days_below(mx, thresh=-10)
+        out = xci.tn_days_below(mx, thresh='-10 C')
         np.testing.assert_array_equal(out[:1], [6])
         np.testing.assert_array_equal(out[1:], [0])
-        out = xci.tn_days_below(mx, thresh=-30)
+        out = xci.tn_days_below(mx, thresh='-30 C')
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -379,9 +379,9 @@ class TestTxDaysAbove:
     def test_simple(self, tasmax_series):
         a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
-        mx = tasmax_series(a)
+        mx = tasmax_series(a + K2C)
 
-        out = xci.tx_days_above(mx, thresh=30.)
+        out = xci.tx_days_above(mx, thresh='30 C')
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -458,7 +458,7 @@ class TestRainOnFrozenGround:
         pr[10] += 2
 
         tas = tas_series(tas + K2C)
-        pr = pr_series(pr)
+        pr = pr_series(pr / 3600 / 24)
 
         out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 1
@@ -471,7 +471,7 @@ class TestRainOnFrozenGround:
         pr[10] += .5
 
         tas = tas_series(tas + K2C)
-        pr = pr_series(pr)
+        pr = pr_series(pr / 3600 / 24)
 
         out = xci.rain_on_frozen_ground_days(pr, tas, freq='MS')
         assert out[0] == 0
@@ -721,14 +721,14 @@ class TestWarmDayFrequency:
     def test_1d(self, tasmax_series):
         a = np.zeros(35)
         a[25:] = 31
-        da = tasmax_series(a)
+        da = tasmax_series(a + K2C)
         wdf = xci.warm_day_frequency(da, freq='MS')
         np.testing.assert_allclose(wdf.values, [6, 4])
         wdf = xci.warm_day_frequency(da, freq='YS')
         np.testing.assert_allclose(wdf.values, [10])
-        wdf = xci.warm_day_frequency(da, thresh=-1)
+        wdf = xci.warm_day_frequency(da, thresh='-1 C')
         np.testing.assert_allclose(wdf.values, [35])
-        wdf = xci.warm_day_frequency(da, thresh=50)
+        wdf = xci.warm_day_frequency(da, thresh='50 C')
         np.testing.assert_allclose(wdf.values, [0])
 
 
@@ -737,29 +737,29 @@ class TestWarmNightFrequency:
     def test_1d(self, tasmin_series):
         a = np.zeros(35)
         a[25:] = 23
-        da = tasmin_series(a)
+        da = tasmin_series(a + K2C)
         wnf = xci.warm_night_frequency(da, freq='MS')
         np.testing.assert_allclose(wnf.values, [6, 4])
         wnf = xci.warm_night_frequency(da, freq='YS')
         np.testing.assert_allclose(wnf.values, [10])
-        wnf = xci.warm_night_frequency(da, thresh=-1)
+        wnf = xci.warm_night_frequency(da, thresh='-1 C')
         np.testing.assert_allclose(wnf.values, [35])
-        wnf = xci.warm_night_frequency(da, thresh=50)
+        wnf = xci.warm_night_frequency(da, thresh='50 C')
         np.testing.assert_allclose(wnf.values, [0])
 
 
 class TestTxTnDaysAbove:
 
     def test_1d(self, tasmax_series, tasmin_series):
-        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]))
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]))
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
         wmmtf = xci.tx_tn_days_above(tn, tx)
         np.testing.assert_allclose(wmmtf.values, [7])
-        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax=50)
+        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax='50 C')
         np.testing.assert_allclose(wmmtf.values, [0])
-        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax=0,
-                                     thresh_tasmin=0)
+        wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax='0 C',
+                                     thresh_tasmin='0 C')
         np.testing.assert_allclose(wmmtf.values, [10])
 
 

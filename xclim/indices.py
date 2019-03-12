@@ -413,7 +413,7 @@ def cooling_degree_days(tas, thresh='18 C', freq='YS'):
     xarray.DataArray
       Cooling degree days
     """
-    thresh = utils.convert_units_to(tas, thresh)
+    thresh = utils.convert_units_to(thresh, tas)
 
     return tas.pipe(lambda x: x - thresh) \
         .clip(min=0) \
@@ -575,7 +575,7 @@ def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
       no such day, return np.nan.
 
     """
-    thresh = utils.convert_units_to(tas, thresh)
+    thresh = utils.convert_units_to(thresh, tas)
     over = (tas > thresh)
     group = over.resample(time=freq)
     return group.apply(rl.first_run_ufunc, window=window, index='dayofyear')
@@ -644,7 +644,7 @@ def growing_degree_days(tas, thresh='4.0 degC', freq='YS'):
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-    thresh = utils.convert_units_to(tas, thresh)
+    thresh = utils.convert_units_to(thresh, tas)
     return tas.pipe(lambda x: x - thresh) \
         .clip(min=0) \
         .resample(time=freq) \
@@ -716,7 +716,7 @@ def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
     # gsl = xr.where(np.isnan(gsl), 0, gsl)
 
     # compute growth season length on resampled data
-    thresh = utils.convert_units_to(tas, thresh)
+    thresh = utils.convert_units_to(thresh, tas)
 
     c = ((tas > thresh) * 1).rolling(time=window).sum().chunk(tas.chunks)
 
@@ -786,8 +786,8 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
-    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
-    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
@@ -815,7 +815,7 @@ def heat_wave_index(tasmax, thresh='25.0 degC', window=5, freq='YS'):
     DataArray
       Heat wave index.
     """
-    thresh = utils.convert_units_to(tasmax, thresh)
+    thresh = utils.convert_units_to(thresh, tasmax)
     over = tasmax > thresh
     group = over.resample(time=freq)
 
@@ -873,8 +873,8 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasma
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
-    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
-    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
@@ -910,7 +910,7 @@ def heating_degree_days(tas, freq='YS', thresh='17.0 degC'):
 
         HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij})
     """
-    thresh = utils.convert_units_to(tas, thresh)
+    thresh = utils.convert_units_to(thresh, tas)
 
     return tas.pipe(lambda x: thresh - x) \
         .clip(0) \
@@ -1022,7 +1022,7 @@ def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
 
         TX_{ij} < thresh [℃]
     """
-    thresh = utils.convert_units_to(tasmin, thresh)
+    thresh = utils.convert_units_to(thresh, tasmin)
     f1 = utils.threshold_count(tasmin, '<', thresh, freq)
     return f1
 
@@ -1055,7 +1055,7 @@ def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
 
         TX_{ij} > 25℃
     """
-    thresh = utils.convert_units_to(tasmax, thresh)
+    thresh = utils.convert_units_to(thresh, tasmax)
     f = (tasmax > (thresh)) * 1
     return f.resample(time=freq).sum(dim='time')
 
@@ -1606,7 +1606,7 @@ def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
 
         TN_{ij} > 20℃
     """
-    thresh = utils.convert_units_to(tasmin, tasmin)
+    thresh = utils.convert_units_to(thresh, tasmin)
     return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
         .resample(time=freq) \
         .sum(dim='time')
@@ -1809,13 +1809,13 @@ def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
     freq : str, optional
       Resampling frequency
     """
-    thresh = utils.convert_units_to(tasmax, thresh)
+    thresh = utils.convert_units_to(thresh, tasmax)
     events = (tasmax > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
 
 
-def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
-                     thresh_tasmax=30, freq='YS'):
+def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 C',
+                     thresh_tasmax='30 C', freq='YS'):
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.
@@ -1839,8 +1839,8 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
       the number of days with tasmin > thresh_tasmin and
       tasmax > thresh_tasamax per period
     """
-    thresh_tasmax = utils.convert_units_to(tasmax, thresh_tasmax)
-    thresh_tasmin = utils.convert_units_to(tasmin, thresh_tasmin)
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > (thresh_tasmin)) & (tasmax > (thresh_tasmax))) * 1
     return events.resample(time=freq).sum(dim='time')
 
@@ -1864,7 +1864,7 @@ def warm_night_frequency(tasmin, thresh='22 degC', freq='YS'):
     xarray.DataArray
       The number of days with tasmin > thresh per period
     """
-    thresh = utils.convert_units_to(tasmin, thresh)
+    thresh = utils.convert_units_to(thresh, tasmin, )
     events = (tasmin > thresh) * 1
     return events.resample(time=freq).sum(dim='time')
 
