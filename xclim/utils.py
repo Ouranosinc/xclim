@@ -11,7 +11,7 @@ import pandas as pd
 import xarray as xr
 from . import checks
 from inspect2 import signature, _empty
-import functools
+# import functools
 import abc
 from collections import defaultdict
 import datetime as dt
@@ -69,9 +69,11 @@ calendars = {'standard': 366,
              'uniform30day': 360,
              '360_day': 360}
 
+
 def cfunits2pint(da):
     """Return the pint Unit for the DataArray units."""
     return units.parse_units(da.attrs['units'].replace('-', '**-'))
+
 
 def convert_units_to(source, target, context=None):
     """
@@ -83,6 +85,7 @@ def convert_units_to(source, target, context=None):
       The value to be converted, e.g. '4C' or '1 mm/d'.
     target : str, pint.Unit or DataArray
       Target array of values to which units must conform.
+    context : None
 
     Returns
     -------
@@ -137,12 +140,9 @@ def create_ensemble(ncfiles):
     Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
     If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
 
-
     Parameters
     ----------
-
     ncfiles : list of netcdf file paths (list)
-
 
     Returns
     -------
@@ -150,7 +150,6 @@ def create_ensemble(ncfiles):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*.nc')
@@ -199,16 +198,13 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     Returns a dataset containing ensemble statistics for input climate simulations.
     Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
 
-
     Parameters
     ----------
     ens : Ensemble dataset (see xclim.utils.create_ensemble)
-
-    values (optional) : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
-
-    time_block (optional) : integer - for large ensembles iteratively calculate percentiles
-    in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
-
+    values : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
+    time_block : integer
+      for large ensembles iteratively calculate percentiles in time-step blocks (n==time_block).
+       If not defined the function tries to estimate an appropriate value
 
     Returns
     -------
@@ -216,7 +212,6 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
@@ -234,7 +229,7 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     """
 
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -242,20 +237,20 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
             time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
 
         if time_block > len(ens[v].time):
-            Out = calc_percentiles_simple(ens, v, values)
+            out = calc_percentiles_simple(ens, v, values)
 
         else:
             # loop through blocks
             Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
                     ' time-steps')
-            Out = calc_percentiles_blocks(ens, v, values, time_block)
-        for vv in Out.data_vars:
-            dsOut[vv] = Out[vv]
-    return dsOut
+            out = calc_percentiles_blocks(ens, v, values, time_block)
+        for vv in out.data_vars:
+            ds_out[vv] = out[vv]
+    return ds_out
 
 
 def calc_percentiles_simple(ens, v, values):
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
     outdims = [x for x in dims if 'realization' not in x]
 
@@ -269,19 +264,19 @@ def calc_percentiles_simple(ens, v, values):
 
         out1 = calc_perc(arr, p)
 
-        dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
-        dsOut[outvar].attrs = ens[v].attrs
-        if 'description' in dsOut[outvar].attrs.keys():
-            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+        ds_out[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
+        ds_out[outvar].attrs = ens[v].attrs
+        if 'description' in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
                                                  'th percentile of ensemble'
         else:
-            dsOut[outvar].attrs['description'] = str(p) + \
+            ds_out[outvar].attrs['description'] = str(p) + \
                                                  'th percentile of ensemble'
-    return dsOut
+    return ds_out
 
 
 def calc_percentiles_blocks(ens, v, values, time_block):
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
     outdims = [x for x in dims if 'realization' not in x]
 
@@ -307,15 +302,15 @@ def calc_percentiles_blocks(ens, v, values, time_block):
                                                xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
     for p in values:
         outvar = v + '_p' + str(p)
-        dsOut[outvar] = arr_p_all[str(p)]
-        dsOut[outvar].attrs = ens[v].attrs
-        if 'description' in dsOut[outvar].attrs.keys():
-            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+        ds_out[outvar] = arr_p_all[str(p)]
+        ds_out[outvar].attrs = ens[v].attrs
+        if 'description' in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
                                                  'th percentile of ensemble'
         else:
-            dsOut[outvar].attrs['description'] = str(p) + \
+            ds_out[outvar].attrs['description'] = str(p) + \
                                                  'th percentile of ensemble'
-    return dsOut
+    return ds_out
 
 
 def calc_perc(arr, p):
@@ -348,14 +343,9 @@ def ensemble_mean_std_max_min(ens):
     Returns a dataset containing ensemble mean, standard-deviation,
     minimum and maximum for input climate simulations.
 
-
-
     Parameters
     ----------
-
     ens : Ensemble dataset (see xclim.utils.create_ensemble)
-
-
 
     Returns
     -------
@@ -363,7 +353,6 @@ def ensemble_mean_std_max_min(ens):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
@@ -372,8 +361,6 @@ def ensemble_mean_std_max_min(ens):
     Calculate ensemble statistics
     >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
-
-
     """
     dsOut = ens.drop(ens.data_vars)
     for v in ens.data_vars:
@@ -493,7 +480,7 @@ def infer_doy_max(arr):
 
 
 def _interpolate_doy_calendar(source, doy_max):
-    r"""Interpolate from one set of dayofyear range to another
+    """Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -527,7 +514,7 @@ def _interpolate_doy_calendar(source, doy_max):
 
 
 def adjust_doy_calendar(source, target):
-    r"""Interpolate from one set of dayofyear range to another calendar.
+    """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -564,10 +551,10 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     ----------
     arr : xarray.DataArray or xarray.Dataset
       Input data.
-    lon_bnds (optional) : list of floats
-      List of maximum and minimum longitudinal bounds. Defaults to all longitudes in original data-array.
-    lat_bnds (optional) :  list of floats
-      List maximum and minimum latitudinal bounds.  Defaults to all latitudes in original data-array.
+    lon_bnds : list of floats
+      List of maximum and minimum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
+    lat_bnds :  list of floats
+      List maximum and minimum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
     start_yr : int
       First year of the subset. Defaults to first year of input.
     end_yr : int
@@ -680,15 +667,15 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
         lon1 = da.lon.values
         lat1 = da.lat.values
     shp_orig = lon1.shape
-    lon1 = np.reshape(lon1, (lon1.size))
-    lat1 = np.reshape(lat1, (lat1.size))
+    lon1 = np.reshape(lon1, lon1.size)
+    lat1 = np.reshape(lat1, lat1.size)
     # calculate geodesic distance between grid points and point of interest
     az12, az21, dist = g.inv(lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape))
     dist = dist.reshape(shp_orig)
 
     iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
     xydims = [x for x in da.dims if 'time' not in x]
-    args = {}
+    args = dict()
     args[xydims[0]] = iy
     args[xydims[1]] = ix
     out = da.isel(**args)
@@ -987,7 +974,7 @@ class Indicator(object):
         with units.context(self.context):
             if u.dimensionality != units.get_dimensionality(req_units):
                 pass
-                #raise AttributeError("Units for {} ({}) don't match expected units: {}."\
+                # raise AttributeError("Units for {} ({}) don't match expected units: {}."\
                 # .format(da.name, da.attrs['units'], req_units))
 
     def format(self, attrs, args=None):
