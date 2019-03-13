@@ -72,16 +72,10 @@ def create_ensemble(ncfiles, mf_flag=False):
     a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
     ensemble dataset is created for overlapping time-steps common to all input files
 
-    Notes
-    -----
-    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
-    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
-
-
     Parameters
     ----------
-
-    ncfiles : list of netcdf file paths (list). If mf_flag is true ncfiles should be a list of lists where
+    ncfiles : sequence
+      List of netcdf file paths. If mf_flag is true ncfiles should be a list of lists where
     each sublist contains input .nc files of a multifile dataset
 
     mf_flag : Boolean . If true climate simulations are treated as multifile datasets before concatenation
@@ -89,6 +83,11 @@ def create_ensemble(ncfiles, mf_flag=False):
     Returns
     -------
     xarray dataset containing concatenated data from all input files
+
+    Notes
+    -----
+    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
+    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
 
     Examples
     --------
