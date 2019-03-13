@@ -113,7 +113,7 @@ def create_ensemble(ncfiles, mf_flag=False):
     print('finding common time-steps')
     for n in ncfiles:
         if mf_flag:
-            ds = xr.open_mfdataset(n, concat_dim='time',decode_times=False)
+            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False)
             ds['time'] = xr.open_mfdataset(n).time
         else:
             ds = xr.open_dataset(n, decode_times=False)
@@ -138,7 +138,7 @@ def create_ensemble(ncfiles, mf_flag=False):
             ds = xr.open_dataset(n, decode_times=False)
             ds['time'] = xr.decode_cf(ds).time
 
-        ds.chunk({'time':10})
+        ds.chunk({'time': 10})
         ds['time'].values = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
 
         ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
