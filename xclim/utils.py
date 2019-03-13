@@ -99,7 +99,7 @@ def create_ensemble(ncfiles, mf_flag=False):
     >>> ens = utils.create_ensemble(ncfiles)
     >>> print(ens)
     Using multifile datasets:
-    simulation 1 is a list of .nc files (separated by time
+    simulation 1 is a list of .nc files (e.g. separated by time)
     >>> ncfiles = glob.glob('dir/*.nc')
     simulation 2 is also a list of .nc files
     >>> ens = utils.create_ensemble(ncfiles)
