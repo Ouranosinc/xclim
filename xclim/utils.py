@@ -269,10 +269,10 @@ def calc_percentiles_simple(ens, v, values):
         ds_out[outvar].attrs = ens[v].attrs
         if 'description' in ds_out[outvar].attrs.keys():
             ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                 'th percentile of ensemble'
+                                                  'th percentile of ensemble'
         else:
             ds_out[outvar].attrs['description'] = str(p) + \
-                                                 'th percentile of ensemble'
+                                                  'th percentile of ensemble'
     return ds_out
 
 
@@ -307,10 +307,10 @@ def calc_percentiles_blocks(ens, v, values, time_block):
         ds_out[outvar].attrs = ens[v].attrs
         if 'description' in ds_out[outvar].attrs.keys():
             ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                 'th percentile of ensemble'
+                                                  'th percentile of ensemble'
         else:
             ds_out[outvar].attrs['description'] = str(p) + \
-                                                 'th percentile of ensemble'
+                                                  'th percentile of ensemble'
     return ds_out
 
 
@@ -864,6 +864,10 @@ class Indicator(object):
         if isinstance(self.required_units, six.string_types):
             self.required_units = (self.required_units,)
 
+        if self.input_convert_units_to:
+            if isinstance(self.input_convert_units_to, six.string_types):
+                self.input_convert_units_to = (self.input_convert_units_to,)
+
         self._nvar = len(self.required_units)
 
         # Extract information from the `compute` function.
@@ -915,6 +919,10 @@ class Indicator(object):
         # Check units
         for (da, ru) in zip(das, self.required_units):
             self.check_units(da, ru)
+
+        # Convert input units if necessary
+        if self.input_convert_units_to:
+            das = tuple((convert_units_to(da, ru, self.context) for (da, ru) in zip(das, self.input_convert_units_to)))
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.arguments)

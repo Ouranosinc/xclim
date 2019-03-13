@@ -25,6 +25,7 @@ import abc
 class Tas(Indicator):
     """Class for univariate indices using mean daily temperature as the input."""
     required_units = '[temperature]'
+    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: mean within days')
@@ -38,6 +39,7 @@ class Tas(Indicator):
 class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
     required_units = '[temperature]'
+    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: minimum within days')
@@ -51,6 +53,7 @@ class Tasmin(Indicator):
 class Tasmax(Indicator):
     """Class for univariate indices using max daily temperature as the input."""
     required_units = '[temperature]'
+    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: maximum within days')
@@ -63,6 +66,7 @@ class Tasmax(Indicator):
 
 class TasminTasmax(Indicator):
     required_units = ('[temperature]', '[temperature]')
+    input_convert_units_to = None
 
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
@@ -144,7 +148,7 @@ heat_wave_index = Tasmax(identifier='hwi_{thresh}',
 
 tg_mean = Tas(identifier='tg_mean',
               units='K',
-              required_units='K',
+              input_convert_units_to='K',
               standard_name="air_temperature",
               long_name="Mean daily mean temperature",
               description="{freq} mean of daily mean temperature.",
@@ -153,6 +157,7 @@ tg_mean = Tas(identifier='tg_mean',
 
 tx_mean = Tasmax(identifier='tx_mean',
                  units='K',
+                 input_convert_units_to='K',
                  standard_name='air_temperature',
                  long_name='Mean daily maximum temperature',
                  description='{freq} mean of daily maximum temperature.',
@@ -162,6 +167,7 @@ tx_mean = Tasmax(identifier='tx_mean',
 
 tx_max = Tasmax(identifier='tx_max',
                 units='K',
+                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Maximum daily maximum temperature',
                 description='{freq} maximum of daily maximum temperature.',
@@ -171,6 +177,7 @@ tx_max = Tasmax(identifier='tx_max',
 
 tx_min = Tasmax(identifier='tx_min',
                 units='K',
+                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Minimum daily maximum temperature',
                 description='{freq} minimum of daily maximum temperature.',
@@ -180,6 +187,7 @@ tx_min = Tasmax(identifier='tx_min',
 
 tn_mean = Tasmin(identifier='tn_mean',
                  units='K',
+                 input_convert_units_to='K',
                  standard_name='air_temperature',
                  long_name='Mean daily minimum temperature',
                  description='{freq} mean of daily minimum temperature.',
@@ -189,6 +197,7 @@ tn_mean = Tasmin(identifier='tn_mean',
 
 tn_max = Tasmin(identifier='tn_max',
                 units='K',
+                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Maximum daily minimum temperature',
                 description='{freq} maximum of daily minimum temperature.',
@@ -198,6 +207,7 @@ tn_max = Tasmin(identifier='tn_max',
 
 tn_min = Tasmin(identifier='tn_min',
                 units='K',
+                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Minimum daily minimum temperature',
                 description='{freq} minimum of daily minimum temperature.',
@@ -207,6 +217,7 @@ tn_min = Tasmin(identifier='tn_min',
 
 daily_temperature_range = TasminTasmax(identifier='dtr',
                                        units='K',
+                                       input_convert_units_to=('K', 'K'),
                                        standard_name='air_temperature',
                                        long_name='Mean Diurnal Temperature Range',
                                        description='{freq} mean diurnal temperature range',
@@ -216,6 +227,7 @@ daily_temperature_range = TasminTasmax(identifier='dtr',
 
 daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
                                                    units='K',
+                                                   input_convert_units_to=('K', 'K'),
                                                    standard_name='air_temperature',
                                                    long_name='Mean Diurnal Temperature Range Variability',
                                                    description='{freq} mean diurnal temparature range variability ('
@@ -229,6 +241,7 @@ daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
 
 extreme_temperature_range = TasminTasmax(identifier='etr',
                                          units='K',
+                                         input_convert_units_to=('K', 'K'),
                                          standard_name='air_temperature',
                                          long_name='Intra-period Extreme Temperature Range',
 
@@ -272,7 +285,7 @@ daily_freezethaw_cycles = TasminTasmax(identifier='dlyfrzthw',
                                        )
 
 cooling_degree_days = Tas(identifier='cddcold_{thresh}',
-                          units='C days',
+                          units='K days',
                           standard_name='integral_of_air_temperature_excess_wrt_time',
                           long_name='Cooling Degree Days (Tmean > {thresh}C)',
                           description='{freq} cooling degree days above {thresh}°C',
@@ -281,7 +294,7 @@ cooling_degree_days = Tas(identifier='cddcold_{thresh}',
                           )
 
 heating_degree_days = Tas(identifier='hddheat_{thresh}',
-                          units='C days',
+                          units='K days',
                           standard_name='integral_of_air_temperature_deficit_wrt_time',
                           long_name='Heating Degree Days (Tmean < {thresh}C)',
                           description='{freq} heating degree days below {thresh}°C',

@@ -333,7 +333,7 @@ class TestColdSpellDays:
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
-        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh='-10 C', freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
@@ -343,7 +343,7 @@ class TestColdSpellDays:
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
         ts.attrs['units'] = 'C'
-        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh='-10 C', freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_nan_presence(self, tas_series):
@@ -354,7 +354,7 @@ class TestColdSpellDays:
         a[-1] = np.nan
         ts = tas_series(a)
 
-        out = temp.cold_spell_days(ts, thresh=-10, freq='MS')
+        out = temp.cold_spell_days(ts, thresh='-10 C', freq='MS')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
@@ -431,7 +431,7 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18 + K2C
-        cdd = temp.cooling_degree_days(tas, thresh=18, freq='YS')
+        cdd = temp.cooling_degree_days(tas, thresh='18 C', freq='YS')
 
         x1 = tas.values[:, 0, 0]
 
@@ -453,7 +453,7 @@ class TestCoolingDegreeDays:
 
         # compute with both skipna options
         thresh = 18
-        cdd = temp.cooling_degree_days(tas, thresh=18, freq='YS')
+        cdd = temp.cooling_degree_days(tas, thresh='18 C', freq='YS')
 
         x1 = tas.values[:, 0, 0]
         # x2 = tas.values[:, 1, 0]
@@ -555,24 +555,24 @@ class TestHeatWaveFrequency:
         txC = tasmax_series(tx1, start='1/1/2000')
         txC.attrs['units'] = 'C'
 
-        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                       thresh_tasmax=30)
-        hwfC = temp.heat_wave_frequency(tnC, txC, thresh_tasmin=22,
-                                        thresh_tasmax=30)
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin='22 C',
+                                       thresh_tasmax='30 C')
+        hwfC = temp.heat_wave_frequency(tnC, txC, thresh_tasmin='22 C',
+                                        thresh_tasmax='30 C')
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 2)
 
-        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=22,
-                                       thresh_tasmax=30, window=4)
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin='22 C',
+                                       thresh_tasmax='30 C', window=4)
         np.testing.assert_allclose(hwf.values[:1], 1)
 
         # one long hw
-        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=10,
-                                       thresh_tasmax=10)
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin='10 C',
+                                       thresh_tasmax='10 C')
         np.testing.assert_allclose(hwf.values[:1], 1)
         # no hw
-        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin=40,
-                                       thresh_tasmax=40)
+        hwf = temp.heat_wave_frequency(tn, tx, thresh_tasmin='40 C',
+                                       thresh_tasmax='40 C')
         np.testing.assert_allclose(hwf.values[:1], 0)
 
 
@@ -590,24 +590,24 @@ class TestHeatWaveMaxLength:
         txC = tasmax_series(tx1, start='1/1/2000')
         txC.attrs['units'] = 'C'
 
-        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin=22,
-                                        thresh_tasmax=30)
-        hwfC = temp.heat_wave_max_length(tnC, txC, thresh_tasmin=22,
-                                         thresh_tasmax=30)
+        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin='22 C',
+                                        thresh_tasmax='30 C')
+        hwfC = temp.heat_wave_max_length(tnC, txC, thresh_tasmin='22 C',
+                                         thresh_tasmax='30 C')
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 4)
 
-        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin=20,
-                                        thresh_tasmax=30, window=4)
+        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin='20 C',
+                                        thresh_tasmax='30 C', window=4)
         np.testing.assert_allclose(hwf.values[:1], 5)
 
         # one long hw
-        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin=10,
-                                        thresh_tasmax=10)
+        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin='10 C',
+                                        thresh_tasmax='10 C')
         np.testing.assert_allclose(hwf.values[:1], 10)
         # no hw
-        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin=40,
-                                        thresh_tasmax=40)
+        hwf = temp.heat_wave_max_length(tn, tx, thresh_tasmin='40 C',
+                                        thresh_tasmax='40 C')
         np.testing.assert_allclose(hwf.values[:1], 0)
 
 
@@ -850,8 +850,8 @@ class TestTxTnDaysAbove:
         tasmin.values[180, 1, 0] = np.nan
         tasminC.values[180, 1, 0] = np.nan
 
-        out = temp.tx_tn_days_above(tasmin, tasmax, thresh_tasmax=25, thresh_tasmin=18)
-        outC = temp.tx_tn_days_above(tasminC, tasmaxC, thresh_tasmax=25, thresh_tasmin=18)
+        out = temp.tx_tn_days_above(tasmin, tasmax, thresh_tasmax='25 C', thresh_tasmin='18 C')
+        outC = temp.tx_tn_days_above(tasminC, tasmaxC, thresh_tasmax='25 C', thresh_tasmin='18 C')
         np.testing.assert_array_equal(out, outC, )
 
         min1 = tasmin.values[:, 53, 76]

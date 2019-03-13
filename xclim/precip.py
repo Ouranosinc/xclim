@@ -5,11 +5,13 @@ from .utils import Indicator
 
 class Pr(Indicator):
     required_units = '[length] / [time]'
+    input_convert_units_to = None
     context = 'hydro'
 
 
 class PrTas(Indicator):
     required_units = ('[length] / [time]', '[temperature]')
+    input_convert_units_to = None
     context = 'hydro'
 
 
@@ -29,6 +31,7 @@ rain_on_frozen_ground_days = PrTas(identifier='rain_frzgr',
 
 max_1day_precipitation_amount = Pr(identifier='rx1day',
                                    units='mm/day',
+                                   input_convert_units_to='mm/day',
                                    standard_name='lwe_thickness_of_precipitation_amount',
                                    long_name='maximum 1-day total precipitation',
                                    description="{freq} maximum 1-day total precipitation",
@@ -38,6 +41,7 @@ max_1day_precipitation_amount = Pr(identifier='rx1day',
 
 max_n_day_precipitation_amount = Pr(identifier='rx{window}day',
                                     units='mm',
+                                    input_convert_units_to='mm/day',
                                     standard_name='lwe_thickness_of_precipitation_amount',
                                     long_name='maximum {window}-day total precipitation',
                                     description="{freq} maximum {window}-day total precipitation",
@@ -78,6 +82,7 @@ maximum_consecutive_dry_days = Pr(identifier='cdd',
 
 daily_pr_intensity = Pr(identifier='sdii',
                         units='mm/day',
+                        input_convert_units_to='mm/day',
                         standard_name='lwe_thickness_of_precipitation_amount',
                         long_name='Average precipitation during Wet Days (SDII)',
                         description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
@@ -88,6 +93,7 @@ daily_pr_intensity = Pr(identifier='sdii',
 
 precip_accumulation = Pr(identifier='prcptot',
                          units='mm',
+                         input_convert_units_to='mm/day',
                          standard_name='lwe_thickness_of_precipitation_amount',
                          long_name='Total precipitation',
                          description='{freq} total precipitation',

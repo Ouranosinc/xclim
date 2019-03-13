@@ -108,7 +108,7 @@ class TestWetDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.wetdays(pr, thresh=pr_min, freq='MS')
         out2 = precip.wetdays(prMM, thresh=pr_min, freq='MS')
 
@@ -121,7 +121,7 @@ class TestWetDays():
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        wd1 = ((x1 >= pr_min) * 1).sum()
+        wd1 = (x1 >= int(pr_min.split(' ')[0])).sum()
 
         assert (wd1 == out1.values[0, 0, 0])
 
@@ -148,7 +148,7 @@ class TestDailyIntensity():
         pr.values[10, 1, 0] = np.nan
 
         # compute with both skipna options
-        pr_min = 2.
+        pr_min = '2 mm/d'
         # dis = daily_pr_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
 
         out1 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
@@ -162,7 +162,7 @@ class TestDailyIntensity():
 
         x1 = prMM[:31, 0, 0].values
 
-        di1 = x1[x1 >= pr_min].mean()
+        di1 = x1[x1 >= int(pr_min.split(' ')[0])].mean()
         # buffer = np.ma.masked_invalid(x2)
         # di2 = buffer[buffer >= pr_min].mean()
 
@@ -258,7 +258,7 @@ class TestMaxConsecWetDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
         out2 = precip.maximum_consecutive_wet_days(prMM, thresh=pr_min, freq='MS')
 

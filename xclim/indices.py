@@ -1233,6 +1233,8 @@ def tg90p(tas, t90, freq='YS'):
     if 'dayofyear' not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
+    t90 = utils.convert_units_to(t90, tas)
+
     # adjustment of t90 to tas doy range
     t90 = utils.adjust_doy_calendar(t90, tas)
 
@@ -1278,6 +1280,8 @@ def tg10p(tas, t10, freq='YS'):
     """
     if 'dayofyear' not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
+
+    t10 = utils.convert_units_to(t10, tas)
 
     # adjustment of t10 to tas doy range
     t10 = utils.adjust_doy_calendar(t10, tas)
@@ -1425,7 +1429,7 @@ def tn90p(tasmin, t90, freq='YS'):
     """
     if 'dayofyear' not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
-
+    t90 = utils.convert_units_to(t90, tasmin)
     # adjustment of t90 to tas doy range
     t90 = utils.adjust_doy_calendar(t90, tasmin)
 
@@ -1472,6 +1476,7 @@ def tn10p(tasmin, t10, freq='YS'):
     """
     if 'dayofyear' not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
+    t10 = utils.convert_units_to(t10, tasmin)
 
     # adjustment of t10 to tas doy range
     t10 = utils.adjust_doy_calendar(t10, tasmin)
@@ -1644,6 +1649,8 @@ def tx90p(tasmax, t90, freq='YS'):
     if 'dayofyear' not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
+    t90 = utils.convert_units_to(t90, tasmax)
+
     # adjustment of t90 to tas doy range
     t90 = utils.adjust_doy_calendar(t90, tasmax)
 
@@ -1689,6 +1696,8 @@ def tx10p(tasmax, t10, freq='YS'):
     """
     if 'dayofyear' not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
+
+    t10 = utils.convert_units_to(t10, tasmax)
 
     # adjustment of t10 to tas doy range
     t10 = utils.adjust_doy_calendar(t10, tasmax)
