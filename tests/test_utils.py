@@ -177,7 +177,8 @@ class TestDailyDownsampler:
 class UniIndTemp(Indicator):
     identifier = 'tmin{thresh}'
     units = 'K'
-    required_units = 'K'
+    required_units = '[temperature]'
+    input_convert_units_to = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
@@ -190,8 +191,9 @@ class UniIndTemp(Indicator):
 
 class UniIndPr(Indicator):
     identifier = 'prmax'
-    units = 'kg m-2 s-1'
-    required_units = 'kg m-2 s-1'
+    required_units = '[length] / [time]'
+    units = 'mm/s'
+    input_convert_units_to = 'mm/s'
     context = 'hydro'
 
     @staticmethod
@@ -227,7 +229,7 @@ class TestIndicator:
         ind = UniIndPr()
         txk = ind(a, freq='YS')
 
-        ind.required_units = ('mm/day',)
+        ind.input_convert_units_to = ('mm/day',)
         ind.units = 'mm'
         txm = ind(a, freq='YS')
 
@@ -243,7 +245,8 @@ class TestIndicator:
         assert set(meta.keys()).issubset(expected)
 
     def test_factory(self, pr_series):
-        attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
+        attrs = dict(identifier='test', units='days', required_units='[length] / [time]',
+                     input_convert_units_to='mm/day', long_name='long name',
                      standard_name='standard name', context='hydro'
                      )
         cls = Indicator.factory(attrs)

@@ -31,7 +31,7 @@ respectively.
    ----------
    <standard_name> : xarray.DataArray
      <Long_name> of variable [acceptable units].
-   threshold : float
+   threshold : string
      Description of the threshold / units.
      e.g. The 10th percentile of historical temperature [K].
    freq : str, optional
@@ -154,6 +154,8 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
+    Input data-arrays require a 'units' attribute.
+
     References
     ----------
     From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
@@ -169,8 +171,9 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     # The day of year value of the tasmin series.
     doy = tasmin.indexes['time'].dayofyear
 
+    tn10 =  utils.convert_units_to(tn10, tasmin)
     # If calendar of `tn10` is different from `tasmin`, interpolate.
-    tn10 = utils.adjust_doy_calendar(utils.convert_units_to(tn10, tasmin), tasmin)
+    tn10 = utils.adjust_doy_calendar(tn10, tasmin)
 
     # Create an array with the shape and coords of tasmin, but with values set to tx90 according to the doy index.
     thresh = xr.full_like(tasmin, np.nan)
