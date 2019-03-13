@@ -171,7 +171,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     # The day of year value of the tasmin series.
     doy = tasmin.indexes['time'].dayofyear
 
-    tn10 =  utils.convert_units_to(tn10, tasmin)
+    tn10 = utils.convert_units_to(tn10, tasmin)
     # If calendar of `tn10` is different from `tasmin`, interpolate.
     tn10 = utils.adjust_doy_calendar(tn10, tasmin)
 
