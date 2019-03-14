@@ -748,7 +748,6 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     xarray.DataArray
       Number of heatwave at the wanted frequency
 
-
     Notes
     -----
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
@@ -832,7 +831,6 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin=22.0, thresh_tasmax=30,
     -------
     xarray.DataArray
       Maximum length of heatwave at the wanted frequency
-
 
     Notes
     -----
@@ -947,6 +945,18 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     xarray.DataArray
       Ratio of rainfall to total precipitation
 
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+        PR_{ij} = \sum_{i=a}^{b} pr_i
+
+
+        PRwet_{ij}
+
     See also
     --------
     winter_rain_ratio
@@ -987,7 +997,7 @@ def tn_days_below(tasmin, thresh=-10.0, freq='YS'):
 
     .. math::
 
-        TX_{ij} < thresh [℃]
+        TX_{ij} < Threshold [℃]
     """
     f1 = utils.threshold_count(tasmin, '<', thresh + K2C, freq)
     return f1
@@ -1019,7 +1029,7 @@ def tx_days_above(tasmax, thresh=25.0, freq='YS'):
 
     .. math::
 
-        TX_{ij} > 25℃
+        TX_{ij} > Threshold [℃]
     """
 
     f = (tasmax > (thresh + K2C)) * 1
@@ -1078,6 +1088,14 @@ def max_1day_precipitation_amount(pr, freq='YS'):
     xarray.DataArray
       The highest 1-day precipitation value at the given time frequency.
 
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day `i`, then for a period `j`:
+
+    .. math::
+
+       PRx_{ij} = max(PR_{ij})
+
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
@@ -1110,11 +1128,12 @@ def precip_accumulation(pr, freq='YS'):
 
     Notes
     -----
-    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
 
     .. math::
-       out_p = \sum_{i=a}^{b} pr_i
+
+       PR_{ij} = \sum_{i=a}^{b} pr_i
 
     Examples
     --------
@@ -1132,7 +1151,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
     """Number of rain on frozen ground events
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
-    Precipitation is assumed to be rain when the temperature is above 0C.
+    Precipitation is assumed to be rain when the temperature is above 0℃.
 
     Parameters
     ----------
@@ -1149,6 +1168,23 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
     -------
     xarray.DataArray
       The number of rain on frozen ground events per period [days]
+
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation and :math:`TG_i` be the mean daily temperature of day :math:`i`.
+    Then for a period :math:`j`, rain on frozen grounds days are counted where:
+
+    .. math::
+
+        `PR_{i} > Threshold [mm]`
+
+    and where
+
+    .. math::
+
+        `TG_{i} ≤ 0℃`
+
+    is true for continuous periods where :math:`i ≥ 7`
 
     """
 
@@ -1180,14 +1216,12 @@ def tg90p(tas, t90, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily mean temperature below the 10th percentile [days]
 
     Notes
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
-
 
     Example
     -------
@@ -1304,15 +1338,14 @@ def tg_mean(tas, freq='YS'):
     xarray.DataArray
       The mean daily temperature at the given time frequency
 
-
     Notes
     -----
-    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
+    Let :math:`TN_i` be the mean daily temperature of day :math:`i`, then for a period :math:`p` starting at
+    day :math:`a` and finishing on day :math:`b`:
 
     .. math::
 
-       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+       TG_p = \frac{\sum_{i=a}^{b} TN_i}{b - a + 1}
 
 
     Examples
@@ -1568,7 +1601,7 @@ def tropical_nights(tasmin, thresh=20.0, freq='YS'):
 
     .. math::
 
-        TN_{ij} > 20℃
+        TN_{ij} > Threshold [℃]
     """
 
     return tasmin.pipe(lambda x: (tasmin > thresh + K2C) * 1) \
@@ -1772,6 +1805,20 @@ def warm_day_frequency(tasmax, thresh=30, freq='YS'):
       Threshold temperature on which to base evaluation [℃] or [K]
     freq : str, optional
       Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days exceeding threshold.
+
+    Notes:
+    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} > Threshold [℃]
+
     """
 
     events = (tasmax > thresh) * 1
@@ -1802,6 +1849,25 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin=22,
     xarray.DataArray
       the number of days with tasmin > thresh_tasmin and
       tasmax > thresh_tasamax per period
+
+
+    Notes
+    -----
+    Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j`, :math:`TN_{ij}`
+    the daily minimum temperature at day :math:`i` of period :math:`j`, :math:`TX_{thresh}` the threshold for maximum
+    daily temperature, and :math:`TN_{thresh}` the threshold for minimum daily temperature. Then counted is the number
+    of days where:
+
+    .. math::
+
+        TX_{ij} > TX_{thresh} [℃]
+
+    and where:
+
+    .. math::
+
+        TN_{ij} > TN_{thresh} [℃]
+
     """
 
     events = ((tasmin > (thresh_tasmin + K2C)) & (tasmax > (thresh_tasmax + K2C))) * 1
