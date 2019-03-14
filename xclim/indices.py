@@ -119,6 +119,11 @@ def base_flow_index(q, freq='YS'):
     -------
     xarray.DataArrray
       Base flow index.
+
+    Notes
+    -----
+    TODO: @huard
+
     """
 
     m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
@@ -149,6 +154,10 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     xarray.DataArray
       Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
       percentile [days].
+
+    Notes
+    -----
+    TODO: @huard
 
     References
     ----------
@@ -196,8 +205,12 @@ def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
 
     Returns
     -------
-    DataArray
-      Cold spell days
+    xarray.DataArray
+      Cold spell days.
+
+    Notes
+    -----
+    TODO: @huard
     """
 
     over = tas < (K2C + thresh)
@@ -306,6 +319,10 @@ def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
     -------
     xarray.DataArray
       The maximum number of consecutive dry days.
+
+    Notes
+    -----
+    TODO: @huard
     """
 
     group = (pr < thresh).resample(time=freq)
@@ -332,12 +349,12 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
     Notes
     -----
-    Let :math:`Tmin_i` be the minimum daily temperature of day :math:`i`, then for a period :math:`p` starting at
-    day :math:`a` and finishing on day :math:`b`
+    Let :math:`TN_i` be the minimum daily temperature of day :math:`i`, then for a period :math:`p` starting at
+    day :math:`a` and finishing on day :math:`b`:
 
     .. math::
 
-       CFD_p = max(run_l(Tmin_i < 273.15))
+       CFD_p = max(run_l(TN_i < 273.15))
 
     for :math:`a ≤ i ≤ b`
 
@@ -369,12 +386,12 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 
     Notes
     -----
-    Let :math:`RR_{ij}` be the daily precipitation amount for day :math:`i` of period :math:`j`. Then
+    Let :math:`PR_{ij}` be the daily precipitation amount for day :math:`i` of period :math:`j`. Then
     counted is the largest number of consecutive days where:
 
     .. math::
 
-        RR_{ij} ≥ 1 mm
+        PR_{ij} ≥ 1 mm
     """
 
     group = (pr > thresh).resample(time=freq)
@@ -412,7 +429,6 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
 
-
     Parameters
     ----------
     tasmax : xarray.DataArray
@@ -422,11 +438,26 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
     freq : str
       Resampling frequency
 
-
     Returns
     -------
     xarray.DataArray
       Number of days with a diurnal freeze-thaw cycle
+
+    Notes
+    -----
+    Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j` and :math:`TN_{ij}`
+    the daily minimum temperature at day :math:`i` of period :math:`j`. Then counted is the number
+    of days where:
+
+    .. math::
+
+        TX_{ij} > 0℃
+
+    and where:
+
+    .. math::
+
+        TN_{ij} <  0℃
 
     """
 
@@ -952,7 +983,7 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
 
     .. math::
 
-        PR_{ij} = \sum_{i=a}^{b} pr_i
+        PR_{ij} = \sum_{i=a}^{b} PR_i
 
 
         PRwet_{ij}
@@ -1133,7 +1164,7 @@ def precip_accumulation(pr, freq='YS'):
 
     .. math::
 
-       PR_{ij} = \sum_{i=a}^{b} pr_i
+       PR_{ij} = \sum_{i=a}^{b} PR_i
 
     Examples
     --------
@@ -1176,13 +1207,13 @@ def rain_on_frozen_ground_days(pr, tas, thresh=1, freq='YS'):
 
     .. math::
 
-        `PR_{i} > Threshold [mm]`
+        PR_{i} > Threshold [mm]
 
     and where
 
     .. math::
 
-        `TG_{i} ≤ 0℃`
+        TG_{i} ≤ 0℃
 
     is true for continuous periods where :math:`i ≥ 7`
 
