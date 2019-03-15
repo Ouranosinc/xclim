@@ -122,7 +122,19 @@ def base_flow_index(q, freq='YS'):
 
     Notes
     -----
-    TODO: @huard
+    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}` the
+    mean flow over the period. The base flow index is given by:
+
+    .. math::
+
+       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
+
+
+    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
+
+    .. math::
+
+       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
 
     """
 
@@ -157,7 +169,16 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
 
     Notes
     -----
-    TODO: @huard
+
+    Let :math:`TN_i` be the minimum daily temperature for the day of the year :math:`i` and :math:`TN10_i` the 10th
+    percentile of the minimum daily temperature over the 1961-1990 period for day of the year :math:`i`, the cold spell
+    duration index over period :math:`\phi` is defined as:
+
+    .. math::
+
+       \sum_{i \in \phi} \prod_{j=i}^{i+6} \left[ TN_j < TN10_j \right]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
 
     References
     ----------
@@ -210,7 +231,15 @@ def cold_spell_days(tas, thresh=-10, window=5, freq='AS-JUL'):
 
     Notes
     -----
-    TODO: @huard
+    Let :math:`T_i` be the mean daily temperature on day :math:`i`, the number of cold spell days during
+    period :math:`\phi` is given by
+
+    .. math::
+
+       \sum_{i \in \phi} \prod_{j=i}^{i+5} [T_j < thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+
     """
 
     over = tas < (K2C + thresh)
