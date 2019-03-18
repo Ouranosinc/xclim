@@ -28,7 +28,7 @@ import dask
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
-from xclim.utils import units
+from xclim.utils import units, pint2cfunits, cfunits2pint
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -36,6 +36,14 @@ TAS_SERIES = tas_series
 PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
+
+
+def test_pint2cfunits(pr_series):
+    u = units('mm/d')
+    assert pint2cfunits(u.units) == 'mm d-1'
+
+    u = cfunits2pint(pr_series([1, 2]))
+    assert pint2cfunits(u) == 'kg m-2 s-1'
 
 
 class TestEnsembleStats:

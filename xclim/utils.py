@@ -71,8 +71,48 @@ calendars = {'standard': 366,
 
 
 def cfunits2pint(da):
-    """Return the pint Unit for the DataArray units."""
+    """Return the pint Unit for the DataArray units.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input data array.
+
+    Returns
+    -------
+    pint.Unit
+      Units of the data array.
+
+    """
     return units.parse_units(da.attrs['units'].replace('-', '**-'))
+
+
+def pint2cfunits(value):
+    """Return a CF-Convention unit string from a `pint` unit.
+
+    Parameters
+    ----------
+    value : pint.Unit
+      Input unit.
+
+    Returns
+    -------
+    out : str
+      Units following CF-Convention.
+    """
+    import re
+    # Print units using abbreviations (millimeter -> mm)
+    s = "{:~}".format(value)
+
+    # Search and replace patterns
+    pat = '/ (?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+    def repl(m):
+        u, p = m.groups()
+        p = p or 1
+        return "{}-{}".format(u, p)
+
+    out, n = re.subn(pat, repl, s)
+    return out
 
 
 def convert_units_to(source, target, context=None):
