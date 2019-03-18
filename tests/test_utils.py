@@ -358,7 +358,7 @@ class TestUnits:
 
     def test_temperature(self):
         assert 4 * units.d == 4 * units.day
-        Q_ = units.Quantity
+        Q_= units.Quantity
         assert Q_(1, units.C) == Q_(1, units.degC)
 
     def test_hydro(self):
@@ -374,6 +374,15 @@ class TestUnits:
             fu = units.parse_units("kilogram / d / meter ** 2")
             tu = units.parse_units("mm/day")
             np.isclose(1 * fu, 1 * tu)
+
+    def test_dimensionality(self):
+        with units.context('hydro'):
+            fu = 1 * units.parse_units('kg / m**2 / s')
+            tu = 1 * units.parse_units('mm / d')
+            fu.to('mmday')
+            tu.to('mmday')
+
+
 
 
 class TestSubsetGridPoint:

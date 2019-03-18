@@ -122,6 +122,7 @@ class TestColdSpellDurationIndex:
 
         out = xci.cold_spell_duration_index(tn, tn10, freq='YS')
         assert out[0] == 10
+        assert out.units == 'days'
 
 
 class TestColdSpellDays:
@@ -135,6 +136,7 @@ class TestColdSpellDays:
 
         out = xci.cold_spell_days(da, thresh='-10. C', freq='M')
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == 'days'
 
 
 class TestConsecutiveFrostDays:
@@ -178,6 +180,7 @@ class TestCoolingDegreeDays:
         a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
+        assert cdd.units == 'C days'
 
     def test_cdd(self):
         a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
@@ -205,6 +208,21 @@ class TestDailyFreezeThawCycles:
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 
+
+class TestDailyPrIntensity:
+
+    def test_simple(self, pr_series):
+        pr = pr_series(np.zeros(365))
+        pr[3:8] += [.5, 1, 2, 3, 4]
+        out = xci.daily_pr_intensity(pr, thresh='1 kg/m**2/s')
+        np.testing.assert_array_equal(out[0], 2.5)
+
+    def test_mm(self, pr_series):
+        pr = pr_series(np.zeros(365))
+        pr[3:8] += [.5, 1, 2, 3, 4]
+        pr.attrs['units'] = 'mm/d'
+        out = xci.daily_pr_intensity(pr, thresh='1 mm/day')
+        np.testing.assert_array_equal(out[0], 2.5)
 
 class TestFreshetStart:
 
@@ -614,9 +632,17 @@ class TestTxMean:
                                    'units': 'K'})
 
     def test_attrs(self):
-        a = self.time_series(np.array([20, 21, 22, 23, 24]))
+        a = self.time_series(np.array([320, 321, 322, 323, 324]))
         txm = xci.tx_mean(a, freq='YS')
+        assert txm == 322
+        assert txm.units == 'K'
+
+        a = self.time_series(np.array([20, 21, 22, 23, 24]))
+        a.attrs['units'] = 'C'
+        txm = xci.tx_mean(a, freq='YS')
+
         assert txm == 22
+        assert txm.units == 'C'
 
 
 class TestTxMax:

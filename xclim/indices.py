@@ -72,7 +72,7 @@ import numpy as np
 from . import utils
 import xarray as xr
 from . import run_length as rl
-from .utils import units
+from .utils import units, declare_units
 
 logging.basicConfig(level=logging.DEBUG)
 logging.captureWarnings(True)
@@ -101,7 +101,7 @@ ftomm = np.nan
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-
+@declare_units('', q='m**3/s')
 def base_flow_index(q, freq='YS'):
     r"""Base flow index
 
@@ -127,6 +127,7 @@ def base_flow_index(q, freq='YS'):
     return m7m / mq.mean(dim='time')
 
 
+@declare_units('days', tasmin='[temperature]', tn10='[temperature]')
 def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     r"""Cold spell duration index
 
@@ -184,6 +185,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     return below.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
+@declare_units('days', tas='[temperature]', thresh='[temperature]')
 def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
     r"""Cold spell days
 
@@ -254,6 +256,7 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     # return c.resample(time=freq).sum(dim='time')
 
 
+@declare_units('mm/day', pr='[precipitation]', thresh='[precipitation]', context='hydro')
 def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
     r"""Average daily precipitation intensity
 
@@ -262,7 +265,7 @@ def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation [mm]
+      Daily precipitation [mm/d or kg/m²/s]
     thresh : str
       precipitation value over which a day is considered wet. Default : '1 mm/day'
     freq : str, optional
@@ -397,6 +400,7 @@ def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
     return group.apply(rl.longest_run, dim='time')
 
 
+@declare_units('C days', tas='[temperature]', thresh='[temperature]')
 def cooling_degree_days(tas, thresh='18 degC', freq='YS'):
     r"""Cooling degree days
 
@@ -1745,7 +1749,7 @@ def tx_max(tasmax, freq='YS'):
 
     return tasmax.resample(time=freq).max(dim='time')
 
-
+@declare_units('[temperature]', tasmax='[temperature]')
 def tx_mean(tasmax, freq='YS'):
     r"""Mean max temperature
 
@@ -1774,7 +1778,7 @@ def tx_mean(tasmax, freq='YS'):
     """
 
     arr = tasmax.resample(time=freq) if freq else tasmax
-    return arr.mean(dim='time')
+    return arr.mean(dim='time', keep_attrs=True)
 
 
 def tx_min(tasmax, freq='YS'):
