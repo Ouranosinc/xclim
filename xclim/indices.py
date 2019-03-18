@@ -184,7 +184,7 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     return below.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
 
 
-def cold_spell_days(tas, thresh='-10 C', window=5, freq='AS-JUL'):
+def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
     r"""Cold spell days
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
@@ -195,7 +195,7 @@ def cold_spell_days(tas, thresh='-10 C', window=5, freq='AS-JUL'):
     tas : xarrray.DataArray
       Mean daily temperature [℃] or [K]
     thresh : str
-      Threshold temperature below which a cold spell begins [℃] or [K].
+      Threshold temperature below which a cold spell begins [℃] or [K]. Default : '-10 degC'
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str, optional
@@ -254,7 +254,7 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     return c.resample(time=freq).sum(dim='time')
 
 
-def daily_pr_intensity(pr, thresh='1 mm/d', freq='YS'):
+def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -264,10 +264,10 @@ def daily_pr_intensity(pr, thresh='1 mm/d', freq='YS'):
     pr : xarray.DataArray
       Daily precipitation [mm]
     thresh : str
-      precipitation value over which a day is considered wet.
+      precipitation value over which a day is considered wet. Default : '1 mm/day'
     freq : str, optional
       Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling. Default : '1 mm/day'
 
     Returns
     -------
@@ -298,7 +298,7 @@ def daily_pr_intensity(pr, thresh='1 mm/d', freq='YS'):
     return s / wd
 
 
-def maximum_consecutive_dry_days(pr, thresh='1 mm/d', freq='YS'):
+def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
     r"""Maximum number of consecutive dry days
 
     Return the maximum number of consecutive days within the period where precipitation
@@ -309,7 +309,7 @@ def maximum_consecutive_dry_days(pr, thresh='1 mm/d', freq='YS'):
     pr : xarray.DataArray
       Mean daily precipitation flux [mm]
     thresh : str
-      Threshold precipitation on which to base evaluation [mm]
+      Threshold precipitation on which to base evaluation [mm]. Default : '1 mm/day'
     freq : str, optional
       Resampling frequency
 
@@ -372,8 +372,8 @@ def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
     ---------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm]
-    thresh : float
-      Threshold precipitation on which to base evaluation [Kg m-2 s-1] or [mm]
+    thresh : str
+      Threshold precipitation on which to base evaluation [Kg m-2 s-1] or [mm]. Default : '1 mm/day'
     freq : str, optional
       Resampling frequency
 
@@ -397,7 +397,7 @@ def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
     return group.apply(rl.longest_run, dim='time')
 
 
-def cooling_degree_days(tas, thresh='18 C', freq='YS'):
+def cooling_degree_days(tas, thresh='18 degC', freq='YS'):
     r"""Cooling degree days
 
     Sum of degree days above the temperature threshold at which spaces are cooled.
@@ -406,8 +406,8 @@ def cooling_degree_days(tas, thresh='18 C', freq='YS'):
     ----------
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Temperature threshold above which air is cooled.
+    thresh : str
+      Temperature threshold above which air is cooled. Default : '18 degC'
     freq : str, optional
       Resampling frequency
 
@@ -564,8 +564,8 @@ def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
     ----------
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'
     window : int
       Minimum number of days with temperature above threshold needed for evaluation
     freq : str, optional
@@ -628,8 +628,8 @@ def growing_degree_days(tas, thresh='4.0 degC', freq='YS'):
     ---------
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 4℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '4.0 degC'.
     freq : str, optional
       Resampling frequency
 
@@ -667,8 +667,8 @@ def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
     ---------
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 5℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '5.0 degC'.
     window : int
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     freq : str, optional
@@ -740,7 +740,7 @@ def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
     return gsl
 
 
-def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax=30,
+def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax='30 degC',
                         window=3, freq='YS'):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
@@ -756,10 +756,10 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax
       Minimum daily temperature [℃] or [K]
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : float
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]
-    thresh_tasmax : float
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]
+    thresh_tasmin : str
+      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str, optional
@@ -806,8 +806,8 @@ def heat_wave_index(tasmax, thresh='25.0 degC', window=5, freq='YS'):
     ----------
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to designate a heatwave [℃] or [K]. Default: 25℃.
+    thresh : str
+      Threshold temperature on which to designate a heatwave [℃] or [K]. Default: '25.0 degC'.
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str, optional
@@ -843,10 +843,10 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasma
       Minimum daily temperature [℃] or [K]
     tasmax : xarrray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : float
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]
-    thresh_tasmax : float
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]
+    thresh_tasmin : str
+      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str, optional
@@ -894,8 +894,8 @@ def heating_degree_days(tas, freq='YS', thresh='17.0 degC'):
     ----------
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 17℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '17.0 degC'.
     freq : str, optional
       Resampling frequency
 
@@ -1006,8 +1006,8 @@ def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K] . Default: -10℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K] . Default: '-10 degC'.
     freq : str, optional
       Resampling frequency
 
@@ -1039,8 +1039,8 @@ def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 25℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '25 degC'.
     freq : str, optional
       Resampling frequency
 
@@ -1177,8 +1177,8 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
       Mean daily precipitation flux [Kg m-2 s-1] or [mm]
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Precipitation threshold to consider a day as a rain event
+    thresh : str
+      Precipitation threshold to consider a day as a rain event. Default : '1 mm/d'
     freq : str, optional
       Resampling frequency
 
@@ -1595,8 +1595,8 @@ def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: 20℃.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
     freq : str, optional
       Resampling frequency
 
@@ -1816,8 +1816,8 @@ def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
     ----------
     tasmax : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default : '30 degC'
     freq : str, optional
       Resampling frequency
     """
@@ -1826,8 +1826,8 @@ def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
     return events.resample(time=freq).sum(dim='time')
 
 
-def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 C',
-                     thresh_tasmax='30 C', freq='YS'):
+def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 degC',
+                     thresh_tasmax='30 degC', freq='YS'):
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.
@@ -1838,10 +1838,10 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 C',
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : float
-      Threshold temperature for tasmin on which to base evaluation [℃] or [K]
-    thresh_tasmax : float
-      Threshold temperature for tasmax on which to base evaluation [℃] or [K]
+    thresh_tasmin : str
+      Threshold temperature for tasmin on which to base evaluation [℃] or [K]. Default : '22 degC'
+    thresh_tasmax : str
+      Threshold temperature for tasmax on which to base evaluation [℃] or [K]. Default : '30 degC'
     freq : str, optional
       Resampling frequency
 
@@ -1866,8 +1866,8 @@ def warm_night_frequency(tasmin, thresh='22 degC', freq='YS'):
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
-    thresh : float
-      Threshold temperature on which to base evaluation [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default : '22 degC'
     freq : str, optional
       Resampling frequency
 
@@ -1939,8 +1939,8 @@ def wetdays(pr, thresh='1.0 mm/day', freq='YS'):
     ----------
     pr : xarray.DataArray
       Daily precipitation [mm]
-    thresh : float
-      Precipitation value over which a day is considered wet. Default: 1mm.
+    thresh : str
+      Precipitation value over which a day is considered wet. Default: '1 mm/day'.
     freq : str, optional
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
