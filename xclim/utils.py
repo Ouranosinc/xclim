@@ -109,20 +109,20 @@ def convert_units_to(source, target, context=None):
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
         return q.to(tu).m
 
-    elif isinstance(source, units.Quantity):
+    if isinstance(source, units.Quantity):
         return source.to(tu).m
 
-    elif isinstance(source, xr.DataArray):
+    if isinstance(source, xr.DataArray):
         fu = cfunits2pint(source)
 
         if fu == tu:
             return source
-        else:
-            tu_u = str(tu).replace('-', '**-')
-            with units.context(context or 'none'):
-                out = units.convert(source, fu, tu)
-                out.attrs['units'] = tu_u
-                return out
+
+        tu_u = str(tu).replace('-', '**-')
+        with units.context(context or 'none'):
+            out = units.convert(source, fu, tu)
+            out.attrs['units'] = tu_u
+            return out
 
     else:
         raise NotImplementedError("source of type {} is not supported.".format(type(source)))

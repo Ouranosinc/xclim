@@ -247,11 +247,11 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     """
     raise NotImplementedError
     # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
-    c1 = tas < utils.convert_units_to(tgin25, tas)
-    c2 = (pr > utils.convert_units_to('1 mm', pr)) * (pr < utils.convert_units_to(wet25, pr))
+    # c1 = tas < utils.convert_units_to(tgin25, tas)
+    # c2 = (pr > utils.convert_units_to('1 mm', pr)) * (pr < utils.convert_units_to(wet25, pr))
 
-    c = (c1 * c2) * 1
-    return c.resample(time=freq).sum(dim='time')
+    # c = (c1 * c2) * 1
+    # return c.resample(time=freq).sum(dim='time')
 
 
 def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
