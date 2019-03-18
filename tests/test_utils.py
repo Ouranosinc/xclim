@@ -38,14 +38,6 @@ TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
-def test_pint2cfunits(pr_series):
-    u = units('mm/d')
-    assert pint2cfunits(u.units) == 'mm d-1'
-
-    u = cfunits2pint(pr_series([1, 2]))
-    assert pint2cfunits(u) == 'kg m-2 s-1'
-
-
 class TestEnsembleStats:
     nc_files_simple = glob.glob(os.path.join(TESTS_DATA, 'EnsembleStats', '*1950-2100*.nc'))
     nc_files = glob.glob(os.path.join(TESTS_DATA, 'EnsembleStats', '*.nc'))
@@ -358,7 +350,7 @@ class TestUnits:
 
     def test_temperature(self):
         assert 4 * units.d == 4 * units.day
-        Q_= units.Quantity
+        Q_ = units.Quantity
         assert Q_(1, units.C) == Q_(1, units.degC)
 
     def test_hydro(self):
@@ -383,6 +375,20 @@ class TestUnits:
             tu.to('mmday')
 
 
+class TestUnitConversion:
+
+    def test_pint2cfunits(self):
+        u = units('mm/d')
+        assert pint2cfunits(u.units) == 'mm d-1'
+
+    def test_cfunits2pint(self, pr_series):
+        u = cfunits2pint(pr_series([1, 2]))
+        assert (str(u)) == 'kilogram / meter ** 2 / second'
+        assert pint2cfunits(u) == 'kg m-2 s-1'
+
+        u = cfunits2pint('m3 s-1')
+        assert str(u) == 'meter ** 3 / second'
+        assert pint2cfunits(u) == 'm3 s-1'
 
 
 class TestSubsetGridPoint:

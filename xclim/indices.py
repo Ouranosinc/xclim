@@ -1749,6 +1749,7 @@ def tx_max(tasmax, freq='YS'):
 
     return tasmax.resample(time=freq).max(dim='time')
 
+
 @declare_units('[temperature]', tasmax='[temperature]')
 def tx_mean(tasmax, freq='YS'):
     r"""Mean max temperature

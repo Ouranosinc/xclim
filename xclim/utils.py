@@ -6,6 +6,7 @@ xclim xarray.DataArray utilities module
 
 import numpy as np
 import six
+import re
 import pint
 import pandas as pd
 import xarray as xr
@@ -20,7 +21,6 @@ from pyproj import Geod
 from boltons.funcutils import wraps
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-#units.load_definitions('context.txt')
 units.define(pint.unit.UnitDefinition('percent', '%', (),
                                       pint.converters.ScaleConverter(0.01)))
 
@@ -43,11 +43,7 @@ hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
                          lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
                          lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3))
-#hydro.add_transformation('[mass] / [length]**2 / [time]', '[precipitation]', lambda ureg, x: x)
-#hydro.add_transformation('[length]', '[precipitation]')
-
 units.add_context(hydro)
-
 units.enable_contexts(hydro)
 
 # These are the changes that could be included in a units definition file.
@@ -90,11 +86,13 @@ def cfunits2pint(value):
       Units of the data array.
 
     """
+    def _transform(s):
+        return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
+
     if isinstance(value, str):
-        return units.parse_expression(value).units
+        return units.parse_expression(_transform(value)).units
     elif isinstance(value, xr.DataArray):
-        u = value.attrs['units'].replace('-', '**-')
-        return units.parse_units(u)
+        return units.parse_units(_transform(value.attrs['units']))
     elif isinstance(value, units.Quantity):
         return value.units
     else:
@@ -119,12 +117,14 @@ def pint2cfunits(value):
     s = "{:~}".format(value)
 
     # Search and replace patterns
-    pat = '/ (?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+    pat = '(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
 
     def repl(m):
-        u, p = m.groups()
-        p = p or 1
-        return "{}-{}".format(u, p)
+        i, u, p = m.groups()
+        neg = '-' if i else ''
+        p = p or (1 if i else '')
+
+        return "{}{}{}".format(u, neg, p)
 
     out, n = re.subn(pat, repl, s)
     return out
@@ -180,37 +180,39 @@ def convert_units_to(source, target, context=None):
     else:
         raise NotImplementedError("source of type {} is not supported.".format(type(source)))
 
+
 # Heavily inspired by MetPy
+def _check_argument_units(args, dimensionality, context):
+    """Yield arguments with improper dimensionality."""
+    for arg, val in args.items():
+        # Get the needed dimensionality (for printing) as well as cached, parsed version
+        # for this argument.
+        try:
+            need, parsed = dimensionality[arg]
+        except KeyError:
+            # Argument did not have units specified in decorator
+            continue
+
+        # See if the value passed in is appropriate
+        try:
+            with units.context(context):
+                if context == 'hydro':
+                    try:
+                        val = (1*cfunits2pint(val)).to('mmday', context)
+                    except:
+                        pass
+
+                if cfunits2pint(val).dimensionality != parsed:
+                    yield arg, val.units, need
+        # No dimensionality
+        except AttributeError:
+            # If this argument is dimensionless, don't worry
+            if parsed != '':
+                yield arg, 'none', need
+
+
 def declare_units(out_units, context='none', **units_by_name):
     """Create a decorator to check units of function arguments."""
-
-    def _check_argument_units(args, dimensionality):
-        """Yield arguments with improper dimensionality."""
-        for arg, val in args.items():
-            # Get the needed dimensionality (for printing) as well as cached, parsed version
-            # for this argument.
-            try:
-                need, parsed = dimensionality[arg]
-            except KeyError:
-                # Argument did not have units specified in decorator
-                continue
-
-            # See if the value passed in is appropriate
-            try:
-                with units.context(context):
-                    if context == 'hydro':
-                        try:
-                            val = (1*cfunits2pint(val)).to('mmday', context)
-                        except:
-                            pass
-
-                    if cfunits2pint(val).dimensionality != parsed:
-                        yield arg, val.units, need
-            # No dimensionality
-            except AttributeError:
-                # If this argument is dimensionless, don't worry
-                if parsed != '':
-                    yield arg, 'none', need
 
     def dec(func):
         # Match the signature of the function to the arguments given to the decorator
@@ -229,7 +231,7 @@ def declare_units(out_units, context='none', **units_by_name):
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments so we can check units
             bound_args = sig.bind(*args, **kwargs)
-            bad = list(_check_argument_units(bound_args.arguments, dims))
+            bad = list(_check_argument_units(bound_args.arguments, dims, context))
 
             # If there are any bad units, emit a proper error message making it clear
             # what went wrong.
@@ -256,6 +258,7 @@ def declare_units(out_units, context='none', **units_by_name):
         return wrapper
 
     return dec
+
 
 def create_ensemble(ncfiles):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
