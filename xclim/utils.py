@@ -106,6 +106,7 @@ def pint2cfunits(value):
 
     # Search and replace patterns
     pat = '/ (?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+
     def repl(m):
         u, p = m.groups()
         p = p or 1
