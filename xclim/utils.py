@@ -262,7 +262,7 @@ def declare_units(out_units, **units_by_name):
             if '[' in out_units:
                 _check_units(out, out_units)
 
-            # Otherwise, we specify explictly the units.
+            # Otherwise, we specify explicitly the units.
             else:
                 out.attrs['units'] = out_units
             return out
@@ -1056,10 +1056,6 @@ class Indicator(object):
             self.validate(da)
         self.cfprobe(*das)
 
-        # Check units
-        for (da, ru) in zip(das, self.required_units):
-            self.check_units(da, ru)
-
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.arguments)
 
@@ -1116,16 +1112,6 @@ class Indicator(object):
     @abc.abstractmethod
     def compute(*args, **kwds):
         """The function computing the indicator."""
-
-    def check_units(self, da, req_units):
-        """Check that input units match expected units dimensions."""
-        u = cfunits2pint(da)
-
-        with units.context(self.context):
-            if u.dimensionality != units.get_dimensionality(req_units):
-                pass
-                # raise AttributeError("Units for {} ({}) don't match expected units: {}."\
-                # .format(da.name, da.attrs['units'], req_units))
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments."""

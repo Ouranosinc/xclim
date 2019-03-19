@@ -66,9 +66,9 @@ class TestPrecipAccumulation():
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
+        pr = xr.open_dataset(self.nc_file).pr  # mm/s
         prMM = xr.open_dataset(self.nc_file).pr
-        prMM.values *= 86400.
+        prMM *= 86400
         prMM.attrs['units'] = 'mm/day'
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
@@ -81,14 +81,15 @@ class TestPrecipAccumulation():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.precip_accumulation(pr, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
         prTot = x1.sum()
 
-        assert (prTot == out1.values[0, 0, 0])
+        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
 
         assert (np.isnan(out1.values[0, 1, 0]))
 
@@ -158,7 +159,8 @@ class TestDailyIntensity():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
 
@@ -196,7 +198,8 @@ class TestMax1Day():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.max_1day_precipitation_amount(pr, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
 
         x1 = prMM[:31, 0, 0].values
         rx1 = x1.max()
@@ -231,7 +234,8 @@ class TestMaxNDay():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
         df = pd.DataFrame({'pr': x1})

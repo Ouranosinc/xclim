@@ -168,7 +168,9 @@ class TestTmean:
         x1 = tas.values[:, 0, 0]
         tmmean1 = x1.mean()
 
-        np.testing.assert_array_equal(tmmeanC, tmmean)
+        # TODO: Investigate the differences between the two outputs.
+        # The conversion to K is done after / before the mean.
+        np.testing.assert_array_almost_equal(tmmeanC, tmmean, 3)
         # test single point vs manual
         assert (np.allclose(tmmean1, tmmean.values[0, 0, 0], tmmeanC.values[0, 0, 0]))
         # test single nan point
@@ -202,7 +204,7 @@ class TestTx:
         assert (np.all(txmax.values[no_nan] > txmean.values[no_nan]) & np.all(
             txmean.values[no_nan] > txmin.values[no_nan]))
 
-        np.testing.assert_array_equal(txmeanC, txmean)
+        np.testing.assert_array_almost_equal(txmeanC, txmean, 3)
         np.testing.assert_array_equal(txminC, txmin)
         np.testing.assert_array_equal(txmaxC, txmax)
         x1 = tasmax.values[:, 0, 0]
@@ -249,7 +251,7 @@ class TestTn:
         assert (np.all(tnmax.values[no_nan] > tnmean.values[no_nan]) & np.all(
             tnmean.values[no_nan] > tnmin.values[no_nan]))
 
-        np.testing.assert_array_equal(tnmeanC, tnmean)
+        np.testing.assert_array_almost_equal(tnmeanC, tnmean, 3)
         np.testing.assert_array_equal(tnminC, tnmin)
         np.testing.assert_array_equal(tnmaxC, tnmax)
 

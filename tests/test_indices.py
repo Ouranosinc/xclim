@@ -217,14 +217,14 @@ class TestDailyPrIntensity:
         pr = pr_series(np.zeros(365))
         pr[3:8] += [.5, 1, 2, 3, 4]
         out = xci.daily_pr_intensity(pr, thresh='1 kg/m**2/s')
-        np.testing.assert_array_equal(out[0], 2.5)
+        np.testing.assert_array_equal(out[0], 2.5 * 3600 * 24)
 
     def test_mm(self, pr_series):
         pr = pr_series(np.zeros(365))
         pr[3:8] += [.5, 1, 2, 3, 4]
         pr.attrs['units'] = 'mm/d'
         out = xci.daily_pr_intensity(pr, thresh='1 mm/day')
-        np.testing.assert_array_equal(out[0], 2.5)
+        np.testing.assert_array_almost_equal(out[0], 2.5)
 
 
 class TestFreshetStart:
