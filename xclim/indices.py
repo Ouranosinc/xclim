@@ -351,9 +351,19 @@ def maximum_consecutive_dry_days(pr, thresh=1.0, freq='YS'):
 
     Notes
     -----
-    TODO: @huard
-    """
+    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
+    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive dry days is given by
 
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+
+    """
     group = (pr < thresh).resample(time=freq)
     return group.apply(rl.longest_run, dim='time')
 
