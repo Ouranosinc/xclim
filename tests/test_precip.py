@@ -199,7 +199,7 @@ class TestMax1Day():
         out3 = precip.max_1day_precipitation_amount(pr, freq='MS')
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
         rx1 = x1.max()

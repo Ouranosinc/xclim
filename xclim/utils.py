@@ -11,7 +11,7 @@ import pint
 import pandas as pd
 import xarray as xr
 from . import checks
-from inspect import signature, _empty, Parameter
+from inspect import signature
 import functools
 import abc
 from collections import defaultdict
@@ -127,7 +127,7 @@ def pint2cfunits(value):
     s = "{:~}".format(value)
 
     # Search and replace patterns
-    pat = '(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+    pat = r'(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
 
     def repl(m):
         i, u, p = m.groups()
@@ -1090,7 +1090,7 @@ class Indicator(object):
 
         out['notes'] = self.notes
 
-        out['parameters'] = str({key: {'default': p.default if p.default != _empty else None, 'desc': ''}
+        out['parameters'] = str({key: {'default': p.default if p.default != p.empty else None, 'desc': ''}
                                  for (key, p) in self._sig.parameters.items()})
 
         if six.PY2:
