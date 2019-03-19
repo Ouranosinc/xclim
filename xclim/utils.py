@@ -271,7 +271,7 @@ def declare_units(out_units, **units_by_name):
     return dec
 
 
-def create_ensemble(ncfiles):
+def create_ensemble(ncfiles, mf_flag=False):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
@@ -279,18 +279,22 @@ def create_ensemble(ncfiles):
     a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
     ensemble dataset is created for overlapping time-steps common to all input files
 
+    Parameters
+    ----------
+    ncfiles : sequence
+      List of netcdf file paths. If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If true climate simulations are treated as multifile datasets before concatenation
+
+    Returns
+    -------
+    xarray dataset containing concatenated data from all input files
+
     Notes
     -----
     Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
     If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
-
-    Parameters
-    ----------
-    ncfiles : list of netcdf file paths (list)
-
-    Returns
-    -------
-    xarray dataset containing concadated data from all input files
 
     Examples
     --------
@@ -299,15 +303,23 @@ def create_ensemble(ncfiles):
     >>> ncfiles = glob.glob('/*.nc')
     >>> ens = utils.create_ensemble(ncfiles)
     >>> print(ens)
-
-     """
+    Using multifile datasets:
+    simulation 1 is a list of .nc files (e.g. separated by time)
+    >>> ncfiles = glob.glob('dir/*.nc')
+    simulation 2 is also a list of .nc files
+    >>> ens = utils.create_ensemble(ncfiles)
+    """
     dim = 'realization'
     ds1 = []
     start_end_flag = True
     print('finding common time-steps')
     for n in ncfiles:
-        ds = xr.open_dataset(n, decode_times=False)
-        ds['time'] = xr.decode_cf(ds).time
+        if mf_flag:
+            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.open_mfdataset(n).time
+        else:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds['time'] = xr.decode_cf(ds).time
         # get times - use common
         time1 = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
         if start_end_flag:
@@ -321,9 +333,13 @@ def create_ensemble(ncfiles):
 
     for n in ncfiles:
         print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
-        ds = xr.open_dataset(n, decode_times=False, chunks={'time': 10})
+        if mf_flag:
+            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.open_mfdataset(n).time
+        else:
+            ds = xr.open_dataset(n, decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.decode_cf(ds).time
 
-        ds['time'] = xr.decode_cf(ds).time
         ds['time'].values = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
 
         ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
