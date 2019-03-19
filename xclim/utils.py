@@ -35,8 +35,14 @@ units.define("d = day")
 null = pint.Context('none')
 units.add_context(null)
 
-units.define("[precipitation] = [mass] / [length]**2 / [time]")
-units.define("mmday = 1000 kg / m**2 / day")
+# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
+# a precipitation unit. Ideally this could be checked through the `dimensionality`, but I can't get it to work.
+units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
+units.define("mmday = 1000 kg / meter ** 2 / day")
+
+units.define("[discharge] = [length] ** 3 / [time]")
+units.define("cms = meter ** 3 / second")
+
 hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
@@ -87,10 +93,14 @@ def cfunits2pint(value):
 
     """
     def _transform(s):
+        """Convert a CF-unit string to a pint expression."""
         return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
 
     if isinstance(value, str):
-        return units.parse_expression(_transform(value)).units
+        try:  # Pint compatible
+            return units.parse_expression(value).units
+        except pint.UndefinedUnitError:  # Convert from CF-units to pint-compatible
+            return units.parse_expression(_transform(value)).units
     elif isinstance(value, xr.DataArray):
         return units.parse_units(_transform(value.attrs['units']))
     elif isinstance(value, units.Quantity):
@@ -127,6 +137,27 @@ def pint2cfunits(value):
         return "{}{}{}".format(u, neg, p)
 
     out, n = re.subn(pat, repl, s)
+    return out
+
+
+def pint_multiply(da, q, out_units=None):
+    """Multiply xarray.DataArray by pint.Quantity.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input array.
+    q : pint.Quantity
+      Multiplicating factor.
+    out_units : str
+      Units the output array should be converted into.
+    """
+    a = 1 * cfunits2pint(da)
+    f = a * q.to_base_units()
+    if out_units:
+        f = f.to(out_units)
+    out = da * f.magnitude
+    out.attrs['units'] = pint2cfunits(f.units)
     return out
 
 
@@ -171,7 +202,7 @@ def convert_units_to(source, target, context=None):
         if fu == tu:
             return source
 
-        tu_u = str(tu).replace('-', '**-')
+        tu_u = pint2cfunits(tu)
         with units.context(context or 'none'):
             out = units.convert(source, fu, tu)
             out.attrs['units'] = tu_u
@@ -181,37 +212,36 @@ def convert_units_to(source, target, context=None):
         raise NotImplementedError("source of type {} is not supported.".format(type(source)))
 
 
-# Heavily inspired by MetPy
-def _check_argument_units(args, dimensionality, context):
-    """Yield arguments with improper dimensionality."""
-    for arg, val in args.items():
-        # Get the needed dimensionality (for printing) as well as cached, parsed version
-        # for this argument.
-        try:
-            need, parsed = dimensionality[arg]
-        except KeyError:
-            # Argument did not have units specified in decorator
-            continue
+def _check_units(val, dim):
+    if dim is None or val is None:
+        return
 
-        # See if the value passed in is appropriate
-        try:
-            with units.context(context):
-                if context == 'hydro':
-                    try:
-                        val = (1*cfunits2pint(val)).to('mmday', context)
-                    except:
-                        pass
+    expected = units.get_dimensionality(dim.replace('dimensionless', ''))
+    val_dim = cfunits2pint(val).dimensionality
+    if val_dim == expected:
+        return
 
-                if cfunits2pint(val).dimensionality != parsed:
-                    yield arg, val.units, need
-        # No dimensionality
-        except AttributeError:
-            # If this argument is dimensionless, don't worry
-            if parsed != '':
-                yield arg, 'none', need
+    # Check if there is a transformation available
+    start = pint.util.to_units_container(expected)
+    end = pint.util.to_units_container(val_dim)
+    graph = units._active_ctx.graph
+    if pint.util.find_shortest_path(graph, start, end):
+        return
+
+    if dim == '[precipitation]':
+        tu = 'mmday'
+    elif dim == '[discharge]':
+        tu = 'cms'
+    else:
+        raise NotImplementedError
+
+    try:
+        (1 * cfunits2pint(val)).to(tu, 'hydro')
+    except pint.UndefinedUnitError:
+        raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
 
 
-def declare_units(out_units, context='none', **units_by_name):
+def declare_units(out_units, **units_by_name):
     """Create a decorator to check units of function arguments."""
 
     def dec(func):
@@ -219,36 +249,18 @@ def declare_units(out_units, context='none', **units_by_name):
         sig = signature(func)
         bound_units = sig.bind_partial(**units_by_name)
 
-        # Convert our specified dimensionality (e.g. "[pressure]") to one used by
-        # pint directly (e.g. "[mass] / [length] / [time]**2). This is for both efficiency
-        # reasons and to ensure that problems with the decorator are caught at import,
-        # rather than runtime.
-        with units.context(context):
-            dims = {name: (orig, units.get_dimensionality(orig.replace('dimensionless', '')))
-                    for name, orig in bound_units.arguments.items()}
-
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments so we can check units
             bound_args = sig.bind(*args, **kwargs)
-            bad = list(_check_argument_units(bound_args.arguments, dims, context))
+            for name, val in bound_args.arguments.items():
+                _check_units(val, bound_units.arguments.get(name, None))
 
-            # If there are any bad units, emit a proper error message making it clear
-            # what went wrong.
-            if bad:
-                msg = '`{0}` given arguments with incorrect units: {1}.'.format(
-                    func.__name__,
-                    ', '.join('`{}` requires "{}" but given "{}"'.format(arg, req, given)
-                              for arg, given, req in bad))
-                raise ValueError(msg)
             out = func(*args, **kwargs)
 
             # In the generic case, we use the default units that should have been propagated by the computation.
             if '[' in out_units:
-                au = cfunits2pint(out)
-                ud = units.get_dimensionality(out_units)
-                if au.dimensionality != ud:
-                    raise AttributeError("Output units do not match expected units dimensionality.")
+                _check_units(out, out_units)
 
             # Otherwise, we specify explictly the units.
             else:

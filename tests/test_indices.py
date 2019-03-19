@@ -55,33 +55,25 @@ class TestBaseFlowIndex:
 
 class TestMaxNDayPrecipitationAmount:
 
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range('7/1/2000', periods=len(values), freq=pd.DateOffset(days=1))
-        return xr.DataArray(values, coords=[coords, ], dims='time',
-                            attrs={'standard_name': 'precipitation_flux',
-                                   'cell_methods': 'time: sum (interval: 1 day)',
-                                   'units': 'mm'})
-
     # test 2 day max precip
-    def test_single_max(self):
-        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+    def test_single_max(self, pr_series):
+        a = pr_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
         rxnday = xci.max_n_day_precipitation_amount(a, 2)
-        assert rxnday == 40
+        assert rxnday == 40 * 3600 * 24
         assert rxnday.time.dt.year == 2000
 
     # test whether sum over entire length is resolved
-    def test_sumlength_max(self):
-        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
+    def test_sumlength_max(self, pr_series):
+        a = pr_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
         rxnday = xci.max_n_day_precipitation_amount(a, len(a))
-        assert rxnday == a.sum('time')
+        assert rxnday == a.sum('time') * 3600 * 24
         assert rxnday.time.dt.year == 2000
 
     # test whether non-unique maxes are resolved
-    def test_multi_max(self):
-        a = self.time_series(np.array([3, 4, 20, 20, 0, 6, 15, 25, 0, 0]))
+    def test_multi_max(self, pr_series):
+        a = pr_series(np.array([3, 4, 20, 20, 0, 6, 15, 25, 0, 0]))
         rxnday = xci.max_n_day_precipitation_amount(a, 2)
-        assert rxnday == 40
+        assert rxnday == 40 * 3600 * 24
         assert len(rxnday) == 1
         assert rxnday.time.dt.year == 2000
 
@@ -451,7 +443,7 @@ class TestMaximumConsecutiveDryDays:
 class TestPrecipAccumulation:
     # build test data for different calendar
     time_std = pd.date_range('2000-01-01', '2010-12-31', freq='D')
-    da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time')
+    da_std = xr.DataArray(time_std.year, coords=[time_std], dims='time', attrs={'units': 'mm d-1'})
 
     # calendar 365_day and 360_day not tested for now since xarray.resample
     # does not support other calendars than standard
@@ -468,13 +460,13 @@ class TestPrecipAccumulation:
         pr = pr_series(pr)
 
         out = xci.precip_accumulation(pr, freq='M')
-        np.testing.assert_equal(out[:1], [5, ])
+        np.testing.assert_array_equal(out[0], 5 * 3600 * 24)
 
     def test_yearly(self):
         da_std = self.da_std
         out_std = xci.precip_accumulation(da_std)
         target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
-        np.testing.assert_allclose(target, out_std.values)
+        np.testing.assert_allclose(out_std.values, target)
 
 
 class TestRainOnFrozenGround:
@@ -736,7 +728,7 @@ class TestTgMaxTgMinIndices:
 
     def test_static_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
-        tasmin = np.subtract(tasmin, 15)
+        tasmin -= 15
         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
 
         np.testing.assert_array_equal([np.sum(ft)], [4])

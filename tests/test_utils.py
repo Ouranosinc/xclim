@@ -390,6 +390,12 @@ class TestUnitConversion:
         assert str(u) == 'meter ** 3 / second'
         assert pint2cfunits(u) == 'm3 s-1'
 
+    def test_pint_multiply(self, pr_series):
+        a = pr_series([1, 2, 3])
+        out = utils.pint_multiply(a, 1 * units.days)
+        assert out[0] == 1 * 60 * 60 * 24
+        assert out.units == 'kg m-2'
+
 
 class TestSubsetGridPoint:
     nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
