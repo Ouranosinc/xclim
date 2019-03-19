@@ -11,7 +11,7 @@ import pint
 import pandas as pd
 import xarray as xr
 from . import checks
-from inspect2 import signature, _empty
+from inspect import signature, _empty, Parameter
 import functools
 import abc
 from collections import defaultdict
@@ -965,6 +965,7 @@ class Indicator(object):
     """
     # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
+    _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
     standard_name = ''  # The set of permissible standard names is contained in the standard name table.
@@ -973,9 +974,6 @@ class Indicator(object):
     cell_methods = ''  # List of blank-separated words of the form "name: method"
     description = ''  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
-
-    # The units expected by the function. Used to convert input units to the required_units.
-    required_units = ''
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = 'none'
@@ -999,16 +997,10 @@ class Indicator(object):
             setattr(self, key, val)
 
         # Sanity checks
-        required = ['compute', 'required_units']
+        required = ['compute', ]
         for key in required:
             if not getattr(self, key):
                 raise ValueError("{} needs to be defined during instantiation.".format(key))
-
-        # Infer number of variables from `required_units`.
-        if isinstance(self.required_units, six.string_types):
-            self.required_units = (self.required_units,)
-
-        self._nvar = len(self.required_units)
 
         # Extract information from the `compute` function.
         # The signature
@@ -1016,6 +1008,8 @@ class Indicator(object):
 
         # The input parameter names
         self._parameters = tuple(self._sig.parameters.keys())
+#        self._input_params = [p for p in self._sig.parameters.values() if p.default is p.empty]
+#        self._nvar = len(self._input_params)
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__.__func__)
@@ -1151,6 +1145,10 @@ class Indicator(object):
         """Create a subclass from the attributes dictionary."""
         name = attrs['identifier'].capitalize()
         return type(name, (cls,), attrs)
+
+
+class Indicator2D(Indicator):
+    _nvar = 2
 
 
 def parse_doc(doc):

@@ -177,8 +177,6 @@ class TestDailyDownsampler:
 class UniIndTemp(Indicator):
     identifier = 'tmin{thresh}'
     units = 'K'
-    required_units = '[temperature]'
-    input_convert_units_to = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
@@ -186,27 +184,27 @@ class UniIndTemp(Indicator):
     @staticmethod
     def compute(da, thresh=0., freq='YS'):
         """Docstring"""
-        return da.resample(time=freq).mean() - thresh
+        out = da
+        out -= thresh
+        return out.resample(time=freq).mean(keep_attrs=True)
 
 
 class UniIndPr(Indicator):
     identifier = 'prmax'
-    required_units = '[length] / [time]'
     units = 'mm/s'
-    input_convert_units_to = 'mm/s'
     context = 'hydro'
 
     @staticmethod
     def compute(da, freq):
         """Docstring"""
-        return da.resample(time=freq).mean()
+        return da.resample(time=freq).mean(keep_attrs=True)
 
 
 class TestIndicator:
 
     def test_attrs(self, tas_series):
         import datetime as dt
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
@@ -214,26 +212,14 @@ class TestIndicator:
         assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
         txk = ind(a, freq='YS')
 
-        ind.required_units = ('degC',)
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
-
-    def test_pr_unit_conversion(self, pr_series):
-        a = pr_series(np.arange(360))
-        ind = UniIndPr()
-        txk = ind(a, freq='YS')
-
-        ind.input_convert_units_to = ('mm/day',)
-        ind.units = 'mm'
-        txm = ind(a, freq='YS')
-
-        np.testing.assert_array_almost_equal(txk, txm / 86400)
 
     def test_json(self, pr_series):
         ind = UniIndPr()

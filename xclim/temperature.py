@@ -14,7 +14,7 @@ for each indicator.
 
 from . import checks
 from . import indices as _ind
-from .utils import Indicator
+from .utils import Indicator, Indicator2D
 import abc
 
 
@@ -24,8 +24,6 @@ import abc
 
 class Tas(Indicator):
     """Class for univariate indices using mean daily temperature as the input."""
-    required_units = '[temperature]'
-    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: mean within days')
@@ -38,8 +36,6 @@ class Tas(Indicator):
 
 class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
-    required_units = '[temperature]'
-    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: minimum within days')
@@ -52,8 +48,6 @@ class Tasmin(Indicator):
 
 class Tasmax(Indicator):
     """Class for univariate indices using max daily temperature as the input."""
-    required_units = '[temperature]'
-    input_convert_units_to = None
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: maximum within days')
@@ -64,9 +58,7 @@ class Tasmax(Indicator):
         """The function computing the indicator."""
 
 
-class TasminTasmax(Indicator):
-    required_units = ('[temperature]', '[temperature]')
-    input_convert_units_to = None
+class TasminTasmax(Indicator2D):
 
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
@@ -148,7 +140,6 @@ heat_wave_index = Tasmax(identifier='hwi_{thresh}',
 
 tg_mean = Tas(identifier='tg_mean',
               units='K',
-              input_convert_units_to='K',
               standard_name="air_temperature",
               long_name="Mean daily mean temperature",
               description="{freq} mean of daily mean temperature.",
@@ -157,7 +148,6 @@ tg_mean = Tas(identifier='tg_mean',
 
 tx_mean = Tasmax(identifier='tx_mean',
                  units='K',
-                 input_convert_units_to='K',
                  standard_name='air_temperature',
                  long_name='Mean daily maximum temperature',
                  description='{freq} mean of daily maximum temperature.',
@@ -167,7 +157,6 @@ tx_mean = Tasmax(identifier='tx_mean',
 
 tx_max = Tasmax(identifier='tx_max',
                 units='K',
-                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Maximum daily maximum temperature',
                 description='{freq} maximum of daily maximum temperature.',
@@ -177,7 +166,6 @@ tx_max = Tasmax(identifier='tx_max',
 
 tx_min = Tasmax(identifier='tx_min',
                 units='K',
-                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Minimum daily maximum temperature',
                 description='{freq} minimum of daily maximum temperature.',
@@ -187,7 +175,6 @@ tx_min = Tasmax(identifier='tx_min',
 
 tn_mean = Tasmin(identifier='tn_mean',
                  units='K',
-                 input_convert_units_to='K',
                  standard_name='air_temperature',
                  long_name='Mean daily minimum temperature',
                  description='{freq} mean of daily minimum temperature.',
@@ -197,7 +184,6 @@ tn_mean = Tasmin(identifier='tn_mean',
 
 tn_max = Tasmin(identifier='tn_max',
                 units='K',
-                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Maximum daily minimum temperature',
                 description='{freq} maximum of daily minimum temperature.',
@@ -207,7 +193,6 @@ tn_max = Tasmin(identifier='tn_max',
 
 tn_min = Tasmin(identifier='tn_min',
                 units='K',
-                input_convert_units_to='K',
                 standard_name='air_temperature',
                 long_name='Minimum daily minimum temperature',
                 description='{freq} minimum of daily minimum temperature.',
@@ -217,7 +202,6 @@ tn_min = Tasmin(identifier='tn_min',
 
 daily_temperature_range = TasminTasmax(identifier='dtr',
                                        units='K',
-                                       input_convert_units_to=('K', 'K'),
                                        standard_name='air_temperature',
                                        long_name='Mean Diurnal Temperature Range',
                                        description='{freq} mean diurnal temperature range',
@@ -227,7 +211,6 @@ daily_temperature_range = TasminTasmax(identifier='dtr',
 
 daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
                                                    units='K',
-                                                   input_convert_units_to=('K', 'K'),
                                                    standard_name='air_temperature',
                                                    long_name='Mean Diurnal Temperature Range Variability',
                                                    description='{freq} mean diurnal temparature range variability ('
@@ -241,7 +224,6 @@ daily_temperature_range_variability = TasminTasmax(identifier='dtrvar',
 
 extreme_temperature_range = TasminTasmax(identifier='etr',
                                          units='K',
-                                         input_convert_units_to=('K', 'K'),
                                          standard_name='air_temperature',
                                          long_name='Intra-period Extreme Temperature Range',
 
