@@ -122,7 +122,6 @@ def pint2cfunits(value):
     out : str
       Units following CF-Convention.
     """
-    import re
     # Print units using abbreviations (millimeter -> mm)
     s = "{:~}".format(value)
 
@@ -1153,7 +1152,6 @@ class Indicator2D(Indicator):
 
 def parse_doc(doc):
     """Crude regex parsing."""
-    import re
     if doc is None:
         return {}
 
