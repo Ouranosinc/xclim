@@ -122,8 +122,8 @@ def base_flow_index(q, freq='YS'):
 
     Notes
     -----
-    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}` the
-    mean flow over the period. The base flow index is given by:
+    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
+    the mean flow over the period. The base flow index is given by:
 
     .. math::
 
@@ -306,6 +306,17 @@ def daily_pr_intensity(pr, thresh=1.0, freq='YS'):
     xarray.DataArray
       The average precipitation over wet days for each period
 
+    Notes
+    -----
+    Let :math:`\mathbf{p} = p_0, p_1, \ldots, p_n` be the daily precipitation and :math:`thresh` be the precipitation
+    threshold defining wet days. Then the daily precipitation intensity is defined as
+
+    .. math::
+
+       \frac{\sum_{i=0}^n p_i [p_i \leq thresh]}{\sum_{i=0}^n [p_i \leq thresh]}
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the average
@@ -388,16 +399,17 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
     Notes
     -----
-    Let :math:`TN_i` be the minimum daily temperature of day :math:`i`, then for a period :math:`p` starting at
-    day :math:`a` and finishing on day :math:`b`:
+    Let :math:`\mathbf{TN}=TN_0, TN_1, \ldots, TN_n` be a daily minimum temperature series and
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
+    0\celsius]`, that is, the days when the temperature crosses the freezing point.
+    Then the maximum number of consecutive frost days is given by
 
     .. math::
 
-       CFD_p = max(run_l(TN_i < 273.15))
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [TN_{s_j} > 0\celsius]
 
-    for :math:`a ≤ i ≤ b`
-
-    where run_l returns the length of each consecutive series of true values.
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
     """
 
     group = (tasmin < K2C).resample(time=freq)
