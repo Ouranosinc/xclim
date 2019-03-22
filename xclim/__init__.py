@@ -61,6 +61,8 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
                 raise NotImplementedError(msg)
             elif mode == 'warn':
                 warnings.warn(msg)
+            else:
+                logging.info(msg)
 
         else:
             out.__dict__[key] = module_mappings
