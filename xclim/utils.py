@@ -320,10 +320,15 @@ class Indicator(object):
     # Whether or not the compute function is a partial.
     _partial = False
 
+    # Can be used to override the compute docstring.
+    doc_template = None
+
     def __init__(self, **kwds):
 
         for key, val in kwds.items():
             setattr(self, key, val)
+
+        self.Long_name = self.long_name.capitalize()
 
         # Sanity checks
         required = ['compute', 'required_units']
@@ -346,6 +351,8 @@ class Indicator(object):
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__.__func__)
+        if self.doc_template is not None:
+            self.__call__.__doc__ = self.doc_template.format(i=self)
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute.__doc__)
@@ -553,3 +560,11 @@ def format_kwargs(attrs, params):
                 mba[k] = v
 
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
+
+
+def wrapped_partial(func, *args, **kwargs):
+    from functools import partial, update_wrapper
+    partial_func = partial(func, *args, **kwargs)
+    update_wrapper(partial_func, func)
+    return partial_func
+
