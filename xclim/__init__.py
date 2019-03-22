@@ -4,6 +4,7 @@
 
 from functools import partial
 from . import indices
+import sys
 
 # from .stats import fit, test
 
@@ -43,7 +44,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
     logging.captureWarnings(capture=True)
 
     try:
-        out = types.ModuleType(name.split('.')[-1], doc)
+        out = types.ModuleType(name, doc)
     except TypeError:
         msg = "Module '{}' is not properly formatted".format(name)
         raise TypeError(msg)
@@ -68,11 +69,13 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
             except AttributeError:
                 msg = "{} is not a function".format(module_mappings)
                 raise AttributeError(msg)
+
+    sys.modules[name] = out
     return out
 
 
 def __build_icclim(mode='warn'):
-    import sys
+
     #  ['TG', 'TX', 'TN', 'TXx', 'TXn', 'TNx', 'TNn', 'SU', 'TR', 'CSU', 'GD4', 'FD', 'CFD', 'GSL',
     #   'ID', 'HD17', 'CDD', 'CWD', 'PRCPTOT', 'RR1', 'SDII', 'R10mm', 'R20mm', 'RX1day', 'RX5day',
     #   'SD', 'SD1', 'SD5cm', 'SD50cm', 'DTR', 'ETR', 'vDTR', 'TG10p', 'TX10p', 'TN10p', 'TG90p',
@@ -129,7 +132,6 @@ def __build_icclim(mode='warn'):
                }
 
     mod = build_module('xclim.icclim', mapping, doc="""ICCLIM indices""", mode=mode)
-    sys.modules['xclim.icclim'] = mod
     return mod
 
 
