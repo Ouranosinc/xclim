@@ -43,7 +43,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
     logging.captureWarnings(capture=True)
 
     try:
-        out = types.ModuleType(name, doc)
+        out = types.ModuleType(name.split('.')[-1], doc)
     except TypeError:
         msg = "Module '{}' is not properly formatted".format(name)
         raise TypeError(msg)
@@ -64,7 +64,7 @@ def build_module(name, objs, doc='', source=None, mode='ignore'):
         else:
             out.__dict__[key] = module_mappings
             try:
-                module_mappings.__module__ = 'xclim.' + name
+                module_mappings.__module__ = name
             except AttributeError:
                 msg = "{} is not a function".format(module_mappings)
                 raise AttributeError(msg)
@@ -128,7 +128,7 @@ def __build_icclim(mode='warn'):
                # 'SD50cm': None,
                }
 
-    mod = build_module('icclim', mapping, doc="""ICCLIM indices""", mode=mode)
+    mod = build_module('xclim.icclim', mapping, doc="""ICCLIM indices""", mode=mode)
     sys.modules['xclim.icclim'] = mod
     return mod
 
