@@ -232,7 +232,7 @@ class TestIndicator:
 
     def test_factory(self, pr_series):
         attrs = dict(identifier='test', units='days', required_units='[length] / [time]',
-                     input_convert_units_to='mm/day', long_name='long name',
+                     long_name='long name',
                      standard_name='standard name', context='hydro'
                      )
         cls = Indicator.factory(attrs)
@@ -359,6 +359,17 @@ class TestUnits:
             tu = 1 * units.parse_units('mm / d')
             fu.to('mmday')
             tu.to('mmday')
+
+
+class TestConvertUnitsTo:
+
+    def test_deprecation(self):
+        with pytest.warns(DeprecationWarning):
+            out = utils.convert_units_to(0, units.K)
+            assert out.m == 273.15
+
+            out = utils.convert_units_to(10, units.mm / units.day, context='hydro')
+            assert out.m == 10
 
 
 class TestUnitConversion:

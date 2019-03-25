@@ -17,7 +17,7 @@ import abc
 from collections import defaultdict
 import datetime as dt
 from pyproj import Geod
-
+import warnings
 from boltons.funcutils import wraps
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -206,6 +206,14 @@ def convert_units_to(source, target, context=None):
             out = units.convert(source, fu, tu)
             out.attrs['units'] = tu_u
             return out
+
+    if isinstance(source, (float, int)):
+        if context == 'hydro':
+            fu = units.mm / units.day
+        else:
+            fu = units.degC
+        warnings.warn("Future versions of XCLIM will require explicit unit specifications.",  DeprecationWarning)
+        return (source * fu).to(tu)
 
     else:
         raise NotImplementedError("source of type {} is not supported.".format(type(source)))
