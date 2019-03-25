@@ -212,7 +212,7 @@ def convert_units_to(source, target, context=None):
             fu = units.mm / units.day
         else:
             fu = units.degC
-        warnings.warn("Future versions of XCLIM will require explicit unit specifications.",  DeprecationWarning)
+        warnings.warn("Future versions of XCLIM will require explicit unit specifications.",  FutureWarning)
         return (source * fu).to(tu)
 
     raise NotImplementedError("source of type {} is not supported.".format(type(source)))

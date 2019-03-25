@@ -364,7 +364,7 @@ class TestUnits:
 class TestConvertUnitsTo:
 
     def test_deprecation(self):
-        with pytest.warns(DeprecationWarning):
+        with pytest.warns(FutureWarning):
             out = utils.convert_units_to(0, units.K)
             assert out.m == 273.15
 
