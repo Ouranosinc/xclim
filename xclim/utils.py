@@ -215,8 +215,7 @@ def convert_units_to(source, target, context=None):
         warnings.warn("Future versions of XCLIM will require explicit unit specifications.",  DeprecationWarning)
         return (source * fu).to(tu)
 
-    else:
-        raise NotImplementedError("source of type {} is not supported.".format(type(source)))
+    raise NotImplementedError("source of type {} is not supported.".format(type(source)))
 
 
 def _check_units(val, dim):
