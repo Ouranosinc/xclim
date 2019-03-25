@@ -511,20 +511,15 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     Notes
     -----
-    Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j` and :math:`TN_{ij}`
-    the daily minimum temperature at day :math:`i` of period :math:`j`. Then counted is the number
-    of days where:
+    Let :math:`TX_{i}` be the maximum temperature at day :math:`i` and :math:`TN_{i}` be
+    the daily minimum temperature at day :math:`i`. Then the number of freeze thaw cycles
+    during period :math:`\phi` is given by :
 
     .. math::
 
-        TX_{ij} > 0℃
+        \sum_{i \in \phi} [ TX_{i} > 0℃ ] [ TN_{i} <  0℃ ]
 
-    and where:
-
-    .. math::
-
-        TN_{ij} <  0℃
-
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
 
     ft = (tasmin < K2C) * (tasmax > K2C) * 1
@@ -657,6 +652,17 @@ def freshet_start(tas, thresh=0.0, window=5, freq='YS'):
       Day of the year when temperature exceeds threshold over a given number of days for the first time. If there are
       no such day, return np.nan.
 
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
+    to 365 or 366. The start date of the freshet is given by the smallest index :math:`i` for which
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j > thresh]
+
+    is true, where :math:`w` is the number of days the temperature threshold should be exceeded,  and :math:`[P]` is
+    1 if :math:`P` is true, and 0 if false.
     """
 
     over = (tas > K2C + thresh)
