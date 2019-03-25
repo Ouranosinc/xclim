@@ -399,14 +399,14 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
     Notes
     -----
-    Let :math:`\mathbf{TN}=TN_0, TN_1, \ldots, TN_n` be a daily minimum temperature series and
+    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
     :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
     0\celsius]`, that is, the days when the temperature crosses the freezing point.
     Then the maximum number of consecutive frost days is given by
 
     .. math::
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [TN_{s_j} > 0\celsius]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
@@ -437,13 +437,17 @@ def maximum_consecutive_wet_days(pr, thresh=1.0, freq='YS'):
 
     Notes
     -----
-    Let :math:`PR_{ij}` be the daily precipitation amount for day :math:`i` of period :math:`j`. Then
-    counted is the largest number of consecutive days where:
+    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} >
+    thresh]`, that is, the days when the precipitation crosses the *wet day* threshold.
+    Then the maximum number of consecutive wet days is given by
 
     .. math::
 
-        PR_{ij} ≥ 1 mm
-    """
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.    """
 
     group = (pr > thresh).resample(time=freq)
     return group.apply(rl.longest_run, dim='time')
@@ -467,6 +471,17 @@ def cooling_degree_days(tas, thresh=18, freq='YS'):
     -------
     xarray.DataArray
       Cooling degree days
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day :math:`i`. Then the cooling degree days above
+    temperature threshold :math:`thresh` over period :math:`\phi` is given by:
+
+    .. math::
+
+        \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
 
     return tas.pipe(lambda x: x - thresh - K2C) \
