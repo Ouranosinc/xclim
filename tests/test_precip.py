@@ -29,6 +29,7 @@ class TestRainOnFrozenGround():
         tas.attrs = tasmax.attrs
         tasC = tas.copy()
         tasC.values -= K2C
+        tasC.attrs['units'] = 'C'
 
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
@@ -40,8 +41,11 @@ class TestRainOnFrozenGround():
         pr.attrs['units'] = 'kg m-2 s-1'
         out5 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
         out6 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
-        np.testing.assert_array_equal(out1, out2, out3, out4)
-        np.testing.assert_array_equal(out1, out5, out6)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
+        np.testing.assert_array_equal(out1, out4)
+        np.testing.assert_array_equal(out1, out5)
+        np.testing.assert_array_equal(out1, out6)
 
         assert (np.isnan(out1.values[0, 1, 0]))
 
@@ -117,7 +121,8 @@ class TestWetDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.wetdays(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1,  out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
@@ -270,7 +275,8 @@ class TestMaxConsecWetDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0.
@@ -309,7 +315,8 @@ class TestMaxConsecDryDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0. + 50.0

@@ -376,7 +376,8 @@ class TestConvertUnitsTo:
             out = ind.tx_days_above(tas, 30)
             out1 = ind.tx_days_above(tas, '30 degC')
             out2 = ind.tx_days_above(tas, '303.15 K')
-            np.testing.assert_array_equal(out, out1, out2)
+            np.testing.assert_array_equal(out, out1)
+            np.testing.assert_array_equal(out, out2)
 
 
 class TestUnitConversion:
