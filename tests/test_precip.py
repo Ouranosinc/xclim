@@ -122,7 +122,7 @@ class TestWetDays():
         out3 = precip.wetdays(pr, thresh=pr_min, freq='MS')
 
         np.testing.assert_array_equal(out1, out2)
-        np.testing.assert_array_equal(out1,  out3)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
