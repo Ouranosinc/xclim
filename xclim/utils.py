@@ -92,6 +92,7 @@ def cfunits2pint(value):
       Units of the data array.
 
     """
+
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
         return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
@@ -207,19 +208,24 @@ def convert_units_to(source, target, context=None):
             out.attrs['units'] = tu_u
             return out
 
+    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
         if context == 'hydro':
             fu = units.mm / units.day
         else:
             fu = units.degC
-        warnings.warn("Future versions of XCLIM will require explicit unit specifications.",  FutureWarning)
-        return (source * fu).to(tu)
+        warnings.warn("Future versions of XCLIM will require explicit unit specifications.", FutureWarning)
+        return (source * fu).to(tu).m
 
     raise NotImplementedError("source of type {} is not supported.".format(type(source)))
 
 
 def _check_units(val, dim):
     if dim is None or val is None:
+        return
+
+    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
+    if isinstance(val, (int, float)):
         return
 
     expected = units.get_dimensionality(dim.replace('dimensionless', ''))
@@ -1030,8 +1036,8 @@ class Indicator(object):
 
         # The input parameter names
         self._parameters = tuple(self._sig.parameters.keys())
-#        self._input_params = [p for p in self._sig.parameters.values() if p.default is p.empty]
-#        self._nvar = len(self._input_params)
+        #        self._input_params = [p for p in self._sig.parameters.values() if p.default is p.empty]
+        #        self._nvar = len(self._input_params)
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__.__func__)

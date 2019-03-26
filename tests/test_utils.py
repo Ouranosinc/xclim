@@ -363,13 +363,20 @@ class TestUnits:
 
 class TestConvertUnitsTo:
 
-    def test_deprecation(self):
+    def test_deprecation(self, tas_series):
         with pytest.warns(FutureWarning):
             out = utils.convert_units_to(0, units.K)
-            assert out.m == 273.15
+            assert out == 273.15
 
             out = utils.convert_units_to(10, units.mm / units.day, context='hydro')
-            assert out.m == 10
+            assert out == 10
+
+        with pytest.warns(FutureWarning):
+            tas = tas_series(np.arange(365), start='1/1/2001')
+            out = ind.tx_days_above(tas, 30)
+            out1 = ind.tx_days_above(tas, '30 degC')
+            out2 = ind.tx_days_above(tas, '303.15 K')
+            np.testing.assert_array_equal(out, out1, out2)
 
 
 class TestUnitConversion:
