@@ -29,6 +29,7 @@ class TestRainOnFrozenGround():
         tas.attrs = tasmax.attrs
         tasC = tas.copy()
         tasC.values -= K2C
+        tasC.attrs['units'] = 'C'
 
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
@@ -40,8 +41,11 @@ class TestRainOnFrozenGround():
         pr.attrs['units'] = 'kg m-2 s-1'
         out5 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
         out6 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
-        np.testing.assert_array_equal(out1, out2, out3, out4)
-        np.testing.assert_array_equal(out1, out5, out6)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
+        np.testing.assert_array_equal(out1, out4)
+        np.testing.assert_array_equal(out1, out5)
+        np.testing.assert_array_equal(out1, out6)
 
         assert (np.isnan(out1.values[0, 1, 0]))
 
@@ -66,9 +70,9 @@ class TestPrecipAccumulation():
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
+        pr = xr.open_dataset(self.nc_file).pr  # mm/s
         prMM = xr.open_dataset(self.nc_file).pr
-        prMM.values *= 86400.
+        prMM *= 86400
         prMM.attrs['units'] = 'mm/day'
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
@@ -81,14 +85,15 @@ class TestPrecipAccumulation():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.precip_accumulation(pr, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
         prTot = x1.sum()
 
-        assert (prTot == out1.values[0, 0, 0])
+        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
 
         assert (np.isnan(out1.values[0, 1, 0]))
 
@@ -108,7 +113,7 @@ class TestWetDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.wetdays(pr, thresh=pr_min, freq='MS')
         out2 = precip.wetdays(prMM, thresh=pr_min, freq='MS')
 
@@ -116,12 +121,13 @@ class TestWetDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.wetdays(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        wd1 = ((x1 >= pr_min) * 1).sum()
+        wd1 = (x1 >= int(pr_min.split(' ')[0])).sum()
 
         assert (wd1 == out1.values[0, 0, 0])
 
@@ -148,7 +154,7 @@ class TestDailyIntensity():
         pr.values[10, 1, 0] = np.nan
 
         # compute with both skipna options
-        pr_min = 2.
+        pr_min = '2 mm/d'
         # dis = daily_pr_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
 
         out1 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
@@ -158,11 +164,12 @@ class TestDailyIntensity():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
 
-        di1 = x1[x1 >= pr_min].mean()
+        di1 = x1[x1 >= int(pr_min.split(' ')[0])].mean()
         # buffer = np.ma.masked_invalid(x2)
         # di2 = buffer[buffer >= pr_min].mean()
 
@@ -196,7 +203,8 @@ class TestMax1Day():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.max_1day_precipitation_amount(pr, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
         rx1 = x1.max()
@@ -231,7 +239,8 @@ class TestMaxNDay():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 3)
 
         x1 = prMM[:31, 0, 0].values
         df = pd.DataFrame({'pr': x1})
@@ -258,7 +267,7 @@ class TestMaxConsecWetDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
         out2 = precip.maximum_consecutive_wet_days(prMM, thresh=pr_min, freq='MS')
 
@@ -266,7 +275,8 @@ class TestMaxConsecWetDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0.
@@ -297,7 +307,7 @@ class TestMaxConsecDryDays():
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = 5
+        pr_min = '5 mm/d'
         out1 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
         out2 = precip.maximum_consecutive_dry_days(prMM, thresh=pr_min, freq='MS')
 
@@ -305,7 +315,8 @@ class TestMaxConsecDryDays():
         pr.attrs['units'] = 'kg m-2 s-1'
         out3 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
 
-        np.testing.assert_array_equal(out1, out2, out3)
+        np.testing.assert_array_equal(out1, out2)
+        np.testing.assert_array_equal(out1, out3)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0] * 0. + 50.0

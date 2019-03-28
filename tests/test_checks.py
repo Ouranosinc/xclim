@@ -25,7 +25,7 @@ class TestDateHandling:
         with pytest.raises(ValueError):
             n = 365
             times = pd.date_range('2000-01-01', freq='12H', periods=n)
-            da = xr.DataArray(np.arange(n), [('time', times)])
+            da = xr.DataArray(np.arange(n), [('time', times)], attrs={'units': 'K'})
             tg_mean(da)
 
     # Missing one day between the two years
@@ -34,7 +34,7 @@ class TestDateHandling:
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2001-01-01', freq='1D', periods=n))
-            da = xr.DataArray(np.arange(2 * n), [('time', times)])
+            da = xr.DataArray(np.arange(2 * n), [('time', times)], attrs={'units': 'K'})
             tg_mean(da)
 
     # Duplicate dates
@@ -43,7 +43,7 @@ class TestDateHandling:
             n = 365
             times = pd.date_range('2000-01-01', freq='1D', periods=n)
             times = times.append(pd.date_range('2000-12-29', freq='1D', periods=n))
-            da = xr.DataArray(np.arange(2 * n), [('time', times)])
+            da = xr.DataArray(np.arange(2 * n), [('time', times)], attrs={'units': 'K'})
             tg_mean(da)
 
 
