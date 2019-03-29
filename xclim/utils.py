@@ -328,8 +328,6 @@ class Indicator(object):
         for key, val in kwds.items():
             setattr(self, key, val)
 
-        self.Long_name = self.long_name.capitalize()
-
         # Sanity checks
         required = ['compute', 'required_units']
         for key in required:

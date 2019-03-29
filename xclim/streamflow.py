@@ -38,13 +38,92 @@ base_flow_index = Streamflow(identifier='base_flow_index',
                              compute=_ind.base_flow_index)
 
 
+freshet_start = Streamflow(identifer='freshet_start',
+                           units='',
+                           long_name="Day of year of spring freshet start",
+                           compute=_ind.freshet_start,
+                           )
 
-q_mean = Streamflow(identifer='q_mean',
-                    long_name="Mean daily streamflow",
-                    compute=generic.select_resample_op,
-                    op = 'mean',
-                    var_name = 'da',
-                    doc_template = generic.mean_doc)
+freq_analysis = Streamflow(identifier='q{window}{mode}{t}{period_id}',
+                           long_name='N-year return period {mode} {period} {window}-day flow',
+                           description="Streamflow frequency analysis for the {mode} {period} {window}-day flow "
+                                       "estimated using the {dist} distribution.",
+                           compute=generic.frequency_analysis)
+
+
+
+daily_fa_doc = \
+    r""" {i.long_name}
+    
+    Mean of daily {i.variable} over {i.period}
+    
+    Parameters
+    ----------
+    {i.var_name} : xarray.DataArray
+      Input {i.long_name} [{i.units}]
+    freq : str, optional
+      Resampling frequency
+    
+    Returns
+    -------
+    xarray.DataArray
+      Mean of daily {i.long_name}.
+    
+    Notes
+    -----
+    Let :math:`\mathbf{{x}}=x_1, x_2, \ldots, x_n` be the daily {i.long_name} of day :math:`i` within a period of 
+    :math:`n` days. Then the mean is given by:
+    
+    .. math::
+    
+        \frac{{ \sum_{{i=1}}^{{n}} x_i }}{{n}}
+    """
+
+daily_mean_doc = \
+    r"""Mean {i.long_name}
+
+    Mean of daily {i.variable} over {i.period}
+
+    Parameters
+    ----------
+    {i.var_name} : xarray.DataArray
+      Input {i.long_name} [{i.units}]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Mean of daily {i.long_name}.
+
+    Notes
+    -----
+    Let :math:`\mathbf{{x}}=x_1, x_2, \ldots, x_n` be the daily {i.long_name} of day :math:`i` within a period of 
+    :math:`n` days. Then the mean is given by:
+
+    .. math::
+
+        \frac{{ \sum_{{i=1}}^{{n}} x_i }}{{n}}
+    """
+
+daily_max_doc = \
+    r"""Max {i.long_name}
+
+    Maximum of daily {i.variable} over {i.period}
+
+    Parameters
+    ----------
+    {i.var_name} : xarray.DataArray
+      Input {i.long_name} [{i.units}]
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Max of daily {i.long_name}.
+
+    """
 
 
 class QIndGen:
@@ -76,28 +155,29 @@ class QIndGen:
         self._season_names = dict(sp='spring', su='summer', f='fall', w='winter', suf='summer-fall')
         self._season_months = dict(sp='MAM', su='JJA', f='SON', w='DJF', suf=['JJA', 'SON'])
         self._rseasons = {str(v): k for k, v in self._season_months.items()}
+        self.op_doc = {'mean': daily_mean_doc, 'max': daily_max_doc, 'fa': daily_fa_doc}
 
     def sop(self, op, **indexer):
         """Simple operation Streamflow instance generator."""
         self._op = op
-        freq = generic.default_freq(**indexer)
+        self.freq = generic.default_freq(**indexer)
 
-        identifier = "q{m.period_id}{m.op}"
-        title = "{{freq}} {m.op} over {m.period}"
-        long_name = title
-        description = ""
+        self.identifier = "q{m.period_id}{m.op}"
+        self.title = "{{freq}} {m.op} over {m.period}"
+        self.long_name = self.title
+        self.description = ""
 
         body_template = """from xclim.generic import select_resample_op as func"""
         if not isinstance(op, str):
             body_template += "\nfrom {} import {}".format(op.__module__, op.__name__)
 
-        return self._generate(identifier.format(m=self),
-                              title.format(m=self),
-                              description.format(m=self),
-                              long_name=long_name.format(m=self),
+        return self._generate(self.identifier.format(m=self),
+
                               body_template=body_template,
+                              doc_template=self.op_doc.get(op, ""),
                               defaults=dict(freq=freq),
-                              fixed=dict(op=self.op))
+                              fixed=dict(op=self.op)
+                              )
 
     def fa(self, window, mode, t, freq=None, **indexer):
         """Frequency analysis Streamflow instance generator."""
@@ -110,11 +190,11 @@ class QIndGen:
 
         self.freq = freq or generic.default_freq(**indexer)
 
-        identifier = 'q{m.window}{m.mode}{m.t}{m.period_id}'
-        title = '{m.t}-year return period {m.mode} {m.period} {m.window}-day streamflow'
-        description = '{m.freq_name} {m.t} {m.window}-day flow of {m.t}-{m.freq_unit} recurrence during {' \
+        self.identifier = 'q{m.window}{m.mode}{m.t}{m.period_id}'
+        self.title = '{m.t}-year return period {m.mode} {m.period} {m.window}-day streamflow'
+        self.description = '{m.freq_name} {m.t} {m.window}-day flow of {m.t}-{m.freq_unit} recurrence during {' \
                        'm.period}'
-        long_name = '{m.t}-year return period {m.mode} {m.period} {m.window}-day flow'
+        self.long_name = '{m.t}-year return period {m.mode} {m.period} {m.window}-day flow'
 
         body_template = """from xclim.generic import frequency_analysis as func"""
 
@@ -123,6 +203,7 @@ class QIndGen:
                               description.format(m=self),
                               long_name=long_name.format(m=self),
                               body_template=body_template,
+                              doc_template=self.op_doc['fa'],
                               defaults=dict(dist='gumbel_r'),
                               fixed=dict(t=t, window=window, mode=mode, freq=freq))
 
@@ -174,8 +255,7 @@ class QIndGen:
         elif self._period is None:
             return 'year'
 
-    def _generate(self, identifier, title, description, body_template, notes='',defaults={}, fixed={},
-                  standard_name='', long_name='', cell_methods=''):
+    def _generate(self, identifier, body_template, doc_template, defaults={}, fixed={}):
         """Return a Streamflow instance based on the `generic.frequency_analysis` function.
 
         Parameters
@@ -197,10 +277,6 @@ class QIndGen:
         long_name : str
           Long name of output variable.
         """
-
-        # TODO: create parameter lines in docstring.
-        params = ""
-        output = ""
         args = ['q', ] + list(defaults.keys())
         gfa_args = ["da=q", ] + \
                    ["{0}={0}".format(k) for k in defaults.keys()] + \
@@ -208,48 +284,22 @@ class QIndGen:
 
         body = body_template + "\nfunc({})".format(', '.join(gfa_args))
 
-        f = FunctionBuilder(name=identifier.lower(),
-                            doc=self.docstring_template.format(**{'identifier': identifier,
-                                                             'title': title,
-                                                             'description': description,
-                                                             'params': params,
-                                                             'output': output,
-                                                             'notes': notes}),
+        f = FunctionBuilder(name=self.identifier.lower(),
+                            doc=doc_template.format(i=self),
                             body=body,
                             args=args,
                             defaults=tuple(defaults.values())
                             )
 
         s = Streamflow(identifier=identifier,
-                       title=title,
-                       standard_name=standard_name,
-                       long_name=long_name,
+                       title=self.title.format(i=self),
+                       standard_name=self.standard_name.format(i=self),
+                       long_name=self.long_name.format(i=self),
                        cell_methods=cell_methods,
                        compute=f.get_func(),
                        )
 
         return s
-
-    docstring_template = \
-        """{title}
-        
-        {description}
-        
-        Parameters
-        ----------
-        q : xarray.DataArray
-         Input streamflow [m3/s]
-        {params}
-        
-        Returns
-        -------
-        xarray.DataArray
-         {output}
-         
-        Notes
-        -----
-        {notes}
-        """
 
 
 Q = QIndGen()
@@ -285,6 +335,7 @@ qmaxsp = Q.sop('max', season='MAM')
 qmean = Q.sop('mean')
 
 qmeansp = Q.sop('mean', season='MAM')
+
 
 
 #
@@ -379,3 +430,5 @@ qmeansp = Q.sop('mean', season='MAM')
 #                                      freq='MS',
 #                                      time_operator='monthly_annual_cycle'
 #                                      )
+
+

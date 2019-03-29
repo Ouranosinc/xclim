@@ -258,31 +258,3 @@ def get_dist(dist):
         e = "Statistical distribution `{}` is not in scipy.stats.".format(dist)
         raise ValueError(e)
     return dc
-
-
-mean_doc = \
-    r"""{i.long_name}.
-
-    Mean of daily {i.variable}.
-
-    Parameters
-    ----------
-    {i.var_name} : xarray.DataArray
-      {i.Long_name} [{i.units}]
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      Mean of daily {i.long_name}.
-
-    Notes
-    -----
-    Let :math:`\mathbf{{x}}=x_1, x_2, \ldots, x_n` be the daily {i.long_name} of day :math:`i` within a period of 
-    :math:`n` days. Then the mean is given by:
-
-    .. math::
-
-        \frac{{ \sum_{{i=1}}^{{n}} x_i }}{{n}}
-    """
