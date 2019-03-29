@@ -1056,3 +1056,8 @@ class TestT10p:
         assert out[0] == 1
         assert np.isnan(out[1])
         assert out[5] == 5
+
+
+def test_freshet_start(tas_series):
+    out = temp.freshet_start(tas_series(np.arange(-50, 350)+274, start='1/1/2000'), freq='YS')
+    assert out[0] == 51

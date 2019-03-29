@@ -95,12 +95,12 @@ def cfunits2pint(value):
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
+        return re.subn(r'\^?(-?\d)', r'**\g<1>', s)[0]
 
     if isinstance(value, str):
         try:  # Pint compatible
             return units.parse_expression(value).units
-        except pint.UndefinedUnitError:  # Convert from CF-units to pint-compatible
+        except (pint.UndefinedUnitError, pint.DimensionalityError):  # Convert from CF-units to pint-compatible
             return units.parse_expression(_transform(value)).units
     elif isinstance(value, xr.DataArray):
         return units.parse_units(_transform(value.attrs['units']))
@@ -131,8 +131,8 @@ def pint2cfunits(value):
 
     def repl(m):
         i, u, p = m.groups()
-        neg = '-' if i else ''
         p = p or (1 if i else '')
+        neg = '-' if i else ('^' if p else '')
 
         return "{}{}{}".format(u, neg, p)
 
@@ -1016,8 +1016,11 @@ class Indicator(object):
 
     # Tag mappings between keyword arguments and long-form text.
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
-                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'},
-                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
+                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
+                                    'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
+                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
+                                      'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
+                      'identifier': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
 
     # Whether or not the compute function is a partial.
     _partial = False
@@ -1093,7 +1096,7 @@ class Indicator(object):
         self.cfprobe(*das)
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(*das, **ba.arguments)
+        out = self.compute(*das, **ba.kwargs)
 
         # Convert to output units
         out = convert_units_to(out, self.units, self.context)
@@ -1161,6 +1164,9 @@ class Indicator(object):
             for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{' + v + '}'
+                elif isinstance(v, dict):
+                    dk, dv = v.copy().popitem()
+                    mba[k] = '{' + dv + '}'
                 else:
                     mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 
@@ -1255,4 +1261,3 @@ def wrapped_partial(func, *args, **kwargs):
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func
-

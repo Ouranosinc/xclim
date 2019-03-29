@@ -293,6 +293,15 @@ growing_degree_days = Tas(identifier='gddgrow_{thresh}',
                           compute=_ind.growing_degree_days,
                           )
 
+freshet_start = Tas(identifer='freshet_start',
+                    units='',
+                    standard_name='day_of_year',
+                    long_name="Day of year of spring freshet start",
+                    description="Day of year of spring freshet start, defined as the first day a temperature "
+                                "threshold of {thresh} is exceeded for at least {window} days.",
+                    compute=_ind.freshet_start)
+
+
 frost_days = Tasmin(identifier='frost_days',
                     units='days',
                     standard_name='days_with_air_temperature_below_threshold',

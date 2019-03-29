@@ -34,18 +34,18 @@ def select_time(da, **indexer):
     return selected
 
 
-def select_resample_op(da, freq, op, **indexer):
+def select_resample_op(da, op, freq="YS", **indexer):
     """Apply operation over each period that is part of the index selection.
 
     Parameters
     ----------
     da : xarray.DataArray
       Input data.
+    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
+      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
       Resampling frequency defining the periods
       defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
-      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -59,7 +59,7 @@ def select_resample_op(da, freq, op, **indexer):
     da = select_time(da, **indexer)
     r = da.resample(time=freq, keep_attrs=True)
     if isinstance(op, str):
-        return getattr(r, op)(dim='time')
+        return getattr(r, op)(dim='time', keep_attrs=True)
 
     return r.apply(op)
 
@@ -67,13 +67,17 @@ def select_resample_op(da, freq, op, **indexer):
 def doymax(da):
     """Return the day of year of the maximum value."""
     i = da.argmax(dim='time')
-    return da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear[i]
+    out.attrs['units'] = ''
+    return out
 
 
 def doymin(da):
     """Return the day of year of the minimum value."""
     i = da.argmax(dim='time')
-    return da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear[i]
+    out.attrs['units'] = ''
+    return out
 
 
 def fit(arr, dist='norm'):
@@ -118,9 +122,8 @@ def fit(arr, dist='norm'):
     out.attrs['estimator'] = 'Maximum likelihood'
     out.attrs['cell_methods'] = (out.attrs.get('cell_methods', '') + ' time: fit').strip()
     out.attrs['units'] = ''
-    out.attrs['history'] = out.attrs.get('history', '') + \
-                           'Data fitted with {0} statistical distribution using a Maximum Likelihood ' \
-                           'Estimator'.format(dist)
+    msg = '\nData fitted with {0} statistical distribution using a Maximum Likelihood Estimator'
+    out.attrs['history'] = out.attrs.get('history', '') + msg.format(dist)
 
     return out
 
@@ -156,9 +159,11 @@ def fa(arr, t, dist='norm', mode='high'):
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode in ['max', 'high']:
-        func = lambda x: dc.isf(1./t, *x)
+        def func(x):
+            return dc.isf(1./t, *x)
     elif mode in ['min', 'low']:
-        func = lambda x: dc.ppf(1./t, *x)
+        def func(x):
+            return dc.ppf(1./t, *x)
     else:
         raise ValueError("mode `{}` should be either 'max' or 'min'".format(mode))
 
@@ -191,7 +196,7 @@ def fa(arr, t, dist='norm', mode='high'):
     return out
 
 
-def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
+def frequency_analysis(da, mode, t, dist, window=1, freq='YS', **indexer):
     """Return the value corresponding to a return period.
 
     Parameters
@@ -230,7 +235,7 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     freq = freq or default_freq(**indexer)
 
     # Extract the time series of min or max over the period
-    sel = select_resample_op(da, freq=freq, op=mode, **indexer).dropna(dim='time')
+    sel = select_resample_op(da, op=mode, freq=freq, **indexer).dropna(dim='time')
 
     # Frequency analysis
     return fa(sel, t, dist, mode)
