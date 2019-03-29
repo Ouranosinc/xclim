@@ -5,14 +5,16 @@ xclim xarray.DataArray utilities module
 """
 
 import numpy as np
-import xarray as xr
 import six
 import pint
+import pandas as pd
+import xarray as xr
 from . import checks
 from inspect2 import signature, _empty
 import abc
 from collections import defaultdict
 import datetime as dt
+from pyproj import Geod
 
 from boltons.funcutils import wraps
 
@@ -48,6 +50,303 @@ units.enable_contexts(hydro)
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
 binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
+
+# Maximum day of year in each calendar.
+calendars = {'standard': 366,
+             'gregorian': 366,
+             'proleptic_gregorian': 366,
+             'julian': 366,
+             'no_leap': 365,
+             '365_day': 365,
+             'all_leap': 366,
+             '366_day': 366,
+             'uniform30day': 360,
+             '360_day': 360}
+
+
+def create_ensemble(ncfiles, mf_flag=False):
+    """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
+    concatenated along a newly created data dimension ('realization')
+
+    Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
+    a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
+    ensemble dataset is created for overlapping time-steps common to all input files
+
+    Parameters
+    ----------
+    ncfiles : sequence
+      List of netcdf file paths. If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If true climate simulations are treated as multifile datasets before concatenation
+
+    Returns
+    -------
+    xarray dataset containing concatenated data from all input files
+
+    Notes
+    -----
+    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
+    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
+
+    Examples
+    --------
+
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*.nc')
+    >>> ens = utils.create_ensemble(ncfiles)
+    >>> print(ens)
+    Using multifile datasets:
+    simulation 1 is a list of .nc files (e.g. separated by time)
+    >>> ncfiles = glob.glob('dir/*.nc')
+    simulation 2 is also a list of .nc files
+    >>> ens = utils.create_ensemble(ncfiles)
+
+
+
+     """
+    dim = 'realization'
+    ds1 = []
+    start_end_flag = True
+    print('finding common time-steps')
+    for n in ncfiles:
+        if mf_flag:
+            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.open_mfdataset(n).time
+        else:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds['time'] = xr.decode_cf(ds).time
+        # get times - use common
+        time1 = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
+        if start_end_flag:
+            start1 = time1.values[0]
+            end1 = time1.values[-1]
+            start_end_flag = False
+        if time1.values.min() > start1:
+            start1 = time1.values.min()
+        if time1.values.max() < end1:
+            end1 = time1.values.max()
+
+    for n in ncfiles:
+        print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
+        if mf_flag:
+            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.open_mfdataset(n).time
+        else:
+            ds = xr.open_dataset(n, decode_times=False, chunks={'time': 10})
+            ds['time'] = xr.decode_cf(ds).time
+
+        ds['time'].values = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
+
+        ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
+
+        ds1.append(ds.drop('time'))
+    print('concatenating files : adding dimension ', dim, )
+    ens = xr.concat(ds1, dim=dim)
+    # assign time coords
+    ens = ens.assign_coords(time=ds.time.values)
+    return ens
+
+
+def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+
+    Returns a dataset containing ensemble statistics for input climate simulations.
+    Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
+
+
+    Parameters
+    ----------
+    ens : Ensemble dataset (see xclim.utils.create_ensemble)
+
+    values (optional) : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
+
+    time_block (optional) : integer - for large ensembles iteratively calculate percentiles
+    in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
+
+
+    Returns
+    -------
+    xarray dataset with containing data variables of requested ensemble statistics
+
+    Examples
+    --------
+
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*tas*.nc')
+    Create ensemble dataset
+    >>> ens = utils.create_ensemble(ncfiles)
+    Calculate default ensemble percentiles
+    >>> ens_percs = utils.ensemble_statistics(ens)
+    >>> print(ens_percs['tas_p10'])
+    Calculate non-default percentiles (25th and 75th)
+    >>> ens_percs = utils.ensemble_statistics(ens, values=(25,75))
+    >>> print(ens_percs['tas_p25'])
+    Calculate by time blocks (n=10) if ensemble size is too large to load in memory
+    >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
+    >>> print(ens_percs['tas_p25'])
+
+    """
+
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens.dims)
+    for v in ens.data_vars:
+        # Percentile calculation requires load to memory : automate size for large ensemble objects
+        if not time_block:
+            time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
+
+        if time_block > len(ens[v].time):
+            Out = calc_percentiles_simple(ens, v, values)
+
+        else:
+            # loop through blocks
+            Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
+                    ' time-steps')
+            Out = calc_percentiles_blocks(ens, v, values, time_block)
+        for vv in Out.data_vars:
+            dsOut[vv] = Out[vv]
+    return dsOut
+
+
+def calc_percentiles_simple(ens, v, values):
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens[v].dims)
+    outdims = [x for x in dims if 'realization' not in x]
+
+    print('loading ensemble data to memory')
+    arr = ens[v].load()  # percentile calc requires loading the array
+    coords = {}
+    for c in outdims:
+        coords[c] = arr[c]
+    for p in values:
+        outvar = v + '_p' + str(p)
+
+        out1 = calc_perc(arr, p)
+
+        dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
+        dsOut[outvar].attrs = ens[v].attrs
+        if 'description' in dsOut[outvar].attrs.keys():
+            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                 'th percentile of ensemble'
+        else:
+            dsOut[outvar].attrs['description'] = str(p) + \
+                                                 'th percentile of ensemble'
+    return dsOut
+
+
+def calc_percentiles_blocks(ens, v, values, time_block):
+    dsOut = ens.drop(ens.data_vars)
+    dims = list(ens[v].dims)
+    outdims = [x for x in dims if 'realization' not in x]
+
+    blocks = list(range(0, len(ens.time) + 1, int(time_block)))
+    if blocks[-1] != len(ens[v].time):
+        blocks.append(len(ens[v].time))
+    arr_p_all = {}
+    for t in range(0, len(blocks) - 1):
+        print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
+        time_sel = slice(blocks[t], blocks[t + 1])
+        arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
+        coords = {}
+        for c in outdims:
+            coords[c] = arr[c]
+        for p in values:
+
+            out1 = calc_perc(arr, p)
+
+            if t == 0:
+                arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
+            else:
+                arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
+                                               xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
+    for p in values:
+        outvar = v + '_p' + str(p)
+        dsOut[outvar] = arr_p_all[str(p)]
+        dsOut[outvar].attrs = ens[v].attrs
+        if 'description' in dsOut[outvar].attrs.keys():
+            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                 'th percentile of ensemble'
+        else:
+            dsOut[outvar].attrs['description'] = str(p) + \
+                                                 'th percentile of ensemble'
+    return dsOut
+
+
+def calc_perc(arr, p):
+    dims = arr.dims
+    # make sure time is the second dimension
+    if dims.index('time') != 1:
+        dims1 = [dims[dims.index('realization')], dims[dims.index('time')]]
+        for d in dims:
+            if d not in dims1:
+                dims1.append(d)
+        arr = arr.transpose(*dims1)
+        dims = dims1
+
+    nan_count = np.isnan(arr).sum(axis=dims.index('realization'))
+    out = np.percentile(arr, p, axis=dims.index('realization'))
+    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')])):
+        arr1 = arr.values.reshape(arr.shape[dims.index('realization')],
+                                  int(arr.size / arr.shape[dims.index('realization')]))
+        # only use nanpercentile where we need it (slow performace compared to standard) :
+        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')]))
+        t = np.ravel_multi_index(nan_index, nan_count.shape)
+        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=dims.index('realization'))
+
+    return out
+
+
+def ensemble_mean_std_max_min(ens):
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+
+    Returns a dataset containing ensemble mean, standard-deviation,
+    minimum and maximum for input climate simulations.
+
+
+
+    Parameters
+    ----------
+
+    ens : Ensemble dataset (see xclim.utils.create_ensemble)
+
+
+
+    Returns
+    -------
+    xarray dataset with containing data variables of ensemble statistics
+
+    Examples
+    --------
+
+    >>> from xclim import utils
+    >>> import glob
+    >>> ncfiles = glob.glob('/*tas*.nc')
+    Create ensemble dataset
+    >>> ens = utils.create_ensemble(ncfiles)
+    Calculate ensemble statistics
+    >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
+    >>> print(ens_mean_std['tas_mean'])
+
+
+    """
+    dsOut = ens.drop(ens.data_vars)
+    for v in ens.data_vars:
+
+        dsOut[v + '_mean'] = ens[v].mean(dim='realization')
+        dsOut[v + '_stdev'] = ens[v].std(dim='realization')
+        dsOut[v + '_max'] = ens[v].max(dim='realization')
+        dsOut[v + '_min'] = ens[v].min(dim='realization')
+        for vv in dsOut.data_vars:
+            dsOut[vv].attrs = ens[v].attrs
+
+            if 'description' in dsOut[vv].attrs.keys():
+                vv.split()
+                dsOut[vv].attrs['description'] = dsOut[vv].attrs['description'] + ' : ' + vv.split('_')[
+                    -1] + ' of ensemble'
+
+    return dsOut
 
 
 def threshold_count(da, op, thresh, freq):
@@ -103,18 +402,14 @@ def percentile_doy(arr, window=5, per=.1):
     xarray.DataArray
       The percentiles indexed by the day of the year.
     """
-
-    # TODO: Support percentile array, store percentile in attributes (or coordinates ?)
+    # TODO: Support percentile array, store percentile in coordinates.
+    #  This is supported by DataArray.quantile, but not by groupby.reduce.
     rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
 
     # Create empty percentile array
     g = rr.groupby('time.dayofyear')
-    c = g.count(dim=('time', 'window'))
 
-    p = xr.full_like(c, np.nan).astype(float).load()
-
-    for doy, ind in rr.groupby('time.dayofyear'):
-        p.loc[{'dayofyear': doy}] = ind.compute().quantile(per, dim=('time', 'window'))
+    p = g.reduce(np.nanpercentile, dim=('time', 'window'), q=per * 100)
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -124,9 +419,35 @@ def percentile_doy(arr, window=5, per=.1):
     return p
 
 
-# TODO: I'd like this function to use calendar instead of target (ie target calendar.)
-# Depends on https://github.com/pydata/xarray/issues/2436
-def adjust_doy_calendar(source, target):
+def infer_doy_max(arr):
+    """Return the largest doy allowed by calendar.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    int
+      The largest day of the year found in calendar.
+    """
+    cal = arr.time.encoding.get('calendar', None)
+    if cal in calendars:
+        doy_max = calendars[cal]
+    else:
+        # If source is an array with no calendar information and whose length is not at least of full year,
+        # then this inference could be wrong (
+        doy_max = arr.time.dt.dayofyear.max().data
+        if len(arr.time) < 360:
+            raise ValueError("Cannot infer the calendar from a series less than a year long.")
+        if doy_max not in [360, 365, 366]:
+            raise ValueError("The target array's calendar is not recognized")
+
+    return doy_max
+
+
+def _interpolate_doy_calendar(source, doy_max):
     r"""Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -136,8 +457,8 @@ def adjust_doy_calendar(source, target):
     ----------
     source : xarray.DataArray
       Array with `dayofyear` coordinates.
-    target : xarray.DataArray
-      Array with `time` coordinates the source should be mapped to.
+    doy_max : int
+      Largest day of the year allowed by calendar.
 
     Returns
     -------
@@ -149,19 +470,197 @@ def adjust_doy_calendar(source, target):
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
-    # When https://github.com/pydata/xarray/issues/2436 will be fixed, we might want to use calendar instead.
-    doy_max_source = source.dayofyear.values.max()
-    doy_max_target = target.time.dt.dayofyear.values.max()
-    if doy_max_target not in [360, 365, 366]:
-        raise ValueError("The target array's calendar is not recognized")
+    doy_max_source = source.dayofyear.max()
 
     # Interpolate to fill na values
-    buffer = source.interpolate_na(dim='dayofyear')
+    tmp = source.interpolate_na(dim='dayofyear')
 
     # Interpolate to target dayofyear range
-    buffer.coords['dayofyear'] = np.linspace(start=1, stop=doy_max_target,
-                                             num=doy_max_source)
-    return buffer.interp(dayofyear=range(1, doy_max_target + 1))
+    tmp.coords['dayofyear'] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+
+    return tmp.interp(dayofyear=range(1, doy_max + 1))
+
+
+def adjust_doy_calendar(source, target):
+    r"""Interpolate from one set of dayofyear range to another
+
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
+    to 365).
+
+    Parameters
+    ----------
+    source : xarray.DataArray
+      Array with `dayofyear` coordinates.
+    target : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+      Interpolated source array over coordinates spanning the target `dayofyear` range.
+
+    """
+    doy_max_source = source.dayofyear.max()
+
+    doy_max = infer_doy_max(target)
+    if doy_max_source == doy_max:
+        return source
+
+    return _interpolate_doy_calendar(source, doy_max)
+
+
+def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
+    """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and years selection.
+
+    Return a subsetted data array for grid points falling within a spatial bounding box
+    defined by longitude and latitudinal bounds and for years falling within provided year bounds.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray or xarray.Dataset
+      Input data.
+    lon_bnds (optional) : list of floats
+      List of maximum and minimum longitudinal bounds. Defaults to all longitudes in original data-array.
+    lat_bnds (optional) :  list of floats
+      List maximum and minimum latitudinal bounds.  Defaults to all latitudes in original data-array.
+    start_yr : int
+      First year of the subset. Defaults to first year of input.
+    end_yr : int
+      Last year of the subset. Defaults to last year of input.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.DataSet
+      subsetted data array or dataset
+
+    Examples
+    --------
+    >>> from xclim import utils
+    >>> ds = xr.open_dataset('pr.day.nc')
+    Subset lat lon and years
+    >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
+    Subset data array lat, lon and single year
+    >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1990)
+    Subset dataarray single year keep entire lon, lat grid
+    >>> prSub = utils.subset_bbox(ds.pr,start_yr=1990,end_yr=1990) # one year only entire grid
+    Subset multiple variables in a single dataset
+    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = utils.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
+    """
+
+    if lon_bnds:
+
+        lon_bnds = np.asarray(lon_bnds)
+
+        # adjust for files with all postive longitudes if necessary
+        if np.all(da.lon > 0) and np.any(lon_bnds < 0):
+            lon_bnds[lon_bnds < 0] += 360
+
+        lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
+    else:
+        lon_cond = (da.lon >= da.lon.min()) & (da.lon <= da.lon.max())
+
+    if lat_bnds:
+        lat_bnds = np.asarray(lat_bnds)
+        lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
+    else:
+        lat_cond = (da.lat >= da.lat.min()) & (da.lat <= da.lat.max())
+
+    if start_yr or end_yr:
+        if not start_yr:
+            start_yr = da.time.dt.year.min()
+        if not end_yr:
+            end_yr = da.time.dt.year.max()
+
+        year_bnds = np.asarray([start_yr, end_yr])
+        if len(year_bnds) == 1:
+            time_cond = da.time.dt.year == year_bnds
+        else:
+            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
+    else:
+        time_cond = (da.time.dt.year >= da.time.dt.year.min()) & (da.time.dt.year <= da.time.dt.year.max())
+
+    return da.where(lon_cond & lat_cond & time_cond, drop=True)
+
+
+def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
+    """Extract a nearest gridpoint from datarray based on lat lon coordinate.
+    Time series can optionally be subsetted by year(s)
+
+    Return a subsetted data array (or dataset) for the grid point falling nearest the input
+    longitude and latitudecoordinates. Optionally subset the data array for years falling
+    within provided year bounds
+
+    Parameters
+    ----------
+    da : xarray.DataArray or xarray.DataSet
+      Input data.
+    lon : float
+      Longitude coordinate.
+    lat:  float
+      Latitude coordinate.
+    start_yr : int
+      First year of the subset. Defaults to first year of input.
+    end_yr : int
+      Last year of the subset. Defaults to last year of input.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.DataSet
+      Subsetted data array or dataset
+
+    Examples
+    --------
+    >>> from xclim import utils
+    >>> ds = xr.open_dataset('pr.day.nc')
+    Subset lat lon point and multiple years
+    >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    Subset lat, lon point and single year
+    >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990)
+     Subset multiple variables in a single dataset
+    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = utils.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    """
+
+    g = Geod(ellps='WGS84')  # WGS84 ellipsoid - decent globaly
+    # adjust for files with all postive longitudes if necessary
+    if np.all(da.lon > 0) and lon < 0:
+        lon += 360
+
+    if len(da.lon.shape) == 1 & len(da.lat.shape) == 1:
+        # create a 2d grid of lon, lat values
+        lon1, lat1 = np.meshgrid(np.asarray(da.lon.values), np.asarray(da.lat.values))
+
+    else:
+        lon1 = da.lon.values
+        lat1 = da.lat.values
+    shp_orig = lon1.shape
+    lon1 = np.reshape(lon1, (lon1.size))
+    lat1 = np.reshape(lat1, (lat1.size))
+    # calculate geodesic distance between grid points and point of interest
+    az12, az21, dist = g.inv(lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape))
+    dist = dist.reshape(shp_orig)
+
+    iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
+    xydims = [x for x in da.dims if 'time' not in x]
+    args = {}
+    args[xydims[0]] = iy
+    args[xydims[1]] = ix
+    out = da.isel(**args)
+    if start_yr or end_yr:
+        if not start_yr:
+            start_yr = da.time.dt.year.min()
+        if not end_yr:
+            end_yr = da.time.dt.year.max()
+        year_bnds = np.asarray([start_yr, end_yr])
+
+        if len(year_bnds) == 1:
+            time_cond = da.time.dt.year == year_bnds
+        else:
+            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
+        out = out.where(time_cond, drop=True)
+
+    return out
 
 
 def get_daily_events(da, da_value, operator):

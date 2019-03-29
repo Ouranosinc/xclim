@@ -17,12 +17,13 @@ requirements = [
     'netCDF4>=1.4',
     'dask[complete]',
     'bottleneck>=1.2.1',
-    'xarray>=0.11.3',
+    'xarray @ https://api.github.com/repos/pydata/xarray/tarball/master',
     'pint>=0.8',
     'boltons>=18.0',
     'inspect2',
     'unittest2',
     'six',
+    'pyproj>=1.9.5.1'
 ]
 
 setup_requirements = ['pytest-runner', ]
