@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 from . import indices as _ind
-from .utils import Indicator
+from .utils import Indicator, Indicator2D
 
 
 class Pr(Indicator):
-    required_units = 'mm/day'
     context = 'hydro'
 
 
-class PrTas(Indicator):
-    required_units = ('mm/day', 'K')
+class PrTas(Indicator2D):
     context = 'hydro'
 
 

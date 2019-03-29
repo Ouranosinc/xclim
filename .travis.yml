@@ -5,6 +5,7 @@ sudo: false
 #branches:
 #  only:
 #    - master
+#    - ^v[0-9]+\.[0-9]+[\.]?[a-c-]?[0-9]?[\w-]+\b
 
 matrix:
   fast_finish: true

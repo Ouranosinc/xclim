@@ -6,20 +6,21 @@ xclim xarray.DataArray utilities module
 
 import numpy as np
 import six
+import re
 import pint
 import pandas as pd
 import xarray as xr
 from . import checks
-from inspect2 import signature, _empty
+from inspect import signature
+import functools
 import abc
 from collections import defaultdict
 import datetime as dt
 from pyproj import Geod
-
+import warnings
 from boltons.funcutils import wraps
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-
 units.define(pint.unit.UnitDefinition('percent', '%', (),
                                       pint.converters.ScaleConverter(0.01)))
 
@@ -29,6 +30,19 @@ units.define('degrees_north = degree = degrees_N = degreesN = degree_north = deg
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
 units.define("degC = kelvin; offset: 273.15 = celsius = C")  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
+
+# Default context.
+null = pint.Context('none')
+units.add_context(null)
+
+# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
+# a precipitation unit. Ideally this could be checked through the `dimensionality`, but I can't get it to work.
+units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
+units.define("mmday = 1000 kg / meter ** 2 / day")
+
+units.define("[discharge] = [length] ** 3 / [time]")
+units.define("cms = meter ** 3 / second")
+
 hydro = pint.Context('hydro')
 hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
 hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
@@ -64,6 +78,212 @@ calendars = {'standard': 366,
              '360_day': 360}
 
 
+def cfunits2pint(value):
+    """Return the pint Unit for the DataArray units.
+
+    Parameters
+    ----------
+    value : xr.DataArray or string
+      Input data array or expression.
+
+    Returns
+    -------
+    pint.Unit
+      Units of the data array.
+
+    """
+
+    def _transform(s):
+        """Convert a CF-unit string to a pint expression."""
+        return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
+
+    if isinstance(value, str):
+        try:  # Pint compatible
+            return units.parse_expression(value).units
+        except pint.UndefinedUnitError:  # Convert from CF-units to pint-compatible
+            return units.parse_expression(_transform(value)).units
+    elif isinstance(value, xr.DataArray):
+        return units.parse_units(_transform(value.attrs['units']))
+    elif isinstance(value, units.Quantity):
+        return value.units
+    else:
+        raise NotImplementedError("Value of type {} not supported.".format(type(value)))
+
+
+def pint2cfunits(value):
+    """Return a CF-Convention unit string from a `pint` unit.
+
+    Parameters
+    ----------
+    value : pint.Unit
+      Input unit.
+
+    Returns
+    -------
+    out : str
+      Units following CF-Convention.
+    """
+    # Print units using abbreviations (millimeter -> mm)
+    s = "{:~}".format(value)
+
+    # Search and replace patterns
+    pat = r'(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+
+    def repl(m):
+        i, u, p = m.groups()
+        neg = '-' if i else ''
+        p = p or (1 if i else '')
+
+        return "{}{}{}".format(u, neg, p)
+
+    out, n = re.subn(pat, repl, s)
+    return out
+
+
+def pint_multiply(da, q, out_units=None):
+    """Multiply xarray.DataArray by pint.Quantity.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input array.
+    q : pint.Quantity
+      Multiplicating factor.
+    out_units : str
+      Units the output array should be converted into.
+    """
+    a = 1 * cfunits2pint(da)
+    f = a * q.to_base_units()
+    if out_units:
+        f = f.to(out_units)
+    out = da * f.magnitude
+    out.attrs['units'] = pint2cfunits(f.units)
+    return out
+
+
+def convert_units_to(source, target, context=None):
+    """
+    Convert a mathematical expression into a value with the same units as a DataArray.
+
+    Parameters
+    ----------
+    source : str, pint.Quantity or xr.DataArray
+      The value to be converted, e.g. '4C' or '1 mm/d'.
+    target : str, pint.Unit or DataArray
+      Target array of values to which units must conform.
+    context : str
+
+
+    Returns
+    -------
+    out
+      The source value converted to target's units.
+    """
+    # Target units
+    if isinstance(target, units.Unit):
+        tu = target
+    elif isinstance(target, (str, xr.DataArray)):
+        tu = cfunits2pint(target)
+    else:
+        raise NotImplementedError
+
+    if isinstance(source, str):
+        q = units.parse_expression(source)
+
+        # Return magnitude of converted quantity. This is going to fail if units are not compatible.
+        return q.to(tu).m
+
+    if isinstance(source, units.Quantity):
+        return source.to(tu).m
+
+    if isinstance(source, xr.DataArray):
+        fu = cfunits2pint(source)
+
+        if fu == tu:
+            return source
+
+        tu_u = pint2cfunits(tu)
+        with units.context(context or 'none'):
+            out = units.convert(source, fu, tu)
+            out.attrs['units'] = tu_u
+            return out
+
+    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
+    if isinstance(source, (float, int)):
+        if context == 'hydro':
+            fu = units.mm / units.day
+        else:
+            fu = units.degC
+        warnings.warn("Future versions of XCLIM will require explicit unit specifications.", FutureWarning)
+        return (source * fu).to(tu).m
+
+    raise NotImplementedError("source of type {} is not supported.".format(type(source)))
+
+
+def _check_units(val, dim):
+    if dim is None or val is None:
+        return
+
+    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
+    if isinstance(val, (int, float)):
+        return
+
+    expected = units.get_dimensionality(dim.replace('dimensionless', ''))
+    val_dim = cfunits2pint(val).dimensionality
+    if val_dim == expected:
+        return
+
+    # Check if there is a transformation available
+    start = pint.util.to_units_container(expected)
+    end = pint.util.to_units_container(val_dim)
+    graph = units._active_ctx.graph
+    if pint.util.find_shortest_path(graph, start, end):
+        return
+
+    if dim == '[precipitation]':
+        tu = 'mmday'
+    elif dim == '[discharge]':
+        tu = 'cms'
+    else:
+        raise NotImplementedError
+
+    try:
+        (1 * cfunits2pint(val)).to(tu, 'hydro')
+    except pint.UndefinedUnitError:
+        raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
+
+
+def declare_units(out_units, **units_by_name):
+    """Create a decorator to check units of function arguments."""
+
+    def dec(func):
+        # Match the signature of the function to the arguments given to the decorator
+        sig = signature(func)
+        bound_units = sig.bind_partial(**units_by_name)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Match all passed in value to their proper arguments so we can check units
+            bound_args = sig.bind(*args, **kwargs)
+            for name, val in bound_args.arguments.items():
+                _check_units(val, bound_units.arguments.get(name, None))
+
+            out = func(*args, **kwargs)
+
+            # In the generic case, we use the default units that should have been propagated by the computation.
+            if '[' in out_units:
+                _check_units(out, out_units)
+
+            # Otherwise, we specify explicitly the units.
+            else:
+                out.attrs['units'] = out_units
+            return out
+
+        return wrapper
+
+    return dec
+
+
 def create_ensemble(ncfiles, mf_flag=False):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
@@ -91,7 +311,6 @@ def create_ensemble(ncfiles, mf_flag=False):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*.nc')
@@ -102,10 +321,7 @@ def create_ensemble(ncfiles, mf_flag=False):
     >>> ncfiles = glob.glob('dir/*.nc')
     simulation 2 is also a list of .nc files
     >>> ens = utils.create_ensemble(ncfiles)
-
-
-
-     """
+    """
     dim = 'realization'
     ds1 = []
     start_end_flag = True
@@ -155,16 +371,13 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     Returns a dataset containing ensemble statistics for input climate simulations.
     Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
 
-
     Parameters
     ----------
     ens : Ensemble dataset (see xclim.utils.create_ensemble)
-
-    values (optional) : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
-
-    time_block (optional) : integer - for large ensembles iteratively calculate percentiles
-    in time-step blocks (n==time_block).  If not defined the function tries to estimate an appropriate value
-
+    values : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
+    time_block : integer
+      for large ensembles iteratively calculate percentiles in time-step blocks (n==time_block).
+       If not defined the function tries to estimate an appropriate value
 
     Returns
     -------
@@ -172,7 +385,6 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
@@ -190,7 +402,7 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     """
 
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -198,20 +410,20 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
             time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
 
         if time_block > len(ens[v].time):
-            Out = calc_percentiles_simple(ens, v, values)
+            out = calc_percentiles_simple(ens, v, values)
 
         else:
             # loop through blocks
             Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
                     ' time-steps')
-            Out = calc_percentiles_blocks(ens, v, values, time_block)
-        for vv in Out.data_vars:
-            dsOut[vv] = Out[vv]
-    return dsOut
+            out = calc_percentiles_blocks(ens, v, values, time_block)
+        for vv in out.data_vars:
+            ds_out[vv] = out[vv]
+    return ds_out
 
 
 def calc_percentiles_simple(ens, v, values):
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
     outdims = [x for x in dims if 'realization' not in x]
 
@@ -225,19 +437,19 @@ def calc_percentiles_simple(ens, v, values):
 
         out1 = calc_perc(arr, p)
 
-        dsOut[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
-        dsOut[outvar].attrs = ens[v].attrs
-        if 'description' in dsOut[outvar].attrs.keys():
-            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                 'th percentile of ensemble'
+        ds_out[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
+        ds_out[outvar].attrs = ens[v].attrs
+        if 'description' in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                  'th percentile of ensemble'
         else:
-            dsOut[outvar].attrs['description'] = str(p) + \
-                                                 'th percentile of ensemble'
-    return dsOut
+            ds_out[outvar].attrs['description'] = str(p) + \
+                                                  'th percentile of ensemble'
+    return ds_out
 
 
 def calc_percentiles_blocks(ens, v, values, time_block):
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
     outdims = [x for x in dims if 'realization' not in x]
 
@@ -263,15 +475,15 @@ def calc_percentiles_blocks(ens, v, values, time_block):
                                                xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
     for p in values:
         outvar = v + '_p' + str(p)
-        dsOut[outvar] = arr_p_all[str(p)]
-        dsOut[outvar].attrs = ens[v].attrs
-        if 'description' in dsOut[outvar].attrs.keys():
-            dsOut[outvar].attrs['description'] = dsOut[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                 'th percentile of ensemble'
+        ds_out[outvar] = arr_p_all[str(p)]
+        ds_out[outvar].attrs = ens[v].attrs
+        if 'description' in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
+                                                  'th percentile of ensemble'
         else:
-            dsOut[outvar].attrs['description'] = str(p) + \
-                                                 'th percentile of ensemble'
-    return dsOut
+            ds_out[outvar].attrs['description'] = str(p) + \
+                                                  'th percentile of ensemble'
+    return ds_out
 
 
 def calc_perc(arr, p):
@@ -304,14 +516,9 @@ def ensemble_mean_std_max_min(ens):
     Returns a dataset containing ensemble mean, standard-deviation,
     minimum and maximum for input climate simulations.
 
-
-
     Parameters
     ----------
-
     ens : Ensemble dataset (see xclim.utils.create_ensemble)
-
-
 
     Returns
     -------
@@ -319,7 +526,6 @@ def ensemble_mean_std_max_min(ens):
 
     Examples
     --------
-
     >>> from xclim import utils
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
@@ -328,8 +534,6 @@ def ensemble_mean_std_max_min(ens):
     Calculate ensemble statistics
     >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
-
-
     """
     dsOut = ens.drop(ens.data_vars)
     for v in ens.data_vars:
@@ -416,6 +620,7 @@ def percentile_doy(arr, window=5, per=.1):
     if p.dayofyear.max() == 366:
         p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
 
+    p.attrs.update(arr.attrs.copy())
     return p
 
 
@@ -448,7 +653,7 @@ def infer_doy_max(arr):
 
 
 def _interpolate_doy_calendar(source, doy_max):
-    r"""Interpolate from one set of dayofyear range to another
+    """Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -482,7 +687,7 @@ def _interpolate_doy_calendar(source, doy_max):
 
 
 def adjust_doy_calendar(source, target):
-    r"""Interpolate from one set of dayofyear range to another
+    """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -519,10 +724,10 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     ----------
     arr : xarray.DataArray or xarray.Dataset
       Input data.
-    lon_bnds (optional) : list of floats
-      List of maximum and minimum longitudinal bounds. Defaults to all longitudes in original data-array.
-    lat_bnds (optional) :  list of floats
-      List maximum and minimum latitudinal bounds.  Defaults to all latitudes in original data-array.
+    lon_bnds : list of floats
+      List of maximum and minimum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
+    lat_bnds :  list of floats
+      List maximum and minimum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
     start_yr : int
       First year of the subset. Defaults to first year of input.
     end_yr : int
@@ -635,15 +840,15 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
         lon1 = da.lon.values
         lat1 = da.lat.values
     shp_orig = lon1.shape
-    lon1 = np.reshape(lon1, (lon1.size))
-    lat1 = np.reshape(lat1, (lat1.size))
+    lon1 = np.reshape(lon1, lon1.size)
+    lat1 = np.reshape(lat1, lat1.size)
     # calculate geodesic distance between grid points and point of interest
     az12, az21, dist = g.inv(lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape))
     dist = dist.reshape(shp_orig)
 
     iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
     xydims = [x for x in da.dims if 'time' not in x]
-    args = {}
+    args = dict()
     args[xydims[0]] = iy
     args[xydims[1]] = ix
     out = da.isel(**args)
@@ -788,6 +993,7 @@ class Indicator(object):
     """
     # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
     identifier = ''
+    _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
     standard_name = ''  # The set of permissible standard names is contained in the standard name table.
@@ -797,11 +1003,8 @@ class Indicator(object):
     description = ''  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
-    # The units expected by the function. Used to convert input units to the required_units.
-    required_units = ''
-
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    context = None
+    context = 'none'
 
     # Additional information that can be used by third party libraries or to describe the file content.
     title = ''  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
@@ -828,16 +1031,10 @@ class Indicator(object):
             setattr(self, key, val)
 
         # Sanity checks
-        required = ['compute', 'required_units']
+        required = ['compute', ]
         for key in required:
             if not getattr(self, key):
                 raise ValueError("{} needs to be defined during instantiation.".format(key))
-
-        # Infer number of variables from `required_units`.
-        if isinstance(self.required_units, six.string_types):
-            self.required_units = (self.required_units,)
-
-        self._nvar = len(self.required_units)
 
         # Extract information from the `compute` function.
         # The signature
@@ -845,6 +1042,8 @@ class Indicator(object):
 
         # The input parameter names
         self._parameters = tuple(self._sig.parameters.keys())
+        #        self._input_params = [p for p in self._sig.parameters.values() if p.default is p.empty]
+        #        self._nvar = len(self._input_params)
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__.__func__)
@@ -893,11 +1092,13 @@ class Indicator(object):
             self.validate(da)
         self.cfprobe(*das)
 
-        # Convert units if necessary
-        das = tuple((self.convert_units(da, ru, self.context) for (da, ru) in zip(das, self.required_units)))
-
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.arguments)
+
+        # Convert to output units
+        out = convert_units_to(out, self.units, self.context)
+
+        # Update netCDF attributes
         out.attrs.update(attrs)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
@@ -931,7 +1132,7 @@ class Indicator(object):
 
         out['notes'] = self.notes
 
-        out['parameters'] = str({key: {'default': p.default if p.default != _empty else None, 'desc': ''}
+        out['parameters'] = str({key: {'default': p.default if p.default != p.empty else None, 'desc': ''}
                                  for (key, p) in self._sig.parameters.items()})
 
         if six.PY2:
@@ -947,19 +1148,6 @@ class Indicator(object):
     @abc.abstractmethod
     def compute(*args, **kwds):
         """The function computing the indicator."""
-
-    def convert_units(self, da, req_units, context=None):
-        """Return DataArray converted to unit."""
-        fu = units.parse_units(da.attrs['units'].replace('-', '**-'))
-        tu = units.parse_units(req_units.replace('-', '**-'))
-        if fu != tu:
-            if self.context:
-                with units.context(self.context):
-                    return units.convert(da, fu, tu)
-            else:
-                return units.convert(da, fu, tu)
-        else:
-            return da
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments."""
@@ -1001,9 +1189,12 @@ class Indicator(object):
         return type(name, (cls,), attrs)
 
 
+class Indicator2D(Indicator):
+    _nvar = 2
+
+
 def parse_doc(doc):
     """Crude regex parsing."""
-    import re
     if doc is None:
         return {}
 

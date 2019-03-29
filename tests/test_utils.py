@@ -28,7 +28,7 @@ import dask
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
-from xclim.utils import units
+from xclim.utils import units, pint2cfunits, cfunits2pint
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -177,7 +177,6 @@ class TestDailyDownsampler:
 class UniIndTemp(Indicator):
     identifier = 'tmin{thresh}'
     units = 'K'
-    required_units = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
@@ -185,26 +184,27 @@ class UniIndTemp(Indicator):
     @staticmethod
     def compute(da, thresh=0., freq='YS'):
         """Docstring"""
-        return da.resample(time=freq).mean() - thresh
+        out = da
+        out -= thresh
+        return out.resample(time=freq).mean(keep_attrs=True)
 
 
 class UniIndPr(Indicator):
     identifier = 'prmax'
-    units = 'kg m-2 s-1'
-    required_units = 'kg m-2 s-1'
+    units = 'mm/s'
     context = 'hydro'
 
     @staticmethod
     def compute(da, freq):
         """Docstring"""
-        return da.resample(time=freq).mean()
+        return da.resample(time=freq).mean(keep_attrs=True)
 
 
 class TestIndicator:
 
     def test_attrs(self, tas_series):
         import datetime as dt
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
         txm = ind(a, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
@@ -212,26 +212,14 @@ class TestIndicator:
         assert txm.name == "tmin0"
 
     def test_temp_unit_conversion(self, tas_series):
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
         txk = ind(a, freq='YS')
 
-        ind.required_units = ('degC',)
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
-
-    def test_pr_unit_conversion(self, pr_series):
-        a = pr_series(np.arange(360))
-        ind = UniIndPr()
-        txk = ind(a, freq='YS')
-
-        ind.required_units = ('mm/day',)
-        ind.units = 'mm'
-        txm = ind(a, freq='YS')
-
-        np.testing.assert_array_almost_equal(txk, txm / 86400)
 
     def test_json(self, pr_series):
         ind = UniIndPr()
@@ -243,7 +231,8 @@ class TestIndicator:
         assert set(meta.keys()).issubset(expected)
 
     def test_factory(self, pr_series):
-        attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
+        attrs = dict(identifier='test', units='days', required_units='[length] / [time]',
+                     long_name='long name',
                      standard_name='standard name', context='hydro'
                      )
         cls = Indicator.factory(attrs)
@@ -303,6 +292,7 @@ class TestPercentileDOY:
         tas = tas_series(np.arange(365), start='1/1/2001')
         p1 = percentile_doy(tas, window=5, per=.5)
         assert p1.sel(dayofyear=3).data == 2
+        assert p1.attrs['units'] == 'K'
 
 
 class TestAdjustDoyCalendar:
@@ -362,6 +352,54 @@ class TestUnits:
             fu = units.parse_units("kilogram / d / meter ** 2")
             tu = units.parse_units("mm/day")
             np.isclose(1 * fu, 1 * tu)
+
+    def test_dimensionality(self):
+        with units.context('hydro'):
+            fu = 1 * units.parse_units('kg / m**2 / s')
+            tu = 1 * units.parse_units('mm / d')
+            fu.to('mmday')
+            tu.to('mmday')
+
+
+class TestConvertUnitsTo:
+
+    def test_deprecation(self, tas_series):
+        with pytest.warns(FutureWarning):
+            out = utils.convert_units_to(0, units.K)
+            assert out == 273.15
+
+            out = utils.convert_units_to(10, units.mm / units.day, context='hydro')
+            assert out == 10
+
+        with pytest.warns(FutureWarning):
+            tas = tas_series(np.arange(365), start='1/1/2001')
+            out = ind.tx_days_above(tas, 30)
+            out1 = ind.tx_days_above(tas, '30 degC')
+            out2 = ind.tx_days_above(tas, '303.15 K')
+            np.testing.assert_array_equal(out, out1)
+            np.testing.assert_array_equal(out, out2)
+
+
+class TestUnitConversion:
+
+    def test_pint2cfunits(self):
+        u = units('mm/d')
+        assert pint2cfunits(u.units) == 'mm d-1'
+
+    def test_cfunits2pint(self, pr_series):
+        u = cfunits2pint(pr_series([1, 2]))
+        assert (str(u)) == 'kilogram / meter ** 2 / second'
+        assert pint2cfunits(u) == 'kg m-2 s-1'
+
+        u = cfunits2pint('m3 s-1')
+        assert str(u) == 'meter ** 3 / second'
+        assert pint2cfunits(u) == 'm3 s-1'
+
+    def test_pint_multiply(self, pr_series):
+        a = pr_series([1, 2, 3])
+        out = utils.pint_multiply(a, 1 * units.days)
+        assert out[0] == 1 * 60 * 60 * 24
+        assert out.units == 'kg m-2'
 
 
 class TestSubsetGridPoint:

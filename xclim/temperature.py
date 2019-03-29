@@ -14,7 +14,7 @@ for each indicator.
 
 from . import checks
 from . import indices as _ind
-from .utils import Indicator
+from .utils import Indicator, Indicator2D
 import abc
 
 
@@ -24,7 +24,6 @@ import abc
 
 class Tas(Indicator):
     """Class for univariate indices using mean daily temperature as the input."""
-    required_units = 'K'
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: mean within days')
@@ -37,7 +36,6 @@ class Tas(Indicator):
 
 class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
-    required_units = 'K'
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: minimum within days')
@@ -50,7 +48,6 @@ class Tasmin(Indicator):
 
 class Tasmax(Indicator):
     """Class for univariate indices using max daily temperature as the input."""
-    required_units = 'K'
 
     def cfprobe(self, da):
         checks.check_valid(da, 'cell_methods', 'time: maximum within days')
@@ -61,8 +58,7 @@ class Tasmax(Indicator):
         """The function computing the indicator."""
 
 
-class TasminTasmax(Indicator):
-    required_units = ('K', 'K')
+class TasminTasmax(Indicator2D):
 
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
