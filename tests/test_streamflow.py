@@ -1,4 +1,5 @@
 from xclim import streamflow
+import numpy as np
 
 
 def test_base_flow_index(ndq_series):
@@ -16,6 +17,11 @@ def test_stats(ndq_series):
     assert out.attrs['units'] == 'm^3 s-1'
 
 
-def test_qdoy_max(ndq_series):
+def test_qdoy_max(ndq_series, q_series):
     out = streamflow.doy_qmax(ndq_series, freq='YS', season='JJA')
     assert out.attrs['units'] == ''
+
+    a = np.ones(450)
+    a[100] = 2
+    out = streamflow.doy_qmax(q_series(a), freq='YS')
+    assert out[0] == 101

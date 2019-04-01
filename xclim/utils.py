@@ -1159,7 +1159,7 @@ class Indicator(object):
 
         out = {}
         for key, val in attrs.items():
-            mba = {}
+            mba = {'indexer': 'year'}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():

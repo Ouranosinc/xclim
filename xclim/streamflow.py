@@ -51,8 +51,16 @@ stats = Streamflow(identifier='q{indexer}{op}',
 
 
 doy_qmax = Streamflow(identifier='q{indexer}_doy_qmax',
-                      long_name='Day of the year of the max over {indexer}',
-                      description='Day of the year of the max over {indexer}',
+                      long_name='Day of the year of the maximum over {indexer}',
+                      description='Day of the year of the maximum over {indexer}',
                       units='',
                       _partial=True,
                       compute=wrapped_partial(generic.select_resample_op, op=generic.doymax))
+
+
+doy_qmin = Streamflow(identifier='q{indexer}_doy_qmin',
+                      long_name='Day of the year of the minimum over {indexer}',
+                      description='Day of the year of the minimum over {indexer}',
+                      units='',
+                      _partial=True,
+                      compute=wrapped_partial(generic.select_resample_op, op=generic.doymin))
