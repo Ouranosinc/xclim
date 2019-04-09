@@ -756,20 +756,13 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     if lon_bnds:
 
         lon_bnds = np.asarray(lon_bnds)
-
-        # adjust for files with all postive longitudes if necessary
         if np.all(da.lon > 0) and np.any(lon_bnds < 0):
             lon_bnds[lon_bnds < 0] += 360
-
-        lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
-    else:
-        lon_cond = (da.lon >= da.lon.min()) & (da.lon <= da.lon.max())
+        da = da.where((da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max()), drop=True)
 
     if lat_bnds:
         lat_bnds = np.asarray(lat_bnds)
-        lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
-    else:
-        lat_cond = (da.lat >= da.lat.min()) & (da.lat <= da.lat.max())
+        da = da.where((da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max()), drop=True)
 
     if start_yr or end_yr:
         if not start_yr:
@@ -778,14 +771,9 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
             end_yr = da.time.dt.year.max()
 
         year_bnds = np.asarray([start_yr, end_yr])
-        if len(year_bnds) == 1:
-            time_cond = da.time.dt.year == year_bnds
-        else:
-            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
-    else:
-        time_cond = (da.time.dt.year >= da.time.dt.year.min()) & (da.time.dt.year <= da.time.dt.year.max())
+        da = da.where((da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max()), drop=True)
 
-    return da.where(lon_cond & lat_cond & time_cond, drop=True)
+    return da
 
 
 def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):

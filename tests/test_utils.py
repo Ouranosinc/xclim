@@ -491,6 +491,22 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
+        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
+
     def test_irregular(self):
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
 
