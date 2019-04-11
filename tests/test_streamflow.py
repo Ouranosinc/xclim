@@ -7,9 +7,16 @@ def test_base_flow_index(ndq_series):
     assert out.attrs['units'] == ''
 
 
-def test_fa(ndq_series):
-    out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma', season='DJF')
-    assert out.long_name == 'N-year return period max winter 1-day flow'
+class Test_FA:
+
+    def test_simple(self, ndq_series):
+        out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma', season='DJF')
+        assert out.long_name == 'N-year return period max winter 1-day flow'
+
+    def test_no_indexer(self, ndq_series):
+        out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma')
+        assert out.long_name == 'N-year return period max annual' \
+                                ' 1-day flow'
 
 
 def test_stats(ndq_series):

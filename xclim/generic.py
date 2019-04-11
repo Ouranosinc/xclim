@@ -195,8 +195,8 @@ def fa(arr, t, dist='norm', mode='high'):
 
     return out
 
-
-def frequency_analysis(da, mode, t, dist, window=1, freq='YS', **indexer):
+# TODO : check avec freq=None
+def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     """Return the value corresponding to a return period.
 
     Parameters
@@ -214,8 +214,8 @@ def frequency_analysis(da, mode, t, dist, window=1, freq='YS', **indexer):
     window : int
       Averaging window length (days).
     freq : str
-      Resampling frequency. If None, the frequency is assumed annual and adjusted to the seasons. That is,
-      years will start in December if season is 'DJF'.
+      Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
+      in which case `freq` would be set to `YS-DEC`.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are

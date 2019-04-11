@@ -20,14 +20,16 @@ class Streamflow(Indicator):
     def cfprobe(self, q):
         checks.check_valid(q, 'standard_name', 'streamflow')
 
+
+class FreqAnalysis(Streamflow):
     def missing(self, *args, **kwds):
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get('freq', None) or getattr(self, 'freq')
-        # TODO
-        # Si on besoin juste d'une saison, cette fonction va quand même checker les données pour toutes les saisons.
-        miss = (checks.missing_any(da, freq) for da in args)
+        indexer = kwds['indexer']
+        freq = kwds['freq'] or generic.default_freq(**indexer)
+
+        miss = (checks.missing_any(generic.select_time(da, **indexer), freq) for da in args)
         return reduce(np.logical_or, miss)
 
 
@@ -37,11 +39,11 @@ base_flow_index = Streamflow(identifier='base_flow_index',
                              compute=_ind.base_flow_index)
 
 
-freq_analysis = Streamflow(identifier='q{window}{mode}{indexer}',
-                           long_name='N-year return period {mode} {indexer} {window}-day flow',
-                           description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
-                                       "estimated using the {dist} distribution.",
-                           compute=generic.frequency_analysis)
+freq_analysis = FreqAnalysis(identifier='q{window}{mode}{indexer}',
+                             long_name='N-year return period {mode} {indexer} {window}-day flow',
+                             description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+                                         "estimated using the {dist} distribution.",
+                             compute=generic.frequency_analysis)
 
 
 stats = Streamflow(identifier='q{indexer}{op}',
