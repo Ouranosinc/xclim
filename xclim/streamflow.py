@@ -21,7 +21,7 @@ class Streamflow(Indicator):
         checks.check_valid(q, 'standard_name', 'streamflow')
 
 
-class FreqAnalysis(Streamflow):
+class Stats(Streamflow):
     def missing(self, *args, **kwds):
         """Return whether an output is considered missing or not."""
         from functools import reduce
@@ -39,17 +39,17 @@ base_flow_index = Streamflow(identifier='base_flow_index',
                              compute=_ind.base_flow_index)
 
 
-freq_analysis = FreqAnalysis(identifier='q{window}{mode}{indexer}',
-                             long_name='N-year return period {mode} {indexer} {window}-day flow',
-                             description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
-                                         "estimated using the {dist} distribution.",
-                             compute=generic.frequency_analysis)
+freq_analysis = Stats(identifier='q{window}{mode}{indexer}',
+                      long_name='N-year return period {mode} {indexer} {window}-day flow',
+                      description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+                                  "estimated using the {dist} distribution.",
+                      compute=generic.frequency_analysis)
 
 
-stats = Streamflow(identifier='q{indexer}{op}',
-                   long_name='{freq} {op} of {indexer} daily flow ',
-                   description="{freq} {op} of {indexer} daily flow",
-                   compute=generic.select_resample_op)
+stats = Stats(identifier='q{indexer}{op}',
+              long_name='{freq} {op} of {indexer} daily flow ',
+              description="{freq} {op} of {indexer} daily flow",
+              compute=generic.select_resample_op)
 
 
 doy_qmax = Streamflow(identifier='q{indexer}_doy_qmax',

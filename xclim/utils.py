@@ -16,6 +16,7 @@ import functools
 import abc
 from collections import defaultdict
 import datetime as dt
+import calendar
 from pyproj import Geod
 import warnings
 from boltons.funcutils import wraps
@@ -1003,12 +1004,16 @@ class Indicator(object):
     notes = ''  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
+    months = {'m{}'.format(i): calendar.month_name[i].lower() for i in range(1, 13)}
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
                       'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
                                     'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
                       'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
                                       'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
                       'identifier': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
+
+    for k, v in _attrs_mapping.items():
+        v.update(months)
 
     # Whether or not the compute function is a partial.
     _partial = False
@@ -1147,14 +1152,17 @@ class Indicator(object):
 
         out = {}
         for key, val in attrs.items():
-            mba = {'indexer': 'year'}
+            mba = {'indexer': 'annual'}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
-                    mba[k] = '{' + v + '}'
+                    mba[k] = '{{{}}}'.format(v)
                 elif isinstance(v, dict):
-                    dk, dv = v.copy().popitem()
-                    mba[k] = '{' + dv + '}'
+                    if v:
+                        dk, dv = v.copy().popitem()
+                        if dk == 'month':
+                            dv = 'm{}'.format(dv)
+                        mba[k] = '{{{}}}'.format(dv)
                 else:
                     mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 

@@ -4,7 +4,7 @@ import xarray as xr
 from scipy.stats import lognorm
 
 
-class TestStats(object):
+class TestFA(object):
 
     def setup(self):
         self.nx, self.ny = 2, 3
@@ -39,3 +39,23 @@ class TestStats(object):
         p0 = lognorm.fit(self.da.values[:, 0, 0])
         q0 = lognorm.ppf(1-1./T, *p0)
         np.testing.assert_array_equal(q[0, 0, 0], q0)
+
+
+class TestSelectResampleOp():
+
+    def test_month(self, q_series):
+        q = q_series(np.arange(1000))
+        o = generic.select_resample_op(q, 'count', freq='YS', month=3)
+        np.testing.assert_array_equal(o, 31)
+
+    def test_season_default(self, q_series):
+        # Will use freq='YS', so count J, F and D of each year.
+        q = q_series(np.arange(1000))
+        o = generic.select_resample_op(q, 'min', season='DJF')
+        assert o[0] == 0
+        assert o[1] == 366
+
+    def test_season(self, q_series):
+        q = q_series(np.arange(1000))
+        o = generic.select_resample_op(q, 'count', freq='AS-DEC', season='DJF')
+        assert o[0] == 31 + 29

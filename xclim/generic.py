@@ -102,6 +102,9 @@ def fit(arr, dist='norm'):
     # Fit the parameters (lazy computation)
     data = dask.array.apply_along_axis(dc.fit, arr.get_axis_num('time'), arr)
 
+    # Count the number of values used for the fit.
+    # n = arr.count(dim='time')
+
     # Create a view to a DataArray with the desired dimensions to copy them over to the parameter array.
     mean = arr.mean(dim='time', keep_attrs=True)
 
@@ -195,7 +198,7 @@ def fa(arr, t, dist='norm', mode='high'):
 
     return out
 
-# TODO : check avec freq=None
+
 def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     """Return the value corresponding to a return period.
 
