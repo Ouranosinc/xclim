@@ -162,7 +162,6 @@ def missing_any(da, freq, **kwds):
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
-
     c = da.notnull().resample(time=freq).sum(dim='time')
 
     if '-' in freq:

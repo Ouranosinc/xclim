@@ -1,21 +1,68 @@
-from . import checks
-from . import indices as _ind
-from .utils import Indicator
+# -*- coding: utf-8 -*-
+import numpy as np
+from xclim import checks
+from xclim import indices as _ind
+from xclim.utils import Indicator, wrapped_partial
+from xclim import generic
+# from boltons.funcutils import FunctionBuilder
+# import calendar
 
 
-class BaseFlowIndex(Indicator):
-    identifier = 'tx_max'
-    units = 'm3 s-1'
-    required_units = 'K'
-    long_name = 'streamflow'  # discharge ?
-    standard_name = 'water_volume_transport_in_river_channel'
-    description = 'Maximum daily maximum temperature over period.'
-    keywords = ''
+class Streamflow(Indicator):
+    units = 'm^3 s-1'
+    context = 'hydro'
+    standard_name = 'discharge'
 
-    compute = _ind.base_flow_index
+    @staticmethod
+    def compute(*args, **kwds):
+        pass
 
     def cfprobe(self, q):
-        checks.check_valid(q, 'standard_name', 'water_volume_transport_in_river_channel')
+        checks.check_valid(q, 'standard_name', 'streamflow')
 
-    def validate(self, q):
-        checks.assert_daily(q)
+
+class Stats(Streamflow):
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        from functools import reduce
+
+        indexer = kwds['indexer']
+        freq = kwds['freq'] or generic.default_freq(**indexer)
+
+        miss = (checks.missing_any(generic.select_time(da, **indexer), freq) for da in args)
+        return reduce(np.logical_or, miss)
+
+
+base_flow_index = Streamflow(identifier='base_flow_index',
+                             units='',
+                             long_name="Base flow index",
+                             compute=_ind.base_flow_index)
+
+
+freq_analysis = Stats(identifier='q{window}{mode}{indexer}',
+                      long_name='N-year return period {mode} {indexer} {window}-day flow',
+                      description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+                                  "estimated using the {dist} distribution.",
+                      compute=generic.frequency_analysis)
+
+
+stats = Stats(identifier='q{indexer}{op}',
+              long_name='{freq} {op} of {indexer} daily flow ',
+              description="{freq} {op} of {indexer} daily flow",
+              compute=generic.select_resample_op)
+
+
+doy_qmax = Streamflow(identifier='q{indexer}_doy_qmax',
+                      long_name='Day of the year of the maximum over {indexer}',
+                      description='Day of the year of the maximum over {indexer}',
+                      units='',
+                      _partial=True,
+                      compute=wrapped_partial(generic.select_resample_op, op=generic.doymax))
+
+
+doy_qmin = Streamflow(identifier='q{indexer}_doy_qmin',
+                      long_name='Day of the year of the minimum over {indexer}',
+                      description='Day of the year of the minimum over {indexer}',
+                      units='',
+                      _partial=True,
+                      compute=wrapped_partial(generic.select_resample_op, op=generic.doymin))

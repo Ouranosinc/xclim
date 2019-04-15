@@ -16,6 +16,7 @@ import functools
 import abc
 from collections import defaultdict
 import datetime as dt
+import calendar
 from pyproj import Geod
 import warnings
 from boltons.funcutils import wraps
@@ -95,12 +96,12 @@ def cfunits2pint(value):
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r'(-?\d)', r'**\g<1>', s)[0]
+        return re.subn(r'\^?(-?\d)', r'**\g<1>', s)[0]
 
     if isinstance(value, str):
         try:  # Pint compatible
             return units.parse_expression(value).units
-        except pint.UndefinedUnitError:  # Convert from CF-units to pint-compatible
+        except (pint.UndefinedUnitError, pint.DimensionalityError):  # Convert from CF-units to pint-compatible
             return units.parse_expression(_transform(value)).units
     elif isinstance(value, xr.DataArray):
         return units.parse_units(_transform(value.attrs['units']))
@@ -131,8 +132,8 @@ def pint2cfunits(value):
 
     def repl(m):
         i, u, p = m.groups()
-        neg = '-' if i else ''
         p = p or (1 if i else '')
+        neg = '-' if i else ('^' if p else '')
 
         return "{}{}{}".format(u, neg, p)
 
@@ -1003,9 +1004,22 @@ class Indicator(object):
     notes = ''  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
+    months = {'m{}'.format(i): calendar.month_name[i].lower() for i in range(1, 13)}
     _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
-                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'},
-                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal'}}
+                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
+                                    'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
+                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
+                                      'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
+                      'identifier': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
+
+    for k, v in _attrs_mapping.items():
+        v.update(months)
+
+    # Whether or not the compute function is a partial.
+    _partial = False
+
+    # Can be used to override the compute docstring.
+    doc_template = None
 
     def __init__(self, **kwds):
 
@@ -1029,6 +1043,8 @@ class Indicator(object):
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__.__func__)
+        if self.doc_template is not None:
+            self.__call__.__doc__ = self.doc_template.format(i=self)
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute.__doc__)
@@ -1038,8 +1054,14 @@ class Indicator(object):
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
-        ba = self._sig.bind(*args, **kwds)
-        ba.apply_defaults()
+        if self._partial:
+            ba = self._sig.bind_partial(*args, **kwds)
+            for key, val in self.compute.keywords.items():
+                if key not in ba.arguments:
+                    ba.arguments[key] = val
+        else:
+            ba = self._sig.bind(*args, **kwds)
+            ba.apply_defaults()
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
@@ -1067,7 +1089,7 @@ class Indicator(object):
         self.cfprobe(*das)
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(*das, **ba.arguments)
+        out = self.compute(*das, **ba.kwargs)
 
         # Convert to output units
         out = convert_units_to(out, self.units, self.context)
@@ -1130,11 +1152,17 @@ class Indicator(object):
 
         out = {}
         for key, val in attrs.items():
-            mba = {}
+            mba = {'indexer': 'annual'}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
                 if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
-                    mba[k] = '{' + v + '}'
+                    mba[k] = '{{{}}}'.format(v)
+                elif isinstance(v, dict):
+                    if v:
+                        dk, dv = v.copy().popitem()
+                        if dk == 'month':
+                            dv = 'm{}'.format(dv)
+                        mba[k] = '{{{}}}'.format(dv)
                 else:
                     mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 
@@ -1222,3 +1250,10 @@ def format_kwargs(attrs, params):
                 mba[k] = v
 
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
+
+
+def wrapped_partial(func, *args, **kwargs):
+    from functools import partial, update_wrapper
+    partial_func = partial(func, *args, **kwargs)
+    update_wrapper(partial_func, func)
+    return partial_func
