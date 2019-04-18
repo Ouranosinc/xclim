@@ -79,7 +79,7 @@ calendars = {'standard': 366,
              '360_day': 360}
 
 
-def cfunits2pint(value):
+def units2pint(value):
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -99,16 +99,18 @@ def cfunits2pint(value):
         return re.subn(r'\^?(-?\d)', r'**\g<1>', s)[0]
 
     if isinstance(value, str):
-        try:  # Pint compatible
-            return units.parse_expression(value).units
-        except (pint.UndefinedUnitError, pint.DimensionalityError):  # Convert from CF-units to pint-compatible
-            return units.parse_expression(_transform(value)).units
+        unit = value
     elif isinstance(value, xr.DataArray):
-        return units.parse_units(_transform(value.attrs['units']))
+        unit = value.attrs['units']
     elif isinstance(value, units.Quantity):
         return value.units
     else:
         raise NotImplementedError("Value of type {} not supported.".format(type(value)))
+
+    try:  # Pint compatible
+        return units.parse_expression(unit).units
+    except (pint.UndefinedUnitError, pint.DimensionalityError):  # Convert from CF-units to pint-compatible
+        return units.parse_expression(_transform(unit)).units
 
 
 def pint2cfunits(value):
@@ -153,7 +155,7 @@ def pint_multiply(da, q, out_units=None):
     out_units : str
       Units the output array should be converted into.
     """
-    a = 1 * cfunits2pint(da)
+    a = 1 * units2pint(da)
     f = a * q.to_base_units()
     if out_units:
         f = f.to(out_units)
@@ -184,7 +186,7 @@ def convert_units_to(source, target, context=None):
     if isinstance(target, units.Unit):
         tu = target
     elif isinstance(target, (str, xr.DataArray)):
-        tu = cfunits2pint(target)
+        tu = units2pint(target)
     else:
         raise NotImplementedError
 
@@ -198,7 +200,7 @@ def convert_units_to(source, target, context=None):
         return source.to(tu).m
 
     if isinstance(source, xr.DataArray):
-        fu = cfunits2pint(source)
+        fu = units2pint(source)
 
         if fu == tu:
             return source
@@ -230,7 +232,7 @@ def _check_units(val, dim):
         return
 
     expected = units.get_dimensionality(dim.replace('dimensionless', ''))
-    val_dim = cfunits2pint(val).dimensionality
+    val_dim = units2pint(val).dimensionality
     if val_dim == expected:
         return
 
@@ -249,7 +251,7 @@ def _check_units(val, dim):
         raise NotImplementedError
 
     try:
-        (1 * cfunits2pint(val)).to(tu, 'hydro')
+        (1 * units2pint(val)).to(tu, 'hydro')
     except pint.UndefinedUnitError:
         raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
 

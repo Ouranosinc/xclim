@@ -28,7 +28,7 @@ import dask
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
-from xclim.utils import units, pint2cfunits, cfunits2pint
+from xclim.utils import units, pint2cfunits, units2pint
 from xclim.testing.common import tas_series, pr_series
 from xclim import indices as ind
 
@@ -387,11 +387,11 @@ class TestUnitConversion:
         assert pint2cfunits(u.units) == 'mm d-1'
 
     def test_cfunits2pint(self, pr_series):
-        u = cfunits2pint(pr_series([1, 2]))
+        u = units2pint(pr_series([1, 2]))
         assert (str(u)) == 'kilogram / meter ** 2 / second'
         assert pint2cfunits(u) == 'kg m-2 s-1'
 
-        u = cfunits2pint('m^3 s-1')
+        u = units2pint('m^3 s-1')
         assert str(u) == 'meter ** 3 / second'
         assert pint2cfunits(u) == 'm^3 s-1'
 
