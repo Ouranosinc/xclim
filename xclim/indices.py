@@ -118,6 +118,23 @@ def base_flow_index(q, freq='YS'):
     -------
     xarray.DataArrray
       Base flow index.
+
+    Notes
+    -----
+    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
+    the mean flow over the period. The base flow index is given by:
+
+    .. math::
+
+       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
+
+
+    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
+
+    .. math::
+
+       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
+
     """
 
     m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
@@ -153,9 +170,15 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
 
     Notes
     -----
-    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    Let :math:`TN_i` be the minimum daily temperature for the day of the year :math:`i` and :math:`TN10_i` the 10th
+    percentile of the minimum daily temperature over the 1961-1990 period for day of the year :math:`i`, the cold spell
+    duration index over period :math:`\phi` is defined as:
 
-    Input data-arrays require a 'units' attribute.
+    .. math::
+
+       \sum_{i \in \phi} \prod_{j=i}^{i+6} \left[ TN_j < TN10_j \right]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
 
     References
     ----------
@@ -205,8 +228,20 @@ def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
 
     Returns
     -------
-    DataArray
-      Cold spell days
+    xarray.DataArray
+      Cold spell days.
+
+    Notes
+    -----
+    Let :math:`T_i` be the mean daily temperature on day :math:`i`, the number of cold spell days during
+    period :math:`\phi` is given by
+
+    .. math::
+
+       \sum_{i \in \phi} \prod_{j=i}^{i+5} [T_j < thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+
     """
     t = utils.convert_units_to(thresh, tas)
     over = tas < t
@@ -277,6 +312,17 @@ def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
     xarray.DataArray
       The average precipitation over wet days for each period
 
+    Notes
+    -----
+    Let :math:`\mathbf{p} = p_0, p_1, \ldots, p_n` be the daily precipitation and :math:`thresh` be the precipitation
+    threshold defining wet days. Then the daily precipitation intensity is defined as
+
+    .. math::
+
+       \frac{\sum_{i=0}^n p_i [p_i \leq thresh]}{\sum_{i=0}^n [p_i \leq thresh]}
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the average
@@ -322,9 +368,24 @@ def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
     -------
     xarray.DataArray
       The maximum number of consecutive dry days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
+    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive dry days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
     """
     t = utils.convert_units_to(thresh, pr, 'hydro')
     group = (pr < t).resample(time=freq)
+
     return group.apply(rl.longest_run, dim='time')
 
 
@@ -349,16 +410,17 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
 
     Notes
     -----
-    Let :math:`Tmin_i` be the minimum daily temperature of day :math:`i`, then for a period :math:`p` starting at
-    day :math:`a` and finishing on day :math:`b`
+    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
+    0\celsius]`, that is, the days when the temperature crosses the freezing point.
+    Then the maximum number of consecutive frost days is given by
 
     .. math::
 
-       CFD_p = max(run_l(Tmin_i < 273.15))
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
 
-    for :math:`a ≤ i ≤ b`
-
-    where run_l returns the length of each consecutive series of true values.
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
     """
     tu = units.parse_units(tasmin.attrs['units'].replace('-', '**-'))
     fu = 'degC'
@@ -391,12 +453,18 @@ def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
 
     Notes
     -----
-    Let :math:`RR_{ij}` be the daily precipitation amount for day :math:`i` of period :math:`j`. Then
-    counted is the largest number of consecutive days where:
+    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} >
+    thresh]`, that is, the days when the precipitation crosses the *wet day* threshold.
+    Then the maximum number of consecutive wet days is given by
 
     .. math::
 
-        RR_{ij} ≥ 1 mm
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
     """
     thresh = utils.convert_units_to(thresh, pr, 'hydro')
 
@@ -423,6 +491,17 @@ def cooling_degree_days(tas, thresh='18 degC', freq='YS'):
     -------
     xarray.DataArray
       Cooling degree days
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day :math:`i`. Then the cooling degree days above
+    temperature threshold :math:`thresh` over period :math:`\phi` is given by:
+
+    .. math::
+
+        \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = utils.convert_units_to(thresh, tas)
 
@@ -438,7 +517,6 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
 
-
     Parameters
     ----------
     tasmax : xarray.DataArray
@@ -448,12 +526,22 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
     freq : str
       Resampling frequency
 
-
     Returns
     -------
     xarray.DataArray
       Number of days with a diurnal freeze-thaw cycle
 
+    Notes
+    -----
+    Let :math:`TX_{i}` be the maximum temperature at day :math:`i` and :math:`TN_{i}` be
+    the daily minimum temperature at day :math:`i`. Then the number of freeze thaw cycles
+    during period :math:`\phi` is given by :
+
+    .. math::
+
+        \sum_{i \in \phi} [ TX_{i} > 0℃ ] [ TN_{i} <  0℃ ]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     frz = utils.convert_units_to('0 degC', tasmax)
     ft = (tasmin < frz) * (tasmax > frz) * 1
@@ -597,6 +685,17 @@ def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
       Day of the year when temperature exceeds threshold over a given number of days for the first time. If there are
       no such day, return np.nan.
 
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
+    to 365 or 366. The start date of the freshet is given by the smallest index :math:`i` for which
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j > thresh]
+
+    is true, where :math:`w` is the number of days the temperature threshold should be exceeded,  and :math:`[P]` is
+    1 if :math:`P` is true, and 0 if false.
     """
     thresh = utils.convert_units_to(thresh, tas)
     over = (tas > thresh)
@@ -795,7 +894,6 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax
     xarray.DataArray
       Number of heatwave at the wanted frequency
 
-
     Notes
     -----
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
@@ -884,7 +982,6 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasma
     -------
     xarray.DataArray
       Maximum length of heatwave at the wanted frequency
-
 
     Notes
     -----
@@ -1009,6 +1106,18 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     xarray.DataArray
       Ratio of rainfall to total precipitation
 
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+        PR_{ij} = \sum_{i=a}^{b} PR_i
+
+
+        PRwet_{ij}
+
     See also
     --------
     winter_rain_ratio
@@ -1055,7 +1164,7 @@ def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
 
     .. math::
 
-        TX_{ij} < thresh [℃]
+        TX_{ij} < Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmin)
     f1 = utils.threshold_count(tasmin, '<', thresh, freq)
@@ -1089,7 +1198,7 @@ def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
 
     .. math::
 
-        TX_{ij} > 25℃
+        TX_{ij} > Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmax)
     f = (tasmax > (thresh)) * 1
@@ -1154,6 +1263,14 @@ def max_1day_precipitation_amount(pr, freq='YS'):
     xarray.DataArray
       The highest 1-day precipitation value at the given time frequency.
 
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day `i`, then for a period `j`:
+
+    .. math::
+
+       PRx_{ij} = max(PR_{ij})
+
     Examples
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
@@ -1188,11 +1305,12 @@ def precip_accumulation(pr, freq='YS'):
 
     Notes
     -----
-    Let :math:`pr_i` be the mean daily precipitation of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
 
     .. math::
-       out_p = \sum_{i=a}^{b} pr_i
+
+       PR_{ij} = \sum_{i=a}^{b} PR_i
 
     Examples
     --------
@@ -1212,7 +1330,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
     """Number of rain on frozen ground events
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
-    Precipitation is assumed to be rain when the temperature is above 0C.
+    Precipitation is assumed to be rain when the temperature is above 0℃.
 
     Parameters
     ----------
@@ -1229,6 +1347,23 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
     -------
     xarray.DataArray
       The number of rain on frozen ground events per period [days]
+
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation and :math:`TG_i` be the mean daily temperature of day :math:`i`.
+    Then for a period :math:`j`, rain on frozen grounds days are counted where:
+
+    .. math::
+
+        PR_{i} > Threshold [mm]
+
+    and where
+
+    .. math::
+
+        TG_{i} ≤ 0℃
+
+    is true for continuous periods where :math:`i ≥ 7`
 
     """
     t = utils.convert_units_to(thresh, pr)
@@ -1263,14 +1398,12 @@ def tg90p(tas, t90, freq='YS'):
 
     Returns
     -------
-
     xarray.DataArray
       Count of days with daily mean temperature below the 10th percentile [days]
 
     Notes
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
-
 
     Example
     -------
@@ -1394,15 +1527,14 @@ def tg_mean(tas, freq='YS'):
     xarray.DataArray
       The mean daily temperature at the given time frequency
 
-
     Notes
     -----
-    Let :math:`T_i` be the mean daily temperature of day `i`, then for a period `p` starting at
-    day `a` and finishing on day `b`
+    Let :math:`TN_i` be the mean daily temperature of day :math:`i`, then for a period :math:`p` starting at
+    day :math:`a` and finishing on day :math:`b`:
 
     .. math::
 
-       TG_p = \frac{\sum_{i=a}^{b} T_i}{b - a + 1}
+       TG_p = \frac{\sum_{i=a}^{b} TN_i}{b - a + 1}
 
 
     Examples
@@ -1666,7 +1798,7 @@ def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
 
     .. math::
 
-        TN_{ij} > 20℃
+        TN_{ij} > Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmin)
     return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
@@ -1880,6 +2012,20 @@ def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
       Threshold temperature on which to base evaluation [℃] or [K]. Default : '30 degC'
     freq : str, optional
       Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days exceeding threshold.
+
+    Notes:
+    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} > Threshold [℃]
+
     """
     thresh = utils.convert_units_to(thresh, tasmax)
     events = (tasmax > thresh) * 1
@@ -1912,6 +2058,25 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 degC',
     xarray.DataArray
       the number of days with tasmin > thresh_tasmin and
       tasmax > thresh_tasamax per period
+
+
+    Notes
+    -----
+    Let :math:`TX_{ij}` be the maximum temperature at day :math:`i` of period :math:`j`, :math:`TN_{ij}`
+    the daily minimum temperature at day :math:`i` of period :math:`j`, :math:`TX_{thresh}` the threshold for maximum
+    daily temperature, and :math:`TN_{thresh}` the threshold for minimum daily temperature. Then counted is the number
+    of days where:
+
+    .. math::
+
+        TX_{ij} > TX_{thresh} [℃]
+
+    and where:
+
+    .. math::
+
+        TN_{ij} > TN_{thresh} [℃]
+
     """
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
