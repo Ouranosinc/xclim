@@ -293,7 +293,7 @@ growing_degree_days = Tas(identifier='gddgrow_{thresh}',
                           compute=_ind.growing_degree_days,
                           )
 
-freshet_start = Tas(identifer='freshet_start',
+freshet_start = Tas(identifier='freshet_start',
                     units='',
                     standard_name='day_of_year',
                     long_name="Day of year of spring freshet start",
