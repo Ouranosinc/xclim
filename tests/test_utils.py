@@ -452,6 +452,11 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
+    def test_raise(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        with pytest.raises(ValueError):
+            utils.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
+
 
 class TestSubsetBbox:
     nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
@@ -530,6 +535,11 @@ class TestSubsetBbox:
         assert (np.all(out.lon <= np.max(np.asarray(self.lon) + 360)))
         assert (np.all(out.lat >= np.min(self.lat)))
         assert (np.all(out.lat <= np.max(self.lat)))
+
+    def test_raise(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        with pytest.raises(ValueError):
+            utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055)
 
 
 class TestThresholdCount:
