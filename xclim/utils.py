@@ -773,6 +773,9 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
         if not end_yr:
             end_yr = da.time.dt.year.max()
 
+        if start_yr > end_yr:
+            raise ValueError("Start date is after end date.")
+
         year_bnds = np.asarray([start_yr, end_yr])
         da = da.where((da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max()), drop=True)
 
@@ -848,6 +851,10 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
             start_yr = da.time.dt.year.min()
         if not end_yr:
             end_yr = da.time.dt.year.max()
+
+        if start_yr > end_yr:
+            raise ValueError("Start date is after end date.")
+
         year_bnds = np.asarray([start_yr, end_yr])
 
         if len(year_bnds) == 1:
