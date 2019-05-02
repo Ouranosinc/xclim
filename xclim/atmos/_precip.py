@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from . import indices as _ind
-from .utils import Indicator, Indicator2D
+from xclim.indices import indices as _ind
+from xclim.utils import Indicator, Indicator2D
 
 
 class Pr(Indicator):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from xclim import checks
-from xclim import indices as _ind
+from xclim.indices import indices as _ind
 from xclim.utils import Indicator, wrapped_partial
 from xclim import generic
 # from boltons.funcutils import FunctionBuilder

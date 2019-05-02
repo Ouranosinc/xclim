@@ -69,10 +69,10 @@ Indice descriptions
 """
 import logging
 import numpy as np
-from . import utils
+from xclim import utils
 import xarray as xr
-from . import run_length as rl
-from .utils import units, declare_units
+from xclim import run_length as rl
+from xclim.utils import units, declare_units
 
 logging.basicConfig(level=logging.DEBUG)
 logging.captureWarnings(True)

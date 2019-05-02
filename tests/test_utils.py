@@ -33,7 +33,7 @@ from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, 
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
 from xclim.utils import units, pint2cfunits, units2pint
 from xclim.testing.common import tas_series, pr_series
-from xclim import indices as ind
+from xclim.indices import indices as ind
 
 TAS_SERIES = tas_series
 PR_SERIES = pr_series

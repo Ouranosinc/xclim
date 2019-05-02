@@ -1,21 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Indicator calculation instances
-===============================
-
-While the `indices` module stores the computing functions, this module defines Indicator classes and instances that
-include a number of functionalities, such as input validation, unit conversion, output meta-data handling,
-and missing value masking.
-
-The concept followed here is to define Indicator subclasses for each input variable, then create instances
-for each indicator.
-
-"""
-
-from . import checks
-from . import indices as _ind
-from .utils import Indicator, Indicator2D
 import abc
+
+from xclim import checks
+from xclim.indices import indices as _ind
+from xclim.utils import Indicator, Indicator2D
 
 
 # TODO: Should we reference the standard vocabulary we're using ?
@@ -300,7 +288,6 @@ freshet_start = Tas(identifier='freshet_start',
                     description="Day of year of spring freshet start, defined as the first day a temperature "
                                 "threshold of {thresh} is exceeded for at least {window} days.",
                     compute=_ind.freshet_start)
-
 
 frost_days = Tasmin(identifier='frost_days',
                     units='days',

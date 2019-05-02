@@ -1,11 +1,11 @@
-from xclim import precip
-import xarray as xr
-import numpy as np
 import os
-import pandas as pd
-
-import pytest
 import sys
+
+import numpy as np
+import pandas as pd
+import pytest
+import xarray as xr
+import xclim.atmos as atmos
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
@@ -34,22 +34,22 @@ class TestRainOnFrozenGround():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
 
-        out1 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
-        out2 = precip.rain_on_frozen_ground_days(prMM, tas, freq='MS')
-        out3 = precip.rain_on_frozen_ground_days(prMM, tasC, freq='MS')
-        out4 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
+        out1 = atmos.rain_on_frozen_ground_days(pr, tas, freq='MS')
+        out2 = atmos.rain_on_frozen_ground_days(prMM, tas, freq='MS')
+        out3 = atmos.rain_on_frozen_ground_days(prMM, tasC, freq='MS')
+        out4 = atmos.rain_on_frozen_ground_days(pr, tasC, freq='MS')
         pr.attrs['units'] = 'kg m-2 s-1'
-        out5 = precip.rain_on_frozen_ground_days(pr, tas, freq='MS')
-        out6 = precip.rain_on_frozen_ground_days(pr, tasC, freq='MS')
+        out5 = atmos.rain_on_frozen_ground_days(pr, tas, freq='MS')
+        out6 = atmos.rain_on_frozen_ground_days(pr, tasC, freq='MS')
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
         np.testing.assert_array_equal(out1, out4)
         np.testing.assert_array_equal(out1, out5)
         np.testing.assert_array_equal(out1, out6)
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
 
         # synthetic data
         tas1 = tas[0:31, 47, 8] * 0 + K2C - 1
@@ -59,7 +59,7 @@ class TestRainOnFrozenGround():
         tas1[10] += 5
         tas1[20] += 5
 
-        rfrz = precip.rain_on_frozen_ground_days(pr1, tas1, freq='MS')
+        rfrz = atmos.rain_on_frozen_ground_days(pr1, tas1, freq='MS')
 
         np.testing.assert_array_equal(rfrz, 2)
 
@@ -78,12 +78,12 @@ class TestPrecipAccumulation():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
 
-        out1 = precip.precip_accumulation(pr, freq='MS')
-        out2 = precip.precip_accumulation(prMM, freq='MS')
+        out1 = atmos.precip_accumulation(pr, freq='MS')
+        out2 = atmos.precip_accumulation(prMM, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.precip_accumulation(pr, freq='MS')
+        out3 = atmos.precip_accumulation(pr, freq='MS')
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
         np.testing.assert_array_almost_equal(out1, out3)
@@ -95,9 +95,9 @@ class TestPrecipAccumulation():
 
         np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
 
 
 class TestWetDays():
@@ -114,12 +114,12 @@ class TestWetDays():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
         pr_min = '5 mm/d'
-        out1 = precip.wetdays(pr, thresh=pr_min, freq='MS')
-        out2 = precip.wetdays(prMM, thresh=pr_min, freq='MS')
+        out1 = atmos.wetdays(pr, thresh=pr_min, freq='MS')
+        out2 = atmos.wetdays(prMM, thresh=pr_min, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.wetdays(pr, thresh=pr_min, freq='MS')
+        out3 = atmos.wetdays(pr, thresh=pr_min, freq='MS')
 
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
@@ -129,12 +129,12 @@ class TestWetDays():
 
         wd1 = (x1 >= int(pr_min.split(' ')[0])).sum()
 
-        assert (wd1 == out1.values[0, 0, 0])
+        assert wd1 == out1.values[0, 0, 0]
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
 
 
@@ -157,12 +157,12 @@ class TestDailyIntensity():
         pr_min = '2 mm/d'
         # dis = daily_pr_intensity(pr, pr_min=pr_min, freq='MS', skipna=True)
 
-        out1 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
-        out2 = precip.daily_pr_intensity(prMM, thresh=pr_min, freq='MS')
+        out1 = atmos.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
+        out2 = atmos.daily_pr_intensity(prMM, thresh=pr_min, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
+        out3 = atmos.daily_pr_intensity(pr, thresh=pr_min, freq='MS')
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
         np.testing.assert_array_almost_equal(out1, out3, 3)
@@ -173,11 +173,11 @@ class TestDailyIntensity():
         # buffer = np.ma.masked_invalid(x2)
         # di2 = buffer[buffer >= pr_min].mean()
 
-        assert (np.allclose(di1, out1.values[0, 0, 0]))
+        assert np.allclose(di1, out1.values[0, 0, 0])
         # assert (np.allclose(di1, dis.values[0, 0, 0]))
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
         # assert (np.allclose(di2, dis.values[0, 1, 0]))
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(dis.values[0, -1, -1]))
 
 
@@ -196,12 +196,12 @@ class TestMax1Day():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
 
-        out1 = precip.max_1day_precipitation_amount(pr, freq='MS')
-        out2 = precip.max_1day_precipitation_amount(prMM, freq='MS')
+        out1 = atmos.max_1day_precipitation_amount(pr, freq='MS')
+        out2 = atmos.max_1day_precipitation_amount(prMM, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.max_1day_precipitation_amount(pr, freq='MS')
+        out3 = atmos.max_1day_precipitation_amount(pr, freq='MS')
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
         np.testing.assert_array_almost_equal(out1, out3, 3)
@@ -209,11 +209,11 @@ class TestMax1Day():
         x1 = prMM[:31, 0, 0].values
         rx1 = x1.max()
 
-        assert (np.allclose(rx1, out1.values[0, 0, 0]))
+        assert np.allclose(rx1, out1.values[0, 0, 0])
         # assert (np.allclose(di1, dis.values[0, 0, 0]))
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
         # assert (np.allclose(di2, dis.values[0, 1, 0]))
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(dis.values[0, -1, -1]))
 
 
@@ -232,12 +232,12 @@ class TestMaxNDay():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
         wind = 3
-        out1 = precip.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
-        out2 = precip.max_n_day_precipitation_amount(prMM, window=wind, freq='MS')
+        out1 = atmos.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
+        out2 = atmos.max_n_day_precipitation_amount(prMM, window=wind, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
+        out3 = atmos.max_n_day_precipitation_amount(pr, window=wind, freq='MS')
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
         np.testing.assert_array_almost_equal(out1, out3, 3)
@@ -246,11 +246,11 @@ class TestMaxNDay():
         df = pd.DataFrame({'pr': x1})
         rx3 = df.rolling(wind).sum().max()
 
-        assert (np.allclose(rx3, out1.values[0, 0, 0]))
+        assert np.allclose(rx3, out1.values[0, 0, 0])
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="too slow to evaluate on python2.7")
@@ -268,12 +268,12 @@ class TestMaxConsecWetDays():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
         pr_min = '5 mm/d'
-        out1 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
-        out2 = precip.maximum_consecutive_wet_days(prMM, thresh=pr_min, freq='MS')
+        out1 = atmos.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
+        out2 = atmos.maximum_consecutive_wet_days(prMM, thresh=pr_min, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
+        out3 = atmos.maximum_consecutive_wet_days(pr, thresh=pr_min, freq='MS')
 
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
@@ -282,14 +282,14 @@ class TestMaxConsecWetDays():
         x1 = prMM[:31, 0, 0] * 0.
         x1[5:10] = 10
         x1.attrs['units'] = 'mm/day'
-        cwd1 = precip.maximum_consecutive_wet_days(x1, freq='MS')
+        cwd1 = atmos.maximum_consecutive_wet_days(x1, freq='MS')
 
-        assert (cwd1 == 5)
+        assert cwd1 == 5
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
 
 
@@ -308,12 +308,12 @@ class TestMaxConsecDryDays():
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
         pr_min = '5 mm/d'
-        out1 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
-        out2 = precip.maximum_consecutive_dry_days(prMM, thresh=pr_min, freq='MS')
+        out1 = atmos.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
+        out2 = atmos.maximum_consecutive_dry_days(prMM, thresh=pr_min, freq='MS')
 
         # test kg m-2 s-1
         pr.attrs['units'] = 'kg m-2 s-1'
-        out3 = precip.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
+        out3 = atmos.maximum_consecutive_dry_days(pr, thresh=pr_min, freq='MS')
 
         np.testing.assert_array_equal(out1, out2)
         np.testing.assert_array_equal(out1, out3)
@@ -322,12 +322,12 @@ class TestMaxConsecDryDays():
         x1 = prMM[:31, 0, 0] * 0. + 50.0
         x1[5:10] = 0
         x1.attrs['units'] = 'mm/day'
-        cdd1 = precip.maximum_consecutive_dry_days(x1, freq='MS')
+        cdd1 = atmos.maximum_consecutive_dry_days(x1, freq='MS')
 
-        assert (cdd1 == 5)
+        assert cdd1 == 5
 
-        assert (np.isnan(out1.values[0, 1, 0]))
+        assert np.isnan(out1.values[0, 1, 0])
 
         # make sure that vector with all nans gives nans whatever skipna
-        assert (np.isnan(out1.values[0, -1, -1]))
+        assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))

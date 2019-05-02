@@ -26,7 +26,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.indices as xci
+import xclim.indices.indices as xci
 from xclim.testing.common import tas_series, tasmax_series, tasmin_series, pr_series
 from xclim.utils import percentile_doy
 
