@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import xclim.indices.threshold
 from xclim.indices import indices as _ind
 from xclim.utils import Indicator, Indicator2D
 
@@ -49,7 +50,7 @@ wetdays = Pr(identifier='r{thresh}mm',
              long_name='Number of Wet Days (precip >= {thresh} mm)',
              description='{freq} number of days with daily precipitation over {thresh} mm',
              cell_methods='time: sum within days time: sum over days',
-             compute=_ind.wetdays,
+             compute=xclim.indices.threshold.wetdays,
              )
 
 maximum_consecutive_wet_days = Pr(identifier='cwd',
@@ -60,7 +61,7 @@ maximum_consecutive_wet_days = Pr(identifier='cwd',
                                   description='{freq} maximum number of days with daily '
                                               'precipitation over {thresh} mm',
                                   cell_methods='time: sum within days time: sum over days',
-                                  compute=_ind.maximum_consecutive_wet_days,
+                                  compute=xclim.indices.threshold.maximum_consecutive_wet_days,
                                   )
 
 maximum_consecutive_dry_days = Pr(identifier='cdd',
@@ -81,7 +82,7 @@ daily_pr_intensity = Pr(identifier='sdii',
                         description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
                                     "for days with daily precipitation over {thresh} mm",
                         cell_methods='',
-                        compute=_ind.daily_pr_intensity,
+                        compute=xclim.indices.threshold.daily_pr_intensity,
                         )
 
 precip_accumulation = Pr(identifier='prcptot',

@@ -4,20 +4,22 @@
 xclim xarray.DataArray utilities module
 """
 
-import numpy as np
-import six
-import re
-import pint
-import xarray as xr
-from . import checks
-from inspect import signature
-import functools
 import abc
-from collections import defaultdict
-import datetime as dt
 import calendar
+import datetime as dt
+import functools
+import re
 import warnings
+from collections import defaultdict
+from inspect import signature
+
+import numpy as np
+import pint
+import six
+import xarray as xr
 from boltons.funcutils import wraps
+
+from . import checks
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(pint.unit.UnitDefinition('percent', '%', (),

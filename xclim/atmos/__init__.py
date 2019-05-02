@@ -26,10 +26,13 @@ from ._temperature import tn_min
 from ._temperature import tx_min
 from ._temperature import tn90p
 from ._temperature import tn10p
+from ._temperature import tg90p
+from ._temperature import tg10p
 from ._temperature import tx90p
 from ._temperature import tx10p
 
 from ._temperature import daily_temperature_range
+from ._temperature import daily_temperature_range_variability
 from ._temperature import extreme_temperature_range
 from ._temperature import cold_spell_duration_index
 from ._temperature import cold_spell_days
@@ -44,7 +47,6 @@ from ._temperature import ice_days
 from ._temperature import consecutive_frost_days
 from ._temperature import growing_season_length
 from ._temperature import tropical_nights
-from ._temperature import ice_days
 
 from ._precip import precip_accumulation
 from ._precip import daily_pr_intensity
