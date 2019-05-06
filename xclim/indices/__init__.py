@@ -68,7 +68,6 @@ Indice descriptions
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 
-
 from ._simple import *
 from ._threshold import *
 from ._multivariate import *
@@ -77,6 +76,3 @@ from ._multivariate import *
 # TODO: Move utility functions to another file.
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
-
-
-ftomm = np.nan

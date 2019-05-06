@@ -3,6 +3,10 @@
 from xclim import indices
 from xclim.utils import Indicator, Indicator2D
 
+__all__ = ['Pr', 'PrTas', 'rain_on_frozen_ground_days', 'max_1day_precipitation_amount',
+           'max_n_day_precipitation_amount', 'wetdays', 'maximum_consecutive_dry_days', 'maximum_consecutive_wet_days',
+           'daily_pr_intensity', 'precip_accumulation']
+
 
 class Pr(Indicator):
     context = 'hydro'
