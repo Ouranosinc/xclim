@@ -94,7 +94,7 @@ def __build_icclim(mode='warn'):
                'TGx': indices.tg_max,
                'TGn': indices.tg_min,
                'TX90p': indices.tx90p,
-               'TX10p': indices .tx10p,
+               'TX10p': indices.tx10p,
                'TXx': indices.tx_max,
                'TXn': indices.tx_min,
                'TN90p': indices.tn90p,
