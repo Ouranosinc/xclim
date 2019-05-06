@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from xclim.indices import *
+from xclim.indices import base_flow_index
 from xclim import checks
 from xclim.utils import Indicator, wrapped_partial
 from xclim import generic

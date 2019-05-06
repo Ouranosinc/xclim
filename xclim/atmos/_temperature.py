@@ -225,7 +225,7 @@ cold_spell_duration_index = Tasmin(identifier='csdi_{window}',
                                    standard_name='cold_spell_duration_index',
                                    long_name='Cold Spell Duration Index, count of days with at '
                                              'least {window} consecutive days when Tmin < 10th percentile',
-                                   descrition='{freq} number of days with at least {window} consecutive days'
+                                   description='{freq} number of days with at least {window} consecutive days'
                                               ' where the daily minimum temperature is below the 10th '
                                               'percentile. The 10th percentile should be computed for '
                                               'a 5-day window centred on each calendar day in the  1961-1990 period',
