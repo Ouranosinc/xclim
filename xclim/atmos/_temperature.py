@@ -5,7 +5,7 @@ from xclim import indices
 from xclim import checks
 from xclim.utils import Indicator, Indicator2D
 
-__all__ = ['Tas', 'Tasmax', 'Tasmin', 'TasminTasmax', 'tn_days_below', 'tx_days_above', 'tx_tn_days_above',
+__all__ = ['tn_days_below', 'tx_days_above', 'tx_tn_days_above',
            'heat_wave_frequency', 'heat_wave_max_length', 'heat_wave_index', 'tg_mean', 'tg10p', 'tg90p', 'tn_min',
            'tn_max', 'tn_mean', 'tn10p', 'tn90p', 'tx_min', 'tx_max', 'tx_mean', 'tx10p', 'tx90p',
            'daily_temperature_range', 'daily_temperature_range_variability', 'extreme_temperature_range',
