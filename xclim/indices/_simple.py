@@ -14,10 +14,13 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
-
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
+
+__all__ = ['tg_max', 'tg_mean', 'tg_min', 'tn_max', 'tn_mean', 'tn_min', 'tx_max', 'tx_mean', 'tx_min',
+           'base_flow_index', 'consecutive_frost_days', 'frost_days', 'ice_days', 'max_1day_precipitation_amount',
+           'precip_accumulation']
 
 
 @declare_units('[temperature]', tas='[temperature]')

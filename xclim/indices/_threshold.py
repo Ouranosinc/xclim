@@ -18,6 +18,11 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
+__all__ = ['cold_spell_days', 'daily_pr_intensity', 'maximum_consecutive_wet_days', 'cooling_degree_days',
+           'freshet_start', 'growing_degree_days', 'growing_season_length', 'heat_wave_index', 'heating_degree_days',
+           'tn_days_below', 'tx_days_above', 'warm_day_frequency', 'warm_night_frequency', 'wetdays',
+           'maximum_consecutive_dry_days', 'max_n_day_precipitation_amount', 'tropical_nights']
+
 
 @declare_units('days', tas='[temperature]', thresh='[temperature]')
 def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
