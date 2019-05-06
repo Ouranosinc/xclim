@@ -202,11 +202,11 @@ def _calc_percentiles_simple(ens, v, values):
         ds_out[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
         ds_out[outvar].attrs = ens[v].attrs
         if 'description' in ds_out[outvar].attrs.keys():
-            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                  'th percentile of ensemble'
+            ds_out[outvar].attrs['description'] = '{} : {}th percentile of ensemble'.format(
+                ds_out[outvar].attrs['description'], str(p))
         else:
-            ds_out[outvar].attrs['description'] = str(p) + \
-                                                  'th percentile of ensemble'
+            ds_out[outvar].attrs['description'] = '{}th percentile of ensemble'.format(str(p))
+
     return ds_out
 
 
@@ -240,11 +240,11 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
         ds_out[outvar] = arr_p_all[str(p)]
         ds_out[outvar].attrs = ens[v].attrs
         if 'description' in ds_out[outvar].attrs.keys():
-            ds_out[outvar].attrs['description'] = ds_out[outvar].attrs['description'] + ' : ' + str(p) + \
-                                                  'th percentile of ensemble'
+            ds_out[outvar].attrs['description'] = '{} : {}th percentile of ensemble'.format(
+                ds_out[outvar].attrs['description'], str(p))
         else:
-            ds_out[outvar].attrs['description'] = str(p) + \
-                                                  'th percentile of ensemble'
+            ds_out[outvar].attrs['description'] = '{}th percentile of ensemble'.format(str(p))
+
     return ds_out
 
 
