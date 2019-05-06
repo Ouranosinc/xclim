@@ -3,8 +3,8 @@
 # The other parameters, common to all distribution, are loc and scale.
 
 import dask
-import xarray as xr
 import numpy as np
+import xarray as xr
 
 
 def select_time(da, **indexer):
@@ -163,10 +163,10 @@ def fa(arr, t, dist='norm', mode='high'):
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode in ['max', 'high']:
         def func(x):
-            return dc.isf(1./t, *x)
+            return dc.isf(1. / t, *x)
     elif mode in ['min', 'low']:
         def func(x):
-            return dc.ppf(1./t, *x)
+            return dc.ppf(1. / t, *x)
     else:
         raise ValueError("mode `{}` should be either 'max' or 'min'".format(mode))
 

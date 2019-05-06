@@ -50,7 +50,7 @@ class TestBaseFlowIndex:
         a[10:17] = 1
         q = q_series(a)
         out = xci.base_flow_index(q)
-        np.testing.assert_array_equal(out, 1./a.mean())
+        np.testing.assert_array_equal(out, 1. / a.mean())
 
 
 class TestMaxNDayPrecipitationAmount:

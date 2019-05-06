@@ -3,7 +3,8 @@
 """Top-level package for xclim."""
 
 from functools import partial
-from . import indices
+
+from xclim import indices
 import sys
 
 # from .stats import fit, test

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+
+from xclim.indices import base_flow_index
 from xclim import checks
-from xclim import indices as _ind
 from xclim.utils import Indicator, wrapped_partial
 from xclim import generic
 # from boltons.funcutils import FunctionBuilder
@@ -36,7 +37,7 @@ class Stats(Streamflow):
 base_flow_index = Streamflow(identifier='base_flow_index',
                              units='',
                              long_name="Base flow index",
-                             compute=_ind.base_flow_index)
+                             compute=base_flow_index)
 
 
 freq_analysis = Stats(identifier='q{window}{mode}{indexer}',
