@@ -1,8 +1,22 @@
+import logging
+
 import numpy as np
 import xarray as xr
 
 from xclim import utils, run_length as rl
 from xclim.utils import declare_units, units
+
+logging.basicConfig(level=logging.DEBUG)
+logging.captureWarnings(True)
+
+xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
+
+# Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
+# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+
+# -------------------------------------------------- #
+# ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
+# -------------------------------------------------- #
 
 
 @declare_units('days', tas='[temperature]', thresh='[temperature]')
@@ -575,3 +589,119 @@ def wetdays(pr, thresh='1.0 mm/day', freq='YS'):
 
     wd = (pr >= thresh) * 1
     return wd.resample(time=freq).sum(dim='time')
+
+
+@declare_units('days', pr='[precipitation]', thresh='[precipitation]')
+def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
+    r"""Maximum number of consecutive dry days
+
+    Return the maximum number of consecutive days within the period where precipitation
+    is below a certain threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [mm]
+    thresh : str
+      Threshold precipitation on which to base evaluation [mm]. Default : '1 mm/day'
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive dry days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
+    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive dry days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+    """
+    t = utils.convert_units_to(thresh, pr, 'hydro')
+    group = (pr < t).resample(time=freq)
+
+    return group.apply(rl.longest_run, dim='time')
+
+
+@declare_units('mm', pr='[precipitation]')
+def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
+    r"""Highest precipitation amount cumulated over a n-day moving window.
+
+    Calculate the n-day rolling sum of the original daily total precipitation series
+    and determine the maximum value over each period.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Daily precipitation values [Kg m-2 s-1] or [mm]
+    window : int
+      Window size in days.
+    freq : str, optional
+      Resampling frequency : default 'YS' (yearly)
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated n-day precipitation value at the given time frequency.
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
+    at an annual frequency:
+
+    >>> da = xr.open_dataset('pr.day.nc').pr
+    >>> window = 5
+    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
+    """
+
+    # rolling sum of the values
+    arr = pr.rolling(time=window, center=False).sum()
+    out = arr.resample(time=freq).max(dim='time', keep_attrs=True)
+
+    out.attrs['units'] = pr.units
+    # Adjust values and units to make sure they are daily
+    return utils.pint_multiply(out, 1 * units.day, 'mm')
+
+
+@declare_units('days', tasmin='[temperature]', thresh='[temperature]')
+def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
+    r"""Tropical nights
+
+    The number of days with minimum daily temperature above threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days with minimum daily temperature above threshold.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} > Threshold [℃]
+    """
+    thresh = utils.convert_units_to(thresh, tasmin)
+    return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
+        .resample(time=freq) \
+        .sum(dim='time')

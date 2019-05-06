@@ -26,16 +26,15 @@ import pytest
 import xarray as xr
 import dask
 
-import xclim.indices.simple
-import xclim.indices.threshold
-import xclim.subset
+
 from xclim import ensembles
+from xclim import indices
+from xclim import subset
 from xclim import utils
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
 from xclim.utils import units, pint2cfunits, units2pint
 from xclim.testing.common import tas_series, pr_series
-from xclim.indices import indices as ind
 
 TAS_SERIES = tas_series
 PR_SERIES = pr_series
@@ -244,7 +243,7 @@ class TestIndicator:
 
         assert issubclass(cls, Indicator)
         da = pr_series(np.arange(365))
-        cls(compute=xclim.indices.threshold.wetdays)(da)
+        cls(compute=indices.wetdays)(da)
 
     def test_signature(self):
         from inspect2 import signature
@@ -288,7 +287,7 @@ class TestKwargs:
 class TestParseDoc:
 
     def test_simple(self):
-        parse_doc(xclim.indices.simple.tg_mean.__doc__)
+        parse_doc(indices.tg_mean.__doc__)
 
 
 class TestPercentileDOY:
@@ -378,9 +377,9 @@ class TestConvertUnitsTo:
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start='1/1/2001')
-            out = xclim.indices.threshold.tx_days_above(tas, 30)
-            out1 = xclim.indices.threshold.tx_days_above(tas, '30 degC')
-            out2 = xclim.indices.threshold.tx_days_above(tas, '303.15 K')
+            out = indices.tx_days_above(tas, 30)
+            out1 = indices.tx_days_above(tas, '30 degC')
+            out2 = indices.tx_days_above(tas, '303.15 K')
             np.testing.assert_array_equal(out, out1)
             np.testing.assert_array_equal(out, out2)
 
@@ -416,7 +415,7 @@ class TestSubsetGridPoint:
         da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
         lon = -72.4
         lat = 46.1
-        out = xclim.subset.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
@@ -425,7 +424,7 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_file).tasmax
         lon = -72.4
         lat = 46.1
-        out = xclim.subset.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
@@ -434,7 +433,7 @@ class TestSubsetGridPoint:
         yr_st = 2050
         yr_ed = 2059
 
-        out = xclim.subset.subset_gridpoint(da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
@@ -445,7 +444,7 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
-        out = xclim.subset.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
@@ -453,14 +452,14 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         lon = -72.4
         lat = 46.1
-        out = xclim.subset.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
-            xclim.subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
+            subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
 
 
 class TestSubsetBbox:
@@ -472,7 +471,7 @@ class TestSubsetBbox:
 
     def test_dataset(self):
         da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -482,7 +481,7 @@ class TestSubsetBbox:
     def test_simple(self):
         da = xr.open_dataset(self.nc_file).tasmax
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -493,7 +492,7 @@ class TestSubsetBbox:
         yr_st = 2050
         yr_ed = 2059
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -501,7 +500,7 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -509,7 +508,7 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -520,7 +519,7 @@ class TestSubsetBbox:
     def test_irregular(self):
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
         # for irregular lat lon grids data matrix remains rectangular in native proj
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
@@ -535,7 +534,7 @@ class TestSubsetBbox:
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
 
-        out = xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
         assert (np.all(out.lon <= np.max(np.asarray(self.lon) + 360)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -544,7 +543,7 @@ class TestSubsetBbox:
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
-            xclim.subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055)
+            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055)
 
 
 class TestThresholdCount:

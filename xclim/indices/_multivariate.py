@@ -1,145 +1,24 @@
-# -*- coding: utf-8 -*-
-
-"""
-Indices library
-===============
-
-This module describes climate indicator functions. Functions are listed in alphabetical order and describe the raw
-computation performed over xarray.DataArrays. DataArrays should carry unit information to allow for any needed
-unit conversions. The output's attributes (CF-Convention) are not modified. Validation checks and output attributes
-are handled by indicator classes described in files named by the physical variable (temperature, precip, streamflow).
-
-Notes for docstring
--------------------
-
-The docstrings adhere to the `NumPy`_ style convention and is meant as a way to store CF-Convention metadata as
-well as information relevant to third party libraries (such as a WPS server).
-
-The first line of the docstring (the short summary), will be assigned to the output's `long_name` attribute. The
-`long_name` attribute is defined by the NetCDF User Guide to contain a long descriptive name which may, for example,
-be used for labeling plots
-
-The second paragraph will be considered as the "*abstract*", or the CF global "*comment*" (miscellaneous information
-about the data or methods used to produce it).
-
-The third and fourth sections are the **Parameters** and **Returns** sections describing the input and output values
-respectively.
-
-.. code-block:: python
-
-   Parameters
-   ----------
-   <standard_name> : xarray.DataArray
-     <Long_name> of variable [acceptable units].
-   threshold : string
-     Description of the threshold / units.
-     e.g. The 10th percentile of historical temperature [K].
-   freq : str, optional
-     Resampling frequency.
-
-   Returns
-   -------
-   xarray.DataArray
-     Output's <long_name> [units]
-
-The next sections would be **Notes** and **References**:
-
-.. code-block:: python
-
-    Notes
-    -----
-    This is where the mathematical equation is described.
-    At the end of the description, convention suggests
-    to add a reference [example]_:
-
-        .. math::
-
-            3987^12 + 4365^12 = 4472^12
-
-    References
-    ----------
-    .. [example] Smith, T.J. and Huard, D. (2018). "CF Docstrings:
-        A manifesto on conventions and the metaphysical nature
-        of ontological python documentation." Climate Aesthetics,
-        vol. 1, pp. 121-155.
-
-Indice descriptions
-===================
-.. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
-"""
 import logging
+
 import numpy as np
-from xclim import utils
 import xarray as xr
-from xclim import run_length as rl
-from xclim.utils import units, declare_units
+
+from xclim import utils, run_length as rl
+from xclim.utils import declare_units, units
 
 logging.basicConfig(level=logging.DEBUG)
 logging.captureWarnings(True)
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-# if six.PY2:
-#     from funcsigs import signature
-# elif six.PY3:
-#     from inspect import signature
-
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
 
-# TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
-# TODO: Move utility functions to another file.
-# TODO: Should we reference the standard vocabulary we're using ?
-# E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
-
-
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
-
-@declare_units('', q='[discharge]')
-def base_flow_index(q, freq='YS'):
-    r"""Base flow index
-
-    Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
-
-    Parameters
-    ----------
-    q : xarray.DataArray
-      Rate of river discharge [m³/s]
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArrray
-      Base flow index.
-
-    Notes
-    -----
-    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
-    the mean flow over the period. The base flow index is given by:
-
-    .. math::
-
-       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
-
-
-    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
-
-    .. math::
-
-       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
-    """
-
-    m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
-    mq = q.resample(time=freq)
-
-    m7m = m7.min(dim='time')
-    return m7m / mq.mean(dim='time')
 
 
 @declare_units('days', tasmin='[temperature]', tn10='[temperature]')
@@ -247,89 +126,6 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     # return c.resample(time=freq).sum(dim='time')
 
 
-@declare_units('days', pr='[precipitation]', thresh='[precipitation]')
-def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
-    r"""Maximum number of consecutive dry days
-
-    Return the maximum number of consecutive days within the period where precipitation
-    is below a certain threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-      Mean daily precipitation flux [mm]
-    thresh : str
-      Threshold precipitation on which to base evaluation [mm]. Default : '1 mm/day'
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      The maximum number of consecutive dry days.
-
-    Notes
-    -----
-    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
-    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
-    Then the maximum number of consecutive dry days is given by
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} > thresh]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
-    """
-    t = utils.convert_units_to(thresh, pr, 'hydro')
-    group = (pr < t).resample(time=freq)
-
-    return group.apply(rl.longest_run, dim='time')
-
-
-@declare_units('days', tasmin='[temperature]')
-def consecutive_frost_days(tasmin, freq='AS-JUL'):
-    r"""Maximum number of consecutive frost days (Tmin < 0℃).
-
-    Resample the daily minimum temperature series by computing the maximum number
-    of days below the freezing point over each period.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      The maximum number of consecutive days below the freezing point.
-
-    Notes
-    -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
-    0\celsius]`, that is, the days when the temperature crosses the freezing point.
-    Then the maximum number of consecutive frost days is given by
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
-    """
-    tu = units.parse_units(tasmin.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    group = (tasmin < frz).resample(time=freq)
-    return group.apply(rl.longest_run, dim='time')
-
-
 @declare_units('days', tasmax='[temperature]', tasmin='[temperature]')
 def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
     r"""Number of days with a diurnal freeze-thaw cycle
@@ -404,7 +200,6 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     return out
 
 
-# TODO: Improve description.
 @declare_units('K', tasmax='[temperature]', tasmin='[temperature]')
 def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
     r"""Mean absolute day-to-day variation in daily temperature range.
@@ -478,42 +273,6 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     out = tx_max - tn_min
     out.attrs['units'] = tasmax.units
     return out
-
-
-@declare_units('days', tasmin='[temperature]')
-def frost_days(tasmin, freq='YS'):
-    r"""Frost days index
-
-    Number of days where daily minimum temperatures are below 0℃.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      Frost days index.
-
-    Notes
-    -----
-    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TN_{ij} < 0℃
-    """
-    tu = units.parse_units(tasmin.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    f = (tasmin < frz) * 1
-    return f.resample(time=freq).sum(dim='time')
 
 
 @declare_units('', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
@@ -635,42 +394,6 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasma
     return max_l.where(max_l >= window, 0)
 
 
-@declare_units('days', tasmax='[temperature]')
-def ice_days(tasmax, freq='YS'):
-    r"""Number of ice/freezing days
-
-    Number of days where daily maximum temperatures are below 0℃.
-
-    Parameters
-    ----------
-    tasmax : xarrray.DataArray
-      Maximum daily temperature [℃] or [K]
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      Number of ice/freezing days.
-
-    Notes
-    -----
-    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TX_{ij} < 0℃
-    """
-    tu = units.parse_units(tasmax.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    f = (tasmax < frz) * 1
-    return f.resample(time=freq).sum(dim='time')
-
-
 @declare_units('', pr='[precipitation]', prsn='[precipitation]', tas='[temperature]')
 def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     r"""Ratio of rainfall to total precipitation
@@ -723,126 +446,6 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     rain = tot - prsn.resample(time=freq).sum(dim='time')
     ratio = rain / tot
     return ratio
-
-
-@declare_units('mm', pr='[precipitation]')
-def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
-    r"""Highest precipitation amount cumulated over a n-day moving window.
-
-    Calculate the n-day rolling sum of the original daily total precipitation series
-    and determine the maximum value over each period.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
-    window : int
-      Window size in days.
-    freq : str, optional
-      Resampling frequency : default 'YS' (yearly)
-
-    Returns
-    -------
-    xarray.DataArray
-      The highest cumulated n-day precipitation value at the given time frequency.
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
-    at an annual frequency:
-
-    >>> da = xr.open_dataset('pr.day.nc').pr
-    >>> window = 5
-    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
-    """
-
-    # rolling sum of the values
-    arr = pr.rolling(time=window, center=False).sum()
-    out = arr.resample(time=freq).max(dim='time', keep_attrs=True)
-
-    out.attrs['units'] = pr.units
-    # Adjust values and units to make sure they are daily
-    return utils.pint_multiply(out, 1 * units.day, 'mm')
-
-
-@declare_units('mm/day', pr='[precipitation]')
-def max_1day_precipitation_amount(pr, freq='YS'):
-    r"""Highest 1-day precipitation amount for a period (frequency).
-
-    Resample the original daily total precipitation temperature series by taking the max over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
-    freq : str, optional
-      Resampling frequency one of : 'YS' (yearly) ,'M' (monthly), or 'QS-DEC' (seasonal - quarters starting in december)
-
-    Returns
-    -------
-    xarray.DataArray
-      The highest 1-day precipitation value at the given time frequency.
-
-    Notes
-    -----
-    Let :math:`PR_i` be the mean daily precipitation of day `i`, then for a period `j`:
-
-    .. math::
-
-       PRx_{ij} = max(PR_{ij})
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
-    at an annual frequency:
-
-    >>> pr = xr.open_dataset('pr.day.nc').pr
-    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
-    """
-
-    out = pr.resample(time=freq).max(dim='time', keep_attrs=True)
-    return utils.convert_units_to(out, 'mm/day', 'hydro')
-
-
-@declare_units('mm', pr='[precipitation]')
-def precip_accumulation(pr, freq='YS'):
-    r"""Accumulated total (liquid + solid) precipitation.
-
-    Resample the original daily mean precipitation flux and accumulate over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-    freq : str, optional
-      Resampling frequency as defined in
-      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-
-    Returns
-    -------
-    xarray.DataArray
-      The total daily precipitation at the given time frequency.
-
-    Notes
-    -----
-    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
-    day :math:`a` and finishing on day :math:`b`:
-
-    .. math::
-
-       PR_{ij} = \sum_{i=a}^{b} PR_i
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr_day.nc` the total
-    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
-
-    >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
-    """
-
-    out = pr.resample(time=freq).sum(dim='time', keep_attrs=True)
-    return utils.pint_multiply(out, 1 * units.day, 'mm')
 
 
 @declare_units('days', pr='[precipitation]', tas='[temperature]', thresh='[precipitation]')
@@ -900,7 +503,6 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
     return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
 
 
-# TODO: Improve description
 @declare_units('days', tas='[temperature]', t90='[temperature]')
 def tg90p(tas, t90, freq='YS'):
     r"""Number of days with daily mean temperature over the 90th percentile.
@@ -949,7 +551,6 @@ def tg90p(tas, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
-# TODO: Improve description
 @declare_units('days', tas='[temperature]', t10='[temperature]')
 def tg10p(tas, t10, freq='YS'):
     r"""Number of days with daily mean temperature below the 10th percentile.
@@ -998,7 +599,6 @@ def tg10p(tas, t10, freq='YS'):
     return below.resample(time=freq).sum(dim='time')
 
 
-# TODO: Improve description
 @declare_units('days', tasmin='[temperature]', t90='[temperature]')
 def tn90p(tasmin, t90, freq='YS'):
     r"""Number of days with daily minimum temperature over the 90th percentile.
@@ -1045,7 +645,6 @@ def tn90p(tasmin, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
-# TODO: Improve description
 @declare_units('days', tasmin='[temperature]', t10='[temperature]')
 def tn10p(tasmin, t10, freq='YS'):
     r"""Number of days with daily minimum temperature below the 10th percentile.
@@ -1094,42 +693,6 @@ def tn10p(tasmin, t10, freq='YS'):
     return below.resample(time=freq).sum(dim='time')
 
 
-@declare_units('days', tasmin='[temperature]', thresh='[temperature]')
-def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
-    r"""Tropical nights
-
-    The number of days with minimum daily temperature above threshold.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
-    thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
-    freq : str, optional
-      Resampling frequency
-
-    Returns
-    -------
-    xarray.DataArray
-      Number of days with minimum daily temperature above threshold.
-
-    Notes
-    -----
-    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TN_{ij} > Threshold [℃]
-    """
-    thresh = utils.convert_units_to(thresh, tasmin)
-    return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
-        .resample(time=freq) \
-        .sum(dim='time')
-
-
-# TODO: Improve description
 @declare_units('days', tasmax='[temperature]', t90='[temperature]')
 def tx90p(tasmax, t90, freq='YS'):
     r"""Number of days with daily maximum temperature over the 90th percentile.
@@ -1178,7 +741,6 @@ def tx90p(tasmax, t90, freq='YS'):
     return over.resample(time=freq).sum(dim='time')
 
 
-# TODO: Improve description
 @declare_units('days', tasmax='[temperature]', t10='[temperature]')
 def tx10p(tasmax, t10, freq='YS'):
     r"""Number of days with daily maximum temperature below the 10th percentile.

@@ -4,10 +4,7 @@
 
 from functools import partial
 
-import xclim.indices
-import xclim.indices.simple
-import xclim.indices.threshold
-from xclim.indices import indices
+from xclim import indices
 import sys
 
 # from .stats import fit, test
@@ -89,34 +86,34 @@ def __build_icclim(mode='warn'):
 
     # Use partials to specify default value ?
     # TODO : Complete mappings for ICCLIM indices
-    mapping = {'TG': xclim.indices.simple.tg_mean,
-               'TX': xclim.indices.simple.tx_mean,
-               'TN': xclim.indices.simple.tn_mean,
+    mapping = {'TG': indices.tg_mean,
+               'TX': indices.tx_mean,
+               'TN': indices.tn_mean,
                'TG90p': indices.tg90p,
                'TG10p': indices.tg10p,
-               'TGx': xclim.indices.simple.tg_max,
-               'TGn': xclim.indices.simple.tg_min,
+               'TGx': indices.tg_max,
+               'TGn': indices.tg_min,
                'TX90p': indices.tx90p,
-               'TX10p': indices.tx10p,
-               'TXx': xclim.indices.simple.tx_max,
-               'TXn': xclim.indices.simple.tx_min,
+               'TX10p': indices .tx10p,
+               'TXx': indices.tx_max,
+               'TXn': indices.tx_min,
                'TN90p': indices.tn90p,
                'TN10p': indices.tn10p,
-               'TNx': xclim.indices.simple.tn_max,
-               'TNn': xclim.indices.simple.tn_min,
-               'SU': xclim.indices.threshold.tx_days_above,
+               'TNx': indices.tn_max,
+               'TNn': indices.tn_min,
+               'SU': indices.tx_days_above,
                'TR': indices.tropical_nights,
                # 'CSU': None,
-               'GD4': partial(xclim.indices.threshold.growing_degree_days, thresh=4),
+               'GD4': partial(indices.growing_degree_days, thresh=4),
                'FD': indices.frost_days,
                'CFD': indices.consecutive_frost_days,
-               'GSL': xclim.indices.threshold.growing_season_length,
+               'GSL': indices.growing_season_length,
                'ID': indices.ice_days,
-               'HD17': xclim.indices.threshold.heating_degree_days,
+               'HD17': indices.heating_degree_days,
                'CDD': indices.maximum_consecutive_dry_days,
-               'CWD': xclim.indices.threshold.maximum_consecutive_wet_days,
+               'CWD': indices.maximum_consecutive_wet_days,
                'PRCPTOT': indices.precip_accumulation,
-               'RR1': xclim.indices.threshold.wetdays,
+               'RR1': indices.wetdays,
                # 'SDII': None,
                'ETR': indices.extreme_temperature_range,
                'DTR': indices.daily_temperature_range,
