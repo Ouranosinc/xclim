@@ -982,8 +982,12 @@ def walk_map(d, func):
 class Indicator(object):
     r"""Climate indicator based on xarray
     """
-    # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
+    # Unique ID for function registry.
     identifier = ''
+
+    # Output variable name. May use tags {<tag>} that will be formatted at runtime.
+    var_name = ''
+
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
@@ -1012,7 +1016,7 @@ class Indicator(object):
                                     'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
                       'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
                                       'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
-                      'identifier': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
+                      'var_name': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
 
     for k, v in _attrs_mapping.items():
         v.update(months)
@@ -1123,7 +1127,7 @@ class Indicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'abstract', 'keywords']
+        names = ['identifier', 'var_name', 'abstract', 'keywords']
         out = {key: getattr(self, key) for key in names}
         out.update(self.cf_attrs)
         out = self.format(out, args)
