@@ -547,7 +547,6 @@ class TestSubsetBbox:
         out = subset.subset_bbox(da, lon_bnds=np.array(self.lon) + 360, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
 
-
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
