@@ -41,14 +41,15 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     >>> dsSub = utils.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
     """
 
-    if lon_bnds:
-
+    if lon_bnds is not None:
         lon_bnds = np.asarray(lon_bnds)
         if np.all(da.lon > 0) and np.any(lon_bnds < 0):
             lon_bnds[lon_bnds < 0] += 360
+        if np.all(da.lon < 0) and np.any(lon_bnds > 0):
+            lon_bnds[lon_bnds < 0] -= 360
         da = da.where((da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max()), drop=True)
 
-    if lat_bnds:
+    if lat_bnds is not None:
         lat_bnds = np.asarray(lat_bnds)
         da = da.where((da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max()), drop=True)
 
@@ -107,9 +108,11 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     """
 
     g = Geod(ellps='WGS84')  # WGS84 ellipsoid - decent globaly
-    # adjust for files with all postive longitudes if necessary
+    # adjust negative/positive longitudes if necessary
     if np.all(da.lon > 0) and lon < 0:
         lon += 360
+    if np.all(da.lon < 0) and lon > 0:
+        lon -= 360
 
     if len(da.lon.shape) == 1 & len(da.lat.shape) == 1:
         # create a 2d grid of lon, lat values
