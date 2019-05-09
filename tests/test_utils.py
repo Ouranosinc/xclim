@@ -456,6 +456,10 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
+        out = subset.subset_gridpoint(da, lon=lon + 360, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon + 360, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
@@ -539,6 +543,9 @@ class TestSubsetBbox:
         assert (np.all(out.lon <= np.max(np.asarray(self.lon) + 360)))
         assert (np.all(out.lat >= np.min(self.lat)))
         assert (np.all(out.lat <= np.max(self.lat)))
+
+        out = subset.subset_bbox(da, lon_bnds=np.array(self.lon) + 360, lat_bnds=self.lat)
+        assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
 
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
