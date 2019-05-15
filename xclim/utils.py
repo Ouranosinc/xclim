@@ -747,7 +747,7 @@ class Indicator(object):
             for k, v in args.items():
                 if isinstance(v, str) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{{{}}}'.format(v)
-                if isinstance(v, dict):
+                elif isinstance(v, dict):
                     if v:
                         dk, dv = v.copy().popitem()
                         if dk == 'month':
