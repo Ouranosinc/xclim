@@ -246,7 +246,7 @@ class TestIndicator:
         cls(compute=indices.wetdays)(da)
 
     def test_signature(self):
-        from inspect2 import signature
+        from inspect import signature
         ind = UniIndTemp()
         assert signature(ind.compute) == signature(ind.__call__)
 
