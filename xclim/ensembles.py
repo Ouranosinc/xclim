@@ -44,7 +44,7 @@ def create_ensemble(ncfiles, mf_flag=False):
     dim = 'realization'
     ds1 = []
     start_end_flag = True
-    print('finding common time-steps')
+    #print('finding common time-steps')
     for n in ncfiles:
         if mf_flag:
             ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
@@ -64,7 +64,7 @@ def create_ensemble(ncfiles, mf_flag=False):
             end1 = time1.values.max()
 
     for n in ncfiles:
-        print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
+        #print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
             ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
             ds['time'] = xr.open_mfdataset(n).time
@@ -77,7 +77,7 @@ def create_ensemble(ncfiles, mf_flag=False):
         ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
 
         ds1.append(ds.drop('time'))
-    print('concatenating files : adding dimension ', dim, )
+    #print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
     # assign time coords
     ens = ens.assign_coords(time=ds.time.values)
