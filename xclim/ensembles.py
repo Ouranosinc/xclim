@@ -30,10 +30,10 @@ def create_ensemble(ncfiles, mf_flag=False):
 
     Examples
     --------
-    >>> from xclim import utils
+    >>> from xclim import ensembles
     >>> import glob
     >>> ncfiles = glob.glob('/*.nc')
-    >>> ens = utils.create_ensemble(ncfiles)
+    >>> ens = ensembles.create_ensemble(ncfiles)
     >>> print(ens)
     Using multifile datasets:
     simulation 1 is a list of .nc files (e.g. separated by time)
@@ -92,7 +92,7 @@ def ensemble_mean_std_max_min(ens):
 
     Parameters
     ----------
-    ens : Ensemble dataset (see xclim.utils.create_ensemble)
+    ens : Ensemble dataset (see xclim.ensembles.create_ensemble)
 
     Returns
     -------
@@ -100,13 +100,13 @@ def ensemble_mean_std_max_min(ens):
 
     Examples
     --------
-    >>> from xclim import utils
+    >>> from xclim import ensembles
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
     Create ensemble dataset
-    >>> ens = utils.create_ensemble(ncfiles)
+    >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate ensemble statistics
-    >>> ens_means_std = utils.ensemble_mean_std_max_min(ens)
+    >>> ens_means_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
     dsOut = ens.drop(ens.data_vars)
@@ -135,7 +135,7 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     Parameters
     ----------
-    ens : Ensemble dataset (see xclim.utils.create_ensemble)
+    ens : Ensemble dataset (see xclim.ensembles.create_ensemble)
     values : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
     time_block : integer
       for large ensembles iteratively calculate percentiles in time-step blocks (n==time_block).
@@ -147,19 +147,19 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     Examples
     --------
-    >>> from xclim import utils
+    >>> from xclim import ensembles
     >>> import glob
     >>> ncfiles = glob.glob('/*tas*.nc')
     Create ensemble dataset
-    >>> ens = utils.create_ensemble(ncfiles)
+    >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate default ensemble percentiles
-    >>> ens_percs = utils.ensemble_statistics(ens)
+    >>> ens_percs = ensembles.ensemble_statistics(ens)
     >>> print(ens_percs['tas_p10'])
     Calculate non-default percentiles (25th and 75th)
-    >>> ens_percs = utils.ensemble_statistics(ens, values=(25,75))
+    >>> ens_percs = ensembles.ensemble_statistics(ens, values=(25,75))
     >>> print(ens_percs['tas_p25'])
     Calculate by time blocks (n=10) if ensemble size is too large to load in memory
-    >>> ens_percs = utils.ensemble_statistics(ens, time_block=10)
+    >>> ens_percs = ensembles.ensemble_statistics(ens, time_block=10)
     >>> print(ens_percs['tas_p25'])
 
     """
@@ -189,7 +189,7 @@ def _calc_percentiles_simple(ens, v, values):
     dims = list(ens[v].dims)
     outdims = [x for x in dims if 'realization' not in x]
 
-    print('loading ensemble data to memory')
+    #print('loading ensemble data to memory')
     arr = ens[v].load()  # percentile calc requires loading the array
     coords = {}
     for c in outdims:
@@ -220,7 +220,7 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
         blocks.append(len(ens[v].time))
     arr_p_all = {}
     for t in range(0, len(blocks) - 1):
-        print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
+        #print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
         time_sel = slice(blocks[t], blocks[t + 1])
         arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
         coords = {}
