@@ -15,6 +15,7 @@ from inspect import signature
 
 import numpy as np
 import pint
+import six
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -721,8 +722,8 @@ class Indicator(object):
         out['parameters'] = str({key: {'default': p.default if p.default != p.empty else None, 'desc': ''}
                                  for (key, p) in self._sig.parameters.items()})
 
-        # if six.PY2:
-        #     out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
+        if six.PY2:
+            out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
 
         return out
 
@@ -745,7 +746,7 @@ class Indicator(object):
             mba = {'indexer': 'annual'}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
-                if isinstance(v, str) and v in self._attrs_mapping.get(key, {}).keys():
+                if isinstance(v, six.string_types) and v in self._attrs_mapping.get(key, {}).keys():
                     mba[k] = '{{{}}}'.format(v)
                 elif isinstance(v, dict):
                     if v:
@@ -834,7 +835,7 @@ def format_kwargs(attrs, params):
         mba = {}
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in params.items():
-            if isinstance(v, str) and v in attrs_mapping.get(key, {}).keys():
+            if isinstance(v, six.string_types) and v in attrs_mapping.get(key, {}).keys():
                 mba[k] = '{' + v + '}'
             else:
                 mba[k] = v
