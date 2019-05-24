@@ -28,17 +28,17 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
 
     Examples
     --------
-    >>> from xclim import utils
+    >>> from xclim import subset
     >>> ds = xr.open_dataset('pr.day.nc')
     Subset lat lon and years
-    >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
     Subset data array lat, lon and single year
-    >>> prSub = utils.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1990)
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1990)
     Subset dataarray single year keep entire lon, lat grid
-    >>> prSub = utils.subset_bbox(ds.pr,start_yr=1990,end_yr=1990) # one year only entire grid
+    >>> prSub = subset.subset_bbox(ds.pr,start_yr=1990,end_yr=1990) # one year only entire grid
     Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = utils.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
+    >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
     """
 
     if lon_bnds is not None:
@@ -96,15 +96,15 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
 
     Examples
     --------
-    >>> from xclim import utils
+    >>> from xclim import subset
     >>> ds = xr.open_dataset('pr.day.nc')
     Subset lat lon point and multiple years
-    >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1999)
     Subset lat, lon point and single year
-    >>> prSub = utils.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990)
+    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990)
      Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = utils.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
     """
 
     g = Geod(ellps='WGS84')  # WGS84 ellipsoid - decent globaly
