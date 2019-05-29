@@ -1,9 +1,11 @@
 import logging
 
 import xarray as xr
+import numpy as np
 
 from xclim import run_length as rl, utils
 from xclim.utils import declare_units, units
+from xclim.generic import mean, stdev
 
 logging.basicConfig(level=logging.DEBUG)
 logging.captureWarnings(True)
