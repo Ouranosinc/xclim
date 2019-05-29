@@ -266,3 +266,13 @@ def get_dist(dist):
         e = "Statistical distribution `{}` is not in scipy.stats.".format(dist)
         raise ValueError(e)
     return dc
+
+def mean(obj, dim):
+    return xr.apply_ufunc(np.nanmean, obj,
+                       input_core_dims=[[dim]],
+                       kwargs={'axis': -1})
+
+def stdev(obj, dim):
+    return xr.apply_ufunc(np.nanstd, obj,
+                       input_core_dims=[[dim]],
+                       kwargs={'axis': -1, 'ddof': 1})
