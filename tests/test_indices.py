@@ -439,6 +439,18 @@ class TestMaximumConsecutiveDryDays:
         out = xci.maximum_consecutive_dry_days(pr, freq='M')
         assert out[0] == 10
 
+class TestPMP:
+    def test_exWMO(self):
+        annual_series_ex_24h = xr.DataArray([[62],[60],[57],[112],[67],[72], \
+                                             [62],[61],[57],[69],[72],[61],[62],[82],[306],[47],[43],[78],[113],[134], \
+                                             [51],[72],[62],[53],[55]], dims=('time', ''))
+
+        assert PMP_Hershfield(annual_series_ex_24h, 24, '1h').values[0] == 506.0070592084365, "The result should be 506.007059"
+
+        def test_NaN(self):
+            nan_series = xr.DataArray([[np.nan], [np.nan], [np.nan], [np.nan]], dims=('time', ''))
+
+        assert np.isnan(PMP_Hershfield(nan_series, 24, '1h').values[0]) == True, "The result should be NaN"
 
 class TestPrecipAccumulation:
     # build test data for different calendar
