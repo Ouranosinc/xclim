@@ -549,3 +549,97 @@ def precip_accumulation(pr, freq='YS'):
 
     out = pr.resample(time=freq).sum(dim='time', keep_attrs=True)
     return utils.pint_multiply(out, 1 * units.day, 'mm')
+
+
+def pmp_Hershfield(annual_max_series, duration=24, freq=None):
+    r"""Probable Maximum Precipitation (PMP) from statistical method (Hershfield).
+
+    Returns the probable maximum precipitation value at tile scale.
+
+    Parameters
+    ----------
+    annual_max_series : xarray.DataArray
+      Minimum annual precipitation values [mm]
+    duration : int, optional
+      Duration of the PMP [hours]
+    freq : str, optional
+      Archiving frequency of the precipitation variable [h]
+
+    Returns
+    -------
+    xarray.DataArray
+      The PMP value at tile scale
+
+    Notes
+    -----
+    This function works only for duration less or equal to 24h.
+
+    References
+    ----------
+    Willardson, B. J. (2011). “Prediction of extreme runoff frequency events in southern California.”
+    PhD Diss., University of Southern California, USA.
+
+    World Meteorological Organization (2009), Manual on Estimation of Probable
+    Maximum Precipitation (PMP), World Meterological Organization,
+    WMO-No. 1045, 65-73
+
+    Example
+    -------
+    The following recreates the computation of the 24-hour PMP from Table 4.1
+    (WMO, 2009, p.71) :
+
+    >>> annual_series_ex_24h = xr.DataArray([[62],[60],[57],[112],[67],[72], \
+    [62],[61],[57],[69],[72],[61],[62],[82],[306],[47],[43],[78],[113],[134], \
+    [51],[72],[62],[53],[55]], dims=('time', 'annual max precipitation'))
+    >>> ex_24h_PMP = pmp_Hershfield(annual_series_ex_24h, 24, '1h')
+    """
+
+    # Remove the max value :
+    max_value = annual_max_series.max(dim='time')
+    without_max = annual_max_series.where(annual_max_series < max_value)
+
+    # Adjustment of mean for maximum observed amount and record length :
+    mean_with_max = mean(annual_max_series, 'time')
+    mean_without_max = mean(without_max, 'time')
+    mean_ratio = mean_without_max / mean_with_max
+
+    # Correction for length of record and for sample size (Willardson, 2011, p.95)
+    record_length = annual_max_series.shape[0]
+    adj_factor_mean_1 = mean_ratio + np.exp(
+        -1.87286 - (0.09132 * record_length) + (0.001583 * (record_length ** 2)) - (0.000011 * record_length))
+    adj_factor_mean_2 = (0.998 + 5.1 * (np.log(record_length) / (record_length) ** 2)) ** 0.5
+
+    mean_adj = mean_with_max * adj_factor_mean_1 * adj_factor_mean_2
+
+    # Adjustment of standard deviation for maximum observed amount and record length :
+    stdev_with_max = stdev(annual_max_series, 'time')
+    stdev_without_max = stdev(without_max, 'time')
+    stdev_ratio = stdev_without_max / stdev_with_max
+
+    # Correction for length of record and for sample size (Willardson, 2011, p.95)
+    adj_factor_std_1 = ((1.09 - (0.001 * record_length) + (1.13 / record_length)) * stdev_ratio) + (
+            0.04 - 0.0019 * (np.log(record_length) ** 2))
+    adj_factor_std_2 = 0.997 + (32.446 / (record_length ** 2))
+
+    stdev_adj = stdev_with_max * adj_factor_std_1 * adj_factor_std_2
+
+    # Calculate the corresponding frequeny factor Km (Koutsoyiannis and Xanthopoulos, 1997, p. 160)
+    Km = 20 - (8.6 * np.log((mean_adj / 130) + 1) * (24 / duration) ** 0.4)
+    # TO DO : compare with Km from Willardson (2011)
+
+    # Unadjusted point values of PMP (from Equation 4.2 (WMO, 2009, p.66)) :
+    PMP = mean_adj + (Km * stdev_adj)
+
+    # Adjustment of PMP based on hourly data to true maximum values ((see section 4.2.4 (WMO, 2009, p.67))
+    if freq == '1h':
+        PMP = PMP * 1.01
+    elif freq == '3h':
+        PMP = PMP * 1.02
+    elif freq == '6h':
+        PMP = PMP * 1.03
+    elif freq == '24h':
+        PMP = PMP * 1.13
+
+    # Enhancements : adjustment of point PMP to tile area
+
+    return PMP
