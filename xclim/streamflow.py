@@ -30,7 +30,7 @@ class Stats(Streamflow):
         indexer = kwds['indexer']
         freq = kwds['freq'] or generic.default_freq(**indexer)
 
-        miss = (checks.missing_any(generic.select_time(da, **indexer), freq) for da in args)
+        miss = (checks.missing_any(da, freq, **indexer) for da in args)
         return reduce(np.logical_or, miss)
 
 

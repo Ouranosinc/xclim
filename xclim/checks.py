@@ -146,8 +146,8 @@ def check_is_dataarray(comp):
 
     return func
 
-
-def missing_any(da, freq, **kwds):
+# This function can probably be made simpler once CFPeriodIndex is implemented.
+def missing_any(da, freq, **indexer):
     r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters
@@ -156,19 +156,38 @@ def missing_any(da, freq, **kwds):
       Input array at daily frequency.
     freq : str
       Resampling frequency.
+    **indexer : {dim: indexer, }, optional
+      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+      considered.
 
     Returns
     -------
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
-    c = da.notnull().resample(time=freq).sum(dim='time')
+    from . import generic
 
     if '-' in freq:
         pfreq, anchor = freq.split('-')
     else:
         pfreq = freq
 
+    # Compute the number of days in the time series during each period at the given frequency.
+    selected = generic.select_time(da, **indexer)
+    c = selected.notnull().resample(time=freq).sum(dim='time')
+
+    if indexer:
+        # Create a full synthetic time series and compare the number of days with the original series.
+        t0 = str(da.indexes['time'][0]).replace(' ', 'T')
+        t1 = str(da.indexes['time'][-1]).replace(' ', 'T')
+        time = xr.cftime_range(t0, t1, freq='D', calendar=da.time.encoding.get('calendar', 'standard'))
+        sda = xr.DataArray(data=np.empty(len(time)), coords={'time': time}, dims=('time',))
+        st = generic.select_time(sda, **indexer)
+        sn = st.notnull().resample(time=freq).sum(dim='time')
+        return sn != c
+
+    # Otherwise simply use the start and end dates to find the expected number of days.
     if pfreq.endswith('S'):
         start_time = c.indexes['time']
         end_time = start_time.shift(1, freq=freq)
