@@ -113,7 +113,7 @@ class TestMissingAnyFills:
         np.testing.assert_equal(miss, [False])
 
         miss = checks.missing_any(ts, freq='YS', season='JJA')
-        np.testing.assert_equal(miss, [True, True])
+        np.testing.assert_array_equal(miss, [True, True])
 
         miss = checks.missing_any(ts, freq='YS', season='SON')
         np.testing.assert_equal(miss, [False])
