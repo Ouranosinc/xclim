@@ -188,13 +188,19 @@ def missing_any(da, freq, **indexer):
 
     if indexer:
         # Create a full synthetic time series and compare the number of days with the original series.
-        t0 = str(start_time[0]).replace(' ', 'T')
-        t1 = str(end_time[-1]).replace(' ', 'T')
-        time = xr.cftime_range(t0, t1, freq='D', calendar=da.time.encoding.get('calendar', 'standard'))
-        sda = xr.DataArray(data=np.empty(len(time)), coords={'time': time}, dims=('time',))
+        t0 = str(start_time[0].date())
+        t1 = str(end_time[-1].date())
+        cal = da.time.encoding.get('calendar')
+        if cal:
+            t = xr.cftime_range(t0, t1, freq='D', calendar=cal)
+        else:
+            t = pd.date_range(t0, t1, freq='D')
+
+        sda = xr.DataArray(data=np.empty(len(t)), coords={'time': t}, dims=('time', ))
         st = generic.select_time(sda, **indexer)
         sn = st.notnull().resample(time=freq).sum(dim='time')
-        return sn.data != c.data
+        miss = sn != c
+        return miss
 
     n = (end_time - start_time).days
     nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')

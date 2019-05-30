@@ -25,7 +25,6 @@ class TestStats():
         out = streamflow.stats(ndq_series, freq='YS', op='min', season='MAM')
         assert out.attrs['units'] == 'm^3 s-1'
 
-    @pytest.mark.skip()
     def test_missing(self, ndq_series):
         a = ndq_series
         a = ndq_series.where(~((a.time.dt.dayofyear == 5) * (a.time.dt.year == 1902)))
