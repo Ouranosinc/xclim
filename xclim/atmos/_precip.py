@@ -39,7 +39,8 @@ max_1day_precipitation_amount = Pr(identifier='rx1day',
                                    compute=indices.max_1day_precipitation_amount,
                                    )
 
-max_n_day_precipitation_amount = Pr(identifier='rx{window}day',
+max_n_day_precipitation_amount = Pr(identifier='max_n_day_precipitation_amount',
+                                    var_name='rx{window}day',
                                     units='mm',
                                     standard_name='lwe_thickness_of_precipitation_amount',
                                     long_name='maximum {window}-day total precipitation',
@@ -48,7 +49,8 @@ max_n_day_precipitation_amount = Pr(identifier='rx{window}day',
                                     compute=indices.max_n_day_precipitation_amount,
                                     )
 
-wetdays = Pr(identifier='r{thresh}mm',
+wetdays = Pr(identifier='wetdays',
+             var_name='r{thresh}mm',
              units='days',
              standard_name='number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold',
              long_name='Number of Wet Days (precip >= {thresh} mm)',

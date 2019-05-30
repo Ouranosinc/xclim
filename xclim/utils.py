@@ -617,8 +617,17 @@ class Indicator(object):
 
     def __init__(self, **kwds):
 
+        # Set instance attributes.
         for key, val in kwds.items():
             setattr(self, key, val)
+
+        # Verify that the identifier is a proper slug
+        if not re.match('[-\w]+', self.identifier):
+            warnings.warn("The identifier contains characters that might cause issues.")
+
+        # Default value for `var_name` is the `identifier`.
+        if self.var_name == '':
+            self.var_name = self.identifier
 
         # Sanity checks
         required = ['compute', ]
@@ -669,8 +678,9 @@ class Indicator(object):
 
         # Update attributes
         out_attrs = self.json(ba.arguments)
-        formatted_id = out_attrs.pop('identifier')
-        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}{}'.format(dt.datetime.now(), formatted_id, ba.signature)
+        vname = out_attrs.pop('var_name')
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
+            dt.datetime.now(), vname, self.identifier, ba.signature)
         attrs['cell_methods'] += out_attrs.pop('cell_methods')
         attrs.update(out_attrs)
 
@@ -698,7 +708,7 @@ class Indicator(object):
         mask = self.missing(*mba.args, **mba.kwargs)
         ma_out = out.where(~mask)
 
-        return ma_out.rename(formatted_id)
+        return ma_out.rename(vname)
 
     @property
     def cf_attrs(self):

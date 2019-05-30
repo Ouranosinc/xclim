@@ -66,7 +66,8 @@ class TasminTasmax(Indicator2D):
         """The function computing the indicator."""
 
 
-tn_days_below = Tasmin(identifier='tnlt_{thresh}',
+tn_days_below = Tasmin(identifier='tn_days_below',
+                       var_name='tnlt_{thresh}',
                        units='days',
                        standard_name='number_of_days_with_air_temperature_below_threshold',
                        long_name='Number of days with Tmin < {thresh}C',
@@ -75,7 +76,8 @@ tn_days_below = Tasmin(identifier='tnlt_{thresh}',
                        compute=indices.tn_days_below,
                        )
 
-tx_days_above = Tasmax(identifier='txgt_{thresh}',
+tx_days_above = Tasmax(identifier='tx_days_above',
+                       var_name='txgt_{thresh}',
                        units='days',
                        standard_name='number_of_days_with_air_temperature_above_threshold',
                        long_name='Number of days with Tmax > {thresh}C',
@@ -84,7 +86,8 @@ tx_days_above = Tasmax(identifier='txgt_{thresh}',
                        compute=indices.tx_days_above,
                        )
 
-tx_tn_days_above = TasminTasmax(identifier='txgt_{thresh_tasmax}_tngt_{thresh_tasmin}',
+tx_tn_days_above = TasminTasmax(identifier='tx_tn_days_above',
+                                var_name='txgt_{thresh_tasmax}_tngt_{thresh_tasmin}',
                                 units='days',
                                 standard_name='number_of_days_with_air_temperature_above_threshold',
                                 long_name='Number of days with Tmax > {thresh_tasmax}C and Tmin > {thresh_tasmin}C',
@@ -95,6 +98,7 @@ tx_tn_days_above = TasminTasmax(identifier='txgt_{thresh_tasmax}_tngt_{thresh_ta
                                 )
 
 heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
+                                   var_name='heat_wave_frequency',
                                    units='',
                                    standard_name='heat_wave_events',
                                    long_name='Number of heat wave events (Tmin > {thresh_tasmin}℃'
@@ -110,6 +114,7 @@ heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    )
 
 heat_wave_max_length = TasminTasmax(identifier='heat_wave_max_length',
+                                    var_name='heat_wave_max_length',
                                     units='days',
                                     standard_name='spell_length_of_days_with_air_temperature_above_threshold',
                                     long_name='Maximum length of heat wave events (Tmin > {thresh_tasmin}℃'
@@ -124,7 +129,8 @@ heat_wave_max_length = TasminTasmax(identifier='heat_wave_max_length',
                                     compute=indices.heat_wave_max_length,
                                     )
 
-heat_wave_index = Tasmax(identifier='hwi_{thresh}',
+heat_wave_index = Tasmax(identifier='heat_wave_index',
+                         var_name='hwi_{thresh}',
                          units='days',
                          standard_name='heat_wave_index',
                          long_name='Number of days that are part of a heatwave',
@@ -228,7 +234,8 @@ extreme_temperature_range = TasminTasmax(identifier='etr',
                                          compute=indices.extreme_temperature_range,
                                          )
 
-cold_spell_duration_index = Tasmin(identifier='csdi_{window}',
+cold_spell_duration_index = Tasmin(identifier='cold_spell_duration_index',
+                                   var_name='csdi_{window}',
                                    units='days',
                                    standard_name='cold_spell_duration_index',
                                    long_name='Cold Spell Duration Index, count of days with at '
@@ -241,7 +248,8 @@ cold_spell_duration_index = Tasmin(identifier='csdi_{window}',
                                    compute=indices.cold_spell_duration_index,
                                    )
 
-cold_spell_days = Tas(identifier='csi_{thresh}',
+cold_spell_days = Tas(identifier='cold_spell_days',
+                      var_name='csi_{thresh}',
                       units='days',
                       standard_name='cold_spell_days',
                       long_name='cold spell index',
@@ -262,7 +270,8 @@ daily_freezethaw_cycles = TasminTasmax(identifier='dlyfrzthw',
                                        compute=indices.daily_freezethaw_cycles,
                                        )
 
-cooling_degree_days = Tas(identifier='cddcold_{thresh}',
+cooling_degree_days = Tas(identifier='cooling_degree_days',
+                          var_name='cddcold_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_excess_wrt_time',
                           long_name='Cooling Degree Days (Tmean > {thresh}C)',
@@ -271,7 +280,8 @@ cooling_degree_days = Tas(identifier='cddcold_{thresh}',
                           compute=indices.cooling_degree_days,
                           )
 
-heating_degree_days = Tas(identifier='hddheat_{thresh}',
+heating_degree_days = Tas(identifier='heating_degree_days',
+                          var_name='hddheat_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_deficit_wrt_time',
                           long_name='Heating Degree Days (Tmean < {thresh}C)',
@@ -280,7 +290,8 @@ heating_degree_days = Tas(identifier='hddheat_{thresh}',
                           compute=indices.heating_degree_days,
                           )
 
-growing_degree_days = Tas(identifier='gddgrow_{thresh}',
+growing_degree_days = Tas(identifier='growing_degree_days',
+                          var_name='gddgrow_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_excess_wrt_time',
                           long_name='growing degree days above {thresh}',
@@ -327,7 +338,8 @@ consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 compute=indices.consecutive_frost_days,
                                 )
 
-growing_season_length = Tas(identifier='gsl_{thresh}',
+growing_season_length = Tas(identifier='growing_season_length',
+                            var_name='gsl_{thresh}',
                             units='days',
                             standard_name='growing_season_length',
                             long_name='ETCCDI Growing Season Length (Tmean > {thresh}C)',
@@ -340,7 +352,8 @@ growing_season_length = Tas(identifier='gsl_{thresh}',
                             compute=indices.growing_season_length,
                             )
 
-tropical_nights = Tasmin(identifier='tr_{thresh}',
+tropical_nights = Tasmin(identifier='tropical_nights',
+                         var_name='tr_{thresh}',
                          units='days',
                          standard_name='number_of_days_with_air_temperature_above_threshold',
                          long_name='Number of Tropical Nights (Tmin > {thresh}C)',
