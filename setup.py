@@ -23,9 +23,6 @@ requirements = [
     'pyproj>=1.9.5.1',
     'pint>=0.8',
     'boltons>=18.0',
-    'inspect2',
-    'unittest2',
-    'six',
 ]
 
 setup_requirements = ['pytest-runner', ]
@@ -61,12 +58,12 @@ setup(
     include_package_data=True,
     keywords=KEYWORDS,
     name='xclim',
-    packages=find_packages(include=['xclim']),
+    packages=find_packages(),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     extras_require={'docs': docs_requirements},
     url='https://github.com/Ouranosinc/xclim',
-    version='0.8-beta',
+    version='0.9-beta',
     zip_safe=False,
 )

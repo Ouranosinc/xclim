@@ -46,10 +46,10 @@ def _get_indicators(modules):
 
 def _indicator_table():
     """Return a sequence of dicts storing metadata about all available indices."""
-    from xclim import temperature, precip
+    import xclim.atmos as atmos
     import inspect
 
-    inds = _get_indicators([temperature, precip])
+    inds = _get_indicators([atmos])
     table = []
     for ind in inds:
         # Apply default values

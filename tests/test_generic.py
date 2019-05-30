@@ -1,7 +1,8 @@
-from xclim import generic
 import numpy as np
 import xarray as xr
 from scipy.stats import lognorm
+
+from xclim import generic
 
 
 class TestFA(object):
@@ -37,7 +38,7 @@ class TestFA(object):
         q = generic.fa(self.da, T, 'lognorm')
 
         p0 = lognorm.fit(self.da.values[:, 0, 0])
-        q0 = lognorm.ppf(1-1./T, *p0)
+        q0 = lognorm.ppf(1 - 1. / T, *p0)
         np.testing.assert_array_equal(q[0, 0, 0], q0)
 
 
