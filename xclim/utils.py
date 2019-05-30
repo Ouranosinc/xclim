@@ -622,7 +622,7 @@ class Indicator(object):
             setattr(self, key, val)
 
         # Verify that the identifier is a proper slug
-        if not re.match('[-\w]+', self.identifier):
+        if not re.match(r'[-\w]+', self.identifier):
             warnings.warn("The identifier contains characters that might cause issues.")
 
         # Default value for `var_name` is the `identifier`.
