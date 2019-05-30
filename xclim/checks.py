@@ -146,6 +146,7 @@ def check_is_dataarray(comp):
 
     return func
 
+
 # This function can probably be made simpler once CFPeriodIndex is implemented.
 def missing_any(da, freq, **indexer):
     r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
@@ -177,16 +178,6 @@ def missing_any(da, freq, **indexer):
     selected = generic.select_time(da, **indexer)
     c = selected.notnull().resample(time=freq).sum(dim='time')
 
-    if indexer:
-        # Create a full synthetic time series and compare the number of days with the original series.
-        t0 = str(da.indexes['time'][0]).replace(' ', 'T')
-        t1 = str(da.indexes['time'][-1]).replace(' ', 'T')
-        time = xr.cftime_range(t0, t1, freq='D', calendar=da.time.encoding.get('calendar', 'standard'))
-        sda = xr.DataArray(data=np.empty(len(time)), coords={'time': time}, dims=('time',))
-        st = generic.select_time(sda, **indexer)
-        sn = st.notnull().resample(time=freq).sum(dim='time')
-        return sn != c
-
     # Otherwise simply use the start and end dates to find the expected number of days.
     if pfreq.endswith('S'):
         start_time = c.indexes['time']
@@ -194,6 +185,16 @@ def missing_any(da, freq, **indexer):
     else:
         end_time = c.indexes['time']
         start_time = end_time.shift(-1, freq=freq)
+
+    if indexer:
+        # Create a full synthetic time series and compare the number of days with the original series.
+        t0 = str(start_time[0]).replace(' ', 'T')
+        t1 = str(end_time[-1]).replace(' ', 'T')
+        time = xr.cftime_range(t0, t1, freq='D', calendar=da.time.encoding.get('calendar', 'standard'))
+        sda = xr.DataArray(data=np.empty(len(time)), coords={'time': time}, dims=('time',))
+        st = generic.select_time(sda, **indexer)
+        sn = st.notnull().resample(time=freq).sum(dim='time')
+        return sn.data != c.data
 
     n = (end_time - start_time).days
     nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
