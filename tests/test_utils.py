@@ -402,6 +402,21 @@ class TestUnitConversion:
         assert out.units == 'kg m-2'
 
 
+class TestCheckUnits:
+
+    def test_basic(self):
+        utils._check_units('mm/day', '[precipitation]')
+        utils._check_units('mm/s', '[precipitation]')
+        utils._check_units('kg/m2/s', '[precipitation]')
+        utils._check_units('kg/m2', '[length]')
+        utils._check_units('cms', '[discharge]')
+        utils._check_units('m3/s', '[discharge]')
+
+        with pytest.raises(AttributeError):
+            utils._check_units('mm', '[precipitation]')
+            utils._check_units('m3', '[discharge]')
+
+
 class TestSubsetGridPoint:
     nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
     nc_file = os.path.join(TESTS_DATA, 'NRCANdaily', 'nrcan_canada_daily_tasmax_1990.nc')

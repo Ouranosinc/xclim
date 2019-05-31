@@ -246,12 +246,14 @@ def _check_units(val, dim):
         tu = 'mmday'
     elif dim == '[discharge]':
         tu = 'cms'
+    elif dim == '[length]':
+        tu = 'm'
     else:
         raise NotImplementedError
 
     try:
         (1 * units2pint(val)).to(tu, 'hydro')
-    except pint.UndefinedUnitError:
+    except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
 
 
