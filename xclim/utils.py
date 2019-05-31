@@ -567,7 +567,7 @@ def walk_map(d, func):
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
 # missing functions. It can handle indicators with any number of forcing fields.
-class Indicator(object):
+class Indicator():
     r"""Climate indicator based on xarray
     """
     # Unique ID for function registry.
@@ -622,18 +622,13 @@ class Indicator(object):
             setattr(self, key, val)
 
         # Verify that the identifier is a proper slug
-        if not re.match(r'[-\w]+', self.identifier):
-            warnings.warn("The identifier contains characters that might cause issues.")
+        if not re.match(r'^[-\w]+$', self.identifier):
+            warnings.warn("The identifier contains non-alphanumeric characters. It could make life "
+                          "difficult for downstream software reusing this class.", UserWarning)
 
         # Default value for `var_name` is the `identifier`.
         if self.var_name == '':
             self.var_name = self.identifier
-
-        # Sanity checks
-        required = ['compute', ]
-        for key in required:
-            if not getattr(self, key):
-                raise ValueError("{} needs to be defined during instantiation.".format(key))
 
         # Extract information from the `compute` function.
         # The signature
@@ -745,9 +740,9 @@ class Indicator(object):
         Warn of potential issues."""
         return True
 
-    @abc.abstractmethod
     def compute(*args, **kwds):
         """The function computing the indicator."""
+        raise NotImplementedError
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments."""
@@ -787,12 +782,6 @@ class Indicator(object):
         """Validate input data requirements.
         Raise error if conditions are not met."""
         checks.assert_daily(da)
-
-    @classmethod
-    def factory(cls, attrs):
-        """Create a subclass from the attributes dictionary."""
-        name = attrs['identifier'].capitalize()
-        return type(name, (cls,), attrs)
 
 
 class Indicator2D(Indicator):

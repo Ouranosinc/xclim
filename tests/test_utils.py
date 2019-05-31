@@ -179,7 +179,8 @@ class TestDailyDownsampler:
 
 
 class UniIndTemp(Indicator):
-    identifier = 'tmin{thresh}'
+    identifier = 'tmin'
+    var_name = 'tmin{thresh}'
     units = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
@@ -235,17 +236,6 @@ class TestIndicator:
 
         assert set(meta.keys()).issubset(expected)
 
-    def test_factory(self, pr_series):
-        attrs = dict(identifier='test', units='days', required_units='[length] / [time]',
-                     long_name='long name',
-                     standard_name='standard name', context='hydro'
-                     )
-        cls = Indicator.factory(attrs)
-
-        assert issubclass(cls, Indicator)
-        da = pr_series(np.arange(365))
-        cls(compute=indices.wetdays)(da)
-
     def test_signature(self):
         from inspect import signature
         ind = UniIndTemp()
@@ -273,6 +263,11 @@ class TestIndicator:
         txc = tx(ds.tasmax)
 
         assert isinstance(txc.data, dask.array.core.Array)
+
+    def test_identifier(self):
+
+        with pytest.warns(UserWarning):
+            UniIndPr(identifier='t_{}')
 
 
 class TestKwargs:
