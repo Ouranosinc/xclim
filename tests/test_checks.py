@@ -91,3 +91,29 @@ class TestMissingAnyFills:
         ts = tasmin_series(a)
         miss = checks.missing_any(ts, freq='A-JUN')
         np.testing.assert_equal(miss, [False])
+
+    def test_month(self, tasmin_series):
+        ts = tasmin_series(np.zeros(36))
+        miss = checks.missing_any(ts, freq='YS', month=7)
+        np.testing.assert_equal(miss, [False])
+
+        miss = checks.missing_any(ts, freq='YS', month=8)
+        np.testing.assert_equal(miss, [True])
+
+        miss = checks.missing_any(ts, freq='YS', month=[7, 8])
+        np.testing.assert_equal(miss, [True])
+
+        ts = tasmin_series(np.zeros(76))
+        miss = checks.missing_any(ts, freq='YS', month=[7, 8])
+        np.testing.assert_equal(miss, [False])
+
+    def test_season(self, tasmin_series):
+        ts = tasmin_series(np.zeros(360))
+        miss = checks.missing_any(ts, freq='YS', season='MAM')
+        np.testing.assert_equal(miss, [False])
+
+        miss = checks.missing_any(ts, freq='YS', season='JJA')
+        np.testing.assert_array_equal(miss, [True, True])
+
+        miss = checks.missing_any(ts, freq='YS', season='SON')
+        np.testing.assert_equal(miss, [False])
