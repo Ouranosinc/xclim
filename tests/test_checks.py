@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+import os
 import xarray as xr
 from xclim.atmos import tg_mean
 from xclim.testing.common import tas_series, tasmin_series
@@ -10,6 +11,9 @@ TAS_SERIES = tas_series
 TASMIN_SERIES = tasmin_series
 
 K2C = 273.15
+
+TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
+TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
 
 
 class TestDateHandling:
@@ -100,6 +104,9 @@ class TestMissingAnyFills:
         miss = checks.missing_any(ts, freq='YS', month=8)
         np.testing.assert_equal(miss, [True])
 
+        with pytest.raises(ValueError):
+            miss = checks.missing_any(ts, freq='YS', month=1)
+
         miss = checks.missing_any(ts, freq='YS', month=[7, 8])
         np.testing.assert_equal(miss, [True])
 
@@ -117,3 +124,13 @@ class TestMissingAnyFills:
 
         miss = checks.missing_any(ts, freq='YS', season='SON')
         np.testing.assert_equal(miss, [False])
+
+    def test_hydro(self):
+        fn = os.path.join(TESTS_DATA, 'Raven', 'q_sim.nc')
+        ds = xr.open_dataset(fn)
+        miss = checks.missing_any(ds.q_sim, freq='YS')
+        np.testing.assert_array_equal(miss[:-1], False)
+        np.testing.assert_array_equal(miss[-1], True)
+
+        miss = checks.missing_any(ds.q_sim, freq='YS', season='JJA')
+        np.testing.assert_array_equal(miss, False)

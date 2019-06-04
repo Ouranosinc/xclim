@@ -231,8 +231,10 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
 
     """
     # Apply rolling average
+    attrs = da.attrs.copy()
     if window > 1:
         da = da.rolling(time=window, center=False).mean()
+        da.attrs.update(attrs)
 
     # Assign default resampling frequency if not provided
     freq = freq or default_freq(**indexer)

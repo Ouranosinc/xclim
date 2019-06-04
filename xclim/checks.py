@@ -176,6 +176,9 @@ def missing_any(da, freq, **indexer):
 
     # Compute the number of days in the time series during each period at the given frequency.
     selected = generic.select_time(da, **indexer)
+    if selected.time.size == 0:
+        raise ValueError("No data for selected period.")
+
     c = selected.notnull().resample(time=freq).sum(dim='time')
 
     # Otherwise simply use the start and end dates to find the expected number of days.
@@ -190,8 +193,8 @@ def missing_any(da, freq, **indexer):
         # Create a full synthetic time series and compare the number of days with the original series.
         t0 = str(start_time[0].date())
         t1 = str(end_time[-1].date())
-        cal = da.time.encoding.get('calendar')
-        if cal:
+        if isinstance(c.indexes['time'], xr.CFTimeIndex):
+            cal = da.time.encoding.get('calendar')
             t = xr.cftime_range(t0, t1, freq='D', calendar=cal)
         else:
             t = pd.date_range(t0, t1, freq='D')

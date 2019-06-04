@@ -18,6 +18,9 @@ class Test_FA():
         out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma')
         assert out.long_name == 'N-year return period max annual 1-day flow'
 
+    def test_q27(self, ndq_series):
+        streamflow.freq_analysis(ndq_series, mode='max', t=2, dist='gamma', window=7)
+
 
 class TestStats():
 
