@@ -132,7 +132,7 @@ class TestMissingAnyFills:
         ds = xr.open_dataset(fn)
         miss = checks.missing_any(ds.q_sim, freq='YS')
         np.testing.assert_array_equal(miss[:-1], False)
-        np.testing.assert_equal(miss[-1], True)
+        np.testing.assert_array_equal(miss[-1], True)
 
         miss = checks.missing_any(ds.q_sim, freq='YS', season='JJA')
         np.testing.assert_array_equal(miss, False)
