@@ -1,19 +1,21 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
-import os
 import xarray as xr
+
+from xclim import checks
 from xclim.atmos import tg_mean
 from xclim.testing.common import tas_series, tasmin_series
-from xclim import checks
 
 TAS_SERIES = tas_series
 TASMIN_SERIES = tasmin_series
 
 K2C = 273.15
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, 'testdata')
+TESTS_HOME = Path(__file__).absolute().parent
+TESTS_DATA = Path(TESTS_HOME, 'testdata')
 
 
 class TestDateHandling:
@@ -126,7 +128,7 @@ class TestMissingAnyFills:
         np.testing.assert_equal(miss, [False])
 
     def test_hydro(self):
-        fn = os.path.join(TESTS_DATA, 'Raven', 'q_sim.nc')
+        fn = Path(TESTS_DATA, 'Raven', 'q_sim.nc')
         ds = xr.open_dataset(fn)
         miss = checks.missing_any(ds.q_sim, freq='YS')
         np.testing.assert_array_equal(miss[:-1], False)
