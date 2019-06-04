@@ -104,7 +104,7 @@ class TestMissingAnyFills:
         miss = checks.missing_any(ts, freq='YS', month=8)
         np.testing.assert_equal(miss, [True])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"No data for selected period."):
             miss = checks.missing_any(ts, freq='YS', month=1)
 
         miss = checks.missing_any(ts, freq='YS', month=[7, 8])
@@ -130,7 +130,7 @@ class TestMissingAnyFills:
         ds = xr.open_dataset(fn)
         miss = checks.missing_any(ds.q_sim, freq='YS')
         np.testing.assert_array_equal(miss[:-1], False)
-        np.testing.assert_array_equal(miss[-1], True)
+        np.testing.assert_equal(miss[-1], True)
 
         miss = checks.missing_any(ds.q_sim, freq='YS', season='JJA')
         np.testing.assert_array_equal(miss, False)
