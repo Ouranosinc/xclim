@@ -48,10 +48,10 @@ base_flow_index = Streamflow(identifier='base_flow_index',
 
 
 freq_analysis = FA(identifier='q{window}{mode}{indexer}',
-                      long_name='N-year return period {mode} {indexer} {window}-day flow',
-                      description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
-                                  "estimated using the {dist} distribution.",
-                      compute=generic.frequency_analysis)
+                   long_name='N-year return period {mode} {indexer} {window}-day flow',
+                   description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+                               "estimated using the {dist} distribution.",
+                   compute=generic.frequency_analysis)
 
 
 stats = Stats(identifier='q{indexer}{op}',
