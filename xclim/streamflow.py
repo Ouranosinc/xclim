@@ -34,17 +34,24 @@ class Stats(Streamflow):
         return reduce(np.logical_or, miss)
 
 
+# We need to disable the missing value check because the output here is not a time series.
+class FA(Streamflow):
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        return False
+
+
 base_flow_index = Streamflow(identifier='base_flow_index',
                              units='',
                              long_name="Base flow index",
                              compute=base_flow_index)
 
 
-freq_analysis = Stats(identifier='q{window}{mode}{indexer}',
-                      long_name='N-year return period {mode} {indexer} {window}-day flow',
-                      description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
-                                  "estimated using the {dist} distribution.",
-                      compute=generic.frequency_analysis)
+freq_analysis = FA(identifier='q{window}{mode}{indexer}',
+                   long_name='N-year return period {mode} {indexer} {window}-day flow',
+                   description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+                               "estimated using the {dist} distribution.",
+                   compute=generic.frequency_analysis)
 
 
 stats = Stats(identifier='q{indexer}{op}',
