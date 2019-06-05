@@ -212,10 +212,11 @@ class TestIndicator:
         import datetime as dt
         a = tas_series(np.arange(360.))
         ind = UniIndTemp()
-        txm = ind(a, freq='YS')
+        txm = ind(a, thresh=5, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
         assert '{:%Y-%m-%d %H}'.format(dt.datetime.now()) in txm.attrs['history']
-        assert txm.name == "tmin0"
+        assert "tmin(da, thresh=5, freq='YS')" in txm.attrs['history']
+        assert txm.name == "tmin5"
 
     def test_temp_unit_conversion(self, tas_series):
         a = tas_series(np.arange(360.))

@@ -676,8 +676,17 @@ class Indicator():
         # Update attributes
         out_attrs = self.json(ba.arguments)
         vname = out_attrs.pop('var_name')
+
+        # Update the signature with the values of the actual call.
+        cp = {}
+        for (k, v) in ba.signature.parameters.items():
+            if isinstance(v.default, (float, int, str)):
+                cp[k] = v.replace(default=ba.arguments[k])
+            else:
+                cp[k] = v
+
         attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
-            dt.datetime.now(), vname, self.identifier, ba.signature)
+            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
         attrs['cell_methods'] += out_attrs.pop('cell_methods')
         attrs.update(out_attrs)
 
