@@ -773,9 +773,11 @@ class Indicator():
                             dv = 'm{}'.format(dv)
                         mba[k] = '{{{}}}'.format(dv)
                 elif isinstance(v, units.Quantity):
-                    mba[k] = '{:~P}'.format(v)
+                    mba[k] = '{:g~P}'.format(v)
+                elif isinstance(v, (int, float)):
+                    mba[k] = '{:g}'.format(v)
                 else:
-                    mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
+                    mba[k] = v
 
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 

@@ -271,8 +271,11 @@ class TestIndicator:
             UniIndPr(identifier='t_{}')
 
     def test_formatting(self, pr_series):
-        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1. * units.mm / units.day)
-        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1.0 mm/day)'
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1 mm/day)'
+
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1.5 mm/day)'
 
 
 class TestKwargs:
