@@ -10,7 +10,7 @@ import datetime as dt
 import functools
 import re
 import warnings
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from inspect import signature
 
 import numpy as np
@@ -678,9 +678,9 @@ class Indicator():
         vname = out_attrs.pop('var_name')
 
         # Update the signature with the values of the actual call.
-        cp = {}
+        cp = OrderedDict()
         for (k, v) in ba.signature.parameters.items():
-            if isinstance(v.default, (float, int, str)):
+            if v.default is not None and isinstance(v.default, (float, int, str)):
                 cp[k] = v.replace(default=ba.arguments[k])
             else:
                 cp[k] = v
