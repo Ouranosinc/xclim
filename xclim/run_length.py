@@ -71,10 +71,7 @@ def longest_run(da, dim='time', ufunc_1Dim='auto'):
         """
     if ufunc_1Dim == 'auto':
         npts = get_npts(da)
-        if npts <= npts_opt:
-            ufunc_1Dim = True
-        else:
-            ufunc_1Dim = False
+        ufunc_1Dim = bool(npts <= npts_opt)
 
     if ufunc_1Dim:
         rl_long = longest_run_ufunc(da)
@@ -107,10 +104,7 @@ def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
         """
     if ufunc_1Dim == 'auto':
         npts = get_npts(da)
-        if npts <= npts_opt:
-            ufunc_1Dim = True
-        else:
-            ufunc_1Dim = False
+        ufunc_1Dim = bool(npts <= npts_opt)
 
     if ufunc_1Dim:
         out = windowed_run_events_ufunc(da, window)
@@ -143,10 +137,7 @@ def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
         """
     if ufunc_1Dim == 'auto':
         npts = get_npts(da)
-        if npts <= npts_opt:
-            ufunc_1Dim = True
-        else:
-            ufunc_1Dim = False
+        ufunc_1Dim = bool(npts <= npts_opt)
 
     if ufunc_1Dim:
         out = windowed_run_count_ufunc(da, window)
@@ -180,10 +171,7 @@ def first_run(da, window, dim='time', ufunc_1Dim='auto'):
         """
     if ufunc_1Dim == 'auto':
         npts = get_npts(da)
-        if npts <= npts_opt:
-            ufunc_1Dim = True
-        else:
-            ufunc_1Dim = False
+        ufunc_1Dim = bool(npts <= npts_opt)
 
     if ufunc_1Dim:
         out = first_run_ufunc(da, window)
