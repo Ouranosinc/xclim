@@ -106,7 +106,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
-        da3d[35,] = da3d[35,] + 1
+        da3d[35, ] = da3d[35, ] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1Dim=False)
