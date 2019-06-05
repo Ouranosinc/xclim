@@ -7,6 +7,16 @@ import logging
 from warnings import warn
 
 logging.captureWarnings(True)
+npts_opt = 9000
+
+
+def get_npts(da):
+    coords = list(da.coords)
+    coords.remove('time')
+    npts = 1
+    for c in coords:
+        npts *= len(da[c])
+    return npts
 
 
 def rle(da, dim='time', max_chunk=1000000):
@@ -41,7 +51,7 @@ def rle(da, dim='time', max_chunk=1000000):
     return d
 
 
-def longest_run(da, dim='time'):
+def longest_run(da, dim='time', ufunc_1Dim='auto'):
     """Return the length of the longest consecutive run of True values.
 
         Parameters
@@ -50,20 +60,30 @@ def longest_run(da, dim='time'):
           Input array
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-
+        ufunc_1Dim : optional, one of 'auto' (default), True or False
+          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
+          for dataarray with a small number of gridpoints
         Returns
         -------
         N-dimensional array (int)
           Length of longest run of True values along dimension
         """
+    if ufunc_1Dim == 'auto':
+        npts = get_npts(da)
+        if npts <= npts_opt:
+            ufunc_1Dim = True
 
-    d = rle(da, dim=dim)
-    rl_long = d.max(dim=dim)
+    if ufunc_1Dim:
+        rl_long = longest_run_ufunc(da)
+    else:
+        d = rle(da, dim=dim)
+        rl_long = d.max(dim=dim)
 
     return rl_long
 
 
-def windowed_run_events(da, window, dim='time'):
+def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
     """Return the number of runs of a minimum length.
 
         Parameters
@@ -74,18 +94,29 @@ def windowed_run_events(da, window, dim='time'):
           Minimum run length.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-
+        ufunc_1Dim : optional, one of 'auto' (default), True or False
+          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
+          for dataarray with a small number of gridpoints
         Returns
         -------
         out : N-dimensional xarray data array (int)
           Number of distinct runs of a minimum length.
         """
-    d = rle(da, dim=dim)
-    out = (d >= window).sum(dim=dim)
+    if ufunc_1Dim == 'auto':
+        npts = get_npts(da)
+        if npts <= npts_opt:
+            ufunc_1Dim = True
+
+    if ufunc_1Dim:
+        out = windowed_run_events_ufunc(da, window)
+    else:
+        d = rle(da, dim=dim)
+        out = (d >= window).sum(dim=dim)
     return out
 
 
-def windowed_run_count(da, window, dim='time'):
+def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
         Parameters
@@ -96,19 +127,30 @@ def windowed_run_count(da, window, dim='time'):
           Minimum run length.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-
+        ufunc_1Dim : optional, one of 'auto' (default), True or False
+          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
+          for dataarray with a small number of gridpoints
 
         Returns
         -------
         out : N-dimensional xarray data array (int)
           Total number of true values part of a consecutive runs of at least `window` long.
         """
-    d = rle(da, dim=dim)
-    out = d.where(d >= window, 0).sum(dim=dim)
+    if ufunc_1Dim == 'auto':
+        npts = get_npts(da)
+        if npts <= npts_opt:
+            ufunc_1Dim = True
+
+    if ufunc_1Dim:
+        out = windowed_run_count_ufunc(da, window)
+    else:
+        d = rle(da, dim=dim)
+        out = d.where(d >= window, 0).sum(dim=dim)
     return out
 
 
-def first_run(da, window, dim='time'):
+def first_run(da, window, dim='time', ufunc_1Dim='auto'):
     """Return the index of the first item of a run of at least a given length.
 
         Parameters
@@ -120,22 +162,35 @@ def first_run(da, window, dim='time'):
           Minimum duration of consecutive run to accumulate values.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
+        ufunc_1Dim : optional, one of 'auto' (default), True or False
+          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
+          for dataarray with a small number of gridpoints
 
         Returns
         -------
         out : N-dimensional xarray data array (int)
           Index of first item in first valid run. Returns np.nan if there are no valid run.
         """
-    dims = list(da.dims)
-    if 'time' not in dims:
-        da['time'] = da[dim]
-        da.swap_dims({dim: 'time'})
-    da = da.astype('int')
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({'time': 1})
-    ind = xr.broadcast(i, da)[0].chunk(da.chunks)
-    wind_sum = da.rolling(time=window).sum()
-    out = ind.where(wind_sum >= window).min(dim=dim) - (
-        window - 1)  # remove window -1 as rolling result index is last element of the moving window
+    if ufunc_1Dim == 'auto':
+        npts = get_npts(da)
+        if npts <= npts_opt:
+            ufunc_1Dim = True
+
+    if ufunc_1Dim:
+        out = first_run_ufunc(da, window)
+
+    else:
+        dims = list(da.dims)
+        if 'time' not in dims:
+            da['time'] = da[dim]
+            da.swap_dims({dim: 'time'})
+        da = da.astype('int')
+        i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({'time': 1})
+        ind = xr.broadcast(i, da)[0].chunk(da.chunks)
+        wind_sum = da.rolling(time=window).sum()
+        out = ind.where(wind_sum >= window).min(dim=dim) - (
+            window - 1)  # remove window -1 as rolling result index is last element of the moving window
     return out
 
 
@@ -179,25 +234,6 @@ def rle_1d(arr):
     return ia[i], rl, pos
 
 
-def windowed_run_count_1d(arr, window):
-    """Return the number of consecutive true values in array for runs at least as long as given duration.
-
-    Parameters
-    ----------
-    arr : bool array
-      Input array
-    window : int
-      Minimum duration of consecutive run to accumulate values.
-
-    Returns
-    -------
-    int
-      Total number of true values part of a consecutive run at least `window` long.
-    """
-    v, rl = rle_1d(arr)[:2]
-    return np.where(v * rl >= window, rl, 0).sum()
-
-
 def first_run_1d(arr, window):
     """Return the index of the first item of a run of at least a given length.
 
@@ -237,6 +273,25 @@ def longest_run_1d(arr):
     """
     v, rl = rle_1d(arr)[:2]
     return np.where(v, rl, 0).max()
+
+
+def windowed_run_count_1d(arr, window):
+    """Return the number of consecutive true values in array for runs at least as long as given duration.
+
+    Parameters
+    ----------
+    arr : bool array
+      Input array
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    int
+      Total number of true values part of a consecutive run at least `window` long.
+    """
+    v, rl = rle_1d(arr)[:2]
+    return np.where(v * rl >= window, rl, 0).sum()
 
 
 def windowed_run_events_1d(arr, window):
