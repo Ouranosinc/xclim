@@ -13,10 +13,16 @@ class Test_FA():
     def test_simple(self, ndq_series):
         out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma', season='DJF')
         assert out.long_name == 'N-year return period max winter 1-day flow'
+        assert out.shape == (2, 2, 3)  # nrt, nx, ny
 
     def test_no_indexer(self, ndq_series):
         out = streamflow.freq_analysis(ndq_series, mode='max', t=[2, 5], dist='gamma')
         assert out.long_name == 'N-year return period max annual 1-day flow'
+        assert out.shape == (2, 2, 3)  # nrt, nx, ny
+
+    def test_q27(self, ndq_series):
+        out = streamflow.freq_analysis(ndq_series, mode='max', t=2, dist='gamma', window=7)
+        assert out.shape == (1, 2, 3)
 
 
 class TestStats():
@@ -25,7 +31,6 @@ class TestStats():
         out = streamflow.stats(ndq_series, freq='YS', op='min', season='MAM')
         assert out.attrs['units'] == 'm^3 s-1'
 
-    @pytest.mark.skip()
     def test_missing(self, ndq_series):
         a = ndq_series
         a = ndq_series.where(~((a.time.dt.dayofyear == 5) * (a.time.dt.year == 1902)))

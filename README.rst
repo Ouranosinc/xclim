@@ -28,6 +28,10 @@ xclim
         :target: https://xclim.readthedocs.io/en/latest
         :alt: Documentation Status
 
+.. image:: https://zenodo.org/badge/142608764.svg
+        :target: https://zenodo.org/badge/latestdoi/142608764
+        :alt: DOI
+
 .. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/bird-house/birdhouse-docs/blob/master/LICENSE
         :alt: License
@@ -43,7 +47,7 @@ For example, the following would compute monthly mean temperature from daily mea
   ds = xr.open_dataset(filename)
   tg = xclim.icclim.TG(ds.tas, freq='YS')
 
-For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.  
+For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.
 
 ``xclim`` is still in active development at the moment, but is close to being production ready. We're are currently nearing a release candidate (as of Q2 2019). If you're interested in participating to the development, please leave us a message on the issue tracker.
 
@@ -55,7 +59,7 @@ For applications where meta-data and missing values are important to get right, 
 Credits
 -------
 
-This work is made possible thanks to the contributions of the Canadian Center for Climate Services. 
+This work is made possible thanks to the contributions of the Canadian Center for Climate Services.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 

@@ -30,8 +30,15 @@ class Stats(Streamflow):
         indexer = kwds['indexer']
         freq = kwds['freq'] or generic.default_freq(**indexer)
 
-        miss = (checks.missing_any(generic.select_time(da, **indexer), freq) for da in args)
+        miss = (checks.missing_any(da, freq, **indexer) for da in args)
         return reduce(np.logical_or, miss)
+
+
+# We need to disable the missing value check because the output here is not a time series.
+class FA(Streamflow):
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        return False
 
 
 base_flow_index = Streamflow(identifier='base_flow_index',
