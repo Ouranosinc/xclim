@@ -44,17 +44,16 @@ max_n_day_precipitation_amount = Pr(identifier='max_n_day_precipitation_amount',
                                     units='mm',
                                     standard_name='lwe_thickness_of_precipitation_amount',
                                     long_name='maximum {window}-day total precipitation',
-                                    description="{freq} maximum {window}-day total precipitation",
+                                    description="{freq} maximum {window}-day total precipitation.",
                                     cellmethods='time: sum within days time: maximum over days',
                                     compute=indices.max_n_day_precipitation_amount,
                                     )
 
 wetdays = Pr(identifier='wetdays',
-             var_name='r{thresh}mm',
              units='days',
              standard_name='number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold',
-             long_name='Number of Wet Days (precip >= {thresh} mm)',
-             description='{freq} number of days with daily precipitation over {thresh} mm',
+             long_name='Number of wet days (precip >= {thresh})',
+             description='{freq} number of days with daily precipitation over {thresh}.',
              cell_methods='time: sum within days time: sum over days',
              compute=indices.wetdays,
              )
@@ -63,9 +62,9 @@ maximum_consecutive_wet_days = Pr(identifier='cwd',
                                   units='days',
                                   standard_name='number_of_days_with_lwe_thickness_of_'
                                                 'precipitation_amount_at_or_above_threshold',
-                                  long_name='Maximum consecutive wet days (Precip >= {thresh}mm)',
+                                  long_name='Maximum consecutive wet days (Precip >= {thresh})',
                                   description='{freq} maximum number of days with daily '
-                                              'precipitation over {thresh} mm',
+                                              'precipitation over {thresh}.',
                                   cell_methods='time: sum within days time: sum over days',
                                   compute=indices.maximum_consecutive_wet_days,
                                   )
@@ -74,9 +73,9 @@ maximum_consecutive_dry_days = Pr(identifier='cdd',
                                   units='days',
                                   standard_name='number_of_days_with_lwe_thickness_of_'
                                                 'precipitation_amount_below_threshold',
-                                  long_name='Maximum consecutive dry days (Precip < {thresh}mm)',
+                                  long_name='Maximum consecutive dry days (Precip < {thresh})',
                                   description='{freq} maximum number of days with daily '
-                                              'precipitation below {thresh} mm',
+                                              'precipitation below {thresh}.',
                                   cell_methods='time: sum within days time: sum over days',
                                   compute=indices.maximum_consecutive_dry_days,
                                   )
@@ -86,7 +85,7 @@ daily_pr_intensity = Pr(identifier='sdii',
                         standard_name='lwe_thickness_of_precipitation_amount',
                         long_name='Average precipitation during Wet Days (SDII)',
                         description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
-                                    "for days with daily precipitation over {thresh} mm",
+                                    "for days with daily precipitation over {thresh}.",
                         cell_methods='',
                         compute=indices.daily_pr_intensity,
                         )
@@ -95,7 +94,7 @@ precip_accumulation = Pr(identifier='prcptot',
                          units='mm',
                          standard_name='lwe_thickness_of_precipitation_amount',
                          long_name='Total precipitation',
-                         description='{freq} total precipitation',
+                         description='{freq} total precipitation.',
                          cell_methods='time: sum within days time: sum over days',
                          compute=indices.precip_accumulation
                          )

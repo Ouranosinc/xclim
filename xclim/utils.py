@@ -747,7 +747,15 @@ class Indicator():
         raise NotImplementedError
 
     def format(self, attrs, args=None):
-        """Format attributes including {} tags with arguments."""
+        """Format attributes including {} tags with arguments.
+
+        Parameters
+        ----------
+        attrs: dict
+          Attributes containing tags to replace with arguments' values.
+        args : dict
+          Function call arguments.
+        """
         if args is None:
             return attrs
 
@@ -764,6 +772,8 @@ class Indicator():
                         if dk == 'month':
                             dv = 'm{}'.format(dv)
                         mba[k] = '{{{}}}'.format(dv)
+                elif isinstance(v, units.Quantity):
+                    mba[k] = '{:~P}'.format(v)
                 else:
                     mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
 

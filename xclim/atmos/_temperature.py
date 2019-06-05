@@ -67,46 +67,42 @@ class TasminTasmax(Indicator2D):
 
 
 tn_days_below = Tasmin(identifier='tn_days_below',
-                       var_name='tnlt_{thresh}',
                        units='days',
                        standard_name='number_of_days_with_air_temperature_below_threshold',
-                       long_name='Number of days with Tmin < {thresh}C',
-                       description="{freq} number of days where daily minimum temperature is below {thresh}℃",
+                       long_name='Number of days with Tmin < {thresh}',
+                       description="{freq} number of days where daily minimum temperature is below {thresh}",
                        cell_methods='time: minimum within days time: sum over days',
                        compute=indices.tn_days_below,
                        )
 
 tx_days_above = Tasmax(identifier='tx_days_above',
-                       var_name='txgt_{thresh}',
                        units='days',
                        standard_name='number_of_days_with_air_temperature_above_threshold',
-                       long_name='Number of days with Tmax > {thresh}C',
-                       description="{freq} number of days where daily maximum temperature exceeds {thresh}℃",
+                       long_name='Number of days with Tmax > {thresh}',
+                       description="{freq} number of days where daily maximum temperature exceeds {thresh}",
                        cell_methods='time: maximum within days time: sum over days',
                        compute=indices.tx_days_above,
                        )
 
 tx_tn_days_above = TasminTasmax(identifier='tx_tn_days_above',
-                                var_name='txgt_{thresh_tasmax}_tngt_{thresh_tasmin}',
                                 units='days',
                                 standard_name='number_of_days_with_air_temperature_above_threshold',
-                                long_name='Number of days with Tmax > {thresh_tasmax}C and Tmin > {thresh_tasmin}C',
+                                long_name='Number of days with Tmax > {thresh_tasmax} and Tmin > {thresh_tasmin}',
                                 description="{freq} number of days where daily maximum temperature exceeds"
-                                            " {thresh_tasmax}℃ and minimum temperature exceeds {thresh_tasmin}℃",
+                                            " {thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}",
                                 cell_methods='',
                                 compute=indices.tx_tn_days_above,
                                 )
 
 heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
-                                   var_name='heat_wave_frequency',
                                    units='',
                                    standard_name='heat_wave_events',
-                                   long_name='Number of heat wave events (Tmin > {thresh_tasmin}℃'
-                                             'and Tmax > {thresh_tasmax}℃ for >= {window} days)',
+                                   long_name='Number of heat wave events (Tmin > {thresh_tasmin}'
+                                             'and Tmax > {thresh_tasmax} for >= {window} days)',
                                    description="{freq} number of heat wave events over a given period. "
                                                "An event occurs when the minimum and maximum daily "
                                                "temperature both exceeds specific thresholds : "
-                                               "(Tmin > {thresh_tasmin}℃ and Tmax > {thresh_tasmax}℃) "
+                                               "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
                                                "over a minimum number of days ({window}).",
                                    cell_methods='',
                                    keywords="health,",
@@ -114,15 +110,14 @@ heat_wave_frequency = TasminTasmax(identifier='heat_wave_frequency',
                                    )
 
 heat_wave_max_length = TasminTasmax(identifier='heat_wave_max_length',
-                                    var_name='heat_wave_max_length',
                                     units='days',
                                     standard_name='spell_length_of_days_with_air_temperature_above_threshold',
-                                    long_name='Maximum length of heat wave events (Tmin > {thresh_tasmin}℃'
-                                              'and Tmax > {thresh_tasmax}℃ for >= {window} days)',
+                                    long_name='Maximum length of heat wave events (Tmin > {thresh_tasmin}'
+                                              'and Tmax > {thresh_tasmax} for >= {window} days)',
                                     description="{freq} maximum length of heat wave events occuring in a given period."
                                                 "An event occurs when the minimum and maximum daily "
                                                 "temperature both exceeds specific thresholds "
-                                                "(Tmin > {thresh_tasmin}℃ and Tmax > {thresh_tasmax}℃) over "
+                                                "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
                                                 "a minimum number of days ({window}).",
                                     cell_methods='',
                                     keywords="health,",
@@ -130,12 +125,11 @@ heat_wave_max_length = TasminTasmax(identifier='heat_wave_max_length',
                                     )
 
 heat_wave_index = Tasmax(identifier='heat_wave_index',
-                         var_name='hwi_{thresh}',
                          units='days',
                          standard_name='heat_wave_index',
                          long_name='Number of days that are part of a heatwave',
                          description='{freq} number of days that are part of a heatwave, '
-                                     'defined as five or more consecutive days over {thresh}℃',
+                                     'defined as five or more consecutive days over {thresh}.',
                          cell_methods='',
                          compute=indices.heat_wave_index,
                          )
@@ -249,13 +243,12 @@ cold_spell_duration_index = Tasmin(identifier='cold_spell_duration_index',
                                    )
 
 cold_spell_days = Tas(identifier='cold_spell_days',
-                      var_name='csi_{thresh}',
                       units='days',
                       standard_name='cold_spell_days',
                       long_name='cold spell index',
                       description='{freq} number of days that are part of a cold spell, defined as {window} '
                                   'or more consecutive days with mean daily '
-                                  'temperature below  {thresh}°C',
+                                  'temperature below  {thresh}.',
                       cell_methods='',
                       compute=indices.cold_spell_days,
                       )
@@ -265,37 +258,34 @@ daily_freezethaw_cycles = TasminTasmax(identifier='dlyfrzthw',
                                        standard_name='daily_freezethaw_cycles',
                                        long_name='daily freezethaw cycles',
                                        description='{freq} number of days with a diurnal freeze-thaw cycle '
-                                                   ': Tmax > 0℃ and Tmin < 0℃',
+                                                   ': Tmax > 0℃ and Tmin < 0℃.',
                                        cell_methods='',
                                        compute=indices.daily_freezethaw_cycles,
                                        )
 
 cooling_degree_days = Tas(identifier='cooling_degree_days',
-                          var_name='cddcold_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_excess_wrt_time',
-                          long_name='Cooling Degree Days (Tmean > {thresh}C)',
-                          description='{freq} cooling degree days above {thresh}°C',
+                          long_name='Cooling Degree Days (Tmean > {thresh})',
+                          description='{freq} cooling degree days above {thresh}.',
                           cell_methods='time: mean within days time: sum over days',
                           compute=indices.cooling_degree_days,
                           )
 
 heating_degree_days = Tas(identifier='heating_degree_days',
-                          var_name='hddheat_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_deficit_wrt_time',
-                          long_name='Heating Degree Days (Tmean < {thresh}C)',
-                          description='{freq} heating degree days below {thresh}°C',
+                          long_name='Heating Degree Days (Tmean < {thresh})',
+                          description='{freq} heating degree days below {thresh}.',
                           cell_methods='time: mean within days time: sum over days',
                           compute=indices.heating_degree_days,
                           )
 
 growing_degree_days = Tas(identifier='growing_degree_days',
-                          var_name='gddgrow_{thresh}',
                           units='K days',
                           standard_name='integral_of_air_temperature_excess_wrt_time',
                           long_name='growing degree days above {thresh}',
-                          description='{freq} growing degree days above {thresh}°C',
+                          description='{freq} growing degree days above {thresh}',
                           cell_methods='time: mean within days time: sum over days',
                           compute=indices.growing_degree_days,
                           )
@@ -313,7 +303,7 @@ frost_days = Tasmin(identifier='frost_days',
                     standard_name='days_with_air_temperature_below_threshold',
                     long_name='Number of Frost Days (Tmin < 0C)',
                     description='{freq} number of days with minimum daily '
-                                'temperature below 0°C',
+                                'temperature below 0℃.',
                     cell_methods='time: minimum within days time: sum over days',
                     compute=indices.frost_days,
                     )
@@ -321,9 +311,9 @@ frost_days = Tasmin(identifier='frost_days',
 ice_days = Tasmax(identifier='ice_days',
                   standard_name='days_with_air_temperature_below_threshold',
                   units='days',
-                  long_name='Number of Ice Days (Tmax < 0C)',
+                  long_name='Number of Ice Days (Tmax < 0℃)',
                   description='{freq} number of days with maximum daily '
-                              'temperature below 0°C',
+                              'temperature below 0℃',
                   cell_methods='time: maximum within days time: sum over days',
                   compute=indices.ice_days,
                   )
@@ -333,32 +323,30 @@ consecutive_frost_days = Tasmin(identifier='consecutive_frost_days',
                                 standard_name='spell_length_of_days_with_air_temperature_below_threshold',
                                 long_name='Maximum number of consecutive days with Tmin < 0C',
                                 description='{freq} maximum number of consecutive days with '
-                                            'minimum daily temperature below 0°C',
+                                            'minimum daily temperature below 0℃',
                                 cell_methods='time: min within days time: maximum over days',
                                 compute=indices.consecutive_frost_days,
                                 )
 
 growing_season_length = Tas(identifier='growing_season_length',
-                            var_name='gsl_{thresh}',
                             units='days',
                             standard_name='growing_season_length',
-                            long_name='ETCCDI Growing Season Length (Tmean > {thresh}C)',
+                            long_name='ETCCDI Growing Season Length (Tmean > {thresh})',
                             description='{freq} number of days between the first occurrence of at least '
-                                        'six consecutive days with mean daily temperature over {thresh}℃ and '
+                                        'six consecutive days with mean daily temperature over {thresh} and '
                                         'the first occurrence of at least {window} consecutive days with '
-                                        'mean daily temperature below {thresh}℃ after July 1st in the northern '
+                                        'mean daily temperature below {thresh} after July 1st in the northern '
                                         'hemisphere and January 1st in the southern hemisphere',
                             cell_methods='',
                             compute=indices.growing_season_length,
                             )
 
 tropical_nights = Tasmin(identifier='tropical_nights',
-                         var_name='tr_{thresh}',
                          units='days',
                          standard_name='number_of_days_with_air_temperature_above_threshold',
-                         long_name='Number of Tropical Nights (Tmin > {thresh}C)',
+                         long_name='Number of Tropical Nights (Tmin > {thresh})',
                          description='{freq} number of Tropical Nights : defined as days with minimum daily temperature'
-                                     ' above {thresh}℃',
+                                     ' above {thresh}',
                          cell_methods='time: minimum within days time: sum over days',
                          compute=indices.tropical_nights,
                          )
@@ -369,7 +357,7 @@ tg90p = Tas(identifier='tg90p',
             long_name='Number of days when Tmean > 90th percentile',
             description='{freq} number of days with mean daily temperature above the 90th percentile.'
                         'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
-                        'for a reference period',
+                        'for a reference period.',
             cell_methods='time: mean within days time: sum over days',
             compute=indices.tg90p,
             )
@@ -380,7 +368,7 @@ tg10p = Tas(identifier='tg10p',
             long_name='Number of days when Tmean < 10th percentile',
             description='{freq} number of days with mean daily temperature below the 10th percentile.'
                         'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
-                        'for a reference period',
+                        'for a reference period.',
             cell_methods='time: mean within days time: sum over days',
             compute=indices.tg10p
             )
@@ -391,7 +379,7 @@ tx90p = Tasmax(identifier='tx90p',
                long_name='Number of days when Tmax > 90th percentile',
                description='{freq} number of days with maximum daily temperature above the 90th percentile.'
                            'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
-                           'for a reference period',
+                           'for a reference period.',
                cell_methods='time: maximum within days time: sum over days',
                compute=indices.tx90p,
                )
@@ -402,7 +390,7 @@ tx10p = Tasmax(identifier='tx10p',
                long_name='Number of days when Tmax < 10th percentile',
                description='{freq} number of days with maximum daily temperature below the 10th percentile.'
                            'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
-                           'for a reference period',
+                           'for a reference period.',
                cell_methods='time: maximum within days time: sum over days',
                compute=indices.tx10p
                )
@@ -413,7 +401,7 @@ tn90p = Tasmin(identifier='tn90p',
                long_name='Number of days when Tmin > 90th percentile',
                description='{freq} number of days with minimum daily temperature above the 90th percentile.'
                            'The 90th percentile is to be computed for a 5 day window centered on each calendar day '
-                           'for a reference period',
+                           'for a reference period.',
                cell_methods='time: minimum within days time: sum over days',
                compute=indices.tn90p,
                )
@@ -424,7 +412,7 @@ tn10p = Tasmin(identifier='tn10p',
                long_name='Number of days when Tmin < 10th percentile',
                description='{freq} number of days with minimum daily temperature below the 10th percentile.'
                            'The 10th percentile is to be computed for a 5 day window centered on each calendar day '
-                           'for a reference period',
+                           'for a reference period.',
                cell_methods='time: minimum within days time: sum over days',
                compute=indices.tn10p
                )
