@@ -5,8 +5,8 @@ import xarray as xr
 from xclim import run_length as rl, utils
 from xclim.utils import declare_units, units
 
-logging.basicConfig(level=logging.DEBUG)
-logging.captureWarnings(True)
+# logging.basicConfig(level=logging.DEBUG)
+# logging.captureWarnings(True)
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 

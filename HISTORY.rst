@@ -2,6 +2,23 @@
 History
 =======
 
+0.10-beta ()
+-------------
+* Indicators are now split into packages named by *realms*. ``import xclim.atmos`` to load indicators related to atmospheric variables.
+* Remove support for Python 2 compatibility
+* Added support for *period of the year* subsetting in ``checks.missing_any``. 
+* Allow passing positive longitude values when subsetting data with negative longitudes
+
+
+
+0.9-beta (13-05-2019) 
+---------------------
+TODO
+
+0.8-beta (2019-02-11)
+---------------------
+TODO
+
 0.7-beta (2019-02-05)
 ---------------------
 Major Changes:
