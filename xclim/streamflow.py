@@ -47,20 +47,23 @@ base_flow_index = Streamflow(identifier='base_flow_index',
                              compute=base_flow_index)
 
 
-freq_analysis = FA(identifier='q{window}{mode}{indexer}',
+freq_analysis = FA(identifier='freq_analysis',
+                   var_name='q{window}{mode}{indexer}',
                    long_name='N-year return period {mode} {indexer} {window}-day flow',
                    description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
                                "estimated using the {dist} distribution.",
                    compute=generic.frequency_analysis)
 
 
-stats = Stats(identifier='q{indexer}{op}',
+stats = Stats(identifier='stats',
+              var_name='q{indexer}{op}',
               long_name='{freq} {op} of {indexer} daily flow ',
               description="{freq} {op} of {indexer} daily flow",
               compute=generic.select_resample_op)
 
 
-doy_qmax = Streamflow(identifier='q{indexer}_doy_qmax',
+doy_qmax = Streamflow(identifier='doy_qmax',
+                      var_name='q{indexer}_doy_qmax',
                       long_name='Day of the year of the maximum over {indexer}',
                       description='Day of the year of the maximum over {indexer}',
                       units='',
@@ -68,7 +71,8 @@ doy_qmax = Streamflow(identifier='q{indexer}_doy_qmax',
                       compute=wrapped_partial(generic.select_resample_op, op=generic.doymax))
 
 
-doy_qmin = Streamflow(identifier='q{indexer}_doy_qmin',
+doy_qmin = Streamflow(identifier='doy_qmin',
+                      var_name='q{indexer}_doy_qmin',
                       long_name='Day of the year of the minimum over {indexer}',
                       description='Day of the year of the minimum over {indexer}',
                       units='',

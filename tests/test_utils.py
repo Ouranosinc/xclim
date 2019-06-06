@@ -31,6 +31,7 @@ from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
+from xclim import atmos
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
 from xclim.utils import units, pint2cfunits, units2pint
@@ -179,7 +180,8 @@ class TestDailyDownsampler:
 
 
 class UniIndTemp(Indicator):
-    identifier = 'tmin{thresh}'
+    identifier = 'tmin'
+    var_name = 'tmin{thresh}'
     units = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
@@ -210,10 +212,11 @@ class TestIndicator:
         import datetime as dt
         a = tas_series(np.arange(360.))
         ind = UniIndTemp()
-        txm = ind(a, freq='YS')
+        txm = ind(a, thresh=5, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
         assert '{:%Y-%m-%d %H}'.format(dt.datetime.now()) in txm.attrs['history']
-        assert txm.name == "tmin0"
+        assert "tmin(da, thresh=5, freq='YS')" in txm.attrs['history']
+        assert txm.name == "tmin5"
 
     def test_temp_unit_conversion(self, tas_series):
         a = tas_series(np.arange(360.))
@@ -229,21 +232,11 @@ class TestIndicator:
         ind = UniIndPr()
         meta = ind.json()
 
-        expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
+        expected = {'identifier', 'var_name', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords',
+                    'abstract',
                     'parameters', 'description', 'history', 'references', 'comment', 'notes'}
 
         assert set(meta.keys()).issubset(expected)
-
-    def test_factory(self, pr_series):
-        attrs = dict(identifier='test', units='days', required_units='[length] / [time]',
-                     long_name='long name',
-                     standard_name='standard name', context='hydro'
-                     )
-        cls = Indicator.factory(attrs)
-
-        assert issubclass(cls, Indicator)
-        da = pr_series(np.arange(365))
-        cls(compute=indices.wetdays)(da)
 
     def test_signature(self):
         from inspect import signature
@@ -272,6 +265,18 @@ class TestIndicator:
         txc = tx(ds.tasmax)
 
         assert isinstance(txc.data, dask.array.core.Array)
+
+    def test_identifier(self):
+
+        with pytest.warns(UserWarning):
+            UniIndPr(identifier='t_{}')
+
+    def test_formatting(self, pr_series):
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1 mm/day)'
+
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1.5 mm/day)'
 
 
 class TestKwargs:
@@ -404,6 +409,21 @@ class TestUnitConversion:
         out = utils.pint_multiply(a, 1 * units.days)
         assert out[0] == 1 * 60 * 60 * 24
         assert out.units == 'kg m-2'
+
+
+class TestCheckUnits:
+
+    def test_basic(self):
+        utils._check_units('mm/day', '[precipitation]')
+        utils._check_units('mm/s', '[precipitation]')
+        utils._check_units('kg/m2/s', '[precipitation]')
+        utils._check_units('kg/m2', '[length]')
+        utils._check_units('cms', '[discharge]')
+        utils._check_units('m3/s', '[discharge]')
+
+        with pytest.raises(AttributeError):
+            utils._check_units('mm', '[precipitation]')
+            utils._check_units('m3', '[discharge]')
 
 
 class TestSubsetGridPoint:
