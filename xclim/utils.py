@@ -10,7 +10,7 @@ import datetime as dt
 import functools
 import re
 import warnings
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from inspect import signature
 
 import numpy as np
@@ -246,12 +246,14 @@ def _check_units(val, dim):
         tu = 'mmday'
     elif dim == '[discharge]':
         tu = 'cms'
+    elif dim == '[length]':
+        tu = 'm'
     else:
         raise NotImplementedError
 
     try:
         (1 * units2pint(val)).to(tu, 'hydro')
-    except pint.UndefinedUnitError:
+    except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
 
 
@@ -567,11 +569,15 @@ def walk_map(d, func):
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
 # missing functions. It can handle indicators with any number of forcing fields.
-class Indicator(object):
+class Indicator():
     r"""Climate indicator based on xarray
     """
-    # Unique ID for registry. May use tags {<tag>} that will be formatted at runtime.
+    # Unique ID for function registry.
     identifier = ''
+
+    # Output variable name. May use tags {<tag>} that will be formatted at runtime.
+    var_name = ''
+
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
@@ -600,7 +606,7 @@ class Indicator(object):
                                     'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
                       'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
                                       'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
-                      'identifier': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
+                      'var_name': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
 
     for k, v in _attrs_mapping.items():
         v.update(months)
@@ -613,14 +619,18 @@ class Indicator(object):
 
     def __init__(self, **kwds):
 
+        # Set instance attributes.
         for key, val in kwds.items():
             setattr(self, key, val)
 
-        # Sanity checks
-        required = ['compute', ]
-        for key in required:
-            if not getattr(self, key):
-                raise ValueError("{} needs to be defined during instantiation.".format(key))
+        # Verify that the identifier is a proper slug
+        if not re.match(r'^[-\w]+$', self.identifier):
+            warnings.warn("The identifier contains non-alphanumeric characters. It could make life "
+                          "difficult for downstream software reusing this class.", UserWarning)
+
+        # Default value for `var_name` is the `identifier`.
+        if self.var_name == '':
+            self.var_name = self.identifier
 
         # Extract information from the `compute` function.
         # The signature
@@ -665,8 +675,18 @@ class Indicator(object):
 
         # Update attributes
         out_attrs = self.json(ba.arguments)
-        formatted_id = out_attrs.pop('identifier')
-        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}{}'.format(dt.datetime.now(), formatted_id, ba.signature)
+        vname = out_attrs.pop('var_name')
+
+        # Update the signature with the values of the actual call.
+        cp = OrderedDict()
+        for (k, v) in ba.signature.parameters.items():
+            if v.default is not None and isinstance(v.default, (float, int, str)):
+                cp[k] = v.replace(default=ba.arguments[k])
+            else:
+                cp[k] = v
+
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
+            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
         attrs['cell_methods'] += out_attrs.pop('cell_methods')
         attrs.update(out_attrs)
 
@@ -694,7 +714,7 @@ class Indicator(object):
         mask = self.missing(*mba.args, **mba.kwargs)
         ma_out = out.where(~mask)
 
-        return ma_out.rename(formatted_id)
+        return ma_out.rename(vname)
 
     @property
     def cf_attrs(self):
@@ -711,7 +731,7 @@ class Indicator(object):
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'abstract', 'keywords']
+        names = ['identifier', 'var_name', 'abstract', 'keywords']
         out = {key: getattr(self, key) for key in names}
         out.update(self.cf_attrs)
         out = self.format(out, args)
@@ -731,12 +751,20 @@ class Indicator(object):
         Warn of potential issues."""
         return True
 
-    @abc.abstractmethod
     def compute(*args, **kwds):
         """The function computing the indicator."""
+        raise NotImplementedError
 
     def format(self, attrs, args=None):
-        """Format attributes including {} tags with arguments."""
+        """Format attributes including {} tags with arguments.
+
+        Parameters
+        ----------
+        attrs: dict
+          Attributes containing tags to replace with arguments' values.
+        args : dict
+          Function call arguments.
+        """
         if args is None:
             return attrs
 
@@ -753,8 +781,12 @@ class Indicator(object):
                         if dk == 'month':
                             dv = 'm{}'.format(dv)
                         mba[k] = '{{{}}}'.format(dv)
+                elif isinstance(v, units.Quantity):
+                    mba[k] = '{:g~P}'.format(v)
+                elif isinstance(v, (int, float)):
+                    mba[k] = '{:g}'.format(v)
                 else:
-                    mba[k] = int(v) if (isinstance(v, float) and v % 1 == 0) else v
+                    mba[k] = v
 
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
@@ -773,12 +805,6 @@ class Indicator(object):
         """Validate input data requirements.
         Raise error if conditions are not met."""
         checks.assert_daily(da)
-
-    @classmethod
-    def factory(cls, attrs):
-        """Create a subclass from the attributes dictionary."""
-        name = attrs['identifier'].capitalize()
-        return type(name, (cls,), attrs)
 
 
 class Indicator2D(Indicator):
