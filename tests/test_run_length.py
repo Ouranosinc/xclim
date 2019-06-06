@@ -38,7 +38,7 @@ class TestLongestRun:
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
-        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
     def test_start_at_0(self):
@@ -57,7 +57,7 @@ class TestLongestRun:
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
         lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time',
-                                                ufunc_1Dim=False)  # override 'auto' for small
+                                                ufunc_1dim=False)  # override 'auto' for small
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
     def test_end_start_at_0(self):
@@ -75,7 +75,7 @@ class TestLongestRun:
         da3d[-10:, ] = da3d[-10:, ] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
     def test_all_true(self):
@@ -90,7 +90,7 @@ class TestLongestRun:
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
     def test_almost_all_true(self):
@@ -109,7 +109,7 @@ class TestLongestRun:
         da3d[35, ] = da3d[35, ] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time='M').apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.longest_run, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
 
@@ -125,7 +125,7 @@ class TestFirstRun:
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time='M').apply(rl.first_run_ufunc, window=5)
-        lt_Ndim = da3d.resample(time='M').apply(rl.first_run, window=5, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.first_run, window=5, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
 
@@ -141,7 +141,7 @@ class TestWindowedRunEvents:
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time='M').apply(rl.windowed_run_events_ufunc, window=4)
-        lt_Ndim = da3d.resample(time='M').apply(rl.windowed_run_events, window=4, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.windowed_run_events, window=4, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
 
@@ -157,5 +157,5 @@ class TestWindowedRunCount:
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time='M').apply(rl.windowed_run_count_ufunc, window=4)
-        lt_Ndim = da3d.resample(time='M').apply(rl.windowed_run_count, window=4, dim='time', ufunc_1Dim=False)
+        lt_Ndim = da3d.resample(time='M').apply(rl.windowed_run_count, window=4, dim='time', ufunc_1dim=False)
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
