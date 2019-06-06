@@ -11,6 +11,19 @@ npts_opt = 9000
 
 
 def get_npts(da):
+    """Return the number of gridpoints in a data-array.
+
+        Parameters
+        ----------
+        da : N-dimensional xarray.DataArray
+          Input array
+
+        Returns
+        -------
+        (int)
+          Product of input dataarray coordinate sizes excluding the dimension 'time'
+        """
+
     coords = list(da.coords)
     coords.remove('time')
     npts = 1
@@ -51,7 +64,7 @@ def rle(da, dim='time', max_chunk=1000000):
     return d
 
 
-def longest_run(da, dim='time', ufunc_1Dim='auto'):
+def longest_run(da, dim='time', ufunc_1dim='auto'):
     """Return the length of the longest consecutive run of True values.
 
         Parameters
@@ -60,7 +73,7 @@ def longest_run(da, dim='time', ufunc_1Dim='auto'):
           Input array
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-        ufunc_1Dim : optional, one of 'auto' (default), True or False
+        ufunc_1dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
           usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
           for dataarray with a small number of gridpoints.
@@ -69,11 +82,11 @@ def longest_run(da, dim='time', ufunc_1Dim='auto'):
         N-dimensional array (int)
           Length of longest run of True values along dimension
         """
-    if ufunc_1Dim == 'auto':
+    if ufunc_1dim == 'auto':
         npts = get_npts(da)
-        ufunc_1Dim = bool(npts <= npts_opt)
+        ufunc_1dim = bool(npts <= npts_opt)
 
-    if ufunc_1Dim:
+    if ufunc_1dim:
         rl_long = longest_run_ufunc(da)
     else:
         d = rle(da, dim=dim)
@@ -82,7 +95,7 @@ def longest_run(da, dim='time', ufunc_1Dim='auto'):
     return rl_long
 
 
-def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
+def windowed_run_events(da, window, dim='time', ufunc_1dim='auto'):
     """Return the number of runs of a minimum length.
 
         Parameters
@@ -93,7 +106,7 @@ def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
           Minimum run length.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-        ufunc_1Dim : optional, one of 'auto' (default), True or False
+        ufunc_1dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
           usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
           for dataarray with a small number of gridpoints.
@@ -102,11 +115,11 @@ def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
         out : N-dimensional xarray data array (int)
           Number of distinct runs of a minimum length.
         """
-    if ufunc_1Dim == 'auto':
+    if ufunc_1dim == 'auto':
         npts = get_npts(da)
-        ufunc_1Dim = bool(npts <= npts_opt)
+        ufunc_1dim = bool(npts <= npts_opt)
 
-    if ufunc_1Dim:
+    if ufunc_1dim:
         out = windowed_run_events_ufunc(da, window)
     else:
         d = rle(da, dim=dim)
@@ -114,7 +127,7 @@ def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
     return out
 
 
-def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
+def windowed_run_count(da, window, dim='time', ufunc_1dim='auto'):
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
         Parameters
@@ -125,7 +138,7 @@ def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
           Minimum run length.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-        ufunc_1Dim : optional, one of 'auto' (default), True or False
+        ufunc_1dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
           usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
           for dataarray with a small number of gridpoints.
@@ -135,11 +148,11 @@ def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
         out : N-dimensional xarray data array (int)
           Total number of true values part of a consecutive runs of at least `window` long.
         """
-    if ufunc_1Dim == 'auto':
+    if ufunc_1dim == 'auto':
         npts = get_npts(da)
-        ufunc_1Dim = bool(npts <= npts_opt)
+        ufunc_1dim = bool(npts <= npts_opt)
 
-    if ufunc_1Dim:
+    if ufunc_1dim:
         out = windowed_run_count_ufunc(da, window)
     else:
         d = rle(da, dim=dim)
@@ -147,7 +160,7 @@ def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
     return out
 
 
-def first_run(da, window, dim='time', ufunc_1Dim='auto'):
+def first_run(da, window, dim='time', ufunc_1dim='auto'):
     """Return the index of the first item of a run of at least a given length.
 
         Parameters
@@ -159,7 +172,7 @@ def first_run(da, window, dim='time', ufunc_1Dim='auto'):
           Minimum duration of consecutive run to accumulate values.
         dim : Xarray dimension (default = 'time')
           Dimension along which to calculate consecutive run
-        ufunc_1Dim : optional, one of 'auto' (default), True or False
+        ufunc_1dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
           usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
           for dataarray with a small number of gridpoints.
@@ -169,11 +182,11 @@ def first_run(da, window, dim='time', ufunc_1Dim='auto'):
         out : N-dimensional xarray data array (int)
           Index of first item in first valid run. Returns np.nan if there are no valid run.
         """
-    if ufunc_1Dim == 'auto':
+    if ufunc_1dim == 'auto':
         npts = get_npts(da)
-        ufunc_1Dim = bool(npts <= npts_opt)
+        ufunc_1dim = bool(npts <= npts_opt)
 
-    if ufunc_1Dim:
+    if ufunc_1dim:
         out = first_run_ufunc(da, window)
 
     else:
