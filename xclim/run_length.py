@@ -62,8 +62,8 @@ def longest_run(da, dim='time', ufunc_1Dim='auto'):
           Dimension along which to calculate consecutive run
         ufunc_1Dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
-          for dataarray with a small number of gridpoints
+          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+          for dataarray with a small number of gridpoints.
         Returns
         -------
         N-dimensional array (int)
@@ -95,8 +95,8 @@ def windowed_run_events(da, window, dim='time', ufunc_1Dim='auto'):
           Dimension along which to calculate consecutive run
         ufunc_1Dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
-          for dataarray with a small number of gridpoints
+          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+          for dataarray with a small number of gridpoints.
         Returns
         -------
         out : N-dimensional xarray data array (int)
@@ -127,8 +127,8 @@ def windowed_run_count(da, window, dim='time', ufunc_1Dim='auto'):
           Dimension along which to calculate consecutive run
         ufunc_1Dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
-          for dataarray with a small number of gridpoints
+          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+          for dataarray with a small number of gridpoints.
 
         Returns
         -------
@@ -161,8 +161,8 @@ def first_run(da, window, dim='time', ufunc_1Dim='auto'):
           Dimension along which to calculate consecutive run
         ufunc_1Dim : optional, one of 'auto' (default), True or False
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc==True is typically more efficient
-          for dataarray with a small number of gridpoints
+          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+          for dataarray with a small number of gridpoints.
 
         Returns
         -------
