@@ -278,6 +278,30 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     out.attrs['units'] = tasmax.units
     return out
 
+@declare_units('', tas='[temperature]', pr='[precipitation]', ws='[speed]', rh='[]')
+def fire_weather_index(tas, pr, ws, rh):
+    r"""Fire weather index
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Noon temperature.
+    pr : xarray.DataArray
+      Rain fall in open over previous 24 hours, at noon.
+    ws : xarray.DataArray
+      Noon wind speed.
+    rh : xarray.DataArray
+      Noon relative humidity.
+    """
+    import math
+    tas = utils.convert_units_to(tas, 'C')
+    pr = utils.convert_units_to(pr, 'mmday')
+    ws = utils.convert_units_to(ws, 'km/h')
+    rh = utils.convert_units_to(rh, '%')
+
+
+
+
 
 @declare_units('', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
                thresh_tasmax='[temperature]')
