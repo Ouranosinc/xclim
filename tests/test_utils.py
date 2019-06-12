@@ -414,6 +414,7 @@ class TestUnitConversion:
 class TestCheckUnits:
 
     def test_basic(self):
+        utils._check_units('%', '[]')
         utils._check_units('pct', '[]')
         utils._check_units('mm/day', '[precipitation]')
         utils._check_units('mm/s', '[precipitation]')

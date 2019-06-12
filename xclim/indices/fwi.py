@@ -94,7 +94,6 @@ def _duff_moisture_code(t, p, h, mth, dmc0):
     """Scalar computation of the Duff moisture code."""
     el = [6.5, 7.5, 9.0, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8.0, 7.0, 6.0]
 
-    t = t
     if (t < -1.1):
         t = -1.1
     rk = 1.894 * (t + 1.1) * (100.0 - h) * (el[mth - 1] * 0.0001)  # *Eqs.16 and 17*#

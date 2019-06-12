@@ -3,6 +3,11 @@ import xarray as xr
 from xclim.indices.fwi import fine_fuel_moisture_code, duff_moisture_code, drought_code
 from xclim.indices.fwi import initial_spread_index, build_up_index, fire_weather_index
 from xclim.indices import fire_weather_index as xfwi
+import os
+from pathlib import Path
+
+TESTS_HOME = Path(os.path.dirname(__file__))
+TESTS_DATA = TESTS_HOME / 'testdata' / 'fwi'
 
 
 class TestFireWeatherIndex:
@@ -30,6 +35,25 @@ class TestFireWeatherIndex:
 
         fwi = xfwi(ds.temp, ds.pr, ds.ws, ds.rh, 85.0, 6.0, 15.0)
         np.testing.assert_array_almost_equal(fwi, data['fwi'], 1)
+
+    def test_gfwed(self):
+        import datetime as dt
+
+        init_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850730.nc'
+        i = xr.open_dataset(init_fn)
+
+        var_fn = [TESTS_DATA / 'Wx.MERRA2.Daily.Default.19850731.nc',
+                 TESTS_DATA / 'Prec.MERRA2.Daily.Default.19850731.nc']
+        v = xr.open_mfdataset(var_fn).reset_index('time', drop=True)
+        v['time'] = xr.IndexVariable('time', [dt.datetime(1985, 7, 31)])
+        v.set_coords('time', inplace=True)
+
+        out_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850731.nc'
+        out = xr.open_dataset(out_fn)
+
+        fwi = xfwi(v.MERRA2_t, v.MERRA2_prec, v.MERRA2_wdSpd, v.MERRA2_rh, i.MERRA2_FFMC, i.MERRA2_DMC, i.MERRA2_DC)
+        np.testing.assert_array_almost_equal(fwi, out.MERRA2_FWI)
+
 
     def test_fine_fuel_moisture_code(self):
         d = self.get_data()
