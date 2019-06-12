@@ -2,16 +2,19 @@
 History
 =======
 
+0.11-beta
+---------
+ * Added fire weather index indicator
+
 0.10-beta ()
 -------------
 * Indicators are now split into packages named by *realms*. ``import xclim.atmos`` to load indicators related to atmospheric variables.
 * Remove support for Python 2 compatibility
-* Added support for *period of the year* subsetting in ``checks.missing_any``. 
+* Added support for *period of the year* subsetting in ``checks.missing_any``.
 * Allow passing positive longitude values when subsetting data with negative longitudes
 * Improved runlength calculations for small grid size arrays via ``ufunc_1dim`` flag
 
-
-0.9-beta (13-05-2019) 
+0.9-beta (13-05-2019)
 ---------------------
 TODO
 
