@@ -23,7 +23,7 @@ from . import checks
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define('fraction = []')
 units.define('percent = 1e-2 fraction = pct = %')
-#units.define(pint.unit.UnitDefinition('percent', 'pct', ('%', ), pint.converters.ScaleConverter(0.01)))
+# units.define(pint.unit.UnitDefinition('percent', 'pct', ('%', ), pint.converters.ScaleConverter(0.01)))
 
 # Define commonly encountered units not defined by pint
 units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '

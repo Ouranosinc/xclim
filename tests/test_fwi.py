@@ -20,7 +20,6 @@ class TestFireWeatherIndex:
         t = [dt.datetime(2015, m, d) for (m, d) in zip(data.pop('mth'), data.pop('day'))]
         data['time'] = t
         data.set_index('time', inplace=True)
-        #time = xr.IndexVariable(dims='time', data=t, attrs={'calendar': 'standard'})
 
         ds = xr.Dataset(data)
         ds.temp.attrs['units'] = 'C'

@@ -19,7 +19,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
         rf = p - 0.5  # *Eq.2*#
         if (mo > 150.0):
             mo = (mo + 42.5 * rf * math.exp(-100.0 / (251.0 - mo)) * (1.0 - math.exp(-6.93 / rf))) \
-                 + (.0015 * (mo - 150.0) ** 2) * math.sqrt(rf)  # *Eq.3b*#
+                + (.0015 * (mo - 150.0) ** 2) * math.sqrt(rf)  # *Eq.3b*#
         elif mo <= 150.0:
             mo = mo + 42.5 * rf * math.exp(-100.0 / (251.0 - mo)) * (1.0 - math.exp(-6.93 / rf))
             # *Eq.3a*#
@@ -27,14 +27,14 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
             mo = 250.0
 
     ed = .942 * (h ** .679) + (11.0 * math.exp((h - 100.0) / 10.0)) + 0.18 * (21.1 - t) \
-         * (1.0 - 1.0 / math.exp(.1150 * h))  # *Eq.4*#
+        * (1.0 - 1.0 / math.exp(.1150 * h))  # *Eq.4*#
 
     if (mo < ed):
         ew = .618 * (h ** .753) + (10.0 * math.exp((h - 100.0) / 10.0)) \
-             + .18 * (21.1 - t) * (1.0 - 1.0 / math.exp(.115 * h))  # *Eq.5*#
+            + .18 * (21.1 - t) * (1.0 - 1.0 / math.exp(.115 * h))  # *Eq.5*#
         if (mo <= ew):
             kl = .424 * (1.0 - ((100.0 - h) / 100.0) ** 1.7) + (.0694 * math.sqrt(w)) \
-                 * (1.0 - ((100.0 - h) / 100.0) ** 8)  # *Eq.7a*#
+                * (1.0 - ((100.0 - h) / 100.0) ** 8)  # *Eq.7a*#
             kw = kl * (.581 * math.exp(.0365 * t))  # *Eq.7b*#
             m = ew - (ew - mo) / 10.0 ** kw  # *Eq.9*#
         elif mo > ew:
@@ -43,7 +43,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
         m = mo
     elif (mo > ed):
         kl = .424 * (1.0 - (h / 100.0) ** 1.7) + (.0694 * math.sqrt(w)) * \
-             (1.0 - (h / 100.0) ** 8)  # *Eq.6a*#
+            (1.0 - (h / 100.0) ** 8)  # *Eq.6a*#
         kw = kl * (.581 * math.exp(.0365 * t))  # *Eq.6b*#
         m = ed + (mo - ed) / 10.0 ** kw  # *Eq.8*#
 
