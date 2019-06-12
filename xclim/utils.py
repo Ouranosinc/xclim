@@ -21,8 +21,9 @@ from boltons.funcutils import wraps
 from . import checks
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-units.define(pint.unit.UnitDefinition('percent', '%', (),
-                                      pint.converters.ScaleConverter(0.01)))
+units.define('fraction = []')
+units.define('percent = 1e-2 fraction = pct = %')
+#units.define(pint.unit.UnitDefinition('percent', 'pct', ('%', ), pint.converters.ScaleConverter(0.01)))
 
 # Define commonly encountered units not defined by pint
 units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
@@ -30,6 +31,8 @@ units.define('degrees_north = degree = degrees_N = degreesN = degree_north = deg
 units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
 units.define("degC = kelvin; offset: 273.15 = celsius = C")  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
+units.define("h = hour")  # Not the Planck constant...
+units.define("[speed] = [length] / [time]")
 
 # Default context.
 null = pint.Context('none')
@@ -248,6 +251,8 @@ def _check_units(val, dim):
         tu = 'cms'
     elif dim == '[length]':
         tu = 'm'
+    elif dim == '[length]/[time]':
+        tu = 'm/s'
     else:
         raise NotImplementedError
 

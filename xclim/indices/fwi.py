@@ -1,6 +1,14 @@
+"""
+Adapted from:
+Updated source code for calculating fire danger indices in the Canadian Forest Fire Weather Index System
+Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+
+D. Huard
+"""
+
 import math
 import numpy as np
-
+import xarray as xr
 
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
@@ -139,23 +147,54 @@ def initial_spread_index(ws, ffmc):
 
 
 def build_up_index(dmc, dc):
-    if dmc <= 0.4 * dc:
-        bui = (0.8 * dc * dmc) / (dmc + 0.4 * dc)  # *Eq.27a*#
-    else:
-        bui = dmc - (1.0 - 0.8 * dc / (dmc + 0.4 * dc)) * (0.92 + (0.0114 * dmc) ** 1.7)  # *Eq.27b*#
-    if bui < 0.0:
-        bui = 0.0
-    return bui
+    bui = xr.where(dmc <= 0.4 * dc,
+                   (0.8 * dc * dmc) / (dmc + 0.4 * dc),   # *Eq.27a*#
+                   dmc - (1.0 - 0.8 * dc / (dmc + 0.4 * dc)) * (0.92 + (0.0114 * dmc) ** 1.7))  # *Eq.27b*#
+    return bui.clip(0, np.inf)
 
 
 def fire_weather_index(isi, bui):
-    if bui <= 80.0:
-        bb = 0.1 * isi * (0.626 * bui ** 0.809 + 2.0)  # *Eq.28a*#
-    else:
-        bb = 0.1 * isi * (1000.0 / (25. + 108.64 / np.exp(0.023 * bui)))  # *Eq.28b*#
-    if (bb <= 1.0):
-        fwi = bb  # *Eq.30b*#
-    else:
-        fwi = np.exp(2.72 * (0.434 * np.log(bb)) ** 0.647)  # *Eq.30a*#
+    bb = xr.where(bui <= 80.0,
+                  0.1 * isi * (0.626 * bui ** 0.809 + 2.0),  # *Eq.28a*#
+                  0.1 * isi * (1000.0 / (25. + 108.64 / np.exp(0.023 * bui))))  # *Eq.28b*#
+
+    fwi = xr.where(bb <= 1.0,
+                   bb,  # *Eq.30b*#
+                   np.exp(2.72 * (0.434 * np.log(bb)) ** 0.647))  # *Eq.30a*#
 
     return fwi
+
+
+def ffmc_ufunc(tas, pr, ws, rh, ffmc0):
+    return xr.apply_ufunc(fine_fuel_moisture_code,
+                          tas, pr, ws, rh,
+                          input_core_dims=4 * (('time', ),),
+                          output_core_dims=(('time',),),
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.float, ],
+                          keep_attrs=True,
+                          kwargs={'ffmc0': ffmc0})
+
+
+def dmc_ufunc(tas, pr, rh, mth, dmc0):
+    return xr.apply_ufunc(duff_moisture_code,
+                          tas, pr, rh, mth,
+                          input_core_dims=4 * (('time', ),),
+                          output_core_dims=(('time', ), ),
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.float, ],
+                          keep_attrs=True,
+                          kwargs={'dmc0': dmc0})
+
+def dc_ufunc(tas, pr, mth, dc0):
+    return xr.apply_ufunc(drought_code,
+                          tas, pr, mth,
+                          input_core_dims=3 * (('time', ),),
+                          output_core_dims=(('time', ), ),
+                          vectorize=True,
+                          dask='parallelized',
+                          output_dtypes=[np.float, ],
+                          keep_attrs=True,
+                          kwargs={'dc0': dc0})

@@ -5,6 +5,7 @@ import xarray as xr
 
 from xclim import utils, run_length as rl
 from xclim.utils import declare_units, units
+from . import fwi
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -20,7 +21,8 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # -------------------------------------------------- #
 
 __all__ = ['cold_spell_duration_index', 'cold_and_dry_days', 'daily_freezethaw_cycles', 'daily_temperature_range',
-           'daily_temperature_range_variability', 'extreme_temperature_range', 'heat_wave_frequency',
+           'daily_temperature_range_variability', 'extreme_temperature_range', 'fire_weather_index',
+           'heat_wave_frequency',
            'heat_wave_max_length', 'liquid_precip_ratio', 'rain_on_frozen_ground_days', 'tg90p', 'tg10p',
            'tn90p', 'tn10p', 'tx90p', 'tx10p', 'tx_tn_days_above', 'warm_spell_duration_index', 'winter_rain_ratio']
 
@@ -279,7 +281,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     return out
 
 @declare_units('', tas='[temperature]', pr='[precipitation]', ws='[speed]', rh='[]')
-def fire_weather_index(tas, pr, ws, rh):
+def fire_weather_index(tas, pr, ws, rh, ffmc0, dmc0, dc0):
     r"""Fire weather index
 
     Parameters
@@ -292,11 +294,26 @@ def fire_weather_index(tas, pr, ws, rh):
       Noon wind speed.
     rh : xarray.DataArray
       Noon relative humidity.
+    ffmc0 : float, xarray.DataArray
+      Initial values of the fine fuel moisture code.
+    dmc0 : float, xarray.DataArray
+      Initial values of the Duff moisture code.
+    dc0 : float, xarray.DataArray
+      Initial values of the drought code.
     """
     tas = utils.convert_units_to(tas, 'C')
-    pr = utils.convert_units_to(pr, 'mmday')
+    pr = utils.convert_units_to(pr, 'mm/day')
     ws = utils.convert_units_to(ws, 'km/h')
-    rh = utils.convert_units_to(rh, '%')
+    rh = utils.convert_units_to(rh, 'pct')
+
+    ffmc = fwi.ffmc_ufunc(tas, pr, ws, rh, ffmc0)
+    dmc = fwi.dmc_ufunc(tas, pr, rh, tas.time.dt.month, dmc0)
+    dc = fwi.dc_ufunc(tas, pr, tas.time.dt.month, dc0)
+    isi = fwi.initial_spread_index(ws, ffmc)
+    bui = fwi.build_up_index(dmc, dc)
+    out = fwi.fire_weather_index(isi, bui)
+    out.attrs['units'] = ''
+    return out
 
 
 @declare_units('', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
