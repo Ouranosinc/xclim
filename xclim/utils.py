@@ -251,8 +251,6 @@ def _check_units(val, dim):
         tu = 'cms'
     elif dim == '[length]':
         tu = 'm'
-    elif dim == '[length]/[time]':
-        tu = 'm/s'
     else:
         raise NotImplementedError
 

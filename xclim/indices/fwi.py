@@ -3,6 +3,8 @@ Adapted from:
 Updated source code for calculating fire danger indices in the Canadian Forest Fire Weather Index System
 Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
 
+See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
+
 D. Huard
 """
 

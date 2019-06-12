@@ -6,6 +6,7 @@ from xclim.indices import fire_weather_index as xfwi
 
 
 class TestFireWeatherIndex:
+    """Note that some of the lines in the code are not exercised by the test data."""
 
     def get_data(self):
         import io
