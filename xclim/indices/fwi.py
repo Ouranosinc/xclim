@@ -43,7 +43,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
             m = mo
     elif (mo == ed):
         m = mo
-    elif (mo > ed):
+    else:
         kl = .424 * (1.0 - (h / 100.0) ** 1.7) + (.0694 * math.sqrt(w)) * \
             (1.0 - (h / 100.0) ** 8)  # *Eq.6a*#
         kw = kl * (.581 * math.exp(.0365 * t))  # *Eq.6b*#
@@ -104,10 +104,10 @@ def _duff_moisture_code(t, p, h, mth, dmc0):
         wmi = 20.0 + 280.0 / math.exp(0.023 * dmc0)  # *Eq.12*#
         if dmc0 <= 33.0:
             b = 100.0 / (0.5 + 0.3 * dmc0)  # *Eq.13a*#
-        elif dmc0 > 33.0:
+        else:
             if dmc0 <= 65.0:
                 b = 14.0 - 1.3 * math.log(dmc0)  # *Eq.13b*#
-            elif dmc0 > 65.0:
+            else:
                 b = 6.2 * math.log(dmc0) - 17.2  # *Eq.13c*#
         wmr = wmi + (1000 * rw) / (48.77 + b * rw)  # *Eq.14*#
         pr = 43.43 * (5.6348 - math.log(wmr - 20.0))  # *Eq.15*#
@@ -155,7 +155,6 @@ def duff_moisture_code(tas, pr, rh, mth, dmc0):
 def _drought_code(t, p, mth, dc0):
     """Scalar computation of the drought code."""
     fl = [-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6]
-    t = t
 
     if (t < -2.8):
         t = -2.8
@@ -165,11 +164,13 @@ def _drought_code(t, p, mth, dc0):
 
     if (p > 2.8):
         ra = p
-        rw = 0.83 * ra - 1.27  # *Eq.18*#
-        smi = 800.0 * math.exp(-dc0 / 400.0)  # *Eq.19*#
+        rw = 0.83 * ra - 1.27  # *Eq.18*#  Rd
+        smi = 800.0 * math.exp(-dc0 / 400.0)  # *Eq.19*# Qo
         dr = dc0 - 400.0 * math.log(1.0 + ((3.937 * rw) / smi))  # *Eqs. 20 and 21*#
-        if (dr > 0.0):
+        if dr > 0.0:
             dc = dr + pe
+        else:
+            dc = pe
     elif p <= 2.8:
         dc = dc0 + pe
     return dc
@@ -274,35 +275,35 @@ def fire_weather_index(isi, bui):
 
 def ffmc_ufunc(tas, pr, ws, rh, ffmc0):
     return xr.apply_ufunc(fine_fuel_moisture_code,
-                          tas, pr, ws, rh,
-                          input_core_dims=4 * (('time', ),),
+                          tas, pr, ws, rh, ffmc0,
+                          input_core_dims=4 * (('time', ),) + ((), ),
                           output_core_dims=(('time',),),
                           vectorize=True,
                           dask='parallelized',
                           output_dtypes=[np.float, ],
-                          keep_attrs=True,
-                          kwargs={'ffmc0': ffmc0})
+                          #keep_attrs=True,
+                          )
 
 
 def dmc_ufunc(tas, pr, rh, mth, dmc0):
     return xr.apply_ufunc(duff_moisture_code,
-                          tas, pr, rh, mth,
-                          input_core_dims=4 * (('time', ),),
+                          tas, pr, rh, mth, dmc0,
+                          input_core_dims=4 * (('time', ),) + ((), ),
                           output_core_dims=(('time', ), ),
                           vectorize=True,
                           dask='parallelized',
                           output_dtypes=[np.float, ],
-                          keep_attrs=True,
-                          kwargs={'dmc0': dmc0})
+                          #keep_attrs=True,
+                          )
 
 
 def dc_ufunc(tas, pr, mth, dc0):
     return xr.apply_ufunc(drought_code,
-                          tas, pr, mth,
-                          input_core_dims=3 * (('time', ),),
+                          tas, pr, mth, dc0,
+                          input_core_dims=3 * (('time', ),) + ((), ),
                           output_core_dims=(('time', ), ),
                           vectorize=True,
                           dask='parallelized',
                           output_dtypes=[np.float, ],
-                          keep_attrs=True,
-                          kwargs={'dc0': dc0})
+                          #keep_attrs=True,
+                          )

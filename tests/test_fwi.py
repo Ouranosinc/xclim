@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import xarray as xr
 from xclim.indices.fwi import fine_fuel_moisture_code, duff_moisture_code, drought_code
@@ -40,6 +41,9 @@ class TestFireWeatherIndex:
         import datetime as dt
 
         init_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850730.nc'
+        if not init_fn.exists():
+            pytest.skip()
+            # https://data.giss.nasa.gov/impacts/gfwed/
         i = xr.open_dataset(init_fn)
 
         var_fn = [TESTS_DATA / 'Wx.MERRA2.Daily.Default.19850731.nc',
@@ -51,8 +55,9 @@ class TestFireWeatherIndex:
         out_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850731.nc'
         out = xr.open_dataset(out_fn)
 
-        fwi = xfwi(v.MERRA2_t, v.MERRA2_prec, v.MERRA2_wdSpd, v.MERRA2_rh, i.MERRA2_FFMC, i.MERRA2_DMC, i.MERRA2_DC)
-        np.testing.assert_array_almost_equal(fwi, out.MERRA2_FWI)
+        fwi = xfwi(v.MERRA2_t, v.MERRA2_prec, v.MERRA2_wdSpd, v.MERRA2_rh,
+                   i.MERRA2_FFMC[0], i.MERRA2_DMC[0], i.MERRA2_DC[0])
+        xr.testing.assert_allclose(fwi.sel(lat=slice(30, None)), out.MERRA2_FWI.sel(lat=slice(30, None)), atol=1)
 
 
     def test_fine_fuel_moisture_code(self):
@@ -166,3 +171,27 @@ testdata = """mth day temp rh ws pr ffmc dmc dc isi bui fwi
 5 29 11.0 54.0 16.0 0.0 77.6 10.5 106.3 2.0 16.8 2.8
 5 30 15.5 39.0 9.0 0.0 85.4 13.1 111.5 3.5 20.3 5.8
 5 31 18.0 36.0 5.0 0.0 88.5 16.3 117.1 4.4 24.2 7.9"""
+
+
+def test_ufunc():
+    """Test to experiment with ufuncs over arrays with non-identical dimensions."""
+    v = xr.DataArray(np.resize(np.arange(10), (2, 10)),
+                 dims=('x', 'time'),
+                 coords=[('x', [0, 1]), ('time', np.arange(10))])
+    i = xr.DataArray([10, 20], dims=('x'),
+                     coords=[('x', [0, 1])])
+
+    def func1d(values, init):
+        if init < 15:
+            return init + np.cumsum(values)
+        else:
+            return init - np.cumsum(values)
+
+    xr.apply_ufunc(func1d,
+                   v, i,
+                   input_core_dims=(('time',), ()),
+                   output_core_dims=(('time',),),
+                   vectorize=True,
+                   dask='parallelized',
+                   output_dtypes=[np.float, ],
+                   )
