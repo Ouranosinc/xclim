@@ -1,6 +1,8 @@
 import numpy as np
-from xclim.indices.fwi import FWI
+from xclim.indices.fwi import fine_fuel_moisture_code, duff_moisture_code, drought_code
+from xclim.indices.fwi import initial_spread_index, build_up_index, fire_weather_index
 import pandas as pd
+
 
 class TestFireWeatherIndex:
     testdata = """mth day temp rh ws pr ffmc dmc dc isi bui fwi
@@ -54,32 +56,67 @@ class TestFireWeatherIndex:
 5 30 15.5 39.0 9.0 0.0 85.4 13.1 111.5 3.5 20.3 5.8
 5 31 18.0 36.0 5.0 0.0 88.5 16.3 117.1 4.4 24.2 7.9"""
 
-    def test_nrcan(self):
+    def get_data(self):
         import io
         f = io.StringIO(self.testdata)
-        d = pd.read_table(f, sep=' ', header=0)
+        return pd.read_table(f, sep=' ', header=0)
+
+    def test_fine_fuel_moisture_code(self):
+        d = self.get_data()
 
         ffmc0 = 85.0
+
+        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
+
+        np.testing.assert_array_almost_equal(ffmc, d['ffmc'], 1)
+
+    def test_duff_moisture_code(self):
+        d = self.get_data()
+
         dmc0 = 6.0
+
+        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
+
+        np.testing.assert_array_almost_equal(dmc, d['dmc'], 1)
+
+    def test_drought_code(self):
+        d = self.get_data()
+
         dc0 = 15.0
 
-        for i, row in d.iterrows():
-            fwisystem = FWI(row['temp'], row['rh'], row['ws'], row['pr'])
-            mth = int(row['mth'])
-            ffmc = fwisystem.FFMCcalc(ffmc0)
-            dmc = fwisystem.DMCcalc(dmc0, mth)
-            dc = fwisystem.DCcalc(dc0, mth)
-            isi = fwisystem.ISIcalc(ffmc)
-            bui = fwisystem.BUIcalc(dmc, dc)
-            fwi = fwisystem.FWIcalc(isi, bui)
+        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
 
-            np.testing.assert_almost_equal(ffmc, row['ffmc'], 1)
-            np.testing.assert_almost_equal(dmc, row['dmc'], 1)
-            np.testing.assert_almost_equal(dc, row['dc'], 1)
-            np.testing.assert_almost_equal(isi, row['isi'], 1)
-            np.testing.assert_almost_equal(bui, row['bui'], 1)
-            np.testing.assert_almost_equal(fwi, row['fwi'], 1)
+        np.testing.assert_array_almost_equal(dc, d['dc'], 1)
 
-            ffmc0 = ffmc
-            dmc0 = dmc
-            dc0 = dc
+    def test_initial_spread_index(self):
+        # Note that using the rounded data as input creates rounding errors.
+        d = self.get_data()
+        ffmc0 = 85.0
+        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
+        isi = initial_spread_index(d['ws'], ffmc)
+        np.testing.assert_array_almost_equal(isi, d['isi'], 1)
+
+    def test_build_up_index(self):
+        d = self.get_data()
+
+        dmc0 = 6.0
+        dc0 = 15.0
+        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
+        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
+
+        bui = build_up_index(dmc, dc)
+        np.testing.assert_array_almost_equal(bui, d['bui'], 1)
+
+    def test_fire_weather_index(self):
+        d = self.get_data()
+
+        dmc0 = 6.0
+        dc0 = 15.0
+        ffmc0 = 85.0
+        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
+        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
+        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
+        isi = initial_spread_index(d['ws'], ffmc)
+        bui = build_up_index(dmc, dc)
+        fwi = fire_weather_index(isi, bui)
+        np.testing.assert_array_almost_equal(fwi, d['fwi'], 1)

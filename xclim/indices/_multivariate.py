@@ -293,14 +293,10 @@ def fire_weather_index(tas, pr, ws, rh):
     rh : xarray.DataArray
       Noon relative humidity.
     """
-    import math
     tas = utils.convert_units_to(tas, 'C')
     pr = utils.convert_units_to(pr, 'mmday')
     ws = utils.convert_units_to(ws, 'km/h')
     rh = utils.convert_units_to(rh, '%')
-
-
-
 
 
 @declare_units('', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
