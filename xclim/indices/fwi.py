@@ -10,7 +10,10 @@ import math
 import numpy as np
 import xarray as xr
 
+
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
+    """Scalar computation of the fine fuel moisture code."""
+
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
     if p > 0.5:
         rf = p - 0.5  # *Eq.2*#
@@ -54,6 +57,27 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
 
 
 def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
+    """Fine fuel moisture code
+
+    Parameters
+    ----------
+    tas: array
+      Noon temperature [C].
+    pr : array
+      Rain fall in open over previous 24 hours, at noon [mm].
+    ws : array
+      Noon wind speed [km/h].
+    rh : array
+      Noon relative humidity [%].
+    ffmc0 : float
+      Initial value of the fine fuel moisture code.
+
+    Returns
+    -------
+    array
+      Fine fuel moisture code
+    """
+
     it = np.nditer([tas, pr, ws, rh, None], [], 4 * [['readonly'], ] + [['writeonly', 'allocate']])
 
     with it:
@@ -65,6 +89,7 @@ def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
 
 
 def _duff_moisture_code(t, p, h, mth, dmc0):
+    """Scalar computation of the Duff moisture code."""
     el = [6.5, 7.5, 9.0, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8.0, 7.0, 6.0]
 
     t = t
@@ -96,6 +121,26 @@ def _duff_moisture_code(t, p, h, mth, dmc0):
 
 
 def duff_moisture_code(tas, pr, rh, mth, dmc0):
+    """Duff moisture code
+
+    Parameters
+    ----------
+    tas: array
+      Noon temperature [C].
+    pr : array
+      Rain fall in open over previous 24 hours, at noon [mm].
+    rh : array
+      Noon relative humidity [%].
+    mth : integer array
+      Month of the year [1-12].
+    dmc0 : float
+      Initial value of the Duff moisture code.
+
+    Returns
+    -------
+    array
+      Duff moisture code
+    """
     it = np.nditer([tas, pr, rh, mth, None], [], 4 * [['readonly'], ] + [['writeonly', 'allocate']])
 
     with it:
@@ -107,6 +152,7 @@ def duff_moisture_code(tas, pr, rh, mth, dmc0):
 
 
 def _drought_code(t, p, mth, dc0):
+    """Scalar computation of the drought code."""
     fl = [-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6]
     t = t
 
@@ -129,6 +175,24 @@ def _drought_code(t, p, mth, dc0):
 
 
 def drought_code(tas, pr, mth, dc0):
+    """Drought code
+
+    Parameters
+    ----------
+    tas: array
+      Noon temperature [C].
+    pr : array
+      Rain fall in open over previous 24 hours, at noon [mm].
+    mth : integer array
+      Month of the year [1-12].
+    dc0 : float
+      Initial value of the drought code.
+
+    Returns
+    -------
+    array
+      Drought code
+    """
     it = np.nditer([tas, pr, mth, None], [], 3 * [['readonly'], ] + [['writeonly', 'allocate']])
 
     with it:
@@ -140,6 +204,20 @@ def drought_code(tas, pr, mth, dc0):
 
 
 def initial_spread_index(ws, ffmc):
+    """Initial spread index
+
+    Parameters
+    ----------
+    ws : array
+      Noon wind speed [km/h].
+    ffmc : array
+      Fine fuel moisture code.
+
+    Returns
+    -------
+    array
+      Initial spread index.
+    """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
     ff = 19.115 * np.exp(mo * -0.1386) * (1.0 + (mo ** 5.31) / 49300000.0)  # *Eq.25*#
     isi = ff * np.exp(0.05039 * ws)  # *Eq.26*#
@@ -147,6 +225,20 @@ def initial_spread_index(ws, ffmc):
 
 
 def build_up_index(dmc, dc):
+    """Build up index
+
+    Parameters
+    ----------
+    dmc : array
+      Duff moisture code.
+    dc : array
+      Drought code.
+
+    Returns
+    -------
+    array
+      Build up index.
+    """
     bui = xr.where(dmc <= 0.4 * dc,
                    (0.8 * dc * dmc) / (dmc + 0.4 * dc),   # *Eq.27a*#
                    dmc - (1.0 - 0.8 * dc / (dmc + 0.4 * dc)) * (0.92 + (0.0114 * dmc) ** 1.7))  # *Eq.27b*#
@@ -154,6 +246,20 @@ def build_up_index(dmc, dc):
 
 
 def fire_weather_index(isi, bui):
+    """Fire weather index
+
+    Parameters
+    ----------
+    isi : array
+      Initial spread index
+    bui : array
+      Build up index.
+
+    Returns
+    -------
+    array
+      Build up index.
+    """
     bb = xr.where(bui <= 80.0,
                   0.1 * isi * (0.626 * bui ** 0.809 + 2.0),  # *Eq.28a*#
                   0.1 * isi * (1000.0 / (25. + 108.64 / np.exp(0.023 * bui))))  # *Eq.28b*#
@@ -187,6 +293,7 @@ def dmc_ufunc(tas, pr, rh, mth, dmc0):
                           output_dtypes=[np.float, ],
                           keep_attrs=True,
                           kwargs={'dmc0': dmc0})
+
 
 def dc_ufunc(tas, pr, mth, dc0):
     return xr.apply_ufunc(drought_code,

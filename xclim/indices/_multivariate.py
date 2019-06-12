@@ -1,14 +1,9 @@
-import logging
-
 import numpy as np
 import xarray as xr
 
 from xclim import utils, run_length as rl
 from xclim.utils import declare_units, units
 from . import fwi
-
-# logging.basicConfig(level=logging.DEBUG)
-# logging.captureWarnings(True)
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -279,6 +274,7 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
     out = tx_max - tn_min
     out.attrs['units'] = tasmax.units
     return out
+
 
 @declare_units('', tas='[temperature]', pr='[precipitation]', ws='[speed]', rh='[]')
 def fire_weather_index(tas, pr, ws, rh, ffmc0, dmc0, dc0):
