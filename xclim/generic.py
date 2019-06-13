@@ -80,12 +80,12 @@ def doymin(da):
     return out
 
 
-def fit(arr, dist='norm'):
+def fit(da, dist='norm'):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    da : xarray.DataArray
       Time series to be fitted along the time dimension.
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
@@ -100,13 +100,13 @@ def fit(arr, dist='norm'):
     dc = get_dist(dist)
 
     # Fit the parameters (lazy computation)
-    data = dask.array.apply_along_axis(dc.fit, arr.get_axis_num('time'), arr)
+    data = dask.array.apply_along_axis(dc.fit, da.get_axis_num('time'), da)
 
     # Count the number of values used for the fit.
     # n = arr.count(dim='time')
 
     # Create a view to a DataArray with the desired dimensions to copy them over to the parameter array.
-    mean = arr.mean(dim='time', keep_attrs=True)
+    mean = da.mean(dim='time', keep_attrs=True)
 
     # Create coordinate for the distribution parameters
     coords = dict(mean.coords.items())
@@ -118,25 +118,22 @@ def fit(arr, dist='norm'):
     # coords['climatology_bounds'] =
 
     out = xr.DataArray(data=data, coords=coords, dims=(u'dparams',) + mean.dims)
-    out.attrs = arr.attrs
-    out.attrs['original_name'] = getattr(arr, 'standard_name', '')
-    out.attrs['standard_name'] = '{0} distribution parameters'.format(dist)
-    out.attrs['long_name'] = '{0} distribution parameters for {1}'.format(dist, getattr(arr, 'standard_name', ''))
+    out.attrs = da.attrs
+    out.attrs['original_name'] = getattr(da, 'standard_name', '')
+    out.attrs['description'] = \
+        'Parameters of the {0} distribution fitted over {1}'.format(dist, getattr(da, 'standard_name', ''))
     out.attrs['estimator'] = 'Maximum likelihood'
-    out.attrs['cell_methods'] = (out.attrs.get('cell_methods', '') + ' time: fit').strip()
+    out.attrs['scipy_dist'] = dist
     out.attrs['units'] = ''
-    msg = '\nData fitted with {0} statistical distribution using a Maximum Likelihood Estimator'
-    out.attrs['history'] = out.attrs.get('history', '') + msg.format(dist)
-
     return out
 
 
-def fa(arr, t, dist='norm', mode='high'):
+def fa(da, t, dist='norm', mode='high'):
     """Return the value corresponding to the given return period.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    da : xarray.DataArray
       Maximized/minimized input data with a `time` dimension.
     t : int or sequence
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
@@ -158,7 +155,7 @@ def fa(arr, t, dist='norm', mode='high'):
     dc = get_dist(dist)
 
     # Fit the parameters of the distribution
-    p = fit(arr, dist)
+    p = fit(da, dist)
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode in ['max', 'high']:
@@ -190,9 +187,9 @@ def fa(arr, t, dist='norm', mode='high'):
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = p.attrs
     out.attrs['standard_name'] = '{0} quantiles'.format(dist)
-    out.attrs['long_name'] = '{0} return period values for {1}'.format(dist, getattr(arr, 'standard_name', ''))
+    out.attrs['long_name'] = '{0} return period values for {1}'.format(dist, getattr(da, 'standard_name', ''))
     out.attrs['cell_methods'] = (out.attrs.get('cell_methods', '') + ' dparams: ppf').strip()
-    out.attrs['units'] = arr.attrs.get('units', '')
+    out.attrs['units'] = da.attrs.get('units', '')
     out.attrs['mode'] = mode
     out.attrs['history'] = out.attrs.get('history', '') + "Compute values corresponding to return periods."
 

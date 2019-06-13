@@ -40,6 +40,14 @@ class TestStats():
         np.testing.assert_array_equal(out[2].isnull(), True)
 
 
+class TestFit():
+
+    def test_simple(self, ndq_series):
+        ts = streamflow.stats(ndq_series, freq='YS', op='max')
+        p = streamflow.fit(ts, dist='gumbel_r')
+        assert p.attrs['estimator'] == 'Maximum likelihood'
+
+
 def test_qdoy_max(ndq_series, q_series):
     out = streamflow.doy_qmax(ndq_series, freq='YS', season='JJA')
     assert out.attrs['units'] == ''

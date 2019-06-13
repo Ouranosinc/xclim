@@ -648,7 +648,7 @@ class Indicator():
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute.__doc__)
-        for key in ['abstract', 'title', 'long_name', 'notes', 'references']:
+        for key in ['abstract', 'title', 'notes', 'references']:
             setattr(self, key, getattr(self, key) or meta.get(key, ''))
 
     def __call__(self, *args, **kwds):
@@ -687,7 +687,7 @@ class Indicator():
 
         attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
             dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
-        attrs['cell_methods'] += out_attrs.pop('cell_methods')
+        attrs['cell_methods'] += out_attrs.pop('cell_methods', '')
         attrs.update(out_attrs)
 
         # Assume the first arguments are always the DataArray.
@@ -721,7 +721,7 @@ class Indicator():
         """CF-Convention attributes of the output value."""
         names = ['standard_name', 'long_name', 'units', 'cell_methods', 'description', 'comment',
                  'references']
-        return {k: getattr(self, k, '') for k in names}
+        return {k: getattr(self, k) for k in names if getattr(self, k)}
 
     def json(self, args=None):
         """Return a dictionary representation of the class.

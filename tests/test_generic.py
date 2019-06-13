@@ -32,6 +32,7 @@ class TestFA(object):
         # Check that we can reuse the parameters with scipy distributions
         cdf = lognorm.cdf(.99, *p.values)
         assert cdf.shape == (self.nx, self.ny)
+        assert p.attrs['estimator'] == 'Maximum likelihood'
 
     def test_fa(self):
         T = 10
