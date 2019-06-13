@@ -3,7 +3,7 @@
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Docs have been added / updated (for bug fixes / features)
 - [ ] HISTORY.rst has been updated
-- [ ] bumpversion (minor / major) has been called
+- [ ] bumpversion (minor / major / patch) has been called
 - [ ] Tags have been pushed
 
 * **What kind of change does this PR introduce?** (Bug fix, feature, docs update, etc.)
