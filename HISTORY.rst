@@ -2,6 +2,10 @@
 History
 =======
 
+0.11.0-beta ()
+--------------
+* Migrated to a `major.minor.patch-release` semantic versioning system.
+
 0.10-beta ()
 -------------
 * Indicators are now split into packages named by *realms*. ``import xclim.atmos`` to load indicators related to atmospheric variables.
@@ -10,8 +14,7 @@ History
 * Allow passing positive longitude values when subsetting data with negative longitudes
 * Improved runlength calculations for small grid size arrays via ``ufunc_1dim`` flag
 
-
-0.9-beta (13-05-2019) 
+0.9-beta (13-05-2019)
 ---------------------
 TODO
 
