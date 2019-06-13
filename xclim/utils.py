@@ -674,8 +674,8 @@ class Indicator():
                     attrs[attr] += "\n" if attr == 'history' else " "
 
         # Update attributes
-        out_attrs = self.json(ba.arguments)
-        vname = out_attrs.pop('var_name')
+        out_attrs = self.format(self.cf_attrs, ba.arguments)
+        vname = self.format({'var_name': self.var_name}, ba.arguments)['var_name']
 
         # Update the signature with the values of the actual call.
         cp = OrderedDict()
