@@ -11,7 +11,7 @@ import sys
 
 __author__ = """Travis Logan"""
 __email__ = 'logan.travis@ouranos.ca'
-__version__ = '0.10-beta'
+__version__ = '0.10.0-beta'
 
 
 def build_module(name, objs, doc='', source=None, mode='ignore'):
