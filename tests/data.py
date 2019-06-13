@@ -5,7 +5,7 @@ from pathlib import Path
 TD = Path(os.path.dirname(__file__)) / 'testdata'
 
 
-FWI = TestDataSet('gfwed', TD / 'fwi')
+FWI = TestDataSet('gfwed', TD / 'FWI')
 FWI.add('init', 'https://portal.nccs.nasa.gov/datashare/'
                 'GlobalFWI/v2.0/fwiCalcs.MERRA2/Default/MERRA2/1985/FWI.MERRA2.Daily.Default.19850730.nc'),
 FWI.add('pr', 'https://portal.nccs.nasa.gov/datashare/'

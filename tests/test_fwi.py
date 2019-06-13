@@ -6,9 +6,7 @@ from xclim.indices.fwi import initial_spread_index, build_up_index, fire_weather
 from xclim.indices import fire_weather_index as xfwi
 import os
 from pathlib import Path
-
-TESTS_HOME = Path(os.path.dirname(__file__))
-TESTS_DATA = TESTS_HOME / 'testdata' / 'fwi'
+from .data import FWI
 
 
 class TestFireWeatherIndex:
@@ -40,20 +38,14 @@ class TestFireWeatherIndex:
     def test_gfwed(self):
         import datetime as dt
 
-        init_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850730.nc'
-        if not init_fn.exists():
-            pytest.skip()
-            # https://data.giss.nasa.gov/impacts/gfwed/
-        i = xr.open_dataset(init_fn)
+        i = xr.open_dataset(FWI.init())
 
-        var_fn = [TESTS_DATA / 'Wx.MERRA2.Daily.Default.19850731.nc',
-                 TESTS_DATA / 'Prec.MERRA2.Daily.Default.19850731.nc']
+        var_fn = [FWI.wx(), FWI.pr()]
         v = xr.open_mfdataset(var_fn).reset_index('time', drop=True)
         v['time'] = xr.IndexVariable('time', [dt.datetime(1985, 7, 31)])
         v.set_coords('time', inplace=True)
 
-        out_fn = TESTS_DATA / 'FWI.MERRA2.Daily.Default.19850731.nc'
-        out = xr.open_dataset(out_fn)
+        out = xr.open_dataset(FWI.out())
 
         fwi = xfwi(v.MERRA2_t, v.MERRA2_prec, v.MERRA2_wdSpd, v.MERRA2_rh,
                    i.MERRA2_FFMC[0], i.MERRA2_DMC[0], i.MERRA2_DC[0])
