@@ -95,12 +95,17 @@ def fit(da, dist='norm'):
     -------
     xarray.DataArray
       An array of distribution parameters fitted using the method of Maximum Likelihood.
+
+    Notes
+    -----
+    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
+    still contains NaNs, the distribution parameters will be returned as NaNs.
     """
     # Get the distribution
     dc = get_dist(dist)
 
     # Fit the parameters (lazy computation)
-    data = dask.array.apply_along_axis(dc.fit, da.get_axis_num('time'), da)
+    data = dask.array.apply_along_axis(dc.fit, da.get_axis_num('time'), da.dropna('time', how='all'))
 
     # Count the number of values used for the fit.
     # n = arr.count(dim='time')
@@ -125,6 +130,7 @@ def fit(da, dist='norm'):
     out.attrs['estimator'] = 'Maximum likelihood'
     out.attrs['scipy_dist'] = dist
     out.attrs['units'] = ''
+    # out.name = 'params'
     return out
 
 

@@ -69,6 +69,7 @@ stats = Stats(identifier='stats',
 
 
 fit = Fit(identifier='fit',
+          var_name='params',
           units='',
           standard_name='{dist} parameters',
           long_name="{dist} distribution parameters",
