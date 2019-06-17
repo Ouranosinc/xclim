@@ -34,11 +34,17 @@ class Stats(Streamflow):
         return reduce(np.logical_or, miss)
 
 
-# We need to disable the missing value check because the output here is not a time series.
+# Disable the missing value check because the output here is not a time series.
 class FA(Streamflow):
     def missing(self, *args, **kwds):
         """Return whether an output is considered missing or not."""
         return False
+
+
+# Disable the daily checks because the inputs are period extremas.
+class Fit(FA):
+    def validate(self, da):
+        pass
 
 
 base_flow_index = Streamflow(identifier='base_flow_index',
@@ -60,6 +66,16 @@ stats = Stats(identifier='stats',
               long_name='{freq} {op} of {indexer} daily flow ',
               description="{freq} {op} of {indexer} daily flow",
               compute=generic.select_resample_op)
+
+
+fit = Fit(identifier='fit',
+          var_name='params',
+          units='',
+          standard_name='{dist} parameters',
+          long_name="{dist} distribution parameters",
+          description="Parameters of the {dist} distribution fitted ",
+          cell_methods='time: fit',
+          compute=generic.fit)
 
 
 doy_qmax = Streamflow(identifier='doy_qmax',

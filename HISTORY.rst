@@ -6,6 +6,7 @@ History
 --------------
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
+* Added `fit` indicator to fit the parameters of a distribution to a series.
 
 0.10-beta (06-06-2019)
 ----------------------
