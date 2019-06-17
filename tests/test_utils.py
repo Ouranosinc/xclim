@@ -25,12 +25,17 @@ import pandas as pd
 import pytest
 import xarray as xr
 import dask
+
+
+from xclim import ensembles
+from xclim import indices
+from xclim import subset
 from xclim import utils
+from xclim import atmos
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
-from xclim.utils import units
+from xclim.utils import units, pint2cfunits, units2pint
 from xclim.testing.common import tas_series, pr_series
-from xclim import indices as ind
 
 TAS_SERIES = tas_series
 PR_SERIES = pr_series
@@ -43,40 +48,40 @@ class TestEnsembleStats:
     nc_files = glob.glob(os.path.join(TESTS_DATA, 'EnsembleStats', '*.nc'))
 
     def test_create_ensemble(self):
-        ens = utils.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_files_simple)
         assert len(ens.realization) == len(self.nc_files_simple)
 
     def test_create_unequal_times(self):
-        ens = utils.create_ensemble(self.nc_files)
+        ens = ensembles.create_ensemble(self.nc_files)
         assert len(ens.realization) == len(self.nc_files)
         assert ens.time.dt.year.min() == 1970
         assert ens.time.dt.year.max() == 2050
 
     def test_calc_perc(self):
-        ens = utils.create_ensemble(self.nc_files_simple)
-        out1 = utils.ensemble_percentiles(ens)
+        ens = ensembles.create_ensemble(self.nc_files_simple)
+        out1 = ensembles.ensemble_percentiles(ens)
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 10), out1['tg_mean_p10'][0, 5, 5])
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 50), out1['tg_mean_p50'][0, 5, 5])
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 90), out1['tg_mean_p90'][0, 5, 5])
         assert np.all(out1['tg_mean_p90'] > out1['tg_mean_p50'])
         assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
-        out1 = utils.ensemble_percentiles(ens, values=(25, 75))
+        out1 = ensembles.ensemble_percentiles(ens, values=(25, 75))
         assert np.all(out1['tg_mean_p75'] > out1['tg_mean_p25'])
 
     def test_calc_perc_blocks(self):
-        ens = utils.create_ensemble(self.nc_files_simple)
-        out1 = utils.ensemble_percentiles(ens)
-        out2 = utils.ensemble_percentiles(ens, values=(10, 50, 90), time_block=10)
+        ens = ensembles.create_ensemble(self.nc_files_simple)
+        out1 = ensembles.ensemble_percentiles(ens)
+        out2 = ensembles.ensemble_percentiles(ens, values=(10, 50, 90), time_block=10)
         np.testing.assert_array_equal(out1['tg_mean_p10'], out2['tg_mean_p10'])
         np.testing.assert_array_equal(out1['tg_mean_p50'], out2['tg_mean_p50'])
         np.testing.assert_array_equal(out1['tg_mean_p90'], out2['tg_mean_p90'])
 
     def test_calc_perc_nans(self):
-        ens = utils.create_ensemble(self.nc_files_simple).load()
+        ens = ensembles.create_ensemble(self.nc_files_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
-        out1 = utils.ensemble_percentiles(ens)
+        out1 = ensembles.ensemble_percentiles(ens)
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 0, 5, 5], 10), np.nan)
         np.testing.assert_array_equal(np.percentile(ens['tg_mean'][:, 7, 5, 5], 10), np.nan)
         np.testing.assert_array_equal(np.nanpercentile(ens['tg_mean'][:, 0, 5, 5], 10), out1['tg_mean_p10'][0, 5, 5])
@@ -85,8 +90,8 @@ class TestEnsembleStats:
         assert np.all(out1['tg_mean_p50'] > out1['tg_mean_p10'])
 
     def test_calc_mean_std_min_max(self):
-        ens = utils.create_ensemble(self.nc_files_simple)
-        out1 = utils.ensemble_mean_std_max_min(ens)
+        ens = ensembles.create_ensemble(self.nc_files_simple)
+        out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].mean(dim='realization'), out1.tg_mean_mean[0, 5, 5])
         np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].std(dim='realization'), out1.tg_mean_stdev[0, 5, 5])
         np.testing.assert_array_equal(ens['tg_mean'][:, 0, 5, 5].max(dim='realization'), out1.tg_mean_max[0, 5, 5])
@@ -175,9 +180,9 @@ class TestDailyDownsampler:
 
 
 class UniIndTemp(Indicator):
-    identifier = 'tmin{thresh}'
+    identifier = 'tmin'
+    var_name = 'tmin{thresh}'
     units = 'K'
-    required_units = 'K'
     long_name = '{freq} mean surface temperature'
     standard_name = '{freq} mean temperature'
     cell_methods = 'time: mean within {freq}'
@@ -185,75 +190,56 @@ class UniIndTemp(Indicator):
     @staticmethod
     def compute(da, thresh=0., freq='YS'):
         """Docstring"""
-        return da.resample(time=freq).mean() - thresh
+        out = da
+        out -= thresh
+        return out.resample(time=freq).mean(keep_attrs=True)
 
 
 class UniIndPr(Indicator):
     identifier = 'prmax'
-    units = 'kg m-2 s-1'
-    required_units = 'kg m-2 s-1'
+    units = 'mm/s'
     context = 'hydro'
 
     @staticmethod
     def compute(da, freq):
         """Docstring"""
-        return da.resample(time=freq).mean()
+        return da.resample(time=freq).mean(keep_attrs=True)
 
 
 class TestIndicator:
 
     def test_attrs(self, tas_series):
         import datetime as dt
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
-        txm = ind(a, freq='YS')
+        txm = ind(a, thresh=5, freq='YS')
         assert txm.cell_methods == 'time: mean within days time: mean within years'
         assert '{:%Y-%m-%d %H}'.format(dt.datetime.now()) in txm.attrs['history']
-        assert txm.name == "tmin0"
+        assert "tmin(da, thresh=5, freq='YS')" in txm.attrs['history']
+        assert txm.name == "tmin5"
 
     def test_temp_unit_conversion(self, tas_series):
-        a = tas_series(np.arange(360))
+        a = tas_series(np.arange(360.))
         ind = UniIndTemp()
         txk = ind(a, freq='YS')
 
-        ind.required_units = ('degC',)
         ind.units = 'degC'
         txc = ind(a, freq='YS')
 
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
-    def test_pr_unit_conversion(self, pr_series):
-        a = pr_series(np.arange(360))
-        ind = UniIndPr()
-        txk = ind(a, freq='YS')
-
-        ind.required_units = ('mm/day',)
-        ind.units = 'mm'
-        txm = ind(a, freq='YS')
-
-        np.testing.assert_array_almost_equal(txk, txm / 86400)
-
     def test_json(self, pr_series):
         ind = UniIndPr()
         meta = ind.json()
 
-        expected = {'identifier', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords', 'abstract',
+        expected = {'identifier', 'var_name', 'units', 'long_name', 'standard_name', 'cell_methods', 'keywords',
+                    'abstract',
                     'parameters', 'description', 'history', 'references', 'comment', 'notes'}
 
         assert set(meta.keys()).issubset(expected)
 
-    def test_factory(self, pr_series):
-        attrs = dict(identifier='test', units='days', required_units='mm/day', long_name='long name',
-                     standard_name='standard name', context='hydro'
-                     )
-        cls = Indicator.factory(attrs)
-
-        assert issubclass(cls, Indicator)
-        da = pr_series(np.arange(365))
-        cls(compute=ind.wetdays)(da)
-
     def test_signature(self):
-        from inspect2 import signature
+        from inspect import signature
         ind = UniIndTemp()
         assert signature(ind.compute) == signature(ind.__call__)
 
@@ -280,6 +266,18 @@ class TestIndicator:
 
         assert isinstance(txc.data, dask.array.core.Array)
 
+    def test_identifier(self):
+
+        with pytest.warns(UserWarning):
+            UniIndPr(identifier='t_{}')
+
+    def test_formatting(self, pr_series):
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1 mm/day)'
+
+        out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
+        assert out.attrs['long_name'] == 'Number of wet days (precip >= 1.5 mm/day)'
+
 
 class TestKwargs:
 
@@ -294,7 +292,7 @@ class TestKwargs:
 class TestParseDoc:
 
     def test_simple(self):
-        parse_doc(ind.tg_mean.__doc__)
+        parse_doc(indices.tg_mean.__doc__)
 
 
 class TestPercentileDOY:
@@ -303,6 +301,7 @@ class TestPercentileDOY:
         tas = tas_series(np.arange(365), start='1/1/2001')
         p1 = percentile_doy(tas, window=5, per=.5)
         assert p1.sel(dayofyear=3).data == 2
+        assert p1.attrs['units'] == 'K'
 
 
 class TestAdjustDoyCalendar:
@@ -363,6 +362,69 @@ class TestUnits:
             tu = units.parse_units("mm/day")
             np.isclose(1 * fu, 1 * tu)
 
+    def test_dimensionality(self):
+        with units.context('hydro'):
+            fu = 1 * units.parse_units('kg / m**2 / s')
+            tu = 1 * units.parse_units('mm / d')
+            fu.to('mmday')
+            tu.to('mmday')
+
+
+class TestConvertUnitsTo:
+
+    def test_deprecation(self, tas_series):
+        with pytest.warns(FutureWarning):
+            out = utils.convert_units_to(0, units.K)
+            assert out == 273.15
+
+            out = utils.convert_units_to(10, units.mm / units.day, context='hydro')
+            assert out == 10
+
+        with pytest.warns(FutureWarning):
+            tas = tas_series(np.arange(365), start='1/1/2001')
+            out = indices.tx_days_above(tas, 30)
+            out1 = indices.tx_days_above(tas, '30 degC')
+            out2 = indices.tx_days_above(tas, '303.15 K')
+            np.testing.assert_array_equal(out, out1)
+            np.testing.assert_array_equal(out, out2)
+
+
+class TestUnitConversion:
+
+    def test_pint2cfunits(self):
+        u = units('mm/d')
+        assert pint2cfunits(u.units) == 'mm d-1'
+
+    def test_cfunits2pint(self, pr_series):
+        u = units2pint(pr_series([1, 2]))
+        assert (str(u)) == 'kilogram / meter ** 2 / second'
+        assert pint2cfunits(u) == 'kg m-2 s-1'
+
+        u = units2pint('m^3 s-1')
+        assert str(u) == 'meter ** 3 / second'
+        assert pint2cfunits(u) == 'm^3 s-1'
+
+    def test_pint_multiply(self, pr_series):
+        a = pr_series([1, 2, 3])
+        out = utils.pint_multiply(a, 1 * units.days)
+        assert out[0] == 1 * 60 * 60 * 24
+        assert out.units == 'kg m-2'
+
+
+class TestCheckUnits:
+
+    def test_basic(self):
+        utils._check_units('mm/day', '[precipitation]')
+        utils._check_units('mm/s', '[precipitation]')
+        utils._check_units('kg/m2/s', '[precipitation]')
+        utils._check_units('kg/m2', '[length]')
+        utils._check_units('cms', '[discharge]')
+        utils._check_units('m3/s', '[discharge]')
+
+        with pytest.raises(AttributeError):
+            utils._check_units('mm', '[precipitation]')
+            utils._check_units('m3', '[discharge]')
+
 
 class TestSubsetGridPoint:
     nc_poslons = os.path.join(TESTS_DATA, 'cmip3', 'tas.sresb1.giss_model_e_r.run1.atm.da.nc')
@@ -373,7 +435,7 @@ class TestSubsetGridPoint:
         da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
         lon = -72.4
         lat = 46.1
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
@@ -382,7 +444,7 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_file).tasmax
         lon = -72.4
         lat = 46.1
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
@@ -391,7 +453,7 @@ class TestSubsetGridPoint:
         yr_st = 2050
         yr_ed = 2059
 
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
@@ -402,7 +464,7 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
@@ -410,9 +472,18 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         lon = -72.4
         lat = 46.1
-        out = utils.subset_gridpoint(da, lon=lon, lat=lat)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
+
+        out = subset.subset_gridpoint(da, lon=lon + 360, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon + 360, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
+    def test_raise(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        with pytest.raises(ValueError):
+            subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
 
 
 class TestSubsetBbox:
@@ -424,7 +495,7 @@ class TestSubsetBbox:
 
     def test_dataset(self):
         da = xr.open_mfdataset([self.nc_file, self.nc_file.replace('tasmax', 'tasmin')])
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -434,7 +505,7 @@ class TestSubsetBbox:
     def test_simple(self):
         da = xr.open_dataset(self.nc_file).tasmax
 
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -445,7 +516,7 @@ class TestSubsetBbox:
         yr_st = 2050
         yr_ed = 2059
 
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed)
         assert (np.all(out.lon >= np.min(self.lon)))
         assert (np.all(out.lon <= np.max(self.lon)))
         assert (np.all(out.lat >= np.min(self.lat)))
@@ -453,10 +524,26 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
+        assert (np.all(out.lon >= np.min(self.lon)))
+        assert (np.all(out.lon <= np.max(self.lon)))
+        assert (np.all(out.lat >= np.min(self.lat)))
+        assert (np.all(out.lat <= np.max(self.lat)))
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
+
     def test_irregular(self):
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
 
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
         # for irregular lat lon grids data matrix remains rectangular in native proj
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
@@ -471,11 +558,19 @@ class TestSubsetBbox:
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
 
-        out = utils.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
         assert (np.all(out.lon <= np.max(np.asarray(self.lon) + 360)))
         assert (np.all(out.lat >= np.min(self.lat)))
         assert (np.all(out.lat <= np.max(self.lat)))
+
+        out = subset.subset_bbox(da, lon_bnds=np.array(self.lon) + 360, lat_bnds=self.lat)
+        assert (np.all(out.lon >= np.min(np.asarray(self.lon) + 360)))
+
+    def test_raise(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        with pytest.raises(ValueError):
+            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055)
 
 
 class TestThresholdCount:

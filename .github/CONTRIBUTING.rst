@@ -141,11 +141,13 @@ Versioning
 In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
 The method we use is as such::
 
-  major.minor-release
+  major.minor.patch-release
 
 **Major** releases denote major changes resulting in a stable API;
 
-**Minor** is to be used when adding a module or set of components;
+**Minor** is to be used when adding a module, process or set of components;
+
+**Patch** should be used for bug fixes and optimizations
 
 **Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
 
@@ -158,7 +160,7 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (**including an entry in HISTORY.rst**).
 Then run::
 
-$ bumpversion minor # possible options: major / minor / release
+$ bumpversion <option> # possible options: major / minor / patch / release
 $ git push
 $ git push --tags
 
