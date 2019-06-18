@@ -129,12 +129,9 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     dist = dist.reshape(shp_orig)
 
     iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
-    xydims = [x for x in da.dims if 'time' not in x]
 
-    args = dict()
-    args[xydims[0]] = iy
-    args[xydims[1]] = ix
-    out = da.isel(**args)
+    out = da.isel(lat=iy, lon=ix)
+
     if start_yr or end_yr:
         if not start_yr:
             start_yr = da.time.dt.year.min()
