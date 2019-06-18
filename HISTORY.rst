@@ -2,13 +2,17 @@
 History
 =======
 
-0.11.0-beta ()
+0.10.2-beta (2019-06-18)
+--------------
+* Added utilities with ensemble, run length, and subset algorithms to the documentation.
+
+0.10.1-beta ()
 --------------
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.
 
-0.10-beta (06-06-2019)
+0.10-beta (2019-06-06)
 ----------------------
 * Indicators are now split into packages named by *realms*. ``import xclim.atmos`` is now the method for loading indicators related to atmospheric variables.
 * Removed support for Python 2 compatibility.
@@ -16,7 +20,7 @@ History
 * Now allow for passing positive longitude values when subsetting data with negative longitudes.
 * Improved runlength calculations for small grid size arrays via ``ufunc_1dim`` flag.
 
-0.9-beta (13-05-2019)
+0.9-beta (2019-05-13)
 ---------------------
 TODO
 
