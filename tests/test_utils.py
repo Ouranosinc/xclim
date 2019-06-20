@@ -32,6 +32,7 @@ from xclim import indices
 from xclim import subset
 from xclim import utils
 from xclim import atmos
+from xclim import __version__
 from xclim.utils import daily_downsampler, Indicator, format_kwargs, parse_doc, walk_map
 from xclim.utils import infer_doy_max, adjust_doy_calendar, percentile_doy
 from xclim.utils import units, pint2cfunits, units2pint
@@ -216,6 +217,7 @@ class TestIndicator:
         assert txm.cell_methods == 'time: mean within days time: mean within years'
         assert '{:%Y-%m-%d %H}'.format(dt.datetime.now()) in txm.attrs['history']
         assert "tmin(da, thresh=5, freq='YS')" in txm.attrs['history']
+        assert 'xclim version: {}.'.format(__version__) in txm.attrs['history']
         assert txm.name == "tmin5"
 
     def test_temp_unit_conversion(self, tas_series):
