@@ -37,7 +37,7 @@ xclim
         :alt: DOI
 
 .. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
-        :target: https://github.com/bird-house/birdhouse-docs/blob/master/LICENSE
+        :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
         :alt: License
 
 ``xclim`` is a library of functions to compute climate indices. It is built using xarray and can benefit from the parallelization handling provided by dask. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
