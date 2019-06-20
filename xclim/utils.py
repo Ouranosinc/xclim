@@ -672,7 +672,7 @@ class Indicator():
                 attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
                 attrs[attr] += getattr(ba.arguments[p], attr, '')
                 if attrs[attr]:
-                    attrs[attr] += ": xclim version: {} ".format(xclim.__version__) if attr == 'history' else " "
+                    attrs[attr] += "\n" if attr == 'history' else " "
 
         # Update attributes
         out_attrs = self.format(self.cf_attrs, ba.arguments)
@@ -686,8 +686,8 @@ class Indicator():
             else:
                 cp[k] = v
 
-        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
-            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{} - xclim version: {}.'.format(
+            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()), xclim.__version__)
         attrs['cell_methods'] += out_attrs.pop('cell_methods', '')
         attrs.update(out_attrs)
 
