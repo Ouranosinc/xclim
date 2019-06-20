@@ -2,15 +2,12 @@
 History
 =======
 
-0.10.2-beta (2019-06-18)
+0.10.x-beta (2019-06-18)
 ------------------------
-* Added utilities with ensemble, run length, and subset algorithms to the documentation.
-
-0.10.1-beta ()
---------------
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.
+* Added utilities with ensemble, run length, and subset algorithms to the documentation.
 
 0.10-beta (2019-06-06)
 ----------------------

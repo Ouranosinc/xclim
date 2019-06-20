@@ -19,6 +19,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 
 from . import checks
+import xclim
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(pint.unit.UnitDefinition('percent', '%', (),
@@ -685,8 +686,8 @@ class Indicator():
             else:
                 cp[k] = v
 
-        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
-            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
+        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{} - xclim version: {}.'.format(
+            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()), xclim.__version__)
         attrs['cell_methods'] += out_attrs.pop('cell_methods', '')
         attrs.update(out_attrs)
 
