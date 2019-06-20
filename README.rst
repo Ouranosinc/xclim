@@ -11,6 +11,10 @@ xclim
 .. image:: https://img.shields.io/pypi/v/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Python Package Index Build
+        
+.. image:: https://img.shields.io/conda/vn/conda-forge/xclim.svg
+        :target: https://anaconda.org/conda-forge/xclim
+        :alt: Conda-forge Build Version
 
 .. image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
         :target: https://travis-ci.org/Ouranosinc/xclim
