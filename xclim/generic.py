@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Note: stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
-
 import dask
 import numpy as np
 import xarray as xr
@@ -29,7 +28,7 @@ def select_time(da, **indexer):
     else:
         key, val = indexer.popitem()
         time_att = getattr(da.time.dt, key)
-        selected = da.sel(time=time_att.isin(val)).dropna(dim='time')
+        selected = da.sel(time=time_att.isin(val)).dropna(dim="time")
 
     return selected
 
@@ -59,28 +58,28 @@ def select_resample_op(da, op, freq="YS", **indexer):
     da = select_time(da, **indexer)
     r = da.resample(time=freq, keep_attrs=True)
     if isinstance(op, str):
-        return getattr(r, op)(dim='time', keep_attrs=True)
+        return getattr(r, op)(dim="time", keep_attrs=True)
 
     return r.apply(op)
 
 
 def doymax(da):
     """Return the day of year of the maximum value."""
-    i = da.argmax(dim='time')
+    i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs['units'] = ''
+    out.attrs["units"] = ""
     return out
 
 
 def doymin(da):
     """Return the day of year of the minimum value."""
-    i = da.argmax(dim='time')
+    i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs['units'] = ''
+    out.attrs["units"] = ""
     return out
 
 
-def fit(da, dist='norm'):
+def fit(da, dist="norm"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -105,36 +104,44 @@ def fit(da, dist='norm'):
     dc = get_dist(dist)
 
     # Fit the parameters (lazy computation)
-    data = dask.array.apply_along_axis(dc.fit, da.get_axis_num('time'), da.dropna('time', how='all'))
+    data = dask.array.apply_along_axis(
+        dc.fit, da.get_axis_num("time"), da.dropna("time", how="all")
+    )
 
     # Count the number of values used for the fit.
     # n = arr.count(dim='time')
 
     # Create a view to a DataArray with the desired dimensions to copy them over to the parameter array.
-    mean = da.mean(dim='time', keep_attrs=True)
+    mean = da.mean(dim="time", keep_attrs=True)
 
     # Create coordinate for the distribution parameters
     coords = dict(mean.coords.items())
-    coords['dparams'] = ([] if dc.shapes is None else dc.shapes.split(',')) + ['loc', 'scale']
+    coords["dparams"] = ([] if dc.shapes is None else dc.shapes.split(",")) + [
+        "loc",
+        "scale",
+    ]
 
     # TODO: add time and time_bnds coordinates (Low will work on this)
     # time.attrs['climatology'] = 'climatology_bounds'
     # coords['time'] =
     # coords['climatology_bounds'] =
 
-    out = xr.DataArray(data=data, coords=coords, dims=(u'dparams',) + mean.dims)
+    out = xr.DataArray(data=data, coords=coords, dims=(u"dparams",) + mean.dims)
     out.attrs = da.attrs
-    out.attrs['original_name'] = getattr(da, 'standard_name', '')
-    out.attrs['description'] = \
-        'Parameters of the {0} distribution fitted over {1}'.format(dist, getattr(da, 'standard_name', ''))
-    out.attrs['estimator'] = 'Maximum likelihood'
-    out.attrs['scipy_dist'] = dist
-    out.attrs['units'] = ''
+    out.attrs["original_name"] = getattr(da, "standard_name", "")
+    out.attrs[
+        "description"
+    ] = "Parameters of the {} distribution fitted over {}".format(
+        dist, getattr(da, "standard_name", "")
+    )
+    out.attrs["estimator"] = "Maximum likelihood"
+    out.attrs["scipy_dist"] = dist
+    out.attrs["units"] = ""
     # out.name = 'params'
     return out
 
 
-def fa(da, t, dist='norm', mode='high'):
+def fa(da, t, dist="norm", mode="high"):
     """Return the value corresponding to the given return period.
 
     Parameters
@@ -164,26 +171,30 @@ def fa(da, t, dist='norm', mode='high'):
     p = fit(da, dist)
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    if mode in ['max', 'high']:
+    if mode in ["max", "high"]:
+
         def func(x):
-            return dc.isf(1. / t, *x)
-    elif mode in ['min', 'low']:
+            return dc.isf(1.0 / t, *x)
+
+    elif mode in ["min", "low"]:
+
         def func(x):
-            return dc.ppf(1. / t, *x)
+            return dc.ppf(1.0 / t, *x)
+
     else:
         raise ValueError("mode `{}` should be either 'max' or 'min'".format(mode))
 
-    data = dask.array.apply_along_axis(func, p.get_axis_num('dparams'), p)
+    data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
     # Create coordinate for the return periods
     coords = dict(p.coords.items())
-    coords.pop('dparams')
-    coords['return_period'] = t
+    coords.pop("dparams")
+    coords["return_period"] = t
 
     # Create dimensions
     dims = list(p.dims)
-    dims.remove('dparams')
-    dims.insert(0, u'return_period')
+    dims.remove("dparams")
+    dims.insert(0, u"return_period")
 
     # TODO: add time and time_bnds coordinates (Low will work on this)
     # time.attrs['climatology'] = 'climatology_bounds'
@@ -192,12 +203,18 @@ def fa(da, t, dist='norm', mode='high'):
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = p.attrs
-    out.attrs['standard_name'] = '{0} quantiles'.format(dist)
-    out.attrs['long_name'] = '{0} return period values for {1}'.format(dist, getattr(da, 'standard_name', ''))
-    out.attrs['cell_methods'] = (out.attrs.get('cell_methods', '') + ' dparams: ppf').strip()
-    out.attrs['units'] = da.attrs.get('units', '')
-    out.attrs['mode'] = mode
-    out.attrs['history'] = out.attrs.get('history', '') + "Compute values corresponding to return periods."
+    out.attrs["standard_name"] = "{} quantiles".format(dist)
+    out.attrs["long_name"] = "{} return period values for {}".format(
+        dist, getattr(da, "standard_name", "")
+    )
+    out.attrs["cell_methods"] = (
+        out.attrs.get("cell_methods", "") + " dparams: ppf"
+    ).strip()
+    out.attrs["units"] = da.attrs.get("units", "")
+    out.attrs["mode"] = mode
+    out.attrs["history"] = (
+        out.attrs.get("history", "") + "Compute values corresponding to return periods."
+    )
 
     return out
 
@@ -243,7 +260,7 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     freq = freq or default_freq(**indexer)
 
     # Extract the time series of min or max over the period
-    sel = select_resample_op(da, op=mode, freq=freq, **indexer).dropna(dim='time')
+    sel = select_resample_op(da, op=mode, freq=freq, **indexer).dropna(dim="time")
 
     # Frequency analysis
     return fa(sel, t, dist, mode)
@@ -251,12 +268,12 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
 
 def default_freq(**indexer):
     """Return the default frequency."""
-    freq = 'AS-JAN'
+    freq = "AS-JAN"
     if indexer:
-        if 'DJF' in indexer.values():
-            freq = 'AS-DEC'
-        if 'month' in indexer and sorted(indexer.values()) != indexer.values():
-            raise (NotImplementedError)
+        if "DJF" in indexer.values():
+            freq = "AS-DEC"
+        if "month" in indexer and sorted(indexer.values()) != indexer.values():
+            raise NotImplementedError
 
     return freq
 
