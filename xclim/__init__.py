@@ -56,12 +56,15 @@ def build_module(name, objs, doc="", source=None, mode="ignore"):
 
         if module_mappings is None:
             msg = "{} has not been implemented.".format(obj)
-            if mode == "raise":
-                raise NotImplementedError(msg)
+            if mode == "ignore":
+                logging.info(msg)
             elif mode == "warn":
                 warnings.warn(msg)
+            elif mode == "raise":
+                raise NotImplementedError(msg)
             else:
-                logging.info(msg)
+                msg = "{} is not a valid missing object behaviour".format(mode)
+                raise AttributeError(msg)
 
         else:
             out.__dict__[key] = module_mappings
@@ -137,4 +140,4 @@ def __build_icclim(mode="warn"):
     return mod
 
 
-icclim = __build_icclim("ignore")
+ICCLIM = __build_icclim("ignore")
