@@ -100,7 +100,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pip install pre-commit
 
     # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge pre-commit
+    $ conda install -c conda-forge pre_commit
 
     $ pre-commit install
 
