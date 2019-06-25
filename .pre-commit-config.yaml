@@ -1,0 +1,36 @@
+default_language_version:
+    python: python3.6
+#exclude: '^$'
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 19.3b0
+    hooks:
+    -   id: black
+        language_version: python3
+-   repo: https://github.com/asottile/reorder_python_imports
+    rev: v1.5.0
+    hooks:
+    -   id: reorder-python-imports
+        language_version: python3
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3
+    hooks:
+    -   id: trailing-whitespace
+        language_version: python3
+    -   id: end-of-file-fixer
+        language_version: python3
+    -   id: check-yaml
+        language_version: python3
+    -   id: debug-statements
+        language_version: python3
+    -   id: flake8
+        language_version: python3
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v1.19.0
+    hooks:
+    -   id: pyupgrade
+        language_version: python3
+-   repo: meta
+    hooks:
+    -   id: check-hooks-apply
+    -   id: check-useless-excludes
