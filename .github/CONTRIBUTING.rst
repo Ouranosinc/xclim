@@ -108,7 +108,7 @@ Before you submit a pull request, please follow these guidelines:
      Consider adding a "**# TODO:**" comment if the need arises.
 
 3. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
-   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not decrease.**
+   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
    Please ensure that the docstrings adhere to one of the following standards:
@@ -116,7 +116,7 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 2.7, 3.4, 3.5, and 3.6 as well as raise test coverage.
+5. The pull request should work for Python 3.5, 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
@@ -132,14 +132,14 @@ Tips
 
 To run a subset of tests::
 
-$ py.test tests.test_xclim
+$ pytest tests.test_xclim
 
 
 Versioning
 ----------
 
-In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
-The method we use is as such::
+In order to update and release the library to PyPI, it's good to use a semantic versioning scheme.
+The method we use is as follows::
 
   major.minor.patch-release
 
@@ -147,7 +147,7 @@ The method we use is as such::
 
 **Minor** is to be used when adding a module, process or set of components;
 
-**Patch** should be used for bug fixes and optimizations
+**Patch** should be used for bug fixes and optimizations;
 
 **Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
 
