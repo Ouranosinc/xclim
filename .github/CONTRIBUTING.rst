@@ -60,38 +60,62 @@ Get Started!
 Ready to contribute? Here's how to set up `xclim` for local development.
 
 1. Fork the `xclim` repo on GitHub.
+
 2. Clone your fork locally::
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
+    # For virtualenv environments:
     $ mkvirtualenv xclim
+
+    # For Anaconda/Miniconda environments:
+    $ conda create -n xclim python=3.6
+
     $ cd xclim/
-    $ pip install -e .    
+    $ pip install -e .
 
 4. Create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
-   Now you can make your changes locally.
+   Now you can make your changes locally!
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+5. When you're done making changes, check that you verify your changes with `black` and run the tests, including testing other Python versions with `tox`::
 
-    $ flake8 xclim tests
-    $ python setup.py test or py.test
+    # For virtualenv environments:
+    $ pip install black pytest tox
+
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge black pytest tox
+
+    $ black xclim tests
+    $ python setup.py test OR pytest test
     $ tox
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
 
-6. Commit your changes and push your branch to GitHub::
+    # For virtualenv environments:
+    $ pip install pre-commit
 
-    $ git add .
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge pre-commit
+
+    $ pre-commit install
+
+7. Commit your changes and push your branch to GitHub::
+
+    $ git add *
+
     $ git commit -m "Your detailed description of your changes."
+    # `pre-commit` will run checks at this point:
+    # if no errors are found, chnages will be committed.
+    # if errors are found, modifications will be mades. Simply `git commit` again.
+
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
