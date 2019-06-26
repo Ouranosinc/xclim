@@ -82,7 +82,7 @@ extensions = (
     "rstjinja",
     "nbsphinx",
     "guzzle_sphinx_theme",
-    "ipython",
+    "IPython.sphinxext.ipython_console_highlighting",
 )
 
 napoleon_numpy_docstring = True
