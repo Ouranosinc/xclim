@@ -18,7 +18,7 @@ matrix:
         apt:
           packages:
           - pandoc
-    - env: TOXENV=flake8
+    - env: TOXENV=black
       python: 3.5
     - env: TOXENV=py38-dev
       python: 3.8-dev
