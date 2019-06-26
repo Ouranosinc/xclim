@@ -91,7 +91,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ conda install -c conda-forge black pytest tox
 
     $ black xclim tests
-    $ python setup.py test OR pytest test
+    $ python setup.py test
     $ tox
 
 6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
@@ -110,7 +110,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     $ git commit -m "Your detailed description of your changes."
     # `pre-commit` will run checks at this point:
-    # if no errors are found, chnages will be committed.
+    # if no errors are found, changes will be committed.
     # if errors are found, modifications will be mades. Simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
