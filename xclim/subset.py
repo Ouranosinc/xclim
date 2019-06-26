@@ -47,11 +47,15 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
             lon_bnds[lon_bnds < 0] += 360
         if np.all(da.lon < 0) and np.any(lon_bnds > 0):
             lon_bnds[lon_bnds < 0] -= 360
-        da = da.where((da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max()), drop=True)
+        da = da.where(
+            (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max()), drop=True
+        )
 
     if lat_bnds is not None:
         lat_bnds = np.asarray(lat_bnds)
-        da = da.where((da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max()), drop=True)
+        da = da.where(
+            (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max()), drop=True
+        )
 
     if start_yr or end_yr:
         if not start_yr:
@@ -63,7 +67,10 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
             raise ValueError("Start date is after end date.")
 
         year_bnds = np.asarray([start_yr, end_yr])
-        da = da.where((da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max()), drop=True)
+        da = da.where(
+            (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max()),
+            drop=True,
+        )
 
     return da
 
@@ -107,7 +114,7 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
     """
 
-    g = Geod(ellps='WGS84')  # WGS84 ellipsoid - decent globaly
+    g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
     # adjust negative/positive longitudes if necessary
     if np.all(da.lon > 0) and lon < 0:
         lon += 360
@@ -125,11 +132,13 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     lon1 = np.reshape(lon1, lon1.size)
     lat1 = np.reshape(lat1, lat1.size)
     # calculate geodesic distance between grid points and point of interest
-    az12, az21, dist = g.inv(lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape))
+    az12, az21, dist = g.inv(
+        lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape)
+    )
     dist = dist.reshape(shp_orig)
 
     iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
-    xydims = [x for x in da.dims if 'time' not in x]
+    xydims = [x for x in da.dims if "time" not in x]
 
     args = dict()
     args[xydims[0]] = iy
@@ -149,7 +158,9 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
         if len(year_bnds) == 1:
             time_cond = da.time.dt.year == year_bnds
         else:
-            time_cond = (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max())
+            time_cond = (da.time.dt.year >= year_bnds.min()) & (
+                da.time.dt.year <= year_bnds.max()
+            )
         out = out.where(time_cond, drop=True)
 
     return out

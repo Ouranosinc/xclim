@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """The setup script."""
+from setuptools import find_packages
+from setuptools import setup
 
-from setuptools import setup, find_packages
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -62,6 +62,6 @@ setup(
     tests_require=test_requirements,
     extras_require={"docs": docs_requirements},
     url="https://github.com/Ouranosinc/xclim",
-    version="0.10.2-beta",
+    version="0.10.3-beta",
     zip_safe=False,
 )
