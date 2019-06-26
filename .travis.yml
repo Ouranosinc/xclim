@@ -13,13 +13,13 @@ matrix:
     - env:
       - TOXENV=docs
       - HOME=~
-      python: 3.5
+      python: 3.6
       addons:
         apt:
           packages:
           - pandoc
     - env: TOXENV=black
-      python: 3.5
+      python: 3.6
     - env: TOXENV=py38-dev
       python: 3.8-dev
       dist: xenial
