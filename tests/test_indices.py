@@ -282,7 +282,7 @@ class TestGrowingDegreeDays:
 
 
 @pytest.mark.skipif(
-    sys.version_info > (3, 6),
+    sys.version_info >= (3, 7),
     reason="GrowingSeasonLength causes a dask-related SegFault",
 )
 class TestGrowingSeasonLength:
