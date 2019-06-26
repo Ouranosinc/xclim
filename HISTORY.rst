@@ -8,6 +8,8 @@ History
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.
 * Added utilities with ensemble, run length, and subset algorithms to the documentation.
+* Source code development standards now implement Python Black formatting.
+* Pre-commit is now used to launch code formatting inspections for local development.
 
 0.10-beta (2019-06-06)
 ----------------------
@@ -65,5 +67,3 @@ Class-based indicators are new methods that allow index calculation with error-c
 0.1.0-dev (2018-08-23)
 ----------------------
 * First release on PyPI.
-
-
