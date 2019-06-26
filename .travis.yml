@@ -10,7 +10,9 @@ sudo: false
 matrix:
   fast_finish: true
   include:
-    - env: TOXENV=docs
+    - env:
+      - TOXENV=docs
+      - HOME=~
       python: 3.5
       addons:
         apt:
