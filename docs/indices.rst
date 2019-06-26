@@ -2,20 +2,7 @@ All Indices
 ===========
 
 
-.. automodule:: xclim.indices._simple
+.. automodule:: xclim.indices
    :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-.. automodule:: xclim.indices._multivariate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
-
-.. automodule:: xclim.indices._threshold
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :imported-members:
    :noindex:

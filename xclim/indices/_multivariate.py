@@ -1,9 +1,15 @@
 import numpy as np
 import xarray as xr
 
-from xclim import utils, run_length as rl
-from xclim.utils import declare_units, units
+from xclim import run_length as rl
+from xclim import utils
+from xclim.utils import declare_units
+from xclim.utils import units
 from . import fwi
+
+# logging.basicConfig(level=logging.DEBUG)
+# logging.captureWarnings(True)
+
 
 xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -15,15 +21,32 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ['cold_spell_duration_index', 'cold_and_dry_days', 'daily_freezethaw_cycles', 'daily_temperature_range',
-           'daily_temperature_range_variability', 'extreme_temperature_range', 'fire_weather_index',
-           'heat_wave_frequency',
-           'heat_wave_max_length', 'liquid_precip_ratio', 'rain_on_frozen_ground_days', 'tg90p', 'tg10p',
-           'tn90p', 'tn10p', 'tx90p', 'tx10p', 'tx_tn_days_above', 'warm_spell_duration_index', 'winter_rain_ratio']
+__all__ = [
+    "cold_spell_duration_index",
+    "cold_and_dry_days",
+    "daily_freezethaw_cycles",
+    "daily_temperature_range",
+    "daily_temperature_range_variability",
+    "extreme_temperature_range",
+    "fire_weather_index",
+    "heat_wave_frequency",
+    "heat_wave_max_length",
+    "liquid_precip_ratio",
+    "rain_on_frozen_ground_days",
+    "tg90p",
+    "tg10p",
+    "tn90p",
+    "tn10p",
+    "tx90p",
+    "tx10p",
+    "tx_tn_days_above",
+    "warm_spell_duration_index",
+    "winter_rain_ratio",
+]
 
 
-@declare_units('days', tasmin='[temperature]', tn10='[temperature]')
-def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
+@declare_units("days", tasmin="[temperature]", tn10="[temperature]")
+def cold_spell_duration_index(tasmin, tn10, window=6, freq="YS"):
     r"""Cold spell duration index
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
@@ -67,11 +90,11 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     >>> tn10 = percentile_doy(historical_tasmin, per=.1)
     >>> cold_spell_duration_index(reference_tasmin, tn10)
     """
-    if 'dayofyear' not in tn10.coords.keys():
+    if "dayofyear" not in tn10.coords.keys():
         raise AttributeError("tn10 should have dayofyear coordinates.")
 
     # The day of year value of the tasmin series.
-    doy = tasmin.indexes['time'].dayofyear
+    doy = tasmin.indexes["time"].dayofyear
 
     tn10 = utils.convert_units_to(tn10, tasmin)
     # If calendar of `tn10` is different from `tasmin`, interpolate.
@@ -81,12 +104,14 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq='YS'):
     thresh = xr.full_like(tasmin, np.nan)
     thresh.data = tn10.sel(dayofyear=doy)
 
-    below = (tasmin < thresh)
+    below = tasmin < thresh
 
-    return below.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
+    return below.resample(time=freq).apply(
+        rl.windowed_run_count, window=window, dim="time"
+    )
 
 
-def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
+def cold_and_dry_days(tas, tgin25, pr, wet25, freq="YS"):
     r"""Cold and dry days.
 
     Returns the total number of days where "Cold" and "Dry" conditions coincide.
@@ -127,8 +152,8 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq='YS'):
     # return c.resample(time=freq).sum(dim='time')
 
 
-@declare_units('days', tasmax='[temperature]', tasmin='[temperature]')
-def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
+@declare_units("days", tasmax="[temperature]", tasmin="[temperature]")
+def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
     r"""Number of days with a diurnal freeze-thaw cycle
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
@@ -159,14 +184,14 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq='YS'):
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    frz = utils.convert_units_to('0 degC', tasmax)
+    frz = utils.convert_units_to("0 degC", tasmax)
     ft = (tasmin < frz) * (tasmax > frz) * 1
-    out = ft.resample(time=freq).sum(dim='time')
+    out = ft.resample(time=freq).sum(dim="time")
     return out
 
 
-@declare_units('K', tasmax='[temperature]', tasmin='[temperature]')
-def daily_temperature_range(tasmax, tasmin, freq='YS'):
+@declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
+def daily_temperature_range(tasmax, tasmin, freq="YS"):
     r"""Mean of daily temperature range.
 
     The mean difference between the daily maximum temperature and the daily minimum temperature.
@@ -196,12 +221,12 @@ def daily_temperature_range(tasmax, tasmin, freq='YS'):
     """
 
     dtr = tasmax - tasmin
-    out = dtr.resample(time=freq).mean(dim='time', keep_attrs=True)
-    out.attrs['units'] = tasmax.units
+    out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
+    out.attrs["units"] = tasmax.units
     return out
 
 
-@declare_units('K', tasmax='[temperature]', tasmin='[temperature]')
+@declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
     r"""Mean absolute day-to-day variation in daily temperature range.
 
@@ -232,14 +257,14 @@ def daily_temperature_range_variability(tasmax, tasmin, freq="YS"):
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
 
-    vdtr = abs((tasmax - tasmin).diff(dim='time'))
-    out = vdtr.resample(time=freq).mean(dim='time')
-    out.attrs['units'] = tasmax.units
+    vdtr = abs((tasmax - tasmin).diff(dim="time"))
+    out = vdtr.resample(time=freq).mean(dim="time")
+    out.attrs["units"] = tasmax.units
     return out
 
 
-@declare_units('K', tasmax='[temperature]', tasmin='[temperature]')
-def extreme_temperature_range(tasmax, tasmin, freq='YS'):
+@declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
+def extreme_temperature_range(tasmax, tasmin, freq="YS"):
     r"""Extreme intra-period temperature range.
 
     The maximum of max temperature (TXx) minus the minimum of min temperature (TNn) for the given time period.
@@ -268,11 +293,11 @@ def extreme_temperature_range(tasmax, tasmin, freq='YS'):
         ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
 
-    tx_max = tasmax.resample(time=freq).max(dim='time')
-    tn_min = tasmin.resample(time=freq).min(dim='time')
+    tx_max = tasmax.resample(time=freq).max(dim="time")
+    tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs['units'] = tasmax.units
+    out.attrs["units"] = tasmax.units
     return out
 
 
@@ -312,10 +337,21 @@ def fire_weather_index(tas, pr, ws, rh, ffmc0, dmc0, dc0):
     return out
 
 
-@declare_units('', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
-               thresh_tasmax='[temperature]')
-def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax='30 degC',
-                        window=3, freq='YS'):
+@declare_units(
+    "",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def heat_wave_frequency(
+    tasmin,
+    tasmax,
+    thresh_tasmin="22.0 degC",
+    thresh_tasmax="30 degC",
+    window=3,
+    freq="YS",
+):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency
 
@@ -367,13 +403,24 @@ def heat_wave_frequency(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim='time')
+    return group.apply(rl.windowed_run_events, window=window, dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
-               thresh_tasmax='[temperature]')
-def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasmax='30 degC',
-                         window=3, freq='YS'):
+@declare_units(
+    "days",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def heat_wave_max_length(
+    tasmin,
+    tasmax,
+    thresh_tasmin="22.0 degC",
+    thresh_tasmax="30 degC",
+    window=3,
+    freq="YS",
+):
     # Dev note : we should decide if it is deg K or C
     r"""Heat wave max length
 
@@ -427,12 +474,12 @@ def heat_wave_max_length(tasmin, tasmax, thresh_tasmin='22.0 degC', thresh_tasma
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run, dim='time')
+    max_l = group.apply(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
 
 
-@declare_units('', pr='[precipitation]', prsn='[precipitation]', tas='[temperature]')
-def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
+@declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
+def liquid_precip_ratio(pr, prsn=None, tas=None, freq="QS-DEC"):
     r"""Ratio of rainfall to total precipitation
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
@@ -472,21 +519,23 @@ def liquid_precip_ratio(pr, prsn=None, tas=None, freq='QS-DEC'):
     """
 
     if prsn is None:
-        tu = units.parse_units(tas.attrs['units'].replace('-', '**-'))
-        fu = 'degC'
+        tu = units.parse_units(tas.attrs["units"].replace("-", "**-"))
+        fu = "degC"
         frz = 0
         if fu != tu:
             frz = units.convert(frz, fu, tu)
         prsn = pr.where(tas < frz, 0)
 
-    tot = pr.resample(time=freq).sum(dim='time')
-    rain = tot - prsn.resample(time=freq).sum(dim='time')
+    tot = pr.resample(time=freq).sum(dim="time")
+    rain = tot - prsn.resample(time=freq).sum(dim="time")
     ratio = rain / tot
     return ratio
 
 
-@declare_units('days', pr='[precipitation]', tas='[temperature]', thresh='[precipitation]')
-def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
+@declare_units(
+    "days", pr="[precipitation]", tas="[temperature]", thresh="[precipitation]"
+)
+def rain_on_frozen_ground_days(pr, tas, thresh="1 mm/d", freq="YS"):
     """Number of rain on frozen ground events
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
@@ -527,7 +576,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
 
     """
     t = utils.convert_units_to(thresh, pr)
-    frz = utils.convert_units_to('0 C', tas)
+    frz = utils.convert_units_to("0 C", tas)
 
     def func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
@@ -535,13 +584,13 @@ def rain_on_frozen_ground_days(pr, tas, thresh='1 mm/d', freq='YS'):
         return frozen.all(axis=axis)
 
     tcond = (tas > frz).rolling(time=8).reduce(func)
-    pcond = (pr > t)
+    pcond = pr > t
 
-    return (tcond * pcond * 1).resample(time=freq).sum(dim='time')
+    return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tas='[temperature]', t90='[temperature]')
-def tg90p(tas, t90, freq='YS'):
+@declare_units("days", tas="[temperature]", t90="[temperature]")
+def tg90p(tas, t90, freq="YS"):
     r"""Number of days with daily mean temperature over the 90th percentile.
 
     Number of days with daily mean temperature over the 90th percentile.
@@ -569,7 +618,7 @@ def tg90p(tas, t90, freq='YS'):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if 'dayofyear' not in t90.coords.keys():
+    if "dayofyear" not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
     t90 = utils.convert_units_to(t90, tas)
@@ -583,13 +632,13 @@ def tg90p(tas, t90, freq='YS'):
     thresh.data = t90.sel(dayofyear=doy)
 
     # compute the cold days
-    over = (tas > thresh)
+    over = tas > thresh
 
-    return over.resample(time=freq).sum(dim='time')
+    return over.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tas='[temperature]', t10='[temperature]')
-def tg10p(tas, t10, freq='YS'):
+@declare_units("days", tas="[temperature]", t10="[temperature]")
+def tg10p(tas, t10, freq="YS"):
     r"""Number of days with daily mean temperature below the 10th percentile.
 
     Number of days with daily mean temperature below the 10th percentile.
@@ -617,7 +666,7 @@ def tg10p(tas, t10, freq='YS'):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if 'dayofyear' not in t10.coords.keys():
+    if "dayofyear" not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
     t10 = utils.convert_units_to(t10, tas)
@@ -631,13 +680,13 @@ def tg10p(tas, t10, freq='YS'):
     thresh.data = t10.sel(dayofyear=doy)
 
     # compute the cold days
-    below = (tas < thresh)
+    below = tas < thresh
 
-    return below.resample(time=freq).sum(dim='time')
+    return below.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', t90='[temperature]')
-def tn90p(tasmin, t90, freq='YS'):
+@declare_units("days", tasmin="[temperature]", t90="[temperature]")
+def tn90p(tasmin, t90, freq="YS"):
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
     Number of days with daily minimum temperature over the 90th percentile.
@@ -665,7 +714,7 @@ def tn90p(tasmin, t90, freq='YS'):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if 'dayofyear' not in t90.coords.keys():
+    if "dayofyear" not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
     t90 = utils.convert_units_to(t90, tasmin)
     # adjustment of t90 to tas doy range
@@ -677,13 +726,13 @@ def tn90p(tasmin, t90, freq='YS'):
     thresh.data = t90.sel(dayofyear=doy)
 
     # compute the cold days
-    over = (tasmin > thresh)
+    over = tasmin > thresh
 
-    return over.resample(time=freq).sum(dim='time')
+    return over.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', t10='[temperature]')
-def tn10p(tasmin, t10, freq='YS'):
+@declare_units("days", tasmin="[temperature]", t10="[temperature]")
+def tn10p(tasmin, t10, freq="YS"):
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
     Number of days with daily minimum temperature below the 10th percentile.
@@ -712,7 +761,7 @@ def tn10p(tasmin, t10, freq='YS'):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if 'dayofyear' not in t10.coords.keys():
+    if "dayofyear" not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
     t10 = utils.convert_units_to(t10, tasmin)
 
@@ -725,13 +774,13 @@ def tn10p(tasmin, t10, freq='YS'):
     thresh.data = t10.sel(dayofyear=doy)
 
     # compute the cold days
-    below = (tasmin < thresh)
+    below = tasmin < thresh
 
-    return below.resample(time=freq).sum(dim='time')
+    return below.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmax='[temperature]', t90='[temperature]')
-def tx90p(tasmax, t90, freq='YS'):
+@declare_units("days", tasmax="[temperature]", t90="[temperature]")
+def tx90p(tasmax, t90, freq="YS"):
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
     Number of days with daily maximum temperature over the 90th percentile.
@@ -759,7 +808,7 @@ def tx90p(tasmax, t90, freq='YS'):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if 'dayofyear' not in t90.coords.keys():
+    if "dayofyear" not in t90.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
     t90 = utils.convert_units_to(t90, tasmax)
@@ -773,13 +822,13 @@ def tx90p(tasmax, t90, freq='YS'):
     thresh.data = t90.sel(dayofyear=doy)
 
     # compute the cold days
-    over = (tasmax > thresh)
+    over = tasmax > thresh
 
-    return over.resample(time=freq).sum(dim='time')
+    return over.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmax='[temperature]', t10='[temperature]')
-def tx10p(tasmax, t10, freq='YS'):
+@declare_units("days", tasmax="[temperature]", t10="[temperature]")
+def tx10p(tasmax, t10, freq="YS"):
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
     Number of days with daily maximum temperature below the 10th percentile.
@@ -807,7 +856,7 @@ def tx10p(tasmax, t10, freq='YS'):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if 'dayofyear' not in t10.coords.keys():
+    if "dayofyear" not in t10.coords.keys():
         raise AttributeError("t10 should have dayofyear coordinates.")
 
     t10 = utils.convert_units_to(t10, tasmax)
@@ -821,15 +870,21 @@ def tx10p(tasmax, t10, freq='YS'):
     thresh.data = t10.sel(dayofyear=doy)
 
     # compute the cold days
-    below = (tasmax < thresh)
+    below = tasmax < thresh
 
-    return below.resample(time=freq).sum(dim='time')
+    return below.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', tasmax='[temperature]', thresh_tasmin='[temperature]',
-               thresh_tasmax='[temperature]')
-def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 degC',
-                     thresh_tasmax='30 degC', freq='YS'):
+@declare_units(
+    "days",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def tx_tn_days_above(
+    tasmin, tasmax, thresh_tasmin="22 degC", thresh_tasmax="30 degC", freq="YS"
+):
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.
@@ -875,11 +930,11 @@ def tx_tn_days_above(tasmin, tasmax, thresh_tasmin='22 degC',
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > (thresh_tasmin)) & (tasmax > (thresh_tasmax))) * 1
-    return events.resample(time=freq).sum(dim='time')
+    return events.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmax='[temperature]', tx90='[temperature]')
-def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
+@declare_units("days", tasmax="[temperature]", tx90="[temperature]")
+def warm_spell_duration_index(tasmax, tx90, window=6, freq="YS"):
     r"""Warm spell duration index
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
@@ -910,11 +965,11 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
     precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
-    if 'dayofyear' not in tx90.coords.keys():
+    if "dayofyear" not in tx90.coords.keys():
         raise AttributeError("tx90 should have dayofyear coordinates.")
 
     # The day of year value of the tasmax series.
-    doy = tasmax.indexes['time'].dayofyear
+    doy = tasmax.indexes["time"].dayofyear
 
     # adjustment of tx90 to tasmax doy range
     tx90 = utils.adjust_doy_calendar(tx90, tasmax)
@@ -923,12 +978,14 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq='YS'):
     thresh = xr.full_like(tasmax, np.nan)
     thresh.data = tx90.sel(dayofyear=doy)
 
-    above = (tasmax > thresh)
+    above = tasmax > thresh
 
-    return above.resample(time=freq).apply(rl.windowed_run_count, window=window, dim='time')
+    return above.resample(time=freq).apply(
+        rl.windowed_run_count, window=window, dim="time"
+    )
 
 
-@declare_units('', pr='[precipitation]', prsn='[precipitation]', tas='[temperature]')
+@declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
 def winter_rain_ratio(pr, prsn=None, tas=None):
     """Ratio of rainfall to total precipitation during winter
 
@@ -951,6 +1008,6 @@ def winter_rain_ratio(pr, prsn=None, tas=None):
     xarray.DataArray
       Ratio of rainfall to total precipitation during winter months (DJF)
     """
-    ratio = liquid_precip_ratio(pr, prsn, tas, freq='QS-DEC')
-    winter = ratio.indexes['time'].month == 12
+    ratio = liquid_precip_ratio(pr, prsn, tas, freq="QS-DEC")
+    winter = ratio.indexes["time"].month == 12
     return ratio[winter]

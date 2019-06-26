@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-
 """
 xclim xarray.DataArray utilities module
 """
-
-import abc
+# import abc
 import calendar
 import datetime as dt
 import functools
 import re
 import warnings
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
+from collections import OrderedDict
 from inspect import signature
 
 import numpy as np
@@ -18,6 +17,7 @@ import pint
 import xarray as xr
 from boltons.funcutils import wraps
 
+import xclim
 from . import checks
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -25,18 +25,27 @@ units.define('fraction = []')
 units.define('percent = 1e-2 fraction = pct')
 # units.define('% = pct') # Does not seem to do anything...
 # units.define(pint.unit.UnitDefinition('percent', 'pct', ('%', ), pint.converters.ScaleConverter(0.01)))
+# units.define(
+#     pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
+# )
 
 # Define commonly encountered units not defined by pint
-units.define('degrees_north = degree = degrees_N = degreesN = degree_north = degree_N '
-             '= degreeN')
-units.define('degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE')
-units.define("degC = kelvin; offset: 273.15 = celsius = C")  # add 'C' as an abbrev for celsius (default Coulomb)
+units.define(
+    "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
+    "= degreeN"
+)
+units.define(
+    "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
+)
+units.define(
+    "degC = kelvin; offset: 273.15 = celsius = C"
+)  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
 units.define("h = hour")  # Not the Planck constant...
 units.define("[speed] = [length] / [time]")
 
 # Default context.
-null = pint.Context('none')
+null = pint.Context("none")
 units.add_context(null)
 
 # Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
@@ -47,12 +56,22 @@ units.define("mmday = 1000 kg / meter ** 2 / day")
 units.define("[discharge] = [length] ** 3 / [time]")
 units.define("cms = meter ** 3 / second")
 
-hydro = pint.Context('hydro')
-hydro.add_transformation('[mass] / [length]**2', '[length]', lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
-hydro.add_transformation('[mass] / [length]**2 / [time]', '[length] / [time]',
-                         lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3))
-hydro.add_transformation('[length] / [time]', '[mass] / [length]**2 / [time]',
-                         lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3))
+hydro = pint.Context("hydro")
+hydro.add_transformation(
+    "[mass] / [length]**2",
+    "[length]",
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+)
+hydro.add_transformation(
+    "[mass] / [length]**2 / [time]",
+    "[length] / [time]",
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+)
+hydro.add_transformation(
+    "[length] / [time]",
+    "[mass] / [length]**2 / [time]",
+    lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3),
+)
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
@@ -67,19 +86,21 @@ units.enable_contexts(hydro)
 #     [mass] / [length]**2 / [time] -> [length] / [time] : value / 1000 / kg * m ** 3
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
-binary_ops = {'>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le'}
+binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
 
 # Maximum day of year in each calendar.
-calendars = {'standard': 366,
-             'gregorian': 366,
-             'proleptic_gregorian': 366,
-             'julian': 366,
-             'no_leap': 365,
-             '365_day': 365,
-             'all_leap': 366,
-             '366_day': 366,
-             'uniform30day': 360,
-             '360_day': 360}
+calendars = {
+    "standard": 366,
+    "gregorian": 366,
+    "proleptic_gregorian": 366,
+    "julian": 366,
+    "no_leap": 365,
+    "365_day": 365,
+    "all_leap": 366,
+    "366_day": 366,
+    "uniform30day": 360,
+    "360_day": 360,
+}
 
 
 def units2pint(value):
@@ -99,12 +120,12 @@ def units2pint(value):
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r'\^?(-?\d)', r'**\g<1>', s)[0]
+        return re.subn(r"\^?(-?\d)", r"**\g<1>", s)[0]
 
     if isinstance(value, str):
         unit = value
     elif isinstance(value, xr.DataArray):
-        unit = value.attrs['units']
+        unit = value.attrs["units"]
     elif isinstance(value, units.Quantity):
         return value.units
     else:
@@ -113,7 +134,10 @@ def units2pint(value):
     unit = unit.replace('%', 'pct')
     try:  # Pint compatible
         return units.parse_expression(unit).units
-    except (pint.UndefinedUnitError, pint.DimensionalityError):  # Convert from CF-units to pint-compatible
+    except (
+        pint.UndefinedUnitError,
+        pint.DimensionalityError,
+    ):  # Convert from CF-units to pint-compatible
         return units.parse_expression(_transform(unit)).units
 
 
@@ -134,12 +158,12 @@ def pint2cfunits(value):
     s = "{:~}".format(value)
 
     # Search and replace patterns
-    pat = r'(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?'
+    pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
 
     def repl(m):
         i, u, p = m.groups()
-        p = p or (1 if i else '')
-        neg = '-' if i else ('^' if p else '')
+        p = p or (1 if i else "")
+        neg = "-" if i else ("^" if p else "")
 
         return "{}{}{}".format(u, neg, p)
 
@@ -164,7 +188,7 @@ def pint_multiply(da, q, out_units=None):
     if out_units:
         f = f.to(out_units)
     out = da * f.magnitude
-    out.attrs['units'] = pint2cfunits(f.units)
+    out.attrs["units"] = pint2cfunits(f.units)
     return out
 
 
@@ -210,21 +234,26 @@ def convert_units_to(source, target, context=None):
             return source
 
         tu_u = pint2cfunits(tu)
-        with units.context(context or 'none'):
+        with units.context(context or "none"):
             out = units.convert(source, fu, tu)
-            out.attrs['units'] = tu_u
+            out.attrs["units"] = tu_u
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
-        if context == 'hydro':
+        if context == "hydro":
             fu = units.mm / units.day
         else:
             fu = units.degC
-        warnings.warn("Future versions of XCLIM will require explicit unit specifications.", FutureWarning)
+        warnings.warn(
+            "Future versions of XCLIM will require explicit unit specifications.",
+            FutureWarning,
+        )
         return (source * fu).to(tu).m
 
-    raise NotImplementedError("source of type {} is not supported.".format(type(source)))
+    raise NotImplementedError(
+        "source of type {} is not supported.".format(type(source))
+    )
 
 
 def _check_units(val, dim):
@@ -235,7 +264,7 @@ def _check_units(val, dim):
     if isinstance(val, (int, float)):
         return
 
-    expected = units.get_dimensionality(dim.replace('dimensionless', ''))
+    expected = units.get_dimensionality(dim.replace("dimensionless", ""))
     val_dim = units2pint(val).dimensionality
     if val_dim == expected:
         return
@@ -247,19 +276,23 @@ def _check_units(val, dim):
     if pint.util.find_shortest_path(graph, start, end):
         return
 
-    if dim == '[precipitation]':
-        tu = 'mmday'
-    elif dim == '[discharge]':
-        tu = 'cms'
-    elif dim == '[length]':
-        tu = 'm'
+    if dim == "[precipitation]":
+        tu = "mmday"
+    elif dim == "[discharge]":
+        tu = "cms"
+    elif dim == "[length]":
+        tu = "m"
     else:
         raise NotImplementedError
 
     try:
-        (1 * units2pint(val)).to(tu, 'hydro')
+        (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
-        raise AttributeError("Value's dimension {} does not match expected units {}.".format(val_dim, expected))
+        raise AttributeError(
+            "Value's dimension {} does not match expected units {}.".format(
+                val_dim, expected
+            )
+        )
 
 
 def declare_units(out_units, **units_by_name):
@@ -280,12 +313,12 @@ def declare_units(out_units, **units_by_name):
             out = func(*args, **kwargs)
 
             # In the generic case, we use the default units that should have been propagated by the computation.
-            if '[' in out_units:
+            if "[" in out_units:
                 _check_units(out, out_units)
 
             # Otherwise, we specify explicitly the units.
             else:
-                out.attrs['units'] = out_units
+                out.attrs["units"] = out_units
             return out
 
         return wrapper
@@ -322,12 +355,12 @@ def threshold_count(da, op, thresh, freq):
     else:
         raise ValueError("Operation `{}` not recognized.".format(op))
 
-    func = getattr(da, '_binary_op')(get_op(op))
+    func = getattr(da, "_binary_op")(get_op(op))
     c = func(da, thresh) * 1
-    return c.resample(time=freq).sum(dim='time')
+    return c.resample(time=freq).sum(dim="time")
 
 
-def percentile_doy(arr, window=5, per=.1):
+def percentile_doy(arr, window=5, per=0.1):
     """Percentile value for each day of the year
 
     Return the climatological percentile over a moving window around each day of the year.
@@ -348,12 +381,12 @@ def percentile_doy(arr, window=5, per=.1):
     """
     # TODO: Support percentile array, store percentile in coordinates.
     #  This is supported by DataArray.quantile, but not by groupby.reduce.
-    rr = arr.rolling(min_periods=1, center=True, time=window).construct('window')
+    rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
     # Create empty percentile array
-    g = rr.groupby('time.dayofyear')
+    g = rr.groupby("time.dayofyear")
 
-    p = g.reduce(np.nanpercentile, dim=('time', 'window'), q=per * 100)
+    p = g.reduce(np.nanpercentile, dim=("time", "window"), q=per * 100)
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -377,7 +410,7 @@ def infer_doy_max(arr):
     int
       The largest day of the year found in calendar.
     """
-    cal = arr.time.encoding.get('calendar', None)
+    cal = arr.time.encoding.get("calendar", None)
     if cal in calendars:
         doy_max = calendars[cal]
     else:
@@ -385,7 +418,9 @@ def infer_doy_max(arr):
         # then this inference could be wrong (
         doy_max = arr.time.dt.dayofyear.max().data
         if len(arr.time) < 360:
-            raise ValueError("Cannot infer the calendar from a series less than a year long.")
+            raise ValueError(
+                "Cannot infer the calendar from a series less than a year long."
+            )
         if doy_max not in [360, 365, 366]:
             raise ValueError("The target array's calendar is not recognized")
 
@@ -411,17 +446,17 @@ def _interpolate_doy_calendar(source, doy_max):
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
-    if 'dayofyear' not in source.coords.keys():
+    if "dayofyear" not in source.coords.keys():
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
     doy_max_source = source.dayofyear.max()
 
     # Interpolate to fill na values
-    tmp = source.interpolate_na(dim='dayofyear')
+    tmp = source.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
-    tmp.coords['dayofyear'] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+    tmp.coords["dayofyear"] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
 
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
@@ -476,11 +511,11 @@ def get_daily_events(da, da_value, operator):
     """
     events = operator(da, da_value) * 1
     events = events.where(~np.isnan(da))
-    events = events.rename('events')
+    events = events.rename("events")
     return events
 
 
-def daily_downsampler(da, freq='YS'):
+def daily_downsampler(da, freq="YS"):
     r"""Daily climate data downsampler
 
     Parameters
@@ -510,22 +545,25 @@ def daily_downsampler(da, freq='YS'):
 
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
-        years = ['{:04d}'.format(y) for y in da.time.dt.year.values]
-        months = ['{:02d}'.format(m) for m in da.time.dt.month.values]
+        years = ["{:04d}".format(y) for y in da.time.dt.year.values]
+        months = ["{:02d}".format(m) for m in da.time.dt.month.values]
     else:
         # cannot use year, month, season attributes, not available for all calendars ...
-        years = ['{:04d}'.format(v.year) for v in da.time.values]
-        months = ['{:02d}'.format(v.month) for v in da.time.values]
-    seasons = ['DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF'.split()[int(m) - 1] for m in months]
+        years = ["{:04d}".format(v.year) for v in da.time.values]
+        months = ["{:02d}".format(v.month) for v in da.time.values]
+    seasons = [
+        "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
+        for m in months
+    ]
 
     n_t = da.time.size
-    if freq == 'YS':
+    if freq == "YS":
         # year start frequency
         l_tags = years
-    elif freq == 'MS':
+    elif freq == "MS":
         # month start frequency
         l_tags = [years[i] + months[i] for i in range(n_t)]
-    elif freq == 'QS-DEC':
+    elif freq == "QS-DEC":
         # DJF, MAM, JJA, SON seasons
         # construct tags from list of season+year, increasing year for December
         ys = []
@@ -533,19 +571,19 @@ def daily_downsampler(da, freq='YS'):
             m = months[i]
             s = seasons[i]
             y = years[i]
-            if m == '12':
+            if m == "12":
                 y = str(int(y) + 1)
             ys.append(y + s)
         l_tags = ys
     else:
-        raise RuntimeError('freqency {:s} not implemented'.format(freq))
+        raise RuntimeError("freqency {:s} not implemented".format(freq))
 
     # add tags to buffer DataArray
     buffer = da.copy()
-    buffer.coords['tags'] = ('time', l_tags)
+    buffer.coords["tags"] = ("time", l_tags)
 
     # return groupby according to tags
-    return buffer.groupby('tags')
+    return buffer.groupby("tags")
 
 
 def walk_map(d, func):
@@ -574,44 +612,73 @@ def walk_map(d, func):
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
 # missing functions. It can handle indicators with any number of forcing fields.
-class Indicator():
+class Indicator:
     r"""Climate indicator based on xarray
     """
     # Unique ID for function registry.
-    identifier = ''
+    identifier = ""
 
     # Output variable name. May use tags {<tag>} that will be formatted at runtime.
-    var_name = ''
+    var_name = ""
 
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = ''  # The set of permissible standard names is contained in the standard name table.
-    long_name = ''  # Parsed.
-    units = ''  # Representative units of the physical quantity.
-    cell_methods = ''  # List of blank-separated words of the form "name: method"
-    description = ''  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    standard_name = (
+        ""
+    )  # The set of permissible standard names is contained in the standard name table.
+    long_name = ""  # Parsed.
+    units = ""  # Representative units of the physical quantity.
+    cell_methods = ""  # List of blank-separated words of the form "name: method"
+    description = (
+        ""
+    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    context = 'none'
+    context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = ''  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
-    abstract = ''  # Parsed
-    keywords = ''  # Comma separated list of keywords
-    references = ''  # Published or web-based references that describe the data or methods used to produce it. Parsed.
-    comment = ''  # Miscellaneous information about the data or methods used to produce it.
-    notes = ''  # Mathematical formulation. Parsed.
+    title = (
+        ""
+    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    abstract = ""  # Parsed
+    keywords = ""  # Comma separated list of keywords
+    references = (
+        ""
+    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    comment = (
+        ""
+    )  # Miscellaneous information about the data or methods used to produce it.
+    notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
-    months = {'m{}'.format(i): calendar.month_name[i].lower() for i in range(1, 13)}
-    _attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},  # I don't think this is necessary.
-                      'long_name': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
-                                    'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
-                      'description': {'YS': 'Annual', 'MS': 'Monthly', 'QS-DEC': 'Seasonal', 'DJF': 'winter',
-                                      'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'},
-                      'var_name': {'DJF': 'winter', 'MAM': 'spring', 'JJA': 'summer', 'SON': 'fall'}}
+    months = {"m{}".format(i): calendar.month_name[i].lower() for i in range(1, 13)}
+    _attrs_mapping = {
+        "cell_methods": {
+            "YS": "years",
+            "MS": "months",
+        },  # I don't think this is necessary.
+        "long_name": {
+            "YS": "Annual",
+            "MS": "Monthly",
+            "QS-DEC": "Seasonal",
+            "DJF": "winter",
+            "MAM": "spring",
+            "JJA": "summer",
+            "SON": "fall",
+        },
+        "description": {
+            "YS": "Annual",
+            "MS": "Monthly",
+            "QS-DEC": "Seasonal",
+            "DJF": "winter",
+            "MAM": "spring",
+            "JJA": "summer",
+            "SON": "fall",
+        },
+        "var_name": {"DJF": "winter", "MAM": "spring", "JJA": "summer", "SON": "fall"},
+    }
 
     for k, v in _attrs_mapping.items():
         v.update(months)
@@ -629,12 +696,15 @@ class Indicator():
             setattr(self, key, val)
 
         # Verify that the identifier is a proper slug
-        if not re.match(r'^[-\w]+$', self.identifier):
-            warnings.warn("The identifier contains non-alphanumeric characters. It could make life "
-                          "difficult for downstream software reusing this class.", UserWarning)
+        if not re.match(r"^[-\w]+$", self.identifier):
+            warnings.warn(
+                "The identifier contains non-alphanumeric characters. It could make life "
+                "difficult for downstream software reusing this class.",
+                UserWarning,
+            )
 
         # Default value for `var_name` is the `identifier`.
-        if self.var_name == '':
+        if self.var_name == "":
             self.var_name = self.identifier
 
         # Extract information from the `compute` function.
@@ -653,8 +723,8 @@ class Indicator():
 
         # Fill in missing metadata from the doc
         meta = parse_doc(self.compute.__doc__)
-        for key in ['abstract', 'title', 'long_name', 'notes', 'references']:
-            setattr(self, key, getattr(self, key) or meta.get(key, ''))
+        for key in ["abstract", "title", "notes", "references"]:
+            setattr(self, key, getattr(self, key) or meta.get(key, ""))
 
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
@@ -672,15 +742,15 @@ class Indicator():
         attrs = defaultdict(str)
         for i in range(self._nvar):
             p = self._parameters[i]
-            for attr in ['history', 'cell_methods']:
+            for attr in ["history", "cell_methods"]:
                 attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
-                attrs[attr] += getattr(ba.arguments[p], attr, '')
+                attrs[attr] += getattr(ba.arguments[p], attr, "")
                 if attrs[attr]:
-                    attrs[attr] += "\n" if attr == 'history' else " "
+                    attrs[attr] += "\n" if attr == "history" else " "
 
         # Update attributes
-        out_attrs = self.json(ba.arguments)
-        vname = out_attrs.pop('var_name')
+        out_attrs = self.format(self.cf_attrs, ba.arguments)
+        vname = self.format({"var_name": self.var_name}, ba.arguments)["var_name"]
 
         # Update the signature with the values of the actual call.
         cp = OrderedDict()
@@ -690,13 +760,20 @@ class Indicator():
             else:
                 cp[k] = v
 
-        attrs['history'] += '[{:%Y-%m-%d %H:%M:%S}] {}: {}{}'.format(
-            dt.datetime.now(), vname, self.identifier, ba.signature.replace(parameters=cp.values()))
-        attrs['cell_methods'] += out_attrs.pop('cell_methods')
+        attrs[
+            "history"
+        ] += "[{:%Y-%m-%d %H:%M:%S}] {}: {}{} - xclim version: {}.".format(
+            dt.datetime.now(),
+            vname,
+            self.identifier,
+            ba.signature.replace(parameters=cp.values()),
+            xclim.__version__,
+        )
+        attrs["cell_methods"] += out_attrs.pop("cell_methods", "")
         attrs.update(out_attrs)
 
         # Assume the first arguments are always the DataArray.
-        das = tuple((ba.arguments.pop(self._parameters[i]) for i in range(self._nvar)))
+        das = tuple(ba.arguments.pop(self._parameters[i]) for i in range(self._nvar))
 
         # Pre-computation validation checks
         for da in das:
@@ -724,9 +801,16 @@ class Indicator():
     @property
     def cf_attrs(self):
         """CF-Convention attributes of the output value."""
-        names = ['standard_name', 'long_name', 'units', 'cell_methods', 'description', 'comment',
-                 'references']
-        return {k: getattr(self, k, '') for k in names}
+        names = [
+            "standard_name",
+            "long_name",
+            "units",
+            "cell_methods",
+            "description",
+            "comment",
+            "references",
+        ]
+        return {k: getattr(self, k) for k in names if getattr(self, k)}
 
     def json(self, args=None):
         """Return a dictionary representation of the class.
@@ -736,15 +820,22 @@ class Indicator():
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ['identifier', 'var_name', 'abstract', 'keywords']
+        names = ["identifier", "var_name", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
         out.update(self.cf_attrs)
         out = self.format(out, args)
 
-        out['notes'] = self.notes
+        out["notes"] = self.notes
 
-        out['parameters'] = str({key: {'default': p.default if p.default != p.empty else None, 'desc': ''}
-                                 for (key, p) in self._sig.parameters.items()})
+        out["parameters"] = str(
+            {
+                key: {
+                    "default": p.default if p.default != p.empty else None,
+                    "desc": "",
+                }
+                for (key, p) in self._sig.parameters.items()
+            }
+        )
 
         # if six.PY2:
         #     out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
@@ -775,21 +866,21 @@ class Indicator():
 
         out = {}
         for key, val in attrs.items():
-            mba = {'indexer': 'annual'}
+            mba = {"indexer": "annual"}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
                 if isinstance(v, str) and v in self._attrs_mapping.get(key, {}).keys():
-                    mba[k] = '{{{}}}'.format(v)
+                    mba[k] = "{{{}}}".format(v)
                 elif isinstance(v, dict):
                     if v:
                         dk, dv = v.copy().popitem()
-                        if dk == 'month':
-                            dv = 'm{}'.format(dv)
-                        mba[k] = '{{{}}}'.format(dv)
+                        if dk == "month":
+                            dv = "m{}".format(dv)
+                        mba[k] = "{{{}}}".format(dv)
                 elif isinstance(v, units.Quantity):
-                    mba[k] = '{:g~P}'.format(v)
+                    mba[k] = "{:g~P}".format(v)
                 elif isinstance(v, (int, float)):
-                    mba[k] = '{:g}'.format(v)
+                    mba[k] = "{:g}".format(v)
                 else:
                     mba[k] = v
 
@@ -802,7 +893,7 @@ class Indicator():
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get('freq')
+        freq = kwds.get("freq")
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
 
@@ -823,26 +914,26 @@ def parse_doc(doc):
 
     out = {}
 
-    sections = re.split(r'(\w+)\n\s+-{4,50}', doc)  # obj.__doc__.split('\n\n')
+    sections = re.split(r"(\w+)\n\s+-{4,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
-        content = list(map(str.strip, intro.strip().split('\n\n')))
+        content = list(map(str.strip, intro.strip().split("\n\n")))
         if len(content) == 1:
-            out['title'] = content[0]
+            out["title"] = content[0]
         elif len(content) == 2:
-            out['title'], out['abstract'] = content
+            out["title"], out["abstract"] = content
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i:i + 2]
+        header, content = sections[i : i + 2]
 
-        if header in ['Notes', 'References']:
-            out[header.lower()] = content.replace('\n    ', '\n')
-        elif header == 'Parameters':
+        if header in ["Notes", "References"]:
+            out[header.lower()] = content.replace("\n    ", "\n")
+        elif header == "Parameters":
             pass
-        elif header == 'Returns':
-            match = re.search(r'xarray\.DataArray\s*(.*)', content)
+        elif header == "Returns":
+            match = re.search(r"xarray\.DataArray\s*(.*)", content)
             if match:
-                out['long_name'] = match.groups()[0]
+                out["long_name"] = match.groups()[0]
 
     return out
 
@@ -858,15 +949,17 @@ def format_kwargs(attrs, params):
     params : dict
       A BoundArguments.arguments dictionary storing a function's arguments.
     """
-    attrs_mapping = {'cell_methods': {'YS': 'years', 'MS': 'months'},
-                     'long_name': {'YS': 'Annual', 'MS': 'Monthly'}}
+    attrs_mapping = {
+        "cell_methods": {"YS": "years", "MS": "months"},
+        "long_name": {"YS": "Annual", "MS": "Monthly"},
+    }
 
     for key, val in attrs.items():
         mba = {}
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in params.items():
             if isinstance(v, str) and v in attrs_mapping.get(key, {}).keys():
-                mba[k] = '{' + v + '}'
+                mba[k] = "{" + v + "}"
             else:
                 mba[k] = v
 
@@ -875,6 +968,7 @@ def format_kwargs(attrs, params):
 
 def wrapped_partial(func, *args, **kwargs):
     from functools import partial, update_wrapper
+
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func

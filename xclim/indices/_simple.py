@@ -2,8 +2,10 @@ import logging
 
 import xarray as xr
 
-from xclim import run_length as rl, utils
-from xclim.utils import declare_units, units
+from xclim import run_length as rl
+from xclim import utils
+from xclim.utils import declare_units
+from xclim.utils import units
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -18,13 +20,27 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ['tg_max', 'tg_mean', 'tg_min', 'tn_max', 'tn_mean', 'tn_min', 'tx_max', 'tx_mean', 'tx_min',
-           'base_flow_index', 'consecutive_frost_days', 'frost_days', 'ice_days', 'max_1day_precipitation_amount',
-           'precip_accumulation']
+__all__ = [
+    "tg_max",
+    "tg_mean",
+    "tg_min",
+    "tn_max",
+    "tn_mean",
+    "tn_min",
+    "tx_max",
+    "tx_mean",
+    "tx_min",
+    "base_flow_index",
+    "consecutive_frost_days",
+    "frost_days",
+    "ice_days",
+    "max_1day_precipitation_amount",
+    "precip_accumulation",
+]
 
 
-@declare_units('[temperature]', tas='[temperature]')
-def tg_max(tas, freq='YS'):
+@declare_units("[temperature]", tas="[temperature]")
+def tg_max(tas, freq="YS"):
     r"""Highest mean temperature.
 
     The maximum of daily mean temperature.
@@ -51,11 +67,11 @@ def tg_max(tas, freq='YS'):
         TNx_j = max(TN_{ij})
     """
 
-    return tas.resample(time=freq).max(dim='time', keep_attrs=True)
+    return tas.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tas='[temperature]')
-def tg_mean(tas, freq='YS'):
+@declare_units("[temperature]", tas="[temperature]")
+def tg_mean(tas, freq="YS"):
     r"""Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
@@ -92,11 +108,11 @@ def tg_mean(tas, freq='YS'):
     """
 
     arr = tas.resample(time=freq) if freq else tas
-    return arr.mean(dim='time', keep_attrs=True)
+    return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tas='[temperature]')
-def tg_min(tas, freq='YS'):
+@declare_units("[temperature]", tas="[temperature]")
+def tg_min(tas, freq="YS"):
     r"""Lowest mean temperature
 
     Minimum of daily mean temperature.
@@ -123,11 +139,11 @@ def tg_min(tas, freq='YS'):
         TGn_j = min(TG_{ij})
     """
 
-    return tas.resample(time=freq).min(dim='time', keep_attrs=True)
+    return tas.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmin='[temperature]')
-def tn_max(tasmin, freq='YS'):
+@declare_units("[temperature]", tasmin="[temperature]")
+def tn_max(tasmin, freq="YS"):
     r"""Highest minimum temperature.
 
     The maximum of daily minimum temperature.
@@ -154,11 +170,11 @@ def tn_max(tasmin, freq='YS'):
         TNx_j = max(TN_{ij})
     """
 
-    return tasmin.resample(time=freq).max(dim='time', keep_attrs=True)
+    return tasmin.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmin='[temperature]')
-def tn_mean(tasmin, freq='YS'):
+@declare_units("[temperature]", tasmin="[temperature]")
+def tn_mean(tasmin, freq="YS"):
     r"""Mean minimum temperature.
 
     Mean of daily minimum temperature.
@@ -186,11 +202,11 @@ def tn_mean(tasmin, freq='YS'):
     """
 
     arr = tasmin.resample(time=freq) if freq else tasmin
-    return arr.mean(dim='time', keep_attrs=True)
+    return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmin='[temperature]')
-def tn_min(tasmin, freq='YS'):
+@declare_units("[temperature]", tasmin="[temperature]")
+def tn_min(tasmin, freq="YS"):
     r"""Lowest minimum temperature
 
     Minimum of daily minimum temperature.
@@ -217,11 +233,11 @@ def tn_min(tasmin, freq='YS'):
         TNn_j = min(TN_{ij})
     """
 
-    return tasmin.resample(time=freq).min(dim='time', keep_attrs=True)
+    return tasmin.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmax='[temperature]')
-def tx_max(tasmax, freq='YS'):
+@declare_units("[temperature]", tasmax="[temperature]")
+def tx_max(tasmax, freq="YS"):
     r"""Highest max temperature
 
     The maximum value of daily maximum temperature.
@@ -248,11 +264,11 @@ def tx_max(tasmax, freq='YS'):
         TXx_j = max(TX_{ij})
     """
 
-    return tasmax.resample(time=freq).max(dim='time', keep_attrs=True)
+    return tasmax.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmax='[temperature]')
-def tx_mean(tasmax, freq='YS'):
+@declare_units("[temperature]", tasmax="[temperature]")
+def tx_mean(tasmax, freq="YS"):
     r"""Mean max temperature
 
     The mean of daily maximum temperature.
@@ -280,11 +296,11 @@ def tx_mean(tasmax, freq='YS'):
     """
 
     arr = tasmax.resample(time=freq) if freq else tasmax
-    return arr.mean(dim='time', keep_attrs=True)
+    return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units('[temperature]', tasmax='[temperature]')
-def tx_min(tasmax, freq='YS'):
+@declare_units("[temperature]", tasmax="[temperature]")
+def tx_min(tasmax, freq="YS"):
     r"""Lowest max temperature
 
     The minimum of daily maximum temperature.
@@ -311,11 +327,11 @@ def tx_min(tasmax, freq='YS'):
         TXn_j = min(TX_{ij})
     """
 
-    return tasmax.resample(time=freq).min(dim='time', keep_attrs=True)
+    return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units('', q='[discharge]')
-def base_flow_index(q, freq='YS'):
+@declare_units("", q="[discharge]")
+def base_flow_index(q, freq="YS"):
     r"""Base flow index
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
@@ -353,12 +369,12 @@ def base_flow_index(q, freq='YS'):
     m7 = q.rolling(time=7, center=True).mean().resample(time=freq)
     mq = q.resample(time=freq)
 
-    m7m = m7.min(dim='time')
-    return m7m / mq.mean(dim='time')
+    m7m = m7.min(dim="time")
+    return m7m / mq.mean(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]')
-def consecutive_frost_days(tasmin, freq='AS-JUL'):
+@declare_units("days", tasmin="[temperature]")
+def consecutive_frost_days(tasmin, freq="AS-JUL"):
     r"""Maximum number of consecutive frost days (Tmin < 0℃).
 
     Resample the daily minimum temperature series by computing the maximum number
@@ -390,17 +406,17 @@ def consecutive_frost_days(tasmin, freq='AS-JUL'):
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    tu = units.parse_units(tasmin.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
+    tu = units.parse_units(tasmin.attrs["units"].replace("-", "**-"))
+    fu = "degC"
     frz = 0
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     group = (tasmin < frz).resample(time=freq)
-    return group.apply(rl.longest_run, dim='time')
+    return group.apply(rl.longest_run, dim="time")
 
 
-@declare_units('days', tasmin='[temperature]')
-def frost_days(tasmin, freq='YS'):
+@declare_units("days", tasmin="[temperature]")
+def frost_days(tasmin, freq="YS"):
     r"""Frost days index
 
     Number of days where daily minimum temperatures are below 0℃.
@@ -426,17 +442,17 @@ def frost_days(tasmin, freq='YS'):
 
         TN_{ij} < 0℃
     """
-    tu = units.parse_units(tasmin.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
+    tu = units.parse_units(tasmin.attrs["units"].replace("-", "**-"))
+    fu = "degC"
     frz = 0
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     f = (tasmin < frz) * 1
-    return f.resample(time=freq).sum(dim='time')
+    return f.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmax='[temperature]')
-def ice_days(tasmax, freq='YS'):
+@declare_units("days", tasmax="[temperature]")
+def ice_days(tasmax, freq="YS"):
     r"""Number of ice/freezing days
 
     Number of days where daily maximum temperatures are below 0℃.
@@ -462,17 +478,17 @@ def ice_days(tasmax, freq='YS'):
 
         TX_{ij} < 0℃
     """
-    tu = units.parse_units(tasmax.attrs['units'].replace('-', '**-'))
-    fu = 'degC'
+    tu = units.parse_units(tasmax.attrs["units"].replace("-", "**-"))
+    fu = "degC"
     frz = 0
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     f = (tasmax < frz) * 1
-    return f.resample(time=freq).sum(dim='time')
+    return f.resample(time=freq).sum(dim="time")
 
 
-@declare_units('mm/day', pr='[precipitation]')
-def max_1day_precipitation_amount(pr, freq='YS'):
+@declare_units("mm/day", pr="[precipitation]")
+def max_1day_precipitation_amount(pr, freq="YS"):
     r"""Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
@@ -506,12 +522,12 @@ def max_1day_precipitation_amount(pr, freq='YS'):
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
 
-    out = pr.resample(time=freq).max(dim='time', keep_attrs=True)
-    return utils.convert_units_to(out, 'mm/day', 'hydro')
+    out = pr.resample(time=freq).max(dim="time", keep_attrs=True)
+    return utils.convert_units_to(out, "mm/day", "hydro")
 
 
-@declare_units('mm', pr='[precipitation]')
-def precip_accumulation(pr, freq='YS'):
+@declare_units("mm", pr="[precipitation]")
+def precip_accumulation(pr, freq="YS"):
     r"""Accumulated total (liquid + solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
@@ -547,5 +563,5 @@ def precip_accumulation(pr, freq='YS'):
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
 
-    out = pr.resample(time=freq).sum(dim='time', keep_attrs=True)
-    return utils.pint_multiply(out, 1 * units.day, 'mm')
+    out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
+    return utils.pint_multiply(out, 1 * units.day, "mm")

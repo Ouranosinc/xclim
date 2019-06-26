@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Run length algorithms module"""
+import logging
+from warnings import warn
 
 import numpy as np
 import xarray as xr
-import logging
-from warnings import warn
 
 logging.captureWarnings(True)
 npts_opt = 9000
@@ -25,20 +25,24 @@ def get_npts(da):
         """
 
     coords = list(da.coords)
-    coords.remove('time')
+    coords.remove("time")
     npts = 1
     for c in coords:
         npts *= da[c].size
     return npts
 
 
-def rle(da, dim='time', max_chunk=1000000):
+def rle(da, dim="time", max_chunk=1000000):
     n = len(da[dim])
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({'time': 1})
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": 1})
     ind = xr.broadcast(i, da)[0].chunk(da.chunks)
     b = ind.where(~da)  # find indexes where false
-    end1 = da.where(b[dim] == b[dim][-1], drop=True) * 0 + n  # add additional end value index (deal with end cases)
-    start1 = da.where(b[dim] == b[dim][0], drop=True) * 0 - 1  # add additional start index (deal with end cases)
+    end1 = (
+        da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
+    )  # add additional end value index (deal with end cases)
+    start1 = (
+        da.where(b[dim] == b[dim][0], drop=True) * 0 - 1
+    )  # add additional start index (deal with end cases)
     b = xr.concat([start1, b, end1], dim)
 
     # Ensure bfill operates on entire (unchunked) time dimension
@@ -64,7 +68,7 @@ def rle(da, dim='time', max_chunk=1000000):
     return d
 
 
-def longest_run(da, dim='time', ufunc_1dim='auto'):
+def longest_run(da, dim="time", ufunc_1dim="auto"):
     """Return the length of the longest consecutive run of True values.
 
         Parameters
@@ -82,7 +86,7 @@ def longest_run(da, dim='time', ufunc_1dim='auto'):
         N-dimensional array (int)
           Length of longest run of True values along dimension
         """
-    if ufunc_1dim == 'auto':
+    if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
 
@@ -95,7 +99,7 @@ def longest_run(da, dim='time', ufunc_1dim='auto'):
     return rl_long
 
 
-def windowed_run_events(da, window, dim='time', ufunc_1dim='auto'):
+def windowed_run_events(da, window, dim="time", ufunc_1dim="auto"):
     """Return the number of runs of a minimum length.
 
         Parameters
@@ -115,7 +119,7 @@ def windowed_run_events(da, window, dim='time', ufunc_1dim='auto'):
         out : N-dimensional xarray data array (int)
           Number of distinct runs of a minimum length.
         """
-    if ufunc_1dim == 'auto':
+    if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
 
@@ -127,7 +131,7 @@ def windowed_run_events(da, window, dim='time', ufunc_1dim='auto'):
     return out
 
 
-def windowed_run_count(da, window, dim='time', ufunc_1dim='auto'):
+def windowed_run_count(da, window, dim="time", ufunc_1dim="auto"):
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
         Parameters
@@ -148,7 +152,7 @@ def windowed_run_count(da, window, dim='time', ufunc_1dim='auto'):
         out : N-dimensional xarray data array (int)
           Total number of true values part of a consecutive runs of at least `window` long.
         """
-    if ufunc_1dim == 'auto':
+    if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
 
@@ -160,7 +164,7 @@ def windowed_run_count(da, window, dim='time', ufunc_1dim='auto'):
     return out
 
 
-def first_run(da, window, dim='time', ufunc_1dim='auto'):
+def first_run(da, window, dim="time", ufunc_1dim="auto"):
     """Return the index of the first item of a run of at least a given length.
 
         Parameters
@@ -182,7 +186,7 @@ def first_run(da, window, dim='time', ufunc_1dim='auto'):
         out : N-dimensional xarray data array (int)
           Index of first item in first valid run. Returns np.nan if there are no valid run.
         """
-    if ufunc_1dim == 'auto':
+    if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
 
@@ -191,15 +195,16 @@ def first_run(da, window, dim='time', ufunc_1dim='auto'):
 
     else:
         dims = list(da.dims)
-        if 'time' not in dims:
-            da['time'] = da[dim]
-            da.swap_dims({dim: 'time'})
-        da = da.astype('int')
-        i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({'time': 1})
+        if "time" not in dims:
+            da["time"] = da[dim]
+            da.swap_dims({dim: "time"})
+        da = da.astype("int")
+        i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": 1})
         ind = xr.broadcast(i, da)[0].chunk(da.chunks)
         wind_sum = da.rolling(time=window).sum()
         out = ind.where(wind_sum >= window).min(dim=dim) - (
-            window - 1)  # remove window -1 as rolling result index is last element of the moving window
+            window - 1
+        )  # remove window -1 as rolling result index is last element of the moving window
     return out
 
 
@@ -232,7 +237,7 @@ def rle_1d(arr):
     n = len(ia)
 
     if n == 0:
-        e = 'run length array empty'
+        e = "run length array empty"
         warn(e)
         return None, None, None
 
@@ -339,14 +344,16 @@ def windowed_run_count_ufunc(x, window):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(windowed_run_count_1d,
-                          x,
-                          input_core_dims=[['time'], ],
-                          vectorize=True,
-                          dask='parallelized',
-                          output_dtypes=[np.int, ],
-                          keep_attrs=True,
-                          kwargs={'window': window})
+    return xr.apply_ufunc(
+        windowed_run_count_1d,
+        x,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.int],
+        keep_attrs=True,
+        kwargs={"window": window},
+    )
 
 
 def windowed_run_events_ufunc(x, window):
@@ -364,14 +371,16 @@ def windowed_run_events_ufunc(x, window):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(windowed_run_events_1d,
-                          x,
-                          input_core_dims=[['time'], ],
-                          vectorize=True,
-                          dask='parallelized',
-                          output_dtypes=[np.int, ],
-                          keep_attrs=True,
-                          kwargs={'window': window})
+    return xr.apply_ufunc(
+        windowed_run_events_1d,
+        x,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.int],
+        keep_attrs=True,
+        kwargs={"window": window},
+    )
 
 
 def longest_run_ufunc(x):
@@ -388,29 +397,31 @@ def longest_run_ufunc(x):
     out : func
       A function operating along the time dimension of a dask-array.
     """
-    return xr.apply_ufunc(longest_run_1d,
-                          x,
-                          input_core_dims=[['time'], ],
-                          vectorize=True,
-                          dask='parallelized',
-                          output_dtypes=[np.int, ],
-                          keep_attrs=True,
-                          )
+    return xr.apply_ufunc(
+        longest_run_1d,
+        x,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.int],
+        keep_attrs=True,
+    )
 
 
 def first_run_ufunc(x, window, index=None):
-    ind = xr.apply_ufunc(first_run_1d,
-                         x,
-                         input_core_dims=[['time'], ],
-                         vectorize=True,
-                         dask='parallelized',
-                         output_dtypes=[np.float, ],
-                         keep_attrs=True,
-                         kwargs={'window': window}
-                         )
+    ind = xr.apply_ufunc(
+        first_run_1d,
+        x,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.float],
+        keep_attrs=True,
+        kwargs={"window": window},
+    )
 
     if index is not None and ~np.isnan(ind):
-        val = getattr(x.indexes['time'], index)
+        val = getattr(x.indexes["time"], index)
         i = int(ind.data)
         ind.data = val[i]
 

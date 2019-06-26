@@ -41,19 +41,23 @@ def create_ensemble(ncfiles, mf_flag=False):
     simulation 2 is also a list of .nc files
     >>> ens = utils.create_ensemble(ncfiles)
     """
-    dim = 'realization'
+    dim = "realization"
     ds1 = []
     start_end_flag = True
     # print('finding common time-steps')
     for n in ncfiles:
         if mf_flag:
-            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
-            ds['time'] = xr.open_mfdataset(n).time
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+            ds["time"] = xr.open_mfdataset(n).time
         else:
             ds = xr.open_dataset(n, decode_times=False)
-            ds['time'] = xr.decode_cf(ds).time
+            ds["time"] = xr.decode_cf(ds).time
         # get times - use common
-        time1 = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
+        time1 = pd.to_datetime(
+            {"year": ds.time.dt.year, "month": ds.time.dt.month, "day": ds.time.dt.day}
+        )
         if start_end_flag:
             start1 = time1.values[0]
             end1 = time1.values[-1]
@@ -66,17 +70,21 @@ def create_ensemble(ncfiles, mf_flag=False):
     for n in ncfiles:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
-            ds = xr.open_mfdataset(n, concat_dim='time', decode_times=False, chunks={'time': 10})
-            ds['time'] = xr.open_mfdataset(n).time
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+            ds["time"] = xr.open_mfdataset(n).time
         else:
-            ds = xr.open_dataset(n, decode_times=False, chunks={'time': 10})
-            ds['time'] = xr.decode_cf(ds).time
+            ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
+            ds["time"] = xr.decode_cf(ds).time
 
-        ds['time'].values = pd.to_datetime({'year': ds.time.dt.year, 'month': ds.time.dt.month, 'day': ds.time.dt.day})
+        ds["time"].values = pd.to_datetime(
+            {"year": ds.time.dt.year, "month": ds.time.dt.month, "day": ds.time.dt.day}
+        )
 
         ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
 
-        ds1.append(ds.drop('time'))
+        ds1.append(ds.drop("time"))
     # print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
     # assign time coords
@@ -112,17 +120,21 @@ def ensemble_mean_std_max_min(ens):
     dsOut = ens.drop(ens.data_vars)
     for v in ens.data_vars:
 
-        dsOut[v + '_mean'] = ens[v].mean(dim='realization')
-        dsOut[v + '_stdev'] = ens[v].std(dim='realization')
-        dsOut[v + '_max'] = ens[v].max(dim='realization')
-        dsOut[v + '_min'] = ens[v].min(dim='realization')
+        dsOut[v + "_mean"] = ens[v].mean(dim="realization")
+        dsOut[v + "_stdev"] = ens[v].std(dim="realization")
+        dsOut[v + "_max"] = ens[v].max(dim="realization")
+        dsOut[v + "_min"] = ens[v].min(dim="realization")
         for vv in dsOut.data_vars:
             dsOut[vv].attrs = ens[v].attrs
 
-            if 'description' in dsOut[vv].attrs.keys():
+            if "description" in dsOut[vv].attrs.keys():
                 vv.split()
-                dsOut[vv].attrs['description'] = dsOut[vv].attrs['description'] + ' : ' + vv.split('_')[
-                    -1] + ' of ensemble'
+                dsOut[vv].attrs["description"] = (
+                    dsOut[vv].attrs["description"]
+                    + " : "
+                    + vv.split("_")[-1]
+                    + " of ensemble"
+                )
 
     return dsOut
 
@@ -169,15 +181,20 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
         if not time_block:
-            time_block = round(2E8 / (ens[v].size / ens[v].shape[dims.index('time')]), -1)  # 2E8
+            time_block = round(
+                2e8 / (ens[v].size / ens[v].shape[dims.index("time")]), -1
+            )  # 2E8
 
         if time_block > len(ens[v].time):
             out = _calc_percentiles_simple(ens, v, values)
 
         else:
             # loop through blocks
-            Warning('large ensemble size detected : statistics will be calculated in blocks of ', int(time_block),
-                    ' time-steps')
+            Warning(
+                "large ensemble size detected : statistics will be calculated in blocks of ",
+                int(time_block),
+                " time-steps",
+            )
             out = _calc_percentiles_blocks(ens, v, values, time_block)
         for vv in out.data_vars:
             ds_out[vv] = out[vv]
@@ -187,7 +204,7 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 def _calc_percentiles_simple(ens, v, values):
     ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
-    outdims = [x for x in dims if 'realization' not in x]
+    outdims = [x for x in dims if "realization" not in x]
 
     # print('loading ensemble data to memory')
     arr = ens[v].load()  # percentile calc requires loading the array
@@ -195,17 +212,22 @@ def _calc_percentiles_simple(ens, v, values):
     for c in outdims:
         coords[c] = arr[c]
     for p in values:
-        outvar = v + '_p' + str(p)
+        outvar = v + "_p" + str(p)
 
         out1 = _calc_perc(arr, p)
 
         ds_out[outvar] = xr.DataArray(out1, dims=outdims, coords=coords)
         ds_out[outvar].attrs = ens[v].attrs
-        if 'description' in ds_out[outvar].attrs.keys():
-            ds_out[outvar].attrs['description'] = '{} : {}th percentile of ensemble'.format(
-                ds_out[outvar].attrs['description'], str(p))
+        if "description" in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs[
+                "description"
+            ] = "{} : {}th percentile of ensemble".format(
+                ds_out[outvar].attrs["description"], str(p)
+            )
         else:
-            ds_out[outvar].attrs['description'] = '{}th percentile of ensemble'.format(str(p))
+            ds_out[outvar].attrs["description"] = "{}th percentile of ensemble".format(
+                str(p)
+            )
 
     return ds_out
 
@@ -213,7 +235,7 @@ def _calc_percentiles_simple(ens, v, values):
 def _calc_percentiles_blocks(ens, v, values, time_block):
     ds_out = ens.drop(ens.data_vars)
     dims = list(ens[v].dims)
-    outdims = [x for x in dims if 'realization' not in x]
+    outdims = [x for x in dims if "realization" not in x]
 
     blocks = list(range(0, len(ens.time) + 1, int(time_block)))
     if blocks[-1] != len(ens[v].time):
@@ -222,7 +244,9 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
     for t in range(0, len(blocks) - 1):
         # print('Calculating block ', t + 1, ' of ', len(blocks) - 1)
         time_sel = slice(blocks[t], blocks[t + 1])
-        arr = ens[v].isel(time=time_sel).load()  # percentile calc requires loading the array
+        arr = (
+            ens[v].isel(time=time_sel).load()
+        )  # percentile calc requires loading the array
         coords = {}
         for c in outdims:
             coords[c] = arr[c]
@@ -233,17 +257,27 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
             if t == 0:
                 arr_p_all[str(p)] = xr.DataArray(out1, dims=outdims, coords=coords)
             else:
-                arr_p_all[str(p)] = xr.concat([arr_p_all[str(p)],
-                                               xr.DataArray(out1, dims=outdims, coords=coords)], dim='time')
+                arr_p_all[str(p)] = xr.concat(
+                    [
+                        arr_p_all[str(p)],
+                        xr.DataArray(out1, dims=outdims, coords=coords),
+                    ],
+                    dim="time",
+                )
     for p in values:
-        outvar = v + '_p' + str(p)
+        outvar = v + "_p" + str(p)
         ds_out[outvar] = arr_p_all[str(p)]
         ds_out[outvar].attrs = ens[v].attrs
-        if 'description' in ds_out[outvar].attrs.keys():
-            ds_out[outvar].attrs['description'] = '{} : {}th percentile of ensemble'.format(
-                ds_out[outvar].attrs['description'], str(p))
+        if "description" in ds_out[outvar].attrs.keys():
+            ds_out[outvar].attrs[
+                "description"
+            ] = "{} : {}th percentile of ensemble".format(
+                ds_out[outvar].attrs["description"], str(p)
+            )
         else:
-            ds_out[outvar].attrs['description'] = '{}th percentile of ensemble'.format(str(p))
+            ds_out[outvar].attrs["description"] = "{}th percentile of ensemble".format(
+                str(p)
+            )
 
     return ds_out
 
@@ -251,22 +285,28 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
 def _calc_perc(arr, p):
     dims = arr.dims
     # make sure time is the second dimension
-    if dims.index('time') != 1:
-        dims1 = [dims[dims.index('realization')], dims[dims.index('time')]]
+    if dims.index("time") != 1:
+        dims1 = [dims[dims.index("realization")], dims[dims.index("time")]]
         for d in dims:
             if d not in dims1:
                 dims1.append(d)
         arr = arr.transpose(*dims1)
         dims = dims1
 
-    nan_count = np.isnan(arr).sum(axis=dims.index('realization'))
-    out = np.percentile(arr, p, axis=dims.index('realization'))
-    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')])):
-        arr1 = arr.values.reshape(arr.shape[dims.index('realization')],
-                                  int(arr.size / arr.shape[dims.index('realization')]))
+    nan_count = np.isnan(arr).sum(axis=dims.index("realization"))
+    out = np.percentile(arr, p, axis=dims.index("realization"))
+    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])):
+        arr1 = arr.values.reshape(
+            arr.shape[dims.index("realization")],
+            int(arr.size / arr.shape[dims.index("realization")]),
+        )
         # only use nanpercentile where we need it (slow performace compared to standard) :
-        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[dims.index('realization')]))
+        nan_index = np.where(
+            (nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])
+        )
         t = np.ravel_multi_index(nan_index, nan_count.shape)
-        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=dims.index('realization'))
+        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
+            arr1[:, t], p, axis=dims.index("realization")
+        )
 
     return out

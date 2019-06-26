@@ -3,8 +3,10 @@ import logging
 import numpy as np
 import xarray as xr
 
-from xclim import utils, run_length as rl
-from xclim.utils import declare_units, units
+from xclim import run_length as rl
+from xclim import utils
+from xclim.utils import declare_units
+from xclim.utils import units
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -18,14 +20,29 @@ xr.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ['cold_spell_days', 'daily_pr_intensity', 'maximum_consecutive_wet_days', 'cooling_degree_days',
-           'freshet_start', 'growing_degree_days', 'growing_season_length', 'heat_wave_index', 'heating_degree_days',
-           'tn_days_below', 'tx_days_above', 'warm_day_frequency', 'warm_night_frequency', 'wetdays',
-           'maximum_consecutive_dry_days', 'max_n_day_precipitation_amount', 'tropical_nights']
+__all__ = [
+    "cold_spell_days",
+    "daily_pr_intensity",
+    "maximum_consecutive_wet_days",
+    "cooling_degree_days",
+    "freshet_start",
+    "growing_degree_days",
+    "growing_season_length",
+    "heat_wave_index",
+    "heating_degree_days",
+    "tn_days_below",
+    "tx_days_above",
+    "warm_day_frequency",
+    "warm_night_frequency",
+    "wetdays",
+    "maximum_consecutive_dry_days",
+    "max_n_day_precipitation_amount",
+    "tropical_nights",
+]
 
 
-@declare_units('days', tas='[temperature]', thresh='[temperature]')
-def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
+@declare_units("days", tas="[temperature]", thresh="[temperature]")
+def cold_spell_days(tas, thresh="-10 degC", window=5, freq="AS-JUL"):
     r"""Cold spell days
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
@@ -63,11 +80,11 @@ def cold_spell_days(tas, thresh='-10 degC', window=5, freq='AS-JUL'):
     over = tas < t
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count, window=window, dim='time')
+    return group.apply(rl.windowed_run_count, window=window, dim="time")
 
 
-@declare_units('mm/day', pr='[precipitation]', thresh='[precipitation]')
-def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
+@declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
+def daily_pr_intensity(pr, thresh="1 mm/day", freq="YS"):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -108,23 +125,23 @@ def daily_pr_intensity(pr, thresh='1 mm/day', freq='YS'):
     >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
 
     """
-    t = utils.convert_units_to(thresh, pr, 'hydro')
+    t = utils.convert_units_to(thresh, pr, "hydro")
 
     # put pr=0 for non wet-days
     pr_wd = xr.where(pr >= t, pr, 0)
-    pr_wd.attrs['units'] = pr.units
+    pr_wd.attrs["units"] = pr.units
 
     # sum over wanted period
-    s = pr_wd.resample(time=freq).sum(dim='time', keep_attrs=True)
-    sd = utils.pint_multiply(s, 1 * units.day, 'mm')
+    s = pr_wd.resample(time=freq).sum(dim="time", keep_attrs=True)
+    sd = utils.pint_multiply(s, 1 * units.day, "mm")
 
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     return sd / wd
 
 
-@declare_units('days', pr='[precipitation]', thresh='[precipitation]')
-def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
+@declare_units("days", pr="[precipitation]", thresh="[precipitation]")
+def maximum_consecutive_wet_days(pr, thresh="1 mm/day", freq="YS"):
     r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
@@ -158,14 +175,14 @@ def maximum_consecutive_wet_days(pr, thresh='1 mm/day', freq='YS'):
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    thresh = utils.convert_units_to(thresh, pr, 'hydro')
+    thresh = utils.convert_units_to(thresh, pr, "hydro")
 
     group = (pr > thresh).resample(time=freq)
-    return group.apply(rl.longest_run, dim='time')
+    return group.apply(rl.longest_run, dim="time")
 
 
-@declare_units('C days', tas='[temperature]', thresh='[temperature]')
-def cooling_degree_days(tas, thresh='18 degC', freq='YS'):
+@declare_units("C days", tas="[temperature]", thresh="[temperature]")
+def cooling_degree_days(tas, thresh="18 degC", freq="YS"):
     r"""Cooling degree days
 
     Sum of degree days above the temperature threshold at which spaces are cooled.
@@ -197,14 +214,13 @@ def cooling_degree_days(tas, thresh='18 degC', freq='YS'):
     """
     thresh = utils.convert_units_to(thresh, tas)
 
-    return tas.pipe(lambda x: x - thresh) \
-        .clip(min=0) \
-        .resample(time=freq) \
-        .sum(dim='time')
+    return (
+        tas.pipe(lambda x: x - thresh).clip(min=0).resample(time=freq).sum(dim="time")
+    )
 
 
-@declare_units('', tas='[temperature]', thresh='[temperature]')
-def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
+@declare_units("", tas="[temperature]", thresh="[temperature]")
+def freshet_start(tas, thresh="0 degC", window=5, freq="YS"):
     r"""First day consistently exceeding threshold temperature.
 
     Returns first day of period where a temperature threshold is exceeded
@@ -240,13 +256,13 @@ def freshet_start(tas, thresh='0 degC', window=5, freq='YS'):
     1 if :math:`P` is true, and 0 if false.
     """
     thresh = utils.convert_units_to(thresh, tas)
-    over = (tas > thresh)
+    over = tas > thresh
     group = over.resample(time=freq)
-    return group.apply(rl.first_run_ufunc, window=window, index='dayofyear')
+    return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
 
 
-@declare_units('C days', tas='[temperature]', thresh='[temperature]')
-def growing_degree_days(tas, thresh='4.0 degC', freq='YS'):
+@declare_units("C days", tas="[temperature]", thresh="[temperature]")
+def growing_degree_days(tas, thresh="4.0 degC", freq="YS"):
     r"""Growing degree-days over threshold temperature value [℃].
 
     The sum of degree-days over the threshold temperature.
@@ -275,14 +291,13 @@ def growing_degree_days(tas, thresh='4.0 degC', freq='YS'):
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
     thresh = utils.convert_units_to(thresh, tas)
-    return tas.pipe(lambda x: x - thresh) \
-        .clip(min=0) \
-        .resample(time=freq) \
-        .sum(dim='time')
+    return (
+        tas.pipe(lambda x: x - thresh).clip(min=0).resample(time=freq).sum(dim="time")
+    )
 
 
-@declare_units('days', tas='[temperature]', thresh='[temperature]')
-def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
+@declare_units("days", tas="[temperature]", thresh="[temperature]")
+def growing_season_length(tas, thresh="5.0 degC", window=6, freq="YS"):
     r"""Growing season length.
 
     The number of days between the first occurrence of at least
@@ -353,14 +368,14 @@ def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
 
     def compute_gsl(c):
         nt = c.time.size
-        i = xr.DataArray(np.arange(nt), dims='time').chunk({'time': 1})
+        i = xr.DataArray(np.arange(nt), dims="time").chunk({"time": 1})
         ind = xr.broadcast(i, c)[0].chunk(c.chunks)
-        i1 = ind.where(c == window).min(dim='time')
+        i1 = ind.where(c == window).min(dim="time")
         i1 = xr.where(np.isnan(i1), nt, i1)
-        i11 = i1.reindex_like(c, method='ffill')
+        i11 = i1.reindex_like(c, method="ffill")
         i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
         i2 = xr.where(np.isnan(i2), nt, i2)
-        d = (i2 - i1).min(dim='time')
+        d = (i2 - i1).min(dim="time")
         return d
 
     gsl = c.resample(time=freq).apply(compute_gsl)
@@ -368,8 +383,8 @@ def growing_season_length(tas, thresh='5.0 degC', window=6, freq='YS'):
     return gsl
 
 
-@declare_units('days', tasmax='[temperature]', thresh='[temperature]')
-def heat_wave_index(tasmax, thresh='25.0 degC', window=5, freq='YS'):
+@declare_units("days", tasmax="[temperature]", thresh="[temperature]")
+def heat_wave_index(tasmax, thresh="25.0 degC", window=5, freq="YS"):
     r"""Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
@@ -394,11 +409,11 @@ def heat_wave_index(tasmax, thresh='25.0 degC', window=5, freq='YS'):
     over = tasmax > thresh
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count, window=window, dim='time')
+    return group.apply(rl.windowed_run_count, window=window, dim="time")
 
 
-@declare_units('C days', tas='[temperature]', thresh='[temperature]')
-def heating_degree_days(tas, thresh='17.0 degC', freq='YS'):
+@declare_units("C days", tas="[temperature]", thresh="[temperature]")
+def heating_degree_days(tas, thresh="17.0 degC", freq="YS"):
     r"""Heating degree days
 
     Sum of degree days below the temperature threshold at which spaces are heated.
@@ -428,14 +443,11 @@ def heating_degree_days(tas, thresh='17.0 degC', freq='YS'):
     """
     thresh = utils.convert_units_to(thresh, tas)
 
-    return tas.pipe(lambda x: thresh - x) \
-        .clip(0) \
-        .resample(time=freq) \
-        .sum(dim='time')
+    return tas.pipe(lambda x: thresh - x).clip(0).resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', thresh='[temperature]')
-def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def tn_days_below(tasmin, thresh="-10.0 degC", freq="YS"):
     r"""Number of days with tmin below a threshold in
 
     Number of days where daily minimum temperature is below a threshold.
@@ -464,12 +476,12 @@ def tn_days_below(tasmin, thresh='-10.0 degC', freq='YS'):
         TX_{ij} < Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmin)
-    f1 = utils.threshold_count(tasmin, '<', thresh, freq)
+    f1 = utils.threshold_count(tasmin, "<", thresh, freq)
     return f1
 
 
-@declare_units('days', tasmax='[temperature]', thresh='[temperature]')
-def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
+@declare_units("days", tasmax="[temperature]", thresh="[temperature]")
+def tx_days_above(tasmax, thresh="25.0 degC", freq="YS"):
     r"""Number of summer days
 
     Number of days where daily maximum temperature exceed a threshold.
@@ -499,11 +511,11 @@ def tx_days_above(tasmax, thresh='25.0 degC', freq='YS'):
     """
     thresh = utils.convert_units_to(thresh, tasmax)
     f = (tasmax > (thresh)) * 1
-    return f.resample(time=freq).sum(dim='time')
+    return f.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmax='[temperature]', thresh='[temperature]')
-def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
+@declare_units("days", tasmax="[temperature]", thresh="[temperature]")
+def warm_day_frequency(tasmax, thresh="30 degC", freq="YS"):
     r"""Frequency of extreme warm days
 
     Return the number of days with tasmax > thresh per period
@@ -533,11 +545,11 @@ def warm_day_frequency(tasmax, thresh='30 degC', freq='YS'):
     """
     thresh = utils.convert_units_to(thresh, tasmax)
     events = (tasmax > thresh) * 1
-    return events.resample(time=freq).sum(dim='time')
+    return events.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', tasmin='[temperature]', thresh='[temperature]')
-def warm_night_frequency(tasmin, thresh='22 degC', freq='YS'):
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def warm_night_frequency(tasmin, thresh="22 degC", freq="YS"):
     r"""Frequency of extreme warm nights
 
     Return the number of days with tasmin > thresh per period
@@ -556,13 +568,13 @@ def warm_night_frequency(tasmin, thresh='22 degC', freq='YS'):
     xarray.DataArray
       The number of days with tasmin > thresh per period
     """
-    thresh = utils.convert_units_to(thresh, tasmin, )
+    thresh = utils.convert_units_to(thresh, tasmin)
     events = (tasmin > thresh) * 1
-    return events.resample(time=freq).sum(dim='time')
+    return events.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', pr='[precipitation]', thresh='[precipitation]')
-def wetdays(pr, thresh='1.0 mm/day', freq='YS'):
+@declare_units("days", pr="[precipitation]", thresh="[precipitation]")
+def wetdays(pr, thresh="1.0 mm/day", freq="YS"):
     r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
@@ -590,14 +602,14 @@ def wetdays(pr, thresh='1.0 mm/day', freq='YS'):
     >>> pr = xr.open_dataset('pr.day.nc')
     >>> wd = wetdays(pr, pr_min = 5., freq="QS-DEC")
     """
-    thresh = utils.convert_units_to(thresh, pr, 'hydro')
+    thresh = utils.convert_units_to(thresh, pr, "hydro")
 
     wd = (pr >= thresh) * 1
-    return wd.resample(time=freq).sum(dim='time')
+    return wd.resample(time=freq).sum(dim="time")
 
 
-@declare_units('days', pr='[precipitation]', thresh='[precipitation]')
-def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
+@declare_units("days", pr="[precipitation]", thresh="[precipitation]")
+def maximum_consecutive_dry_days(pr, thresh="1 mm/day", freq="YS"):
     r"""Maximum number of consecutive dry days
 
     Return the maximum number of consecutive days within the period where precipitation
@@ -631,14 +643,14 @@ def maximum_consecutive_dry_days(pr, thresh='1 mm/day', freq='YS'):
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    t = utils.convert_units_to(thresh, pr, 'hydro')
+    t = utils.convert_units_to(thresh, pr, "hydro")
     group = (pr < t).resample(time=freq)
 
-    return group.apply(rl.longest_run, dim='time')
+    return group.apply(rl.longest_run, dim="time")
 
 
-@declare_units('mm', pr='[precipitation]')
-def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
+@declare_units("mm", pr="[precipitation]")
+def max_n_day_precipitation_amount(pr, window=1, freq="YS"):
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
@@ -670,15 +682,15 @@ def max_n_day_precipitation_amount(pr, window=1, freq='YS'):
 
     # rolling sum of the values
     arr = pr.rolling(time=window, center=False).sum()
-    out = arr.resample(time=freq).max(dim='time', keep_attrs=True)
+    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
-    out.attrs['units'] = pr.units
+    out.attrs["units"] = pr.units
     # Adjust values and units to make sure they are daily
-    return utils.pint_multiply(out, 1 * units.day, 'mm')
+    return utils.pint_multiply(out, 1 * units.day, "mm")
 
 
-@declare_units('days', tasmin='[temperature]', thresh='[temperature]')
-def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def tropical_nights(tasmin, thresh="20.0 degC", freq="YS"):
     r"""Tropical nights
 
     The number of days with minimum daily temperature above threshold.
@@ -707,6 +719,6 @@ def tropical_nights(tasmin, thresh='20.0 degC', freq='YS'):
         TN_{ij} > Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmin)
-    return tasmin.pipe(lambda x: (tasmin > thresh) * 1) \
-        .resample(time=freq) \
-        .sum(dim='time')
+    return (
+        tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
+    )
