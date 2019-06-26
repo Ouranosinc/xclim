@@ -1,6 +1,8 @@
 import os
+import sys
 
 import numpy as np
+import pytest
 import xarray as xr
 
 import xclim.atmos as atmos
@@ -748,6 +750,10 @@ class TestDailyFreezeThaw:
         assert np.isnan(frzthw.values[0, -1, -1])
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 7),
+    reason="GrowingSeasonLength causes a dask-related SegFault",
+)
 class TestGrowingSeasonLength:
     def test_single_year(self, tas_series):
         a = np.zeros(366) + K2C

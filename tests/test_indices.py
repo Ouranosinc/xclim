@@ -16,6 +16,7 @@
 # import cftime
 import calendar
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -280,6 +281,10 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 7),
+    reason="GrowingSeasonLength causes a dask-related SegFault",
+)
 class TestGrowingSeasonLength:
     def test_simple(self, tas_series):
         # test for different growing length
