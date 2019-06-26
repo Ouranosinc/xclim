@@ -29,7 +29,7 @@ setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest", "tox"]
 
-docs_requirements = ["sphinx", "guzzle-sphinx-theme", "nbsphinx", "pandoc"]
+docs_requirements = ["sphinx", "guzzle-sphinx-theme", "nbsphinx", "pypandoc"]
 
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 

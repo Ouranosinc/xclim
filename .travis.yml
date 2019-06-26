@@ -46,7 +46,6 @@ matrix:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37
 
-
 install:
     - sudo -H pip install --upgrade pip
     - pip install -U tox-travis
