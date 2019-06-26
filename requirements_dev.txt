@@ -8,3 +8,4 @@ coverage
 twine
 pytest
 pytest-runner
+pre-commit
