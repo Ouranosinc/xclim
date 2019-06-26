@@ -12,6 +12,10 @@ matrix:
   include:
     - env: TOXENV=docs
       python: 3.5
+      addons:
+        apt:
+          packages:
+          - pandoc
     - env: TOXENV=flake8
       python: 3.5
     - env: TOXENV=py38-dev
