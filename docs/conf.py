@@ -78,7 +78,8 @@ extensions = (
     'sphinx.ext.todo',
     'rstjinja',
     'nbsphinx',
-    'guzzle_sphinx_theme'
+    'guzzle_sphinx_theme',
+    "pandoc",
 )
 
 napoleon_numpy_docstring = True
