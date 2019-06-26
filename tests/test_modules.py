@@ -10,17 +10,17 @@ class TestBuildModules:
         with pytest.raises(AttributeError):
             build_module(name, objs, mode="warn")
 
-    def test_invalid_missing_object_handling(self):
-        name = ""
-        objs = {"k1": "v1", "k2": "v2"}
-        with pytest.raises(AttributeError):
-            build_module(name, objs, mode="bananas")
-
     def test_quiet_build_failure(self):
         name = None
         objs = {}
         with pytest.raises(TypeError):
             build_module(name, objs, mode="ignore")
+
+    def test_configured_build_failure(self):
+        name = ""
+        objs = {"k1": None, "k2": None}
+        with pytest.raises(AttributeError):
+            build_module(name, objs, mode="bananas")
 
     def test_loud_build_failure(self):
         name = ""
