@@ -458,7 +458,7 @@ class TestUnitConversion:
         u = units("mm/d")
         assert pint2cfunits(u.units) == "mm d-1"
 
-    def test_cfunits2pint(self, pr_series):
+    def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
         assert (str(u)) == "kilogram / meter ** 2 / second"
         assert pint2cfunits(u) == "kg m-2 s-1"
@@ -466,6 +466,10 @@ class TestUnitConversion:
         u = units2pint("m^3 s-1")
         assert str(u) == "meter ** 3 / second"
         assert pint2cfunits(u) == "m^3 s-1"
+
+        u = units2pint("2 kg m-2 s-1")
+        assert (str(u)) == "kilogram / meter ** 2 / second"
+
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])

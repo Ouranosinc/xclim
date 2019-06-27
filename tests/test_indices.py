@@ -24,18 +24,10 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim.testing.common import pr_series
-from xclim.testing.common import tas_series
-from xclim.testing.common import tasmax_series
-from xclim.testing.common import tasmin_series
 from xclim.utils import percentile_doy
 
 xr.set_options(enable_cftimeindex=True)
 
-TAS_SERIES = tas_series
-TASMAX_SERIES = tasmax_series
-TASMIN_SERIES = tasmin_series
-PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
@@ -246,6 +238,22 @@ class TestDailyPrIntensity:
         pr.attrs["units"] = "mm/d"
         out = xci.daily_pr_intensity(pr, thresh="1 mm/day")
         np.testing.assert_array_almost_equal(out[0], 2.5)
+
+
+class TestDaysOverPrecipThresh:
+    def test_simple(self, pr_series, per_doy):
+        a = np.zeros(365)
+        a[:8] = np.arange(8)
+        pr = pr_series(a, start="1/1/2000")
+
+        per = per_doy(np.zeros(366))
+        per[5:] = 5
+
+        out = xci.days_over_precip_thresh(pr, per, thresh='2 kg/m**2/s')
+        np.testing.assert_array_almost_equal(out[0], 4)
+
+        out = xci.fraction_over_precip_thresh(pr, per, thresh='2 kg/m**2/s')
+        np.testing.assert_array_almost_equal(out[0], (3 + 4 + 6 + 7)/(3 + 4 + 5 + 6 + 7))
 
 
 class TestFreshetStart:

@@ -650,7 +650,7 @@ def maximum_consecutive_dry_days(pr, thresh="1 mm/day", freq="YS"):
     return group.apply(rl.longest_run, dim="time")
 
 
-@declare_units("days", pr="[temperature]", thresh="[temperature]")
+@declare_units("days", tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_summer_days(tasmax, thresh="25 degC", freq="YS"):
     r"""Maximum number of consecutive summer days (Tx > 25℃)
 

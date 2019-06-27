@@ -554,7 +554,7 @@ def rain_on_frozen_ground_days(pr, tas, thresh="1 mm/d", freq="YS"):
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
 
 
-@declare_units("days", tas="[precipitation]", thresh="[precipitation]")
+@declare_units("days", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
 def days_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -606,7 +606,7 @@ def days_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
     return over.resample(time=freq).sum(dim="time")
 
 
-@declare_units("", tas="[precipitation]", thresh="[precipitation]")
+@declare_units("", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
 def fraction_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -647,8 +647,8 @@ def fraction_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
     doy = tp.time.dt.dayofyear.values
     tp.data = mper.sel(dayofyear=doy)
 
-    # Total precip over period
-    total = per.resample(time=freq).sum(dim="time")
+    # Total precip during wet days over period
+    total = pr.where(pr > thresh).resample(time=freq).sum(dim="time")
 
     # compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
