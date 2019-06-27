@@ -4,6 +4,8 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 
+include requirements_dev.txt
+
 recursive-include xclim *
 recursive-include tests *
 recursive-exclude * __pycache__
