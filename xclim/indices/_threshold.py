@@ -36,6 +36,7 @@ __all__ = [
     "warm_night_frequency",
     "wetdays",
     "maximum_consecutive_dry_days",
+    "maximum_consecutive_summer_days",
     "max_n_day_precipitation_amount",
     "tropical_nights",
 ]
@@ -54,7 +55,7 @@ def cold_spell_days(tas, thresh="-10 degC", window=5, freq="AS-JUL"):
       Mean daily temperature [℃] or [K]
     thresh : str
       Threshold temperature below which a cold spell begins [℃] or [K]. Default : '-10 degC'
-    window : int
+        window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str, optional
       Resampling frequency
@@ -645,6 +646,46 @@ def maximum_consecutive_dry_days(pr, thresh="1 mm/day", freq="YS"):
     """
     t = utils.convert_units_to(thresh, pr, "hydro")
     group = (pr < t).resample(time=freq)
+
+    return group.apply(rl.longest_run, dim="time")
+
+
+@declare_units("days", pr="[temperature]", thresh="[temperature]")
+def maximum_consecutive_summer_days(tasmax, thresh="25 degC", freq="YS"):
+    r"""Maximum number of consecutive summer days (Tx > 25℃)
+
+    Return the maximum number of consecutive days within the period where temperature is above a certain threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Max daily temperature [K]
+    thresh : str
+      Threshold temperature [K].
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive summer days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily maximum temperature series and :math:`thresh` the threshold
+    above which a day is considered a summer day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive dry days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+    """
+    t = utils.convert_units_to(thresh, tasmax)
+    group = (tasmax > t).resample(time=freq)
 
     return group.apply(rl.longest_run, dim="time")
 

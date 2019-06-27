@@ -27,7 +27,9 @@ __all__ = [
     "daily_freezethaw_cycles",
     "daily_temperature_range",
     "daily_temperature_range_variability",
+    "days_over_precip_thresh",
     "extreme_temperature_range",
+    "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
     "liquid_precip_ratio",
@@ -550,6 +552,108 @@ def rain_on_frozen_ground_days(pr, tas, thresh="1 mm/d", freq="YS"):
     pcond = pr > t
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
+
+
+@declare_units("days", tas="[precipitation]", thresh="[precipitation]")
+def days_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
+    r"""Number of wet days with daily precipitation over a given percentile.
+
+    Number of days over period where the precipitation is above a threshold defining wet days and above a given
+    percentile for that day.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
+    per : xarray.DataArray
+      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day]
+    thresh : str
+       Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Count of days with daily precipitation above the given percentile [days]
+
+    Notes
+    -----
+    The percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+
+    Example
+    -------
+    >>> p75 = percentile_doy(historical_pr, per=0.75)
+    >>> r75p = days_over_precip_thresh(pr, p75)
+    """
+    if "dayofyear" not in per.coords.keys():
+        raise AttributeError("percentile should have dayofyear coordinates.")
+
+    per = utils.convert_units_to(per, pr)
+    thresh = utils.convert_units_to(thresh, pr)
+
+    per = utils.adjust_doy_calendar(per, pr)
+    mper = np.maximum(per, thresh)
+
+    # create array of percentile with pr shape and coords
+    tp = xr.full_like(pr, np.nan)
+    doy = tp.time.dt.dayofyear.values
+    tp.data = mper.sel(dayofyear=doy)
+
+    # compute the days where precip is both over the wet day threshold and the percentile threshold.
+    over = pr > tp
+
+    return over.resample(time=freq).sum(dim="time")
+
+
+@declare_units("", tas="[precipitation]", thresh="[precipitation]")
+def fraction_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
+    r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
+
+    Percentage of the total precipitation over period occurring in days where the precipitation is above a threshold
+    defining wet days and above a given percentile for that day.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
+    per : xarray.DataArray
+      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day]
+    thresh : str
+       Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
+    freq : str, optional
+      Resampling frequency
+
+    Returns
+    -------
+    xarray.DataArray
+      Fraction of precipitation over threshold during wet days days.
+
+    Notes
+    -----
+    The percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    """
+    if "dayofyear" not in per.coords.keys():
+        raise AttributeError("percentile should have dayofyear coordinates.")
+
+    per = utils.convert_units_to(per, pr)
+    thresh = utils.convert_units_to(thresh, pr)
+
+    per = utils.adjust_doy_calendar(per, pr)
+    mper = np.maximum(per, thresh)
+
+    # create array of percentile with pr shape and coords
+    tp = xr.full_like(pr, np.nan)
+    doy = tp.time.dt.dayofyear.values
+    tp.data = mper.sel(dayofyear=doy)
+
+    # Total precip over period
+    total = per.resample(time=freq).sum(dim="time")
+
+    # compute the days where precip is both over the wet day threshold and the percentile threshold.
+    over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
+
+    return over / total
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
