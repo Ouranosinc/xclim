@@ -1,10 +1,12 @@
 <!--Please ensure the PR fulfills the follwing requirements-->
-### Pull Request Checklist
+### Pull Request Checklist:
 - [ ] This PR addresses an already opened issue (for bug fixes / features)
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Docs have been added / updated (for bug fixes / features)
 - [ ] HISTORY.rst has been updated
-- [ ] bumpversion (minor / major / patch) has been called
+
+### After merging to master and before closing the branch:
+- [ ] bumpversion (minor / major / patch) has been called on `master` branch
 - [ ] Tags have been pushed
 
 * **What kind of change does this PR introduce?** <!--(Bug fix, feature, docs update, etc.)-->
