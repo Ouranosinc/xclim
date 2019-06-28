@@ -7,11 +7,6 @@ import xarray as xr
 
 from xclim import checks
 from xclim.atmos import tg_mean
-from xclim.testing.common import tas_series
-from xclim.testing.common import tasmin_series
-
-TAS_SERIES = tas_series
-TASMIN_SERIES = tasmin_series
 
 K2C = 273.15
 

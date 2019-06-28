@@ -1,8 +1,9 @@
 import numpy as np
-import xclim
 import pandas as pd
 import pytest
 import xarray as xr
+
+import xclim.utils as utils
 
 
 @pytest.fixture
@@ -121,7 +122,7 @@ def ndq_series():
 @pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
-        n = xclim.utils.calendars[calendar]
+        n = utils.calendars[calendar]
         if len(values) != n:
             raise ValueError(
                 "Values must be same length as number of days in calendar."

@@ -101,7 +101,7 @@ def __build_icclim(mode="warn"):
         "TNn": indices.tn_min,
         "CSDI": indices.cold_spell_duration_index,
         "SU": indices.tx_days_above,
-        "CSU": indices.maximum_consecutive_summer_days,
+        "CSU": indices.maximum_consecutive_tx_days,
         "TR": indices.tropical_nights,
         "GD4": partial(indices.growing_degree_days, thresh="4 degC"),
         "FD": indices.frost_days,

@@ -36,7 +36,7 @@ __all__ = [
     "warm_night_frequency",
     "wetdays",
     "maximum_consecutive_dry_days",
-    "maximum_consecutive_summer_days",
+    "maximum_consecutive_tx_days",
     "max_n_day_precipitation_amount",
     "tropical_nights",
 ]
@@ -651,7 +651,7 @@ def maximum_consecutive_dry_days(pr, thresh="1 mm/day", freq="YS"):
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
-def maximum_consecutive_summer_days(tasmax, thresh="25 degC", freq="YS"):
+def maximum_consecutive_tx_days(tasmax, thresh="25 degC", freq="YS"):
     r"""Maximum number of consecutive summer days (Tx > 25℃)
 
     Return the maximum number of consecutive days within the period where temperature is above a certain threshold.

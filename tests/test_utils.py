@@ -29,8 +29,6 @@ from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
-from xclim.testing.common import pr_series
-from xclim.testing.common import tas_series
 from xclim.utils import adjust_doy_calendar
 from xclim.utils import daily_downsampler
 from xclim.utils import format_kwargs
@@ -43,8 +41,6 @@ from xclim.utils import units
 from xclim.utils import units2pint
 from xclim.utils import walk_map
 
-TAS_SERIES = tas_series
-PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
