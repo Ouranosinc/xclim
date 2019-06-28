@@ -1,8 +1,8 @@
-import xarray as xr
 import numpy as np
+import xarray as xr
 
 
-def delta(src, dst, nbins, group, kind='+'):
+def delta(src, dst, nq, group, kind="+"):
     """Compute quantile mapping factors.
 
     Parameters
@@ -11,8 +11,8 @@ def delta(src, dst, nbins, group, kind='+'):
       Source time series.
     dst : xr.DataArray
       Destination time series.
-    nbins : int
-      Number of quantile bins.
+    nq : int
+      Number of quantiles.
     group : {'time.month', 'time.week', 'time.dayofyear'}
       Grouping criterion.
     kind : {'+', '*'}
@@ -23,21 +23,22 @@ def delta(src, dst, nbins, group, kind='+'):
     xr.DataArray
       Delta factor computed over time grouping and quantile bins.
     """
-    bins = np.linspace(0., 1., nbins)
+    dq = 1 / nq / 2
+    q = np.linspace(dq, 1 - dq, nq)
 
-    sg = src.groupby(group).quantile(bins)
-    dg = dst.groupby(group).quantile(bins)
+    sg = src.groupby(group).quantile(q)
+    dg = dst.groupby(group).quantile(q)
 
-    if kind == '+':
+    if kind == "+":
         out = dg - sg
-    elif kind == '*':
+    elif kind == "*":
         out = dg / sg
     else:
         raise ValueError("kind must be + or *.")
 
-    out.attrs['kind'] = kind
-    out.attrs['group'] = group
-    out.attrs['bins'] = bins
+    out.attrs["kind"] = kind
+    out.attrs["group"] = group
+
     return out
 
 
@@ -59,64 +60,85 @@ def apply(da, qmf, interp=False):
       Input array with delta applied.
     """
 
-    if 'time' not in qmf.group:
+    if "time" not in qmf.group:
         raise NotImplementedError
 
-    if 'season' in qmf.group and interp:
+    if "season" in qmf.group and interp:
         raise NotImplementedError
 
     # Find the group indexes
-    ind, att = qmf.group.split('.')
+    ind, att = qmf.group.split(".")
 
-    time = da.coords['time']
+    time = da.coords["time"]
     gc = qmf.coords[att]
     ng = len(gc)
 
     # Add cyclical values to the scaling factors for interpolation
     if interp:
         qmf = add_cyclic(qmf, att)
+        qmf = add_q_bounds(qmf)
 
     # Compute the percentile time series of the input array
     q = da.groupby(qmf.group).apply(xr.DataArray.rank, pct=True, dim=ind)
-    iq = xr.DataArray(q, dims='time', coords={'time': time}, name='quantile index')
+    iq = xr.DataArray(q, dims="time", coords={"time": time}, name="quantile index")
 
     # Create DataArrays for indexing
     # TODO: Adjust for different calendars if necessary.
-    if interp:
-        it = xr.DataArray((q.indexes['time'].dayofyear-1) / 365. * ng + 0.5,
-                          dims='time', coords={'time': time}, name='time group index')
-    else:
-        it = xr.DataArray(getattr(q.indexes[ind], att),
-                          dims='time', coords={'time': time}, name='time group index')
 
+    if interp:
+        time = q.indexes["time"]
+        if att == "month":
+            x = time.month - 0.5 + time.day / time.daysinmonth
+        elif att == "week":
+            x = time.week - 0.5 + time.dayofweek / 6
+        elif att == "dayofyear":
+            x = time.dayofyear
+        else:
+            raise ValueError
+
+    else:
+        x = getattr(q.indexes[ind], att)
+
+    it = xr.DataArray(x, dims="time", coords={"time": time}, name="time group index")
 
     # Extract the correct quantile for each time step.
+
     if interp:  # Interpolate both the time group and the quantile.
-        factor = qmf.interp({att: it, 'quantile': iq})
+        factor = qmf.interp({att: it, "quantile": iq})
     else:  # Find quantile for nearest time group and quantile.
-        factor = qmf.sel({att: it, 'quantile': iq}, method='nearest')
+        factor = qmf.sel({att: it, "quantile": iq}, method="nearest")
 
     # Apply delta to input time series.
     out = da.copy()
-    if qmf.kind == '+':
+    if qmf.kind == "+":
         out += factor
-    elif qmf.kind == '*':
+    elif qmf.kind == "*":
         out *= factor
 
-    out.attrs['bias_corrected'] = True
+    out.attrs["bias_corrected"] = True
 
     # Remove time grouping and quantile coordinates
-    return out.drop(['quantile', att])
+    return out.drop(["quantile", att])
 
 
 def add_cyclic(qmf, att):
-    """Reindex the scaling factors to include the last grouping
+    """Reindex the scaling factors to include the last time grouping
     at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
     """
     gc = qmf.coords[att]
-    i = np.concatenate(([-1, ], range(len(gc)), [0, ]))
+    i = np.concatenate(([-1], range(len(gc)), [0]))
     qmf = qmf.reindex({att: gc[i]})
     qmf.coords[att] = range(len(qmf))
+    return qmf
+
+
+def add_q_bounds(qmf):
+    """Reindex the scaling factors to set the quantile at 0 and 1 to the first and last quantile respectively."""
+    att = "quantile"
+    q = qmf.coords[att]
+    i = np.concatenate(([0], range(len(q)), [-1]))
+    qmf = qmf.reindex({att: q[i]})
+    qmf.coords[att] = np.concatenate(([0], q, [1]))
     return qmf
