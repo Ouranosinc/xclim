@@ -249,11 +249,13 @@ class TestDaysOverPrecipThresh:
         per = per_doy(np.zeros(366))
         per[5:] = 5
 
-        out = xci.days_over_precip_thresh(pr, per, thresh='2 kg/m**2/s')
+        out = xci.days_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
         np.testing.assert_array_almost_equal(out[0], 4)
 
-        out = xci.fraction_over_precip_thresh(pr, per, thresh='2 kg/m**2/s')
-        np.testing.assert_array_almost_equal(out[0], (3 + 4 + 6 + 7)/(3 + 4 + 5 + 6 + 7))
+        out = xci.fraction_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
+        np.testing.assert_array_almost_equal(
+            out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
+        )
 
 
 class TestFreshetStart:

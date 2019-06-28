@@ -117,12 +117,18 @@ def ndq_series():
         attrs={"units": "m^3 s-1", "standard_name": "streamflow"},
     )
 
+
 @pytest.fixture
 def per_doy():
-    def _per_doy(values, calendar='standard', units="kg m-2 s-1"):
+    def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
         n = xclim.utils.calendars[calendar]
         if len(values) != n:
-            raise ValueError("Values must be same length as number of days in calendar.")
-        coords = xr.IndexVariable('dayofyear', np.arange(1, n + 1))
-        return xr.DataArray(values, coords=[coords], attrs= {'calendar': calendar, "units": units})
+            raise ValueError(
+                "Values must be same length as number of days in calendar."
+            )
+        coords = xr.IndexVariable("dayofyear", np.arange(1, n + 1))
+        return xr.DataArray(
+            values, coords=[coords], attrs={"calendar": calendar, "units": units}
+        )
+
     return _per_doy

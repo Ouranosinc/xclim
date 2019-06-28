@@ -470,7 +470,6 @@ class TestUnitConversion:
         u = units2pint("2 kg m-2 s-1")
         assert (str(u)) == "kilogram / meter ** 2 / second"
 
-
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = utils.pint_multiply(a, 1 * units.days)
