@@ -114,7 +114,7 @@ def units2pint(value):
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r"\^?(-?\d)", r"**\g<1>", s)[0]
+        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
         unit = value

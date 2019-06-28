@@ -4,6 +4,8 @@ History
 
 0.10.x-beta (2019-06-18)
 ------------------------
+* Added indices to ICCLIM module
+* Added indices `days_over_precip_thresh` and `fraction_over_precip_thresh`
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.
@@ -25,12 +27,12 @@ This is a significant jump in the release. Many modifications have been made and
 * New indices have been added with documentation and call examples
 * Run_length based operations have been optimized
 * Support for CF non-standard calendars
-* Automated/improved unit conversion and management via pint library  
+* Automated/improved unit conversion and management via pint library
 * Added ensemble utilities for creation and analysis of muti-model climate ensembles
 * Added subsetting utilities for spatio-temporal subsets of xarray data objects
 * Added streamflow indicators
 * Refactoring of the code : separation of indices.py into a directory with sub-files (simple, threshold and multivariate); ensembles and subset utilities separated into distinct modules (pulled from utils.py)
-* Indicators are now split into packages named by realms. import xclim.atmos to load indicators related to atmospheric variables.  
+* Indicators are now split into packages named by realms. import xclim.atmos to load indicators related to atmospheric variables.
 
 0.8-beta (2019-02-11)
 ---------------------
