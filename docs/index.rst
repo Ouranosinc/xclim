@@ -10,6 +10,7 @@ xclim Official Documentation
    usage
    indices
    icclim
+   utilities
    contributing
    authors
    history
