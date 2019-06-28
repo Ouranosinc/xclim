@@ -2,43 +2,24 @@
 xclim
 ======
 
-
 .. image:: _static/_images/xclim-logo.png
         :align: center
         :target: _static/_images/xclim-logo.png
         :alt: xclim
 
 .. image:: https://img.shields.io/pypi/v/xclim.svg
+        :align: center
         :target: https://pypi.python.org/pypi/xclim
         :alt: Python Package Index Build
-        
+
 .. image:: https://img.shields.io/conda/vn/conda-forge/xclim.svg
+        :align: center
         :target: https://anaconda.org/conda-forge/xclim
         :alt: Conda-forge Build Version
 
-.. image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
-        :target: https://travis-ci.org/Ouranosinc/xclim
-        :alt: Build Status
+----
 
-.. image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
-        :target: https://coveralls.io/github/Ouranosinc/xclim
-        :alt: Coveralls
-
-.. image:: https://www.codefactor.io/repository/github/ouranosinc/xclim/badge
-        :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
-        :alt: CodeFactor
-
-.. image:: https://readthedocs.org/projects/xclim/badge
-        :target: https://xclim.readthedocs.io/en/latest
-        :alt: Documentation Status
-
-.. image:: https://zenodo.org/badge/142608764.svg
-        :target: https://zenodo.org/badge/latestdoi/142608764
-        :alt: DOI
-
-.. image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
-        :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
-        :alt: License
+|build| |coveralls| |codefactor| |zenodo| |black|
 
 ``xclim`` is a library of functions to compute climate indices. It is built using xarray and can benefit from the parallelization handling provided by dask. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
 
@@ -56,8 +37,8 @@ For applications where meta-data and missing values are important to get right, 
 ``xclim`` is still in active development at the moment, but is close to being production ready. We're are currently nearing a release candidate (as of Q2 2019). If you're interested in participating to the development, please leave us a message on the issue tracker.
 
 
-* Free software: Apache Software License 2.0
-* Documentation: https://xclim.readthedocs.io.
+* Free software: |license|
+* Documentation: |docs|
 
 
 Credits
@@ -69,3 +50,33 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+
+
+
+.. |build| image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
+        :target: https://travis-ci.org/Ouranosinc/xclim
+        :alt: Build Status
+
+.. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
+        :target: https://coveralls.io/github/Ouranosinc/xclim
+        :alt: Coveralls
+
+.. |codefactor| image:: https://www.codefactor.io/repository/github/ouranosinc/xclim/badge
+        :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
+        :alt: CodeFactor
+
+.. |docs| image:: https://readthedocs.org/projects/xclim/badge
+        :target: https://xclim.readthedocs.io/en/latest
+        :alt: Documentation Status
+
+.. |zenodo| image:: https://zenodo.org/badge/142608764.svg
+        :target: https://zenodo.org/badge/latestdoi/142608764
+        :alt: DOI
+
+.. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
+        :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
+        :alt: License
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+        :target: https://github.com/python/black
+        :alt: Python Black

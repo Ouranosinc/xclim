@@ -4,6 +4,15 @@
 from setuptools import find_packages
 from setuptools import setup
 
+NAME = "xclim"
+DESCRIPTION = "Derived climate variables built with xarray."
+URL = "https://github.com/Ouranosinc/xclim"
+AUTHOR = "Travis Logan"
+AUTHOR_EMAIL = "logan.travis@ouranos.ca"
+REQUIRES_PYTHON = ">=3.5.0"
+VERSION = "0.10.3-beta"
+LICENSE = "Apache Software License 2.0"
+
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
@@ -28,41 +37,45 @@ setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest", "tox"]
 
-docs_requirements = ["Sphinx", "guzzle-sphinx-theme"]
+docs_requirements = ["sphinx", "guzzle-sphinx-theme", "nbsphinx", "pandoc", "ipython"]
+
+dev_requirements = []
+with open("requirements_dev.txt") as dev:
+    for dependency in dev.readlines():
+        dev_requirements.append(dependency)
 
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
 setup(
-    author="Travis Logan",
-    author_email="logan.travis@ouranos.ca",
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
-    description="Derived climate variables built with xarray.",
+    description=DESCRIPTION,
+    python_requires=REQUIRES_PYTHON,
     install_requires=requirements,
-    license="Apache Software License 2.0",
+    license=LICENSE,
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
     include_package_data=True,
     keywords=KEYWORDS,
-    name="xclim",
+    name=NAME,
     packages=find_packages(),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={"docs": docs_requirements},
-    url="https://github.com/Ouranosinc/xclim",
-    version="0.10.3-beta",
+    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    url=URL,
+    version=VERSION,
     zip_safe=False,
 )

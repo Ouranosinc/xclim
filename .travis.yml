@@ -10,8 +10,13 @@ sudo: false
 matrix:
   fast_finish: true
   include:
-    - env: TOXENV=docs
+    - env:
+      - TOXENV=docs
       python: 3.6
+      addons:
+        apt:
+          packages:
+          - pandoc
     - env: TOXENV=black
       python: 3.6
     - env: TOXENV=py38-dev
@@ -41,7 +46,6 @@ matrix:
   allow_failures:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37
-
 
 install:
     - sudo -H pip install --upgrade pip
