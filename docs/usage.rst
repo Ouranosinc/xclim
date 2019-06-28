@@ -3,7 +3,6 @@ Usage
 
 Basic example
 -------------
-
 To use xclim in a project:
 
 .. code-block:: python
@@ -20,7 +19,7 @@ To open NetCDF (`.nc`) climate data sets, use xarray:
     ds = xr.open_dataset(data_file)
 
 .. note::
-    Calculations are performed on the variable of interest present within the data set (in this example, **ds.tas**) and not the data set itself, so be sure to specify this when using xclim's indices and other calls.
+    Calculations are performed on the variable of interest present within the data set (in this example, **tas**) and not the data set itself, so be sure to specify this when using xclim's indices and other calls.
 
 To perform a simple climate indice calculation:
 
@@ -56,17 +55,19 @@ To save the data as a new NetCDF
 
 Slicing and subsetting with xarray
 ----------------------------------
+.. warning::
 
+    This section is presently under development!
 
 Using the xclim.icclim module
 -----------------------------
 `ICCLIM <https://github.com/cerfacs-globc/icclim>`_ is a software platform / python library for performing climate indice calculations. It includes roughly 50 types of indicators as defined by the `European Climate Assessment & Dataset project <https://www.ecad.eu/>`_.
 
-For those familiar with ICCLIM, xclim has created one-to-one mappings of their indices. Effectively, these are simply indice calculations methods that have been renamed to be consistent with ICCLIM's terminology.
+For those familiar with ICCLIM, xclim has created similar mappings for many of their indices. Effectively, these are simply indice calculations that have been renamed to be consistent with ICCLIM's terminology.
 
-Where thresholds may differ between xclim's own indices and those of ICCLIM, those called from `xclim.icclim` will ensure that the indice follows the ICCLIM standards. Other extras that the ICCLIM library performs, such as error-handling and specific variable integrity checks are currently planned but not implemented yet.
+Where thresholds may differ between xclim's thresholds for indices and those of ICCLIM, those called from `xclim.icclim` will ensure that the indice follows the ICCLIM threshold standards. Other extras that the ICCLIM library performs, such as error-handling and variable integrity checks modeled after ICCLIM's standards are currently planned but not yet implemented.
 
-The list of all currently-implented ICCLIM indices can be found `here <icclim>`_.
+The list of all presently-available ICCLIM indices can be found `here <icclim>`_.
 
 .. code-block:: python
 
@@ -87,9 +88,26 @@ The list of all currently-implented ICCLIM indices can be found `here <icclim>`_
 
 Using the xclim.atmos module
 ----------------------------
-checks for missing data, incomplete periods, CF-metadata. Useful for producing NetCDFs that will be shared with others. Omits calculations for period with bad coverage.
+The `xclim.atmos` module is tool for running error-detection checks and ensuring consistent metadata when running an indice calculation. Some of the processes involve:
 
+* Checking for missing data and incomplete periods.
+* Writing `Climate and Forecast Convention <http://cfconventions.org/>`_ compliant metadata based on the variables and indices calculated.
+* Identifying periods where missing data significantly impacts the calculation and omits calculations for those periods.
+* Appending process history and maintaining the historical provenance of file metadata.
+
+This module is best used for producing NetCDF that will be shared with users and is called using the following methods:
+
+.. code-block:: python
+
+    import xclim.atmos
+
+    tmax = xclim.atmos.tx_max(ds.tas)
+    tmax.to_netcdf('tmax.nc')
 
 Resampling frequencies
 ----------------------
+.. warning::
+
+    This section is under development!
+
 Use `Q-NOV` to resample into climatological seasons (DJF, MAM, JJA, SON).
