@@ -114,36 +114,44 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
     """
 
-    g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
     # adjust negative/positive longitudes if necessary
     if np.all(da.lon > 0) and lon < 0:
         lon += 360
     if np.all(da.lon < 0) and lon > 0:
         lon -= 360
 
-    if len(da.lon.shape) == 1 & len(da.lat.shape) == 1:
-        # create a 2d grid of lon, lat values
-        lon1, lat1 = np.meshgrid(np.asarray(da.lon.values), np.asarray(da.lat.values))
-
+    dims = list(da.dims)
+    if "lat" in dims and "lon" in dims:
+        out = da.sel(lat=lat, lon=lon, method="nearest")
     else:
-        lon1 = da.lon.values
-        lat1 = da.lat.values
-    shp_orig = lon1.shape
-    lon1 = np.reshape(lon1, lon1.size)
-    lat1 = np.reshape(lat1, lat1.size)
-    # calculate geodesic distance between grid points and point of interest
-    az12, az21, dist = g.inv(
-        lon1, lat1, np.broadcast_to(lon, lon1.shape), np.broadcast_to(lat, lat1.shape)
-    )
-    dist = dist.reshape(shp_orig)
+        if hasattr(da, "lon") and hasattr(da, "lat"):
+            g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
+            lon1 = da.lon.values
+            lat1 = da.lat.values
+            shp_orig = lon1.shape
+            lon1 = np.reshape(lon1, lon1.size)
+            lat1 = np.reshape(lat1, lat1.size)
+            # calculate geodesic distance between grid points and point of interest
+            az12, az21, dist = g.inv(
+                lon1,
+                lat1,
+                np.broadcast_to(lon, lon1.shape),
+                np.broadcast_to(lat, lat1.shape),
+            )
+            dist = dist.reshape(shp_orig)
+            iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
+            xydims = [x for x in da.lon.dims]
+            args = dict()
+            args[xydims[0]] = iy
+            args[xydims[1]] = ix
+            out = da.isel(**args)
+        else:
+            raise (
+                Exception(
+                    'subset_gridpoint() input data requires "lon" and "lat" coordinates or data variables.'
+                )
+            )
 
-    iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
-    xydims = [x for x in da.dims if "time" not in x]
-
-    args = dict()
-    args[xydims[0]] = iy
-    args[xydims[1]] = ix
-    out = da.isel(**args)
     if start_yr or end_yr:
         if not start_yr:
             start_yr = da.time.dt.year.min()

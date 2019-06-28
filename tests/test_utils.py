@@ -323,7 +323,6 @@ class TestIndicator:
         assert isinstance(txc.data, dask.array.core.Array)
 
     def test_identifier(self):
-
         with pytest.warns(UserWarning):
             UniIndPr(identifier="t_{}")
 
@@ -529,12 +528,45 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
     def test_irregular(self):
+
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
+
+        # test_irregular transposed:
+        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
+        dims = list(da1.dims)
+        dims.reverse()
+        daT = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT = daT.assign_coords(**args)
+        daT = daT.assign_coords(lon=(["rlon", "rlat"], np.transpose(da1.lon.values)))
+        daT = daT.assign_coords(lat=(["rlon", "rlat"], np.transpose(da1.lat.values)))
+
+        out1 = subset.subset_gridpoint(daT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out1.lon, lon, 1)
+        np.testing.assert_almost_equal(out1.lat, lat, 1)
+        np.testing.assert_array_equal(out, out1)
+
+        # Dataset with tasmax, lon and lat as data variables (i.e. lon, lat not coords of tasmax)
+        daT1 = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT1.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT1 = daT1.assign_coords(**args)
+        dsT = xr.Dataset(data_vars=None, coords=daT1.coords)
+        dsT["tasmax"] = daT1
+        dsT["lon"] = xr.DataArray(np.transpose(da1.lon.values), dims=["rlon", "rlat"])
+        dsT["lat"] = xr.DataArray(np.transpose(da1.lat.values), dims=["rlon", "rlat"])
+        out2 = subset.subset_gridpoint(dsT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out2.lon, lon, 1)
+        np.testing.assert_almost_equal(out2.lat, lat, 1)
+        np.testing.assert_array_equal(out, out2.tasmax)
 
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
