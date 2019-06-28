@@ -76,10 +76,12 @@ def apply(da, qmf, interp=False):
     if interp:
         qmf = add_cyclic(qmf, att)
 
-    # Compute the quantiles of the input array
+    # Compute the percentile time series of the input array
     q = da.groupby(qmf.group).apply(xr.DataArray.rank, pct=True, dim=ind)
+    iq = xr.DataArray(q, dims='time', coords={'time': time}, name='quantile index')
 
     # Create DataArrays for indexing
+    # TODO: Adjust for different calendars if necessary.
     if interp:
         it = xr.DataArray((q.indexes['time'].dayofyear-1) / 365. * ng + 0.5,
                           dims='time', coords={'time': time}, name='time group index')
@@ -87,7 +89,6 @@ def apply(da, qmf, interp=False):
         it = xr.DataArray(getattr(q.indexes[ind], att),
                           dims='time', coords={'time': time}, name='time group index')
 
-    iq = xr.DataArray(q, dims='time', coords={'time': time}, name='quantile index')
 
     # Extract the correct quantile for each time step.
     if interp:  # Interpolate both the time group and the quantile.
@@ -103,6 +104,7 @@ def apply(da, qmf, interp=False):
         out *= factor
 
     out.attrs['bias_corrected'] = True
+
     # Remove time grouping and quantile coordinates
     return out.drop(['quantile', att])
 
