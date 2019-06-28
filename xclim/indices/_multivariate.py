@@ -554,8 +554,10 @@ def rain_on_frozen_ground_days(pr, tas, thresh="1 mm/d", freq="YS"):
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
 
 
-@declare_units("days", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
-def days_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
+@declare_units(
+    "days", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]"
+)
+def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     r"""Number of wet days with daily precipitation over a given percentile.
 
     Number of days over period where the precipitation is above a threshold defining wet days and above a given
@@ -606,8 +608,10 @@ def days_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
     return over.resample(time=freq).sum(dim="time")
 
 
-@declare_units("", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
-def fraction_over_precip_thresh(pr, per, thresh='1 mm/day', freq="YS"):
+@declare_units(
+    "", pr="[precipitation]", per="[precipitation]", thresh="[precipitation]"
+)
+def fraction_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
     Percentage of the total precipitation over period occurring in days where the precipitation is above a threshold
