@@ -8,6 +8,7 @@ xclim Official Documentation
    readme
    installation
    usage
+   notebooks/example
    indices
    icclim
    utilities
