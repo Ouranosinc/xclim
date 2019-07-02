@@ -18,7 +18,7 @@ requirements = [
     "netCDF4>=1.4",
     "dask[complete]",
     "bottleneck>=1.2.1",
-    "xarray>=0.12.0",
+    "xarray>=0.12.2",
     "pyproj>=1.9.5.1",
     "pint>=0.8",
     "boltons>=18.0",
