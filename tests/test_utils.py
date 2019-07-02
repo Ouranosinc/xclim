@@ -527,6 +527,12 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
+        # test time only
+        out = subset.subset_gridpoint(da, start_yr=yr_st, end_yr=yr_ed)
+        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
     def test_irregular(self):
 
         da = xr.open_dataset(self.nc_2dlonlat).tasmax

@@ -75,7 +75,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     return da
 
 
-def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
+def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by year(s)
 
@@ -115,7 +115,7 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
     """
 
     # check if trying to subset lon and lat
-    if lat and lon:
+    if not lat is None and not lon is None:
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
             # adjust negative/positive longitudes if necessary
@@ -126,6 +126,7 @@ def subset_gridpoint(da, lon, lat, start_yr=None, end_yr=None):
 
             dims = list(da.dims)
 
+            # if 'lon' and 'lat' are present as data dimensions use the .sel method.
             if "lat" in dims and "lon" in dims:
                 out = da.sel(lat=lat, lon=lon, method="nearest")
             else:
