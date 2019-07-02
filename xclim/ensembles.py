@@ -3,7 +3,7 @@ import pandas as pd
 import xarray as xr
 
 
-def create_ensemble(ncfiles, mf_flag=False):
+def create_ensemble(datasets, mf_flag=False):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
@@ -39,7 +39,8 @@ def create_ensemble(ncfiles, mf_flag=False):
     simulation 1 is a list of .nc files (e.g. separated by time)
     >>> ncfiles = glob.glob('dir/*.nc')
     simulation 2 is also a list of .nc files
-    >>> ens = utils.create_ensemble(ncfiles)
+    >>> ncfiles.append(glob.glob('dir2/*.nc'))
+    >>> ens = utils.create_ensemble(ncfiles, mf_flag=True)
     """
 
     dim = "realization"
@@ -48,13 +49,16 @@ def create_ensemble(ncfiles, mf_flag=False):
     # print('finding common time-steps')
     time_flag = False
     time_all = []
-    for n in ncfiles:
+    for n in datasets:
         if mf_flag:
             ds = xr.open_mfdataset(
                 n, concat_dim="time", decode_times=False, chunks={"time": 10}
             )
         else:
-            ds = xr.open_dataset(n, decode_times=False)
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False)
 
         if hasattr(ds, "time"):
             ds["time"] = xr.decode_cf(ds).time
@@ -71,14 +75,18 @@ def create_ensemble(ncfiles, mf_flag=False):
 
             time_all.extend(time1.values)
 
-    for n in ncfiles:
+    for n in datasets:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
+
             ds = xr.open_mfdataset(
                 n, concat_dim="time", decode_times=False, chunks={"time": 10}
             )
         else:
-            ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False)
 
         if time_flag:
             if isinstance(time_all, list):
