@@ -13,7 +13,7 @@ def delta(src, dst, nq, group, kind="+"):
       Destination time series.
     nq : int
       Number of quantiles.
-    group : {'time.month', 'time.week', 'time.dayofyear'}
+    group : {'time.season', 'time.month', 'time.dayofyear'}
       Grouping criterion.
     kind : {'+', '*'}
       The transfer operation, + for additive and * for multiplicative.
@@ -89,12 +89,10 @@ def apply(da, qmf, interp=False):
         time = q.indexes["time"]
         if att == "month":
             x = time.month - 0.5 + time.day / time.daysinmonth
-        elif att == "week":
-            x = time.week - 0.5 + time.dayofweek / 6
         elif att == "dayofyear":
             x = time.dayofyear
         else:
-            raise ValueError
+            raise NotImplementedError
 
     else:
         x = getattr(q.indexes[ind], att)
