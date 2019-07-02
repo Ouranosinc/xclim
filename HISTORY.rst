@@ -12,10 +12,12 @@ History
 * Added utilities with ensemble, run length, and subset algorithms to the documentation.
 * Source code development standards now implement Python Black formatting.
 * Pre-commit is now used to launch code formatting inspections for local development.
+* Documentation now includes more detailed usage and an example workflow notebook.
+* Development build configurations are now available via both Anaconda and pip install methods.
 
 0.10-beta (2019-06-06)
 ----------------------
-* Removed support for Python 2 compatibility.
+* Dropped support for Python 2.
 * Added support for *period of the year* subsetting in ``checks.missing_any``.
 * Now allow for passing positive longitude values when subsetting data with negative longitudes.
 * Improved runlength calculations for small grid size arrays via ``ufunc_1dim`` flag.
@@ -36,7 +38,7 @@ This is a significant jump in the release. Many modifications have been made and
 
 0.8-beta (2019-02-11)
 ---------------------
-TODO
+*This was a staging release and is functionally identical to 0.7-beta*
 
 0.7-beta (2019-02-05)
 ---------------------
