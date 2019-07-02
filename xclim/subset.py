@@ -128,7 +128,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
 
             # if 'lon' and 'lat' are present as data dimensions use the .sel method.
             if "lat" in dims and "lon" in dims:
-                out = da.sel(lat=lat, lon=lon, method="nearest")
+                da = da.sel(lat=lat, lon=lon, method="nearest")
             else:
                 g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
                 lon1 = da.lon.values
@@ -149,7 +149,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
                 args = dict()
                 args[xydims[0]] = iy
                 args[xydims[1]] = ix
-                out = da.isel(**args)
+                da = da.isel(**args)
         else:
             raise (
                 Exception(
@@ -174,6 +174,6 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
             time_cond = (da.time.dt.year >= year_bnds.min()) & (
                 da.time.dt.year <= year_bnds.max()
             )
-        out = out.where(time_cond, drop=True)
+        da = da.where(time_cond, drop=True)
 
-    return out
+    return da
