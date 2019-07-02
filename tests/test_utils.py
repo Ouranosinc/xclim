@@ -585,6 +585,10 @@ class TestSubsetGridPoint:
         with pytest.raises(ValueError):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
 
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
+
 
 class TestSubsetBbox:
     nc_poslons = os.path.join(
