@@ -62,8 +62,20 @@ class TestEnsembleStats:
     def test_create_unequal_times(self):
         ens = ensembles.create_ensemble(self.nc_files)
         assert len(ens.realization) == len(self.nc_files)
-        assert ens.time.dt.year.min() == 1970
-        assert ens.time.dt.year.max() == 2050
+        assert ens.time.dt.year.min() == 1950
+        assert ens.time.dt.year.max() == 2100
+
+        # assert padded with nans
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=1).sel(time=ens.time.dt.year < 1970))
+        )
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=1).sel(time=ens.time.dt.year > 2050))
+        )
+
+        ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.min() == 1970
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.max() == 2050
 
     def test_calc_perc(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
