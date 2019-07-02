@@ -59,6 +59,31 @@ class TestEnsembleStats:
         ens = ensembles.create_ensemble(self.nc_files_simple)
         assert len(ens.realization) == len(self.nc_files_simple)
 
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds)
+
+        ens1 = ensembles.create_ensemble(ds_all)
+        coords = list(ens1.coords)
+        coords.extend(list(ens1.data_vars))
+        for c in coords:
+            np.testing.assert_array_equal(ens[c], ens1[c])
+
+    def test_no_time(self):
+
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
+
+        ens = ensembles.create_ensemble(ds_all)
+        assert len(ens.realization) == len(self.nc_files_simple)
+
     def test_create_unequal_times(self):
         ens = ensembles.create_ensemble(self.nc_files)
         assert len(ens.realization) == len(self.nc_files)

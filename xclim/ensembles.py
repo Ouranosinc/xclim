@@ -9,15 +9,17 @@ def create_ensemble(datasets, mf_flag=False):
 
     Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
     a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
-    ensemble dataset is created for overlapping time-steps common to all input files
+    ensemble dataset is created for maximum time-step interval of all input files.  Before concatenation datasets not
+    covering the entire time span have their data padded with `nan` values
 
     Parameters
     ----------
-    ncfiles : sequence
-      List of netcdf file paths. If mf_flag is true ncfiles should be a list of lists where
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
     each sublist contains input .nc files of a multifile dataset
 
-    mf_flag : Boolean . If true climate simulations are treated as multifile datasets before concatenation
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
 
     Returns
     -------
@@ -78,7 +80,6 @@ def create_ensemble(datasets, mf_flag=False):
     for n in datasets:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
-
             ds = xr.open_mfdataset(
                 n, concat_dim="time", decode_times=False, chunks={"time": 10}
             )
