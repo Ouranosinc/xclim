@@ -12,7 +12,9 @@ History
 * Pre-commit is now used to launch code formatting inspections for local development.
 * Documentation now includes more detailed usage and an example workflow notebook.
 * Development build configurations are now available via both Anaconda and pip install methods.
-* Updated `subset_gridpoint()` to use `.sel` method if 'lon' and 'lat' dims are present (improved speed)
+* Modified create_ensembles() to allow creation of ensemble dataset without a time dimension as well as from xr.Datasets
+* Modified create ensembles() to pad input data with nans when time dimensions are unequal
+* Updated subset_gridpoint() to use .sel method if 'lon' and 'lat' dims are present.
 
 0.10-beta (2019-06-06)
 ----------------------
