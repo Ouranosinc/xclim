@@ -90,12 +90,13 @@ class TestEnsembleStats:
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
 
+        ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
         # assert padded with nans
         assert np.all(
-            np.isnan(ens.tg_mean.isel(realization=1).sel(time=ens.time.dt.year < 1970))
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
         )
         assert np.all(
-            np.isnan(ens.tg_mean.isel(realization=1).sel(time=ens.time.dt.year > 2050))
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year > 2050))
         )
 
         ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
