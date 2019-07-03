@@ -200,4 +200,4 @@ def subset_time(da, start_yr=None, end_yr=None):
         time_cond = (da.time.dt.year >= year_bnds.min()) & (
             da.time.dt.year <= year_bnds.max()
         )
-    return da.sel(time=time_cond)  # , drop=True)
+    return da.sel(time=time_cond)
