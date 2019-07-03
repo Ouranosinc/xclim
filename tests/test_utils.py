@@ -55,6 +55,27 @@ class TestEnsembleStats:
     )
     nc_files = glob.glob(os.path.join(TESTS_DATA, "EnsembleStats", "*.nc"))
 
+    def test_checktimes(self):
+        time_flag, time_all = ensembles._ens_checktimes(self.nc_files)
+        assert time_flag
+        assert pd.DatetimeIndex(time_all).min() == pd.Timestamp("1950-01-01 00:00:00")
+        assert pd.DatetimeIndex(time_all).max() == pd.Timestamp("2100-01-01 00:00:00")
+
+        # verify short time-series file
+        time_flag, time_all1 = ensembles._ens_checktimes(
+            [i for i in self.nc_files if "1970-2050" in i]
+        )
+        assert time_flag
+        assert pd.DatetimeIndex(time_all1).min() > pd.DatetimeIndex(time_all).min()
+        assert pd.DatetimeIndex(time_all1).max() < pd.DatetimeIndex(time_all).max()
+
+        # no time
+        ds = xr.open_dataset(self.nc_files[0])
+        ds = ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True)
+        time_flag, time_all = ensembles._ens_checktimes([ds])
+        assert not time_flag
+        assert time_all is None
+
     def test_create_ensemble(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         assert len(ens.realization) == len(self.nc_files_simple)
@@ -361,7 +382,6 @@ class TestIndicator:
         assert isinstance(txc.data, dask.array.core.Array)
 
     def test_identifier(self):
-
         with pytest.warns(UserWarning):
             UniIndPr(identifier="t_{}")
 

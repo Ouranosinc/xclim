@@ -49,7 +49,7 @@ def create_ensemble(datasets, mf_flag=False):
 
     time_flag, time_all = _ens_checktimes(datasets, mf_flag)
 
-    ds1 = _ens_aligntimes(datasets, mf_flag, time_flag, time_all)
+    ds1 = _ens_align_datasets(datasets, mf_flag, time_flag, time_all)
 
     # print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
@@ -167,6 +167,24 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
 
 def _ens_checktimes(datasets, mf_flag=False):
+    """Check list of datasets and determine if they hava a time dimension. If present return the
+    maximum time-step interval of all input files
+
+    Parameters
+    ----------
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
+
+    Returns
+    -------
+    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
+
+    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+    """
 
     time_flag = False
     time_all = []
@@ -195,12 +213,37 @@ def _ens_checktimes(datasets, mf_flag=False):
             )
 
             time_all.extend(time1.values)
-    time_all = np.unique(time_all)
-    time_all.sort()
+    if time_flag:
+        time_all = pd.unique(time_all)
+        time_all.sort()
+    else:
+        time_all = None
     return time_flag, time_all
 
 
-def _ens_aligntimes(datasets, mf_flag=False, time_flag=False, time_all=None):
+def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None):
+    """Create a list of aligned xr.Datasets for ensemble dataset creation. If `time_flag == True` input datasets are
+    given a common time dimension defined by `time_all`. Datasets not covering the entire time span have their data
+    padded with `nan` values
+
+    Parameters
+    ----------
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
+
+    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
+
+    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+
+    Returns
+    -------
+    ds_all : list; list of xr.Datasets
+
+    """
 
     ds_all = []
     for n in datasets:
