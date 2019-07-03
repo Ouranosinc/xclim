@@ -35,84 +35,21 @@ def create_ensemble(datasets, mf_flag=False):
     >>> from xclim import ensembles
     >>> import glob
     >>> ncfiles = glob.glob('/*.nc')
-    >>> ens = ensembles.create_ensemble(ncfiles)
+    >>> ens = ensembles.create_ensemble(datasets)
     >>> print(ens)
     Using multifile datasets:
     simulation 1 is a list of .nc files (e.g. separated by time)
-    >>> ncfiles = glob.glob('dir/*.nc')
+    >>> datasets = glob.glob('dir/*.nc')
     simulation 2 is also a list of .nc files
-    >>> ncfiles.append(glob.glob('dir2/*.nc'))
-    >>> ens = utils.create_ensemble(ncfiles, mf_flag=True)
+    >>> datasets.append(glob.glob('dir2/*.nc'))
+    >>> ens = utils.create_ensemble(datasets, mf_flag=True)
     """
 
     dim = "realization"
-    ds1 = []
-    start_end_flag = True
-    # print('finding common time-steps')
-    time_flag = False
-    time_all = []
-    for n in datasets:
-        if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
-        else:
-            if isinstance(n, xr.Dataset):
-                ds = n
-            else:
-                ds = xr.open_dataset(n, decode_times=False)
 
-        if hasattr(ds, "time"):
-            ds["time"] = xr.decode_cf(ds).time
-            time_flag = True
+    time_flag, time_all = _ens_checktimes(datasets, mf_flag)
 
-            # get times - use common
-            time1 = pd.to_datetime(
-                {
-                    "year": ds.time.dt.year,
-                    "month": ds.time.dt.month,
-                    "day": ds.time.dt.day,
-                }
-            )
-
-            time_all.extend(time1.values)
-
-    for n in datasets:
-        # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
-        if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
-        else:
-            if isinstance(n, xr.Dataset):
-                ds = n
-            else:
-                ds = xr.open_dataset(n, decode_times=False)
-
-        if time_flag:
-            if isinstance(time_all, list):
-                time_all = np.unique(time_all)
-            ds["time"] = xr.decode_cf(ds).time
-
-            ds["time"].values = pd.to_datetime(
-                {
-                    "year": ds.time.dt.year,
-                    "month": ds.time.dt.month,
-                    "day": ds.time.dt.day,
-                }
-            )
-            # if dataset does not have the same time steps pad with nans
-            if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
-                coords = {}
-                for c in [c for c in ds.coords if not "time" in c]:
-                    coords[c] = ds.coords[c]
-                coords["time"] = time_all
-                dsTmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
-                for v in ds.data_vars:
-                    dsTmp[v] = ds[v]
-                ds = dsTmp
-            # ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
-        ds1.append(ds)
+    ds1 = _ens_aligntimes(datasets, mf_flag, time_flag, time_all)
 
     # print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
@@ -227,6 +164,80 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
         for vv in out.data_vars:
             ds_out[vv] = out[vv]
     return ds_out
+
+
+def _ens_checktimes(datasets, mf_flag):
+    time_flag = False
+    time_all = []
+    for n in datasets:
+        if mf_flag:
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+        else:
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False)
+
+        if hasattr(ds, "time"):
+            ds["time"] = xr.decode_cf(ds).time
+            time_flag = True
+
+            # get times - use common
+            time1 = pd.to_datetime(
+                {
+                    "year": ds.time.dt.year,
+                    "month": ds.time.dt.month,
+                    "day": ds.time.dt.day,
+                }
+            )
+
+            time_all.extend(time1.values)
+    time_all = np.unique(time_all)
+    time_all.sort()
+    return time_flag, time_all
+
+
+def _ens_aligntimes(datasets, mf_flag, time_flag, time_all):
+    ds_all = []
+    for n in datasets:
+        # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
+        if mf_flag:
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+        else:
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False)
+
+        if time_flag:
+
+            ds["time"] = xr.decode_cf(ds).time
+
+            ds["time"].values = pd.to_datetime(
+                {
+                    "year": ds.time.dt.year,
+                    "month": ds.time.dt.month,
+                    "day": ds.time.dt.day,
+                }
+            )
+            # if dataset does not have the same time steps pad with nans
+            if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
+                coords = {}
+                for c in [c for c in ds.coords if not "time" in c]:
+                    coords[c] = ds.coords[c]
+                coords["time"] = time_all
+                dsTmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
+                for v in ds.data_vars:
+                    dsTmp[v] = ds[v]
+                ds = dsTmp
+            # ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
+        ds_all.append(ds)
+
+    return ds_all
 
 
 def _calc_percentiles_simple(ens, v, values):
