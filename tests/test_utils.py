@@ -55,15 +55,74 @@ class TestEnsembleStats:
     )
     nc_files = glob.glob(os.path.join(TESTS_DATA, "EnsembleStats", "*.nc"))
 
+    def test_checktimes(self):
+        time_flag, time_all = ensembles._ens_checktimes(self.nc_files)
+        assert time_flag
+        assert pd.DatetimeIndex(time_all).min() == pd.Timestamp("1950-01-01 00:00:00")
+        assert pd.DatetimeIndex(time_all).max() == pd.Timestamp("2100-01-01 00:00:00")
+
+        # verify short time-series file
+        time_flag, time_all1 = ensembles._ens_checktimes(
+            [i for i in self.nc_files if "1970-2050" in i]
+        )
+        assert time_flag
+        assert pd.DatetimeIndex(time_all1).min() > pd.DatetimeIndex(time_all).min()
+        assert pd.DatetimeIndex(time_all1).max() < pd.DatetimeIndex(time_all).max()
+
+        # no time
+        ds = xr.open_dataset(self.nc_files[0])
+        ds = ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True)
+        time_flag, time_all = ensembles._ens_checktimes([ds])
+        assert not time_flag
+        assert time_all is None
+
     def test_create_ensemble(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
+        assert len(ens.realization) == len(self.nc_files_simple)
+
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds)
+
+        ens1 = ensembles.create_ensemble(ds_all)
+        coords = list(ens1.coords)
+        coords.extend(list(ens1.data_vars))
+        for c in coords:
+            np.testing.assert_array_equal(ens[c], ens1[c])
+
+    def test_no_time(self):
+
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
+
+        ens = ensembles.create_ensemble(ds_all)
         assert len(ens.realization) == len(self.nc_files_simple)
 
     def test_create_unequal_times(self):
         ens = ensembles.create_ensemble(self.nc_files)
         assert len(ens.realization) == len(self.nc_files)
-        assert ens.time.dt.year.min() == 1970
-        assert ens.time.dt.year.max() == 2050
+        assert ens.time.dt.year.min() == 1950
+        assert ens.time.dt.year.max() == 2100
+
+        ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
+        # assert padded with nans
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
+        )
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year > 2050))
+        )
+
+        ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.min() == 1970
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.max() == 2050
 
     def test_calc_perc(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
@@ -323,7 +382,6 @@ class TestIndicator:
         assert isinstance(txc.data, dask.array.core.Array)
 
     def test_identifier(self):
-
         with pytest.warns(UserWarning):
             UniIndPr(identifier="t_{}")
 
