@@ -58,19 +58,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
         )
 
     if start_yr or end_yr:
-        if not start_yr:
-            start_yr = da.time.dt.year.min()
-        if not end_yr:
-            end_yr = da.time.dt.year.max()
-
-        if start_yr > end_yr:
-            raise ValueError("Start date is after end date.")
-
-        year_bnds = np.asarray([start_yr, end_yr])
-        da = da.where(
-            (da.time.dt.year >= year_bnds.min()) & (da.time.dt.year <= year_bnds.max()),
-            drop=True,
-        )
+        da = subset_time(da, start_yr=start_yr, end_yr=end_yr)
 
     return da
 
@@ -158,22 +146,58 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
             )
 
     if start_yr or end_yr:
-        if not start_yr:
-            start_yr = da.time.dt.year.min()
-        if not end_yr:
-            end_yr = da.time.dt.year.max()
-
-        if start_yr > end_yr:
-            raise ValueError("Start date is after end date.")
-
-        year_bnds = np.asarray([start_yr, end_yr])
-
-        if len(year_bnds) == 1:
-            time_cond = da.time.dt.year == year_bnds
-        else:
-            time_cond = (da.time.dt.year >= year_bnds.min()) & (
-                da.time.dt.year <= year_bnds.max()
-            )
-        da = da.where(time_cond, drop=True)
+        da = subset_time(da, start_yr=start_yr, end_yr=end_yr)
 
     return da
+
+
+def subset_time(da, start_yr=None, end_yr=None):
+    """Subset input data based on start and end years
+
+    Return a subsetted data array (or dataset) for years falling
+    within provided year bounds
+
+    Parameters
+    ----------
+    da : xarray.DataArray or xarray.DataSet
+      Input data.
+    start_yr : int
+      First year of the subset. Defaults to first year of input.
+    end_yr : int
+      Last year of the subset. Defaults to last year of input.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.DataSet
+      Subsetted data array or dataset
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> ds = xr.open_dataset('pr.day.nc')
+    Subset multiple years
+    >>> prSub = subset.subset_time(ds.pr,start_yr=1990,end_yr=1999)
+    Subset single year
+    >>> prSub = subset.subset_time(ds.pr,start_yr=1990,end_yr=1990)
+    Subset multiple variables in a single dataset
+    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = subset.subset_time(ds,start_yr=1990,end_yr=1999)
+    """
+
+    if not start_yr:
+        start_yr = da.time.dt.year.min()
+    if not end_yr:
+        end_yr = da.time.dt.year.max()
+
+    if start_yr > end_yr:
+        raise ValueError("Start date is after end date.")
+
+    year_bnds = np.asarray([start_yr, end_yr])
+
+    if len(year_bnds) == 1:
+        time_cond = da.time.dt.year == year_bnds
+    else:
+        time_cond = (da.time.dt.year >= year_bnds.min()) & (
+            da.time.dt.year <= year_bnds.max()
+        )
+    return da.sel(time=time_cond)  # , drop=True)
