@@ -166,7 +166,8 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     return ds_out
 
 
-def _ens_checktimes(datasets, mf_flag):
+def _ens_checktimes(datasets, mf_flag=False):
+
     time_flag = False
     time_all = []
     for n in datasets:
@@ -199,7 +200,8 @@ def _ens_checktimes(datasets, mf_flag):
     return time_flag, time_all
 
 
-def _ens_aligntimes(datasets, mf_flag, time_flag, time_all):
+def _ens_aligntimes(datasets, mf_flag=False, time_flag=False, time_all=None):
+
     ds_all = []
     for n in datasets:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
