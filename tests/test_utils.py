@@ -586,13 +586,52 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
+        # test time only
+        out = subset.subset_gridpoint(da, start_yr=yr_st, end_yr=yr_ed)
+        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
     def test_irregular(self):
+
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
+
+        # test_irregular transposed:
+        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
+        dims = list(da1.dims)
+        dims.reverse()
+        daT = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT = daT.assign_coords(**args)
+        daT = daT.assign_coords(lon=(["rlon", "rlat"], np.transpose(da1.lon.values)))
+        daT = daT.assign_coords(lat=(["rlon", "rlat"], np.transpose(da1.lat.values)))
+
+        out1 = subset.subset_gridpoint(daT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out1.lon, lon, 1)
+        np.testing.assert_almost_equal(out1.lat, lat, 1)
+        np.testing.assert_array_equal(out, out1)
+
+        # Dataset with tasmax, lon and lat as data variables (i.e. lon, lat not coords of tasmax)
+        daT1 = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT1.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT1 = daT1.assign_coords(**args)
+        dsT = xr.Dataset(data_vars=None, coords=daT1.coords)
+        dsT["tasmax"] = daT1
+        dsT["lon"] = xr.DataArray(np.transpose(da1.lon.values), dims=["rlon", "rlat"])
+        dsT["lat"] = xr.DataArray(np.transpose(da1.lat.values), dims=["rlon", "rlat"])
+        out2 = subset.subset_gridpoint(dsT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out2.lon, lon, 1)
+        np.testing.assert_almost_equal(out2.lat, lat, 1)
+        np.testing.assert_array_equal(out, out2.tasmax)
 
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
@@ -610,6 +649,10 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
+
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
 
 class TestSubsetBbox:
@@ -709,6 +752,10 @@ class TestSubsetBbox:
             subset.subset_bbox(
                 da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
             )
+
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
 
 class TestThresholdCount:

@@ -14,6 +14,7 @@ History
 * Development build configurations are now available via both Anaconda and pip install methods.
 * Modified create_ensembles() to allow creation of ensemble dataset without a time dimension as well as from xr.Datasets
 * Modified create ensembles() to pad input data with nans when time dimensions are unequal
+* Updated subset_gridpoint() and subset_bbox() to use .sel method if 'lon' and 'lat' dims are present.
 
 0.10-beta (2019-06-06)
 ----------------------
