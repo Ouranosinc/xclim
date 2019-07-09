@@ -47,11 +47,8 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
             if lon_bnds is None:
                 lon_bnds = [da.lon.min(), da.lon.max()]
 
-            lon_bnds = np.asarray(lon_bnds)
-            if np.all(da.lon > 0) and np.any(lon_bnds < 0):
-                lon_bnds[lon_bnds < 0] += 360
-            if np.all(da.lon < 0) and np.any(lon_bnds > 0):
-                lon_bnds[lon_bnds < 0] -= 360
+            lon_bnds = _check_lons(da, np.asarray(lon_bnds))
+
             lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
 
             if lat_bnds is None:
@@ -134,10 +131,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
             # adjust negative/positive longitudes if necessary
-            if np.all(da.lon > 0) and lon < 0:
-                lon += 360
-            if np.all(da.lon < 0) and lon > 0:
-                lon -= 360
+            lon = _check_lons(da, lon)
 
             dims = list(da.dims)
 
@@ -228,3 +222,17 @@ def subset_time(da, start_yr=None, end_yr=None):
             da.time.dt.year <= year_bnds.max()
         )
     return da.sel(time=time_cond)
+
+
+def _check_lons(da, lon_bnds):
+    if np.all(da.lon > 0) and np.any(lon_bnds < 0):
+        if isinstance(lon_bnds, float):
+            lon_bnds += 360
+        else:
+            lon_bnds[lon_bnds < 0] += 360
+    if np.all(da.lon < 0) and np.any(lon_bnds > 0):
+        if isinstance(lon_bnds, float):
+            lon_bnds -= 360
+        else:
+            lon_bnds[lon_bnds < 0] -= 360
+    return lon_bnds
