@@ -753,6 +753,10 @@ class TestSubsetBbox:
                 da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
             )
 
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+
 
 class TestThresholdCount:
     def test_simple(self, tas_series):

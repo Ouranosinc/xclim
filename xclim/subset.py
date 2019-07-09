@@ -40,22 +40,49 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
     """
+    # check if trying to subset lon and lat
 
-    if lon_bnds is not None:
-        lon_bnds = np.asarray(lon_bnds)
-        if np.all(da.lon > 0) and np.any(lon_bnds < 0):
-            lon_bnds[lon_bnds < 0] += 360
-        if np.all(da.lon < 0) and np.any(lon_bnds > 0):
-            lon_bnds[lon_bnds < 0] -= 360
-        da = da.where(
-            (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max()), drop=True
-        )
+    if not lat_bnds is None or not lon_bnds is None:
+        if hasattr(da, "lon") and hasattr(da, "lat"):
+            if lon_bnds is None:
+                lon_bnds = [da.lon.min(), da.lon.max()]
 
-    if lat_bnds is not None:
-        lat_bnds = np.asarray(lat_bnds)
-        da = da.where(
-            (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max()), drop=True
-        )
+            lon_bnds = np.asarray(lon_bnds)
+            if np.all(da.lon > 0) and np.any(lon_bnds < 0):
+                lon_bnds[lon_bnds < 0] += 360
+            if np.all(da.lon < 0) and np.any(lon_bnds > 0):
+                lon_bnds[lon_bnds < 0] -= 360
+            lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
+
+            if lat_bnds is None:
+                lat_bnds = [da.lat.min(), da.lat.max()]
+
+            lat_bnds = np.asarray(lat_bnds)
+            lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
+            dims = list(da.dims)
+
+            if "lon" in dims and "lat" in dims:
+                da = da.sel(lon=lon_cond, lat=lat_cond)
+            else:
+                ind = np.where(lon_cond & lat_cond)
+                dims_lonlat = da.lon.dims
+                # reduce size using isel
+                args = {}
+                for d in dims_lonlat:
+                    coords = da[d][ind[dims_lonlat.index(d)]]
+                    args[d] = slice(coords.min(), coords.max())
+                da = da.sel(**args)
+                lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
+                lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
+
+                # mask irregular grid with new lat lon conditions
+                da = da.where(lon_cond & lat_cond, drop=True)
+        else:
+            raise (
+                Exception(
+                    'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or data variables.'
+                )
+            )
 
     if start_yr or end_yr:
         da = subset_time(da, start_yr=start_yr, end_yr=end_yr)
