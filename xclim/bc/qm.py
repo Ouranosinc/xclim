@@ -2,6 +2,12 @@ import numpy as np
 import xarray as xr
 
 
+"""
+Basic quantile mapping post-processing algorithms.
+
+"""
+
+
 def delta(src, dst, nq, group, kind="+"):
     """Compute quantile mapping factors.
 
@@ -23,12 +29,15 @@ def delta(src, dst, nq, group, kind="+"):
     xr.DataArray
       Delta factor computed over time grouping and quantile bins.
     """
+    # Define n equally spaced points within [0, 1] domain
     dq = 1 / nq / 2
     q = np.linspace(dq, 1 - dq, nq)
 
+    # Group values by time, then compute quantiles. The resulting array will have new time and quantile dimensions.
     sg = src.groupby(group).quantile(q)
     dg = dst.groupby(group).quantile(q)
 
+    # Compute the correction factor
     if kind == "+":
         out = dg - sg
     elif kind == "*":
@@ -36,6 +45,7 @@ def delta(src, dst, nq, group, kind="+"):
     else:
         raise ValueError("kind must be + or *.")
 
+    # Save input parameters as attributes of output DataArray.
     out.attrs["kind"] = kind
     out.attrs["group"] = group
 
