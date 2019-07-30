@@ -21,7 +21,8 @@ xclim
 
 |build| |coveralls| |codefactor| |zenodo| |black|
 
-Chat with us: |gitter|
+* Documentation: |docs|
+* Chat with us: |gitter|
 
 ``xclim`` is a library of functions to compute climate indices. It is built using xarray and can benefit from the parallelization handling provided by dask. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
 
@@ -38,10 +39,7 @@ For applications where meta-data and missing values are important to get right, 
 
 ``xclim`` is still in active development at the moment, but is close to being production ready. We're are currently nearing a release candidate (as of Q2 2019). If you're interested in participating to the development, please leave us a message on the issue tracker.
 
-
 * Free software: |license|
-* Documentation: |docs|
-
 
 Credits
 -------
@@ -54,8 +52,8 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 
 
-.. |gitter| image:: https://badges.gitter.im/Ouranosinc/community.svg
-        :target: https://gitter.im/Ouranosinc/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+.. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
+        :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
         :alt: Gitter Chat
 
 
