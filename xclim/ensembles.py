@@ -256,7 +256,7 @@ def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None)
             if isinstance(n, xr.Dataset):
                 ds = n
             else:
-                ds = xr.open_dataset(n, decode_times=False)
+                ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
 
         if time_flag:
 
