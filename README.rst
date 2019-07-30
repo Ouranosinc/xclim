@@ -21,6 +21,8 @@ xclim
 
 |build| |coveralls| |codefactor| |zenodo| |black|
 
+Chat with us: |gitter|
+
 ``xclim`` is a library of functions to compute climate indices. It is built using xarray and can benefit from the parallelization handling provided by dask. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
@@ -51,6 +53,10 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 
+
+.. |gitter| image:: https://badges.gitter.im/Ouranosinc/community.svg
+        :target: https://gitter.im/Ouranosinc/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+        :alt: Gitter Chat
 
 
 .. |build| image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
