@@ -3,7 +3,7 @@
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
-trigger:
+pr:
 - master
 
 pool:
@@ -16,6 +16,7 @@ strategy:
       python.version: '3.6'
     Python37:
       python.version: '3.7'
+  maxParallel: 3
 
 steps:
 - task: UsePythonVersion@0
