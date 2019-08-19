@@ -4,6 +4,8 @@ History
 
 0.10.x-beta (2019-06-18)
 ------------------------
+* Added indices to ICCLIM module
+* Added indices `days_over_precip_thresh` and `fraction_over_precip_thresh`
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.

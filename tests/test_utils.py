@@ -29,8 +29,6 @@ from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
-from xclim.testing.common import pr_series
-from xclim.testing.common import tas_series
 from xclim.utils import adjust_doy_calendar
 from xclim.utils import daily_downsampler
 from xclim.utils import format_kwargs
@@ -43,8 +41,6 @@ from xclim.utils import units
 from xclim.utils import units2pint
 from xclim.utils import walk_map
 
-TAS_SERIES = tas_series
-PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
@@ -516,7 +512,7 @@ class TestUnitConversion:
         u = units("mm/d")
         assert pint2cfunits(u.units) == "mm d-1"
 
-    def test_cfunits2pint(self, pr_series):
+    def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
         assert (str(u)) == "kilogram / meter ** 2 / second"
         assert pint2cfunits(u) == "kg m-2 s-1"
@@ -524,6 +520,9 @@ class TestUnitConversion:
         u = units2pint("m^3 s-1")
         assert str(u) == "meter ** 3 / second"
         assert pint2cfunits(u) == "m^3 s-1"
+
+        u = units2pint("2 kg m-2 s-1")
+        assert (str(u)) == "kilogram / meter ** 2 / second"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
