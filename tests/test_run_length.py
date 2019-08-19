@@ -5,9 +5,7 @@ import pandas as pd
 import xarray as xr
 
 from xclim import run_length as rl
-from xclim.testing.common import tas_series
 
-TAS_SERIES = tas_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15

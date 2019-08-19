@@ -3,21 +3,23 @@ import pandas as pd
 import xarray as xr
 
 
-def create_ensemble(ncfiles, mf_flag=False):
+def create_ensemble(datasets, mf_flag=False):
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
     Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
     a new dimension (name:'realization'). In the case where input files have unequal time dimensions output
-    ensemble dataset is created for overlapping time-steps common to all input files
+    ensemble dataset is created for maximum time-step interval of all input files.  Before concatenation datasets not
+    covering the entire time span have their data padded with `nan` values
 
     Parameters
     ----------
-    ncfiles : sequence
-      List of netcdf file paths. If mf_flag is true ncfiles should be a list of lists where
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
     each sublist contains input .nc files of a multifile dataset
 
-    mf_flag : Boolean . If true climate simulations are treated as multifile datasets before concatenation
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
 
     Returns
     -------
@@ -33,62 +35,25 @@ def create_ensemble(ncfiles, mf_flag=False):
     >>> from xclim import ensembles
     >>> import glob
     >>> ncfiles = glob.glob('/*.nc')
-    >>> ens = ensembles.create_ensemble(ncfiles)
+    >>> ens = ensembles.create_ensemble(datasets)
     >>> print(ens)
     Using multifile datasets:
     simulation 1 is a list of .nc files (e.g. separated by time)
-    >>> ncfiles = glob.glob('dir/*.nc')
+    >>> datasets = glob.glob('dir/*.nc')
     simulation 2 is also a list of .nc files
-    >>> ens = utils.create_ensemble(ncfiles)
+    >>> datasets.append(glob.glob('dir2/*.nc'))
+    >>> ens = utils.create_ensemble(datasets, mf_flag=True)
     """
+
     dim = "realization"
-    ds1 = []
-    start_end_flag = True
-    # print('finding common time-steps')
-    for n in ncfiles:
-        if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
-            ds["time"] = xr.open_mfdataset(n).time
-        else:
-            ds = xr.open_dataset(n, decode_times=False)
-            ds["time"] = xr.decode_cf(ds).time
-        # get times - use common
-        time1 = pd.to_datetime(
-            {"year": ds.time.dt.year, "month": ds.time.dt.month, "day": ds.time.dt.day}
-        )
-        if start_end_flag:
-            start1 = time1.values[0]
-            end1 = time1.values[-1]
-            start_end_flag = False
-        if time1.values.min() > start1:
-            start1 = time1.values.min()
-        if time1.values.max() < end1:
-            end1 = time1.values.max()
 
-    for n in ncfiles:
-        # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
-        if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
-            ds["time"] = xr.open_mfdataset(n).time
-        else:
-            ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
-            ds["time"] = xr.decode_cf(ds).time
+    time_flag, time_all = _ens_checktimes(datasets, mf_flag)
 
-        ds["time"].values = pd.to_datetime(
-            {"year": ds.time.dt.year, "month": ds.time.dt.month, "day": ds.time.dt.day}
-        )
+    ds1 = _ens_align_datasets(datasets, mf_flag, time_flag, time_all)
 
-        ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
-
-        ds1.append(ds.drop("time"))
     # print('concatenating files : adding dimension ', dim, )
     ens = xr.concat(ds1, dim=dim)
-    # assign time coords
-    ens = ens.assign_coords(time=ds.time.values)
+
     return ens
 
 
@@ -199,6 +164,125 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
         for vv in out.data_vars:
             ds_out[vv] = out[vv]
     return ds_out
+
+
+def _ens_checktimes(datasets, mf_flag=False):
+    """Check list of datasets and determine if they hava a time dimension. If present return the
+    maximum time-step interval of all input files
+
+    Parameters
+    ----------
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
+
+    Returns
+    -------
+    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
+
+    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+    """
+
+    time_flag = False
+    time_all = []
+    for n in datasets:
+        if mf_flag:
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+        else:
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False)
+
+        if hasattr(ds, "time"):
+            ds["time"] = xr.decode_cf(ds).time
+            time_flag = True
+
+            # get times - use common
+            time1 = pd.to_datetime(
+                {
+                    "year": ds.time.dt.year,
+                    "month": ds.time.dt.month,
+                    "day": ds.time.dt.day,
+                }
+            )
+
+            time_all.extend(time1.values)
+    if time_flag:
+        time_all = pd.unique(time_all)
+        time_all.sort()
+    else:
+        time_all = None
+    return time_flag, time_all
+
+
+def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None):
+    """Create a list of aligned xr.Datasets for ensemble dataset creation. If `time_flag == True` input datasets are
+    given a common time dimension defined by `time_all`. Datasets not covering the entire time span have their data
+    padded with `nan` values
+
+    Parameters
+    ----------
+    datasets : sequence
+      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
+    each sublist contains input .nc files of a multifile dataset
+
+    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
+    Only applicable when `datasets` is a sequence of file paths
+
+    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
+
+    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+
+    Returns
+    -------
+    ds_all : list; list of xr.Datasets
+
+    """
+
+    ds_all = []
+    for n in datasets:
+        # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
+        if mf_flag:
+            ds = xr.open_mfdataset(
+                n, concat_dim="time", decode_times=False, chunks={"time": 10}
+            )
+        else:
+            if isinstance(n, xr.Dataset):
+                ds = n
+            else:
+                ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
+
+        if time_flag:
+
+            ds["time"] = xr.decode_cf(ds).time
+
+            ds["time"].values = pd.to_datetime(
+                {
+                    "year": ds.time.dt.year,
+                    "month": ds.time.dt.month,
+                    "day": ds.time.dt.day,
+                }
+            )
+            # if dataset does not have the same time steps pad with nans
+            if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
+                coords = {}
+                for c in [c for c in ds.coords if not "time" in c]:
+                    coords[c] = ds.coords[c]
+                coords["time"] = time_all
+                dsTmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
+                for v in ds.data_vars:
+                    dsTmp[v] = ds[v]
+                ds = dsTmp
+            # ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
+        ds_all.append(ds)
+
+    return ds_all
 
 
 def _calc_percentiles_simple(ens, v, values):

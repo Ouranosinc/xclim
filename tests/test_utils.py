@@ -29,8 +29,6 @@ from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
-from xclim.testing.common import pr_series
-from xclim.testing.common import tas_series
 from xclim.utils import adjust_doy_calendar
 from xclim.utils import daily_downsampler
 from xclim.utils import format_kwargs
@@ -43,8 +41,6 @@ from xclim.utils import units
 from xclim.utils import units2pint
 from xclim.utils import walk_map
 
-TAS_SERIES = tas_series
-PR_SERIES = pr_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
@@ -55,15 +51,74 @@ class TestEnsembleStats:
     )
     nc_files = glob.glob(os.path.join(TESTS_DATA, "EnsembleStats", "*.nc"))
 
+    def test_checktimes(self):
+        time_flag, time_all = ensembles._ens_checktimes(self.nc_files)
+        assert time_flag
+        assert pd.DatetimeIndex(time_all).min() == pd.Timestamp("1950-01-01 00:00:00")
+        assert pd.DatetimeIndex(time_all).max() == pd.Timestamp("2100-01-01 00:00:00")
+
+        # verify short time-series file
+        time_flag, time_all1 = ensembles._ens_checktimes(
+            [i for i in self.nc_files if "1970-2050" in i]
+        )
+        assert time_flag
+        assert pd.DatetimeIndex(time_all1).min() > pd.DatetimeIndex(time_all).min()
+        assert pd.DatetimeIndex(time_all1).max() < pd.DatetimeIndex(time_all).max()
+
+        # no time
+        ds = xr.open_dataset(self.nc_files[0])
+        ds = ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True)
+        time_flag, time_all = ensembles._ens_checktimes([ds])
+        assert not time_flag
+        assert time_all is None
+
     def test_create_ensemble(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
+        assert len(ens.realization) == len(self.nc_files_simple)
+
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds)
+
+        ens1 = ensembles.create_ensemble(ds_all)
+        coords = list(ens1.coords)
+        coords.extend(list(ens1.data_vars))
+        for c in coords:
+            np.testing.assert_array_equal(ens[c], ens1[c])
+
+    def test_no_time(self):
+
+        # create again using xr.Dataset objects
+        ds_all = []
+        for n in self.nc_files_simple:
+            ds = xr.open_dataset(n, decode_times=False)
+            ds["time"] = xr.decode_cf(ds).time
+            ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
+
+        ens = ensembles.create_ensemble(ds_all)
         assert len(ens.realization) == len(self.nc_files_simple)
 
     def test_create_unequal_times(self):
         ens = ensembles.create_ensemble(self.nc_files)
         assert len(ens.realization) == len(self.nc_files)
-        assert ens.time.dt.year.min() == 1970
-        assert ens.time.dt.year.max() == 2050
+        assert ens.time.dt.year.min() == 1950
+        assert ens.time.dt.year.max() == 2100
+
+        ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
+        # assert padded with nans
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
+        )
+        assert np.all(
+            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year > 2050))
+        )
+
+        ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.min() == 1970
+        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.max() == 2050
 
     def test_calc_perc(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
@@ -323,7 +378,6 @@ class TestIndicator:
         assert isinstance(txc.data, dask.array.core.Array)
 
     def test_identifier(self):
-
         with pytest.warns(UserWarning):
             UniIndPr(identifier="t_{}")
 
@@ -531,13 +585,52 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
+        # test time only
+        out = subset.subset_gridpoint(da, start_yr=yr_st, end_yr=yr_ed)
+        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
+        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+
     def test_irregular(self):
+
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
+
+        # test_irregular transposed:
+        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
+        dims = list(da1.dims)
+        dims.reverse()
+        daT = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT = daT.assign_coords(**args)
+        daT = daT.assign_coords(lon=(["rlon", "rlat"], np.transpose(da1.lon.values)))
+        daT = daT.assign_coords(lat=(["rlon", "rlat"], np.transpose(da1.lat.values)))
+
+        out1 = subset.subset_gridpoint(daT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out1.lon, lon, 1)
+        np.testing.assert_almost_equal(out1.lat, lat, 1)
+        np.testing.assert_array_equal(out, out1)
+
+        # Dataset with tasmax, lon and lat as data variables (i.e. lon, lat not coords of tasmax)
+        daT1 = xr.DataArray(np.transpose(da1.values), dims=dims)
+        for d in daT1.dims:
+            args = dict()
+            args[d] = da1[d]
+            daT1 = daT1.assign_coords(**args)
+        dsT = xr.Dataset(data_vars=None, coords=daT1.coords)
+        dsT["tasmax"] = daT1
+        dsT["lon"] = xr.DataArray(np.transpose(da1.lon.values), dims=["rlon", "rlat"])
+        dsT["lat"] = xr.DataArray(np.transpose(da1.lat.values), dims=["rlon", "rlat"])
+        out2 = subset.subset_gridpoint(dsT, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out2.lon, lon, 1)
+        np.testing.assert_almost_equal(out2.lat, lat, 1)
+        np.testing.assert_array_equal(out, out2.tasmax)
 
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
@@ -555,6 +648,10 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
+
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
 
 class TestSubsetBbox:
@@ -654,6 +751,10 @@ class TestSubsetBbox:
             subset.subset_bbox(
                 da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
             )
+
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        with pytest.raises(Exception):
+            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
 
 class TestThresholdCount:

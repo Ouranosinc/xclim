@@ -473,12 +473,12 @@ class TestMaximumConsecutiveDryDays:
         assert out[0] == 10
 
 
-class TestMaximumConsecutiveSummerDays:
+class TestMaximumConsecutiveTxDays:
     def test_simple(self, tasmax_series):
         a = np.zeros(365) + 273.15
         a[5:15] += 30
         tx = tasmax_series(a, start="1/1/2010")
-        out = xci.maximum_consecutive_summer_days(tx, thresh="25 C", freq="M")
+        out = xci.maximum_consecutive_tx_days(tx, thresh="25 C", freq="M")
         assert out[0] == 10
         np.testing.assert_array_almost_equal(out[1:], 0)
 
@@ -570,6 +570,9 @@ class TestTGXN10p:
         out = xci.tg10p(tas, t10, freq="MS")
         assert out[0] == 1
         assert out[5] == 5
+
+        with pytest.raises(AttributeError):
+            out = xci.tg10p(tas, tas, freq="MS")
 
     def test_tx10p_simple(self, tasmax_series):
         i = 366
