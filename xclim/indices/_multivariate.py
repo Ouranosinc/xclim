@@ -567,7 +567,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
-    per : xarray.DataArray or string (scalar with units)
+    per : xarray.DataArray or str
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
