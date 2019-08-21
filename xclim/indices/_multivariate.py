@@ -567,8 +567,8 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
-    per : xarray.DataArray
-      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day]
+    per : xarray.DataArray or string (scalar with units)
+      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
     freq : str, optional
@@ -588,21 +588,14 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     >>> p75 = percentile_doy(historical_pr, per=0.75)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    if "dayofyear" not in per.coords.keys():
-        raise AttributeError("percentile should have dayofyear coordinates.")
-
     per = utils.convert_units_to(per, pr)
     thresh = utils.convert_units_to(thresh, pr)
 
-    per = utils.adjust_doy_calendar(per, pr)
-    mper = np.maximum(per, thresh)
+    tp = np.maximum(per, thresh)
+    if isinstance(per, xr.DataArray):
+        tp = utils.resample_doy(tp, pr)
 
-    # create array of percentile with pr shape and coords
-    tp = xr.full_like(pr, np.nan)
-    doy = tp.time.dt.dayofyear.values
-    tp.data = mper.sel(dayofyear=doy)
-
-    # compute the days where precip is both over the wet day threshold and the percentile threshold.
+    # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr > tp
 
     return over.resample(time=freq).sum(dim="time")

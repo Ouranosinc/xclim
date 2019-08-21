@@ -197,7 +197,6 @@ def convert_units_to(source, target, context=None):
       Target array of values to which units must conform.
     context : str
 
-
     Returns
     -------
     out
@@ -463,7 +462,7 @@ def adjust_doy_calendar(source, target):
     Parameters
     ----------
     source : xarray.DataArray
-      Array with `dayofyear` coordinates.
+      Array with `dayofyear` coordinate.
     target : xarray.DataArray
       Array with `time` coordinate.
 
@@ -480,6 +479,38 @@ def adjust_doy_calendar(source, target):
         return source
 
     return _interpolate_doy_calendar(source, doy_max)
+
+
+def resample_doy(doy, arr):
+    """Create a temporal DataArray where each day takes the value defined by the day-of-year.
+
+    Parameters
+    ----------
+    doy : xarray.DataArray
+      Array with `dayofyear` coordinate.
+    arr : xarray.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+      An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
+      `doy`.
+    """
+    if "dayofyear" not in doy.coords.keys():
+        raise AttributeError("`doy` should have dayofyear coordinates.")
+
+    # Adjust calendar
+    adoy = adjust_doy_calendar(doy, arr)
+
+    # Create array with arr shape and coords
+    out = xr.full_like(arr, np.nan)
+
+    # Fill with values from `doy`
+    d = out.time.dt.dayofyear.values
+    out.data = adoy.sel(dayofyear=d)
+
+    return out
 
 
 def get_daily_events(da, da_value, operator):

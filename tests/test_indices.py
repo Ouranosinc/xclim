@@ -257,6 +257,16 @@ class TestDaysOverPrecipThresh:
             out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
         )
 
+    def test_float(self, pr_series):
+        a = np.zeros(365)
+        a[:8] = np.arange(8)
+        pr = pr_series(a, start="1/1/2000")
+
+        out = xci.days_over_precip_thresh(pr, "5 kg/m**2/s", thresh="2 kg/m**2/s")
+        np.testing.assert_array_almost_equal(
+            out[0], 2
+        )  # Only days 6 and 7 meet criteria.
+
 
 class TestFreshetStart:
     def test_simple(self, tas_series):
