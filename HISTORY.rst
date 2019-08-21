@@ -18,6 +18,7 @@ History
 * Modified create ensembles() to pad input data with nans when time dimensions are unequal
 * Updated subset_gridpoint() and subset_bbox() to use .sel method if 'lon' and 'lat' dims are present.
 * Added Azure Pipelines to automatically build xclim in Microsoft Windows environments
+* Now employing PEP8 + Black compatible autoformatting.
 
 0.10-beta (2019-06-06)
 ----------------------
