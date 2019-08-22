@@ -37,7 +37,6 @@ __all__ = [
     "wetdays",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_tx_days",
-    "max_n_day_precipitation_amount",
     "tropical_nights",
 ]
 
@@ -688,46 +687,6 @@ def maximum_consecutive_tx_days(tasmax, thresh="25 degC", freq="YS"):
     group = (tasmax > t).resample(time=freq)
 
     return group.apply(rl.longest_run, dim="time")
-
-
-@declare_units("mm", pr="[precipitation]")
-def max_n_day_precipitation_amount(pr, window=1, freq="YS"):
-    r"""Highest precipitation amount cumulated over a n-day moving window.
-
-    Calculate the n-day rolling sum of the original daily total precipitation series
-    and determine the maximum value over each period.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
-    window : int
-      Window size in days.
-    freq : str, optional
-      Resampling frequency : default 'YS' (yearly)
-
-    Returns
-    -------
-    xarray.DataArray
-      The highest cumulated n-day precipitation value at the given time frequency.
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
-    at an annual frequency:
-
-    >>> da = xr.open_dataset('pr.day.nc').pr
-    >>> window = 5
-    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
-    """
-
-    # rolling sum of the values
-    arr = pr.rolling(time=window, center=False).sum()
-    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
-
-    out.attrs["units"] = pr.units
-    # Adjust values and units to make sure they are daily
-    return utils.pint_multiply(out, 1 * units.day, "mm")
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
