@@ -91,19 +91,10 @@ def cold_spell_duration_index(tasmin, tn10, window=6, freq="YS"):
     >>> tn10 = percentile_doy(historical_tasmin, per=.1)
     >>> cold_spell_duration_index(reference_tasmin, tn10)
     """
-    if "dayofyear" not in tn10.coords.keys():
-        raise AttributeError("tn10 should have dayofyear coordinates.")
-
-    # The day of year value of the tasmin series.
-    doy = tasmin.indexes["time"].dayofyear
-
     tn10 = utils.convert_units_to(tn10, tasmin)
-    # If calendar of `tn10` is different from `tasmin`, interpolate.
-    tn10 = utils.adjust_doy_calendar(tn10, tasmin)
 
-    # Create an array with the shape and coords of tasmin, but with values set to tx90 according to the doy index.
-    thresh = xr.full_like(tasmin, np.nan)
-    thresh.data = tn10.sel(dayofyear=doy)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(tn10, tasmin)
 
     below = tasmin < thresh
 
@@ -567,7 +558,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
-    per : xarray.DataArray or string (scalar with units)
+    per : xarray.DataArray or string
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
@@ -593,6 +584,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
 
     tp = np.maximum(per, thresh)
     if isinstance(per, xr.DataArray):
+        # Create time series out of doy values.
         tp = utils.resample_doy(tp, pr)
 
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
@@ -613,9 +605,9 @@ def fraction_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
-    per : xarray.DataArray
-      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day]
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day].
+    per : xarray.DataArray or str
+      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
     freq : str, optional
@@ -636,18 +628,15 @@ def fraction_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     per = utils.convert_units_to(per, pr)
     thresh = utils.convert_units_to(thresh, pr)
 
-    per = utils.adjust_doy_calendar(per, pr)
-    mper = np.maximum(per, thresh)
-
-    # create array of percentile with pr shape and coords
-    tp = xr.full_like(pr, np.nan)
-    doy = tp.time.dt.dayofyear.values
-    tp.data = mper.sel(dayofyear=doy)
+    tp = np.maximum(per, thresh)
+    if isinstance(per, xr.DataArray):
+        # Create time series out of doy values.
+        tp = utils.resample_doy(tp, pr)
 
     # Total precip during wet days over period
     total = pr.where(pr > thresh).resample(time=freq).sum(dim="time")
 
-    # compute the days where precip is both over the wet day threshold and the percentile threshold.
+    # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
     return over / total
@@ -682,20 +671,12 @@ def tg90p(tas, t90, freq="YS"):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if "dayofyear" not in t90.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
-
     t90 = utils.convert_units_to(t90, tas)
 
-    # adjustment of t90 to tas doy range
-    t90 = utils.adjust_doy_calendar(t90, tas)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t90, tas)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tas, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t90.sel(dayofyear=doy)
-
-    # compute the cold days
+    # Identify the days over the 90th percentile
     over = tas > thresh
 
     return over.resample(time=freq).sum(dim="time")
@@ -730,20 +711,12 @@ def tg10p(tas, t10, freq="YS"):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if "dayofyear" not in t10.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
-
     t10 = utils.convert_units_to(t10, tas)
 
-    # adjustment of t10 to tas doy range
-    t10 = utils.adjust_doy_calendar(t10, tas)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t10, tas)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tas, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t10.sel(dayofyear=doy)
-
-    # compute the cold days
+    # Identify the days below the 10th percentile
     below = tas < thresh
 
     return below.resample(time=freq).sum(dim="time")
@@ -778,18 +751,12 @@ def tn90p(tasmin, t90, freq="YS"):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if "dayofyear" not in t90.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
     t90 = utils.convert_units_to(t90, tasmin)
-    # adjustment of t90 to tas doy range
-    t90 = utils.adjust_doy_calendar(t90, tasmin)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tasmin, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t90.sel(dayofyear=doy)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t90, tasmin)
 
-    # compute the cold days
+    # Identify the days with min temp above 90th percentile.
     over = tasmin > thresh
 
     return over.resample(time=freq).sum(dim="time")
@@ -825,19 +792,12 @@ def tn10p(tasmin, t10, freq="YS"):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if "dayofyear" not in t10.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
     t10 = utils.convert_units_to(t10, tasmin)
 
-    # adjustment of t10 to tas doy range
-    t10 = utils.adjust_doy_calendar(t10, tasmin)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t10, tasmin)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tasmin, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t10.sel(dayofyear=doy)
-
-    # compute the cold days
+    # Identify the days below the 10th percentile
     below = tasmin < thresh
 
     return below.resample(time=freq).sum(dim="time")
@@ -872,20 +832,12 @@ def tx90p(tasmax, t90, freq="YS"):
     >>> t90 = percentile_doy(historical_tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    if "dayofyear" not in t90.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
-
     t90 = utils.convert_units_to(t90, tasmax)
 
-    # adjustment of t90 to tas doy range
-    t90 = utils.adjust_doy_calendar(t90, tasmax)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t90, tasmax)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tasmax, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t90.sel(dayofyear=doy)
-
-    # compute the cold days
+    # Identify the days with max temp above 90th percentile.
     over = tasmax > thresh
 
     return over.resample(time=freq).sum(dim="time")
@@ -920,20 +872,12 @@ def tx10p(tasmax, t10, freq="YS"):
     >>> t10 = percentile_doy(historical_tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    if "dayofyear" not in t10.coords.keys():
-        raise AttributeError("t10 should have dayofyear coordinates.")
-
     t10 = utils.convert_units_to(t10, tasmax)
 
-    # adjustment of t10 to tas doy range
-    t10 = utils.adjust_doy_calendar(t10, tasmax)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(t10, tasmax)
 
-    # create array of percentile with tas shape and coords
-    thresh = xr.full_like(tasmax, np.nan)
-    doy = thresh.time.dt.dayofyear.values
-    thresh.data = t10.sel(dayofyear=doy)
-
-    # compute the cold days
+    # Identify the days below the 10th percentile
     below = tasmax < thresh
 
     return below.resample(time=freq).sum(dim="time")
@@ -1029,18 +973,11 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq="YS"):
     precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
-    if "dayofyear" not in tx90.coords.keys():
-        raise AttributeError("tx90 should have dayofyear coordinates.")
-
     # The day of year value of the tasmax series.
     doy = tasmax.indexes["time"].dayofyear
 
-    # adjustment of tx90 to tasmax doy range
-    tx90 = utils.adjust_doy_calendar(tx90, tasmax)
-
-    # Create an array with the shape and coords of tasmax, but with values set to tx90 according to the doy index.
-    thresh = xr.full_like(tasmax, np.nan)
-    thresh.data = tx90.sel(dayofyear=doy)
+    # Create time series out of doy values.
+    thresh = utils.resample_doy(tx90, tasmax)
 
     above = tasmax > thresh
 
