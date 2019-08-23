@@ -4,8 +4,8 @@ History
 
 0.10.x-beta (2019-06-18)
 ------------------------
-* Added indices to ICCLIM module
-* Added indices `days_over_precip_thresh` and `fraction_over_precip_thresh`
+* Added indices to ICCLIM module.
+* Added indices `days_over_precip_thresh` and `fraction_over_precip_thresh`.
 * Migrated to a `major.minor.patch-release` semantic versioning system.
 * Removed attributes in netCDF output from Indicators that are not in the CF-convention.
 * Added `fit` indicator to fit the parameters of a distribution to a series.
@@ -14,12 +14,12 @@ History
 * Pre-commit is now used to launch code formatting inspections for local development.
 * Documentation now includes more detailed usage and an example workflow notebook.
 * Development build configurations are now available via both Anaconda and pip install methods.
-* Modified create_ensembles() to allow creation of ensemble dataset without a time dimension as well as from xr.Datasets
-* Modified create ensembles() to pad input data with nans when time dimensions are unequal
+* Modified create_ensembles() to allow creation of ensemble dataset without a time dimension as well as from xr.Datasets.
+* Modified create ensembles() to pad input data with nans when time dimensions are unequal.
 * Updated subset_gridpoint() and subset_bbox() to use .sel method if 'lon' and 'lat' dims are present.
-* *Added Azure Pipelines to automatically build xclim in Microsoft Windows environments* -- REMOVED
+* *Added Azure Pipelines to automatically build xclim in Microsoft Windows environments.* -- **REMOVED**
 * Now employing PEP8 + Black compatible autoformatting.
-* Added Windows and macOS images to Travis CI build ensemble
+* Added Windows and macOS images to Travis CI build ensemble.
 
 0.10-beta (2019-06-06)
 ----------------------
@@ -32,19 +32,19 @@ History
 ---------------------
 This is a significant jump in the release. Many modifications have been made and will be added to the documentation in the coming days. Among the many changes:
 
-* New indices have been added with documentation and call examples
-* Run_length based operations have been optimized
-* Support for CF non-standard calendars
-* Automated/improved unit conversion and management via pint library
-* Added ensemble utilities for creation and analysis of muti-model climate ensembles
-* Added subsetting utilities for spatio-temporal subsets of xarray data objects
-* Added streamflow indicators
-* Refactoring of the code : separation of indices.py into a directory with sub-files (simple, threshold and multivariate); ensembles and subset utilities separated into distinct modules (pulled from utils.py)
+* New indices have been added with documentation and call examples.
+* Run_length based operations have been optimized.
+* Support for CF non-standard calendars.
+* Automated/improved unit conversion and management via pint library.
+* Added ensemble utilities for creation and analysis of muti-model climate ensembles.
+* Added subsetting utilities for spatio-temporal subsets of xarray data objects.
+* Added streamflow indicators.
+* Refactoring of the code : separation of indices.py into a directory with sub-files (simple, threshold and multivariate); ensembles and subset utilities separated into distinct modules (pulled from utils.py).
 * Indicators are now split into packages named by realms. import xclim.atmos to load indicators related to atmospheric variables.
 
 0.8-beta (2019-02-11)
 ---------------------
-*This was a staging release and is functionally identical to 0.7-beta*
+*This was a staging release and is functionally identical to 0.7-beta*.
 
 0.7-beta (2019-02-05)
 ---------------------
