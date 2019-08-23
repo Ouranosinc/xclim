@@ -56,6 +56,7 @@ matrix:
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
       os: osx
+      language: minimal
       addons:
         homebrew:
           update: true
