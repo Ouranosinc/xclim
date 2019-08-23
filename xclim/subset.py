@@ -42,7 +42,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     """
     # check if trying to subset lon and lat
 
-    if not lat_bnds is None or not lon_bnds is None:
+    if lat_bnds is not None or lon_bnds is not None:
         if hasattr(da, "lon") and hasattr(da, "lat"):
             if lon_bnds is None:
                 lon_bnds = [da.lon.min(), da.lon.max()]
@@ -127,7 +127,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
     """
 
     # check if trying to subset lon and lat
-    if not lat is None and not lon is None:
+    if lat is not None and lon is not None:
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
             # adjust negative/positive longitudes if necessary
