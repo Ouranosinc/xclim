@@ -53,14 +53,15 @@ matrix:
     - env: TOXENV=py36
       name: "Python3.6 (Linux)"
       python: 3.6
-    - env: TOXENV=py35-macOS
-      name: "Python3.5 (macOS)"
-      python: 3.5
+    - env: TOXENV=py37-macOS
+      name: "Python3.7 (macOS)"
       os: osx
       addons:
         homebrew:
+          update: true
           packages:
             - netcdf
+            - python@3
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5
