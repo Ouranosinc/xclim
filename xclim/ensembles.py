@@ -272,7 +272,7 @@ def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None)
             # if dataset does not have the same time steps pad with nans
             if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
                 coords = {}
-                for c in [c for c in ds.coords if not "time" in c]:
+                for c in [c for c in ds.coords if "time" not in c]:
                     coords[c] = ds.coords[c]
                 coords["time"] = time_all
                 dsTmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)

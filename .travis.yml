@@ -10,27 +10,48 @@ branches:
 matrix:
   fast_finish: true
   include:
-    - env:
-      - TOXENV=docs
+    - env: TOXENV=docs
+      name: "Documentation"
       python: 3.6
       addons:
         apt:
           packages:
-          - pandoc
+            - pandoc
     - env: TOXENV=black
+      name: "Black and flake8 compliance"
       python: 3.6
     - env: TOXENV=py38-dev
+      name: "Python 3.8-development (Linux)"
       python: 3.8-dev
       dist: xenial
       addons:
         apt:
           packages:
-          - liblapack-dev
-          - libblas-dev
-          - libhdf5-serial-dev
-          - netcdf-bin
-          - libnetcdf-dev
+            - liblapack-dev
+            - libblas-dev
+            - libhdf5-serial-dev
+            - netcdf-bin
+            - libnetcdf-dev
+    - env: TOXENV=py37-windows
+      name: "Python3.7 (Windows)"
+      os: windows
+      language: minimal
+      before_install:
+        - choco install python3
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - python -m pip install --upgrade pip wheel
+    - env: TOXENV=py37-macOS
+      name: "Python3.7 (macOS)"
+      os: osx
+      language: minimal
+      addons:
+        homebrew:
+          update: true
+          packages:
+            - netcdf
+            - python@3
     - env: TOXENV=py37
+      name: "Python3.7 (Linux)"
       python: 3.7
       dist: xenial
       addons:
@@ -40,12 +61,14 @@ matrix:
             - netcdf-bin
             - libnetcdf-dev
     - env: TOXENV=py36
+      name: "Python3.6 (Linux)"
       python: 3.6
     - env: TOXENV=py35
+      name: "Python3.5 (Linux)"
       python: 3.5
   allow_failures:
     - env: TOXENV=py38-dev
-    - env: TOXENV=py37
+    - env: TOXENV=py37-windows
 
 install:
     - sudo -H pip install --upgrade pip
