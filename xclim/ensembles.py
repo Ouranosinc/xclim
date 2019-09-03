@@ -1,6 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 import xarray as xr
+from sklearn.cluster import KMeans
 
 
 def create_ensemble(datasets, mf_flag=False):
@@ -394,3 +397,245 @@ def _calc_perc(arr, p):
         )
 
     return out
+
+
+def kmeans_reduce_ensemble(
+    sel_criteria,
+    method={"rsq_optimize": None},
+    max_clusters=None,
+    variable_weights=None,
+    sample_weights=None,
+    model_weights=None,
+    make_graph=False,
+    random_state=None,
+):
+    """Return a reduced selection of ensemble members using k-means clustering. The algorithm attempts to
+    reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
+    uncertainty (variance) in a N-dimensional data space (sel_criteria). K-Means clustering is carried out on the input
+    selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups
+    Subsequently a single representative simulation is identified from each group.
+
+
+    Parameters
+    ----------
+    sel_criteria : xr.DataArray (NxP array)  ---  Selecton criteria data. These are the values used for clustering.
+        N is the number of realizations in the original ensemble and P the number of variables/indicators used in the grouping
+        algorithm
+
+    method : dict. Dictionary defining selection method and associated value (when required). One of the following:
+
+        {'rsq_optimize':None} : Default - Optimize the cost (number of ensemble members) versus benefit
+            (variance coverage) relationship. For details see supporting information (S2 text) in
+            https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+
+        {'rsq_cutoff': val} : threshold Coefficient of variation (R² value) above which to cover with the
+            grouping. val : float between 0 and 1. The R² indicates the proportion of the total variance in sel_criteria
+            that is explained by the grouping
+
+        {'n_clusters': val} : Create a user determined number of clusters. val : integer between 1 and N
+
+    Optional parameters:
+    max_clusters : integer  --  Maximum number of members to include in the output ensemble selection.
+        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
+        results indicate a higher value. Defaults to N (number ensemble members)
+
+    variable_weights: xr.DataArray of size P  --  This weighting can be used to influence of weight of the climate
+        indices on the clustering itself
+
+    sample_weights: xr.DataArray of size N  --  This weighting can be used to influence of weight of simulations on
+        the clustering itself. For example, putting a weight of 0 on a simulation will completely exclude it from the
+        clustering
+
+    model_weights: xr.DataArray of size N  --  This weighting can be used to influence which model is selected within
+        each cluster. This parameter has no influence whatsoever on the clustering itself.
+
+    graph: boolean --  displays a plot of R² vs. the number of clusters
+
+    random_state -- sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
+        initialization. Use an int to make the randomness deterministic.
+        see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+
+    Returns
+    -------
+
+    out : list -- Selected model indexes (positions)
+    clusters : KMeans clustering results
+
+
+
+    Notes
+    -----
+    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
+    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
+
+    Examples
+    --------
+
+    """
+
+    # initialize the variables
+    n_sim = np.shape(sel_criteria)[0]  # number of simulations
+    n_idx = np.shape(sel_criteria)[1]  # number of indicators
+
+    # normalize the data matrix
+    z = xr.DataArray(
+        scipy.stats.zscore(sel_criteria, axis=0, ddof=1)
+    )  # ddof=1 to be the same as Matlab's zscore
+
+    if sample_weights is None:
+        sample_weights = np.ones(n_sim)
+    if model_weights is None:
+        model_weights = np.ones(n_sim)
+    if variable_weights is None:
+        variable_weights = np.ones(shape=(1, n_idx))
+    if max_clusters is None:
+        max_clusters = np.shape(sel_criteria)[0]
+
+    # normalize the weights (note: I don't know if this is really useful... this was in the MATLAB code)
+    sample_weights = sample_weights / np.sum(sample_weights)
+    model_weights = model_weights / np.sum(model_weights)
+    variable_weights = variable_weights / np.sum(variable_weights)
+
+    z = z * variable_weights
+
+    if list(method.keys())[0] != "n_clusters" or make_graph is True:
+        # generate r2 profile data
+        sumd = np.zeros(shape=n_sim) + np.nan
+        for nclust in range(n_sim):
+            # This is k-means with only 10 iterations, to limit the computation times
+            kmeans = KMeans(
+                n_clusters=nclust + 1,
+                n_init=15,
+                max_iter=300,
+                random_state=random_state,
+            ).fit(z, sample_weight=sample_weights)
+            kmeans.fit(z)
+            sumd[
+                nclust
+            ] = (
+                kmeans.inertia_
+            )  # sum of the squared distance between each simulation and the nearest cluster centroid
+
+        # R² of the groups vs. the full ensemble
+        rsq = (sumd[0] - sumd) / sumd[0]
+    if make_graph:
+        # make a plot of rsq
+        fig = plt.figure(figsize=(10, 6))
+        plt.plot(
+            range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4
+        )
+        # plt.plot(np.arange(1.5, n_sim + 0.5), np.diff(rsq), 'r', label='ΔR²')
+        axes = plt.gca()
+        axes.set_xlim([0, n_sim])
+        axes.set_ylim([0, 1])
+        plt.xlabel("Number of groups")
+        plt.ylabel("R²")
+        plt.legend(loc="lower right")
+        plt.title("R² of groups vs. full ensemble")
+        # plt.show()
+
+    # if we actually need to find the optimal number of clusters, this is where it is done
+    if list(method.keys())[0] == "rsq_cutoff":
+        # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
+        n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
+        if make_graph:
+            plt.plot(
+                (0, n_clusters, n_clusters),
+                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+                "k--",
+                label=f'R² > {method["rsq_cutoff"]} (n = {n_clusters})',
+                linewidth=0.75,
+            )
+            plt.legend(loc="lower right")
+            # plt.show()
+
+    elif list(method.keys())[0] == "rsq_optimize":
+        # create constant benefits curve (one to one)
+        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
+            1.0 / (n_sim - 1)
+        )
+        n_clusters = np.argmax(rsq - onetoone)
+        if make_graph:
+            plt.plot(
+                range(1, n_sim + 1),
+                onetoone,
+                color=[0.25, 0.25, 0.75],
+                label="Theoretical constant increase in R²",
+                linewidth=0.5,
+            )
+            plt.plot(
+                range(1, n_sim + 1),
+                rsq - onetoone,
+                color=[0.75, 0.25, 0.25],
+                label="Real benefits (R² - theoretical)",
+                linewidth=0.5,
+            )
+            plt.plot(
+                (0, n_clusters, n_clusters),
+                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+                "k--",
+                linewidth=0.75,
+                label=f"Optimized R² cost / benefit (n = {n_clusters})",
+            )
+            plt.legend(loc="center right")
+            # plt.show()
+    elif list(method.keys())[0] == "n_clusters":
+        n_clusters = method["n_clusters"]
+
+    else:
+        raise Exception(f"unknown selection method : {list(method.keys())}")
+    if n_clusters > max_clusters:
+        print(
+            str(n_clusters)
+            + " clusters has been found to be the optimal number of clusters, but limiting "
+            "to " + str(max_clusters) + " as required by user provided max_clusters"
+        )
+        n_clusters = max_clusters
+
+    # Finale k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
+    kmeans = KMeans(n_clusters=n_clusters, n_init=1000, max_iter=600)
+    # we use 'fit_' only once, otherwise it computes everything again
+    clusters = kmeans.fit_predict(z, sample_weight=sample_weights)
+
+    # squared distance to centroids
+    d = np.square(
+        kmeans.transform(z)
+    )  # squared distance between each point and each centroid
+
+    out = np.empty(
+        shape=n_clusters
+    )  # prepare an empty array in which to store the results
+    r = np.arange(n_sim)
+
+    # in each cluster, find the closest (weighted) simulation and select it
+    for i in range(n_clusters):
+        d_i = d[
+            clusters == i, i
+        ]  # distance to the centroid for all simulations within the cluster 'i'
+        if d_i.shape[0] > 2:
+            sig = np.std(
+                d_i, ddof=1
+            )  # standard deviation of those distances (ddof = 1 gives the same as Matlab's std function)
+            like = (
+                scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]
+            )  # weighted likelihood
+            argmax = np.argmax(like)  # index of the maximum likelihood
+        elif d_i.shape[0] == 2:
+            sig = (
+                1
+            )  # standard deviation would be 0 for a 2-simulation cluster, meaning that model_weights would be ignored.
+            like = (
+                scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]
+            )  # weighted likelihood
+            argmax = np.argmax(like)  # index of the maximum likelihood
+        else:
+            argmax = 0
+        r_clust = r[
+            clusters == i
+        ]  # index of the cluster simulations within the full ensemble
+
+        out[i] = r_clust[argmax]
+
+    out = sorted(out.astype(int))
+
+    return out, clusters
