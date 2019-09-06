@@ -527,8 +527,10 @@ def kmeans_reduce_ensemble(
 
     n_clusters = _get_nclust(method, n_sim, rsq, make_graph, max_clusters)
 
-    # Finale k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
-    kmeans = KMeans(n_clusters=n_clusters, n_init=1000, max_iter=600)
+    # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
+    kmeans = KMeans(
+        n_clusters=n_clusters, n_init=1000, max_iter=600, random_state=random_state
+    )
     # we use 'fit_' only once, otherwise it computes everything again
     clusters = kmeans.fit_predict(z, sample_weight=sample_weights)
 
