@@ -401,15 +401,15 @@ def _calc_perc(arr, p):
 
 def kmeans_reduce_ensemble(
     sel_criteria,
-    method={"rsq_optimize": None},
+    method=None,
     max_clusters=None,
     variable_weights=None,
     sample_weights=None,
     model_weights=None,
-    make_graph=False,
+    make_graph=True,
     random_state=None,
 ):
-    """Return a reduced selection of ensemble members using k-means clustering. The algorithm attempts to
+    """Return a sample (selection) of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
     uncertainty (variance) in a N-dimensional data space (sel_criteria). K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups
@@ -484,12 +484,17 @@ def kmeans_reduce_ensemble(
 
     if sample_weights is None:
         sample_weights = np.ones(n_sim)
+    else:
+        # TODO KMeans sample weights of zero cause errors occasionally - set to 1e-20 for now
+        sample_weights[sample_weights == 0] = 1e-20
     if model_weights is None:
         model_weights = np.ones(n_sim)
     if variable_weights is None:
         variable_weights = np.ones(shape=(1, n_idx))
     if max_clusters is None:
-        max_clusters = np.shape(sel_criteria)[0]
+        max_clusters = n_sim
+    if method is None:
+        method = {"rsq_optimize": None}
 
     # normalize the weights (note: I don't know if this is really useful... this was in the MATLAB code)
     sample_weights = sample_weights / np.sum(sample_weights)
@@ -497,30 +502,10 @@ def kmeans_reduce_ensemble(
     variable_weights = variable_weights / np.sum(variable_weights)
 
     z = z * variable_weights
-
-    if list(method.keys())[0] != "n_clusters" or make_graph is True:
-        # generate r2 profile data
-        sumd = np.zeros(shape=n_sim) + np.nan
-        for nclust in range(n_sim):
-            # This is k-means with only 10 iterations, to limit the computation times
-            kmeans = KMeans(
-                n_clusters=nclust + 1,
-                n_init=15,
-                max_iter=300,
-                random_state=random_state,
-            ).fit(z, sample_weight=sample_weights)
-            kmeans.fit(z)
-            sumd[
-                nclust
-            ] = (
-                kmeans.inertia_
-            )  # sum of the squared distance between each simulation and the nearest cluster centroid
-
-        # R² of the groups vs. the full ensemble
-        rsq = (sumd[0] - sumd) / sumd[0]
+    rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
     if make_graph:
-        # make a plot of rsq
-        fig = plt.figure(figsize=(10, 6))
+        # make a plot of rsq profile
+        plt.figure(figsize=(10, 6))
         plt.plot(
             range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4
         )
@@ -532,65 +517,8 @@ def kmeans_reduce_ensemble(
         plt.ylabel("R²")
         plt.legend(loc="lower right")
         plt.title("R² of groups vs. full ensemble")
-        # plt.show()
 
-    # if we actually need to find the optimal number of clusters, this is where it is done
-    if list(method.keys())[0] == "rsq_cutoff":
-        # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
-        n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
-        if make_graph:
-            plt.plot(
-                (0, n_clusters, n_clusters),
-                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
-                "k--",
-                label=f'R² > {method["rsq_cutoff"]} (n = {n_clusters})',
-                linewidth=0.75,
-            )
-            plt.legend(loc="lower right")
-            # plt.show()
-
-    elif list(method.keys())[0] == "rsq_optimize":
-        # create constant benefits curve (one to one)
-        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
-            1.0 / (n_sim - 1)
-        )
-        n_clusters = np.argmax(rsq - onetoone)
-        if make_graph:
-            plt.plot(
-                range(1, n_sim + 1),
-                onetoone,
-                color=[0.25, 0.25, 0.75],
-                label="Theoretical constant increase in R²",
-                linewidth=0.5,
-            )
-            plt.plot(
-                range(1, n_sim + 1),
-                rsq - onetoone,
-                color=[0.75, 0.25, 0.25],
-                label="Real benefits (R² - theoretical)",
-                linewidth=0.5,
-            )
-            plt.plot(
-                (0, n_clusters, n_clusters),
-                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
-                "k--",
-                linewidth=0.75,
-                label=f"Optimized R² cost / benefit (n = {n_clusters})",
-            )
-            plt.legend(loc="center right")
-            # plt.show()
-    elif list(method.keys())[0] == "n_clusters":
-        n_clusters = method["n_clusters"]
-
-    else:
-        raise Exception(f"unknown selection method : {list(method.keys())}")
-    if n_clusters > max_clusters:
-        print(
-            str(n_clusters)
-            + " clusters has been found to be the optimal number of clusters, but limiting "
-            "to " + str(max_clusters) + " as required by user provided max_clusters"
-        )
-        n_clusters = max_clusters
+    n_clusters = _get_nclust(method, n_sim, rsq, make_graph, max_clusters)
 
     # Finale k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(n_clusters=n_clusters, n_init=1000, max_iter=600)
@@ -637,5 +565,95 @@ def kmeans_reduce_ensemble(
         out[i] = r_clust[argmax]
 
     out = sorted(out.astype(int))
-
+    # display graph - don't block code execution
+    if make_graph:
+        plt.show(block=False)
     return out, clusters
+
+
+def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
+    rsq = None
+    if list(method.keys())[0] != "n_clusters" or make_graph is True:
+        # generate r2 profile data
+        sumd = np.zeros(shape=n_sim) + np.nan
+        for nclust in range(n_sim):
+            # This is k-means with only 10 iterations, to limit the computation times
+            kmeans = KMeans(
+                n_clusters=nclust + 1,
+                n_init=15,
+                max_iter=300,
+                random_state=random_state,
+            )
+            kmeans = kmeans.fit(z, sample_weight=sample_weights)
+            sumd[
+                nclust
+            ] = (
+                kmeans.inertia_
+            )  # sum of the squared distance between each simulation and the nearest cluster centroid
+
+        # R² of the groups vs. the full ensemble
+        rsq = (sumd[0] - sumd) / sumd[0]
+
+    return rsq
+
+
+def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters=None):
+    """Subfunction to kmean_reduce_ensemble.
+       Determine number of clusters to create depending on various methods
+    """
+
+    # if we actually need to find the optimal number of clusters, this is where it is done
+    if list(method.keys())[0] == "rsq_cutoff":
+        # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
+        n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
+        if make_graph:
+            plt.plot(
+                (0, n_clusters, n_clusters),
+                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+                "k--",
+                label=f'R² > {method["rsq_cutoff"]} (n = {n_clusters})',
+                linewidth=0.75,
+            )
+            plt.legend(loc="lower right")
+    elif list(method.keys())[0] == "rsq_optimize":
+        # create constant benefits curve (one to one)
+        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
+            1.0 / (n_sim - 1)
+        )
+        n_clusters = np.argmax(rsq - onetoone) + 1
+        if make_graph:
+            plt.plot(
+                range(1, n_sim + 1),
+                onetoone,
+                color=[0.25, 0.25, 0.75],
+                label="Theoretical constant increase in R²",
+                linewidth=0.5,
+            )
+            plt.plot(
+                range(1, n_sim + 1),
+                rsq - onetoone,
+                color=[0.75, 0.25, 0.25],
+                label="Real benefits (R² - theoretical)",
+                linewidth=0.5,
+            )
+            plt.plot(
+                (0, n_clusters, n_clusters),
+                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+                "k--",
+                linewidth=0.75,
+                label=f"Optimized R² cost / benefit (n = {n_clusters})",
+            )
+            plt.legend(loc="center right")
+            # plt.show()
+    elif list(method.keys())[0] == "n_clusters":
+        n_clusters = method["n_clusters"]
+    else:
+        raise Exception(f"unknown selection method : {list(method.keys())}")
+    if n_clusters > max_clusters:
+        print(
+            str(n_clusters)
+            + " clusters has been found to be the optimal number of clusters, but limiting "
+            "to " + str(max_clusters) + " as required by user provided max_clusters"
+        )
+        n_clusters = max_clusters
+    return n_clusters

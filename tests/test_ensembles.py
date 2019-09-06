@@ -173,28 +173,168 @@ class TestEnsembleReduction:
 
     def test_kmeans_rsqcutoff(self):
         ds = xr.open_dataset(self.nc_file)
-        for n in np.arange(0, 20):
-            print(n)
-            # use random state variable to ensure consistent clustering in tests:
-            [ids, cluster] = ensembles.kmeans_reduce_ensemble(
-                ds.data, method={"rsq_cutoff": 0.9}, random_state=42
-            )
 
-            assert ids == [0, 1, 3, 4, 6, 7, 8, 10, 11, 15, 18, 20, 22]
-            assert len(ids) == 13
+        # use random state variable to ensure consistent clustering in tests:
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
+        )
+
+        assert ids == [0, 1, 3, 4, 6, 7, 8, 10, 11, 15, 18, 20, 22]
+        assert len(ids) == 13
+
+        # Test max cluster option
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_cutoff": 0.9},
+            random_state=42,
+            make_graph=False,
+            max_clusters=10,
+        )
+        assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
+        assert len(ids) == 10
 
     def test_kmeans_rsqopt(self):
         ds = xr.open_dataset(self.nc_file)
         [ids, cluster] = ensembles.kmeans_reduce_ensemble(
-            ds.data, method={"rsq_optimize": None}
+            ds.data, method={"rsq_optimize": None}, random_state=42, make_graph=False
         )
-        assert ids == [4, 5, 7, 10, 11, 12, 13]
-        assert len(ids) == 7
+        assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
+        assert len(ids) == 8
 
     def test_kmeans_nclust(self):
         ds = xr.open_dataset(self.nc_file)
+
         [ids, cluster] = ensembles.kmeans_reduce_ensemble(
-            ds.data, method={"n_clusters": 4}
+            ds.data, method={"n_clusters": 4}, random_state=42, make_graph=False
         )
-        assert ids == [4, 5, 7, 10, 11, 12, 13]
-        assert len(ids) == 7
+        assert ids == [4, 7, 10, 23]
+        assert len(ids) == 4
+
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data, method={"n_clusters": 9}, random_state=42, make_graph=False
+        )
+        assert ids == [0, 3, 4, 6, 7, 10, 11, 12, 13]
+        assert len(ids) == 9
+
+    def test_kmeans_sampleweights(self):
+        ds = xr.open_dataset(self.nc_file)
+        # Test sample weights
+        sample_weights = np.ones(ds.data.shape[0])
+        # boost weights for some sims
+        sample_weights[[0, 20]] = 15
+
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_cutoff": 0.9},
+            random_state=42,
+            make_graph=False,
+            sample_weights=sample_weights,
+        )
+        assert ids == [0, 1, 3, 4, 5, 6, 7, 10, 11, 18, 20]
+        assert len(ids) == 11
+
+        # RSQ optimize
+        sample_weights = np.ones(ds.data.shape[0])
+        # try zero weights
+        sample_weights[[0, 20]] = 0
+
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_optimize": None},
+            random_state=42,
+            make_graph=False,
+            sample_weights=sample_weights,
+        )
+
+        assert ids == [1, 3, 4, 5, 7, 10, 11, 18]
+        assert len(ids) == 8
+
+        sample_weights = np.ones(ds.data.shape[0])
+        # try zero weights
+        sample_weights[[6, 18, 22]] = 0
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_optimize": None},
+            random_state=42,
+            make_graph=False,
+            sample_weights=sample_weights,
+        )
+        assert ids == [4, 5, 7, 10, 12, 13]
+        assert len(ids) == 6
+
+    def test_kmeans_variweights(self):
+        ds = xr.open_dataset(self.nc_file)
+        # Test sample weights
+        var_weights = np.ones(ds.data.shape[1])
+        # reduce weights for some variables
+        var_weights[3:] = 0.25
+
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_cutoff": 0.9},
+            random_state=42,
+            make_graph=False,
+            variable_weights=var_weights,
+        )
+        assert ids == [1, 3, 8, 10, 13, 14, 16, 19, 20]
+        assert len(ids) == 9
+
+        # using RSQ optimize
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_optimize": None},
+            random_state=42,
+            make_graph=False,
+            variable_weights=var_weights,
+        )
+
+        assert ids == [2, 4, 8, 13, 14, 22]
+        assert len(ids) == 6
+
+        # try zero weights
+        var_weights = np.ones(ds.data.shape[1])
+        var_weights[[1, 4]] = 0
+
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"rsq_optimize": None},
+            random_state=42,
+            make_graph=False,
+            variable_weights=var_weights,
+        )
+        assert ids == [8, 10, 12, 13, 16, 20]
+        assert len(ids) == 6
+
+    def test_kmeans_modelweights(self):
+        ds = xr.open_dataset(self.nc_file)
+        # Test sample weights
+        model_weights = np.ones(ds.data.shape[0])
+        model_weights[[4, 7, 10, 23]] = 0
+
+        # set to zero for some models that are selected in n_cluster test - these models should not be selected now
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"n_clusters": 4},
+            random_state=42,
+            make_graph=False,
+            model_weights=model_weights,
+        )
+
+        for i in np.where(model_weights == 0)[0]:
+            # as long as the cluster has more than one member the models w/ weight==0 should not be present
+            if np.sum(cluster == cluster[i]) > 1:
+                assert i not in ids
+
+        model_weights = np.ones(ds.data.shape[0])
+        model_weights[[0, 3, 4, 6, 7, 10, 11, 12, 13]] = 0
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            ds.data,
+            method={"n_clusters": 9},
+            random_state=42,
+            make_graph=False,
+            model_weights=model_weights,
+        )
+        for i in np.where(model_weights == 0)[0]:
+            # as long as the cluster has more than one member the models w/ weight==0 should not be present
+            if np.sum(cluster == cluster[i]) > 1:
+                assert i not in ids
