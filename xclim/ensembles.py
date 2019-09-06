@@ -1,9 +1,16 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy
 import xarray as xr
 from sklearn.cluster import KMeans
+
+# Avoid having to include matplotlib in xclim requirements
+try:
+    import matplotlib.pyplot as plt
+
+    make_graph = True
+except ModuleNotFoundError:
+    make_graph = False
 
 
 def create_ensemble(datasets, mf_flag=False):
@@ -406,7 +413,7 @@ def kmeans_reduce_ensemble(
     variable_weights=None,
     sample_weights=None,
     model_weights=None,
-    make_graph=True,
+    make_graph=make_graph,
     random_state=None,
 ):
     """Return a sample (selection) of ensemble members using k-means clustering. The algorithm attempts to
@@ -463,10 +470,10 @@ def kmeans_reduce_ensemble(
 
 
 
-    Notes
+    References
     -----
-    Input netcdf files require equal spatial dimension size (e.g. lon, lat dimensions)
-    If input data contains multiple cftime calendar types they must be at monthly or coarser frequency
+    Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+
 
     Examples
     --------

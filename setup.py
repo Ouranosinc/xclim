@@ -31,6 +31,7 @@ requirements = [
     "pyproj>=1.9.5.1",
     "pint>=0.8",
     "boltons>=18.0",
+    "sklearn>=0.21.3",
 ]
 
 setup_requirements = ["pytest-runner"]
