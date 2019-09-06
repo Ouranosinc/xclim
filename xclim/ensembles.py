@@ -650,14 +650,18 @@ def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters
                 (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
                 "k--",
                 linewidth=0.75,
-                label=f"Optimized R² cost / benefit (n = {n_clusters})",
+                label="Optimized R² cost / benefit (n = {n_clusters})".format(
+                    n_clusters=n_clusters
+                ),
             )
             plt.legend(loc="center right")
             # plt.show()
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
-        raise Exception(f"unknown selection method : {list(method.keys())}")
+        raise Exception(
+            "unknown selection method : {meth}".format(meth=list(method.keys()))
+        )
     if n_clusters > max_clusters:
         print(
             str(n_clusters)
