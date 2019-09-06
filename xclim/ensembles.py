@@ -492,8 +492,8 @@ def kmeans_reduce_ensemble(
     if sample_weights is None:
         sample_weights = np.ones(n_sim)
     else:
-        # TODO KMeans sample weights of zero cause errors occasionally - set to 1e-20 for now
-        sample_weights[sample_weights == 0] = 1e-20
+        # TODO KMeans sample weights of zero cause errors occasionally - set to 1e-15 for now
+        sample_weights[sample_weights == 0] = 1e-15
     if model_weights is None:
         model_weights = np.ones(n_sim)
     if variable_weights is None:
@@ -618,7 +618,9 @@ def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters
                 (0, n_clusters, n_clusters),
                 (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
                 "k--",
-                label=f'R² > {method["rsq_cutoff"]} (n = {n_clusters})',
+                label="R² > {rsq_cut} (n = {n_clusters})".format(
+                    rsq_cut=method["rsq_cutoff"], n_clusters=n_clusters
+                ),
                 linewidth=0.75,
             )
             plt.legend(loc="lower right")

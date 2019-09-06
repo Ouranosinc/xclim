@@ -236,18 +236,18 @@ class TestEnsembleReduction:
         # RSQ optimize
         sample_weights = np.ones(ds.data.shape[0])
         # try zero weights
-        sample_weights[[0, 20]] = 0
+        sample_weights[[6, 18, 22]] = 0
 
         [ids, cluster] = ensembles.kmeans_reduce_ensemble(
             ds.data,
             method={"rsq_optimize": None},
-            random_state=42,
+            random_state=0,
             make_graph=False,
             sample_weights=sample_weights,
         )
 
-        assert ids == [1, 3, 4, 5, 7, 10, 11, 18]
-        assert len(ids) == 8
+        assert ids == [4, 5, 7, 10, 11, 12, 13]
+        assert len(ids) == 7
 
         sample_weights = np.ones(ds.data.shape[0])
         # try zero weights
