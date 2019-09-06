@@ -477,7 +477,7 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
-
+    >
     """
 
     # initialize the variables
