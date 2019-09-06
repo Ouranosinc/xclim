@@ -9,7 +9,7 @@ try:
     import matplotlib.pyplot as plt
 
     make_graph = True
-except ModuleNotFoundError:
+except ImportError:
     make_graph = False
 
 
