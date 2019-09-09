@@ -415,7 +415,7 @@ def kmeans_reduce_ensemble(
     model_weights=None,
     sample_weights=None,
     random_state=None,
-    make_graph=make_graph,
+    make_graph=make_graph
 ):
     """Return a sample (selection) of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
@@ -427,8 +427,8 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     sel_criteria : xr.DataArray (NxP array)  ---  Selecton criteria data. These are the values used for clustering.
-        N is the number of realizations in the original ensemble and P the number of variables/indicators used in the grouping
-        algorithm
+        N is the number of realizations in the original ensemble and P the number of variables/indicators used in
+         the grouping algorithm
 
     method : dict. Dictionary defining selection method and associated value (when required). One of the following:
 
