@@ -153,8 +153,10 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq="YS"):
     # return c.resample(time=freq).sum(dim='time')
 
 
-@declare_units("days", tasmax="[temperature]", tasmin="[temperature]")
-def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
+@declare_units(
+    "days", tasmax="[temperature]", tasmin="[temperature]", thresh="[temperature]"
+)
+def daily_freezethaw_cycles(tasmax, tasmin, thresh="0 degC", freq="YS"):
     r"""Number of days with a diurnal freeze-thaw cycle
 
     The number of days where Tmax > 0℃ and Tmin < 0℃.
@@ -165,6 +167,8 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
       Maximum daily temperature [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    thresh : str
+      The temperature threshold needed to trigger a freeze-thaw event [℃] or [K]. Default : '0 degC'
     freq : str
       Resampling frequency
 
@@ -185,7 +189,7 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    frz = utils.convert_units_to("0 degC", tasmax)
+    frz = utils.convert_units_to(thresh, tasmax)
     ft = (tasmin < frz) * (tasmax > frz) * 1
     out = ft.resample(time=freq).sum(dim="time")
     return out
