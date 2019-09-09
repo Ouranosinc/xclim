@@ -47,10 +47,10 @@ def create_ensemble(datasets, mf_flag=False):
     >>> ncfiles = glob.glob('/*.nc')
     >>> ens = ensembles.create_ensemble(datasets)
     >>> print(ens)
-    Using multifile datasets:
-    simulation 1 is a list of .nc files (e.g. separated by time)
+    # Using multifile datasets:
+    # simulation 1 is a list of .nc files (e.g. separated by time)
     >>> datasets = glob.glob('dir/*.nc')
-    simulation 2 is also a list of .nc files
+    # simulation 2 is also a list of .nc files
     >>> datasets.append(glob.glob('dir2/*.nc'))
     >>> ens = utils.create_ensemble(datasets, mf_flag=True)
     """
@@ -408,13 +408,14 @@ def _calc_perc(arr, p):
 
 def kmeans_reduce_ensemble(
     sel_criteria,
+    *,
     method=None,
     max_clusters=None,
     variable_weights=None,
-    sample_weights=None,
     model_weights=None,
-    make_graph=make_graph,
+    sample_weights=None,
     random_state=None,
+    make_graph=make_graph,
 ):
     """Return a sample (selection) of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
@@ -449,18 +450,22 @@ def kmeans_reduce_ensemble(
     variable_weights: xr.DataArray of size P  --  This weighting can be used to influence of weight of the climate
         indices on the clustering itself
 
-    sample_weights: xr.DataArray of size N  --  This weighting can be used to influence of weight of simulations on
-        the clustering itself. For example, putting a weight of 0 on a simulation will completely exclude it from the
-        clustering
+
 
     model_weights: xr.DataArray of size N  --  This weighting can be used to influence which model is selected within
         each cluster. This parameter has no influence whatsoever on the clustering itself.
 
-    graph: boolean --  displays a plot of R² vs. the number of clusters
+    sample_weights: xr.DataArray of size N  --  sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
+        used to influence of weight of simulations on the clustering itself.
+        see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
 
     random_state -- sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
         initialization. Use an int to make the randomness deterministic.
         see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+
+    graph: boolean --  displays a plot of R² vs. the number of clusters
+
+
 
     Returns
     -------
@@ -477,7 +482,27 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
-    >
+    # Start with ensemble datasets for temperature and precipitation
+    >>> ensTas = ensembles.create_ensemble(temperature_datasets)
+    >>> ensPr = ensembles.create_ensemble(precip_datasets)
+
+    # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
+
+    # Total annual precipation
+    >>> HistPr = ensPr.pr.sel(time=slice('1981','2010')).sum(dim='time').mean(dim=['lat','lon'])
+    >>> FutPr = ensPr.pr.sel(time=slice('2071','2100')).sum(dim='time').mean(dim=['lat','lon'])
+    >>> dPr = 100*((FutPr / HistPr) - 1)  # expressed in percent change
+
+    # Average annual temperature
+    >>> HistTas = ensTas.tas.sel(time=slice('1981','2010')).mean(dim=['time','lat','lon'])
+    >>> FutTas = ensTas.tas.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])
+    >>> dTas = FutTas - HistTas
+
+    # Create selection criteria xr.DataArray - Ensure ensemble object dim 'realizations' is first dim for kmeans
+    >>> crit = xr.concat((dTas,dPr), dim='criteria').transpose('realization','criteria')
+
+    # Create clusters and select realization ids of reduced ensemble
+    >>> [ids, cluster] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
     """
 
     # initialize the variables
