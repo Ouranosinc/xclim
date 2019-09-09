@@ -756,6 +756,21 @@ class TestSubsetBbox:
         with pytest.raises(Exception):
             subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
+    def test_warnings(self):
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+        with pytest.warns(FutureWarning):
+            subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2049, end_yr=2055
+            )
+        with pytest.warns(None) as record:
+            subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=2049, end_date=2055
+            )
+        assert (
+            "Subsetting tools will soon be using start_date and end_date with types int or datetime objects."
+            not in [q.message for q in record]
+        )
+
 
 class TestThresholdCount:
     def test_simple(self, tas_series):
