@@ -706,12 +706,18 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        with pytest.warns(FutureWarning) as record:
+            frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < K2C - 1) * (max1 > K2C) * 1.0).sum()
+        frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
+
+        assert (
+            "This index calculation will soon require user-specified thresholds."
+            in [str(q.message) for q in record]
+        )
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 
@@ -729,14 +735,24 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(
-            tasmax, tasmin, thresh_tasmax="0 degC", thresh_tasmin="-1 degC", freq="YS"
-        )
+        with pytest.warns(None) as record:
+            frzthw = atmos.daily_freezethaw_cycles(
+                tasmax,
+                tasmin,
+                thresh_tasmax="0 degC",
+                thresh_tasmin="0 degC",
+                freq="YS",
+            )
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < -1) * (max1 > 0) * 1.0).sum()
+        frzthw1 = ((min1 < 0) * (max1 > 0) * 1.0).sum()
+
+        assert (
+            "This index calculation will soon require user-specified thresholds."
+            not in [str(q.message) for q in record]
+        )
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 

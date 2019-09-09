@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -161,7 +162,11 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq="YS"):
     thresh_tasmin="[temperature]",
 )
 def daily_freezethaw_cycles(
-    tasmax, tasmin, thresh_tasmax="0 degC", thresh_tasmin="-1 degC", freq="YS"
+    tasmax,
+    tasmin,
+    thresh_tasmax="UNSET 0 degC",
+    thresh_tasmin="UNSET 0 degC",
+    freq="YS",
 ):
     r"""Number of days with a diurnal freeze-thaw cycle
 
@@ -197,6 +202,12 @@ def daily_freezethaw_cycles(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
+    if thresh_tasmax.startswith("UNSET ") or thresh_tasmin.startswith("UNSET"):
+        thresh_tasmax, thresh_tasmin = (
+            thresh_tasmax.replace("UNSET ", ""),
+            thresh_tasmin.replace("UNSET ", ""),
+        )
+
     thaw_threshold = utils.convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = utils.convert_units_to(thresh_tasmin, tasmin)
 
