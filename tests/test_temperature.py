@@ -706,14 +706,12 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(
-            tasmax, tasmin, thresh="0 degC", freq="YS"
-        )
+        frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
+        frzthw1 = ((min1 < K2C - 1) * (max1 > K2C) * 1.0).sum()
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 
@@ -732,13 +730,13 @@ class TestDailyFreezeThaw:
         tasmin.values[180, 1, 0] = np.nan
 
         frzthw = atmos.daily_freezethaw_cycles(
-            tasmax, tasmin, thresh="0 degC", freq="YS"
+            tasmax, tasmin, thresh_tasmax="0 degC", thresh_tasmin="-1 degC", freq="YS"
         )
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < 0) * (max1 > 0) * 1.0).sum()
+        frzthw1 = ((min1 < -1) * (max1 > 0) * 1.0).sum()
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 
