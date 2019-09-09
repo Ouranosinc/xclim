@@ -116,9 +116,9 @@ class TestColdSpellDurationIndex:
         i = 3650
         A = 10.0
         tn = (
-            np.zeros(i) +
-            A * np.sin(np.arange(i) / 365.0 * 2 * np.pi) +
-            0.1 * np.random.rand(i)
+            np.zeros(i)
+            + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
+            + 0.1 * np.random.rand(i)
         )
         tn[10:20] -= 2
         tn = tasmin_series(tn)
@@ -282,13 +282,13 @@ class TestFreshetStart:
         w = 5
 
         i = 10
-        tg[i: i + w - 1] += 6  # too short
+        tg[i : i + w - 1] += 6  # too short
 
         i = 20
-        tg[i: i + w] += 6  # ok
+        tg[i : i + w] += 6  # ok
 
         i = 30
-        tg[i: i + w + 1] += 6  # Second valid condition, should be ignored.
+        tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg + K2C, start="1/1/2000")
         out = xci.freshet_start(tg, window=w)
@@ -889,9 +889,9 @@ class TestWarmSpellDurationIndex:
         i = 3650
         A = 10.0
         tx = (
-            np.zeros(i) +
-            A * np.sin(np.arange(i) / 365.0 * 2 * np.pi) +
-            0.1 * np.random.rand(i)
+            np.zeros(i)
+            + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
+            + 0.1 * np.random.rand(i)
         )
         tx[10:20] += 2
         tx = tasmax_series(tx)
