@@ -170,7 +170,7 @@ def daily_freezethaw_cycles(
 ):
     r"""Number of days with a diurnal freeze-thaw cycle
 
-    The number of days where Tmax > 0℃ and Tmin < 0℃.
+    The number of days where Tmax > thresh_tasmax and Tmin <= thresh_tasmin.
 
     Parameters
     ----------
@@ -181,7 +181,7 @@ def daily_freezethaw_cycles(
     thresh_tasmax : str
       The temperature threshold needed to trigger a thaw event [℃] or [K]. Default : '0 degC'
     thresh_tasmin : str
-      The temperature threshold needed to trigger a freeze event [℃] or [K]. Default : '-1 degC'
+      The temperature threshold needed to trigger a freeze event [℃] or [K]. Default : '0 degC'
     freq : str
       Resampling frequency
 
