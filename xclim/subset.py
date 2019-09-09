@@ -1,8 +1,25 @@
+import datetime
+import warnings
+from typing import List
+from typing import Union
+
 import numpy as np
+import xarray
 from pyproj import Geod
 
+_DEFAULT_DATE = object()
+DEPRECATION_MESSAGE = "Subsetting tools will soon be using start_date and end_date with types int or datetime objects."
 
-def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
+
+def subset_bbox(
+    da,
+    lon_bnds=None,
+    lat_bnds=None,
+    start_date=_DEFAULT_DATE,
+    end_date=_DEFAULT_DATE,
+    start_yr=None,
+    end_yr=None,
+):
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and years selection.
 
     Return a subsetted data array for grid points falling within a spatial bounding box
@@ -10,12 +27,16 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
 
     Parameters
     ----------
-    arr : xarray.DataArray or xarray.Dataset
+    da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon_bnds : list of floats
+    lon_bnds : List[float]
       List of maximum and minimum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
-    lat_bnds :  list of floats
+    lat_bnds :  List[float]
       List maximum and minimum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
+    start_date : Union[str, datetime.datetime, datetime.date]
+      Starting date of the subset. Can be year, year-month, or year-month-day.
+    end_date : Union[str, datetime.datetime, datetime.date]
+      Ending date of the subset. Can be year, year-month, or year-month-day.
     start_yr : int
       First year of the subset. Defaults to first year of input.
     end_yr : int
@@ -40,8 +61,12 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr=1990,end_yr=1999)
     """
-    # check if trying to subset lon and lat
+    if start_date == _DEFAULT_DATE or end_date == _DEFAULT_DATE:
 
+        warnings.warn(DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+        start_date, end_date = start_yr, end_yr
+
+    # check if trying to subset lon and lat
     if lat_bnds is not None or lon_bnds is not None:
         if hasattr(da, "lon") and hasattr(da, "lat"):
             if lon_bnds is None:
@@ -81,13 +106,21 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_yr=None, end_yr=None):
                 )
             )
 
-    if start_yr or end_yr:
-        da = subset_time(da, start_yr=start_yr, end_yr=end_yr)
+    if start_date or end_date:
+        da = subset_time(da, start_yr=start_date, end_yr=end_date)
 
     return da
 
 
-def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
+def subset_gridpoint(
+    da,
+    lon=None,
+    lat=None,
+    start_date=_DEFAULT_DATE,
+    end_date=_DEFAULT_DATE,
+    start_yr=None,
+    end_yr=None,
+):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by year(s)
 
@@ -97,12 +130,16 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
 
     Parameters
     ----------
-    da : xarray.DataArray or xarray.DataSet
+    da : Union[xarray.DataArray, xarray.DataSet]
       Input data.
     lon : float
       Longitude coordinate.
     lat:  float
       Latitude coordinate.
+    start_date : Union[str, datetime.datetime, datetime.date]
+      Starting date of the subset. Can be year, year-month, or year-month-day.
+    end_date : Union[str, datetime.datetime, datetime.date]
+      Ending date of the subset. Can be year, year-month, or year-month-day.
     start_yr : int
       First year of the subset. Defaults to first year of input.
     end_yr : int
@@ -125,6 +162,10 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
     """
+    if start_date == _DEFAULT_DATE or end_date == _DEFAULT_DATE:
+
+        warnings.warn(DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+        start_date, end_date = start_yr, end_yr
 
     # check if trying to subset lon and lat
     if lat is not None and lon is not None:
@@ -166,13 +207,15 @@ def subset_gridpoint(da, lon=None, lat=None, start_yr=None, end_yr=None):
                 )
             )
 
-    if start_yr or end_yr:
-        da = subset_time(da, start_yr=start_yr, end_yr=end_yr)
+    if start_date or end_date:
+        da = subset_time(da, start_yr=start_date, end_yr=end_date)
 
     return da
 
 
-def subset_time(da, start_yr=None, end_yr=None):
+def subset_time(
+    da, start_date=_DEFAULT_DATE, end_date=_DEFAULT_DATE, start_yr=None, end_yr=None
+):
     """Subset input data based on start and end years
 
     Return a subsetted data array (or dataset) for years falling
@@ -182,6 +225,10 @@ def subset_time(da, start_yr=None, end_yr=None):
     ----------
     da : xarray.DataArray or xarray.DataSet
       Input data.
+    start_date : Union[str, datetime.datetime, datetime.date]
+      Starting date of the subset. Can be year, year-month, or year-month-day.
+    end_date : Union[str, datetime.datetime, datetime.date]
+      Ending date of the subset. Can be year, year-month, or year-month-day.
     start_yr : int
       First year of the subset. Defaults to first year of input.
     end_yr : int
@@ -204,16 +251,20 @@ def subset_time(da, start_yr=None, end_yr=None):
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_time(ds,start_yr=1990,end_yr=1999)
     """
+    if start_date == _DEFAULT_DATE or end_date == _DEFAULT_DATE:
 
-    if not start_yr:
-        start_yr = da.time.dt.year.min()
-    if not end_yr:
-        end_yr = da.time.dt.year.max()
+        warnings.warn(DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+        start_date, end_date = start_yr, end_yr
 
-    if start_yr > end_yr:
+    if not start_date:
+        start_date = da.time.dt.year.min()
+    if not end_date:
+        end_date = da.time.dt.year.max()
+
+    if start_date > end_date:
         raise ValueError("Start date is after end date.")
 
-    year_bnds = np.asarray([start_yr, end_yr])
+    year_bnds = np.asarray([start_date, end_date])
 
     if len(year_bnds) == 1:
         time_cond = da.time.dt.year == year_bnds
@@ -221,6 +272,7 @@ def subset_time(da, start_yr=None, end_yr=None):
         time_cond = (da.time.dt.year >= year_bnds.min()) & (
             da.time.dt.year <= year_bnds.max()
         )
+
     return da.sel(time=time_cond)
 
 
@@ -235,4 +287,5 @@ def _check_lons(da, lon_bnds):
             lon_bnds -= 360
         else:
             lon_bnds[lon_bnds < 0] -= 360
+
     return lon_bnds
