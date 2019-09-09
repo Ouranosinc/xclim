@@ -706,7 +706,9 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        frzthw = atmos.daily_freezethaw_cycles(
+            tasmax, tasmin, thresh="0 degC", freq="YS"
+        )
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
@@ -729,7 +731,9 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        frzthw = atmos.daily_freezethaw_cycles(
+            tasmax, tasmin, thresh="0 degC", freq="YS"
+        )
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
