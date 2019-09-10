@@ -40,7 +40,7 @@ __all__ = [
     "tropical_nights",
 ]
 
-
+# TODO: Add docstring for window
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(tas, thresh="-10 degC", window=5, freq="AS-JUL"):
     r"""Cold spell days

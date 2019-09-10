@@ -19,13 +19,17 @@ def _get_indicators(modules):
 def _indicator_table():
     """Return a sequence of dicts storing metadata about all available indices."""
     from xclim import atmos
-    import inspect2
+    import inspect
 
     inds = _get_indicators([atmos])
     table = []
     for ind in inds:
         # Apply default values
-        args = {name: p.default for (name, p) in ind._sig.parameters.items() if p.default != inspect2._empty}
+        args = {
+            name: p.default
+            for (name, p) in ind._sig.parameters.items()
+            if p.default != inspect._empty
+        }
         table.append(ind.json(args))
     return table
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Indices library
 ===============
@@ -68,9 +67,9 @@ Indice descriptions
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 
+from ._multivariate import *
 from ._simple import *
 from ._threshold import *
-from ._multivariate import *
 
 # TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
 # TODO: Move utility functions to another file.
