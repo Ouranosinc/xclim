@@ -8,11 +8,14 @@ xclim Official Documentation
    readme
    installation
    usage
+   notebooks/example
    indices
    icclim
+   utilities
    contributing
    authors
    history
+   itable
 
 Indices and tables
 ==================

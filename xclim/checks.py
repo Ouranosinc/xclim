@@ -1,13 +1,18 @@
 import datetime as dt
+import logging
 from functools import wraps
 from warnings import warn
-import logging
+
 import numpy as np
 import pandas as pd
 import xarray as xr
+
 from . import run_length as rl
-from .utils import clim_mean_doy, within_bnds_doy
+from .utils import clim_mean_doy
+from .utils import within_bnds_doy
+
 logging.captureWarnings(True)
+
 
 # Dev notes
 # ---------
@@ -21,15 +26,18 @@ logging.captureWarnings(True)
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
 
+
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
 
     att = getattr(var, key, None)
     if att is None:
-        e = 'Variable does not have a `{}` attribute.'.format(key)
+        e = "Variable does not have a `{}` attribute.".format(key)
         warn(e)
     elif att != expected:
-        e = 'Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected)
+        e = "Variable has a non-conforming {}. Got `{}`, expected `{}`".format(
+            key, att, expected
+        )
         warn(e)
 
 
@@ -40,9 +48,10 @@ def assert_daily(var):
 
     t0, t1 = var.time[:2]
 
-    # This won't work for non-standard calendars. Needs to be implemented in xarray.
-    if pd.infer_freq(var.time.to_pandas()) != 'D':
-        raise ValueError("time series is not recognized as daily.")
+    # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now
+    if isinstance(t0.values, np.datetime64):
+        if pd.infer_freq(var.time.to_pandas()) != "D":
+            raise ValueError("time series is not recognized as daily.")
 
     # Check that the first time step is one day.
     if np.timedelta64(dt.timedelta(days=1)) != (t1 - t0).data:
@@ -63,10 +72,10 @@ def icclim_precipitation_flags():
     """Return a dictionary of conditions that would flag a suspicious precipitation time series.
     """
     conditions = {
-        'Contains negative values': lambda x: (x < 0).any(),
-        'Values too large (> 300mm)' : lambda x: (x > 300).any(),
-        'Many 1mm repetitions': lambda x: rl.suspicious_run(x, window=10, thresh=1.),
-        'Many 5mm repetitions': lambda x: rl.suspicious_run(x, window=5, thresh=5.)
+        "Contains negative values": lambda x: (x < 0).any(),
+        "Values too large (> 300mm)": lambda x: (x > 300).any(),
+        "Many 1mm repetitions": lambda x: rl.suspicious_run(x, window=10, thresh=1.0),
+        "Many 5mm repetitions": lambda x: rl.suspicious_run(x, window=5, thresh=5.0)
         # TODO: Create a check for dry days in precipitation runs
         # . . . dry periods receive flag = 1 (suspect), if the amount of dry days lies
         # outside a 14·bivariate standard deviation ?
@@ -80,12 +89,12 @@ def icclim_tasmean_flags():
     """Return a dictionary of conditions that would flag a suspicious tas time series.
     """
     conditions = {
-        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
-        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
-        'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
-        'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
-        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
+        "Extremely low (< -90℃)": lambda x: (x < -90).any(),
+        "Extremely high (> 60℃)": lambda x: (x > 60).any(),
+        "Exceeds maximum temperature": lambda x, tasmax: (x > tasmax).any(),
+        "Below minimum temperature": lambda x, tasmin: (x < tasmin).any(),
+        "Identical values for 5 or more days": lambda x: rl.suspicious_run(x, window=5),
+        "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
     }
 
     return conditions
@@ -95,12 +104,12 @@ def icclim_tasmax_flags():
     """Return a dictionary of conditions that would flag a suspicious tasmax time series.
     """
     conditions = {
-        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
-        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
-        'Below mean temperature': lambda x, tas: (x < tas).any(),
-        'Below minimum temperature': lambda x, tasmin: (x < tasmin).any(),
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
-        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
+        "Extremely low (< -90℃)": lambda x: (x < -90).any(),
+        "Extremely high (> 60℃)": lambda x: (x > 60).any(),
+        "Below mean temperature": lambda x, tas: (x < tas).any(),
+        "Below minimum temperature": lambda x, tasmin: (x < tasmin).any(),
+        "Identical values for 5 or more days": lambda x: rl.suspicious_run(x, window=5),
+        "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
     }
 
     return conditions
@@ -110,12 +119,12 @@ def icclim_tasmin_flags():
     """Return a dictionary of conditions that would flag a suspicious tasmin time series.
     """
     conditions = {
-        'Extremely low (< -90℃)': lambda x: (x < -90).any(),
-        'Extremely high (> 60℃)': lambda x: (x > 60).any(),
-        'Exceeds maximum temperature': lambda x, tasmax: (x > tasmax).any(),
-        'Exceeds mean temperature': lambda x, tas: (x > tas).any(),
-        'Identical values for 5 or more days': lambda x: rl.suspicious_run(x, window=5),
-        'Outside 5 standard deviations of mean': lambda x: outside_climatology(x, n=5)
+        "Extremely low (< -90℃)": lambda x: (x < -90).any(),
+        "Extremely high (> 60℃)": lambda x: (x > 60).any(),
+        "Exceeds maximum temperature": lambda x, tasmax: (x > tasmax).any(),
+        "Exceeds mean temperature": lambda x, tas: (x > tas).any(),
+        "Identical values for 5 or more days": lambda x: rl.suspicious_run(x, window=5),
+        "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
     }
 
     return conditions
@@ -128,63 +137,63 @@ def flag(arr, conditions):
 
 
 def check_valid_precipitation(var, units):
-    check_valid(var, 'standard_name', 'precipitation_flux')
-    check_valid(var, 'units', units)
+    check_valid(var, "standard_name", "precipitation_flux")
+    check_valid(var, "units", units)
     assert_daily(var)
 
 
 def check_valid_temperature(var, units):
     r"""Check that variable is air temperature."""
 
-    check_valid(var, 'standard_name', 'air_temperature')
-    check_valid(var, 'units', units)
+    check_valid(var, "standard_name", "air_temperature")
+    check_valid(var, "units", units)
     assert_daily(var)
 
 
 def check_valid_discharge(var):
     r"""Check that the variable is a discharge."""
     #
-    check_valid(var, 'standard_name', 'water_volume_transport_in_river_channel')
-    check_valid(var, 'units', 'm3 s-1')
+    check_valid(var, "standard_name", "water_volume_transport_in_river_channel")
+    check_valid(var, "units", "m3 s-1")
 
 
-def valid_daily_min_temperature(comp, units='K'):
+def valid_daily_min_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmin, *args, **kwds):
         check_valid_temperature(tasmin, units)
-        check_valid(tasmin, 'cell_methods', 'time: minimum within days')
+        check_valid(tasmin, "cell_methods", "time: minimum within days")
         return comp(tasmin, **kwds)
 
     return func
 
 
-def valid_daily_mean_temperature(comp, units='K'):
+def valid_daily_mean_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tas, *args, **kwds):
         check_valid_temperature(tas, units)
-        check_valid(tas, 'cell_methods', 'time: mean within days')
+        check_valid(tas, "cell_methods", "time: mean within days")
         return comp(tas, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_temperature(comp, units='K'):
+def valid_daily_max_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmax, *args, **kwds):
         check_valid_temperature(tasmax, units)
-        check_valid(tasmax, 'cell_methods', 'time: maximum within days')
+        check_valid(tasmax, "cell_methods", "time: maximum within days")
         return comp(tasmax, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_min_temperature(comp, units='K'):
+def valid_daily_max_min_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on valid min and max temperature datasets."""
 
     @wraps(comp)
@@ -226,7 +235,8 @@ def check_is_dataarray(comp):
     return func
 
 
-def missing_any(da, freq, **kwds):
+# This function can probably be made simpler once CFPeriodIndex is implemented.
+def missing_any(da, freq, **indexer):
     r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters
@@ -235,17 +245,54 @@ def missing_any(da, freq, **kwds):
       Input array at daily frequency.
     freq : str
       Resampling frequency.
+    **indexer : {dim: indexer, }, optional
+      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+      considered.
 
     Returns
     -------
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
+    from . import generic
 
-    c = da.notnull().resample(time=freq).sum(dim='time')
-    p = c.indexes['time'].to_period()
-    n = (p.end_time - p.start_time).days + 1
-    nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
+    if "-" in freq:
+        pfreq, anchor = freq.split("-")
+    else:
+        pfreq = freq
+
+    # Compute the number of days in the time series during each period at the given frequency.
+    selected = generic.select_time(da, **indexer)
+    if selected.time.size == 0:
+        raise ValueError("No data for selected period.")
+
+    c = selected.notnull().resample(time=freq).sum(dim="time")
+
+    # Otherwise simply use the start and end dates to find the expected number of days.
+    if pfreq.endswith("S"):
+        start_time = c.indexes["time"]
+        end_time = start_time.shift(1, freq=freq)
+    else:
+        end_time = c.indexes["time"]
+        start_time = end_time.shift(-1, freq=freq)
+
+    if indexer:
+        # Create a full synthetic time series and compare the number of days with the original series.
+        t0 = str(start_time[0].date())
+        t1 = str(end_time[-1].date())
+        if isinstance(c.indexes["time"], xr.CFTimeIndex):
+            cal = da.time.encoding.get("calendar")
+            t = xr.cftime_range(t0, t1, freq="D", calendar=cal)
+        else:
+            t = pd.date_range(t0, t1, freq="D")
+
+        sda = xr.DataArray(data=np.empty(len(t)), coords={"time": t}, dims=("time",))
+        st = generic.select_time(sda, **indexer)
+        sn = st.notnull().resample(time=freq).sum(dim="time")
+        miss = sn != c
+        return miss
+
+    n = (end_time - start_time).days
+    nda = xr.DataArray(n.values, coords={"time": c.time}, dims="time")
     return c != nda
-
-

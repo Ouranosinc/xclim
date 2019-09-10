@@ -60,38 +60,62 @@ Get Started!
 Ready to contribute? Here's how to set up `xclim` for local development.
 
 1. Fork the `xclim` repo on GitHub.
+
 2. Clone your fork locally::
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
+    # For virtualenv environments:
     $ mkvirtualenv xclim
+
+    # For Anaconda/Miniconda environments:
+    $ conda create -n xclim python=3.6
+
     $ cd xclim/
-    $ python setup.py develop
+    $ pip install -e .
 
 4. Create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
-   Now you can make your changes locally.
+   Now you can make your changes locally!
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+5. When you're done making changes, check that you verify your changes with `black` and run the tests, including testing other Python versions with `tox`::
 
-    $ flake8 xclim tests
-    $ python setup.py test or py.test
+    # For virtualenv environments:
+    $ pip install black pytest tox
+
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge black pytest tox
+
+    $ black xclim tests
+    $ python setup.py test
     $ tox
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
 
-6. Commit your changes and push your branch to GitHub::
+    # For virtualenv environments:
+    $ pip install pre-commit
 
-    $ git add .
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge pre_commit
+
+    $ pre-commit install
+
+7. Commit your changes and push your branch to GitHub::
+
+    $ git add *
+
     $ git commit -m "Your detailed description of your changes."
+    # `pre-commit` will run checks at this point:
+    # if no errors are found, changes will be committed.
+    # if errors are found, modifications will be mades. Simply `git commit` again.
+
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -108,7 +132,7 @@ Before you submit a pull request, please follow these guidelines:
      Consider adding a "**# TODO:**" comment if the need arises.
 
 3. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
-   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not decrease.**
+   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
    Please ensure that the docstrings adhere to one of the following standards:
@@ -116,7 +140,7 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 2.7, 3.4, 3.5, and 3.6 as well as raise test coverage.
+5. The pull request should work for Python 3.5, 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
@@ -132,20 +156,22 @@ Tips
 
 To run a subset of tests::
 
-$ py.test tests.test_xclim
+$ pytest tests.test_xclim
 
 
 Versioning
 ----------
 
-In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
-The method we use is as such::
+In order to update and release the library to PyPI, it's good to use a semantic versioning scheme.
+The method we use is as follows::
 
-  major.minor-release
+  major.minor.patch-release
 
 **Major** releases denote major changes resulting in a stable API;
 
-**Minor** is to be used when adding a module or set of components;
+**Minor** is to be used when adding a module, process or set of components;
+
+**Patch** should be used for bug fixes and optimizations;
 
 **Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
 
@@ -158,7 +184,7 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (**including an entry in HISTORY.rst**).
 Then run::
 
-$ bumpversion minor # possible options: major / minor / release
+$ bumpversion <option> # possible options: major / minor / patch / release
 $ git push
 $ git push --tags
 

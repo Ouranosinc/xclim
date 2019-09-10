@@ -4,5 +4,5 @@ All Indices
 
 .. automodule:: xclim.indices
    :members:
-   :undoc-members:
-   :show-inheritance:
+   :imported-members:
+   :noindex:

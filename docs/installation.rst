@@ -4,12 +4,9 @@
 Installation
 ============
 
-
 Stable release
 --------------
-
-
-To install xclim, run this command in your terminal:
+To install xclim via pip, run this command in your terminal:
 
 .. code-block:: console
 
@@ -26,7 +23,6 @@ you through the process.
 
 From sources
 ------------
-
 The sources for xclim can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
@@ -47,6 +43,11 @@ Once you have a copy of the source, you can install it with:
 
     $ python setup.py install
 
+Alternatively, you can also install a local copy via pip:
+
+.. code-block:: console
+
+    $ pip install .
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
@@ -55,8 +56,10 @@ Once you have a copy of the source, you can install it with:
 Creating a Conda environment
 ----------------------------
 
-To create a conda environment including all xclim dependencies, enter the following command, where :
+To create a conda development environment including all xclim dependencies, enter the following command from within your cloned repo:
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.6 --file=requirements.txt --file=requirements_dev.txt
+    $ conda create -n my_xclim_env python=3.6 --file=requirements_dev.txt
+    $ conda activate my_xclim_env
+    $ python setup.py install
