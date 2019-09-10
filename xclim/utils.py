@@ -253,6 +253,16 @@ def _check_units(val, dim):
     if dim is None or val is None:
         return
 
+    if str(val).startswith("UNSET "):
+        from warnings import warn
+
+        warnings.warn(
+            "This index calculation will soon require user-specified thresholds.",
+            FutureWarning,
+            stacklevel=4,
+        )
+        val = str(val).replace("UNSET ", "")
+
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(val, (int, float)):
         return
