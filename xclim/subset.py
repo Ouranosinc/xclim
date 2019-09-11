@@ -71,6 +71,10 @@ def subset_bbox(
     Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
+     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03',end_date='1999-08')
+    # Subset with specific start_dates and end_dates
+    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03-13',end_date='1990-08-17')
     """
     start_date, end_date = _check_times(
         start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
@@ -171,12 +175,16 @@ def subset_gridpoint(
     >>> from xclim import subset
     >>> ds = xr.open_dataset('pr.day.nc')
     Subset lat lon point and multiple years
-    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
     Subset lat, lon point and single year
-    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_yr=1990,end_yr=1990)
+    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
      Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_yr=1990,end_yr=1999)
+    >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_date='1990',end_date='1999')
+    # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> prSub = subset.subset_time(ds.pr,lon=-75, lat=45, start_date='1990-03',end_date='1999-08')
+    # Subset with specific start_dates and end_dates
+    >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
     """
     [start_date, end_date] = _check_times(
         start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
