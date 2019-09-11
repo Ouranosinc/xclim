@@ -8,10 +8,9 @@ import xarray
 from pyproj import Geod
 
 _DEFAULT_DATE = object()
-DEPRECATION_MESSAGE = (
-    'Using "start_yr" and / or "end_yr" (dtype=int) is deprecated. Temporal subsets'
-    ' will soon exclusively support "start_date" and "end_date" (dtype=str) w/ formats of '
-    ' "%Y", "%Y-%m" or "%Y-%m-%d".'
+_DEPRECATION_MESSAGE = (
+    'Using "start_yr" and / or "end_yr" (dtype=int) is deprecated.\nTemporal subsets will soon exclusively'
+    ' support "start_date" and "end_date" (dtype=str) w/ formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
 )
 
 
@@ -323,7 +322,7 @@ def _check_lons(da, lon_bnds):
 
 def _check_times(start_date=None, end_date=None, end_yr=None, start_yr=None):
     if start_date == _DEFAULT_DATE or end_date == _DEFAULT_DATE:
-        warnings.warn(DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+        warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
         if start_date == _DEFAULT_DATE:
             if isinstance(start_yr, int):
                 start_date = str(start_yr)
