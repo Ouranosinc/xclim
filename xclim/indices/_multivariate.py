@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -153,11 +154,23 @@ def cold_and_dry_days(tas, tgin25, pr, wet25, freq="YS"):
     # return c.resample(time=freq).sum(dim='time')
 
 
-@declare_units("days", tasmax="[temperature]", tasmin="[temperature]")
-def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
+@declare_units(
+    "days",
+    tasmax="[temperature]",
+    tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+)
+def daily_freezethaw_cycles(
+    tasmax,
+    tasmin,
+    thresh_tasmax="UNSET 0 degC",
+    thresh_tasmin="UNSET 0 degC",
+    freq="YS",
+):
     r"""Number of days with a diurnal freeze-thaw cycle
 
-    The number of days where Tmax > 0℃ and Tmin < 0℃.
+    The number of days where Tmax > thresh_tasmax and Tmin <= thresh_tasmin.
 
     Parameters
     ----------
@@ -165,6 +178,10 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
       Maximum daily temperature [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    thresh_tasmax : str
+      The temperature threshold needed to trigger a thaw event [℃] or [K]. Default : '0 degC'
+    thresh_tasmin : str
+      The temperature threshold needed to trigger a freeze event [℃] or [K]. Default : '0 degC'
     freq : str
       Resampling frequency
 
@@ -185,9 +202,18 @@ def daily_freezethaw_cycles(tasmax, tasmin, freq="YS"):
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    frz = utils.convert_units_to("0 degC", tasmax)
-    ft = (tasmin < frz) * (tasmax > frz) * 1
+    if thresh_tasmax.startswith("UNSET ") or thresh_tasmin.startswith("UNSET"):
+        thresh_tasmax, thresh_tasmin = (
+            thresh_tasmax.replace("UNSET ", ""),
+            thresh_tasmin.replace("UNSET ", ""),
+        )
+
+    thaw_threshold = utils.convert_units_to(thresh_tasmax, tasmax)
+    freeze_threshold = utils.convert_units_to(thresh_tasmin, tasmin)
+
+    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
     out = ft.resample(time=freq).sum(dim="time")
+
     return out
 
 

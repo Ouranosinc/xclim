@@ -20,6 +20,7 @@ History
 * *Added Azure Pipelines to automatically build xclim in Microsoft Windows environments.* -- **REMOVED**
 * Now employing PEP8 + Black compatible autoformatting.
 * Added Windows and macOS images to Travis CI build ensemble.
+* Added variable thresholds for tasmax and tasmin in daily_freezethaw_events.
 
 0.10-beta (2019-06-06)
 ----------------------

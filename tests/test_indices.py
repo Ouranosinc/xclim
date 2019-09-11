@@ -220,7 +220,27 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(mx, mn, "M")
+        out = xci.daily_freezethaw_cycles(mx, mn, freq="M")
+        np.testing.assert_array_equal(out[:2], [5, 1])
+        np.testing.assert_array_equal(out[2:], 0)
+
+    def test_zeroed_thresholds(self, tasmin_series, tasmax_series):
+        mn = np.zeros(365)
+        mx = np.zeros(365)
+
+        # 5 days in 1st month
+        mn[10:20] -= 1
+        mx[10:15] += 1
+
+        # 1 day in 2nd month
+        mn[40:44] += [1, 1, -1, -1]
+        mx[40:44] += [1, -1, 1, -1]
+
+        mn = tasmin_series(mn + K2C)
+        mx = tasmax_series(mx + K2C)
+        out = xci.daily_freezethaw_cycles(
+            mx, mn, thresh_tasmax="0 degC", thresh_tasmin="0 degC", freq="M"
+        )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 

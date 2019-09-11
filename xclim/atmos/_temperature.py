@@ -306,7 +306,7 @@ daily_freezethaw_cycles = TasminTasmax(
     standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
-    ": Tmax > 0℃ and Tmin < 0℃.",
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
     compute=indices.daily_freezethaw_cycles,
 )
