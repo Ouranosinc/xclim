@@ -7,22 +7,85 @@ import numpy as np
 import xarray
 from pyproj import Geod
 
-_DEFAULT_DATE = object()
-_DEPRECATION_MESSAGE = (
-    'Using "start_yr" and / or "end_yr" (dtype=int) is deprecated.\nTemporal subsets will soon exclusively'
-    ' support "start_date" and "end_date" (dtype=str) w/ formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
-)
+
+def check_dates(func):
+    def func_checker(*args, **kwargs):
+
+        _DEPRECATION_MESSAGE = (
+            '"start_yr" and "end_yr" (type: int) are being deprecated. \nTemporal subsets will soon exclusively'
+            ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
+        )
+
+        if "start_yr" in kwargs:
+            warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+            if kwargs["start_yr"] is not None:
+                kwargs["start_date"] = str(kwargs.pop("start_yr"))
+            elif kwargs["start_yr"] is None:
+                kwargs["start_date"] = None
+        elif "start_date" not in kwargs:
+            kwargs["start_date"] = None
+
+        if "end_yr" in kwargs:
+            if kwargs["end_yr"] is not None:
+                warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+                kwargs["end_date"] = str(kwargs.pop("end_yr"))
+            elif kwargs["end_yr"] is None:
+                kwargs["end_date"] = None
+        elif "end_date" not in kwargs:
+            kwargs["end_date"] = None
+
+        return func(*args, **kwargs)
+
+    return func_checker
 
 
-def subset_bbox(
-    da,
-    lon_bnds=None,
-    lat_bnds=None,
-    start_date=_DEFAULT_DATE,
-    end_date=_DEFAULT_DATE,
-    start_yr=None,
-    end_yr=None,
-):
+def check_lons(func):
+    def func_checker(*args, **kwargs):
+        if "lon_bnds" in kwargs:
+            lon = "lon_bnds"
+        elif "lon" in kwargs:
+            lon = "lon"
+        else:
+            return func(*args, **kwargs)
+
+        if isinstance(args[0], (xarray.DataArray, xarray.Dataset)):
+            if kwargs[lon] is None:
+                kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
+            else:
+                kwargs[lon] = np.asarray(kwargs[lon])
+            if np.all(args[0].lon > 0) and np.any(kwargs[lon] < 0):
+                if isinstance(kwargs[lon], float):
+                    kwargs[lon] += 360
+                else:
+                    kwargs[lon][kwargs[lon] < 0] += 360
+            if np.all(args[0].lon < 0) and np.any(kwargs[lon] > 0):
+                if isinstance(kwargs[lon], float):
+                    kwargs[lon] -= 360
+                else:
+                    kwargs[lon][kwargs[lon] < 0] -= 360
+        return func(*args, **kwargs)
+
+    return func_checker
+
+
+# def _check_lons(da, lon_bnds):
+#     if np.all(da.lon > 0) and np.any(lon_bnds < 0):
+#         if isinstance(lon_bnds, float):
+#             lon_bnds += 360
+#         else:
+#             lon_bnds[lon_bnds < 0] += 360
+#     if np.all(da.lon < 0) and np.any(lon_bnds > 0):
+#         if isinstance(lon_bnds, float):
+#             lon_bnds -= 360
+#         else:
+#             lon_bnds[lon_bnds < 0] -= 360
+#
+#     return lon_bounds
+
+
+@check_lons
+@check_dates
+def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None):
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and date selection.
 
     Return a subsetted data array for grid points falling within a spatial bounding box
@@ -75,17 +138,17 @@ def subset_bbox(
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03-13',end_date='1990-08-17')
     """
-    start_date, end_date = _check_times(
-        start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
-    )
+    # start_date, end_date = _check_times(
+    #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
+    # )
 
     # check if trying to subset lon and lat
     if lat_bnds is not None or lon_bnds is not None:
         if hasattr(da, "lon") and hasattr(da, "lat"):
-            if lon_bnds is None:
-                lon_bnds = [da.lon.min(), da.lon.max()]
+            # if lon_bnds is None:
+            #     lon_bounds = [da.lon.min(), da.lon.max()]
 
-            lon_bnds = _check_lons(da, np.asarray(lon_bnds))
+            # lon_bnds = _check_lons(da, lon_bounds=np.asarray(lon_bnds))
 
             lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
 
@@ -125,15 +188,9 @@ def subset_bbox(
     return da
 
 
-def subset_gridpoint(
-    da,
-    lon=None,
-    lat=None,
-    start_date=_DEFAULT_DATE,
-    end_date=_DEFAULT_DATE,
-    start_yr=None,
-    end_yr=None,
-):
+@check_lons
+@check_dates
+def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by dates
 
@@ -185,16 +242,13 @@ def subset_gridpoint(
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
     """
-    [start_date, end_date] = _check_times(
-        start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
-    )
 
     # check if trying to subset lon and lat
     if lat is not None and lon is not None:
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
-            # adjust negative/positive longitudes if necessary
-            lon = _check_lons(da, lon)
+            # # adjust negative/positive longitudes if necessary
+            # lon = _check_lons(da, lon)
 
             dims = list(da.dims)
 
@@ -235,9 +289,7 @@ def subset_gridpoint(
     return da
 
 
-def subset_time(
-    da, start_date=_DEFAULT_DATE, end_date=_DEFAULT_DATE, start_yr=None, end_yr=None
-):
+def subset_time(da, start_date=None, end_date=None):
     """Subset input data based on start and end years
 
     Return a subsetted data array (or dataset) for dates falling
@@ -255,12 +307,6 @@ def subset_time(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
-    start_yr : int
-      Deprecated --
-      First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated --
-      Last year of the subset. Defaults to last year of input data-array.
 
     Returns
     -------
@@ -288,9 +334,6 @@ def subset_time(
 
 
     """
-    start_date, end_date = _check_times(
-        start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
-    )
 
     if not start_date:
         # use string for first year only - .sel() will include all time steps
@@ -303,34 +346,3 @@ def subset_time(
         raise ValueError("Start date is after end date.")
 
     return da.sel(time=slice(start_date, end_date))
-
-
-def _check_lons(da, lon_bnds):
-    if np.all(da.lon > 0) and np.any(lon_bnds < 0):
-        if isinstance(lon_bnds, float):
-            lon_bnds += 360
-        else:
-            lon_bnds[lon_bnds < 0] += 360
-    if np.all(da.lon < 0) and np.any(lon_bnds > 0):
-        if isinstance(lon_bnds, float):
-            lon_bnds -= 360
-        else:
-            lon_bnds[lon_bnds < 0] -= 360
-
-    return lon_bnds
-
-
-def _check_times(start_date=None, end_date=None, end_yr=None, start_yr=None):
-    if start_date == _DEFAULT_DATE or end_date == _DEFAULT_DATE:
-        warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
-        if start_date == _DEFAULT_DATE:
-            if isinstance(start_yr, int):
-                start_date = str(start_yr)
-            else:
-                start_date = start_yr
-        if end_date == _DEFAULT_DATE:
-            if isinstance(end_yr, int):
-                end_date = str(end_yr)
-            else:
-                end_date = end_yr
-    return start_date, end_date
