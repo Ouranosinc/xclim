@@ -384,7 +384,7 @@ class TestSubsetBbox:
                 end_date="2055",
             )
         assert (
-            'Using "start_yr" and / or "end_yr" (dtype=int) is deprecated. Temporal subsets'
-            ' will soon exclusively support "start_date" and "end_date" strings w/ formats of '
-            ' "%Y", "%Y-%m" or "%Y-%m-%d".' not in [q.message for q in record]
+            '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets will soon exclusively'
+            ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
+            not in [q.message for q in record]
         )

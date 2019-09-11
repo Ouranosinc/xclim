@@ -12,12 +12,12 @@ def check_dates(func):
     def func_checker(*args, **kwargs):
 
         _DEPRECATION_MESSAGE = (
-            '"start_yr" and "end_yr" (type: int) are being deprecated. \nTemporal subsets will soon exclusively'
+            '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets will soon exclusively'
             ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
         )
 
         if "start_yr" in kwargs:
-            warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+            warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
             if kwargs["start_yr"] is not None:
                 kwargs["start_date"] = str(kwargs.pop("start_yr"))
             elif kwargs["start_yr"] is None:
@@ -27,7 +27,7 @@ def check_dates(func):
 
         if "end_yr" in kwargs:
             if kwargs["end_yr"] is not None:
-                warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=2)
+                warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
                 kwargs["end_date"] = str(kwargs.pop("end_yr"))
             elif kwargs["end_yr"] is None:
                 kwargs["end_date"] = None
