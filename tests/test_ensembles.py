@@ -347,3 +347,28 @@ class TestEnsembleReduction:
             # as long as the cluster has more than one member the models w/ weight==0 should not be present
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
+
+    def test_kmeans_rsqcutoff_with_graphs(self):
+        ds = xr.open_dataset(self.nc_file)
+
+        # use random state variable to ensure consistent clustering in tests:
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            sel_criteria=ds.data,
+            method={"rsq_cutoff": 0.9},
+            random_state=42,
+            make_graph=True,
+        )
+
+        assert ids == [0, 1, 3, 4, 6, 7, 8, 10, 11, 15, 18, 20, 22]
+        assert len(ids) == 13
+
+        # Test max cluster option
+        [ids, cluster] = ensembles.kmeans_reduce_ensemble(
+            sel_criteria=ds.data,
+            method={"rsq_cutoff": 0.9},
+            random_state=42,
+            make_graph=True,
+            max_clusters=10,
+        )
+        assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
+        assert len(ids) == 10
