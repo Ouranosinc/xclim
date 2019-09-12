@@ -457,8 +457,8 @@ def within_bnds_doy(arr, low, high):
     high : xarray.DataArray
       High bound with dayofyear coordinate.
     """
-    l = reshape_doy(low, arr)
-    h = reshape_doy(high, arr)
+    low = reshape_doy(low, arr)
+    high = reshape_doy(high, arr)
     return (low < arr) * (arr < high)
 
 
@@ -845,13 +845,14 @@ class Indicator:
 
         # Pre-computation validation checks
         for da in das:
-            self.validate(da)
+            self.validate(da, self.flag)
+            # Flag suspicious time series
+            flags = self.validate(da, self.flag)
+            if any(flags.values()):
+                da.attrs["flags"] = ", ".join(
+                    [key for key, val in flags.items() if val]
+                )
         self.cfprobe(*das)
-
-        # Flag suspicious time series
-        flags = self.validate(da, self.flag)
-        if any(flags.values()):
-            da.attrs["flags"] = ", ".join([key for key, val in flags.items() if val])
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(*das, **ba.kwargs)
@@ -887,11 +888,9 @@ class Indicator:
 
     def json(self, args=None):
         """Return a dictionary representation of the class.
-
         Notes
         -----
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
-
         """
         names = ["identifier", "var_name", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
@@ -926,7 +925,6 @@ class Indicator:
 
     def format(self, attrs, args=None):
         """Format attributes including {} tags with arguments.
-
         Parameters
         ----------
         attrs: dict
@@ -971,8 +969,10 @@ class Indicator:
         return reduce(np.logical_or, miss)
 
     def validate(self, da, conditions):
-        """Flag the output as suspect if one of the conditions are not met.
-        """
+        """Validate input data requirements. Raise error and return suspect flags if one of the
+         conditions are not met."""
+        checks.assert_daily(da)
+
         flags = {}
         for key, func in conditions.items():
             flags[key] = func(da)

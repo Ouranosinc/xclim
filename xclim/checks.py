@@ -8,8 +8,7 @@ import pandas as pd
 import xarray as xr
 
 from . import run_length as rl
-from .utils import clim_mean_doy
-from .utils import within_bnds_doy
+from . import utils
 
 logging.captureWarnings(True)
 
@@ -64,8 +63,8 @@ def assert_daily(var):
 
 def outside_climatology(arr, n=5):
     """Check if any value is outside `n` standard deviations from the day of year mean."""
-    mu, sig = clim_mean_doy(arr, window=5)
-    return not within_bnds_doy(arr, mu + n * sig, mu - n * sig).all()
+    mu, sig = utils.clim_mean_doy(arr, window=5)
+    return not utils.within_bnds_doy(arr, mu + n * sig, mu - n * sig).all()
 
 
 def icclim_precipitation_flags():
