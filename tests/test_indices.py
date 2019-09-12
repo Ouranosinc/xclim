@@ -257,15 +257,29 @@ class TestDaysOverPrecipThresh:
             out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
         )
 
-    def test_float(self, pr_series):
+    def test_quantile(self, pr_series):
         a = np.zeros(365)
         a[:8] = np.arange(8)
         pr = pr_series(a, start="1/1/2000")
 
-        out = xci.days_over_precip_thresh(pr, "5 kg/m**2/s", thresh="2 kg/m**2/s")
+        # Create synthetic percentile
+        pr0 = pr_series(np.ones(365) * 5, start="1/1/2000")
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
         np.testing.assert_array_almost_equal(
             out[0], 2
         )  # Only days 6 and 7 meet criteria.
+
+    def test_nd(self, pr_ndseries):
+        pr = pr_ndseries(np.ones((300, 2, 3)))
+        pr0 = pr_ndseries(np.zeros((300, 2, 3)))
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="0.5 kg/m**2/s")
+        np.testing.assert_array_almost_equal(out, 300)
 
 
 class TestFreshetStart:

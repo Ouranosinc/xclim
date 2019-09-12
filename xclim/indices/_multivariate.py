@@ -558,7 +558,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
-    per : xarray.DataArray or str
+    per : xarray.DataArray
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
@@ -570,10 +570,6 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     xarray.DataArray
       Count of days with daily precipitation above the given percentile [days]
 
-    Notes
-    -----
-    The percentile should be computed for a 5 day window centered on each calendar day for a reference period.
-
     Example
     -------
     >>> p75 = percentile_doy(historical_pr, per=0.75)
@@ -583,7 +579,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     thresh = utils.convert_units_to(thresh, pr)
 
     tp = np.maximum(per, thresh)
-    if isinstance(per, xr.DataArray):
+    if "dayofyear" in per.coords:
         # Create time series out of doy values.
         tp = utils.resample_doy(tp, pr)
 
@@ -606,7 +602,7 @@ def fraction_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day].
-    per : xarray.DataArray or str
+    per : xarray.DataArray
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
     thresh : str
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
@@ -618,18 +614,12 @@ def fraction_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
     xarray.DataArray
       Fraction of precipitation over threshold during wet days days.
 
-    Notes
-    -----
-    The percentile should be computed for a 5 day window centered on each calendar day for a reference period.
     """
-    if "dayofyear" not in per.coords.keys():
-        raise AttributeError("percentile should have dayofyear coordinates.")
-
     per = utils.convert_units_to(per, pr)
     thresh = utils.convert_units_to(thresh, pr)
 
     tp = np.maximum(per, thresh)
-    if isinstance(per, xr.DataArray):
+    if "dayofyear" in per.coords:
         # Create time series out of doy values.
         tp = utils.resample_doy(tp, pr)
 
@@ -973,9 +963,6 @@ def warm_spell_duration_index(tasmax, tx90, window=6, freq="YS"):
     precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
-    # The day of year value of the tasmax series.
-    doy = tasmax.indexes["time"].dayofyear
-
     # Create time series out of doy values.
     thresh = utils.resample_doy(tx90, tasmax)
 

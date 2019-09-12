@@ -497,7 +497,7 @@ def resample_doy(doy, arr):
       An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
       `doy`.
     """
-    if "dayofyear" not in doy.coords.keys():
+    if "dayofyear" not in doy.coords:
         raise AttributeError("`doy` should have dayofyear coordinates.")
 
     # Adjust calendar
