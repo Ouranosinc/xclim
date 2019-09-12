@@ -63,6 +63,10 @@ matrix:
     - env: TOXENV=py36
       name: "Python3.6 (Linux)"
       python: 3.6
+    - env: TOXENV=py36-MPL
+      name: "Python3.6 (Linux) with Matplotlib"
+      python: 3.6
+      services: xvfb
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5
