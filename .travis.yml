@@ -67,7 +67,7 @@ matrix:
       name: "Python3.6 (Linux) with Matplotlib"
       python: 3.6
       services: xvfb
-      script: xvfb-run tox -e $TOXENV
+      script: xvfb-run -a tox -e $TOXENV
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5

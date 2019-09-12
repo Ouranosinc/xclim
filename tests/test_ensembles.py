@@ -350,7 +350,9 @@ class TestEnsembleReduction:
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
 
-    @pytest.mark.skipif('matplotlib.pyplot' not in sys.modules, reason="matplotlib.pyplot is required")
+    @pytest.mark.skipif(
+        "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
+    )
     def test_kmeans_rsqcutoff_with_graphs(self):
         ds = xr.open_dataset(self.nc_file)
 
