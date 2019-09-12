@@ -15,9 +15,11 @@
 # a first line of defense.
 import glob
 import os
+import sys
 
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from xclim import ensembles
@@ -348,6 +350,7 @@ class TestEnsembleReduction:
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
 
+    @pytest.mark.skipif('matplotlib.pyplot' not in sys.modules, reason="matplotlib.pyplot is required")
     def test_kmeans_rsqcutoff_with_graphs(self):
         ds = xr.open_dataset(self.nc_file)
 
