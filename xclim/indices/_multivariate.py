@@ -572,7 +572,7 @@ def days_over_precip_thresh(pr, per, thresh="1 mm/day", freq="YS"):
 
     Example
     -------
-    >>> p75 = percentile_doy(historical_pr, per=0.75)
+    >>> p75 = historical_pr.quantile(.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
     per = utils.convert_units_to(per, pr)
