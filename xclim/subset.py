@@ -7,9 +7,15 @@ import numpy as np
 import xarray
 from pyproj import Geod
 
+__all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
+
 
 def check_dates(func):
     def func_checker(*args, **kwargs):
+        """
+        A decorator to reformat the deprecated `start_yr` and `end_yr` calls to subset functions and return
+         `start_date` and `end_date` to kwargs. Deprecation warnings are raised for deprecated usage.
+        """
 
         _DEPRECATION_MESSAGE = (
             '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets will soon exclusively'
@@ -41,6 +47,12 @@ def check_dates(func):
 
 def check_lons(func):
     def func_checker(*args, **kwargs):
+        """
+        A decorator to reformat user-specified lon values based on the lon dimensions of a supplied xarray
+         DataSet or DataArray. Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs
+         with min() and max() values.
+        """
+
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
         elif "lon" in kwargs:
@@ -68,21 +80,6 @@ def check_lons(func):
     return func_checker
 
 
-# def _check_lons(da, lon_bnds):
-#     if np.all(da.lon > 0) and np.any(lon_bnds < 0):
-#         if isinstance(lon_bnds, float):
-#             lon_bnds += 360
-#         else:
-#             lon_bnds[lon_bnds < 0] += 360
-#     if np.all(da.lon < 0) and np.any(lon_bnds > 0):
-#         if isinstance(lon_bnds, float):
-#             lon_bnds -= 360
-#         else:
-#             lon_bnds[lon_bnds < 0] -= 360
-#
-#     return lon_bounds
-
-
 @check_lons
 @check_dates
 def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None):
@@ -95,8 +92,8 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     ----------
     da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon_bnds : List[float]
-      List of maximum and minimum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
+    lon_bnds : Union[numpy.array, List[float]]
+      List of minimum and maximum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
     lat_bnds :  List[float]
       List maximum and minimum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
     start_date : str
@@ -145,11 +142,6 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     # check if trying to subset lon and lat
     if lat_bnds is not None or lon_bnds is not None:
         if hasattr(da, "lon") and hasattr(da, "lat"):
-            # if lon_bnds is None:
-            #     lon_bounds = [da.lon.min(), da.lon.max()]
-
-            # lon_bnds = _check_lons(da, lon_bounds=np.asarray(lon_bnds))
-
             lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
 
             if lat_bnds is None:
@@ -247,9 +239,6 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
     if lat is not None and lon is not None:
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
-            # # adjust negative/positive longitudes if necessary
-            # lon = _check_lons(da, lon)
-
             dims = list(da.dims)
 
             # if 'lon' and 'lat' are present as data dimensions use the .sel method.
