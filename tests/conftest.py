@@ -83,6 +83,28 @@ def pr_series():
 
 
 @pytest.fixture
+def pr_ndseries():
+    def _pr_series(values, start="1/1/2000"):
+        nt, nx, ny = np.atleast_3d(values).shape
+        time = pd.date_range(start, periods=nt, freq=pd.DateOffset(days=1))
+        x = np.arange(nx)
+        y = np.arange(ny)
+        return xr.DataArray(
+            values,
+            coords=[time, x, y],
+            dims=("time", "x", "y"),
+            name="pr",
+            attrs={
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+            },
+        )
+
+    return _pr_series
+
+
+@pytest.fixture
 def q_series():
     def _q_series(values, start="1/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
