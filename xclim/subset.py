@@ -65,12 +65,12 @@ def check_lons(func):
                 kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
                 kwargs[lon] = np.asarray(kwargs[lon])
-            if np.all(args[0].lon > 0) and np.any(kwargs[lon] < 0):
+            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] += 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] += 360
-            if np.all(args[0].lon < 0) and np.any(kwargs[lon] > 0):
+            if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] -= 360
                 else:
