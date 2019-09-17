@@ -460,10 +460,10 @@ def kmeans_reduce_ensemble(
         results indicate a higher value. Defaults to N.
 
     variable_weights: xr.DataArray of size P  --  This weighting can be used to influence of weight of the climate
-        indices on the clustering itself
+        indices (criteria dimension) on the clustering itself
 
-    model_weights: xr.DataArray of size N  --  This weighting can be used to influence which model is selected within
-        each cluster. This parameter has no influence on the clustering itself.
+    model_weights: xr.DataArray of size N  --  This weighting can be used to influence which realization is selected
+        from within each cluster. This parameter has no influence on the clustering itself.
 
     sample_weights: xr.DataArray of size N  --  sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
         used to influence of weight of simulations on the clustering itself.
@@ -482,7 +482,7 @@ def kmeans_reduce_ensemble(
 
     out : list -- Selected model indexes (positions)
     clusters : KMeans clustering results
-    fig_data : Dictionary of input data for creating R² profile plot. 'None' only when graph=True
+    fig_data : Dictionary of input data for creating R² profile plot. 'None' when graph=False
 
 
 
@@ -513,8 +513,12 @@ def kmeans_reduce_ensemble(
     >>> crit = xr.concat((dTas,dPr), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
-    >>> [ids, cluster] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
+    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
     """
+    if make_graph:
+        fig_data = {}
+    else:
+        fig_data = None
     data = data.transpose("realization", "criteria")
     # initialize the variables
     n_sim = np.shape(data)[0]  # number of simulations
@@ -528,7 +532,7 @@ def kmeans_reduce_ensemble(
     if sample_weights is None:
         sample_weights = np.ones(n_sim)
     else:
-        # TODO KMeans sample weights of zero cause errors occasionally - set to 1e-15 for now
+        # KMeans sample weights of zero cause errors occasionally - set to 1e-15 for now
         sample_weights[sample_weights == 0] = 1e-15
     if model_weights is None:
         model_weights = np.ones(n_sim)
@@ -547,19 +551,20 @@ def kmeans_reduce_ensemble(
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
     if make_graph:
+        fig_data["rsq"] = rsq
         # make a plot of rsq profile
-        plt.figure(figsize=(10, 6))
-        plt.plot(
-            range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4
-        )
-        # plt.plot(np.arange(1.5, n_sim + 0.5), np.diff(rsq), 'r', label='ΔR²')
-        axes = plt.gca()
-        axes.set_xlim([0, n_sim])
-        axes.set_ylim([0, 1])
-        plt.xlabel("Number of groups")
-        plt.ylabel("R²")
-        plt.legend(loc="lower right")
-        plt.title("R² of groups vs. full ensemble")
+        # plt.figure(figsize=(10, 6))
+        # plt.plot(
+        #     range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4
+        # )
+        # # plt.plot(np.arange(1.5, n_sim + 0.5), np.diff(rsq), 'r', label='ΔR²')
+        # axes = plt.gca()
+        # axes.set_xlim([0, n_sim])
+        # axes.set_ylim([0, 1])
+        # plt.xlabel("Number of groups")
+        # plt.ylabel("R²")
+        # plt.legend(loc="lower right")
+        # plt.title("R² of groups vs. full ensemble")
 
     n_clusters = _get_nclust(method, n_sim, rsq, make_graph, max_clusters)
 
