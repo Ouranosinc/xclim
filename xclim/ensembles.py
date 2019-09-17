@@ -407,7 +407,7 @@ def _calc_perc(arr, p):
 
 
 def kmeans_reduce_ensemble(
-    sel_criteria,
+    data,
     *,
     method=None,
     max_clusters=None,
@@ -417,43 +417,53 @@ def kmeans_reduce_ensemble(
     random_state=None,
     make_graph=make_graph
 ):
-    """Return a sample (selection) of ensemble members using k-means clustering. The algorithm attempts to
+    """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
-    uncertainty (variance) in a N-dimensional data space (sel_criteria). K-Means clustering is carried out on the input
-    selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups
-    Subsequently a single representative simulation is identified from each group.
+    uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
+    Subsequently a single representative simulation is retained from each group.
 
 
     Parameters
     ----------
-    sel_criteria : xr.DataArray (NxP array)  ---  Selecton criteria data. These are the values used for clustering.
-        N is the number of realizations in the original ensemble and P the number of variables/indicators used in
-         the grouping algorithm
+    data : xr.DataArray  ---  Selecton criteria data : 2-D data-array with dimensions 'realization' (N) and
+        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        ensemble members and criteria the variables/indicators used in the grouping algorithm.
 
-    method : dict. Dictionary defining selection method and associated value (when required). One of the following:
+    method : dict. Dictionary defining selection method and associated value when required. One of the following:
 
-        {'rsq_optimize':None} : Default - Optimize the cost (number of ensemble members) versus benefit
-            (variance coverage) relationship. For details see supporting information (S2 text) in
-            https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+        'rsq_optimize' : Default
+            Calculate coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
+            an optimal number of clusters that balances cost / benefit tradeoffs. See supporting
+            information S2 text in https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
 
-        {'rsq_cutoff': val} : threshold Coefficient of variation (R² value) above which to cover with the
-            grouping. val : float between 0 and 1. The R² indicates the proportion of the total variance in sel_criteria
-            that is explained by the grouping
+            method={'rsq_optimize':None}
 
-        {'n_clusters': val} : Create a user determined number of clusters. val : integer between 1 and N
+        'rsq_cutoff' :
+            Calculate Coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
+            the minimum numbers of clusters needed for R² > val.
+
+            val : float between 0 and 1. R² value that must be exceeded by clustering results.
+
+            method={'rsq_cutoff': val}
+
+        'n_clusters' :
+            Create a user determined number of clusters.
+
+            val : integer between 1 and N
+
+            method={'n_clusters': val}
 
     Optional parameters:
     max_clusters : integer  --  Maximum number of members to include in the output ensemble selection.
         When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
-        results indicate a higher value. Defaults to N (number ensemble members)
+        results indicate a higher value. Defaults to N.
 
     variable_weights: xr.DataArray of size P  --  This weighting can be used to influence of weight of the climate
         indices on the clustering itself
 
-
-
     model_weights: xr.DataArray of size N  --  This weighting can be used to influence which model is selected within
-        each cluster. This parameter has no influence whatsoever on the clustering itself.
+        each cluster. This parameter has no influence on the clustering itself.
 
     sample_weights: xr.DataArray of size N  --  sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
         used to influence of weight of simulations on the clustering itself.
@@ -463,7 +473,7 @@ def kmeans_reduce_ensemble(
         initialization. Use an int to make the randomness deterministic.
         see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
 
-    graph: boolean --  displays a plot of R² vs. the number of clusters
+    graph: boolean --  output dictionary of input for displays a plot of R² vs. the number of clusters
 
 
 
@@ -472,6 +482,7 @@ def kmeans_reduce_ensemble(
 
     out : list -- Selected model indexes (positions)
     clusters : KMeans clustering results
+    fig_data : Dictionary of input data for creating R² profile plot. 'None' only when graph=True
 
 
 
@@ -498,20 +509,20 @@ def kmeans_reduce_ensemble(
     >>> FutTas = ensTas.tas.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])
     >>> dTas = FutTas - HistTas
 
-    # Create selection criteria xr.DataArray - Ensure ensemble object dim 'realizations' is first dim for kmeans
-    >>> crit = xr.concat((dTas,dPr), dim='criteria').transpose('realization','criteria')
+    # Create selection criteria xr.DataArray
+    >>> crit = xr.concat((dTas,dPr), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
     >>> [ids, cluster] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
     """
-
+    data = data.transpose("realization", "criteria")
     # initialize the variables
-    n_sim = np.shape(sel_criteria)[0]  # number of simulations
-    n_idx = np.shape(sel_criteria)[1]  # number of indicators
+    n_sim = np.shape(data)[0]  # number of simulations
+    n_idx = np.shape(data)[1]  # number of indicators
 
     # normalize the data matrix
     z = xr.DataArray(
-        scipy.stats.zscore(sel_criteria, axis=0, ddof=1)
+        scipy.stats.zscore(data, axis=0, ddof=1), coords=data.coords
     )  # ddof=1 to be the same as Matlab's zscore
 
     if sample_weights is None:
