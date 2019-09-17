@@ -1,7 +1,5 @@
-import datetime
 import warnings
 from typing import List
-from typing import Union
 
 import numpy as np
 import xarray
@@ -329,6 +327,28 @@ def subset_time(da, start_date=None, end_date=None):
         start_date = da.time.min().dt.strftime("%Y").values
     if not end_date:
         # use string for last year only - .sel() will include all time steps
+        end_date = da.time.max().dt.strftime("%Y").values
+
+    try:
+        da.time.sel(time=start_date)
+    except KeyError:
+        warnings.warn(
+            '"start_date" not found within input date time range - Defaulting to minimum time step in '
+            "the dataset",
+            Warning,
+            stacklevel=2,
+        )
+        # raise Warning('"start_date" not found within input date time range - Defaulting to minimum time step in the dataset')
+        start_date = da.time.min().dt.strftime("%Y").values
+    try:
+        da.time.sel(time=end_date)
+    except KeyError:
+        warnings.warn(
+            '"end_date" not found within input date time range - Defaulting to maximum time step in '
+            "the dataset",
+            Warning,
+            stacklevel=2,
+        )
         end_date = da.time.max().dt.strftime("%Y").values
 
     if da.time.sel(time=start_date).min() > da.time.sel(time=end_date).max():
