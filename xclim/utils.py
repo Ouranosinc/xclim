@@ -452,7 +452,7 @@ def _interpolate_doy_calendar(source, doy_max):
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
-    doy_max_source = source.dayofyear.max()
+    doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
     tmp = source.interpolate_na(dim="dayofyear")
@@ -958,7 +958,7 @@ def parse_doc(doc):
             out["title"], out["abstract"] = content
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i : i + 2]
+        header, content = sections[i: i + 2]
 
         if header in ["Notes", "References"]:
             out[header.lower()] = content.replace("\n    ", "\n")
