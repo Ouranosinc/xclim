@@ -26,8 +26,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.utils import percentile_doy
 
-xr.set_options(enable_cftimeindex=True)
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
