@@ -95,7 +95,6 @@ def check_lons(func):
          DataSet or DataArray. Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs
          with min() and max() values.
         """
-
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
         elif "lon" in kwargs:
@@ -157,7 +156,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       subsetted data array or dataset
 
     Examples
@@ -178,10 +177,6 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03-13',end_date='1990-08-17')
     """
-    # start_date, end_date = _check_times(
-    #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
-    # )
-
     # check if trying to subset lon and lat
     if lat_bnds is not None or lon_bnds is not None:
         if hasattr(da, "lon") and hasattr(da, "lat"):
@@ -258,7 +253,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       Subsetted data array or dataset
 
     Examples
@@ -343,7 +338,7 @@ def subset_time(da, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       Subsetted data array or dataset
 
     Examples
