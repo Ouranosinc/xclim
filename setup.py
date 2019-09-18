@@ -30,7 +30,7 @@ requirements = [
     "xarray>=0.12.2",
     "pyproj>=1.9.5.1",
     "pint>=0.8",
-    "boltons>=18.0",
+    "boltons>=19.0",
 ]
 
 setup_requirements = ["pytest-runner"]
