@@ -188,8 +188,9 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
         if lat_bnds is not None:
             lat_cond = (da.lat >= lat_b[0]) & (da.lat <= lat_b[1])
 
-            # Mask coordinates outside the bounding box
-            da = da.where(lon_cond & lat_cond, drop=True)
+        # Mask coordinates outside the bounding box
+        da = da.where(lon_cond & lat_cond, drop=True)
+
     else:
         raise (
             Exception(
