@@ -145,10 +145,16 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     if ("lat" in da.dims) or ("lon" in da.dims):
 
         if "lat" in da.dims and lat_bnds is not None:
-            da = da.sel(lat=slice(*lat_bnds))
+            if np.all(da.lat.diff(dim="lat") < 0):
+                da = da.sel(lat=slice(*np.flip(lat_bnds)))
+            else:
+                da = da.sel(lat=slice(*lat_bnds))
 
         if "lon" in da.dims and lon_bnds is not None:
-            da = da.sel(lon=slice(*lon_bnds))
+            if np.all(da.lon.diff(dim="lon") < 0):
+                da = da.sel(lon=slice(*np.flip(lon_bnds)))
+            else:
+                da = da.sel(lon=slice(*lon_bnds))
 
     # Curvilinear case (lat and lon are coordinates, not dimensions)
     elif ("lat" in da.coords) and ("lon" in da.coords):
@@ -194,7 +200,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     else:
         raise (
             Exception(
-                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or data variables.'
+                'subset_bbox() requires input data with "lon" and "lat" dimensions or coordinates'
             )
         )
 

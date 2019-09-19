@@ -259,9 +259,11 @@ class TestSubsetBbox:
         da = xr.open_dataset(self.nc_file).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
+        assert np.all(out.lat.values >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
 
         da = xr.open_dataset(self.nc_poslons).tas
@@ -276,6 +278,8 @@ class TestSubsetBbox:
             start_date=str(yr_st),
             end_date=str(yr_ed),
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -286,6 +290,8 @@ class TestSubsetBbox:
         out = subset.subset_bbox(
             da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -296,6 +302,8 @@ class TestSubsetBbox:
         out = subset.subset_bbox(
             da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -312,16 +320,21 @@ class TestSubsetBbox:
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
         # Check only non-nans gridcells using mask
         mask1 = ~np.isnan(out.sel(time=out.time[0]))
-
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon.values[mask1] >= np.min(self.lon))
         assert np.all(out.lon.values[mask1] <= np.max(self.lon))
         assert np.all(out.lat.values[mask1] >= np.min(self.lat))
         assert np.all(out.lat.values[mask1] <= np.max(self.lat))
 
+    # inverted lats or lons
+
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(np.asarray(self.lon) + 360))
         assert np.all(out.lon <= np.max(np.asarray(self.lon) + 360))
         assert np.all(out.lat >= np.min(self.lat))
@@ -339,6 +352,8 @@ class TestSubsetBbox:
         out = subset.subset_bbox(
             da, lon_bnds=self.lon, lat_bnds=self.lat, start_date="2050", end_date="2059"
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -357,6 +372,8 @@ class TestSubsetBbox:
             start_date="2050-02-05",
             end_date="2059-07-15",
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
