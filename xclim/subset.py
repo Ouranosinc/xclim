@@ -191,7 +191,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     else:
         raise (
             Exception(
-                'subset_bbox() requires input data with "lon" and "lat" dimensions or coordinates'
+                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or variables'
             )
         )
 
