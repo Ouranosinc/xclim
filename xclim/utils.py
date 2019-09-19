@@ -958,7 +958,7 @@ def parse_doc(doc):
             out["title"], out["abstract"] = content
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i: i + 2]
+        header, content = sections[i : i + 2]
 
         if header in ["Notes", "References"]:
             out[header.lower()] = content.replace("\n    ", "\n")
