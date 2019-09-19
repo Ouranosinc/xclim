@@ -160,22 +160,16 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     elif ("lat" in da.coords) and ("lon" in da.coords):
 
         # Define a bounding box along the dimensions
-        # This is an optimization, a simple `where` works but takes longer.
+        # This is an optimization, a simple `where` would work but take longer for large hi-res grids.
         if lat_bnds is not None:
-            lat_ext = da.lat.min(), da.lat.max()
-            lat_b = [
-                b if b is not None else lat_ext[i] for (i, b) in enumerate(lat_bnds)
-            ]
-            lat_cond = (da.lat >= lat_b[0]) & (da.lat <= lat_b[1])
+            lat_b = assign_bounds(lat_bnds, da.lat)
+            lat_cond = in_bounds(lat_b, da.lat)
         else:
             lat_cond = True
 
         if lon_bnds is not None:
-            lon_ext = da.lon.min(), da.lon.max()
-            lon_b = [
-                b if b is not None else lon_ext[i] for (i, b) in enumerate(lon_bnds)
-            ]
-            lon_cond = (da.lon >= lon_b[0]) & (da.lon <= lon_b[1])
+            lon_b = assign_bounds(lon_bnds, da.lon)
+            lon_cond = in_bounds(lon_b, da.lon)
         else:
             lon_cond = True
 
@@ -188,11 +182,11 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
         da = da.sel(**args)
 
         # Recompute condition on cropped coordinates
-        if lon_bnds is not None:
-            lon_cond = (da.lon >= lon_b[0]) & (da.lon <= lon_b[1])
-
         if lat_bnds is not None:
-            lat_cond = (da.lat >= lat_b[0]) & (da.lat <= lat_b[1])
+            lat_cond = in_bounds(lat_b, da.lat)
+
+        if lon_bnds is not None:
+            lon_cond = in_bounds(lon_b, da.lon)
 
         # Mask coordinates outside the bounding box
         da = da.where(lon_cond & lat_cond, drop=True)
@@ -208,6 +202,34 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
         da = subset_time(da, start_date=start_date, end_date=end_date)
 
     return da
+
+
+def assign_bounds(bounds, coord):
+    """Replace unset boundaries by the minimum and maximum coordinates.
+
+    Parameters
+    ----------
+    bounds : [Union[float, None], Union[float, None]]
+      Boundaries.
+    coord : xr.Coordinate
+      Grid coordinates.
+
+    Returns
+    -------
+    list
+      Lower and upper grid boundaries.
+
+    """
+    bn, bx = bounds
+    bn = bn if bn is not None else coord.min()
+    bx = bx if bx is not None else coord.max()
+    return bn, bx
+
+
+def in_bounds(bounds, coord):
+    """Check which coordinates are within the boundaries."""
+    bn, bx = bounds
+    return coord >= bn & coord <= bx
 
 
 @check_lons
