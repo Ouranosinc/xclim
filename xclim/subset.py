@@ -1,5 +1,6 @@
 import warnings
 from typing import List
+
 import numpy as np
 import xarray
 from pyproj import Geod
@@ -231,6 +232,7 @@ def in_bounds(bounds, coord):
 
 
 def _check_desc_coords(coord, bounds, dim):
+    """if dataset coordinates are descending reverse bounds"""
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
