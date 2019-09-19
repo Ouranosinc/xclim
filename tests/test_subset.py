@@ -327,7 +327,24 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1] >= np.min(self.lat))
         assert np.all(out.lat.values[mask1] <= np.max(self.lat))
 
-    # inverted lats or lons
+    # test datasets with descending coords
+    def test_inverted_coords(self):
+        lon = np.linspace(-90, -60, 200)
+        lat = np.linspace(40, 80, 100)
+        da = xr.Dataset(
+            data_vars=None, coords={"lon": np.flip(lon), "lat": np.flip(lat)}
+        )
+        da["data"] = xr.DataArray(
+            np.random.rand(lon.size, lat.size), dims=["lon", "lat"]
+        )
+
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(np.asarray(self.lon)))
+        assert np.all(out.lon <= np.max(np.asarray(self.lon)))
+        assert np.all(out.lat >= np.min(self.lat))
+        assert np.all(out.lat <= np.max(self.lat))
 
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas

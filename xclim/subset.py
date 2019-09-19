@@ -1,8 +1,5 @@
-import datetime
 import warnings
 from typing import List
-from typing import Union
-
 import numpy as np
 import xarray
 from pyproj import Geod
@@ -75,6 +72,7 @@ def check_lons(func):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
+
         return func(*args, **kwargs)
 
     return func_checker
@@ -145,19 +143,17 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     if ("lat" in da.dims) or ("lon" in da.dims):
 
         if "lat" in da.dims and lat_bnds is not None:
-            if np.all(da.lat.diff(dim="lat") < 0):
-                da = da.sel(lat=slice(*np.flip(lat_bnds)))
-            else:
-                da = da.sel(lat=slice(*lat_bnds))
+            lat_bnds = _check_desc_coords(coord=da.lat, bounds=lat_bnds, dim="lat")
+            da = da.sel(lat=slice(*lat_bnds))
 
         if "lon" in da.dims and lon_bnds is not None:
-            if np.all(da.lon.diff(dim="lon") < 0):
-                da = da.sel(lon=slice(*np.flip(lon_bnds)))
-            else:
-                da = da.sel(lon=slice(*lon_bnds))
+            lon_bnds = _check_desc_coords(coord=da.lon, bounds=lon_bnds, dim="lon")
+            da = da.sel(lon=slice(*lon_bnds))
 
     # Curvilinear case (lat and lon are coordinates, not dimensions)
-    elif ("lat" in da.coords) and ("lon" in da.coords):
+    elif (("lat" in da.coords) and ("lon" in da.coords)) or (
+        ("lat" in da.data_vars) and ("lon" in da.data_vars)
+    ):
 
         # Define a bounding box along the dimensions
         # This is an optimization, a simple `where` would work but take longer for large hi-res grids.
@@ -220,6 +216,8 @@ def assign_bounds(bounds, coord):
       Lower and upper grid boundaries.
 
     """
+    if bounds[0] > bounds[1]:
+        bounds = np.flip(bounds)
     bn, bx = bounds
     bn = bn if bn is not None else coord.min()
     bx = bx if bx is not None else coord.max()
@@ -229,7 +227,13 @@ def assign_bounds(bounds, coord):
 def in_bounds(bounds, coord):
     """Check which coordinates are within the boundaries."""
     bn, bx = bounds
-    return coord >= bn & coord <= bx
+    return (coord >= bn) & (coord <= bx)
+
+
+def _check_desc_coords(coord, bounds, dim):
+    if np.all(coord.diff(dim=dim) < 0):
+        bounds = np.flip(bounds)
+    return bounds
 
 
 @check_lons
