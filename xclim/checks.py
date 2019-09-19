@@ -34,7 +34,7 @@ def check_valid(var, key, expected):
         e = "Variable does not have a `{}` attribute.".format(key)
         warn(e)
     elif att != expected:
-        e = "Variable has a non-conforming {}. Got `{}`, expected `{}`".format(
+        e = "Variable has a non-conforming {}: Got `{}`, expected `{}`".format(
             key, att, expected
         )
         warn(e)
@@ -163,7 +163,7 @@ def valid_daily_min_temperature(comp, units="K"):
     def func(tasmin, *args, **kwds):
         check_valid_temperature(tasmin, units)
         check_valid(tasmin, "cell_methods", "time: minimum within days")
-        return comp(tasmin, **kwds)
+        return comp(tasmin, *args, **kwds)
 
     return func
 

@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from xclim import run_length as rl
@@ -187,6 +188,7 @@ class TestWindowedRunCount:
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
 
 
+@pytest.mark.skip
 class TestSuspiciousRun:
     def test_simple(self):
         assert False

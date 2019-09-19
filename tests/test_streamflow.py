@@ -46,7 +46,7 @@ class TestStats:
 class TestFit:
     def test_simple(self, ndq_series):
         ts = streamflow.stats(ndq_series, freq="YS", op="max")
-        p = streamflow.fit(ts, dist="gumbel_r")
+        p = streamflow.fit(ts)  # , dist="gumbel_r")
         assert p.attrs["estimator"] == "Maximum likelihood"
 
 
