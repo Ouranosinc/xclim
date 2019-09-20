@@ -23,6 +23,7 @@ History
 * Added variable thresholds for tasmax and tasmin in daily_freezethaw_events.
 * Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting
 * Clean-up of day-of-year resampling. Precipitation percentile threshold will work without a doy index.
+* Addressed deprecations for xarray 0.13.0
 
 0.10-beta (2019-06-06)
 ----------------------

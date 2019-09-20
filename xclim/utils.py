@@ -452,7 +452,7 @@ def _interpolate_doy_calendar(source, doy_max):
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
-    doy_max_source = source.dayofyear.max()
+    doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
     tmp = source.interpolate_na(dim="dayofyear")
