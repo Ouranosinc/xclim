@@ -93,9 +93,11 @@ def check_start_end_dates(func):
 def check_lons(func):
     def func_checker(*args, **kwargs):
         """
-        A decorator to reformat user-specified lon values based on the lon dimensions of a supplied xarray
-         DataSet or DataArray. Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs
-         with min() and max() values.
+        A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
+         xarray DataSet or DataArray. Examines an xarray object longitude dimensions and depending on extent
+         (either -180 to +180 or 0 to +360), will reformat user-specified lon values to be synonymous with
+         xarray object boundaries.
+         Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
         """
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
@@ -161,7 +163,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     Returns
     -------
     Union[xarray.DataArray, xarray.DataSet]
-      subsetted data array or dataset
+      Subsetted xarray.DataArray or xarray.DataSet
 
     Examples
     --------
@@ -319,7 +321,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
     Returns
     -------
     Union[xarray.DataArray, xarray.DataSet]
-      Subsetted data array or dataset
+      Subsetted xarray.dataArray or xarray.DataSet
 
     Examples
     --------
@@ -404,7 +406,7 @@ def subset_time(da, start_date=None, end_date=None):
     Returns
     -------
     Union[xarray.DataArray, xarray.DataSet]
-      Subsetted data array or dataset
+      Subsetted xarray.DataArray or xarray.DataSet
 
     Examples
     --------
@@ -424,6 +426,6 @@ def subset_time(da, start_date=None, end_date=None):
 
     Notes
     TODO add notes about different calendar types. Avoid "%Y-%m-31". If you want complete month use only "%Y-%m".
-
     """
+
     return da.sel(time=slice(start_date, end_date))
