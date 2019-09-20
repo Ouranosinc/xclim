@@ -4,7 +4,7 @@ import xarray as xr
 
 
 def create_ensemble(datasets, mf_flag=False):
-    """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
+    """Create an xarray dataset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
     Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
@@ -82,7 +82,7 @@ def ensemble_mean_std_max_min(ens):
     >>> ens_means_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    dsOut = ens.drop(ens.data_vars)
+    dsOut = ens.drop(ens.data_vars.keys())
     for v in ens.data_vars:
 
         dsOut[v + "_mean"] = ens[v].mean(dim="realization")
@@ -141,7 +141,7 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
 
     """
 
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars.keys())
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -286,7 +286,7 @@ def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None)
 
 
 def _calc_percentiles_simple(ens, v, values):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars.keys())
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -317,7 +317,7 @@ def _calc_percentiles_simple(ens, v, values):
 
 
 def _calc_percentiles_blocks(ens, v, values, time_block):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop(ens.data_vars.keys())
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 

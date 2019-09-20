@@ -10,7 +10,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.5.0"
-VERSION = "0.10.11-beta"
+VERSION = "0.10.12-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -30,7 +30,7 @@ requirements = [
     "xarray>=0.12.2",
     "pyproj>=1.9.5.1",
     "pint>=0.8",
-    "boltons>=18.0",
+    "boltons>=19.0",
 ]
 
 setup_requirements = ["pytest-runner"]

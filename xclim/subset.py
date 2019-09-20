@@ -118,6 +118,7 @@ def check_lons(func):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
+
         return func(*args, **kwargs)
 
     return func_checker
@@ -131,6 +132,8 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     Return a subsetted data array for grid points falling within a spatial bounding box
     defined by longitude and latitudinal bounds and for dates falling within provided bounds.
 
+    In the case of a lat-lon rectilinear grid, this simply returns the
+
     Parameters
     ----------
     da : Union[xarray.DataArray, xarray.Dataset]
@@ -138,7 +141,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     lon_bnds : Union[numpy.array, List[float]]
       List of minimum and maximum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
     lat_bnds :  List[float]
-      List maximum and minimum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
+      List of minimum and maximum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
     start_date : str
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
@@ -182,45 +185,102 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
     # )
 
-    # check if trying to subset lon and lat
-    if lat_bnds is not None or lon_bnds is not None:
-        if hasattr(da, "lon") and hasattr(da, "lat"):
-            lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
+    # Rectilinear case (lat and lon are the 1D dimensions)
+    if ("lat" in da.dims) or ("lon" in da.dims):
 
-            if lat_bnds is None:
-                lat_bnds = [da.lat.min(), da.lat.max()]
+        if "lat" in da.dims and lat_bnds is not None:
+            lat_bnds = _check_desc_coords(coord=da.lat, bounds=lat_bnds, dim="lat")
+            da = da.sel(lat=slice(*lat_bnds))
 
-            lat_bnds = np.asarray(lat_bnds)
-            lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
-            dims = list(da.dims)
+        if "lon" in da.dims and lon_bnds is not None:
+            lon_bnds = _check_desc_coords(coord=da.lon, bounds=lon_bnds, dim="lon")
+            da = da.sel(lon=slice(*lon_bnds))
 
-            if "lon" in dims and "lat" in dims:
-                da = da.sel(lon=lon_cond, lat=lat_cond)
-            else:
-                ind = np.where(lon_cond & lat_cond)
-                dims_lonlat = da.lon.dims
-                # reduce size using isel
-                args = {}
-                for d in dims_lonlat:
-                    coords = da[d][ind[dims_lonlat.index(d)]]
-                    args[d] = slice(coords.min(), coords.max())
-                da = da.sel(**args)
-                lon_cond = (da.lon >= lon_bnds.min()) & (da.lon <= lon_bnds.max())
-                lat_cond = (da.lat >= lat_bnds.min()) & (da.lat <= lat_bnds.max())
+    # Curvilinear case (lat and lon are coordinates, not dimensions)
+    elif (("lat" in da.coords) and ("lon" in da.coords)) or (
+        ("lat" in da.data_vars) and ("lon" in da.data_vars)
+    ):
 
-                # mask irregular grid with new lat lon conditions
-                da = da.where(lon_cond & lat_cond, drop=True)
+        # Define a bounding box along the dimensions
+        # This is an optimization, a simple `where` would work but take longer for large hi-res grids.
+        if lat_bnds is not None:
+            lat_b = assign_bounds(lat_bnds, da.lat)
+            lat_cond = in_bounds(lat_b, da.lat)
         else:
-            raise (
-                Exception(
-                    'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or data variables.'
-                )
+            lat_cond = True
+
+        if lon_bnds is not None:
+            lon_b = assign_bounds(lon_bnds, da.lon)
+            lon_cond = in_bounds(lon_b, da.lon)
+        else:
+            lon_cond = True
+
+        # Crop original array using slice, which is faster than `where`.
+        ind = np.where(lon_cond & lat_cond)
+        args = {}
+        for i, d in enumerate(da.lat.dims):
+            coords = da[d][ind[i]]
+            args[d] = slice(coords.min(), coords.max())
+        da = da.sel(**args)
+
+        # Recompute condition on cropped coordinates
+        if lat_bnds is not None:
+            lat_cond = in_bounds(lat_b, da.lat)
+
+        if lon_bnds is not None:
+            lon_cond = in_bounds(lon_b, da.lon)
+
+        # Mask coordinates outside the bounding box
+        da = da.where(lon_cond & lat_cond, drop=True)
+
+    else:
+        raise (
+            Exception(
+                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or variables'
             )
+        )
 
     if start_date or end_date:
         da = subset_time(da, start_date=start_date, end_date=end_date)
 
     return da
+
+
+def assign_bounds(bounds, coord):
+    """Replace unset boundaries by the minimum and maximum coordinates.
+
+    Parameters
+    ----------
+    bounds : [Union[float, None], Union[float, None]]
+      Boundaries.
+    coord : xr.Coordinate
+      Grid coordinates.
+
+    Returns
+    -------
+    list
+      Lower and upper grid boundaries.
+
+    """
+    if bounds[0] > bounds[1]:
+        bounds = np.flip(bounds)
+    bn, bx = bounds
+    bn = bn if bn is not None else coord.min()
+    bx = bx if bx is not None else coord.max()
+    return bn, bx
+
+
+def in_bounds(bounds, coord):
+    """Check which coordinates are within the boundaries."""
+    bn, bx = bounds
+    return (coord >= bn) & (coord <= bx)
+
+
+def _check_desc_coords(coord, bounds, dim):
+    """if dataset coordinates are descending reverse bounds"""
+    if np.all(coord.diff(dim=dim) < 0):
+        bounds = np.flip(bounds)
+    return bounds
 
 
 @check_lons

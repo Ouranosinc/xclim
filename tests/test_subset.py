@@ -20,7 +20,10 @@ class TestSubsetGridPoint:
     nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
 
     def test_dataset(self):
-        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace("tasmax", "tasmin")])
+        da = xr.open_mfdataset(
+            [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
+            combine="by_coords",
+        )
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
@@ -42,7 +45,7 @@ class TestSubsetGridPoint:
         yr_ed = 2059
 
         out = subset.subset_gridpoint(
-            da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed
+            da, lon=lon, lat=lat, start_date=str(yr_st), end_date=str(yr_ed)
         )
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
@@ -51,7 +54,7 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
         # test time only
-        out = subset.subset_gridpoint(da, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_gridpoint(da, start_date=str(yr_st), end_date=str(yr_ed))
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
@@ -233,10 +236,10 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_gridpoint(
-                da, lon=-72.4, lat=46.1, start_yr="2055-03-15", end_yr="2055-03-14"
+                da, lon=-72.4, lat=46.1, start_date="2055-03-15", end_date="2055-03-14"
             )
             subset.subset_gridpoint(
-                da, lon=-72.4, lat=46.1, start_yr="2055", end_yr="2052"
+                da, lon=-72.4, lat=46.1, start_date="2055", end_date="2052"
             )
         da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
         with pytest.raises(Exception):
@@ -251,11 +254,16 @@ class TestSubsetBbox:
         TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
     )
     nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
-    lon = [-72.4, -60]
-    lat = [42, 46.1]
+    lon = [-75.4, -68]
+    lat = [44.1, 47.1]
+    lonGCM = [-70.0, -60.0]
+    latGCM = [43.0, 59.0]
 
     def test_dataset(self):
-        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace("tasmax", "tasmin")])
+        da = xr.open_mfdataset(
+            [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
+            combine="by_coords",
+        )
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
@@ -267,9 +275,11 @@ class TestSubsetBbox:
         da = xr.open_dataset(self.nc_file).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
+        assert np.all(out.lat.values >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
 
         da = xr.open_dataset(self.nc_poslons).tas
@@ -278,18 +288,26 @@ class TestSubsetBbox:
         yr_ed = 2059
 
         out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed
+            da,
+            lon_bnds=self.lonGCM,
+            lat_bnds=self.latGCM,
+            start_date=str(yr_st),
+            end_date=str(yr_ed),
         )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(self.lonGCM))
+        assert np.all(out.lon <= np.max(self.lonGCM))
+        assert np.all(out.lat >= np.min(self.latGCM))
+        assert np.all(out.lat <= np.max(self.latGCM))
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
         out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st
+            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
         )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -297,7 +315,11 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
+        out = subset.subset_bbox(
+            da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
+        )
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
@@ -314,37 +336,99 @@ class TestSubsetBbox:
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
         # Check only non-nans gridcells using mask
         mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon.values[mask1.values] >= np.min(self.lon))
+        assert np.all(out.lon.values[mask1.values] <= np.max(self.lon))
+        assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
+        assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
 
-        assert np.all(out.lon.values[mask1] >= np.min(self.lon))
-        assert np.all(out.lon.values[mask1] <= np.max(self.lon))
-        assert np.all(out.lat.values[mask1] >= np.min(self.lat))
-        assert np.all(out.lat.values[mask1] <= np.max(self.lat))
+    # test datasets with descending coords
+    def test_inverted_coords(self):
+        lon = np.linspace(-90, -60, 200)
+        lat = np.linspace(40, 80, 100)
+        da = xr.Dataset(
+            data_vars=None, coords={"lon": np.flip(lon), "lat": np.flip(lat)}
+        )
+        da["data"] = xr.DataArray(
+            np.random.rand(lon.size, lat.size), dims=["lon", "lat"]
+        )
+
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(np.asarray(self.lon)))
+        assert np.all(out.lon <= np.max(np.asarray(self.lon)))
+        assert np.all(out.lat >= np.min(self.lat))
+        assert np.all(out.lat <= np.max(self.lat))
+
+    def test_single_bounds_rectilinear(self):
+        da = xr.open_dataset(self.nc_file).tasmax
+
+        out = subset.subset_bbox(da, lon_bnds=self.lon)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        np.testing.assert_array_equal(out.lat, da.lat)
+        assert np.all(out.lon <= np.max(self.lon))
+        assert np.all(out.lon.values >= np.min(self.lon))
+
+        out = subset.subset_bbox(da, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        np.testing.assert_array_equal(out.lon, da.lon)
+        assert np.all(out.lat <= np.max(self.lat))
+        assert np.all(out.lat.values >= np.min(self.lat))
+
+    def test_single_bounds_curvilinear(self):
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+
+        out = subset.subset_bbox(da, lon_bnds=self.lon)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        assert np.all(out.lon.values[mask1.values] <= np.max(self.lon))
+        assert np.all(out.lon.values[mask1.values] >= np.min(self.lon))
+
+        out = subset.subset_bbox(da, lat_bnds=self.lat)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
+        assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
 
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
 
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-        assert np.all(out.lon >= np.min(np.asarray(self.lon) + 360))
-        assert np.all(out.lon <= np.max(np.asarray(self.lon) + 360))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
+        out = subset.subset_bbox(da, lon_bnds=self.lonGCM, lat_bnds=self.latGCM)
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(np.asarray(self.lonGCM) + 360))
+        assert np.all(out.lon <= np.max(np.asarray(self.lonGCM) + 360))
+        assert np.all(out.lat >= np.min(self.latGCM))
+        assert np.all(out.lat <= np.max(self.latGCM))
 
         out = subset.subset_bbox(
-            da, lon_bnds=np.array(self.lon) + 360, lat_bnds=self.lat
+            da, lon_bnds=np.array(self.lonGCM) + 360, lat_bnds=self.latGCM
         )
-        assert np.all(out.lon >= np.min(np.asarray(self.lon) + 360))
+        assert np.all(out.lon >= np.min(np.asarray(self.lonGCM) + 360))
 
     def test_time(self):
         da = xr.open_dataset(self.nc_poslons).tas
         da["lon"] -= 360
 
         out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date="2050", end_date="2059"
+            da,
+            lon_bnds=self.lonGCM,
+            lat_bnds=self.latGCM,
+            start_date="2050",
+            end_date="2059",
         )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(self.lonGCM))
+        assert np.all(out.lon <= np.max(self.lonGCM))
+        assert np.all(out.lat >= np.min(self.latGCM))
+        assert np.all(out.lat <= np.max(self.latGCM))
         np.testing.assert_array_equal(out.time.min().dt.year, 2050)
         np.testing.assert_array_equal(out.time.min().dt.month, 1)
         np.testing.assert_array_equal(out.time.min().dt.day, 1)
@@ -354,15 +438,17 @@ class TestSubsetBbox:
 
         out = subset.subset_bbox(
             da,
-            lon_bnds=self.lon,
-            lat_bnds=self.lat,
+            lon_bnds=self.lonGCM,
+            lat_bnds=self.latGCM,
             start_date="2050-02-05",
             end_date="2059-07-15",
         )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
+        assert out.lon.values.size != 0
+        assert out.lat.values.size != 0
+        assert np.all(out.lon >= np.min(self.lonGCM))
+        assert np.all(out.lon <= np.max(self.lonGCM))
+        assert np.all(out.lat >= np.min(self.latGCM))
+        assert np.all(out.lat <= np.max(self.latGCM))
         np.testing.assert_array_equal(out.time.min().dt.year, 2050)
         np.testing.assert_array_equal(out.time.min().dt.month, 2)
         np.testing.assert_array_equal(out.time.min().dt.day, 5)
@@ -374,7 +460,11 @@ class TestSubsetBbox:
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_bbox(
-                da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
+                da,
+                lon_bnds=self.lonGCM,
+                lat_bnds=self.latGCM,
+                start_date="2056",
+                end_date="2055",
             )
 
         da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])

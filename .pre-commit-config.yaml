@@ -1,6 +1,6 @@
 default_language_version:
     python: python3.6
-#exclude: '^$'
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3
@@ -18,15 +18,18 @@ repos:
     hooks:
     -   id: black
         language_version: python3
+        args: ['--target-version=py35']
 -   repo: https://github.com/pycqa/flake8
     rev: 3.7.7
     hooks:
     -   id: flake8
         language_version: python3
+        args: ['--config=setup.cfg']
 -   repo: https://github.com/pre-commit/mirrors-autopep8
     rev: v1.4.4
     hooks:
     -   id: autopep8
+        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/asottile/reorder_python_imports
     rev: v1.5.0
     hooks:
