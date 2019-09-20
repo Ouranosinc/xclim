@@ -1,5 +1,7 @@
+import datetime
 import warnings
 from typing import List
+from typing import Union
 
 import numpy as np
 import xarray
@@ -95,7 +97,6 @@ def check_lons(func):
          DataSet or DataArray. Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs
          with min() and max() values.
         """
-
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
         elif "lon" in kwargs:
@@ -118,7 +119,6 @@ def check_lons(func):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
-
         return func(*args, **kwargs)
 
     return func_checker
@@ -160,7 +160,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       subsetted data array or dataset
 
     Examples
@@ -318,7 +318,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       Subsetted data array or dataset
 
     Examples
@@ -403,7 +403,7 @@ def subset_time(da, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.DataSet]
       Subsetted data array or dataset
 
     Examples
