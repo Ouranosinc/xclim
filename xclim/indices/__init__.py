@@ -66,7 +66,6 @@ Indice descriptions
 ===================
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
-
 from ._multivariate import *
 from ._simple import *
 from ._threshold import *
