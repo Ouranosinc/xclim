@@ -40,6 +40,7 @@ matrix:
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
+        - python pip install --upgrade pip
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
       os: osx
@@ -70,8 +71,10 @@ matrix:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37-windows
 
-install:
+before_install:
     - sudo -H pip install --upgrade pip
+
+install:
     - pip install -U tox-travis
 
 script: tox -e $TOXENV
