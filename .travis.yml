@@ -37,8 +37,9 @@ matrix:
       os: windows
       language: bash
       before_install:
-        - C:\temp\osgeo4w-setup-x86-64.exe -q -k -r -A -s https://download.osgeo.org/osgeo4w/ -a x86_64 -P proj
-        - set PROJ_DIR=C:\OSGeo4W\
+        - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
+        - /c/temp/osgeo4w-setup-x86-64.exe -q -k -r -A -s https://download.osgeo.org/osgeo4w/ -a x86_64 -P proj
+        - set PROJ_DIR=/c/OSGeo4W/
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
