@@ -35,7 +35,7 @@ matrix:
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
-      language: minimal
+      language: bash
       before_install:
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
