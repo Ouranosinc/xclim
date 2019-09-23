@@ -1,5 +1,7 @@
+import datetime
 import warnings
 from typing import List
+from typing import Union
 
 import numpy as np
 import xarray
@@ -8,7 +10,7 @@ from pyproj import Geod
 __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
 
 
-def check_dates(func):
+def check_date_signature(func):
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat the deprecated `start_yr` and `end_yr` calls to subset functions and return
@@ -43,14 +45,60 @@ def check_dates(func):
     return func_checker
 
 
+def check_start_end_dates(func):
+    def func_checker(*args, **kwargs):
+        """
+        A decorator to verify that start and end dates are valid in a time subsetting function.
+        """
+        da = args[0]
+        if "start_date" not in kwargs:
+            # use string for first year only - .sel() will include all time steps
+            kwargs["start_date"] = da.time.min().dt.strftime("%Y").values
+        if "end_date" not in kwargs:
+            # use string for last year only - .sel() will include all time steps
+            kwargs["end_date"] = da.time.max().dt.strftime("%Y").values
+
+        try:
+            da.time.sel(time=kwargs["start_date"])
+        except KeyError:
+            warnings.warn(
+                '"start_date" not found within input date time range. Defaulting to minimum time step in '
+                "xarray object.",
+                Warning,
+                stacklevel=2,
+            )
+            kwargs["start_date"] = da.time.min().dt.strftime("%Y").values
+        try:
+            da.time.sel(time=kwargs["end_date"])
+        except KeyError:
+            warnings.warn(
+                '"end_date" not found within input date time range. Defaulting to maximum time step in '
+                "xarray object.",
+                Warning,
+                stacklevel=2,
+            )
+            kwargs["end_date"] = da.time.max().dt.strftime("%Y").values
+
+        if (
+            da.time.sel(time=kwargs["start_date"]).min()
+            > da.time.sel(time=kwargs["end_date"]).max()
+        ):
+            raise ValueError("Start date is after end date.")
+
+        return func(*args, **kwargs)
+
+    return func_checker
+
+
 def check_lons(func):
     def func_checker(*args, **kwargs):
         """
-        A decorator to reformat user-specified lon values based on the lon dimensions of a supplied xarray
-         DataSet or DataArray. Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs
-         with min() and max() values.
+        A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
+         xarray DataSet or DataArray. Examines an xarray object longitude dimensions and depending on extent
+         (either -180 to +180 or 0 to +360), will reformat user-specified lon values to be synonymous with
+         xarray object boundaries.
+         Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
         """
-
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
         elif "lon" in kwargs:
@@ -63,24 +111,23 @@ def check_lons(func):
                 kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
                 kwargs[lon] = np.asarray(kwargs[lon])
-            if np.all(args[0].lon > 0) and np.any(kwargs[lon] < 0):
+            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] += 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] += 360
-            if np.all(args[0].lon < 0) and np.any(kwargs[lon] > 0):
+            if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
-
         return func(*args, **kwargs)
 
     return func_checker
 
 
 @check_lons
-@check_dates
+@check_date_signature
 def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None):
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and date selection.
 
@@ -115,8 +162,8 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
-      subsetted data array or dataset
+    Union[xarray.DataArray, xarray.DataSet]
+      Subsetted xarray.DataArray or xarray.DataSet
 
     Examples
     --------
@@ -239,7 +286,7 @@ def _check_desc_coords(coord, bounds, dim):
 
 
 @check_lons
-@check_dates
+@check_date_signature
 def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
     Time series can optionally be subsetted by dates
@@ -273,8 +320,8 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
-      Subsetted data array or dataset
+    Union[xarray.DataArray, xarray.DataSet]
+      Subsetted xarray.dataArray or xarray.DataSet
 
     Examples
     --------
@@ -336,6 +383,7 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
     return da
 
 
+@check_start_end_dates
 def subset_time(da, start_date=None, end_date=None):
     """Subset input data based on start and end years
 
@@ -344,7 +392,7 @@ def subset_time(da, start_date=None, end_date=None):
 
     Parameters
     ----------
-    da : xarray.DataArray or xarray.DataSet
+    da : Union[xarray.DataArray, xarray.DataSet]
       Input data.
     start_date : str
       Start date of the subset.
@@ -357,8 +405,8 @@ def subset_time(da, start_date=None, end_date=None):
 
     Returns
     -------
-    xarray.DataArray or xarray.DataSet
-      Subsetted data array or dataset
+    Union[xarray.DataArray, xarray.DataSet]
+      Subsetted xarray.DataArray or xarray.DataSet
 
     Examples
     --------
@@ -378,18 +426,6 @@ def subset_time(da, start_date=None, end_date=None):
 
     Notes
     TODO add notes about different calendar types. Avoid "%Y-%m-31". If you want complete month use only "%Y-%m".
-
-
     """
-
-    if not start_date:
-        # use string for first year only - .sel() will include all time steps
-        start_date = da.time.min().dt.strftime("%Y").values
-    if not end_date:
-        # use string for last year only - .sel() will include all time steps
-        end_date = da.time.max().dt.strftime("%Y").values
-
-    if da.time.sel(time=start_date).min() > da.time.sel(time=end_date).max():
-        raise ValueError("Start date is after end date.")
 
     return da.sel(time=slice(start_date, end_date))

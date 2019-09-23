@@ -96,6 +96,20 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
 
+    def test_time_dates_outofbounds(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        da["lon"] -= 360
+        yr_st = "1950"
+        yr_ed = "2099"
+
+        out = subset.subset_gridpoint(
+            da,
+            start_date="{yr_st}-01".format(yr_st=yr_st),
+            end_date="{yr_ed}-01".format(yr_ed=yr_ed),
+        )
+        np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
+        np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
+
     def test_time_start_only(self):
         da = xr.open_dataset(self.nc_poslons).tas
         da["lon"] -= 360
