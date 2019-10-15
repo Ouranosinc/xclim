@@ -37,6 +37,7 @@ units.define(
     "degC = kelvin; offset: 273.15 = celsius = C"
 )  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
+units.define("h = hour")
 
 # Default context.
 null = pint.Context("none")
