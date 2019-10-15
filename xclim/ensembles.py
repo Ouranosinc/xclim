@@ -9,6 +9,7 @@ try:
     import matplotlib.pyplot as plt
 
     make_graph = True
+
 except ImportError:
     make_graph = False
 
@@ -426,7 +427,7 @@ def kmeans_reduce_ensemble(
 
     Parameters
     ----------
-    data : xr.DataArray  ---  Selecton criteria data : 2-D data-array with dimensions 'realization' (N) and
+    data : xr.DataArray  ---  Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
         'criteria' (P). These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
 
@@ -473,7 +474,7 @@ def kmeans_reduce_ensemble(
         initialization. Use an int to make the randomness deterministic.
         see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
 
-    graph: boolean --  output dictionary of input for displays a plot of R² vs. the number of clusters
+    make_graph: boolean --  output a dictionary of input for displays a plot of R² vs. the number of clusters
 
 
 
@@ -482,7 +483,7 @@ def kmeans_reduce_ensemble(
 
     out : list -- Selected model indexes (positions)
     clusters : KMeans clustering results
-    fig_data : Dictionary of input data for creating R² profile plot. 'None' when graph=False
+    fig_data : Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
 
 
@@ -515,10 +516,7 @@ def kmeans_reduce_ensemble(
     # Create clusters and select realization ids of reduced ensemble
     >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
     """
-    if make_graph:
-        fig_data = {}
-    else:
-        fig_data = None
+
     data = data.transpose("realization", "criteria")
     # initialize the variables
     n_sim = np.shape(data)[0]  # number of simulations
@@ -550,23 +548,19 @@ def kmeans_reduce_ensemble(
 
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
-    if make_graph:
-        fig_data["rsq"] = rsq
-        # make a plot of rsq profile
-        # plt.figure(figsize=(10, 6))
-        # plt.plot(
-        #     range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4
-        # )
-        # # plt.plot(np.arange(1.5, n_sim + 0.5), np.diff(rsq), 'r', label='ΔR²')
-        # axes = plt.gca()
-        # axes.set_xlim([0, n_sim])
-        # axes.set_ylim([0, 1])
-        # plt.xlabel("Number of groups")
-        # plt.ylabel("R²")
-        # plt.legend(loc="lower right")
-        # plt.title("R² of groups vs. full ensemble")
 
     n_clusters = _get_nclust(method, n_sim, rsq, make_graph, max_clusters)
+
+    if make_graph:
+        fig_data = {}
+        fig_data["method"] = method
+        fig_data["rsq"] = rsq
+        fig_data["n_clusters"] = n_clusters
+        fig_data["realizations"] = n_sim
+        if max_clusters is not None:
+            fig_data["max_clusters"] = max_clusters
+    else:
+        fig_data = None
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(
@@ -590,24 +584,23 @@ def kmeans_reduce_ensemble(
         d_i = d[
             clusters == i, i
         ]  # distance to the centroid for all simulations within the cluster 'i'
-        if d_i.shape[0] > 2:
-            sig = np.std(
-                d_i, ddof=1
-            )  # standard deviation of those distances (ddof = 1 gives the same as Matlab's std function)
+        if d_i.shape[0] >= 2:
+            if d_i.shape[0] == 2:
+                sig = 1
+            else:
+                sig = np.std(
+                    d_i, ddof=1
+                )  # standard deviation of those distances (ddof = 1 gives the same as Matlab's std function)
+
             like = (
                 scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]
             )  # weighted likelihood
+
             argmax = np.argmax(like)  # index of the maximum likelihood
-        elif d_i.shape[0] == 2:
-            sig = (
-                1
-            )  # standard deviation would be 0 for a 2-simulation cluster, meaning that model_weights would be ignored.
-            like = (
-                scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]
-            )  # weighted likelihood
-            argmax = np.argmax(like)  # index of the maximum likelihood
+
         else:
             argmax = 0
+
         r_clust = r[
             clusters == i
         ]  # index of the cluster simulations within the full ensemble
@@ -616,9 +609,8 @@ def kmeans_reduce_ensemble(
 
     out = sorted(out.astype(int))
     # display graph - don't block code execution
-    if make_graph:
-        plt.show(block=False)
-    return out, clusters
+
+    return out, clusters, fig_data
 
 
 def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
@@ -656,49 +648,16 @@ def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters
     if list(method.keys())[0] == "rsq_cutoff":
         # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
         n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
-        if make_graph:
-            plt.plot(
-                (0, n_clusters, n_clusters),
-                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
-                "k--",
-                label="R² > {rsq_cut} (n = {n_clusters})".format(
-                    rsq_cut=method["rsq_cutoff"], n_clusters=n_clusters
-                ),
-                linewidth=0.75,
-            )
-            plt.legend(loc="lower right")
+
     elif list(method.keys())[0] == "rsq_optimize":
         # create constant benefits curve (one to one)
         onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
             1.0 / (n_sim - 1)
         )
+
         n_clusters = np.argmax(rsq - onetoone) + 1
-        if make_graph:
-            plt.plot(
-                range(1, n_sim + 1),
-                onetoone,
-                color=[0.25, 0.25, 0.75],
-                label="Theoretical constant increase in R²",
-                linewidth=0.5,
-            )
-            plt.plot(
-                range(1, n_sim + 1),
-                rsq - onetoone,
-                color=[0.75, 0.25, 0.25],
-                label="Real benefits (R² - theoretical)",
-                linewidth=0.5,
-            )
-            plt.plot(
-                (0, n_clusters, n_clusters),
-                (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
-                "k--",
-                linewidth=0.75,
-                label="Optimized R² cost / benefit (n = {n_clusters})".format(
-                    n_clusters=n_clusters
-                ),
-            )
-            plt.legend(loc="center right")
-            # plt.show()
+
+        # plt.show()
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
@@ -713,3 +672,98 @@ def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters
         )
         n_clusters = max_clusters
     return n_clusters
+
+
+def plot_rsqprofile(fig_data):
+    fig_data
+    rsq = fig_data["rsq"]
+    n_sim = fig_data["realizations"]
+    n_clusters = fig_data["n_clusters"]
+    # make a plot of rsq profile
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, n_sim + 1), rsq, "k-o", label="R²", linewidth=0.8, markersize=4)
+    # plt.plot(np.arange(1.5, n_sim + 0.5), np.diff(rsq), 'r', label='ΔR²')
+    axes = plt.gca()
+    axes.set_xlim([0, fig_data["realizations"]])
+    axes.set_ylim([0, 1])
+    plt.xlabel("Number of groups")
+    plt.ylabel("R²")
+    plt.legend(loc="lower right")
+    plt.title("R² of groups vs. full ensemble")
+    if "rsq_cutoff" in fig_data["method"].keys():
+        col = "k--"
+        label = "R² selection > {rsq_cut} (n = {n_clusters})".format(
+            rsq_cut=fig_data["method"]["rsq_cutoff"], n_clusters=n_clusters
+        )
+
+        if "max_clusters" in fig_data.keys():
+
+            if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
+                col = "r--"
+            label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
+                rsq=rsq[n_clusters - 1].round(2),
+                n_clusters=n_clusters,
+                max_clust=fig_data["max_clusters"],
+            )
+
+        plt.plot(
+            (0, n_clusters, n_clusters),
+            (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+            col,
+            label=label,
+            linewidth=0.75,
+        )
+        plt.legend(loc="lower right")
+    elif "rsq_optimize" in fig_data["method"].keys():
+        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
+            1.0 / (n_sim - 1)
+        )
+        plt.plot(
+            range(1, n_sim + 1),
+            onetoone,
+            color=[0.25, 0.25, 0.75],
+            label="Theoretical constant increase in R²",
+            linewidth=0.5,
+        )
+        plt.plot(
+            range(1, n_sim + 1),
+            rsq - onetoone,
+            color=[0.75, 0.25, 0.25],
+            label="Real benefits (R² - theoretical)",
+            linewidth=0.5,
+        )
+        col = "k--"
+        label = "Optimized R² cost / benefit (n = {n_clusters})".format(
+            n_clusters=n_clusters
+        )
+        if "max_clusters" in fig_data.keys():
+            opt = rsq - onetoone
+            imax = np.where(opt == opt.max())[0]
+
+            if rsq[n_clusters - 1] < rsq[imax]:
+                col = "r--"
+            label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
+                rsq=rsq[n_clusters - 1].round(2),
+                n_clusters=n_clusters,
+                max_clust=fig_data["max_clusters"],
+            )
+
+        plt.plot(
+            (0, n_clusters, n_clusters),
+            (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+            col,
+            linewidth=0.75,
+            label=label,
+        )
+        plt.legend(loc="center right")
+    else:
+        plt.plot(
+            (0, n_clusters, n_clusters),
+            (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
+            "k--",
+            label="n = {n_clusters} (R² selection = {rsq})".format(
+                rsq=rsq[n_clusters - 1].round(2), n_clusters=n_clusters
+            ),
+            linewidth=0.75,
+        )
+        plt.legend(loc="lower right")
