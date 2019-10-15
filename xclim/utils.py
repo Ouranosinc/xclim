@@ -977,106 +977,110 @@ def wrapped_partial(func, *args, **kwargs):
     return partial_func
 
 
-def uas_vas_2_wind(uas, vas):
-    """Converts uas and vas to the wind speed sfcWind
+def uas_vas_2_sfcwind(uas=None, vas=None):
+    """Converts eastward and northward wind components to wind speed and direction
 
     Parameters
     ----------
     uas : xr.DataArray
-      eastward wind (m s-1)
+      Eastward wind velocity (m s-1)
     vas : xr.DataArray
-      northward wind (m s-1)
+      Northward wind velocity (m s-1)
 
     Returns
     -------
     wind : xr.DataArray
-      wind speed (m s-1)
-    winddir : xr.DataArray
-      direction FROM WHICH the wind blows (corresponds to the meteorological standard)
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
     """
-    # TODO: This needs to be tested with 2D data.
+    # TODO: Add an attribute check to switch between sfcwind and wind
 
-    # Wind speed is the Pythagore of "uas" and "vas"
-    wind = np.sqrt(np.square(uas) + np.square(vas))
+    # Wind speed is the hypothenuse of "uas" and "vas"
+    wind = np.hypot(uas, vas)
+
+    # Converts the wind speed to m s-1
+    # TODO: convert_units_to crashes with hours listed as 'h', for example 'km/h' or 'km h-1'
+    wind = convert_units_to(wind, 'm/s')
 
     # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
     wind.attrs = uas.attrs
-    wind.name = 'wind'
+    wind.name = 'sfcWind'
     wind.attrs['standard_name'] = 'wind_speed'
-    wind.attrs['long_name'] = 'Wind Speed'
+    wind.attrs['long_name'] = 'Near-Surface Wind Speed'
 
     # Calculate the angle
     # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
-    winddir_math = np.degrees(np.arctan2(vas, uas))
+    windfromdir_math = np.degrees(np.arctan2(vas, uas))
 
     # Convert the angle from the mathematical standard to the meteorological standard
-    winddir = (270 - winddir_math) % 360.0
+    windfromdir = (270 - windfromdir_math) % 360.0
 
     # According to the meteorological standard, calm winds must have a direction of 0°, while northerly winds have a direction of 360°.
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
-    # TODO: units check for wind speed in m/s
-    # TODO: ideally, we would want to circumvent ".values", as this forces xarray to do calculations
-    if wind.attrs['units'] in ['m/s', 'm s-1']:
-        winddir.values[(winddir.round() == 0) & (wind >= 0.5)] = 360.0
-        winddir.values[wind < 0.5] = 0
-    else:
-        raise Exception('Units need to be in m/s!')
+    # TODO: Is there a way to do this step without '.values'?
+    windfromdir.values[(windfromdir.round() == 0) & (wind >= 0.5)] = 360.0
+    windfromdir.values[wind < 0.5] = 0
 
     # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
-    winddir.attrs = uas.attrs
-    winddir.name = 'winddir'
-    winddir.attrs['standard_name'] = 'wind_from_direction'
-    winddir.attrs['long_name'] = 'Direction from which the Wind Blows'
-    winddir.attrs['units'] = 'degree'
+    windfromdir.attrs = uas.attrs
+    windfromdir.name = 'sfcWindfromdir'
+    windfromdir.attrs['standard_name'] = 'wind_from_direction'
+    windfromdir.attrs['long_name'] = 'Near-Surface Wind from Direction'
+    windfromdir.attrs['units'] = 'degree'
 
-    return wind, winddir
+    return wind, windfromdir
 
 
-def wind_2_uas_vas(wind, winddir):
-    """Converts sfcWind to the components uas and vas
+def sfcwind_2_uas_vas(wind=None, windfromdir=None):
+    """Converts wind speed and direction to eastward and northward wind components
 
     Parameters
     ----------
     wind : xr.DataArray
-      wind speed (units do not need to be in CF-Convention)
-    winddir : xr.DataArray
-      direction FROM WHICH the wind blows (corresponds to the meteorological standard)
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
 
     Returns
     -------
     uas : xr.DataArray
-      eastward wind (same units as input)
+      Eastward wind velocity (m s-1)
     vas : xr.DataArray
-      northward wind (same units as input)
+      Northward wind velocity (m s-1)
 
     """
-    # TODO: This needs to be tested with 2D data.
+    # TODO: Add an attribute check to switch between sfcwind and wind
+
+    # Converts the wind speed to m s-1
+    # TODO: convert_units_to crashes with hours listed as 'h', for example 'km/h' or 'km h-1'
+    wind = convert_units_to(wind, 'm/s')
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
-    winddir_math = (-winddir + 270) % 360.0
+    windfromdir_math = (-windfromdir + 270) % 360.0
 
     # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere
     # if resample is not None:
     #     wind = wind.resample(time=resample).mean(dim='time', keep_attrs=True)
     #
     #     # nb_per_day is the number of values each day. This should be calculated
-    #     winddir_math_per_day = winddir_math.reshape((len(wind.time), nb_per_day))
+    #     windfromdir_math_per_day = windfromdir_math.reshape((len(wind.time), nb_per_day))
     #     # Averages the subdaily angles around a circle, i.e. mean([0, 360]) = 0, not 180
-    #     winddir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
-    #                                       for angles in winddir_math_per_day])
+    #     windfromdir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
+    #                                       for angles in windfromdir_math_per_day])
 
-    uas = wind * np.cos(np.radians(winddir_math))
-    vas = wind * np.sin(np.radians(winddir_math))
+    uas = wind * np.cos(np.radians(windfromdir_math))
+    vas = wind * np.sin(np.radians(windfromdir_math))
 
     # Add attributes to uas and vas. This is done by copying wind' attributes and overwriting a few of them
     uas.attrs = wind.attrs
     uas.name = 'uas'
     uas.attrs['standard_name'] = 'eastward_wind'
-    uas.attrs['long_name'] = 'Eastward Wind'
+    uas.attrs['long_name'] = 'Near-Surface Eastward Wind'
 
     vas.attrs = wind.attrs
     vas.name = 'vas'
     vas.attrs['standard_name'] = 'northward_wind'
-    vas.attrs['long_name'] = 'Northward Wind'
+    vas.attrs['long_name'] = 'Near-Surface Northward Wind'
 
     return uas, vas
