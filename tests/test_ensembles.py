@@ -72,6 +72,11 @@ class TestEnsembleStats:
         for c in coords:
             np.testing.assert_array_equal(ens[c], ens1[c])
 
+        for i in np.arange(0, len(ens1.realization)):
+            np.testing.assert_array_equal(
+                ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
+            )
+
     def test_no_time(self):
 
         # create again using xr.Dataset objects
