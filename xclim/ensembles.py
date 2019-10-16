@@ -1,3 +1,6 @@
+from typing import Union
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 import scipy
@@ -8,10 +11,10 @@ from sklearn.cluster import KMeans
 try:
     import matplotlib.pyplot as plt
 
-    make_graph = True
+    MPL_INSTALLED = True
 
 except ImportError:
-    make_graph = False
+    MPL_INSTALLED = False
 
 
 def create_ensemble(datasets, mf_flag=False):
@@ -412,15 +415,15 @@ def _calc_perc(arr, p):
 
 
 def kmeans_reduce_ensemble(
-    data,
+    data: xr.DataArray,
     *,
-    method=None,
-    max_clusters=None,
-    variable_weights=None,
-    model_weights=None,
-    sample_weights=None,
-    random_state=None,
-    make_graph=make_graph,
+    method: dict = None,
+    make_graph: bool = MPL_INSTALLED,
+    max_clusters: Optional[int] = None,
+    variable_weights: Optional[xr.DataArray] = None,
+    model_weights: Optional[xr.DataArray] = None,
+    sample_weights: Optional[xr.DataArray] = None,
+    random_state: Optional[Union[int, np.random.RandomState]] = None
 ):
     """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
@@ -431,63 +434,67 @@ def kmeans_reduce_ensemble(
 
     Parameters
     ----------
-    data : xr.DataArray  ---  Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
-        ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    data : xr.DataArray
+      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+      ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    method : dict
+      Dictionary defining selection method and associated value when required. See Notes.
+    max_clusters : Optional[int]
+      Maximum number of members to include in the output ensemble selection.
+      When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
+      results indicate a higher value. Defaults to N.
+    variable_weights: Optional[xr.DataArray]
+      An array of size P. This weighting can be used to influence of weight of the climate indices (criteria dimension)
+       on the clustering itself
+    model_weights: Optional[xr.DataArray]
+      An array of size N. This weighting can be used to influence which realization is selected
+      from within each cluster. This parameter has no influence on the clustering itself.
+    sample_weights: Optional[xr.DataArray]
+      An array of size N. sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
+      used to influence of weight of simulations on the clustering itself.
+      see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+    random_state: Optional[Union[int, np.random.RandomState]]
+      sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
+      initialization. Use an int to make the randomness deterministic.
+      see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+    make_graph: bool
+      output a dictionary of input for displays a plot of R² vs. the number of clusters
 
-    method : dict. Dictionary defining selection method and associated value when required. One of the following:
+    Notes
+    -----
+    Parameters for method in call must follow these conventions:
 
-        'rsq_optimize' : Default
-            Calculate coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
-            an optimal number of clusters that balances cost / benefit tradeoffs. See supporting
-            information S2 text in https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+    rsq_optimize
+        Calculate coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
+        an optimal number of clusters that balances cost / benefit tradeoffs. This is the default setting.
+        See supporting information S2 text in https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
 
-            method={'rsq_optimize':None}
+        method={'rsq_optimize':None}
 
-        'rsq_cutoff' :
-            Calculate Coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
-            the minimum numbers of clusters needed for R² > val.
+    rsq_cutoff
+        Calculate Coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
+        the minimum numbers of clusters needed for R² > val.
 
-            val : float between 0 and 1. R² value that must be exceeded by clustering results.
+        val : float between 0 and 1. R² value that must be exceeded by clustering results.
 
-            method={'rsq_cutoff': val}
+        method={'rsq_cutoff': val}
 
-        'n_clusters' :
-            Create a user determined number of clusters.
+    n_clusters
+        Create a user determined number of clusters.
 
-            val : integer between 1 and N
+        val : integer between 1 and N
 
-            method={'n_clusters': val}
-
-    Optional parameters:
-    max_clusters : integer  --  Maximum number of members to include in the output ensemble selection.
-        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
-        results indicate a higher value. Defaults to N.
-
-    variable_weights: xr.DataArray of size P  --  This weighting can be used to influence of weight of the climate
-        indices (criteria dimension) on the clustering itself
-
-    model_weights: xr.DataArray of size N  --  This weighting can be used to influence which realization is selected
-        from within each cluster. This parameter has no influence on the clustering itself.
-
-    sample_weights: xr.DataArray of size N  --  sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
-        used to influence of weight of simulations on the clustering itself.
-        see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
-
-    random_state -- sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
-        initialization. Use an int to make the randomness deterministic.
-        see https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
-
-    make_graph: boolean --  output a dictionary of input for displays a plot of R² vs. the number of clusters
-
-
+        method={'n_clusters': val}
 
     Returns
     -------
-
-    out : list -- Selected model indexes (positions)
-    clusters : KMeans clustering results
-    fig_data : Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
+    list
+      Selected model indexes (positions)
+    UNKNOWN
+      KMeans clustering results
+    dict
+      Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
     -----
@@ -496,25 +503,21 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
+    >>> from xclim import ensembles
     # Start with ensemble datasets for temperature and precipitation
     >>> ensTas = ensembles.create_ensemble(temperature_datasets)
     >>> ensPr = ensembles.create_ensemble(precip_datasets)
-
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
-
     # Total annual precipation
     >>> HistPr = ensPr.pr.sel(time=slice('1981','2010')).sum(dim='time').mean(dim=['lat','lon'])
     >>> FutPr = ensPr.pr.sel(time=slice('2071','2100')).sum(dim='time').mean(dim=['lat','lon'])
     >>> dPr = 100*((FutPr / HistPr) - 1)  # expressed in percent change
-
     # Average annual temperature
     >>> HistTas = ensTas.tas.sel(time=slice('1981','2010')).mean(dim=['time','lat','lon'])
     >>> FutTas = ensTas.tas.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])
     >>> dTas = FutTas - HistTas
-
     # Create selection criteria xr.DataArray
     >>> crit = xr.concat((dTas,dPr), dim='criteria')
-
     # Create clusters and select realization ids of reduced ensemble
     >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
     >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
@@ -790,3 +793,7 @@ def plot_rsqprofile(fig_data):
             linewidth=0.75,
         )
         plt.legend(loc="lower right")
+
+
+if __name__ == "__main__":
+    kmeans_reduce_ensemble()
