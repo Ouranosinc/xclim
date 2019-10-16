@@ -1,9 +1,8 @@
 import warnings
+from functools import wraps
 from typing import Optional
 from typing import Tuple
 from typing import Union
-
-from functools import wraps
 
 import numpy as np
 import xarray
@@ -13,7 +12,7 @@ __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
 
 
 def check_date_signature(func):
-    @wraps
+    @wraps(func)
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat the deprecated `start_yr` and `end_yr` calls to subset functions and return
@@ -49,7 +48,7 @@ def check_date_signature(func):
 
 
 def check_start_end_dates(func):
-    @wraps
+    @wraps(func)
     def func_checker(*args, **kwargs):
         """
         A decorator to verify that start and end dates are valid in a time subsetting function.
@@ -95,7 +94,7 @@ def check_start_end_dates(func):
 
 
 def check_lons(func):
-    @wraps
+    @wraps(func)
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
@@ -139,7 +138,7 @@ def subset_bbox(
     lat_bnds: Union[np.array, Tuple[Optional[float], Optional[float]]] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-):
+) -> Union[xarray.DataArray, xarray.Dataset]:
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and date selection.
 
     Return a subsetted data array for grid points falling within a spatial bounding box
@@ -164,17 +163,17 @@ def subset_bbox(
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
     start_yr : int
-      Deprecated --
-      First year of the subset. Defaults to first year of input data-array.
+      Deprecated
+        First year of the subset. Defaults to first year of input data-array.
     end_yr : int
-      Deprecated --
-      Last year of the subset. Defaults to last year of input data-array.
+      Deprecated
+        Last year of the subset. Defaults to last year of input data-array.
 
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.DataSet]
-      Subsetted xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.Dataset]
+      Subsetted xarray.DataArray or xarray.Dataset
 
     Examples
     --------
@@ -306,7 +305,7 @@ def subset_gridpoint(
     lat: Optional[float] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-):
+) -> Union[xarray.DataArray, xarray.Dataset]:
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
 
     Return a subsetted data array (or Dataset) for the grid point falling nearest the input longitude and latitude
@@ -330,11 +329,11 @@ def subset_gridpoint(
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
     start_yr : int
-      Deprecated --
-      First year of the subset. Defaults to first year of input data-array.
+      Deprecated
+        First year of the subset. Defaults to first year of input data-array.
     end_yr : int
-      Deprecated --
-      Last year of the subset. Defaults to last year of input data-array.
+      Deprecated
+        Last year of the subset. Defaults to last year of input data-array.
 
     Returns
     -------
@@ -446,6 +445,7 @@ def subset_time(
     >>> prSub = subset.subset_time(ds.pr,start_date='1990-03-13',end_date='1990-08-17')
 
     Notes
+    -----
     TODO add notes about different calendar types. Avoid "%Y-%m-31". If you want complete month use only "%Y-%m".
     """
 
