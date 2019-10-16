@@ -1,7 +1,9 @@
-import datetime
 import warnings
-from typing import List
+from typing import Optional
+from typing import Tuple
 from typing import Union
+
+from functools import wraps
 
 import numpy as np
 import xarray
@@ -11,6 +13,7 @@ __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
 
 
 def check_date_signature(func):
+    @wraps
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat the deprecated `start_yr` and `end_yr` calls to subset functions and return
@@ -46,6 +49,7 @@ def check_date_signature(func):
 
 
 def check_start_end_dates(func):
+    @wraps
     def func_checker(*args, **kwargs):
         """
         A decorator to verify that start and end dates are valid in a time subsetting function.
@@ -91,6 +95,7 @@ def check_start_end_dates(func):
 
 
 def check_lons(func):
+    @wraps
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
@@ -128,7 +133,13 @@ def check_lons(func):
 
 @check_lons
 @check_date_signature
-def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None):
+def subset_bbox(
+    da: Union[xarray.DataArray, xarray.Dataset],
+    lon_bnds: Union[np.array, Tuple[Optional[float], Optional[float]]] = None,
+    lat_bnds: Union[np.array, Tuple[Optional[float], Optional[float]]] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
     """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and date selection.
 
     Return a subsetted data array for grid points falling within a spatial bounding box
@@ -140,15 +151,15 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     ----------
     da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon_bnds : Union[numpy.array, List[float]]
+    lon_bnds : Union[np.array, Tuple[Optional[float], Optional[float]]]
       List of minimum and maximum longitudinal bounds. Optional. Defaults to all longitudes in original data-array.
-    lat_bnds :  List[float]
+    lat_bnds : Union[np.array, Tuple[Optional[float], Optional[float]]]
       List of minimum and maximum latitudinal bounds. Optional. Defaults to all latitudes in original data-array.
-    start_date : str
+    start_date : Optional[str]
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to first day of input data-array.
-    end_date : str
+    end_date : Optional[str]
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
@@ -168,7 +179,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     Examples
     --------
     >>> from xclim import subset
-    >>> ds = xr.open_dataset('pr.day.nc')
+    >>> ds = xarray.open_dataset('pr.day.nc')
     Subset lat lon and years
     >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
     Subset data array lat, lon and single year
@@ -176,7 +187,7 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     Subset dataarray single year keep entire lon, lat grid
     >>> prSub = subset.subset_bbox(ds.pr,start_yr='1990',end_yr='1990') # one year only entire grid
     Subset multiple variables in a single dataset
-    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
      # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
     >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03',end_date='1999-08')
@@ -248,19 +259,21 @@ def subset_bbox(da, lon_bnds=None, lat_bnds=None, start_date=None, end_date=None
     return da
 
 
-def assign_bounds(bounds, coord):
+def assign_bounds(
+    bounds: Tuple[Optional[float], Optional[float]], coord: xarray.Coordinate
+) -> tuple:
     """Replace unset boundaries by the minimum and maximum coordinates.
 
     Parameters
     ----------
-    bounds : [Union[float, None], Union[float, None]]
+    bounds : Tuple[Optional[float], Optional[float]]
       Boundaries.
-    coord : xr.Coordinate
+    coord : xarray.Coordinate
       Grid coordinates.
 
     Returns
     -------
-    list
+    tuple
       Lower and upper grid boundaries.
 
     """
@@ -272,14 +285,14 @@ def assign_bounds(bounds, coord):
     return bn, bx
 
 
-def in_bounds(bounds, coord):
+def in_bounds(bounds: Tuple[float, float], coord: xarray.Coordinate) -> bool:
     """Check which coordinates are within the boundaries."""
     bn, bx = bounds
     return (coord >= bn) & (coord <= bx)
 
 
 def _check_desc_coords(coord, bounds, dim):
-    """if dataset coordinates are descending reverse bounds"""
+    """If dataset coordinates are descending reverse bounds"""
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
@@ -287,27 +300,32 @@ def _check_desc_coords(coord, bounds, dim):
 
 @check_lons
 @check_date_signature
-def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
+def subset_gridpoint(
+    da: Union[xarray.DataArray, xarray.Dataset],
+    lon: Optional[float] = None,
+    lat: Optional[float] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
-    Time series can optionally be subsetted by dates
 
-    Return a subsetted data array (or dataset) for the grid point falling nearest the input
-    longitude and latitudecoordinates. Optionally subset the data array for years falling
-    within provided date bounds
+    Return a subsetted data array (or Dataset) for the grid point falling nearest the input longitude and latitude
+    coordinates. Optionally subset the data array for years falling within provided date bounds.
+    Time series can optionally be subsetted by dates.
 
     Parameters
     ----------
-    da : Union[xarray.DataArray, xarray.DataSet]
+    da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon : float
+    lon : Optional[float]
       Longitude coordinate.
-    lat:  float
+    lat : Optional[float]
       Latitude coordinate.
-    start_date : str
+    start_date : Optional[str]
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to first day of input data-array.
-    end_date : str
+    end_date : Optional[str]
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
@@ -320,19 +338,19 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.DataSet]
-      Subsetted xarray.dataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.Dataset]
+      Subsetted xarray.DataArray or xarray.Dataset
 
     Examples
     --------
     >>> from xclim import subset
-    >>> ds = xr.open_dataset('pr.day.nc')
+    >>> ds = xarray.open_dataset('pr.day.nc')
     Subset lat lon point and multiple years
     >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
     Subset lat, lon point and single year
     >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
      Subset multiple variables in a single dataset
-    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_date='1990',end_date='1999')
     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
     >>> prSub = subset.subset_time(ds.pr,lon=-75, lat=45, start_date='1990-03',end_date='1999-08')
@@ -384,40 +402,43 @@ def subset_gridpoint(da, lon=None, lat=None, start_date=None, end_date=None):
 
 
 @check_start_end_dates
-def subset_time(da, start_date=None, end_date=None):
-    """Subset input data based on start and end years
+def subset_time(
+    da: Union[xarray.DataArray, xarray.Dataset],
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> Union[xarray.DataArray, xarray.Dataset]:
+    """Subset input data based on start and end years.
 
-    Return a subsetted data array (or dataset) for dates falling
-    within provided bounds
+    Return a subsetted data array (or dataset) for dates falling within the provided bounds.
 
     Parameters
     ----------
-    da : Union[xarray.DataArray, xarray.DataSet]
+    da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    start_date : str
+    start_date : Optional[str]
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to first day of input data-array.
-    end_date : str
+    end_date : Optional[str]
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.DataSet]
-      Subsetted xarray.DataArray or xarray.DataSet
+    Union[xarray.DataArray, xarray.Dataset]
+      Subsetted xarray.DataArray or xarray.Dataset
 
     Examples
     --------
     >>> from xclim import subset
-    >>> ds = xr.open_dataset('pr.day.nc')
+    >>> ds = xarray.open_dataset('pr.day.nc')
     # Subset complete years
     >>> prSub = subset.subset_time(ds.pr,start_date='1990',end_date='1999')
     # Subset single complete year
     >>> prSub = subset.subset_time(ds.pr,start_date='1990',end_date='1990')
     # Subset multiple variables in a single dataset
-    >>> ds = xr.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
     >>> dsSub = subset.subset_time(ds,start_date='1990',end_date='1999')
     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
     >>> prSub = subset.subset_time(ds.pr,start_date='1990-03',end_date='1999-08')
