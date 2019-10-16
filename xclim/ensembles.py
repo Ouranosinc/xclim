@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -22,7 +21,8 @@ except ImportError:
 
 
 def create_ensemble(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]], mf_flag: bool = False
+    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    mf_flag: bool = False,
 ) -> xr.Dataset:
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
@@ -133,7 +133,9 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: xr.Dataset, values: Tuple[int, int, int] = (10, 50, 90), time_block: Optional[int] = None
+    ens: xr.Dataset,
+    values: Tuple[int, int, int] = (10, 50, 90),
+    time_block: Optional[int] = None,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -200,7 +202,8 @@ def ensemble_percentiles(
 
 
 def _ens_checktimes(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]], mf_flag: bool = False
+    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    mf_flag: bool = False,
 ) -> Tuple[bool, np.ndarray]:
     """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
     maximum time-step interval of all input files.
