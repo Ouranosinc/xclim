@@ -62,8 +62,12 @@ def create_ensemble(datasets, mf_flag=False):
 
     ds1 = _ens_align_datasets(datasets, mf_flag, time_flag, time_all)
 
-    # print('concatenating files : adding dimension ', dim, )
-    ens = xr.concat(ds1, dim=dim)
+    for v in list(ds1[0].data_vars):
+        list1 = [ds[v] for ds in ds1]
+        data = xr.concat(list1, dim=dim)
+        if v == list(ds1[0].data_vars)[0]:
+            ens = xr.Dataset(data_vars=None, coords=data.coords, attrs=ds1[0].attrs)
+        ens[v] = data
 
     return ens
 
@@ -485,8 +489,6 @@ def kmeans_reduce_ensemble(
     clusters : KMeans clustering results
     fig_data : Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
-
-
     References
     -----
     Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
@@ -514,8 +516,13 @@ def kmeans_reduce_ensemble(
     >>> crit = xr.concat((dTas,dPr), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
-    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(sel_criteria=crit, method={'rsq_cutoff':0.9}, make_graph=False)
+    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
+    if make_graph:
+        fig_data = {}
+        if max_clusters is not None:
+            fig_data["max_clusters"] = max_clusters
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -549,16 +556,15 @@ def kmeans_reduce_ensemble(
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
 
-    n_clusters = _get_nclust(method, n_sim, rsq, make_graph, max_clusters)
+    n_clusters = _get_nclust(method, n_sim, rsq, max_clusters)
 
     if make_graph:
-        fig_data = {}
+
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
         fig_data["realizations"] = n_sim
-        if max_clusters is not None:
-            fig_data["max_clusters"] = max_clusters
+
     else:
         fig_data = None
 
@@ -614,6 +620,9 @@ def kmeans_reduce_ensemble(
 
 
 def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
+    """Subfunction to kmeans_reduce_ensemble.
+           Calculate r-square profile (r-square versus number of clusters)
+    """
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
@@ -639,8 +648,8 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
     return rsq
 
 
-def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters=None):
-    """Subfunction to kmean_reduce_ensemble.
+def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
+    """Subfunction to kmeans_reduce_ensemble.
        Determine number of clusters to create depending on various methods
     """
 
@@ -675,7 +684,15 @@ def _get_nclust(method=None, n_sim=None, rsq=None, make_graph=None, max_clusters
 
 
 def plot_rsqprofile(fig_data):
-    fig_data
+    """Create an R² profile plot using kmeans_reduce_ensemble output. The R² plot allows evaluation of the proportion
+    of total uncertainty in the original ensemble that is provided by the reduced selected
+    --------
+    Examples
+    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> plot_rsqprofile(fig_data)
+
+    """
+
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
     n_clusters = fig_data["n_clusters"]
@@ -700,11 +717,17 @@ def plot_rsqprofile(fig_data):
 
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
-            label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
-                rsq=rsq[n_clusters - 1].round(2),
-                n_clusters=n_clusters,
-                max_clust=fig_data["max_clusters"],
-            )
+                label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
+                    rsq=rsq[n_clusters - 1].round(2),
+                    n_clusters=n_clusters,
+                    max_clust=fig_data["max_clusters"],
+                )
+            else:
+                label = "R² selection > {rsq_cut} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
+                    rsq_cut=fig_data["method"]["rsq_cutoff"],
+                    n_clusters=n_clusters,
+                    max_clust=fig_data["max_clusters"],
+                )
 
         plt.plot(
             (0, n_clusters, n_clusters),
