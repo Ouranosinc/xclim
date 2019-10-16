@@ -191,7 +191,11 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     return out
 
 
-def convert_units_to(source: Union[str, xr.DataArray, Any], target: Union[str, xr.DataArray, Any], context: Optional[str] = None):
+def convert_units_to(
+    source: Union[str, xr.DataArray, Any],
+    target: Union[str, xr.DataArray, Any],
+    context: Optional[str] = None,
+):
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
@@ -334,7 +338,9 @@ def declare_units(out_units, **units_by_name):
     return dec
 
 
-def threshold_count(da: xr.DataArray, op: str, thresh: float, freq: str) -> xr.DataArray:
+def threshold_count(
+    da: xr.DataArray, op: str, thresh: float, freq: str
+) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
@@ -368,7 +374,9 @@ def threshold_count(da: xr.DataArray, op: str, thresh: float, freq: str) -> xr.D
     return c.resample(time=freq).sum(dim="time")
 
 
-def percentile_doy(arr: xr.DataArray, window: int = 5, per: float = 0.1) -> xr.DataArray:
+def percentile_doy(
+    arr: xr.DataArray, window: int = 5, per: float = 0.1
+) -> xr.DataArray:
     """Percentile value for each day of the year
 
     Return the climatological percentile over a moving window around each day of the year.
