@@ -11,6 +11,10 @@ import warnings
 from collections import defaultdict
 from collections import OrderedDict
 from inspect import signature
+from typing import Any
+from typing import Optional
+from typing import Union
+from types import FunctionType
 
 import numpy as np
 import pint
@@ -19,6 +23,8 @@ from boltons.funcutils import wraps
 
 import xclim
 from . import checks
+
+# TODO: The pint library does not have a generic Unit or Quantitiy type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
@@ -97,12 +103,12 @@ calendars = {
 }
 
 
-def units2pint(value):
+def units2pint(value: Union[xr.DataArray, str]) -> Any:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or string
+    value : Union[xr.DataArray, str]
       Input data array or expression.
 
     Returns
@@ -134,12 +140,12 @@ def units2pint(value):
         return units.parse_expression(_transform(unit)).units
 
 
-def pint2cfunits(value):
+def pint2cfunits(value: Any) -> str:
     """Return a CF-Convention unit string from a `pint` unit.
 
     Parameters
     ----------
-    value : pint.Unit
+    value : pint.UnitRegistry
       Input unit.
 
     Returns
@@ -164,7 +170,7 @@ def pint2cfunits(value):
     return out
 
 
-def pint_multiply(da, q, out_units=None):
+def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     """Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
@@ -172,8 +178,8 @@ def pint_multiply(da, q, out_units=None):
     da : xr.DataArray
       Input array.
     q : pint.Quantity
-      Multiplicating factor.
-    out_units : str
+      Multiplicative factor.
+    out_units : Optional[str]
       Units the output array should be converted into.
     """
     a = 1 * units2pint(da)
@@ -185,17 +191,17 @@ def pint_multiply(da, q, out_units=None):
     return out
 
 
-def convert_units_to(source, target, context=None):
+def convert_units_to(source: Union[str, xr.DataArray, Any], target: Union[str, xr.DataArray, Any], context: Optional[str] = None):
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
-    source : str, pint.Quantity or xr.DataArray
+    source : Union[str, xr.DataArray, Any]
       The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str, pint.Unit or DataArray
+    target : Union[str, xr.DataArray, Any]
       Target array of values to which units must conform.
-    context : str
+    context : Optional[str]
 
     Returns
     -------
@@ -328,15 +334,15 @@ def declare_units(out_units, **units_by_name):
     return dec
 
 
-def threshold_count(da, op, thresh, freq):
+def threshold_count(da: xr.DataArray, op: str, thresh: float, freq: str) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Input data.
-    op : {>, <, >=, <=, gt, lt, ge, le }
-      Logical operator, e.g. arr > thresh.
+    op : str
+      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
     thresh : float
       Threshold value.
     freq : str
@@ -345,7 +351,7 @@ def threshold_count(da, op, thresh, freq):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The number of days meeting the constraints for each period.
     """
     from xarray.core.ops import get_op
@@ -362,14 +368,14 @@ def threshold_count(da, op, thresh, freq):
     return c.resample(time=freq).sum(dim="time")
 
 
-def percentile_doy(arr, window=5, per=0.1):
+def percentile_doy(arr: xr.DataArray, window: int = 5, per: float = 0.1) -> xr.DataArray:
     """Percentile value for each day of the year
 
     Return the climatological percentile over a moving window around each day of the year.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Input data.
     window : int
       Number of days around each day of the year to include in the calculation.
@@ -378,7 +384,7 @@ def percentile_doy(arr, window=5, per=0.1):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The percentiles indexed by the day of the year.
     """
     # TODO: Support percentile array, store percentile in coordinates.
@@ -399,12 +405,12 @@ def percentile_doy(arr, window=5, per=0.1):
     return p
 
 
-def infer_doy_max(arr):
+def infer_doy_max(arr: xr.DataArray) -> int:
     """Return the largest doy allowed by calendar.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Array with `time` coordinate.
 
     Returns
@@ -429,7 +435,7 @@ def infer_doy_max(arr):
     return doy_max
 
 
-def _interpolate_doy_calendar(source, doy_max):
+def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -437,14 +443,14 @@ def _interpolate_doy_calendar(source, doy_max):
 
     Parameters
     ----------
-    source : xarray.DataArray
+    source : xr.DataArray
       Array with `dayofyear` coordinates.
     doy_max : int
       Largest day of the year allowed by calendar.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
@@ -463,7 +469,7 @@ def _interpolate_doy_calendar(source, doy_max):
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
-def adjust_doy_calendar(source, target):
+def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -471,14 +477,14 @@ def adjust_doy_calendar(source, target):
 
     Parameters
     ----------
-    source : xarray.DataArray
+    source : xr.DataArray
       Array with `dayofyear` coordinate.
-    target : xarray.DataArray
+    target : xr.DataArray
       Array with `time` coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
@@ -491,19 +497,19 @@ def adjust_doy_calendar(source, target):
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def resample_doy(doy, arr):
+def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
     """Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
-    doy : xarray.DataArray
+    doy : xr.DataArray
       Array with `dayofyear` coordinate.
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Array with `time` coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
       `doy`.
     """
@@ -523,7 +529,7 @@ def resample_doy(doy, arr):
     return out
 
 
-def get_daily_events(da, da_value, operator):
+def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
     r"""
     function that returns a 0/1 mask when a condition is True or False
 
@@ -533,34 +539,33 @@ def get_daily_events(da, da_value, operator):
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
     da_value : float
-    operator : string
+    operator : str
 
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
 
     """
     events = operator(da, da_value) * 1
-    events = events.where(~np.isnan(da))
+    events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
 
 
-def daily_downsampler(da, freq="YS"):
+def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Daily climate data downsampler
 
     Parameters
     ----------
-    da : xarray.DataArray
-    freq : string
+    da : xr.DataArray
+    freq : str
 
     Returns
     -------
-    xarray.DataArray
-
+    xr.DataArray
 
     Note
     ----
@@ -620,14 +625,14 @@ def daily_downsampler(da, freq="YS"):
     return buffer.groupby("tags")
 
 
-def walk_map(d, func):
+def walk_map(d: dict, func: FunctionType):
     """Apply a function recursively to values of dictionary.
 
     Parameters
     ----------
     d : dict
       Input dictionary, possibly nested.
-    func : function
+    func : FunctionType
       Function to apply to dictionary values.
 
     Returns
@@ -658,32 +663,24 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = (
-        ""
-    )  # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = (
-        ""
-    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = (
-        ""
-    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = (
-        ""
-    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = (
-        ""
-    )  # Miscellaneous information about the data or methods used to produce it.
+        ""  # Miscellaneous information about the data or methods used to produce it.
+    )
     notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
@@ -885,7 +882,7 @@ class Indicator:
         """The function computing the indicator."""
         raise NotImplementedError
 
-    def format(self, attrs, args=None):
+    def format(self, attrs: dict, args: dict = None):
         """Format attributes including {} tags with arguments.
 
         Parameters
@@ -972,7 +969,7 @@ def parse_doc(doc):
     return out
 
 
-def format_kwargs(attrs, params):
+def format_kwargs(attrs: dict, params: dict) -> None:
     """Modify attribute with argument values.
 
     Parameters
@@ -1000,7 +997,7 @@ def format_kwargs(attrs, params):
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
-def wrapped_partial(func, *args, **kwargs):
+def wrapped_partial(func: FunctionType, *args, **kwargs):
     from functools import partial, update_wrapper
 
     partial_func = partial(func, *args, **kwargs)
