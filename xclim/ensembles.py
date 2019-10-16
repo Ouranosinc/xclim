@@ -1,5 +1,9 @@
-from typing import Union
+from pathlib import Path
+from typing import Any
+from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -17,7 +21,9 @@ except ImportError:
     MPL_INSTALLED = False
 
 
-def create_ensemble(datasets, mf_flag=False):
+def create_ensemble(
+    datasets: List[Union[xr.Dataset, Path, str, List[Path, str]]], mf_flag: bool = False
+) -> xr.Dataset:
     """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
@@ -28,16 +34,18 @@ def create_ensemble(datasets, mf_flag=False):
 
     Parameters
     ----------
-    datasets : sequence
-      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
-    each sublist contains input .nc files of a multifile dataset
+    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
+      List of netcdf file paths or xr.DataSet objects . If mf_flag is True, ncfiles should be a list of lists where
+      each sublist contains input .nc files of an xarray multifile Dataset.
 
-    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
-    Only applicable when `datasets` is a sequence of file paths
+    mf_flag : bool
+      If True climate simulations are treated as multifile datasets before concatenation.
+      Only applicable when `datasets` is a sequence of file paths
 
     Returns
     -------
-    xarray dataset containing concatenated data from all input files
+    xr.Dataset
+      Dataset containing concatenated data from all input files
 
     Notes
     -----
@@ -75,19 +83,21 @@ def create_ensemble(datasets, mf_flag=False):
     return ens
 
 
-def ensemble_mean_std_max_min(ens):
+def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations
 
-    Returns a dataset containing ensemble mean, standard-deviation,
-    minimum and maximum for input climate simulations.
+    Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
+     simulations.
 
     Parameters
     ----------
-    ens : Ensemble dataset (see xclim.ensembles.create_ensemble)
+    ens: xr.Dataset
+      Ensemble dataset (see xclim.ensembles.create_ensemble)
 
     Returns
     -------
-    xarray dataset with containing data variables of ensemble statistics
+    xr.Dataset
+      Dataset with data variables of ensemble statistics
 
     Examples
     --------
@@ -122,23 +132,27 @@ def ensemble_mean_std_max_min(ens):
     return dsOut
 
 
-def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+def ensemble_percentiles(
+    ens, values: Tuple[int, int, int] = (10, 50, 90), time_block: Optional[int] = None
+) -> xr.Dataset:
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
-    Returns a dataset containing ensemble statistics for input climate simulations.
-    Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation
+    Returns a Dataset containing ensemble statistics for input climate simulations.
+    Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation.
 
     Parameters
     ----------
     ens : Ensemble dataset (see xclim.ensembles.create_ensemble)
-    values : tuple of integers - percentile values to calculate  : default : (10, 50, 90)
-    time_block : integer
+    values : Tuple[int, int, int]
+      Percentile values to calculate. Default: (10, 50, 90).
+    time_block : Optional[int]
       for large ensembles iteratively calculate percentiles in time-step blocks (n==time_block).
-       If not defined the function tries to estimate an appropriate value
+      If not defined the function tries to estimate an appropriate value.
 
     Returns
     -------
-    xarray dataset with containing data variables of requested ensemble statistics
+    xr.Dataset
+      Dataset with containing data variables of requested ensemble statistics
 
     Examples
     --------
@@ -184,24 +198,27 @@ def ensemble_percentiles(ens, values=(10, 50, 90), time_block=None):
     return ds_out
 
 
-def _ens_checktimes(datasets, mf_flag=False):
-    """Check list of datasets and determine if they hava a time dimension. If present return the
+def _ens_checktimes(
+    datasets: List[Union[xr.Dataset, Path, str, List[Path, str]]], mf_flag: bool = False
+) -> Tuple[bool, np.ndarray]:
+    """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
     maximum time-step interval of all input files
 
     Parameters
     ----------
-    datasets : sequence
-      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
-    each sublist contains input .nc files of a multifile dataset
-
-    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
-    Only applicable when `datasets` is a sequence of file paths
+    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
+      List of netcdf file paths or xr.DataSet objects . If mf_flag is True, ncfiles should be a list of lists where
+      each sublist contains input .nc files of an xarray multifile Dataset.
+    mf_flag : bool
+      If True climate simulations are treated as xarray multifile Datasets before concatenation.
+      Only applicable when :datasets: is a sequence of file paths
 
     Returns
     -------
-    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
-
-    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+    bool
+      True if time dimension is present in the dataset list; Otherwise False.
+    array of datetime64
+      Series of unique time-steps covering all input datasets.
     """
 
     time_flag = False
@@ -239,28 +256,32 @@ def _ens_checktimes(datasets, mf_flag=False):
     return time_flag, time_all
 
 
-def _ens_align_datasets(datasets, mf_flag=False, time_flag=False, time_all=None):
-    """Create a list of aligned xr.Datasets for ensemble dataset creation. If `time_flag == True` input datasets are
+def _ens_align_datasets(
+    datasets: List[Union[xr.Dataset, Path, str, List[Path, str]]],
+    mf_flag: bool = False,
+    time_flag: bool = False,
+    time_all=None,
+) -> xr.Dataset:
+    """Create a list of aligned xarray Datasets for ensemble Dataset creation. If `time_flag == True` input Datasets are
     given a common time dimension defined by `time_all`. Datasets not covering the entire time span have their data
     padded with `nan` values
 
     Parameters
     ----------
-    datasets : sequence
-      List of netcdf file paths or xr.Datasets . If mf_flag is true ncfiles should be a list of lists where
-    each sublist contains input .nc files of a multifile dataset
-
-    mf_flag : Boolean . If True climate simulations are treated as multifile datasets before concatenation.
-    Only applicable when `datasets` is a sequence of file paths
-
-    time_flag : bool; True if time dimension is present in the dataset list otherwise false.
-
-    time_all : array of datetime64; Series of unique time-steps covering all input datasets.
+    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
+      List of netcdf file paths or xarray Dataset objects . If mf_flag is True, ncfiles should be a list of lists where
+      each sublist contains input .nc files of an xarray multifile Dataset
+    mf_flag : bool
+      If True climate simulations are treated as multifile datasets before concatenation.
+      Only applicable when datasets is a sequence of file paths
+    time_flag : bool
+      True if time dimension is present in the dataset list otherwise false.
+    time_all : array of datetime64
+      Series of unique time-steps covering all input DataSets.
 
     Returns
     -------
-    ds_all : list; list of xr.Datasets
-
+    List[xr.Dataset]
     """
 
     ds_all = []
@@ -424,7 +445,7 @@ def kmeans_reduce_ensemble(
     model_weights: Optional[xr.DataArray] = None,
     sample_weights: Optional[xr.DataArray] = None,
     random_state: Optional[Union[int, np.random.RandomState]] = None
-):
+) -> Tuple[list, Any, dict]:
     """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
     uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
@@ -623,9 +644,7 @@ def kmeans_reduce_ensemble(
 
 
 def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
-    """Subfunction to kmeans_reduce_ensemble.
-           Calculate r-square profile (r-square versus number of clusters)
-    """
+    """Subfunction to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
@@ -652,9 +671,7 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
-    """Subfunction to kmeans_reduce_ensemble.
-       Determine number of clusters to create depending on various methods
-    """
+    """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
 
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
@@ -688,12 +705,12 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
 
 def plot_rsqprofile(fig_data):
     """Create an R² profile plot using kmeans_reduce_ensemble output. The R² plot allows evaluation of the proportion
-    of total uncertainty in the original ensemble that is provided by the reduced selected
-    --------
+    of total uncertainty in the original ensemble that is provided by the reduced selected.
+
     Examples
+    --------
     >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
     >>> plot_rsqprofile(fig_data)
-
     """
 
     rsq = fig_data["rsq"]
@@ -793,7 +810,3 @@ def plot_rsqprofile(fig_data):
             linewidth=0.75,
         )
         plt.legend(loc="lower right")
-
-
-if __name__ == "__main__":
-    kmeans_reduce_ensemble()
