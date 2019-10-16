@@ -997,18 +997,19 @@ def uas_vas_2_sfcwind(uas=None, vas=None):
     """
     # TODO: Add an attribute check to switch between sfcwind and wind
 
+    # Converts the wind speed to m s-1
+    uas = convert_units_to(uas, 'm/s')
+    vas = convert_units_to(vas, 'm/s')
+
     # Wind speed is the hypothenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
-
-    # Converts the wind speed to m s-1
-    # TODO: convert_units_to crashes with hours listed as 'h', for example 'km/h' or 'km h-1'
-    wind = convert_units_to(wind, 'm/s')
 
     # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
     wind.attrs = uas.attrs
     wind.name = 'sfcWind'
     wind.attrs['standard_name'] = 'wind_speed'
     wind.attrs['long_name'] = 'Near-Surface Wind Speed'
+    wind.attrs['units'] = 'm s-1'
 
     # Calculate the angle
     # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
@@ -1019,9 +1020,8 @@ def uas_vas_2_sfcwind(uas=None, vas=None):
 
     # According to the meteorological standard, calm winds must have a direction of 0°, while northerly winds have a direction of 360°.
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
-    # TODO: Is there a way to do this step without '.values'?
-    windfromdir.values[(windfromdir.round() == 0) & (wind >= 0.5)] = 360.0
-    windfromdir.values[wind < 0.5] = 0
+    windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
+    windfromdir = xr.where(wind < 0.5, 0, windfromdir)
 
     # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
     windfromdir.attrs = uas.attrs
@@ -1054,7 +1054,6 @@ def sfcwind_2_uas_vas(wind=None, windfromdir=None):
     # TODO: Add an attribute check to switch between sfcwind and wind
 
     # Converts the wind speed to m s-1
-    # TODO: convert_units_to crashes with hours listed as 'h', for example 'km/h' or 'km h-1'
     wind = convert_units_to(wind, 'm/s')
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
@@ -1078,10 +1077,12 @@ def sfcwind_2_uas_vas(wind=None, windfromdir=None):
     uas.name = 'uas'
     uas.attrs['standard_name'] = 'eastward_wind'
     uas.attrs['long_name'] = 'Near-Surface Eastward Wind'
+    wind.attrs['units'] = 'm s-1'
 
     vas.attrs = wind.attrs
     vas.name = 'vas'
     vas.attrs['standard_name'] = 'northward_wind'
     vas.attrs['long_name'] = 'Near-Surface Northward Wind'
+    wind.attrs['units'] = 'm s-1'
 
     return uas, vas

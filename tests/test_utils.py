@@ -762,3 +762,25 @@ class TestThresholdCount:
         ts = tas_series(np.arange(365))
         out = utils.threshold_count(ts, "<", 50, "Y")
         np.testing.assert_array_equal(out, [50, 0])
+
+
+class TestWindConversion:
+    da_uas = xr.DataArray(np.array([[3.6, -3.6], [-1, 0]]), coords={'lon': [-72, -72], 'lat': [55, 55]}, dims=['lon', 'lat'])
+    da_uas.attrs['units'] = 'km/h'
+    da_vas = xr.DataArray(np.array([[3.6, 3.6], [-1, -18]]), coords={'lon': [-72, -72], 'lat': [55, 55]}, dims=['lon', 'lat'])
+    da_vas.attrs['units'] = 'km/h'
+    da_wind = xr.DataArray(np.array([[np.hypot(3.6, 3.6), np.hypot(3.6, 3.6)], [np.hypot(1, 1), 18]]), coords={'lon': [-72, -72], 'lat': [55, 55]}, dims=['lon', 'lat'])
+    da_wind.attrs['units'] = 'km/h'
+    da_windfromdir = xr.DataArray(np.array([[225, 135], [0, 360]]), coords={'lon': [-72, -72], 'lat': [55, 55]}, dims=['lon', 'lat'])
+
+    def test_uas_vas_2_sfcwind(self):
+        wind, windfromdir = utils.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
+
+        assert np.all(np.around(wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
+        assert np.all(np.around(windfromdir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10))
+
+    def test_sfcwind_2_uas_vas(self):
+        uas, vas = utils.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
+
+        assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
+        assert np.all(np.around(vas.values, decimals=10) == np.around(np.array([[1, 1], [-np.hypot(1, 1) / 3.6, -5]]), decimals=10))
