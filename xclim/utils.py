@@ -20,6 +20,28 @@ from boltons.funcutils import wraps
 import xclim
 from . import checks
 
+__all__ = [
+    "units2pint",
+    "pint2cfunits",
+    "pint_multiply",
+    "convert_units_to",
+    "declare_units",
+    "threshold_count",
+    "percentile_doy",
+    "infer_doy_max",
+    "adjust_doy_calendar",
+    "get_daily_events",
+    "daily_downsampler",
+    "walk_map",
+    "Indicator",
+    "Indicator2D",
+    "parse_doc",
+    "format_kwargs",
+    "wrapped_partial",
+    "uas_vas_2_sfcwind",
+    "sfcwind_2_uas_vas",
+]
+
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
     pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
@@ -514,7 +536,7 @@ def get_daily_events(da, da_value, operator):
 
     """
     events = operator(da, da_value) * 1
-    events = events.where(~np.isnan(da))
+    events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
 
@@ -628,32 +650,24 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = (
-        ""
-    )  # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = (
-        ""
-    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = (
-        ""
-    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = (
-        ""
-    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = (
-        ""
-    )  # Miscellaneous information about the data or methods used to produce it.
+        ""  # Miscellaneous information about the data or methods used to produce it.
+    )
     notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
@@ -978,7 +992,7 @@ def wrapped_partial(func, *args, **kwargs):
     return partial_func
 
 
-def uas_vas_2_sfcwind(uas=None, vas=None):
+def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
     """Converts eastward and northward wind components to wind speed and direction
 
     Parameters
@@ -998,18 +1012,18 @@ def uas_vas_2_sfcwind(uas=None, vas=None):
     # TODO: Add an attribute check to switch between sfcwind and wind
 
     # Converts the wind speed to m s-1
-    uas = convert_units_to(uas, 'm/s')
-    vas = convert_units_to(vas, 'm/s')
+    uas = convert_units_to(uas, "m/s")
+    vas = convert_units_to(vas, "m/s")
 
     # Wind speed is the hypothenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
 
     # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
     wind.attrs = uas.attrs
-    wind.name = 'sfcWind'
-    wind.attrs['standard_name'] = 'wind_speed'
-    wind.attrs['long_name'] = 'Near-Surface Wind Speed'
-    wind.attrs['units'] = 'm s-1'
+    wind.name = "sfcWind"
+    wind.attrs["standard_name"] = "wind_speed"
+    wind.attrs["long_name"] = "Near-Surface Wind Speed"
+    wind.attrs["units"] = "m s-1"
 
     # Calculate the angle
     # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
@@ -1018,22 +1032,23 @@ def uas_vas_2_sfcwind(uas=None, vas=None):
     # Convert the angle from the mathematical standard to the meteorological standard
     windfromdir = (270 - windfromdir_math) % 360.0
 
-    # According to the meteorological standard, calm winds must have a direction of 0°, while northerly winds have a direction of 360°.
+    # According to the meteorological standard, calm winds must have a direction of 0°
+    # while northerly winds have a direction of 360°
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
     windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
     windfromdir = xr.where(wind < 0.5, 0, windfromdir)
 
     # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
     windfromdir.attrs = uas.attrs
-    windfromdir.name = 'sfcWindfromdir'
-    windfromdir.attrs['standard_name'] = 'wind_from_direction'
-    windfromdir.attrs['long_name'] = 'Near-Surface Wind from Direction'
-    windfromdir.attrs['units'] = 'degree'
+    windfromdir.name = "sfcWindfromdir"
+    windfromdir.attrs["standard_name"] = "wind_from_direction"
+    windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
+    windfromdir.attrs["units"] = "degree"
 
     return wind, windfromdir
 
 
-def sfcwind_2_uas_vas(wind=None, windfromdir=None):
+def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
     """Converts wind speed and direction to eastward and northward wind components
 
     Parameters
@@ -1054,7 +1069,7 @@ def sfcwind_2_uas_vas(wind=None, windfromdir=None):
     # TODO: Add an attribute check to switch between sfcwind and wind
 
     # Converts the wind speed to m s-1
-    wind = convert_units_to(wind, 'm/s')
+    wind = convert_units_to(wind, "m/s")
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
     windfromdir_math = (-windfromdir + 270) % 360.0
@@ -1074,15 +1089,15 @@ def sfcwind_2_uas_vas(wind=None, windfromdir=None):
 
     # Add attributes to uas and vas. This is done by copying wind' attributes and overwriting a few of them
     uas.attrs = wind.attrs
-    uas.name = 'uas'
-    uas.attrs['standard_name'] = 'eastward_wind'
-    uas.attrs['long_name'] = 'Near-Surface Eastward Wind'
-    wind.attrs['units'] = 'm s-1'
+    uas.name = "uas"
+    uas.attrs["standard_name"] = "eastward_wind"
+    uas.attrs["long_name"] = "Near-Surface Eastward Wind"
+    wind.attrs["units"] = "m s-1"
 
     vas.attrs = wind.attrs
-    vas.name = 'vas'
-    vas.attrs['standard_name'] = 'northward_wind'
-    vas.attrs['long_name'] = 'Near-Surface Northward Wind'
-    wind.attrs['units'] = 'm s-1'
+    vas.name = "vas"
+    vas.attrs["standard_name"] = "northward_wind"
+    vas.attrs["long_name"] = "Near-Surface Northward Wind"
+    wind.attrs["units"] = "m s-1"
 
     return uas, vas
