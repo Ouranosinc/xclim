@@ -25,12 +25,13 @@ def create_ensemble(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
 ) -> xr.Dataset:
-    """Create an xarray datset of ensemble of climate simulation from a list of netcdf files. Input data is
+
+    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
-    Returns a xarray dataset object containing input data from the list of netcdf files concatenated along
-    a new dimension (name:'realization'). In the case where input files have unequal time dimensions, output
-    ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, Datasets not
+    Returns an xarray dataset object containing input data from the list of netcdf files concatenated along
+    a new dimension (name:'realization'). In the case where input files have unequal time dimensions, the output
+    ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, datasets not
     covering the entire time span have their data padded with NaN values.
 
     Parameters
@@ -449,7 +450,7 @@ def kmeans_reduce_ensemble(
     variable_weights: Optional[np.ndarray] = None,
     model_weights: Optional[np.ndarray] = None,
     sample_weights: Optional[np.ndarray] = None,
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
+    random_state: Optional[Union[int, np.random.RandomState]] = None
 ) -> Tuple[list, np.ndarray, dict]:
     """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
