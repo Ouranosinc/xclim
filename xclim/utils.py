@@ -672,8 +672,8 @@ class Indicator:
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
     standard_name = (
-        ""  # The set of permissible standard names is contained in the standard name table.
-    )
+        ""
+    )  # The set of permissible standard names is contained in the standard name table.
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
@@ -692,8 +692,8 @@ class Indicator:
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
     references = (
-        ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
-    )
+        ""
+    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = (
         ""  # Miscellaneous information about the data or methods used to produce it.
     )
