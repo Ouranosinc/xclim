@@ -714,10 +714,9 @@ class TestDailyFreezeThaw:
 
         frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
 
-        assert (
-            "This index calculation will soon require user-specified thresholds."
-            in [str(q.message) for q in record]
-        )
+        assert "This index calculation will soon require user-specified thresholds." in [
+            str(q.message) for q in record
+        ]
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 

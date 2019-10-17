@@ -953,7 +953,7 @@ def tx_tn_days_above(
     """
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
-    events = ((tasmin > (thresh_tasmin)) & (tasmax > (thresh_tasmax))) * 1
+    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
     return events.resample(time=freq).sum(dim="time")
 
 
