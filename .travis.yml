@@ -63,12 +63,16 @@ matrix:
     - env: TOXENV=py36
       name: "Python3.6 (Linux)"
       python: 3.6
+    - env: TOXENV=py36-xarray
+      name: "Python3.6 (Linux + xarray@master)"
+      python: 3.6
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5
   allow_failures:
     - env: TOXENV=py38-dev
     - env: TOXENV=py37-windows
+    - env: TOXENV=py36-xarray
 
 install:
     - sudo -H pip install --upgrade pip
