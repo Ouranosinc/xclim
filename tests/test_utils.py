@@ -760,7 +760,7 @@ class TestSubsetBbox:
         with pytest.raises(Exception):
             subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
-            
+
 class TestThresholdCount:
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(365))
