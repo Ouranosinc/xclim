@@ -934,7 +934,7 @@ class TestWinterRainRatio:
         tas[10:20] += 10
         tas = tas_series(tas + K2C, start="12/1/2000")
 
-        out = xci.winter_rain_ratio(pr, tas=tas)
+        out = xci.winter_rain_ratio(pr=pr, tas=tas)
         np.testing.assert_almost_equal(out, [10.0 / (31 + 31 + 28), 0])
 
 
