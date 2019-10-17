@@ -11,10 +11,10 @@ import warnings
 from collections import defaultdict
 from collections import OrderedDict
 from inspect import signature
+from types import FunctionType
 from typing import Any
 from typing import Optional
 from typing import Union
-from types import FunctionType
 
 import numpy as np
 import pint
@@ -671,21 +671,27 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
+    # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = (
+        ""
+    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = (
+        ""
+    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""
     comment = (
         ""  # Miscellaneous information about the data or methods used to produce it.
     )

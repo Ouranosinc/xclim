@@ -126,7 +126,7 @@ def fit(da, dist="norm"):
     # coords['time'] =
     # coords['climatology_bounds'] =
 
-    out = xr.DataArray(data=data, coords=coords, dims=(u"dparams",) + mean.dims)
+    out = xr.DataArray(data=data, coords=coords, dims=("dparams",) + mean.dims)
     out.attrs = da.attrs
     out.attrs["original_name"] = getattr(da, "standard_name", "")
     out.attrs[
@@ -194,7 +194,7 @@ def fa(da, t, dist="norm", mode="high"):
     # Create dimensions
     dims = list(p.dims)
     dims.remove("dparams")
-    dims.insert(0, u"return_period")
+    dims.insert(0, "return_period")
 
     # TODO: add time and time_bnds coordinates (Low will work on this)
     # time.attrs['climatology'] = 'climatology_bounds'

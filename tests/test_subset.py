@@ -335,7 +335,7 @@ class TestSubsetBbox:
         # for irregular lat lon grids data matrix remains rectangular in native proj
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
         # Check only non-nans gridcells using mask
-        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        mask1 = ~(np.isnan(out.sel(time=out.time[0])))
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
         assert np.all(out.lon.values[mask1.values] >= np.min(self.lon))
@@ -385,14 +385,14 @@ class TestSubsetBbox:
         out = subset.subset_bbox(da, lon_bnds=self.lon)
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
-        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        mask1 = ~(np.isnan(out.sel(time=out.time[0])))
         assert np.all(out.lon.values[mask1.values] <= np.max(self.lon))
         assert np.all(out.lon.values[mask1.values] >= np.min(self.lon))
 
         out = subset.subset_bbox(da, lat_bnds=self.lat)
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
-        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        mask1 = ~(np.isnan(out.sel(time=out.time[0])))
         assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
         assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
 

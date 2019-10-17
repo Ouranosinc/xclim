@@ -105,8 +105,12 @@ class TestEnsembleStats:
         )
 
         ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
-        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.min() == 1970
-        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.max() == 2050
+        assert (
+            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.min() == 1970
+        )
+        assert (
+            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
+        )
 
     def test_calc_perc(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
