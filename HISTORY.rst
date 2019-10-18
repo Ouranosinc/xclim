@@ -2,8 +2,11 @@
 History
 =======
 
-0.10.x-beta (2019-10-17)
+0.11.x-beta (2019-10-17)
 ------------------------
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Now supporting explicit builds for Windows OS via Travis CI.
+* Added Kmeans clustering ensemble reduction algorithms.
 * Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
 
 
@@ -31,7 +34,7 @@ History
 * Addressed deprecations for xarray 0.13.0
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
-* Added Kmeans clustering ensemble reduction algorithms.
+
 
 0.10-beta (2019-06-06)
 ----------------------

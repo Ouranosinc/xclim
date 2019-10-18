@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -24,6 +25,7 @@ def create_ensemble(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
 ) -> xr.Dataset:
+
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
     concatenated along a newly created data dimension ('realization')
 
