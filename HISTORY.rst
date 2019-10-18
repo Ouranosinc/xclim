@@ -5,6 +5,7 @@ History
 0.11.x-beta (2019-10-17)
 ------------------------
 * Added type hinting to call signatures of many functions for more explicit type-checking
+* Now supporting explicit builds for Windows OS via Travis CI
 
 
 0.10.x-beta (2019-06-18)
