@@ -2,6 +2,11 @@
 History
 =======
 
+0.11.x-beta (2019-10-17)
+------------------------
+* Added type hinting to call signatures of many functions for more explicit type-checking
+
+
 0.10.x-beta (2019-06-18)
 ------------------------
 * Added indices to ICCLIM module.
@@ -26,7 +31,7 @@ History
 * Addressed deprecations for xarray 0.13.0
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
-* Added Kmeans clustering ensemble reduction algorithms
+
 
 0.10-beta (2019-06-06)
 ----------------------
