@@ -32,16 +32,16 @@ matrix:
             - libhdf5-serial-dev
             - netcdf-bin
             - libnetcdf-dev
-    - env: TOXENV=py38-windows
-      name: "Python3.8 (Windows)"
+    - env: TOXENV=py37-windows
+      name: "Python3.7 (Windows)"
       os: windows
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj
         - set PROJ_DIR=/c/OSGeo4W/
-        - choco install python3
-        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+        - choco install python --version=3.7.5
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
@@ -74,7 +74,7 @@ matrix:
       python: 3.5
   allow_failures:
     - env: TOXENV=py38-dev
-    - env: TOXENV=py38-windows
+    - env: TOXENV=py37-windows
     - env: TOXENV=py36-xarray
 
 before_install:
