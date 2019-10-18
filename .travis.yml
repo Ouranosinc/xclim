@@ -33,7 +33,7 @@ matrix:
             - netcdf-bin
             - libnetcdf-dev
     - env: TOXENV=py38-windows
-      name: "Python3.7 (Windows)"
+      name: "Python3.8 (Windows)"
       os: windows
       language: bash
       before_install:
@@ -74,7 +74,7 @@ matrix:
       python: 3.5
   allow_failures:
     - env: TOXENV=py38-dev
-    - env: TOXENV=py37-windows
+    - env: TOXENV=py38-windows
     - env: TOXENV=py36-xarray
 
 before_install:
