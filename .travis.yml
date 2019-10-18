@@ -32,7 +32,7 @@ matrix:
             - libhdf5-serial-dev
             - netcdf-bin
             - libnetcdf-dev
-    - env: TOXENV=py37-windows
+    - env: TOXENV=py38-windows
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
