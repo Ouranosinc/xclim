@@ -38,10 +38,9 @@ matrix:
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-        - sleep 5
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj
         - set PROJ_DIR=/c/OSGeo4W/
-        - choco install python3 pip
+        - choco install python3
         - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
     - env: TOXENV=py37-macOS
