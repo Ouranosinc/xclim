@@ -1037,7 +1037,7 @@ def wrapped_partial(func: FunctionType, *args, **kwargs):
 
 
 def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
-    """Converts eastward and northward wind components to wind speed and direction
+    """Converts eastward and northward wind components to wind speed and direction.
 
     Parameters
     ----------
@@ -1052,6 +1052,11 @@ def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
       Wind velocity (m s-1)
     windfromdir : xr.DataArray
       Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+    
+    Notes
+    -----
+    Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
+    while stronger winds are set to 360°.
     """
     # TODO: Add an attribute check to switch between sfcwind and wind
 
@@ -1093,7 +1098,7 @@ def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
 
 
 def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
-    """Converts wind speed and direction to eastward and northward wind components
+    """Converts wind speed and direction to eastward and northward wind components.
 
     Parameters
     ----------
