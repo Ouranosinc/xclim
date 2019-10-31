@@ -1,14 +1,22 @@
+import logging
 import warnings
 from functools import wraps
+from pathlib import Path
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import geojson
+import fiona
+import rioxarray
+import rasterio.crs
 import numpy as np
+import shapely.geometry
 import xarray
 from pyproj import Geod
 
 __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
+logging.basicConfig(level=logging.INFO)
 
 
 def check_date_signature(func):
@@ -125,9 +133,158 @@ def check_lons(func):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
+
         return func(*args, **kwargs)
 
     return func_checker
+
+
+def check_geometry(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator to perform a check to verify a geometry is either a Polygon or a MultiPolygon.
+          Returns the function with geom set to the shapely Shape object.
+        """
+        try:
+            shape = kwargs["shape"]
+            if shape is None:
+                raise ValueError
+        except (KeyError, ValueError):
+            logging.exception("No shape provided.")
+            raise
+
+        if "use_all_features" in kwargs:
+            use_all_features = bool(kwargs["use_all_features"])
+        else:
+            use_all_features = False
+
+        if not isinstance(shape, shapely.geometry.GeometryCollection):
+            geom = list()
+            geometry_types = list()
+            try:
+                fio = fiona.open(shape)
+                logging.info("Geometry OK.")
+                if "crs" not in kwargs:
+                    kwargs["crs"] = rasterio.crs.CRS(fio.crs).to_epsg()
+                if use_all_features:
+                    for i, feat in enumerate(fio):
+                        g = geojson.loads(
+                            feat["geometry"]
+                        )  # shapely.geometry.shape(feat["geometry"])
+                        geom.append(g)
+                        geometry_types.append(g.geom_type)
+                else:
+                    # g = shapely.geometry.shape(next(iter(fio))["geometry"])
+                    g = geojson.loads(next(iter(fio))["geometry"])
+                    geom.append(g)
+                    geometry_types.append(g.geom_type)
+                fio.close()
+            except fiona.errors.DriverError:
+                logging.exception("Unable to load vector as shapely.geometry.shape().")
+        else:
+            geom = shape
+            geometry_types = shape.geom_type
+
+        if geom[0].is_valid:
+            print(geom)
+            kwargs["geometry"] = geom[0]  # geojson.GeometryCollection(geom)
+            logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
+            return func(*args, **kwargs)
+        raise RuntimeError("No appropriate geometries found.")
+
+    return func_checker
+
+
+@check_geometry
+@check_date_signature
+def subset_shape(
+    da: Union[xarray.DataArray, xarray.Dataset],
+    shape: Union[str, Path],
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    geometry: Optional[shapely.geometry.GeometryCollection] = None,
+    crs: Optional[str] = None,
+    use_all_features: bool = False,
+) -> Union[xarray.DataArray, xarray.Dataset]:
+    """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
+
+    Return a subsetted data array for grid points falling within the area of a polygon and/or MultiPolygon shape,
+      or grid points along the path of a LineString and/or MultiLineString.
+
+    Parameters
+    ----------
+    da : Union[xarray.DataArray, xarray.Dataset]
+      Input data.
+    shape : Union[str, Path, geometry.GeometryCollection]
+      Path to a single-layer vector file, or a shapely GeometryCollection object.
+    start_date : Optional[str]
+      Start date of the subset.
+      Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+      Defaults to first day of input data-array.
+    end_date : Optional[str]
+      End date of the subset.
+      Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+      Defaults to last day of input data-array.
+    geometry: Optional[geometry.GeometryCollection]
+    crs : Optional[str]
+      CRS of the geometries provided. If passing GeometryCollections as shapes, CRS must be explicitly stated.
+    use_all_features : bool
+      Use either the first found feature geometry or the union of all found features. Default: False.
+    start_yr : int
+      Deprecated
+        First year of the subset. Defaults to first year of input data-array.
+    end_yr : int
+      Deprecated
+        Last year of the subset. Defaults to last year of input data-array.
+
+    Returns
+    -------
+    Union[xarray.DataArray, xarray.Dataset]
+      Subsetted xarray.DataArray or xarray.Dataset
+
+    Warnings
+    --------
+    This functions relies on the rioxarray library and requires xarray Datasets and DataArrays that have been read with
+     the `rioxarray` library imported. Attempting to use this function with pure xarray objects will raise exceptions.
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> import rioxarray
+    >>> import xarray as xr
+    >>> ds = xarray.open_dataset('pr.day.nc')
+    Subset lat lon and years
+    >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+    Subset data array lat, lon and single year
+    >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
+    Subset data array single year keep entire lon, lat grid
+    >>> prSub = subset.subset_bbox(ds.pr, start_yr='1990', end_yr='1990') # one year only entire grid
+    Subset multiple variables in a single dataset
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = subset.subset_bbox(ds, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> prSub = subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03', end_date='1999-08')
+    # Subset with specific start_dates and end_dates
+    >>> prSub = \
+            subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
+    """
+    vectors = geometry or shape
+    assert da.rio.clip
+
+    crs = rasterio.crs.CRS().from_epsg(crs)
+    print(crs, da.rio.crs)
+    da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+    da.rio.write_crs(crs, inplace=True)
+    print(crs, da.rio.crs)
+
+    clipped = da.rio.clip(
+        geometries=vectors, crs=da.rio.crs, all_touched=False, drop=True, invert=False
+    )
+    if start_date or end_date:
+        clipped = subset_time(clipped, start_date=start_date, end_date=end_date)
+
+    return clipped
 
 
 @check_lons
@@ -144,6 +301,7 @@ def subset_bbox(
     Return a subsetted data array for grid points falling within a spatial bounding box
     defined by longitude and latitudinal bounds and for dates falling within provided bounds.
 
+    TODO: returns the what?
     In the case of a lat-lon rectilinear grid, this simply returns the
 
     Parameters
@@ -169,7 +327,6 @@ def subset_bbox(
       Deprecated
         Last year of the subset. Defaults to last year of input data-array.
 
-
     Returns
     -------
     Union[xarray.DataArray, xarray.Dataset]
@@ -180,18 +337,20 @@ def subset_bbox(
     >>> from xclim import subset
     >>> ds = xarray.open_dataset('pr.day.nc')
     Subset lat lon and years
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
     Subset data array lat, lon and single year
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1990')
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1990')
     Subset dataarray single year keep entire lon, lat grid
-    >>> prSub = subset.subset_bbox(ds.pr,start_yr='1990',end_yr='1990') # one year only entire grid
+    >>> prSub = subset.subset_bbox(ds.pr, start_yr='1990', end_yr='1990') # one year only entire grid
     Subset multiple variables in a single dataset
     >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
+    >>> dsSub = subset.subset_bbox(ds, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
      # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03',end_date='1999-08')
+    >>> prSub = \
+        subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],start_date='1990-03', end_date='1999-08')
     # Subset with specific start_dates and end_dates
-    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03-13',end_date='1990-08-17')
+    >>> prSub = subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],\
+                                    start_date='1990-03-13', end_date='1990-08-17')
     """
     # start_date, end_date = _check_times(
     #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
@@ -219,12 +378,14 @@ def subset_bbox(
             lat_b = assign_bounds(lat_bnds, da.lat)
             lat_cond = in_bounds(lat_b, da.lat)
         else:
+            lat_b = None
             lat_cond = True
 
         if lon_bnds is not None:
             lon_b = assign_bounds(lon_bnds, da.lon)
             lon_cond = in_bounds(lon_b, da.lon)
         else:
+            lon_b = None
             lon_cond = True
 
         # Crop original array using slice, which is faster than `where`.
@@ -390,7 +551,9 @@ def subset_gridpoint(
         else:
             raise (
                 Exception(
-                    'subset_gridpoint() requires input data with "lon" and "lat" coordinates or data variables.'
+                    '{} requires input data with "lon" and "lat" coordinates or data variables.'.format(
+                        subset_gridpoint.__name__
+                    )
                 )
             )
 
@@ -450,3 +613,19 @@ def subset_time(
     """
 
     return da.sel(time=slice(start_date, end_date))
+
+
+if __name__ == "__main__":
+    import rioxarray
+    import xarray
+    import xclim.subset
+    import geojson
+    import shapely.geometry
+    a = "/home/tjs/Downloads/map.geojson"
+    nc = (
+        "/home/tjs/Downloads/nc_data/pr_Amon_CanESM2_historical_r1i1p1_185001-200512.nc"
+    )
+    with open(a) as gj:
+        g = geojson.loads(gj.read())
+    ds = xarray.open_dataset(nc)
+    ss = xclim.subset.subset_shape(ds, shape=g)
