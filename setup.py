@@ -23,7 +23,6 @@ requirements = [
     "scipy>=1.2",
     "numpy>=1.15",
     "pandas>=0.23",
-    "shapely>=1.6",
     "fiona>=1.8",
     "geojson>=2.5.0",
     "rasterio>=1.0.28",

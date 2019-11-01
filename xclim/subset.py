@@ -2,6 +2,7 @@ import logging
 import warnings
 from functools import wraps
 from pathlib import Path
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -11,7 +12,6 @@ import geojson
 import numpy as np
 import rasterio.crs
 import rioxarray
-import shapely.geometry
 import xarray
 from pyproj import Geod
 
@@ -159,26 +159,23 @@ def check_geometry_and_read(func):
         else:
             use_all_features = False
 
-        if not isinstance(shape, shapely.geometry.GeometryCollection):
-            geom = list()
-            geometry_types = list()
-            try:
-                with fiona.open(shape) as fio:
-                    logging.info("Vector read OK.")
-                    if "crs" not in kwargs:
-                        kwargs["shape_crs"] = rasterio.crs.CRS(fio.crs)
+        geom = list()
+        geometry_types = list()
+        try:
+            with fiona.open(shape) as fio:
+                logging.info("Vector read OK.")
+                if "crs" not in kwargs:
+                    kwargs["shape_crs"] = rasterio.crs.CRS(fio.crs)
 
-                    for i, feat in enumerate(fio):
-                        g = geojson.GeoJSON(feat)
-                        geom.append(g["geometry"])
-                        geometry_types.append(g["geometry"]["type"])
-                        if not use_all_features:
-                            break
-            except fiona.errors.DriverError:
-                logging.exception("Unable to read shape.")
-                raise
-        else:
-            raise NotImplementedError("Shapely GeometryCollections are not supported.")
+                for i, feat in enumerate(fio):
+                    g = geojson.GeoJSON(feat)
+                    geom.append(g["geometry"])
+                    geometry_types.append(g["geometry"]["type"])
+                    if not use_all_features:
+                        break
+        except fiona.errors.DriverError:
+            logging.exception("Unable to read shape.")
+            raise
 
         if len(geom):
             kwargs["geometry"] = geom
@@ -197,7 +194,7 @@ def subset_shape(
     shape: Union[str, Path],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    geometry: Optional[shapely.geometry.GeometryCollection] = None,
+    geometry: Optional[List[geojson.GeoJSON]] = None,
     da_crs: Optional[str] = None,
     shape_crs: Optional[str] = None,
     use_all_features: bool = False,
@@ -221,7 +218,6 @@ def subset_shape(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
-    geometry: Optional[geometry.GeometryCollection]
     da_crs : Optional[Union[int, dict, str]]
       CRS of the xarray.DataArray or xarray.Dataset provided. Default: dict(epsg=4326).
     shape_crs : Optional[Union[int, dict, str]]
@@ -266,7 +262,6 @@ def subset_shape(
     >>> prSub = \
             subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
-    vectors = geometry or shape
     try:
         if da.rio.crs is None:
             if np.any(da.lon < -180) or np.any(da.lon > 360):
@@ -302,7 +297,7 @@ def subset_shape(
             dss.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
             dss.rio.write_crs(crs, inplace=True)
             ds_out[v] = dss.rio.clip(
-                vectors, crs=dss.rio.crs, all_touched=True, drop=True, invert=False
+                geometry, crs=dss.rio.crs, all_touched=True, drop=True, invert=False
             )
 
     for v in da.data_vars:
