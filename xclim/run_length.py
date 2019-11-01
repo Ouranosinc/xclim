@@ -420,9 +420,9 @@ def first_run_ufunc(x, window, index=None):
         kwargs={"window": window},
     )
 
-    if index is not None and ~np.isnan(ind):
+    if index is not None:
         val = getattr(x.indexes["time"], index)
-        i = int(ind.data)
+        i = ind.data.astype(int)
         ind.data = val[i]
 
     return ind

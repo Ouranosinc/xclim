@@ -1,11 +1,11 @@
 import numpy as np
 import xarray as xr
 
+from . import fwi
 from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
-from . import fwi
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -301,7 +301,7 @@ def extreme_temperature_range(tasmax, tasmin, freq="YS"):
     return out
 
 
-@declare_units('', tas='[temperature]', pr='[precipitation]', ws='[speed]', rh='[]')
+@declare_units("", tas="[temperature]", pr="[precipitation]", ws="[speed]", rh="[]")
 def fire_weather_index(tas, pr, ws, rh, ffmc0, dmc0, dc0):
     r"""Fire weather index
 
@@ -322,18 +322,21 @@ def fire_weather_index(tas, pr, ws, rh, ffmc0, dmc0, dc0):
     dc0 : float, xarray.DataArray
       Initial values of the drought code.
     """
-    tas = utils.convert_units_to(tas, 'C')
-    pr = utils.convert_units_to(pr, 'mm/day')
-    ws = utils.convert_units_to(ws, 'km/h')
-    rh = utils.convert_units_to(rh, 'pct')
+    tas = utils.convert_units_to(tas, "C")
+    pr = utils.convert_units_to(pr, "mm/day")
+    ws = utils.convert_units_to(ws, "km/h")
+    rh = utils.convert_units_to(rh, "pct")
+
+    if "lat" not in tas.coords:
+        raise AttributeError("Meteorological variables should have coordinate `lat`.")
 
     ffmc = fwi.ffmc_ufunc(tas, pr, ws, rh, ffmc0)
-    dmc = fwi.dmc_ufunc(tas, pr, rh, tas.time.dt.month, dmc0)
-    dc = fwi.dc_ufunc(tas, pr, tas.time.dt.month, dc0)
+    dmc = fwi.dmc_ufunc(tas, pr, rh, tas.time.dt.month, tas.lat, dmc0)
+    dc = fwi.dc_ufunc(tas, pr, tas.time.dt.month, tas.lat, dc0)
     isi = fwi.initial_spread_index(ws, ffmc)
     bui = fwi.build_up_index(dmc, dc)
     out = fwi.fire_weather_index(isi, bui)
-    out.attrs['units'] = ''
+    out.attrs["units"] = ""
     return out
 
 

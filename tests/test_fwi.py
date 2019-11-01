@@ -1,12 +1,23 @@
-import pytest
-import numpy as np
-import xarray as xr
-from xclim.indices.fwi import fine_fuel_moisture_code, duff_moisture_code, drought_code
-from xclim.indices.fwi import initial_spread_index, build_up_index, fire_weather_index
-from xclim.indices import fire_weather_index as xfwi
 import os
 from pathlib import Path
+
+import numpy as np
+import pytest
+import xarray as xr
+
 from .data import FWI
+from xclim.indices import fire_weather_index as xfwi
+from xclim.indices.fwi import build_up_index
+from xclim.indices.fwi import day_length
+from xclim.indices.fwi import day_length_factor
+from xclim.indices.fwi import drought_code
+from xclim.indices.fwi import duff_moisture_code
+from xclim.indices.fwi import fine_fuel_moisture_code
+from xclim.indices.fwi import fire_weather_index
+from xclim.indices.fwi import initial_spread_index
+from xclim.indices.fwi import significant_snow_cover
+from xclim.indices.fwi import start_up_snow
+from xclim.indices.fwi import start_up_temp
 
 
 class TestFireWeatherIndex:
@@ -15,25 +26,30 @@ class TestFireWeatherIndex:
     def get_data(self):
         import io
         import pandas as pd
+
         f = io.StringIO(testdata)
-        return pd.read_table(f, sep=' ', header=0)
+        return pd.read_table(f, sep=" ", header=0)
 
     def test_xfwi(self):
         import datetime as dt
+
         # Convert test data in DataArrays.
         data = self.get_data()
-        t = [dt.datetime(2015, m, d) for (m, d) in zip(data.pop('mth'), data.pop('day'))]
-        data['time'] = t
-        data.set_index('time', inplace=True)
+        t = [
+            dt.datetime(2015, m, d) for (m, d) in zip(data.pop("mth"), data.pop("day"))
+        ]
+        data["time"] = t
+        data.set_index("time", inplace=True)
 
-        ds = xr.Dataset(data)
-        ds.temp.attrs['units'] = 'C'
-        ds.pr.attrs['units'] = 'mm/day'
-        ds.ws.attrs['units'] = 'km/h'
-        ds.rh.attrs['units'] = 'pct'
+        ds = xr.Dataset(data).expand_dims(axis=1, lat=[46])
+
+        ds.temp.attrs["units"] = "C"
+        ds.pr.attrs["units"] = "mm/day"
+        ds.ws.attrs["units"] = "km/h"
+        ds.rh.attrs["units"] = "pct"
 
         fwi = xfwi(ds.temp, ds.pr, ds.ws, ds.rh, 85.0, 6.0, 15.0)
-        np.testing.assert_array_almost_equal(fwi, data['fwi'], 1)
+        np.testing.assert_array_almost_equal(np.squeeze(fwi), data["fwi"], 1)
 
     def test_gfwed(self):
         import datetime as dt
@@ -41,62 +57,76 @@ class TestFireWeatherIndex:
         i = xr.open_dataset(FWI.init())
 
         var_fn = [FWI.wx(), FWI.pr()]
-        v = xr.open_mfdataset(var_fn).reset_index('time', drop=True)
-        v['time'] = xr.IndexVariable('time', [dt.datetime(1985, 7, 31)])
-        v.set_coords('time', inplace=True)
+        v = xr.open_mfdataset(var_fn).reset_index("time", drop=True)
+        v["time"] = xr.IndexVariable("time", [dt.datetime(1985, 7, 31)])
 
         out = xr.open_dataset(FWI.out())
 
-        fwi = xfwi(v.MERRA2_t, v.MERRA2_prec, v.MERRA2_wdSpd, v.MERRA2_rh,
-                   i.MERRA2_FFMC[0], i.MERRA2_DMC[0], i.MERRA2_DC[0])
-        xr.testing.assert_allclose(fwi.sel(lat=slice(30, None)), out.MERRA2_FWI.sel(lat=slice(30, None)), atol=1)
-
+        fwi = xfwi(
+            v.MERRA2_t,
+            v.MERRA2_prec,
+            v.MERRA2_wdSpd,
+            v.MERRA2_rh,
+            i.MERRA2_FFMC[0],
+            i.MERRA2_DMC[0],
+            i.MERRA2_DC[0],
+        )
+        xr.testing.assert_allclose(
+            fwi.sel(lat=slice(30, None)),
+            out.MERRA2_FWI.sel(lat=slice(30, None)),
+            atol=1,
+        )
 
     def test_fine_fuel_moisture_code(self):
         d = self.get_data()
 
         ffmc0 = 85.0
 
-        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
+        ffmc = fine_fuel_moisture_code(d["temp"], d["pr"], d["ws"], d["rh"], ffmc0)
 
-        np.testing.assert_array_almost_equal(ffmc, d['ffmc'], 1)
+        np.testing.assert_array_almost_equal(ffmc, d["ffmc"], 1)
 
     def test_duff_moisture_code(self):
         d = self.get_data()
 
         dmc0 = 6.0
 
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
+        dmc = duff_moisture_code(
+            d["temp"], d["pr"], d["rh"], d["mth"].astype(int), 44, dmc0
+        )
 
-        np.testing.assert_array_almost_equal(dmc, d['dmc'], 1)
+        np.testing.assert_array_almost_equal(dmc, d["dmc"], 1)
 
     def test_drought_code(self):
         d = self.get_data()
 
         dc0 = 15.0
+        lat = 46
+        dc = drought_code(d["temp"], d["pr"], d["mth"].astype(int), lat, dc0)
 
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
-
-        np.testing.assert_array_almost_equal(dc, d['dc'], 1)
+        np.testing.assert_array_almost_equal(dc, d["dc"], 1)
 
     def test_initial_spread_index(self):
         # Note that using the rounded data as input creates rounding errors.
         d = self.get_data()
         ffmc0 = 85.0
-        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
-        isi = initial_spread_index(d['ws'], ffmc)
-        np.testing.assert_array_almost_equal(isi, d['isi'], 1)
+        ffmc = fine_fuel_moisture_code(d["temp"], d["pr"], d["ws"], d["rh"], ffmc0)
+        isi = initial_spread_index(d["ws"], ffmc)
+        np.testing.assert_array_almost_equal(isi, d["isi"], 1)
 
     def test_build_up_index(self):
         d = self.get_data()
 
         dmc0 = 6.0
         dc0 = 15.0
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
+        lat = 46
+        dmc = duff_moisture_code(
+            d["temp"], d["pr"], d["rh"], d["mth"].astype(int), lat, dmc0
+        )
+        dc = drought_code(d["temp"], d["pr"], d["mth"].astype(int), lat, dc0)
 
         bui = build_up_index(dmc, dc)
-        np.testing.assert_array_almost_equal(bui, d['bui'], 1)
+        np.testing.assert_array_almost_equal(bui, d["bui"], 1)
 
     def test_fire_weather_index(self):
         d = self.get_data()
@@ -104,13 +134,59 @@ class TestFireWeatherIndex:
         dmc0 = 6.0
         dc0 = 15.0
         ffmc0 = 85.0
-        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), dmc0)
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), dc0)
-        isi = initial_spread_index(d['ws'].values, ffmc)
+        lat = 46
+        ffmc = fine_fuel_moisture_code(d["temp"], d["pr"], d["ws"], d["rh"], ffmc0)
+        dmc = duff_moisture_code(
+            d["temp"], d["pr"], d["rh"], d["mth"].astype(int), lat, dmc0
+        )
+        dc = drought_code(d["temp"], d["pr"], d["mth"].astype(int), lat, dc0)
+        isi = initial_spread_index(d["ws"].values, ffmc)
         bui = build_up_index(dmc, dc)
         fwi = fire_weather_index(isi, bui)
-        np.testing.assert_array_almost_equal(fwi, d['fwi'], 1)
+        np.testing.assert_array_almost_equal(fwi, d["fwi"], 1)
+
+    def test_day_length(self):
+        assert day_length(44)[0] == 6.5
+
+    def test_day_lengh_factor(self):
+        assert day_length_factor(44)[0] == -1.6
+
+    def test_significant_snow_cover(self):
+        n = 1000
+        a = np.ones((n, 5)) * 0.3
+        time = xr.cftime_range("2000-01-01", periods=n, freq="D")
+        lat = [-65.0, -12.0, 0, 14.0, 46.0]
+        snd = xr.DataArray(
+            data=a,
+            coords={"time": time, "lat": lat},
+            dims=("time", "lat"),
+            attrs={"units": "m"},
+        )
+        out = significant_snow_cover(snd)
+        assert out.shape == (3, 5)
+        np.testing.assert_array_equal(out, True)
+
+        snd -= 0.25
+        out = significant_snow_cover(snd)
+        np.testing.assert_array_equal(out, False)
+
+    def test_start_up_snow(self):
+        n = 365
+        a = np.zeros((n, 5))
+        # Add some snow in winter
+        a[180:230, :2] = 1
+        a[0:60, 3:] = 1
+        time = xr.cftime_range("2000-01-01", periods=n, freq="D")
+        lat = [-65.0, -12.0, 0, 14.0, 46.0]
+        snd = xr.DataArray(
+            data=a,
+            coords={"time": time, "lat": lat},
+            dims=("time", "lat"),
+            attrs={"units": "m"},
+        )
+
+        out = start_up_snow(snd)
+        np.testing.assert_array_equal(out, [[233, 233, 3, 63, 63]])
 
 
 testdata = """mth day temp rh ws pr ffmc dmc dc isi bui fwi
@@ -167,11 +243,12 @@ testdata = """mth day temp rh ws pr ffmc dmc dc isi bui fwi
 
 def test_ufunc():
     """Test to experiment with ufuncs over arrays with non-identical dimensions."""
-    v = xr.DataArray(np.resize(np.arange(10), (2, 10)),
-                 dims=('x', 'time'),
-                 coords=[('x', [0, 1]), ('time', np.arange(10))])
-    i = xr.DataArray([10, 20], dims=('x'),
-                     coords=[('x', [0, 1])])
+    v = xr.DataArray(
+        np.resize(np.arange(10), (2, 10)),
+        dims=("x", "time"),
+        coords=[("x", [0, 1]), ("time", np.arange(10))],
+    )
+    i = xr.DataArray([10, 20], dims=("x"), coords=[("x", [0, 1])])
 
     def func1d(values, init):
         if init < 15:
@@ -179,11 +256,13 @@ def test_ufunc():
         else:
             return init - np.cumsum(values)
 
-    xr.apply_ufunc(func1d,
-                   v, i,
-                   input_core_dims=(('time',), ()),
-                   output_core_dims=(('time',),),
-                   vectorize=True,
-                   dask='parallelized',
-                   output_dtypes=[np.float, ],
-                   )
+    xr.apply_ufunc(
+        func1d,
+        v,
+        i,
+        input_core_dims=(("time",), ()),
+        output_core_dims=(("time",),),
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.float],
+    )
