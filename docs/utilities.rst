@@ -1,6 +1,14 @@
 Utilities
 =========
 
+Generic
+-------
+.. automodule:: xclim.generic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 Ensembles
 ---------
 .. automodule:: xclim.ensembles
