@@ -19,6 +19,44 @@ __all__ = ["subset_bbox", "subset_gridpoint", "subset_shape", "subset_time"]
 logging.basicConfig(level=logging.INFO)
 
 
+def _read_geometries(
+    shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
+) -> Tuple[List[geojson.geometry.Geometry], rasterio.crs.CRS]:
+    """
+    A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
+      the shapely Shape object.
+    """
+    try:
+        if shape is None:
+            raise ValueError
+    except (KeyError, ValueError):
+        logging.exception("No shape provided.")
+        raise
+
+    geom = list()
+    geometry_types = list()
+    try:
+        with fiona.open(shape) as fio:
+            logging.info("Vector read OK.")
+            if crs:
+                shape_crs = rasterio.crs.CRS.from_user_input(crs)
+            else:
+                shape_crs = rasterio.crs.CRS(fio.crs or 4326)
+            for i, feat in enumerate(fio):
+                g = geojson.GeoJSON(feat)
+                geom.append(g["geometry"])
+                geometry_types.append(g["geometry"]["type"])
+    except fiona.errors.DriverError:
+        logging.exception("Unable to read shape.")
+        raise
+
+    if len(geom):
+        logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
+        return geom, shape_crs
+    else:
+        raise RuntimeError("No geometries found.")
+
+
 def check_date_signature(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
@@ -139,65 +177,15 @@ def check_lons(func):
     return func_checker
 
 
-def check_geometry_and_read(func):
-    @wraps(func)
-    def func_checker(*args, **kwargs):
-        """
-        A decorator to perform a check to verify a geometry is either a Polygon or a MultiPolygon.
-          Returns the function with geom set to the shapely Shape object.
-        """
-        try:
-            shape = kwargs["shape"]
-            if shape is None:
-                raise ValueError
-        except (KeyError, ValueError):
-            logging.exception("No shape provided.")
-            raise
-
-        if "use_all_features" in kwargs:
-            use_all_features = bool(kwargs["use_all_features"])
-        else:
-            use_all_features = False
-
-        geom = list()
-        geometry_types = list()
-        try:
-            with fiona.open(shape) as fio:
-                logging.info("Vector read OK.")
-                if "crs" not in kwargs:
-                    kwargs["shape_crs"] = rasterio.crs.CRS(fio.crs)
-
-                for i, feat in enumerate(fio):
-                    g = geojson.GeoJSON(feat)
-                    geom.append(g["geometry"])
-                    geometry_types.append(g["geometry"]["type"])
-                    if not use_all_features:
-                        break
-        except fiona.errors.DriverError:
-            logging.exception("Unable to read shape.")
-            raise
-
-        if len(geom):
-            kwargs["geometry"] = geom
-            logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
-            return func(*args, **kwargs)
-        else:
-            raise RuntimeError("No geometries found.")
-
-    return func_checker
-
-
-@check_geometry_and_read
 @check_date_signature
 def subset_shape(
     da: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    geometry: Optional[List[geojson.GeoJSON]] = None,
     da_crs: Optional[str] = None,
+    geometry: Optional[List[geojson.GeoJSON]] = None,
     shape_crs: Optional[str] = None,
-    use_all_features: bool = False,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
 
@@ -218,12 +206,12 @@ def subset_shape(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
+    geometry: Optional[List[geojson.GeoJSON]]
+      A list of all GeoJSON shapes to be used in clipping the xarray.DataArray or xarray.Dataset
     da_crs : Optional[Union[int, dict, str]]
       CRS of the xarray.DataArray or xarray.Dataset provided. Default: dict(epsg=4326).
     shape_crs : Optional[Union[int, dict, str]]
       CRS of the geometries provided. If passing GeometryCollections as shapes, CRS must be explicitly stated.
-    use_all_features : bool
-      Use either the first found feature geometry or the union of all found features. Default: False.
     start_yr : int
       Deprecated
         First year of the subset. Defaults to first year of input data-array.
@@ -262,52 +250,82 @@ def subset_shape(
     >>> prSub = \
             subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
+
+    if geometry and shape_crs:
+        shape_crs = rasterio.crs.CRS.from_user_input(shape_crs)
+    else:
+        geometry, shape_crs = _read_geometries(shape, crs=shape_crs)
+
     try:
+        # NetCDF data doesn't typically have defined CRS. Ensure this is the case and append one if needed.
         if da.rio.crs is None:
-            if np.any(da.lon < -180) or np.any(da.lon > 360):
-                raise rasterio.crs.CRSError("Set")
-            if np.any(da.lon > 180):
-                lon_attrs = da.lon.attrs.copy()
-                fix_lon = da.lon.values
-                fix_lon[fix_lon > 180] = fix_lon[fix_lon > 180] - 360
-                if "lon_bnds" in da.data_vars:
-                    fix_lon_bnds = da.lon_bnds.values
-                    fix_lon_bnds[fix_lon_bnds > 180] = (
-                        fix_lon_bnds[fix_lon_bnds > 180] - 360
-                    )
-                da = da.assign_coords(lon=fix_lon)
-                da = da.sortby("lon")
-                da.lon.attrs = lon_attrs
             if da_crs is None:
-                crs = rasterio.crs.CRS.from_epsg(4326)
+
+                if "rlon" in da.dims or "rlat" in da.dims:
+                    raise NotImplementedError("Rotated poles are not supported.")
+
+                else:
+                    crs = rasterio.crs.CRS.from_epsg(4326)
+                    if np.any(da.lon < -180) or np.any(da.lon > 360):
+                        raise rasterio.crs.CRSError(
+                            "NetCDF doesn't seem to be in EPSG:4326. Set CRS manually."
+                        )
+
+                    # Convert longitudes from 0,+360 to -180,+180
+                    if np.any(da.lon > 180):
+                        lon_attrs = da.lon.attrs.copy()
+                        fix_lon = da.lon.values
+                        fix_lon[fix_lon > 180] = fix_lon[fix_lon > 180] - 360
+
+                        # Correct lon_bnds in xarray.Datasets
+                        if isinstance(da, xarray.Dataset):
+                            if "lon_bnds" in da.data_vars:
+                                fix_lon_bnds = da.lon_bnds.values
+                                fix_lon_bnds[fix_lon_bnds > 180] = (
+                                    fix_lon_bnds[fix_lon_bnds > 180] - 360
+                                )
+                        da = da.assign_coords(lon=fix_lon)
+                        da = da.sortby("lon")
+                        da.lon.attrs = lon_attrs
             else:
                 crs = rasterio.crs.CRS.from_user_input(da_crs)
         else:
             crs = da.rio.crs
-        if shape_crs != crs:
-            raise rasterio.crs.CRSError("Shape and Raster CRS are not the same.")
+
     except Exception as e:
         logging.exception(e)
         raise
 
-    ds_out = xarray.Dataset(data_vars=None, attrs=da.attrs)
-    for v in da.data_vars:
-        if "lon" in da[v].dims and "lat" in da[v].dims:
-            dss = da[v]
-            dss.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
-            dss.rio.write_crs(crs, inplace=True)
-            ds_out[v] = dss.rio.clip(
-                geometry, crs=dss.rio.crs, all_touched=True, drop=True, invert=False
-            )
+    if shape_crs != crs:
+        raise rasterio.crs.CRSError("Shape and Raster CRS are not the same.")
 
-    for v in da.data_vars:
-        if not ("lon" in da[v].dims and "lat" in da[v].dims):
-            if "lat" in da[v].dims:
-                ds_out[v] = da[v].sel(lat=ds_out.lat)
-            elif "lon" in da[v].dims:
-                ds_out[v] = da[v].sel(lon=ds_out.lon)
-            else:
-                ds_out[v] = da[v]
+    if isinstance(da, xarray.Dataset):
+        # Create a new empty xarray.Dataset and populate with corrected/clipped variables
+        ds_out = xarray.Dataset(data_vars=None, attrs=da.attrs)
+        for v in da.data_vars:
+            if "lon" in da[v].dims and "lat" in da[v].dims:
+                dss = da[v]
+                # Identify spatial dimensions
+                dss.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+                dss.rio.write_crs(crs, inplace=True)
+                ds_out[v] = dss.rio.clip(
+                    geometry, crs=dss.rio.crs, all_touched=True, drop=True, invert=False
+                )
+
+        for v in da.data_vars:
+            if not ("lon" in da[v].dims and "lat" in da[v].dims):
+                if "lat" in da[v].dims:
+                    ds_out[v] = da[v].sel(lat=ds_out.lat)
+                elif "lon" in da[v].dims:
+                    ds_out[v] = da[v].sel(lon=ds_out.lon)
+                else:
+                    ds_out[v] = da[v]
+    else:
+        da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+        da.rio.write_crs(crs, inplace=True)
+        ds_out = da.rio.clip(
+            geometry, crs=crs, all_touched=True, drop=True, invert=False
+        )
 
     if start_date or end_date:
         ds_out = subset_time(ds_out, start_date=start_date, end_date=end_date)
