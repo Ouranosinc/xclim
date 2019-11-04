@@ -27,7 +27,7 @@ requirements = [
     "geojson>=2.5.0",
     "rasterio>=1.0.28",
     "rioxarray",
-    "cftime>=1.0.3",
+    "cftime~=1.0.3.4",
     "netCDF4>=1.4",
     "dask[complete]",
     "bottleneck>=1.2.1",
