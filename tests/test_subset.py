@@ -346,10 +346,10 @@ class TestSubsetBbox:
     def test_irregular_datset(self):
         da = xr.open_dataset(self.nc_2dlonlat)
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-        vars = list(da.data_vars)
-        vars.pop(vars.index("tasmax"))
+        variables = list(da.data_vars)
+        variables.pop(variables.index("tasmax"))
         # only tasmax should be subsetted/masked others should remain untouched
-        for v in vars:
+        for v in variables:
             assert out[v].dims == da[v].dims
             np.testing.assert_array_equal(out[v], da[v])
 
