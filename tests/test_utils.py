@@ -69,7 +69,6 @@ class TestDailyDownsampler:
             # assert the values of resampler and grouper are the same
             assert np.allclose(x1.values, x2.values)
 
-    @pytest.mark.skip
     def test_365_day(self):
 
         # 365_day calendar

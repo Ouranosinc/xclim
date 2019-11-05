@@ -6,6 +6,7 @@ History
 ------------------------
 * Added type hinting to call signatures of many functions for more explicit type-checking
 * Now supporting explicit builds for Windows OS via Travis CI
+* Fix failing test with Python 3.7
 * Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
 
 0.10.x-beta (2019-06-18)
