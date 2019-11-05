@@ -23,7 +23,7 @@ requirements = [
     "scipy>=1.2",
     "numpy>=1.15",
     "pandas>=0.23",
-    "cftime==1.0.3.4",
+    "cftime~=1.0.3.4",
     "netCDF4>=1.4",
     "dask[complete]",
     "bottleneck>=1.2.1",
