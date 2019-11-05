@@ -243,7 +243,17 @@ def subset_bbox(
             lon_cond = in_bounds(lon_b, da.lon)
 
         # Mask coordinates outside the bounding box
-        da = da.where(lon_cond & lat_cond, drop=True)
+        if isinstance(da, xarray.Dataset):
+            # If da is a xr.DataSet Mask only variables that have the
+            # same 2d coordinates as da.lat (or da.lon)
+            for var in da.data_vars:
+                if [d for d in da[var].dims if d in list(da.lat.dims)] == list(
+                    da.lat.dims
+                ):
+                    da[var] = da[var].where(lon_cond & lat_cond, drop=True)
+        else:
+
+            da = da.where(lon_cond & lat_cond, drop=True)
 
     else:
         raise (

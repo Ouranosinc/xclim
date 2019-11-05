@@ -343,6 +343,20 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
         assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
 
+    def test_irregular_datset(self):
+        da = xr.open_dataset(self.nc_2dlonlat)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        vars = list(da.data_vars)
+        vars.pop(vars.index("tasmax"))
+        # only tasmax should be subsetted/masked others should remain untouched
+        for v in vars:
+            assert out[v].dims == da[v].dims
+            np.testing.assert_array_equal(out[v], da[v])
+
+        # ensure results are equal to previous test on DataArray only
+        out1 = subset.subset_bbox(da.tasmax, lon_bnds=self.lon, lat_bnds=self.lat)
+        np.testing.assert_array_equal(out1, out.tasmax)
+
     # test datasets with descending coords
     def test_inverted_coords(self):
         lon = np.linspace(-90, -60, 200)
