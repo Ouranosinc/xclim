@@ -28,7 +28,7 @@ requirements = [
     "dask[complete]",
     "bottleneck>=1.2.1",
     "xarray==0.13.0",
-    "pyproj>=1.9.5.1",
+    "pyproj==2.4.0",
     "pint>=0.8",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
