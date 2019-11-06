@@ -247,9 +247,7 @@ def subset_bbox(
             # If da is a xr.DataSet Mask only variables that have the
             # same 2d coordinates as da.lat (or da.lon)
             for var in da.data_vars:
-                if [d for d in da[var].dims if d in list(da.lat.dims)] == list(
-                    da.lat.dims
-                ):
+                if set(da.lat.dims).issubset(da[var].dims):
                     da[var] = da[var].where(lon_cond & lat_cond, drop=True)
         else:
 
