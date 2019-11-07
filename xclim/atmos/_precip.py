@@ -108,8 +108,8 @@ precip_accumulation = Pr(
     identifier="prcptot",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Total precipitation",
-    description="{freq} total precipitation.",
+    long_name="Total{phase:>1}precipitation",
+    description="{freq} total{phase:>1}precipitation.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.precip_accumulation,
 )
