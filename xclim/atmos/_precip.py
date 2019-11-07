@@ -110,12 +110,14 @@ precip_accumulation = Pr(
     standard_name=lambda **kw: "lwe_thickness_of_snowfall_amount"
     if kw["phase"] == "solid"
     else "lwe_thickness_of_precipitation_amount",
-    long_name=lambda **kw: "Total {} precipitation".format(kw["phase"])
-    if kw["phase"] != "both"
-    else "Total precipitation",
+    long_name=lambda **kw: "Total {} precipitation".format(kw["phase"]).replace(
+        "both ", ""
+    ),
     description=lambda **kw: "{freq} "
     + (
-        "total {} precipitation".format(kw["phase"])
+        "total {} precipitation, estimated as precipitation when T {} 0".format(
+            kw["phase"], "<" if kw["phase"] == "solid" else ">="
+        )
         if kw["phase"] != "both"
         else "total precipitation"
     ),
