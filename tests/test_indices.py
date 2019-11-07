@@ -26,8 +26,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.utils import percentile_doy
 
-xr.set_options(enable_cftimeindex=True)
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
@@ -277,6 +275,30 @@ class TestDaysOverPrecipThresh:
             out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
         )
 
+    def test_quantile(self, pr_series):
+        a = np.zeros(365)
+        a[:8] = np.arange(8)
+        pr = pr_series(a, start="1/1/2000")
+
+        # Create synthetic percentile
+        pr0 = pr_series(np.ones(365) * 5, start="1/1/2000")
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
+        np.testing.assert_array_almost_equal(
+            out[0], 2
+        )  # Only days 6 and 7 meet criteria.
+
+    def test_nd(self, pr_ndseries):
+        pr = pr_ndseries(np.ones((300, 2, 3)))
+        pr0 = pr_ndseries(np.zeros((300, 2, 3)))
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="0.5 kg/m**2/s")
+        np.testing.assert_array_almost_equal(out, 300)
+
 
 class TestFreshetStart:
     def test_simple(self, tas_series):
@@ -311,10 +333,6 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 7),
-    reason="GrowingSeasonLength causes a dask-related SegFault",
-)
 class TestGrowingSeasonLength:
     def test_simple(self, tas_series):
         # test for different growing length
@@ -912,7 +930,7 @@ class TestWinterRainRatio:
         tas[10:20] += 10
         tas = tas_series(tas + K2C, start="12/1/2000")
 
-        out = xci.winter_rain_ratio(pr, tas=tas)
+        out = xci.winter_rain_ratio(pr=pr, tas=tas)
         np.testing.assert_almost_equal(out, [10.0 / (31 + 31 + 28), 0])
 
 
@@ -934,24 +952,3 @@ def cmip3_day_tas():
     )
     yield ds.tas
     ds.close()
-
-
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-@pytest.mark.skip
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
-
-
-# x = Test_frost_days()
-# print('done')

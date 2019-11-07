@@ -600,27 +600,27 @@ class TestHeatWaveFrequency:
         txC.attrs["units"] = "C"
 
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         hwfC = atmos.heat_wave_frequency(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 2)
 
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4, freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 1)
 
         # one long hw
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 1)
         # no hw
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
@@ -640,27 +640,27 @@ class TestHeatWaveMaxLength:
         txC.attrs["units"] = "C"
 
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         hwfC = atmos.heat_wave_max_length(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 4)
 
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4
+            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 5)
 
         # one long hw
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 10)
         # no hw
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
@@ -761,10 +761,6 @@ class TestDailyFreezeThaw:
         assert np.isnan(frzthw.values[0, -1, -1])
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 7),
-    reason="GrowingSeasonLength causes a dask-related SegFault",
-)
 class TestGrowingSeasonLength:
     def test_single_year(self, tas_series):
         a = np.zeros(366) + K2C

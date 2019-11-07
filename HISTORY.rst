@@ -2,6 +2,13 @@
 History
 =======
 
+0.11.x-beta (2019-10-17)
+------------------------
+* Added type hinting to call signatures of many functions for more explicit type-checking
+* Now supporting explicit builds for Windows OS via Travis CI
+* Fix failing test with Python 3.7
+* Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
+
 0.10.x-beta (2019-06-18)
 ------------------------
 * Added indices to ICCLIM module.
@@ -21,6 +28,12 @@ History
 * Now employing PEP8 + Black compatible autoformatting.
 * Added Windows and macOS images to Travis CI build ensemble.
 * Added variable thresholds for tasmax and tasmin in daily_freezethaw_events.
+* Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting
+* Clean-up of day-of-year resampling. Precipitation percentile threshold will work without a doy index.
+* Addressed deprecations for xarray 0.13.0
+* Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
+* Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
+
 
 0.10-beta (2019-06-06)
 ----------------------
