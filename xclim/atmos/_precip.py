@@ -107,9 +107,9 @@ daily_pr_intensity = Pr(
 precip_accumulation = Pr(
     identifier="prcptot",
     units="mm",
-    standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Total{phase:>1}precipitation",
-    description="{freq} total{phase:>1}precipitation.",
+    standard_name=lambda **kw: "lwe_thickness_of_snowfall_amount" if kw['phase'] == 'solid' else "lwe_thickness_of_precipitation_amount",
+    long_name=lambda **kw: "Total {} precipitation".format(kw['phase']) if kw['phase'] != 'both' else "Total precipitation",
+    description=lambda **kw: "{freq} " + ("total {} precipitation".format(kw['phase']) if kw['phase'] != 'both' else "total precipitation"),
     cell_methods="time: sum within days time: sum over days",
     compute=indices.precip_accumulation,
 )
