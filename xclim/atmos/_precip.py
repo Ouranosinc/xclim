@@ -115,7 +115,7 @@ precip_accumulation = Pr(
     ),
     description=lambda **kw: "{freq} "
     + (
-        "total {} precipitation, estimated as precipitation when T {} 0".format(
+        "total {} precipitation, estimated as precipitation when daily average temperature {} 0°C".format(
             kw["phase"], "<" if kw["phase"] == "solid" else ">="
         )
         if kw["phase"] != "both"
