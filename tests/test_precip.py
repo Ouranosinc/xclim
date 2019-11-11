@@ -113,8 +113,8 @@ class TestPrecipAccumulation:
         tasmin = xr.open_dataset(self.nc_tasmin).tasmin  # K
 
         out_tot = atmos.precip_accumulation(pr, freq="MS")
-        out_sol = atmos.precip_accumulation(pr, tas=tasmin, phase="solid", freq="MS")
-        out_liq = atmos.precip_accumulation(pr, tas=tasmin, phase="liquid", freq="MS")
+        out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
+        out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, freq="MS")
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 

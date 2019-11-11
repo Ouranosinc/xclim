@@ -543,7 +543,7 @@ def liquid_precip_ratio(
 def precip_accumulation(
     pr: xr.DataArray,
     tas: xr.DataArray = None,
-    phase: str = "both",
+    phase: Optional[str] = None,
     freq: Optional[str] = None,
 ) -> xr.DataArray:
     r"""Accumulated total (liquid and/or solid) precipitation.
@@ -590,12 +590,9 @@ def precip_accumulation(
     """
     freq = freq or "YS"
 
-    if phase != "both":
-        tu = units.parse_units(tas.attrs["units"].replace("-", "**-"))
-        fu = "degC"
-        frz = 0
-        if fu != tu:
-            frz = units.convert(frz, fu, tu)
+    if phase in ["liquid", "solid"]:
+        frz = utils.convert_units_to("0 degC", tas)
+
         if phase == "liquid":
             pr = pr.where(tas >= frz, 0)
         elif phase == "solid":
