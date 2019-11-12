@@ -582,6 +582,21 @@ class TestPrecipAccumulation:
         ]
         np.testing.assert_allclose(out_std.values, target)
 
+    def test_mixed_phases(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[5:15] = 1
+        pr = pr_series(pr)
+
+        tas = np.ones(100) * 280
+        tas[5:10] = 270
+        tas = tas_series(tas)
+
+        outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="M")
+        outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="M")
+
+        np.testing.assert_array_equal(outsn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
+
 
 class TestRainOnFrozenGround:
     def test_simple(self, tas_series, pr_series):

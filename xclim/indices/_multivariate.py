@@ -36,6 +36,7 @@ __all__ = [
     "heat_wave_max_length",
     "heat_wave_total_length",
     "liquid_precip_ratio",
+    "precip_accumulation",
     "rain_on_frozen_ground_days",
     "tg90p",
     "tg10p",
@@ -594,6 +595,69 @@ def liquid_precip_ratio(
     rain = tot - prsn.resample(time=freq).sum(dim="time")
     ratio = rain / tot
     return ratio
+
+
+@declare_units("mm", pr="[precipitation]", tas="[temperature]")
+def precip_accumulation(
+    pr: xr.DataArray,
+    tas: xr.DataArray = None,
+    phase: Optional[str] = None,
+    freq: Optional[str] = None,
+) -> xr.DataArray:
+    r"""Accumulated total (liquid and/or solid) precipitation.
+
+    Resample the original daily mean precipitation flux and accumulate over each period.
+    If the daily mean temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
+    When the mean temperature is over 0 degC, precipitatio is assumed to be liquid rain and snow otherwise.
+
+    Parameters
+    ----------
+    pr : xr.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    tas : xr.DataArray, optional
+      Mean daily temperature [℃] or [K]
+    phase : str, optional,
+      Which phase to consider, "liquid" or "solid", if None (default), both are considered.
+    freq : str, optional
+      Resampling frequency as defined in
+      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling. Defaults to "YS"
+
+    Returns
+    -------
+    xr.DataArray
+      The total daily precipitation at the given time frequency for the given phase.
+
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+       PR_{ij} = \sum_{i=a}^{b} PR_i
+
+    If `phase` is "liquid", only times where the daily mean temperature :math:`T_i` is above or equal to 0 °C are considered, inversely for "solid".
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr_day.nc` the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> pr_day = xr.open_dataset('pr_day.nc').pr
+    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
+    """
+    freq = freq or "YS"
+
+    if phase in ["liquid", "solid"]:
+        frz = utils.convert_units_to("0 degC", tas)
+
+        if phase == "liquid":
+            pr = pr.where(tas >= frz, 0)
+        elif phase == "solid":
+            pr = pr.where(tas < frz, 0)
+
+    out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
+    return utils.pint_multiply(out, 1 * units.day, "mm")
 
 
 @declare_units(

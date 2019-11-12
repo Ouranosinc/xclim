@@ -71,12 +71,15 @@ class TestRainOnFrozenGround:
 
 class TestPrecipAccumulation:
     # TODO: replace by fixture
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = os.path.join(
+        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
+    )
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr  # mm/s
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
+        prMM = xr.open_dataset(self.nc_pr).pr
         prMM *= 86400
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -103,6 +106,21 @@ class TestPrecipAccumulation:
         assert np.isnan(out1.values[0, 1, 0])
 
         assert np.isnan(out1.values[0, -1, -1])
+
+    def test_with_different_phases(self):
+        # test with different phases
+        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin  # K
+
+        out_tot = atmos.precip_accumulation(pr, freq="MS")
+        out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
+        out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, freq="MS")
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+        assert "solid" in out_sol.long_name
+        assert "liquid" in out_liq.long_name
+        assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
 
 class TestWetDays:

@@ -946,6 +946,9 @@ class Indicator:
                 else:
                     mba[k] = v
 
+            if callable(val):
+                val = val(**mba)
+
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
         return out

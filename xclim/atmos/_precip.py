@@ -2,6 +2,7 @@
 from xclim import indices
 from xclim.utils import Indicator
 from xclim.utils import Indicator2D
+from xclim.utils import wrapped_partial
 
 __all__ = [
     "rain_on_frozen_ground_days",
@@ -12,6 +13,8 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
     "precip_accumulation",
+    "liquid_precip_accumulation",
+    "solid_precip_accumulation",
 ]
 
 
@@ -109,7 +112,30 @@ precip_accumulation = Pr(
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Total precipitation",
-    description="{freq} total precipitation.",
+    description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    compute=indices.precip_accumulation,
+    _partial=True,
+    compute=wrapped_partial(indices.precip_accumulation, phase=None),
+)
+
+liquid_precip_accumulation = Pr(
+    identifier="liquidprcptot",
+    units="mm",
+    standard_name="lwe_thickness_of_liquid_precipitation_amount",
+    long_name="Total liquid precipitation",
+    description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
+    cell_methods="time: sum within days time: sum over days",
+    _partial=True,
+    compute=wrapped_partial(indices.precip_accumulation, phase="liquid"),
+)
+
+solid_precip_accumulation = Pr(
+    identifier="solidprcptot",
+    units="mm",
+    standard_name="lwe_thickness_of_snowfall_amount",
+    long_name="Total solid precipitation",
+    description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
+    cell_methods="time: sum within days time: sum over days",
+    _partial=True,
+    compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
 )
