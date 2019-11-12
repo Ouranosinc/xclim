@@ -36,7 +36,6 @@ __all__ = [
     "ice_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
-    "precip_accumulation",
 ]
 
 
@@ -564,45 +563,4 @@ def max_n_day_precipitation_amount(pr, window=1, freq="YS"):
 
     out.attrs["units"] = pr.units
     # Adjust values and units to make sure they are daily
-    return utils.pint_multiply(out, 1 * units.day, "mm")
-
-
-@declare_units("mm", pr="[precipitation]")
-def precip_accumulation(pr, freq="YS"):
-    r"""Accumulated total (liquid + solid) precipitation.
-
-    Resample the original daily mean precipitation flux and accumulate over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-    freq : str, optional
-      Resampling frequency as defined in
-      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-
-    Returns
-    -------
-    xarray.DataArray
-      The total daily precipitation at the given time frequency.
-
-    Notes
-    -----
-    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
-    day :math:`a` and finishing on day :math:`b`:
-
-    .. math::
-
-       PR_{ij} = \sum_{i=a}^{b} PR_i
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr_day.nc` the total
-    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
-
-    >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
-    """
-
-    out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
     return utils.pint_multiply(out, 1 * units.day, "mm")

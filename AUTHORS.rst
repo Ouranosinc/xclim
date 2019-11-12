@@ -11,6 +11,7 @@ Co-Developers
 -------------
 
 * Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
+* Pascal Bourgault <bourgault.pascal@ouranos.ca> `@aulemahal <https://github.com/aulemahal>`_
 * David Huard <huard.david@ouranos.ca> `@huard <https://github.com/huard>`_
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca> `@RondeauG <https://github.com/RondeauG>`_
 * Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_

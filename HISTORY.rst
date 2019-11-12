@@ -14,6 +14,7 @@ History
 * Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
 * Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
 * Now officially supporting Python3.8
+* Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation
 
 0.10.x-beta (2019-06-18)
 ------------------------
@@ -39,7 +40,6 @@ History
 * Addressed deprecations for xarray 0.13.0
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
-
 
 0.10-beta (2019-06-06)
 ----------------------
