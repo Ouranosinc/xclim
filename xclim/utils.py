@@ -1052,7 +1052,7 @@ def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
       Wind velocity (m s-1)
     windfromdir : xr.DataArray
       Direction from which the wind blows, following the meteorological convention where 360 stands for North.
-    
+
     Notes
     -----
     Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
