@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 from typing import List
 from typing import Optional
 from typing import Tuple

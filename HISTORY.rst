@@ -4,10 +4,16 @@ History
 
 0.11.x-beta (2019-10-17)
 ------------------------
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Now supporting explicit builds for Windows OS via Travis CI.
+* Added Kmeans clustering ensemble reduction algorithms.
+* Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
 * Added type hinting to call signatures of many functions for more explicit type-checking
 * Now supporting explicit builds for Windows OS via Travis CI
 * Fix failing test with Python 3.7
 * Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
+* Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
+* Now officially supporting Python3.8
 
 0.10.x-beta (2019-06-18)
 ------------------------
