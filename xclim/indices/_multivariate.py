@@ -34,6 +34,7 @@ __all__ = [
     "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
+    "heat_wave_total_length",
     "liquid_precip_ratio",
     "rain_on_frozen_ground_days",
     "tg90p",
@@ -162,6 +163,7 @@ def cold_and_dry_days(
     thresh_tasmax="[temperature]",
     thresh_tasmin="[temperature]",
 )
+
 def daily_freezethaw_cycles(
     tasmax: xr.DataArray,
     tasmin: xr.DataArray,
@@ -530,7 +532,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    total_count = group.apply(lambda d: rl.windowed_run_count(d, window), dim="time")
+    total_count = group.apply(lambda d, dim=None: rl.windowed_run_count(d, window, dim=dim), dim="time")
     return total_count
 
 

@@ -158,6 +158,23 @@ heat_wave_max_length = TasminTasmax(
     compute=indices.heat_wave_max_length,
 )
 
+heat_wave_total_length = TasminTasmax(
+    identifier="heat_wave_total_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Total length of heat wave events (Tmin > {thresh_tasmin}"
+    "and Tmax > {thresh_tasmax} for >= {window} days)",
+    description="{freq} total length of heat wave events occuring in a given period."
+    "An event occurs when the minimum and maximum daily "
+    "temperature both exceeds specific thresholds "
+    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
+    "a minimum number of days ({window}).",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.heat_wave_total_length,
+)
+
+
 heat_wave_index = Tasmax(
     identifier="heat_wave_index",
     units="days",

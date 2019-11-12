@@ -455,6 +455,35 @@ class TestHeatWaveMaxLength:
         np.testing.assert_allclose(hwml.values, 0)
 
 
+class TestHeatWaveTotalLength:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        # some hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+        )
+        np.testing.assert_allclose(hwml.values, 7)
+
+        # one long hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+        )
+        np.testing.assert_allclose(hwml.values, 10)
+
+        # no hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+        )
+        np.testing.assert_allclose(hwml.values, 0)
+
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
+        )
+        np.testing.assert_allclose(hwml.values, 0)
+
+
 class TestTnDaysBelow:
     def test_simple(self, tasmin_series):
         a = np.zeros(365)
