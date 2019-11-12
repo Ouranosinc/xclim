@@ -23,6 +23,7 @@ except ImportError:
 def create_ensemble(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
+    **xr_kwargs,
 ) -> xr.Dataset:
 
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
@@ -42,6 +43,9 @@ def create_ensemble(
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when "datasets" is a sequence of file paths.
+
+    xr_kwargs : 
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
@@ -70,7 +74,7 @@ def create_ensemble(
 
     dim = "realization"
 
-    time_flag, time_all = _ens_checktimes(datasets, mf_flag)
+    time_flag, time_all = _ens_checktimes(datasets, mf_flag, **xr_kwargs)
 
     ds1 = _ens_align_datasets(datasets, mf_flag, time_flag, time_all)
 
@@ -205,6 +209,7 @@ def ensemble_percentiles(
 def _ens_checktimes(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
+    **xr_kwargs,
 ) -> Tuple[bool, np.ndarray]:
     """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
     maximum time-step interval of all input files.
@@ -217,6 +222,8 @@ def _ens_checktimes(
     mf_flag : bool
       If True climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when :datasets: is a sequence of file paths.
+    xr_kwargs : 
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
@@ -225,19 +232,18 @@ def _ens_checktimes(
     array of datetime64
       Series of unique time-steps covering all input datasets.
     """
-
+    xr_kwargs.setdefault('decode_times', False)
     time_flag = False
     time_all = []
     for n in datasets:
         if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
+            xr_kwargs.setdefault('chunks', {"time": 10})
+            ds = xr.open_mfdataset(n, **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
             else:
-                ds = xr.open_dataset(n, decode_times=False)
+                ds = xr.open_dataset(n, **xr_kwargs)
 
         if hasattr(ds, "time"):
             ds["time"] = xr.decode_cf(ds).time
@@ -266,6 +272,7 @@ def _ens_align_datasets(
     mf_flag: bool = False,
     time_flag: bool = False,
     time_all=None,
+    **xr_kwargs,
 ) -> xr.Dataset:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
     are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
@@ -283,24 +290,26 @@ def _ens_align_datasets(
       True if time dimension is present among the "datasets"; Otherwise false.
     time_all : array of datetime64
       Series of unique time-steps covering all input Datasets.
+    xr_kwargs : 
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
     List[xr.Dataset]
     """
+    xr_kwargs.setdefault('chunks', {"time": 10})
+    xr_kwargs.setdefault('decode_times', False)
 
     ds_all = []
     for n in datasets:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
+            ds = xr.open_mfdataset(n, combine='by_coords', **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
             else:
-                ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
+                ds = xr.open_dataset(n, **xr_kwargs)
 
         if time_flag:
 
