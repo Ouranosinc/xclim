@@ -13,7 +13,7 @@ History
 * Fix failing test with Python 3.7
 * Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
 * Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
-
+* Now officially supporting Python3.8
 
 0.10.x-beta (2019-06-18)
 ------------------------
