@@ -10,7 +10,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.5.0"
-VERSION = "0.11.2"
+VERSION = "0.11.3"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -28,7 +28,7 @@ requirements = [
     "dask[complete]",
     "bottleneck>=1.2.1",
     "xarray==0.13.0",
-    "pyproj==2.4.0",
+    "pyproj==2.4.1",
     "pint>=0.8",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
@@ -61,6 +61,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
     description=DESCRIPTION,
