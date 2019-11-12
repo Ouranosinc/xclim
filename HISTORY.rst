@@ -4,6 +4,10 @@ History
 
 0.11.x-beta (2019-10-17)
 ------------------------
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Now supporting explicit builds for Windows OS via Travis CI.
+* Added Kmeans clustering ensemble reduction algorithms.
+* Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
 * Added type hinting to call signatures of many functions for more explicit type-checking
 * Now supporting explicit builds for Windows OS via Travis CI
 * Fix failing test with Python 3.7
