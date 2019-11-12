@@ -74,7 +74,7 @@ matrix:
       name: "Python3.5 (Linux)"
       python: 3.5
   allow_failures:
-    - env: TOXENV=py38-dev
+    - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
     - env: TOXENV=py36-xarray
 
