@@ -533,8 +533,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    total_count = group.apply(lambda d: rl.windowed_run_count(d, window, dim='time'))
-    return total_count
+    return group.apply(rl.windowed_run_count, args=(window,), dim='time')
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
