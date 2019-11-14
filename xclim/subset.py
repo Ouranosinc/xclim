@@ -6,7 +6,6 @@ from typing import Union
 
 import numpy as np
 import xarray
-import xarray as xr
 from pyproj import Geod
 
 __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
@@ -499,6 +498,6 @@ def distance(da, lon, lat):
     def func(lons, lats):
         return g.inv(*np.broadcast_arrays(lons, lats, lon, lat))[2]
 
-    out = xr.apply_ufunc(func, da.lon, da.lat)
+    out = xarray.apply_ufunc(func, da.lon, da.lat)
     out.attrs["units"] = "m"
     return out
