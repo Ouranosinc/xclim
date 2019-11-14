@@ -34,7 +34,7 @@ class Test_FA:
         out = streamflow.freq_analysis(
             q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
         )
-        out.values
+        assert np.isnan(out.values[:, 0, 0]).all()
 
 
 class TestStats:
