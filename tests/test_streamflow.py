@@ -28,6 +28,14 @@ class Test_FA:
         )
         assert out.shape == (1, 2, 3)
 
+    def test_empty(self, ndq_series):
+        q = ndq_series.copy()
+        q[:, 0, 0] = np.nan
+        out = streamflow.freq_analysis(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        out.values
+
 
 class TestStats:
     def test_simple(self, ndq_series):

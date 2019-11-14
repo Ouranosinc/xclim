@@ -102,10 +102,20 @@ def fit(da, dist="norm"):
     """
     # Get the distribution
     dc = get_dist(dist)
+    shape_params = [] if dc.shapes is None else dc.shapes.split(",")
+    dist_params = shape_params + ["loc", "scale"]
 
-    # Fit the parameters (lazy computation)
+    # Fit the parameters (lazy computation). Return NaN if array is empty.
+    def fitfunc(x):
+        if len(x) == 0:
+            return len(dist_params) * [
+                np.nan,
+            ]
+        else:
+            return dc.fit(x)
+
     data = dask.array.apply_along_axis(
-        dc.fit, da.get_axis_num("time"), da.dropna("time", how="all")
+        fitfunc, da.get_axis_num("time"), da.dropna("time", how="all")
     )
 
     # Count the number of values used for the fit.
@@ -116,15 +126,7 @@ def fit(da, dist="norm"):
 
     # Create coordinate for the distribution parameters
     coords = dict(mean.coords.items())
-    coords["dparams"] = ([] if dc.shapes is None else dc.shapes.split(",")) + [
-        "loc",
-        "scale",
-    ]
-
-    # TODO: add time and time_bnds coordinates (Low will work on this)
-    # time.attrs['climatology'] = 'climatology_bounds'
-    # coords['time'] =
-    # coords['climatology_bounds'] =
+    coords["dparams"] = dist_params
 
     out = xr.DataArray(data=data, coords=coords, dims=("dparams",) + mean.dims)
     out.attrs = da.attrs
@@ -260,7 +262,7 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     freq = freq or default_freq(**indexer)
 
     # Extract the time series of min or max over the period
-    sel = select_resample_op(da, op=mode, freq=freq, **indexer).dropna(dim="time")
+    sel = select_resample_op(da, op=mode, freq=freq, **indexer)
 
     # Frequency analysis
     return fa(sel, t, dist, mode)
