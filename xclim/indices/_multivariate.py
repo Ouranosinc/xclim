@@ -164,7 +164,6 @@ def cold_and_dry_days(
     thresh_tasmax="[temperature]",
     thresh_tasmin="[temperature]",
 )
-
 def daily_freezethaw_cycles(
     tasmax: xr.DataArray,
     tasmin: xr.DataArray,
@@ -533,7 +532,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_count, args=(window,), dim='time')
+    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
@@ -1193,7 +1192,7 @@ def winter_rain_ratio(
     pr: xr.DataArray = None,
     prsn: xr.DataArray = None,
     tas: xr.DataArray = None,
-    freq: Optional[str] = None
+    freq: Optional[str] = None,
 ) -> xr.DataArray:
     """Ratio of rainfall to total precipitation during winter
 
