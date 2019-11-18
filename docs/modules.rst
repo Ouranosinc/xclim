@@ -3,6 +3,10 @@ Modules
 
 Atmos
 -----
+
+.. warning::
+    This is a work in progress!
+
 .. automodule:: xclim.atmos._precip
    :members:
    :private-members:
@@ -19,7 +23,11 @@ Atmos
 
 Land
 ----
-.. automodule:: xclim.land
+
+.. warning::
+    This is a work in progress!
+
+.. automodule:: xclim.land._streamflow
    :members:
    :private-members:
    :inherited-members:
