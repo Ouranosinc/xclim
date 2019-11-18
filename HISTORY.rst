@@ -7,6 +7,8 @@ History
 * Added a distance function computing the geodesic distance to a point.
 * Added a `tolerance` argument to `subset_gridpoint` raising an error if distance to closest point is larger than tolerance.
 * Created land module for standardized access to streamflow indices.
+* Enhancement to utils.Indicator to have more dynamic attributes using callables.
+* Added indice `heat_wave_total_length`.
 
 0.11.x-beta (2019-10-17)
 ------------------------
@@ -21,8 +23,6 @@ History
 * Now officially supporting Python3.8!
 * Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation.
 * Bugfix for frequency analysis choking on time series with NaNs only.
-* Enhancement to utils.Indicator to have more dynamic attributes using callables.
-* Added indice `heat_wave_total_length`.
 
 0.10.x-beta (2019-06-18)
 ------------------------
