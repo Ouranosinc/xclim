@@ -2,6 +2,11 @@
 History
 =======
 
+0.12.x-beta (2019-11-15)
+------------------------
+* Added a distance function computing the geodesic distance to a point.
+* Added a `tolerance` argument to `subset_gridpoint` raising an error if distance to closest point is larger than tolerance.
+
 0.11.x-beta (2019-10-17)
 ------------------------
 * Added type hinting to call signatures of many functions for more explicit type-checking.
