@@ -1192,7 +1192,7 @@ def winter_rain_ratio(
     pr: xr.DataArray = None,
     prsn: xr.DataArray = None,
     tas: xr.DataArray = None,
-    freq: Optional[str] = None,
+    freq: Optional[str] = None
 ) -> xr.DataArray:
     """Ratio of rainfall to total precipitation during winter
 
