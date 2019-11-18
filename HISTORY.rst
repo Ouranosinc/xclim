@@ -8,14 +8,15 @@ History
 * Now supporting explicit builds for Windows OS via Travis CI.
 * Added Kmeans clustering ensemble reduction algorithms.
 * Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
-* Added type hinting to call signatures of many functions for more explicit type-checking
-* Now supporting explicit builds for Windows OS via Travis CI
-* Fix failing test with Python 3.7
-* Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
-* Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
-* Now officially supporting Python3.8
-* Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Now supporting explicit builds for Windows OS via Travis CI.
+* Fix failing test with Python 3.7.
+* Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset.
+* Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data.
+* Now officially supporting Python3.8!
+* Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation.
 * Bugfix for frequency analysis choking on time series with NaNs only.
+* Created land module for standardized access to streamflow indices.
 
 0.10.x-beta (2019-06-18)
 ------------------------
@@ -36,9 +37,9 @@ History
 * Now employing PEP8 + Black compatible autoformatting.
 * Added Windows and macOS images to Travis CI build ensemble.
 * Added variable thresholds for tasmax and tasmin in daily_freezethaw_events.
-* Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting
+* Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting.
 * Clean-up of day-of-year resampling. Precipitation percentile threshold will work without a doy index.
-* Addressed deprecations for xarray 0.13.0
+* Addressed deprecations for xarray 0.13.0.
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
 
