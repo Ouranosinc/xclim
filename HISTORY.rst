@@ -15,6 +15,7 @@ History
 * Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
 * Now officially supporting Python3.8
 * Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation
+* Bugfix for frequency analysis choking on time series with NaNs only.
 * Enhancement to utils.Indicator to have more dynamic attributes using callables.
 * Added indice `heat_wave_total_length`.
 
