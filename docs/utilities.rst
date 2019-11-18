@@ -34,3 +34,13 @@ Run-Length Calculations
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+Other Utilities
+---------------
+
+.. automodule:: xclim.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+

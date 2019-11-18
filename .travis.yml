@@ -32,6 +32,7 @@ matrix:
             - libhdf5-serial-dev
             - netcdf-bin
             - libnetcdf-dev
+      script: travis_wait 30 tox -vv -e $TOXENV
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
@@ -73,7 +74,7 @@ matrix:
       name: "Python3.5 (Linux)"
       python: 3.5
   allow_failures:
-    - env: TOXENV=py38-dev
+    - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
     - env: TOXENV=py36-xarray
 
@@ -83,7 +84,7 @@ before_install:
 install:
     - pip install -U tox-travis
 
-script: tox -e $TOXENV
+script: tox -vv -e $TOXENV
 
 before_deploy:
     - echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"

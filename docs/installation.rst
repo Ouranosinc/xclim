@@ -23,6 +23,11 @@ you through the process.
 
 From sources
 ------------
+.. Warning::
+    For Python3.8 users: Many of the required scientific libraries do not currently have wheels that support the latest
+    python. In order to ensure that installation of xclim doesn't fail, we suggest installation the `Cython` module before
+    installing xclim.
+
 The sources for xclim can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
