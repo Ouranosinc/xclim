@@ -15,6 +15,7 @@ History
 * Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data
 * Now officially supporting Python3.8
 * Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation
+* Bugfix for frequency analysis choking on time series with NaNs only.
 
 0.10.x-beta (2019-06-18)
 ------------------------
