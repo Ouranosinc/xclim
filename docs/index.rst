@@ -10,6 +10,7 @@ xclim Official Documentation
    usage
    notebooks/example
    indices
+   modules
    icclim
    utilities
    contributing
