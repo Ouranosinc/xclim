@@ -34,6 +34,7 @@ __all__ = [
     "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
+    "heat_wave_total_length",
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
@@ -477,6 +478,61 @@ def heat_wave_max_length(
     group = cond.resample(time=freq)
     max_l = group.apply(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
+
+
+@declare_units(
+    "days",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def heat_wave_total_length(
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
+    thresh_tasmin: str = "22.0 degC",
+    thresh_tasmax: str = "30 degC",
+    window: int = 3,
+    freq: Optional[str] = None,
+) -> xr.DataArray:
+    # Dev note : we should decide if it is deg K or C
+    r"""Heat wave total length
+
+    Total length of heat waves over a given period. A heat wave is defined as an event
+    where the minimum and maximum daily temperature both exceeds specific thresholds
+    over a minimum number of days. This the sum of all days in such events.
+
+    Parameters
+    ----------
+    tasmin : xr.DataArray
+      Minimum daily temperature [℃] or [K]
+    tasmax : xr.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmin : str
+      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : Optional[str]
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xr.DataArray
+      Total length of heatwave at the wanted frequency
+
+    Notes
+    -----
+    See notes and references of `heat_wave_max_length`
+    """
+    freq = freq or "YS"
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
+
+    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    group = cond.resample(time=freq)
+    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
