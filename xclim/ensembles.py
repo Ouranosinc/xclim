@@ -421,14 +421,6 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
 
 def _calc_perc(arr, p):
     dims = arr.dims
-    # make sure time is the second dimension
-    if dims.index("time") != 1:
-        dims1 = [dims[dims.index("realization")], dims[dims.index("time")]]
-        for d in dims:
-            if d not in dims1:
-                dims1.append(d)
-        arr = arr.transpose(*dims1)
-        dims = dims1
 
     nan_count = np.isnan(arr).sum(axis=dims.index("realization"))
     out = np.percentile(arr, p, axis=dims.index("realization"))
