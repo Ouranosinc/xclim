@@ -9,6 +9,7 @@ History
 * Created land module for standardized access to streamflow indices.
 * Enhancement to utils.Indicator to have more dynamic attributes using callables.
 * Added indice `heat_wave_total_length`.
+* Fixed a bug with typed call signatures that caused downstream failures on library import.
 
 0.11.x-beta (2019-10-17)
 ------------------------
