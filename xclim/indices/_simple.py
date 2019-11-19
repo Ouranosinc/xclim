@@ -232,7 +232,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units("[temperature]", tasmax="[temperature]")
-def tx_max(tasmax: xarray.DataArray, freq: str = " YS"):
+def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
     r"""Highest max temperature
 
     The maximum value of daily maximum temperature.
@@ -263,7 +263,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = " YS"):
 
 
 @declare_units("[temperature]", tasmax="[temperature]")
-def tx_mean(tasmax: xarray.DataArray, freq: str = " YS"):
+def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
     r"""Mean max temperature
 
     The mean of daily maximum temperature.
