@@ -9,7 +9,7 @@ from xclim import indices
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.12.1-beta"
+__version__ = "0.12.1"
 
 
 def build_module(name, objs, doc="", source=None, mode="ignore"):
