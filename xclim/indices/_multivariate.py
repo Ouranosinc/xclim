@@ -622,7 +622,7 @@ def precip_accumulation(
     --------
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
-
+    >>> import xarray as xr
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
@@ -733,8 +733,11 @@ def days_over_precip_thresh(
 
     Example
     -------
-    >>> p75 = historical_pr.quantile(.75, dim="time", keep_attrs=True)
-    >>> r75p = days_over_precip_thresh(pr, p75)
+    >>> import xarray as xr
+    >>> import xclim
+    >>> pr = xr.open_dataset("precipitation_data.nc").pr
+    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
+    >>> r75p = xclim.indices.days_over_precip_thresh(pr, p75)
     """
     per = utils.convert_units_to(per, pr)
     thresh = utils.convert_units_to(thresh, pr)
@@ -826,7 +829,10 @@ def tg90p(
 
     Example
     -------
-    >>> t90 = percentile_doy(historical_tas, per=0.9)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
     t90 = utils.convert_units_to(t90, tas)
@@ -868,7 +874,10 @@ def tg10p(
 
     Example
     -------
-    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
     t10 = utils.convert_units_to(t10, tas)
@@ -910,8 +919,11 @@ def tn90p(
 
     Example
     -------
-    >>> t90 = percentile_doy(historical_tas, per=0.9)
-    >>> hot_days = tg90p(tas, t90)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
+    >>> hot_days = tn90p(tas, t90)
     """
     t90 = utils.convert_units_to(t90, tasmin)
 
@@ -953,7 +965,10 @@ def tn10p(
 
     Example
     -------
-    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
     t10 = utils.convert_units_to(t10, tasmin)
@@ -995,7 +1010,10 @@ def tx90p(
 
     Example
     -------
-    >>> t90 = percentile_doy(historical_tas, per=0.9)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
     t90 = utils.convert_units_to(t90, tasmax)
@@ -1037,7 +1055,10 @@ def tx10p(
 
     Example
     -------
-    >>> t10 = percentile_doy(historical_tas, per=0.1)
+    >>> import xarray as xr
+    >>> import xclim.utils
+    >>> tas = xr.open_dataset("temperature_data.nc").tas
+    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
     t10 = utils.convert_units_to(t10, tasmax)
@@ -1164,7 +1185,7 @@ def winter_rain_ratio(
     pr: xarray.DataArray = None,
     prsn: xarray.DataArray = None,
     tas: xarray.DataArray = None,
-    freq: str = "QS-DEC",
+    freq: str = "QS-DEC"
 ) -> xarray.DataArray:
     """Ratio of rainfall to total precipitation during winter
 

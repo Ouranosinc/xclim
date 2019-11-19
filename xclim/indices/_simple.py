@@ -514,7 +514,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     at an annual frequency:
     >>> import xarray as xr
     >>> pr = xr.open_dataset('pr.day.nc').pr
-    >>> rx1day = max_1day_precipitation_amount(pr, freq: str = "YS")
+    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
 
     out = pr.resample(time=freq).max(dim="time", keep_attrs=True)
@@ -549,7 +549,7 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     >>> import xarray as xr
     >>> da = xr.open_dataset('pr.day.nc').pr
     >>> window = 5
-    >>> output = max_n_day_precipitation_amount(da, window, freq: str = "YS")
+    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
     """
 
     # rolling sum of the values
