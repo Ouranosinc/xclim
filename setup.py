@@ -21,7 +21,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "scipy>=1.2",
-    "numpy>=1.15",
+    "numpy>=1.17",
     "pandas>=0.23",
     "cftime==1.0.3.4",
     "netCDF4<1.5.3",
