@@ -1,11 +1,12 @@
 import logging
 
 import xarray as xr
-
+import numpy as np
 from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
+from xclim.utils import rolling
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -528,7 +529,7 @@ def max_1day_precipitation_amount(pr, freq="YS"):
 
 
 @declare_units("mm", pr="[precipitation]")
-def max_n_day_precipitation_amount(pr, window=1, freq="YS"):
+def max_n_day_precipitation_amount(pr, window=1, use_overlap=False, freq="YS"):
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
@@ -559,7 +560,7 @@ def max_n_day_precipitation_amount(pr, window=1, freq="YS"):
     """
 
     # rolling sum of the values
-    arr = pr.rolling(time=window, center=False).sum()
+    arr = rolling(pr, window=window, dim="time", mode="sum")
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
     out.attrs["units"] = pr.units

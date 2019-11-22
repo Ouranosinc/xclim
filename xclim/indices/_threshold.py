@@ -7,6 +7,7 @@ from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
+from xclim.utils import rolling
 
 # logging.basicConfig(level=logging.DEBUG)
 # logging.captureWarnings(True)
@@ -364,7 +365,7 @@ def growing_season_length(tas, thresh="5.0 degC", window=6, freq="YS"):
     # compute growth season length on resampled data
     thresh = utils.convert_units_to(thresh, tas)
 
-    c = ((tas > thresh) * 1).rolling(time=window).sum().chunk(tas.chunks)
+    c = rolling(((tas > thresh) * 1), window=window, dim="time", mode="sum")
 
     def compute_gsl(c):
         nt = c.time.size
