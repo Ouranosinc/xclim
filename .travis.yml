@@ -53,7 +53,12 @@ matrix:
           update: true
           packages:
             - netcdf
-            - python@3
+            - python3
+      before_install:
+        - python3 -m pip install --upgrade virtualenv
+        - virtualenv -p python3 --system-site-packages "$HOME/venv"
+        - source "$HOME/venv/bin/activate"
+        - pip install --upgrade pip
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
