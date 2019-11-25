@@ -21,7 +21,7 @@ matrix:
       name: "Black and flake8 compliance"
       python: 3.6
     - env: TOXENV=py38-dev
-      name: "Python 3.8 (Linux)"
+      name: "Python3.8 (Linux)"
       python: 3.8-dev
       dist: xenial
       addons:
