@@ -20,13 +20,13 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "numpy",
+    "numpy>=1.16",
     "scipy>=1.2",
     "pandas>=0.23",
     "cftime==1.0.3.4",
     "netCDF4<1.5.3",
     "dask[complete]",
-    "bottleneck",
+    "bottleneck>=1.2.1",
     "xarray==0.13.0",
     "pyproj>=2.4.1",
     "pint>=0.9",
