@@ -26,7 +26,7 @@ requirements = [
     "cftime==1.0.3.4",
     "netCDF4<1.5.3",
     "dask[complete]",
-    "bottleneck>=1.2.1",
+    "bottleneck==1.2.1",
     "xarray==0.13.0",
     "pyproj>=2.4.1",
     "pint>=0.9",
