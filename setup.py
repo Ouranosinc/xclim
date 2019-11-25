@@ -20,8 +20,9 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "Cython",
     "scipy>=1.2",
-    "numpy>=1.17",
+    "numpy>=1.16",
     "pandas>=0.23",
     "cftime==1.0.3.4",
     "netCDF4<1.5.3",
