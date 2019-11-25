@@ -312,9 +312,10 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
-        )
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
+            )
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
@@ -324,9 +325,10 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
-        )
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
+            )
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))

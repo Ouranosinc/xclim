@@ -103,21 +103,21 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     Examples
     --------
     >>> from xclim import ensembles
-    >>> import glob
-    >>> ncfiles = glob.glob('/*tas*.nc')
+    >>> from pathlib import Path
+    >>> ncfiles = Path().rglob('*tas*.nc')
     Create ensemble dataset
     >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate ensemble statistics
     >>> ens_means_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    dsOut = ens.drop(ens.data_vars)
+    dsOut = ens._drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
 
-        dsOut[v + "_mean"] = ens[v].mean(dim="realization")
-        dsOut[v + "_stdev"] = ens[v].std(dim="realization")
-        dsOut[v + "_max"] = ens[v].max(dim="realization")
-        dsOut[v + "_min"] = ens[v].min(dim="realization")
+        dsOut["{}_mean".format(v)] = ens[v].mean(dim="realization")
+        dsOut["{}_stdev".format(v)] = ens[v].std(dim="realization")
+        dsOut["{}_max".format(v)] = ens[v].max(dim="realization")
+        dsOut["{}_min".format(v)] = ens[v].min(dim="realization")
         for vv in dsOut.data_vars:
             dsOut[vv].attrs = ens[v].attrs
 
@@ -177,7 +177,7 @@ def ensemble_percentiles(
 
     """
 
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens._drop_vars(names=set(ens.data_vars))
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -265,7 +265,7 @@ def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     time_flag: bool = False,
-    time_all=None,
+    time_all: np.array = None,
 ) -> xr.Dataset:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
     are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
@@ -281,7 +281,7 @@ def _ens_align_datasets(
       Only applicable when datasets is a sequence of file paths.
     time_flag : bool
       True if time dimension is present among the "datasets"; Otherwise false.
-    time_all : array of datetime64
+    time_all : np.array
       Series of unique time-steps covering all input Datasets.
 
     Returns
@@ -330,7 +330,7 @@ def _ens_align_datasets(
 
 
 def _calc_percentiles_simple(ens, v, values):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens._drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -361,7 +361,7 @@ def _calc_percentiles_simple(ens, v, values):
 
 
 def _calc_percentiles_blocks(ens, v, values, time_block):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens._drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
