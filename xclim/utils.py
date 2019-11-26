@@ -1015,25 +1015,37 @@ def wrapped_partial(func: FunctionType, *args, **kwargs):
 
 def _get_rolling_sum(N):
     """Generate the rolling sum function to be mapped in rolling()"""
+
     def rolling_sum_na(x):
         # First we get the rolling sum of the values.
         cumsum = np.nancumsum(np.insert(x, 0, 0, axis=0), axis=0)
-        out = (cumsum[N:] - cumsum[:-N])
+        out = cumsum[N:] - cumsum[:-N]
         # We get the rolling sum of where the data is nan. Non-zero values here are
         # all elements where the rolling window had at least one nan.
         # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
         isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=0), axis=0)
-        outna = (isnasum[N:] - isnasum[:-N])
+        outna = isnasum[N:] - isnasum[:-N]
         out[outna > 0] = np.nan
         # dask will trim our output, so we pad.
         # PB: I would like to get rid of this line, but passing "trim=false" to
         # dask.map_overlap, f*cks up the shape.
-        return np.pad(out, [(N - 1, 0)] + (x.ndim - 1) * [(0, 0)],
-                      mode='constant', constant_values=np.nan)
+        return np.pad(
+            out,
+            [(N - 1, 0)] + (x.ndim - 1) * [(0, 0)],
+            mode="constant",
+            constant_values=np.nan,
+        )
+
     return rolling_sum_na
 
 
-def rolling(arr: xr.DataArray, window: int = 1, mode: str = 'sum', dim: str = 'time'):
+def rolling(
+    arr: xr.DataArray,
+    window: int = 1,
+    mode: str = "sum",
+    dim: str = "time",
+    keep_attrs: bool = False,
+):
     """Utility function for rolling.sum and rolling.mean
 
     This calls a custom dask mapping when the rolled dimension is chunked.
@@ -1056,6 +1068,8 @@ def rolling(arr: xr.DataArray, window: int = 1, mode: str = 'sum', dim: str = 't
         (the default is 'sum')
     dim : {str}
         Dimension along which to roll (the default is 'time')
+    keep_attrs : {bool}
+        If True, transfers the attrs of the input array to the output one. (default is False)
 
     Returns
     -------
@@ -1066,19 +1080,30 @@ def rolling(arr: xr.DataArray, window: int = 1, mode: str = 'sum', dim: str = 't
     if isinstance(arr.data, dask.array.Array):
         dims = arr.dims
         # Transpose so to get the rolling dim in axis=0
-        arr = arr.transpose(dim * [dm for dm in dims if dm != dim])
+        arr = arr.transpose(dim, *[dm for dm in dims if dm != dim])
         # Map the rolling function but with an overlap so the first element
         # has a full window. Boundaries are nan so to imitate the default behavior.
-        out = arr.data.map_overlap(_get_rolling_sum(window),
-                                   (window - 1,) + (arr.ndim - 1) * (0,),
-                                   boundary=np.nan, dtype=arr.dtype)
-        # Recreate a DataArray from the dask output and transpose back to the input dim order
-        out = xr.DataArray(out, coords=arr.coords, attrs=arr.attrs).transpose(*dims)
-        if mode == 'mean':  # Default is a sum.
+        out = arr.data.map_overlap(
+            _get_rolling_sum(window),
+            (window - 1,) + (arr.ndim - 1) * (0,),
+            boundary=np.nan,
+            dtype=arr.dtype,
+        )
+
+        if mode == "mean":  # Default is a sum.
             out = out / window
+
+        # Recreate a DataArray from the dask output and transpose back to the input dim order
+        out = xr.DataArray(
+            out, coords=arr.coords, attrs=arr.attrs if keep_attrs else None
+        ).transpose(*dims)
         return out
     else:
         # If not a dask array, call the normal rolling.
-        if mode == 'mean':
-            return arr.rolling(time=window).mean()
-        return arr.rolling(time=window).sum()
+        if mode == "mean":
+            out = arr.rolling(time=window).mean()
+        else:
+            out = arr.rolling(time=window).sum()
+        if keep_attrs:
+            out.attrs.update(**arr.attrs)
+        return out

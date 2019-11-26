@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pathlib import Path
 
 from xclim import __version__
 from xclim import atmos
@@ -407,3 +408,34 @@ class TestThresholdCount:
         ts = tas_series(np.arange(365))
         out = utils.threshold_count(ts, "<", 50, "Y")
         np.testing.assert_array_equal(out, [50, 0])
+
+
+class TestRolling:
+    def test_rolling_ufunc(self):
+        ones = np.ones((100,))
+
+        rolld = utils._get_rolling_sum(10)(ones)
+
+        assert all(np.isnan(rolld[:9]))
+        assert all(rolld[9:] == 10)
+
+        ones[20] = np.nan
+        rolld = utils._get_rolling_sum(10)(ones)
+
+        assert all(np.isnan(rolld[20:30]))
+        assert all(rolld[9:20] == 10)
+        assert all(rolld[30:] == 10)
+
+    def test_rolling(self):
+        fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+        ds_nd = xr.open_dataset(fn)
+        ds_dask = xr.open_dataset(fn, chunks={"time": 30})
+
+        pr5d_nd_xr = ds_nd.pr.rolling(time=5).mean()
+        pr5d_nd_xc = utils.rolling(
+            ds_nd.pr, window=5, dim="time", mode="mean", keep_attrs=False
+        )
+        pr5d_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="mean")
+
+        xr.testing.assert_identical(pr5d_nd_xr, pr5d_nd_xc)
+        xr.testing.assert_allclose(pr5d_dask, pr5d_nd_xr)
