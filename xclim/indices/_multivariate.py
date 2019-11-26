@@ -802,7 +802,7 @@ def fraction_over_precip_thresh(
     return over / total
 
 
-@declare_units("temperature", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units("K", tasmin="[temperature]", tasmax="[temperature]")
 def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     """Average temperature from minimum and maximum temperatures.
 
