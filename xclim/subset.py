@@ -12,9 +12,9 @@ import geojson
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import rasterio.crs
 import xarray
 from pyproj import Geod
+from rasterio.crs import CRS
 from shapely.geometry import Point
 
 # import rioxarray
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 
 def _read_geometries(
     shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
-) -> Tuple[List[geojson.geometry.Geometry], rasterio.crs.CRS]:
+) -> Tuple[List[geojson.geometry.Geometry], CRS]:
     """
     A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
       the shapely Shape object.
@@ -43,9 +43,9 @@ def _read_geometries(
         with fiona.open(shape) as fio:
             logging.info("Vector read OK.")
             if crs:
-                shape_crs = rasterio.crs.CRS.from_user_input(crs)
+                shape_crs = CRS().from_user_input(crs)
             else:
-                shape_crs = rasterio.crs.CRS(fio.crs or 4326)
+                shape_crs = CRS(fio.crs or 4326)
             for i, feat in enumerate(fio):
                 g = geojson.GeoJSON(feat)
                 geom.append(g["geometry"])
@@ -181,33 +181,33 @@ def check_lons(func):
 
 
 def _create_mask(
-    xdim: xarray.DataArray, ydim: xarray.DataArray, poly: gpd.GeoDataFrame
+    x_dim: xarray.DataArray, y_dim: xarray.DataArray, poly: gpd.GeoDataFrame
 ):
     """
     Parameters
     ----------
-    xdim : xarray.DataArray
-    ydim : xarray.DataArray
+    x_dim : xarray.DataArray
+    y_dim : xarray.DataArray
     poly: gpd.GeoDataFrame
 
     Returns
     -------
     xarray.DataArray
     """
-    if len(xdim.shape) == 1 & len(ydim.shape) == 1:
+    if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
         lon1, lat1 = np.meshgrid(
-            np.asarray(xdim.values), np.asarray(ydim.values), indexing="ij"
+            np.asarray(x_dim.values), np.asarray(y_dim.values), indexing="ij"
         )
-        dims_out = xdim.dims + ydim.dims
+        dims_out = x_dim.dims + y_dim.dims
         coords_out = dict()
-        coords_out[dims_out[0]] = xdim.values
-        coords_out[dims_out[1]] = ydim.values
+        coords_out[dims_out[0]] = x_dim.values
+        coords_out[dims_out[1]] = y_dim.values
     else:
-        lon1 = xdim.values
-        lat1 = ydim.values
-        dims_out = xdim.dims
-        coords_out = xdim.coords
+        lon1 = x_dim.values
+        lat1 = y_dim.values
+        dims_out = x_dim.dims
+        coords_out = x_dim.coords
 
     # create pandas Dataframe from NetCDF lat and lon points
     df = pd.DataFrame(
@@ -218,7 +218,8 @@ def _create_mask(
 
     # create geodataframe (spatially referenced)
     gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates")
-    gdf_points.crs = rasterio.crs.CRS().from_epsg(4326).to_dict()
+    # TODO: There needs to be a check here in case the raster and shape CRS are same and not WGS84.
+    gdf_points.crs = CRS().from_epsg(4326).to_dict()
 
     # spatial join geodata points with region polygons
     point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="within")
@@ -234,8 +235,9 @@ def _create_mask(
 @check_date_signature
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
-    region: Union[str, Path],
-    shape_crs: Optional[str] = None,
+    shape: Union[str, Path],
+    raster_crs: Optional[Union[str, int]] = None,
+    shape_crs: Optional[Union[str, int]] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]:
@@ -247,8 +249,9 @@ def subset_shape(
     Parameters
     ----------
     ds : Union[xarray.DataArray, xarray.Dataset]
-    region : Union[str, Path]
-    shape_crs: Optional[str]
+    shape : Union[str, Path]
+    raster_crs: Optional[Union[str, int]]
+    shape_crs: Optional[Union[str, int]]
     start_date : Optional[str]
     end_date : Optional[str]
     start_yr : int
@@ -261,14 +264,43 @@ def subset_shape(
     Returns
     -------
     Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> import rioxarray
+    >>> import xarray as xr
+    >>> pr = xarray.open_dataset('pr.day.nc').pr
+    Subset lat lon and years
+    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+    Subset data array lat, lon and single year
+    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
+    Subset multiple variables in a single dataset
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = subset.subset_shape(ds, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03', end_date='1999-08')
+    # Subset with specific start_dates and end_dates
+    >>> prSub = \
+            subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
     if "ts" in ds.coords:
         ds = ds.drop("ts")
 
-    poly = gpd.GeoDataFrame.from_file(region)
+    poly = gpd.GeoDataFrame.from_file(shape)
 
-    crs = shape_crs or poly.crs
-    if crs != rasterio.crs.CRS().from_epsg(4326):
+    # Determine whether CRS types are the same between shape and raster
+    if shape_crs is not None:
+        shape_crs = CRS().from_user_input(shape_crs)
+    else:
+        shape_crs = poly.crs
+    if raster_crs is not None:
+        raster_crs = CRS().from_user_input(raster_crs)
+    else:
+        # TODO: This assumes that the raster is is georeferenced but it likely is not.
+        raster_crs = CRS().from_epsg(4326)
+
+    if shape_crs != raster_crs:
         warnings.warn("CRS not recognized or not equal to WGS84. Caveat emptor.")
 
     mask_2d = _create_mask(ds.lon, ds.lat, poly)
@@ -276,7 +308,7 @@ def subset_shape(
     # loop through variables
     for v in ds.data_vars:
         if set.issubset(set(mask_2d.dims), set(ds[v].dims)):
-            ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
+            ds[v] = ds[v].where((not np.isnan(mask_2d)), drop=True)
 
     if start_date or end_date:
         ds = subset_time(ds, start_date=start_date, end_date=end_date)
