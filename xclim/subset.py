@@ -181,16 +181,36 @@ def check_lons(func):
     return func_checker
 
 
-def _create_mask(ds: Union[xarray.DataArray, xarray.Dataset], poly: gpd.GeoDataFrame):
-    ds = ds.drop(ds.data_vars)
-    if len(ds.lon.shape) == 1 & len(ds.lat.shape) == 1:
-        # create a 2d grid of lon, lat values
-        lon1, lat1 = np.meshgrid(np.asarray(ds.lon.values), np.asarray(ds.lat.values))
-    else:
-        lon1 = ds.lon.values
-        lat1 = ds.lat.values
+def _create_mask(
+    xdim: xarray.DataArray, ydim: xarray.DataArray, poly: gpd.GeoDataFrame
+):
+    """
+    Parameters
+    ----------
+    xdim : xarray.DataArray
+    ydim : xarray.DataArray
+    poly: gpd.GeoDataFrame
 
-    # create pandas dataframe from netcdf lat lon points
+    Returns
+    -------
+    xarray.DataArray
+    """
+    if len(xdim.shape) == 1 & len(ydim.shape) == 1:
+        # create a 2d grid of lon, lat values
+        lon1, lat1 = np.meshgrid(
+            np.asarray(xdim.values), np.asarray(ydim.values), indexing="ij"
+        )
+        dims_out = xdim.dims + ydim.dims
+        coords_out = dict()
+        coords_out[dims_out[0]] = xdim.values
+        coords_out[dims_out[1]] = ydim.values
+    else:
+        lon1 = xdim.values
+        lat1 = ydim.values
+        dims_out = xdim.dims
+        coords_out = xdim.coords
+
+    # create pandas Dataframe from NetCDF lat and lon points
     df = pd.DataFrame(
         {"id": np.arange(0, lon1.size), "lon": lon1.flatten(), "lat": lat1.flatten()}
     )
@@ -206,10 +226,63 @@ def _create_mask(ds: Union[xarray.DataArray, xarray.Dataset], poly: gpd.GeoDataF
 
     # extract polygon ids for points
     mask = point_in_poly["index_right"]
-
     mask_2d = np.array(mask).reshape(lat1.shape[0], lat1.shape[1])
-    mask_2d = xarray.DataArray(mask_2d, coords=ds.coords, dims=ds.dims)
+    mask_2d = xarray.DataArray(mask_2d, dims=dims_out, coords=coords_out)
+
     return mask_2d
+
+
+@check_date_signature
+def subset_shape(
+    ds: Union[xarray.DataArray, xarray.Dataset],
+    region: Union[str, Path],
+    shape_crs: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]:
+    """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
+
+    Return a subsetted data array for grid points falling within the area of a Polygon and/or MultiPolygon shape,
+      or grid points along the path of a LineString and/or MultiLineString.
+
+    Parameters
+    ----------
+    ds : Union[xarray.DataArray, xarray.Dataset]
+    region : Union[str, Path]
+    shape_crs: Optional[str]
+    start_date : Optional[str]
+    end_date : Optional[str]
+    start_yr : int
+      Deprecated
+        First year of the subset. Defaults to first year of input data-array.
+    end_yr : int
+      Deprecated
+        Last year of the subset. Defaults to last year of input data-array.
+
+    Returns
+    -------
+    Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]
+    """
+    if "ts" in ds.coords:
+        ds = ds.drop("ts")
+
+    poly = gpd.GeoDataFrame.from_file(region)
+
+    crs = shape_crs or poly.crs
+    if crs != rasterio.crs.CRS().from_epsg(4326):
+        warnings.warn("CRS not recognized or not equal to WGS84. Caveat emptor.")
+
+    mask_2d = _create_mask(ds.lon, ds.lat, poly)
+
+    # loop through variables
+    for v in ds.data_vars:
+        if set.issubset(set(mask_2d.dims), set(ds[v].dims)):
+            ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
+
+    if start_date or end_date:
+        ds = subset_time(ds, start_date=start_date, end_date=end_date)
+
+    return ds, mask_2d
 
 
 # @check_date_signature
