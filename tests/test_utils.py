@@ -778,11 +778,11 @@ class TestRolling:
         assert all(rolld[9:] == 10)
 
         ones[20] = np.nan
-        rolld = utils._get_rolling_func(10, mode='mean')(ones)
+        rolld = utils._get_rolling_func(10, mode="mean")(ones)
 
         assert all(rolld[30:] == 1)
 
-        rolld = utils._get_rolling_func(10, mode='max')(ones)
+        rolld = utils._get_rolling_func(10, mode="max")(ones)
 
         assert all(rolld[30:] == 1)
 
@@ -801,7 +801,9 @@ class TestRolling:
         mean_nd_xc = utils.rolling(
             ds_nd.pr, window=5, dim="time", mode="mean", keep_attrs=False
         )
-        mean_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="mean", keep_attrs=True)
+        mean_dask = utils.rolling(
+            ds_dask.pr, window=5, dim="time", mode="mean", keep_attrs=True
+        )
 
         xr.testing.assert_identical(mean_nd_xr, mean_nd_xc)
         xr.testing.assert_allclose(mean_dask, mean_nd_xr)

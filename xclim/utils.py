@@ -1040,11 +1040,11 @@ def wrapped_partial(func: FunctionType, *args, **kwargs):
     return partial_func
 
 
-def _get_rolling_func(N, mode='sum'):
+def _get_rolling_func(N, mode="sum"):
     """Generate the rolling sum function to be mapped in rolling()"""
 
-    if mode in ['sum', 'mean']:
-        denom = 1 if mode == 'sum' else N
+    if mode in ["sum", "mean"]:
+        denom = 1 if mode == "sum" else N
 
         def rolling_sum_na(x):
             # First we get the rolling sum of the values.
@@ -1065,6 +1065,7 @@ def _get_rolling_func(N, mode='sum'):
                 mode="constant",
                 constant_values=np.nan,
             )
+
         return rolling_sum_na
 
     try:
@@ -1082,11 +1083,18 @@ def _get_rolling_func(N, mode='sum'):
             strides = x.strides + (x.strides[-1],)
             rolling = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
             out = func(rolling, axis=-1)
-            return np.pad(out, [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
-                          mode="constant", constant_values=np.nan)
+            return np.pad(
+                out,
+                [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
+                mode="constant",
+                constant_values=np.nan,
+            )
+
         return rolling_stride_na
     except AttributeError:
-        raise NotImplementedError('Rolling operation {mode} not known or yet implemented.')
+        raise NotImplementedError(
+            "Rolling operation {mode} not known or yet implemented."
+        )
 
 
 def rolling(
