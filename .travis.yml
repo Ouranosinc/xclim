@@ -27,6 +27,7 @@ matrix:
       addons:
         apt:
           packages:
+            - libgdal-dev
             - liblapack-dev
             - libblas-dev
             - libhdf5-serial-dev
