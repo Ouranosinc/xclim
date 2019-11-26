@@ -772,31 +772,49 @@ class TestRolling:
     def test_rolling_ufunc(self):
         ones = np.ones((100,))
 
-        rolld = utils._get_rolling_sum(10)(ones)
+        rolld = utils._get_rolling_func(10)(ones)
 
         assert all(np.isnan(rolld[:9]))
         assert all(rolld[9:] == 10)
 
         ones[20] = np.nan
-        rolld = utils._get_rolling_sum(10)(ones)
+        rolld = utils._get_rolling_func(10, mode='mean')(ones)
 
-        assert all(np.isnan(rolld[20:30]))
-        assert all(rolld[9:20] == 10)
-        assert all(rolld[30:] == 10)
+        assert all(rolld[30:] == 1)
+
+        rolld = utils._get_rolling_func(10, mode='max')(ones)
+
+        assert all(rolld[30:] == 1)
+
+        def myfunc(x, axis):
+            return x[..., 0] + x[..., 1]
+
+        rolld = utils._get_rolling_func(10, mode=myfunc)(ones)
+        assert all(rolld[30:] == 2)
 
     def test_rolling(self):
         fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
         ds_nd = xr.open_dataset(fn)
         ds_dask = xr.open_dataset(fn, chunks={"time": 30})
 
-        pr5d_nd_xr = ds_nd.pr.rolling(time=5).mean()
-        pr5d_nd_xc = utils.rolling(
+        mean_nd_xr = ds_nd.pr.rolling(time=5).mean()
+        mean_nd_xc = utils.rolling(
             ds_nd.pr, window=5, dim="time", mode="mean", keep_attrs=False
         )
-        pr5d_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="mean")
+        mean_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="mean", keep_attrs=True)
 
-        xr.testing.assert_identical(pr5d_nd_xr, pr5d_nd_xc)
-        xr.testing.assert_allclose(pr5d_dask, pr5d_nd_xr)
+        xr.testing.assert_identical(mean_nd_xr, mean_nd_xc)
+        xr.testing.assert_allclose(mean_dask, mean_nd_xr)
+        assert ds_dask.pr.attrs == mean_dask.attrs
+
+        max_nd_xr = ds_nd.pr.rolling(time=5).max()
+        max_nd_xc = utils.rolling(
+            ds_nd.pr, window=5, dim="time", mode="max", keep_attrs=False
+        )
+        max_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="max")
+
+        xr.testing.assert_identical(max_nd_xr, max_nd_xc)
+        xr.testing.assert_allclose(max_dask, max_nd_xr)
 
 
 class TestWindConversion:

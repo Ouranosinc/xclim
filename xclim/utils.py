@@ -15,6 +15,7 @@ from types import FunctionType
 from typing import Any
 from typing import Optional
 from typing import Union
+from typing import Callable
 import dask
 import numpy as np
 import pint
@@ -1039,36 +1040,59 @@ def wrapped_partial(func: FunctionType, *args, **kwargs):
     return partial_func
 
 
-def _get_rolling_sum(N):
+def _get_rolling_func(N, mode='sum'):
     """Generate the rolling sum function to be mapped in rolling()"""
 
-    def rolling_sum_na(x):
-        # First we get the rolling sum of the values.
-        cumsum = np.nancumsum(np.insert(x, 0, 0, axis=0), axis=0)
-        out = cumsum[N:] - cumsum[:-N]
-        # We get the rolling sum of where the data is nan. Non-zero values here are
-        # all elements where the rolling window had at least one nan.
-        # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
-        isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=0), axis=0)
-        outna = isnasum[N:] - isnasum[:-N]
-        out[outna > 0] = np.nan
-        # dask will trim our output, so we pad.
-        # PB: I would like to get rid of this line, but passing "trim=false" to
-        # dask.map_overlap, f*cks up the shape.
-        return np.pad(
-            out,
-            [(N - 1, 0)] + (x.ndim - 1) * [(0, 0)],
-            mode="constant",
-            constant_values=np.nan,
-        )
+    if mode in ['sum', 'mean']:
+        denom = 1 if mode == 'sum' else N
 
-    return rolling_sum_na
+        def rolling_sum_na(x):
+            # First we get the rolling sum of the values.
+            cumsum = np.nancumsum(np.insert(x, 0, 0, axis=-1), axis=-1)
+            out = cumsum[..., N:] - cumsum[..., :-N]
+            # We get the rolling sum of where the data is nan. Non-zero values here are
+            # all elements where the rolling window had at least one nan.
+            # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
+            isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=-1), axis=-1)
+            outna = isnasum[..., N:] - isnasum[..., :-N]
+            out[outna > 0] = np.nan
+            # dask will trim our output, so we pad.
+            # PB: I would like to get rid of this line, but passing "trim=false" to
+            # dask.map_overlap, f*cks up the shape.
+            return np.pad(
+                out / denom,
+                (x.ndim - 1) * [(0, 0)] + [(N - 1, 0)],
+                mode="constant",
+                constant_values=np.nan,
+            )
+        return rolling_sum_na
+
+    try:
+        if isinstance(mode, str):
+            # Get the reducing numpy function
+            func = getattr(np, mode)
+        else:
+            # Assume it is a callable
+            func = mode
+
+        def rolling_stride_na(x):
+            # rolling is an array with a new dimension of the same size as the window
+            # All values are copied so that the function can be applied along this dim.
+            shape = x.shape[:-1] + (x.shape[-1] - N + 1, N)
+            strides = x.strides + (x.strides[-1],)
+            rolling = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+            out = func(rolling, axis=-1)
+            return np.pad(out, [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
+                          mode="constant", constant_values=np.nan)
+        return rolling_stride_na
+    except AttributeError:
+        raise NotImplementedError('Rolling operation {mode} not known or yet implemented.')
 
 
 def rolling(
     arr: xr.DataArray,
     window: int = 1,
-    mode: str = "sum",
+    mode: Union[str, Callable] = "sum",
     dim: str = "time",
     keep_attrs: bool = False,
 ):
@@ -1087,14 +1111,16 @@ def rolling(
     ----------
     arr : DataArray
         The data. If it is not stored in a dask array, this goes back to xr.rolling()
-    window : {int}
+    window : int
         Window size along the rolled dimension (the default is 1)
-    mode : 'sum' or 'mean'
-        Whether to apply a rolling sum or mean (other modes not yet implemented)
-        (the default is 'sum')
-    dim : {str}
+    mode : str,
+        The operation to apply on the rolled axis (the default is 'sum')
+        Any numpy function that accept the keyword axis and reduces along this axis is valid.
+        (If the arr is not a dask array, then any method of xr.core.rolling.DataArrayRolling)
+        Can also be a function accepting the array and "axis=-1".
+    dim : str
         Dimension along which to roll (the default is 'time')
-    keep_attrs : {bool}
+    keep_attrs : bool
         If True, transfers the attrs of the input array to the output one. (default is False)
 
     Returns
@@ -1106,18 +1132,15 @@ def rolling(
     if isinstance(arr.data, dask.array.Array):
         dims = arr.dims
         # Transpose so to get the rolling dim in axis=0
-        arr = arr.transpose(dim, *[dm for dm in dims if dm != dim])
+        arr = arr.transpose(*[dm for dm in dims if dm != dim], dim)
         # Map the rolling function but with an overlap so the first element
         # has a full window. Boundaries are nan so to imitate the default behavior.
         out = arr.data.map_overlap(
-            _get_rolling_sum(window),
-            (window - 1,) + (arr.ndim - 1) * (0,),
+            _get_rolling_func(window, mode),
+            (arr.ndim - 1) * (0,) + (window - 1,),
             boundary=np.nan,
             dtype=arr.dtype,
         )
-
-        if mode == "mean":  # Default is a sum.
-            out = out / window
 
         # Recreate a DataArray from the dask output and transpose back to the input dim order
         out = xr.DataArray(
@@ -1126,10 +1149,11 @@ def rolling(
         return out
     else:
         # If not a dask array, call the normal rolling.
-        if mode == "mean":
-            out = arr.rolling(time=window).mean()
+        rolling = arr.rolling(time=window)
+        if isinstance(mode, str):
+            out = getattr(rolling, mode)()
         else:
-            out = arr.rolling(time=window).sum()
+            out = rolling.reduce(mode)
         if keep_attrs:
             out.attrs.update(**arr.attrs)
         return out
