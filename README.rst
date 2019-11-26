@@ -2,9 +2,9 @@
 xclim
 ======
 
-.. image:: _static/_images/xclim-logo.png
+.. image:: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo.png
         :align: center
-        :target: _static/_images/xclim-logo.png
+        :target: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo.png
         :alt: xclim
 
 .. image:: https://img.shields.io/pypi/v/xclim.svg

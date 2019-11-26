@@ -2,12 +2,28 @@
 History
 =======
 
+0.12.x-beta (2019-11-18)
+------------------------
+* Added a distance function computing the geodesic distance to a point.
+* Added a `tolerance` argument to `subset_gridpoint` raising an error if distance to closest point is larger than tolerance.
+* Created land module for standardized access to streamflow indices.
+* Enhancement to utils.Indicator to have more dynamic attributes using callables.
+* Added indice `heat_wave_total_length`.
+* Fixed a bug with typed call signatures that caused downstream failures on library import.
+
 0.11.x-beta (2019-10-17)
 ------------------------
-* Added type hinting to call signatures of many functions for more explicit type-checking
-* Now supporting explicit builds for Windows OS via Travis CI
-* Fix failing test with Python 3.7
-* Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Added Kmeans clustering ensemble reduction algorithms.
+* Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
+* Added type hinting to call signatures of many functions for more explicit type-checking.
+* Now supporting explicit builds for Windows OS via Travis CI.
+* Fix failing test with Python 3.7.
+* Fixed bug in subset.subset_bbox that could add unwanted coordinates/dims to some variables when applied to an entire dataset.
+* Reformatted packaging configuration to pure Py3 wheel that ignore tests and test data.
+* Now officially supporting Python3.8!
+* Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation.
+* Bugfix for frequency analysis choking on time series with NaNs only.
 
 0.10.x-beta (2019-06-18)
 ------------------------
@@ -28,12 +44,11 @@ History
 * Now employing PEP8 + Black compatible autoformatting.
 * Added Windows and macOS images to Travis CI build ensemble.
 * Added variable thresholds for tasmax and tasmin in daily_freezethaw_events.
-* Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting
+* Updated subset.py to use date formatted strings ("%Y", "%Y%m" etc.) in temporal subsetting.
 * Clean-up of day-of-year resampling. Precipitation percentile threshold will work without a doy index.
-* Addressed deprecations for xarray 0.13.0
+* Addressed deprecations for xarray 0.13.0.
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
-
 
 0.10-beta (2019-06-06)
 ----------------------
