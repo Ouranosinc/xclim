@@ -1099,9 +1099,9 @@ def _get_rolling_func(N, mode="sum"):
 
 def rolling(
     arr: xr.DataArray,
+    dim: str = "time",
     window: int = 1,
     mode: Union[str, Callable] = "sum",
-    dim: str = "time",
     keep_attrs: bool = False,
 ):
     """Utility function for rolling.sum and rolling.mean
