@@ -42,6 +42,36 @@ class TestFA(object):
         q0 = lognorm.ppf(1 - 1.0 / T, *p0)
         np.testing.assert_array_equal(q[0, 0, 0], q0)
 
+    def test_fit_nan(self):
+        da = self.da.copy()
+        da[0, 0, 0] = np.nan
+        out_nan = generic.fit(da, "lognorm")
+        out_censor = generic.fit(da[1:], "lognorm")
+        np.testing.assert_array_equal(
+            out_nan.values[:, 0, 0], out_censor.values[:, 0, 0]
+        )
+
+    def test_empty(self):
+        da = self.da.copy()
+        da[:, 0, 0] = np.nan
+        out = generic.fit(da, "lognorm").values
+        assert np.isnan(out[:, 0, 0]).all()
+
+
+class TestFrequencyAnalysis:
+    def test_simple(self, ndq_series):
+        q = ndq_series.copy()
+        q[:, 0, 0] = np.nan
+        out = generic.frequency_analysis(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        assert out.dims == ("return_period", "x", "y")
+        assert out.shape == (1, 2, 3)
+        v = out.values
+        assert v.shape == (1, 2, 3)
+        assert np.isnan(v[:, 0, 0])
+        assert ~np.isnan(v[:, 1, 1])
+
 
 class TestSelectResampleOp:
     def test_month(self, q_series):

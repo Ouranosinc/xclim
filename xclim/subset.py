@@ -659,6 +659,7 @@ def subset_gridpoint(
     lat: Optional[float] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    tolerance: Optional[float] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
     """Extract a nearest gridpoint from datarray based on lat lon coordinate.
 
@@ -688,6 +689,8 @@ def subset_gridpoint(
     end_yr : int
       Deprecated
         Last year of the subset. Defaults to last year of input data-array.
+    tolerance : Optional[float]
+      Raise error if the distance to the nearest gridpoint is larger than tolerance in meters.
 
     Returns
     -------
@@ -720,23 +723,20 @@ def subset_gridpoint(
             # if 'lon' and 'lat' are present as data dimensions use the .sel method.
             if "lat" in dims and "lon" in dims:
                 da = da.sel(lat=lat, lon=lon, method="nearest")
+
+                if tolerance is not None:
+                    # Calculate the geodesic distance between grid points and the point of interest.
+                    dist = distance(da, lon, lat)
+
             else:
-                g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
-                lon1 = da.lon.values
-                lat1 = da.lat.values
-                shp_orig = lon1.shape
-                lon1 = np.reshape(lon1, lon1.size)
-                lat1 = np.reshape(lat1, lat1.size)
-                # calculate geodesic distance between grid points and point of interest
-                az12, az21, dist = g.inv(
-                    lon1,
-                    lat1,
-                    np.broadcast_to(lon, lon1.shape),
-                    np.broadcast_to(lat, lat1.shape),
-                )
-                dist = dist.reshape(shp_orig)
-                iy, ix = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
-                xydims = [x for x in da.lon.dims]
+                # Calculate the geodesic distance between grid points and the point of interest.
+                dist = distance(da, lon, lat)
+
+                # Find the indices for the closest point
+                iy, ix = np.unravel_index(dist.argmin(), dist.shape)
+
+                # Select data from closest point
+                xydims = [x for x in dist.dims]
                 args = dict()
                 args[xydims[0]] = iy
                 args[xydims[1]] = ix
@@ -747,6 +747,14 @@ def subset_gridpoint(
                     '{} requires input data with "lon" and "lat" coordinates or data variables.'.format(
                         subset_gridpoint.__name__
                     )
+                )
+            )
+
+    if tolerance is not None:
+        if dist.min() > tolerance:
+            raise ValueError(
+                "Distance to closest point ({}) is larger than tolerance ({})".format(
+                    dist, tolerance
                 )
             )
 
@@ -806,3 +814,38 @@ def subset_time(
     """
 
     return da.sel(time=slice(start_date, end_date))
+
+
+def distance(da, lon, lat):
+    """Return distance to point in meters.
+
+    Parameters
+    ----------
+    da : Union[xarray.DataArray, xarray.Dataset]
+      Input data.
+    lon : Optional[float]
+      Longitude coordinate.
+    lat : Optional[float]
+      Latitude coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+      Distance in meters to point.
+
+    Note
+    ----
+    To get the indices from closest point, use
+    >>> d = distance(da)
+    >>> k = d.argmin()
+    >>> i, j = numpy.unravel_index(k, d.shape)
+
+    """
+    g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
+
+    def func(lons, lats):
+        return g.inv(*np.broadcast_arrays(lons, lats, lon, lat))[2]
+
+    out = xarray.apply_ufunc(func, da.lon, da.lat)
+    out.attrs["units"] = "m"
+    return out
