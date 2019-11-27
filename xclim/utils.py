@@ -958,12 +958,7 @@ class Indicator:
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        if "freq" not in kwds:
-            # Freq will be None for indices not using it. As long as missing_any is the
-            # only "missing" check, these indices do not require the check.
-            return False
-
-        freq = kwds.get("freq")
+        freq = kwds.get("freq", "D")
 
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
