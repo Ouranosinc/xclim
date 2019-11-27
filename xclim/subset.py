@@ -271,9 +271,9 @@ def subset_shape(
     >>> import rioxarray
     >>> import xarray as xr
     >>> pr = xarray.open_dataset('pr.day.nc').pr
-    Subset lat lon and years
+    Subset data array by shape and multiple years
     >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
-    Subset data array lat, lon and single year
+    Subset data array by shape and single year
     >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
     Subset multiple variables in a single dataset
     >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
@@ -297,7 +297,7 @@ def subset_shape(
     if raster_crs is not None:
         raster_crs = CRS().from_user_input(raster_crs)
     else:
-        # TODO: This assumes that the raster is is georeferenced but it likely is not.
+        # TODO: This assumes that the raster is georeferenced but it likely is not.
         raster_crs = CRS().from_epsg(4326)
 
     if shape_crs != raster_crs:
