@@ -17,6 +17,8 @@ from pyproj import Geod
 from rasterio.crs import CRS
 from shapely.geometry import Point
 
+# from pyproj import CRS
+
 # import rioxarray
 
 __all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
@@ -181,14 +183,22 @@ def check_lons(func):
 
 
 def _create_mask(
-    x_dim: xarray.DataArray, y_dim: xarray.DataArray, poly: gpd.GeoDataFrame
+    x_dim: xarray.DataArray,
+    y_dim: xarray.DataArray,
+    poly: gpd.GeoDataFrame,
+    translate: bool = False,
 ):
     """
     Parameters
     ----------
     x_dim : xarray.DataArray
+      X or longitudinal dimension of xarray object.
     y_dim : xarray.DataArray
-    poly: gpd.GeoDataFrame
+      Y or latitudinal dimension of xarray object.
+    poly : gpd.GeoDataFrame
+      GeoDataFrame used to create the xarray.DataArray mask.
+    translate : bool
+      Shift vector longitudes by -180 degrees; Default = False
 
     Returns
     -------
@@ -217,9 +227,16 @@ def _create_mask(
     df["Coordinates"] = df["Coordinates"].apply(Point)
 
     # create geodataframe (spatially referenced)
-    gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates")
-    # TODO: There needs to be a check here in case the raster and shape CRS are same and not WGS84.
-    gdf_points.crs = CRS().from_epsg(4326).to_dict()
+    gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=poly.crs)
+    if translate:
+        shifted = (
+            CRS()
+            .from_proj4(
+                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+            )
+            .to_dict()
+        )
+        gdf_points.to_crs(shifted)
 
     # spatial join geodata points with region polygons
     point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="within")
@@ -228,7 +245,6 @@ def _create_mask(
     mask = point_in_poly["index_right"]
     mask_2d = np.array(mask).reshape(lat1.shape[0], lat1.shape[1])
     mask_2d = xarray.DataArray(mask_2d, dims=dims_out, coords=coords_out)
-
     return mask_2d
 
 
@@ -238,9 +254,10 @@ def subset_shape(
     shape: Union[str, Path],
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
+    translate: Optional[bool] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-) -> Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]:
+) -> Union[xarray.DataArray, xarray.Dataset]:
     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
 
     Return a subsetted data array for grid points falling within the area of a Polygon and/or MultiPolygon shape,
@@ -252,6 +269,8 @@ def subset_shape(
     shape : Union[str, Path]
     raster_crs: Optional[Union[str, int]]
     shape_crs: Optional[Union[str, int]]
+    translate: Optional[bool]
+      Manually set whether vector longitudes should be translated by -180 degrees.
     start_date : Optional[str]
     end_date : Optional[str]
     start_yr : int
@@ -293,27 +312,50 @@ def subset_shape(
     if shape_crs is not None:
         shape_crs = CRS().from_user_input(shape_crs)
     else:
-        shape_crs = poly.crs
+        shape_crs = CRS(poly.crs)
     if raster_crs is not None:
         raster_crs = CRS().from_user_input(raster_crs)
     else:
-        # TODO: This assumes that the raster is georeferenced but it likely is not.
-        raster_crs = CRS().from_epsg(4326)
+        # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
+        raster_crs = CRS().from_string(
+            "+proj=longlat +ellps=WGS84 +pm=-180 +datum=WGS84 +no_defs"
+        )
 
-    if shape_crs != raster_crs:
-        warnings.warn("CRS not recognized or not equal to WGS84. Caveat emptor.")
+    if (shape_crs != raster_crs) or (
+        CRS().from_epsg(4326) not in [shape_crs, raster_crs]
+    ):
+        warnings.warn(
+            "CRS definitions are not similar or both not using WGS84. Caveat emptor.",
+            UserWarning,
+            stacklevel=3,
+        )
+    if (translate is None) and ('PRIMEM["unknown",-180' in raster_crs.to_wkt()):
+        crs_transformed = CRS().from_string(
+            "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+        )
+        poly = poly.to_crs(crs_transformed)
+        translate = True
+    else:
+        translate = False
 
-    mask_2d = _create_mask(ds.lon, ds.lat, poly)
+    mask_2d = _create_mask(ds.lon, ds.lat, poly, translate=translate)
 
     # loop through variables
     for v in ds.data_vars:
         if set.issubset(set(mask_2d.dims), set(ds[v].dims)):
-            ds[v] = ds[v].where((not np.isnan(mask_2d)), drop=True)
+            ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
+
+    ds = ds.dropna(dim="lon", how="all")
+    ds = ds.dropna(dim="lat", how="all")
+
+    if translate:
+        ds.coords["crs"] = 0
+        ds.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
 
     if start_date or end_date:
         ds = subset_time(ds, start_date=start_date, end_date=end_date)
 
-    return ds, mask_2d
+    return ds
 
 
 # @check_date_signature
