@@ -15,7 +15,11 @@ import pandas as pd
 import xarray
 from pyproj import Geod
 from rasterio.crs import CRS
+from shapely.geometry import LineString
 from shapely.geometry import Point
+from shapely.geometry import Polygon
+from shapely.ops import cascaded_union
+from shapely.ops import split
 
 # from pyproj import CRS
 
@@ -155,38 +159,108 @@ def check_lons(func):
          Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
         """
         if "lon_bnds" in kwargs:
-            lon = "lon_bnds"
+            lons = kwargs["lon_bnds"]
         elif "lon" in kwargs:
-            lon = "lon"
+            lons = kwargs["lon"]
         else:
             return func(*args, **kwargs)
 
         if isinstance(args[0], (xarray.DataArray, xarray.Dataset)):
-            if kwargs[lon] is None:
-                kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
+            if lons is None:
+                lons = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
-                kwargs[lon] = np.asarray(kwargs[lon])
-            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
-                if isinstance(kwargs[lon], float):
-                    kwargs[lon] += 360
+                lons = np.asarray(lons)
+            if np.all(args[0].lon >= 0) and np.any(lons < 0):
+                if isinstance(lons, float):
+                    lons += 360
                 else:
-                    kwargs[lon][kwargs[lon] < 0] += 360
-            if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
-                if isinstance(kwargs[lon], float):
-                    kwargs[lon] -= 360
+                    lons[lons < 0] += 360
+            if np.all(args[0].lon <= 0) and np.any(lons > 0):
+                if isinstance(lons, float):
+                    lons -= 360
                 else:
-                    kwargs[lon][kwargs[lon] < 0] -= 360
+                    lons[lons < 0] -= 360
 
         return func(*args, **kwargs)
 
     return func_checker
 
 
+def wrap_lons_and_split_at_greenwich(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator to split and reproject polygon vectors in a GeoDataFram whose values cross the Greenwich Meridian.
+         Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
+         the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
+         transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
+
+         Returns a GeoDataFrame with the new features in a wrap_lon WGS84 projection if needed.
+        """
+        try:
+            poly = kwargs["poly"]
+            x_dim = kwargs["x_dim"]
+            wrap_lons = kwargs["wrap_lons"]
+        except KeyError:
+            return func(*args, **kwargs)
+
+        if wrap_lons:
+            if np.min(x_dim) < 0 or np.max(x_dim) > 360:
+                warnings.warn(
+                    "Dataset doesn't seem to be using lons between 0 and 360 degrees."
+                    " Tread with caution.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+            if (poly.geometry.total_bounds[0] < 0) and (
+                poly.geometry.total_bounds[2] > 0
+            ):
+                warnings.warn(
+                    "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
+                    " This feature is experimental. Output might not be accurate.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+                # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
+                union = Polygon(cascaded_union(poly.geometry))
+                meridian = LineString([Point(0, 90), Point(0, -90)])
+                buffered = meridian.buffer(0.000000001)
+                split_polygons = split(union, meridian)
+                buffered_split_polygons = [
+                    feat for feat in split_polygons.difference(buffered)
+                ]
+
+                # Load split features into a new GeoDataFrame with WGS84 CRS
+                split_gdf = gpd.GeoDataFrame(
+                    list(range(len(buffered_split_polygons))),
+                    geometry=buffered_split_polygons,
+                    crs={"init": "epsg:4326"},
+                )
+                # split_gdf.crs = CRS.from_epsg(4326)
+                split_gdf.columns = ["index", "geometry"]
+
+                poly = split_gdf
+
+            # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
+            poly = poly.to_crs(
+                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+            )
+            kwargs["poly"] = poly
+
+        return func(*args, **kwargs)
+
+    return func_checker
+
+
+@wrap_lons_and_split_at_greenwich
 def _create_mask(
-    x_dim: xarray.DataArray,
-    y_dim: xarray.DataArray,
-    poly: gpd.GeoDataFrame,
-    translate: bool = False,
+    *,
+    x_dim: xarray.DataArray = None,
+    y_dim: xarray.DataArray = None,
+    poly: gpd.GeoDataFrame = None,
+    wrap_lons: bool = False,
 ):
     """
     Parameters
@@ -197,8 +271,8 @@ def _create_mask(
       Y or latitudinal dimension of xarray object.
     poly : gpd.GeoDataFrame
       GeoDataFrame used to create the xarray.DataArray mask.
-    translate : bool
-      Shift vector longitudes by -180 degrees; Default = False
+    wrap_lons : bool
+      Shift vector longitudes by -180,180 degrees to 0,360 degrees; Default = False
 
     Returns
     -------
@@ -226,17 +300,16 @@ def _create_mask(
     df["Coordinates"] = list(zip(df.lon, df.lat))
     df["Coordinates"] = df["Coordinates"].apply(Point)
 
-    # create geodataframe (spatially referenced)
-    gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=poly.crs)
-    if translate:
-        shifted = (
-            CRS()
-            .from_proj4(
-                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
-            )
-            .to_dict()
+    # create geodataframe (spatially referenced with shifted longitude values if needed).
+    if wrap_lons:
+        shifted = CRS().from_proj4(
+            "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
         )
-        gdf_points.to_crs(shifted)
+        gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=shifted)
+    else:
+        gdf_points = gpd.GeoDataFrame(
+            df, geometry="Coordinates", crs=CRS().from_epsg(4326)
+        )
 
     # spatial join geodata points with region polygons
     point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="within")
@@ -254,7 +327,7 @@ def subset_shape(
     shape: Union[str, Path],
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
-    translate: Optional[bool] = None,
+    wrap_lons: Optional[bool] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
@@ -269,8 +342,8 @@ def subset_shape(
     shape : Union[str, Path]
     raster_crs: Optional[Union[str, int]]
     shape_crs: Optional[Union[str, int]]
-    translate: Optional[bool]
-      Manually set whether vector longitudes should be translated by -180 degrees.
+    wrap_lons: Optional[bool]
+      Manually set whether vector longitudes should extend from 0 to 360 degrees.
     start_date : Optional[str]
     end_date : Optional[str]
     start_yr : int
@@ -316,10 +389,15 @@ def subset_shape(
     if raster_crs is not None:
         raster_crs = CRS().from_user_input(raster_crs)
     else:
-        # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
-        raster_crs = CRS().from_string(
-            "+proj=longlat +ellps=WGS84 +pm=-180 +datum=WGS84 +no_defs"
-        )
+        if np.min(ds.lon) >= 0 and np.max(ds.lon) <= 360:
+            # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
+            raster_crs = CRS().from_string(
+                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+            )
+            wrap_lons = True
+        else:
+            raster_crs = CRS().from_epsg(4326)
+            wrap_lons = False
 
     if (shape_crs != raster_crs) or (
         CRS().from_epsg(4326) not in [shape_crs, raster_crs]
@@ -329,26 +407,20 @@ def subset_shape(
             UserWarning,
             stacklevel=3,
         )
-    if (translate is None) and ('PRIMEM["unknown",-180' in raster_crs.to_wkt()):
-        crs_transformed = CRS().from_string(
-            "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
-        )
-        poly = poly.to_crs(crs_transformed)
-        translate = True
-    else:
-        translate = False
 
-    mask_2d = _create_mask(ds.lon, ds.lat, poly, translate=translate)
+    mask_2d = _create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=poly, wrap_lons=wrap_lons)
 
     # loop through variables
     for v in ds.data_vars:
         if set.issubset(set(mask_2d.dims), set(ds[v].dims)):
             ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
 
+    # TODO: This doesn't seem to do anything. Lots of NaNs still present.
     ds = ds.dropna(dim="lon", how="all")
     ds = ds.dropna(dim="lat", how="all")
 
-    if translate:
+    # Add a CRS definition as a coordinate for reference purposes
+    if wrap_lons:
         ds.coords["crs"] = 0
         ds.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
 
@@ -878,9 +950,13 @@ def distance(da, lon, lat):
     Note
     ----
     To get the indices from closest point, use
-    >>> d = distance(da)
+    >>> import numpy as np
+    >>> import xarray as xr
+    >>> import xclim.subset
+    >>> da = xr.open_dataset("/path/to/file.nc").variable
+    >>> d = xclim.subset.distance(da)
     >>> k = d.argmin()
-    >>> i, j = numpy.unravel_index(k, d.shape)
+    >>> i, j = np.unravel_index(k, d.shape)
 
     """
     g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
