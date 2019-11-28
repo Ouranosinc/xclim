@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Union
 from typing import Callable
 import dask
+import dask.array
 import numpy as np
 import pint
 import xarray as xr
@@ -1053,9 +1054,10 @@ def _get_rolling_func(N, mode="sum"):
             # We get the rolling sum of where the data is nan. Non-zero values here are
             # all elements where the rolling window had at least one nan.
             # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
-            isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=-1), axis=-1)
-            outna = isnasum[..., N:] - isnasum[..., :-N]
-            out[outna > 0] = np.nan
+            if np.any(np.isnan(x)):
+                isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=-1), axis=-1)
+                outna = isnasum[..., N:] - isnasum[..., :-N]
+                out[outna > 0] = np.nan
             # dask will trim our output, so we pad.
             # PB: I would like to get rid of this line, but passing "trim=false" to
             # dask.map_overlap, f*cks up the shape.
@@ -1063,7 +1065,9 @@ def _get_rolling_func(N, mode="sum"):
                 out / denom,
                 (x.ndim - 1) * [(0, 0)] + [(N - 1, 0)],
                 mode="constant",
-                constant_values=np.nan,
+                constant_values=np.nan
+                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
+                else 0,
             )
 
         return rolling_sum_na
@@ -1071,7 +1075,7 @@ def _get_rolling_func(N, mode="sum"):
     try:
         if isinstance(mode, str):
             # Get the reducing numpy function
-            func = getattr(np, mode)
+            func = getattr(dask.array, mode, getattr(np, mode))
         else:
             # Assume it is a callable
             func = mode
@@ -1087,7 +1091,9 @@ def _get_rolling_func(N, mode="sum"):
                 out,
                 [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
                 mode="constant",
-                constant_values=np.nan,
+                constant_values=np.nan
+                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
+                else 0,
             )
 
         return rolling_stride_na
@@ -1097,7 +1103,7 @@ def _get_rolling_func(N, mode="sum"):
         )
 
 
-def rolling(
+def _rolling(
     arr: xr.DataArray,
     dim: str = "time",
     window: int = 1,
@@ -1125,7 +1131,8 @@ def rolling(
         The operation to apply on the rolled axis (the default is 'sum')
         Any numpy function that accept the keyword axis and reduces along this axis is valid.
         (If the arr is not a dask array, then any method of xr.core.rolling.DataArrayRolling)
-        Can also be a function accepting the array and "axis=-1".
+        Can also be a function accepting the array and "axis=-1". In that case, proper propagation
+        of NaN values is not assured.
     dim : str
         Dimension along which to roll (the default is 'time')
     keep_attrs : bool
@@ -1149,7 +1156,6 @@ def rolling(
             boundary=np.nan,
             dtype=arr.dtype,
         )
-
         # Recreate a DataArray from the dask output and transpose back to the input dim order
         out = xr.DataArray(
             out, coords=arr.coords, attrs=arr.attrs if keep_attrs else None

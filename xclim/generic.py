@@ -4,7 +4,7 @@
 import dask
 import numpy as np
 import xarray as xr
-from xclim.utils import rolling
+from xclim.utils import _rolling
 
 
 def select_time(da, **indexer):
@@ -264,7 +264,7 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
     """
     # Apply rolling average
     if window > 1:
-        da = rolling(da, window=window, dim="time", keep_attrs=True, mode="mean")
+        da = _rolling(da, window=window, dim="time", keep_attrs=True, mode="mean")
 
     # Assign default resampling frequency if not provided
     freq = freq or default_freq(**indexer)

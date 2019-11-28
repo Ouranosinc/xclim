@@ -23,6 +23,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from pathlib import Path
+from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos
@@ -769,54 +770,46 @@ class TestThresholdCount:
 
 
 class TestRolling:
-    def test_rolling_ufunc(self):
-        ones = np.ones((100,))
+    @pytest.mark.parametrize(
+        "mode,expected,error",
+        [
+            ("sum", 10, does_not_raise()),
+            ("max", 1, does_not_raise()),
+            (lambda x, axis: x[..., 1], 1, does_not_raise()),
+            ("notanumpyfunction", None, pytest.raises(NotImplementedError)),
+        ],
+    )
+    @pytest.mark.parametrize("dtype", [float, int, bool])
+    def test_rolling_ufunc(self, mode, expected, error, dtype):
+        ones = np.ones((100,), dtype=dtype)
+        if dtype is float:
+            ones[20] = np.nan
 
-        rolld = utils._get_rolling_func(10)(ones)
+        with error:
+            rolld = utils._get_rolling_func(10, mode=mode)(ones)
+            if dtype is float:
+                assert all(np.isnan(rolld[:9]))
+                if isinstance(mode, str):
+                    assert all(np.isnan(rolld[20:30]))
+            assert all(rolld[30:] == expected)
 
-        assert all(np.isnan(rolld[:9]))
-        assert all(rolld[9:] == 10)
-
-        ones[20] = np.nan
-        rolld = utils._get_rolling_func(10, mode="mean")(ones)
-
-        assert all(rolld[30:] == 1)
-
-        rolld = utils._get_rolling_func(10, mode="max")(ones)
-
-        assert all(rolld[30:] == 1)
-
-        def myfunc(x, axis):
-            return x[..., 0] + x[..., 1]
-
-        rolld = utils._get_rolling_func(10, mode=myfunc)(ones)
-        assert all(rolld[30:] == 2)
-
-    def test_rolling(self):
+    @pytest.mark.parametrize("mode", ["mean", "max"])
+    def test_rolling(self, mode):
         fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
         ds_nd = xr.open_dataset(fn)
         ds_dask = xr.open_dataset(fn, chunks={"time": 30})
 
-        mean_nd_xr = ds_nd.pr.rolling(time=5).mean()
-        mean_nd_xc = utils.rolling(
-            ds_nd.pr, window=5, dim="time", mode="mean", keep_attrs=False
+        res_nd_xr = getattr(ds_nd.pr.rolling(time=5), mode)()
+        res_nd_xc = utils._rolling(
+            ds_nd.pr, window=5, dim="time", mode=mode, keep_attrs=False
         )
-        mean_dask = utils.rolling(
-            ds_dask.pr, window=5, dim="time", mode="mean", keep_attrs=True
+        res_dask = utils._rolling(
+            ds_dask.pr, window=5, dim="time", mode=mode, keep_attrs=True
         )
 
-        xr.testing.assert_identical(mean_nd_xr, mean_nd_xc)
-        xr.testing.assert_allclose(mean_dask, mean_nd_xr)
-        assert ds_dask.pr.attrs == mean_dask.attrs
-
-        max_nd_xr = ds_nd.pr.rolling(time=5).max()
-        max_nd_xc = utils.rolling(
-            ds_nd.pr, window=5, dim="time", mode="max", keep_attrs=False
-        )
-        max_dask = utils.rolling(ds_dask.pr, window=5, dim="time", mode="max")
-
-        xr.testing.assert_identical(max_nd_xr, max_nd_xc)
-        xr.testing.assert_allclose(max_dask, max_nd_xr)
+        xr.testing.assert_identical(res_nd_xr, res_nd_xc)
+        xr.testing.assert_allclose(res_dask, res_nd_xr)
+        assert ds_dask.pr.attrs == res_dask.attrs
 
 
 class TestWindConversion:

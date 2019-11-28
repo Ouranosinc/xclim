@@ -4,7 +4,7 @@ from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
-from xclim.utils import rolling
+from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -554,7 +554,7 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     """
 
     # rolling sum of the values
-    arr = rolling(pr, window=window, dim="time", mode="sum")
+    arr = _rolling(pr, window=window, dim="time", mode="sum")
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
     out.attrs["units"] = pr.units
