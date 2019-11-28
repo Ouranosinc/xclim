@@ -21,11 +21,13 @@ from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 from shapely.ops import split
 
-# from pyproj import CRS
-
-# import rioxarray
-
-__all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
+__all__ = [
+    "create_mask",
+    "subset_bbox",
+    "subset_gridpoint",
+    "subset_shape",
+    "subset_time",
+]
 logging.basicConfig(level=logging.INFO)
 
 
@@ -159,27 +161,27 @@ def check_lons(func):
          Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
         """
         if "lon_bnds" in kwargs:
-            lons = kwargs["lon_bnds"]
+            lon = "lon_bnds"
         elif "lon" in kwargs:
-            lons = kwargs["lon"]
+            lon = "lon"
         else:
             return func(*args, **kwargs)
 
         if isinstance(args[0], (xarray.DataArray, xarray.Dataset)):
-            if lons is None:
-                lons = np.asarray(args[0].lon.min(), args[0].lon.max())
+            if kwargs[lon] is None:
+                kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
-                lons = np.asarray(lons)
-            if np.all(args[0].lon >= 0) and np.any(lons < 0):
-                if isinstance(lons, float):
-                    lons += 360
+                kwargs[lon] = np.asarray(kwargs[lon])
+            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
+                if isinstance(kwargs[lon], float):
+                    kwargs[lon] += 360
                 else:
-                    lons[lons < 0] += 360
-            if np.all(args[0].lon <= 0) and np.any(lons > 0):
-                if isinstance(lons, float):
-                    lons -= 360
+                    kwargs[lon][kwargs[lon] < 0] += 360
+            if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
+                if isinstance(kwargs[lon], float):
+                    kwargs[lon] -= 360
                 else:
-                    lons[lons < 0] -= 360
+                    kwargs[lon][kwargs[lon] < 0] -= 360
 
         return func(*args, **kwargs)
 
@@ -255,7 +257,7 @@ def wrap_lons_and_split_at_greenwich(func):
 
 
 @wrap_lons_and_split_at_greenwich
-def _create_mask(
+def create_mask(
     *,
     x_dim: xarray.DataArray = None,
     y_dim: xarray.DataArray = None,
@@ -408,7 +410,7 @@ def subset_shape(
             stacklevel=3,
         )
 
-    mask_2d = _create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=poly, wrap_lons=wrap_lons)
+    mask_2d = create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=poly, wrap_lons=wrap_lons)
 
     # loop through variables
     for v in ds.data_vars:

@@ -517,6 +517,22 @@ class TestSubsetBbox:
         )
 
 
+class TestSubsetShape:
+    nc_file = os.path.join(
+        TESTS_DATA, "cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"
+    )
+    meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
+
+    def test_simple(self):
+        ds = xr.open_dataset(self.nc_file)
+
+        with pytest.warns(UserWarning):
+            sub = subset.subset_shape(ds, self.meridian_geojson)
+
+        assert len(sub.tas) == 12
+        np.testing.assert_equal(np.mean(sub.tas.isel(time=0)), 285.057)
+
+
 class TestDistance:
     def test_values(self):
         # Check values are OK. Values taken from pyproj test.
