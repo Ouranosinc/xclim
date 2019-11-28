@@ -13,6 +13,7 @@ __all__ = [
     "heat_wave_frequency",
     "heat_wave_max_length",
     "heat_wave_index",
+    "tg",
     "tg_mean",
     "tg10p",
     "tg90p",
@@ -184,6 +185,16 @@ heat_wave_index = Tasmax(
     "defined as five or more consecutive days over {thresh}.",
     cell_methods="",
     compute=indices.heat_wave_index,
+)
+
+tg = TasminTasmax(
+    identifier="tg",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Daily mean temperature",
+    description="Estimated mean temperature from maximum and minimum temperatures",
+    cell_methods="",
+    compute=indices.tas,
 )
 
 tg_mean = Tas(

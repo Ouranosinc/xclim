@@ -175,13 +175,16 @@ class TestETR:
 
 
 class TestTmean:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
+    nc_files = (
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
     def test_Tmean_3d_data(self):
-        tas = xr.open_dataset(self.nc_file).tasmax
-        tas_C = xr.open_dataset(self.nc_file).tasmax
+        ds_tmax = xr.open_dataset(self.nc_files[0])
+        ds_tmin = xr.open_dataset(self.nc_files[1])
+        tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
         tas_C.attrs["units"] = "C"
         # put a nan somewhere

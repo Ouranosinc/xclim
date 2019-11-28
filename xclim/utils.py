@@ -959,7 +959,8 @@ class Indicator:
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get("freq")
+        freq = kwds.get("freq", "D")
+
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
 
