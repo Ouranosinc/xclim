@@ -17,7 +17,6 @@ from typing import Optional
 from typing import Union
 from typing import Callable
 import dask
-import dask.array
 import numpy as np
 import pint
 import xarray as xr
@@ -1075,7 +1074,7 @@ def _get_rolling_func(N, mode="sum"):
     try:
         if isinstance(mode, str):
             # Get the reducing numpy function
-            func = getattr(dask.array, mode, getattr(np, mode))
+            func = getattr(np, mode)
         else:
             # Assume it is a callable
             func = mode
@@ -1109,6 +1108,7 @@ def _rolling(
     window: int = 1,
     mode: Union[str, Callable] = "sum",
     keep_attrs: bool = False,
+    **kwargs,
 ):
     """Utility function for rolling.sum and rolling.mean
 
@@ -1137,14 +1137,15 @@ def _rolling(
         Dimension along which to roll (the default is 'time')
     keep_attrs : bool
         If True, transfers the attrs of the input array to the output one. (default is False)
-
+    kwargs :
+        If any other kwargs are passed, this defaults to the classical rolling as other options are not implemented.
     Returns
     -------
     DataArray
         The data with the rolling sum/mean applied along the specified dim.
     """
-    # Only do this is the data is as dask array
-    if isinstance(arr.data, dask.array.Array):
+    # Only do this if the data is as dask array and no unsupported kwargs are requested.
+    if isinstance(arr.data, dask.array.Array) and not kwargs:
         dims = arr.dims
         # Transpose so to get the rolling dim in axis=0
         arr = arr.transpose(*[dm for dm in dims if dm != dim], dim)
@@ -1162,12 +1163,12 @@ def _rolling(
         ).transpose(*dims)
         return out
     else:
-        # If not a dask array, call the normal rolling.
+        # If not a dask array or with unsupported kwargs, call the normal rolling.
         rolling = arr.rolling(time=window)
         if isinstance(mode, str):
-            out = getattr(rolling, mode)()
+            out = getattr(rolling, mode)(allow_lazy=True)
         else:
-            out = rolling.reduce(mode)
+            out = rolling.reduce(mode, allow_lazy=True)
         if keep_attrs:
             out.attrs.update(**arr.attrs)
         return out
