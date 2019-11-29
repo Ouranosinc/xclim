@@ -369,7 +369,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units("days", tasmin="[temperature]")
-def consecutive_frost_days(tasmin: xarray.DataArray, freq="AS-JUL"):
+def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
     r"""Maximum number of consecutive frost days (Tmin < 0℃).
 
     Resample the daily minimum temperature series by computing the maximum number
@@ -547,9 +547,9 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
     at an annual frequency:
     >>> import xarray as xr
-    >>> da = xr.open_dataset('pr.day.nc').pr
+    >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> window = 5
-    >>> output = max_n_day_precipitation_amount(da, window, freq="YS")
+    >>> output = max_n_day_precipitation_amount(pr, window=window, freq="YS")
     """
 
     # rolling sum of the values

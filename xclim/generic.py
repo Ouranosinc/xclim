@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 # Note: stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
-import dask
+from typing import Sequence
+from typing import Union
+
+import dask.array
 import numpy as np
 import xarray as xr
 
 
-def select_time(da, **indexer):
+def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Input data.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
@@ -33,12 +36,12 @@ def select_time(da, **indexer):
     return selected
 
 
-def select_resample_op(da, op, freq="YS", **indexer):
+def select_resample_op(da: xr.DataArray, op, freq: str = "YS", **indexer):
     """Apply operation over each period that is part of the index selection.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Input data.
     op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
@@ -63,7 +66,7 @@ def select_resample_op(da, op, freq="YS", **indexer):
     return r.apply(op)
 
 
-def doymax(da):
+def doymax(da: xr.DataArray):
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
@@ -71,7 +74,7 @@ def doymax(da):
     return out
 
 
-def doymin(da):
+def doymin(da: xr.DataArray):
     """Return the day of year of the minimum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
@@ -79,12 +82,12 @@ def doymin(da):
     return out
 
 
-def fit(da, dist="norm"):
+def fit(da: xr.DataArray, dist: str = "norm"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Time series to be fitted along the time dimension.
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
@@ -92,7 +95,7 @@ def fit(da, dist="norm"):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       An array of distribution parameters fitted using the method of Maximum Likelihood.
 
     Notes
@@ -113,7 +116,7 @@ def fit(da, dist="norm"):
 
         # Return NaNs if array is empty.
         if len(x) <= 1:
-            return [np.nan,] * len(dist_params)
+            return [np.nan] * len(dist_params)
 
         # Fill with NaNs if one of the parameters is NaN
         params = dc.fit(x)
@@ -134,7 +137,8 @@ def fit(da, dist="norm"):
     coords["dparams"] = dist_params
 
     # Dimensions for the distribution parameters
-    dims = ["dparams",] + list(da.dims)
+    dims = ["dparams"]
+    dims.extend(da.dims)
     dims.remove("time")
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
@@ -152,14 +156,16 @@ def fit(da, dist="norm"):
     return out
 
 
-def fa(da, t, dist="norm", mode="high"):
+def fa(
+    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "high"
+):
     """Return the value corresponding to the given return period.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Maximized/minimized input data with a `time` dimension.
-    t : int or sequence
+    t : Union[int, Sequence]
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
