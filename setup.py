@@ -24,6 +24,7 @@ requirements = [
     "numpy>=1.15",
     "pandas>=0.23",
     "fiona>=1.8",
+    "rtree>=0.8",
     "geojson>=2.5.0",
     "shapely>=1.6",
     "rasterio>=1.0.28",
