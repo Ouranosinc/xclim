@@ -48,7 +48,7 @@ __all__ = [
     "sfcwind_2_uas_vas",
 ]
 
-# TODO: The pint library does not have a generic Unit or Quantitiy type at the moment. Using "Any" as a stand-in.
+# TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
