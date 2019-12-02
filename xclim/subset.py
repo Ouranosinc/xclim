@@ -207,9 +207,11 @@ def wrap_lons_and_split_at_greenwich(func):
             return func(*args, **kwargs)
 
         if wrap_lons:
-            if np.min(x_dim) < 0 or np.max(x_dim) > 360:
+            if (np.min(x_dim) < 0 and np.max(x_dim) >= 360) or (
+                np.min(x_dim) < -180 and np.max >= 180
+            ):
                 warnings.warn(
-                    "Dataset doesn't seem to be using lons between 0 and 360 degrees."
+                    "Dataset doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
                     " Tread with caution.",
                     UserWarning,
                     stacklevel=4,
@@ -425,8 +427,6 @@ def subset_shape(
             ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
 
     # TODO: This doesn't seem to do anything. Lots of NaNs still present.
-    ds = ds.dropna(dim="lon", how="all")
-    ds = ds.dropna(dim="lat", how="all")
     if "lon" in ds.dims:
         ds = ds.dropna(dim="lon", how="all")
         ds = ds.dropna(dim="lat", how="all")
