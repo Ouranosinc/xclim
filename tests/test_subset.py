@@ -521,9 +521,13 @@ class TestSubsetShape:
     nc_file = os.path.join(
         TESTS_DATA, "cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"
     )
-    meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
+    lons_2d_nc_file = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
 
-    def test_simple(self):
+    meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
+    poslons_geojson = os.path.join(TESTS_DATA, "cmip5", "poslons.json")
+    eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
+
+    def test_wraps(self):
         ds = xr.open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
@@ -533,7 +537,52 @@ class TestSubsetShape:
         # No time subsetting should occur.
         assert len(sub.tas) == 12
         # Average temperature at surface for region in January (time=0)
-        np.testing.assert_equal(np.mean(sub.tas.isel(time=0)), 285.057)
+        np.testing.assert_array_almost_equal(
+            float(np.mean(sub.tas.isel(time=0))), 285.057007
+        )
+
+    def test_no_wraps(self):
+        ds = xr.open_dataset(self.nc_file)
+
+        with pytest.warns(None) as record:
+            sub = subset.subset_shape(ds, self.poslons_geojson)
+
+        # No time subsetting should occur.
+        assert len(sub.tas) == 12
+        # Average temperature at surface for region in January (time=0)
+        np.testing.assert_array_almost_equal(
+            float(np.mean(sub.tas.isel(time=0))), 276.732483
+        )
+        # Check that no warnings are raised for meridian crossing
+        assert (
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
+            '" This feature is experimental. Output might not be accurate."'
+            not in [q.message for q in record]
+        )
+
+    def test_rotated_pole_with_time(self):
+        ds = xr.open_dataset(self.lons_2d_nc_file)
+
+        with pytest.warns(None) as record:
+            sub = subset.subset_shape(
+                ds,
+                self.eastern_canada_geojson,
+                start_date="1984-06-01",
+                end_date="1984-06-15",
+            )
+
+        # Should only have 15 days of data.
+        assert len(sub.tasmax) == 15
+        # Average max temperature at surface for region on June 1st, 1984 (time=0)
+        np.testing.assert_array_almost_equal(
+            float(np.mean(sub.tasmax.isel(time=0))), 289.634968
+        )
+        # Check that no warnings are raised for meridian crossing
+        assert (
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
+            '" This feature is experimental. Output might not be accurate."'
+            not in [q.message for q in record]
+        )
 
 
 class TestDistance:
