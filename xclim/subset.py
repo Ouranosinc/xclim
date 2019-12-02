@@ -264,7 +264,7 @@ def create_mask(
     x_dim: xarray.DataArray = None,
     y_dim: xarray.DataArray = None,
     poly: gpd.GeoDataFrame = None,
-    wrap_lons: bool = False,
+    wrap_lons: bool = False
 ):
     """
     Parameters
