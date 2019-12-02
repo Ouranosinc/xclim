@@ -16,10 +16,15 @@ matrix:
       addons:
         apt:
           packages:
+            - libspatialindex-dev
             - pandoc
     - env: TOXENV=black
       name: "Black and flake8 compliance"
       python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py38-dev
       name: "Python 3.8-development (Linux)"
       python: 3.8-dev
@@ -27,6 +32,7 @@ matrix:
       addons:
         apt:
           packages:
+            - libspatialindex-dev
             - libgdal1-dev
             - liblapack-dev
             - libblas-dev
@@ -62,18 +68,27 @@ matrix:
       addons:
         apt:
           packages:
+            - libspatialindex-dev
             - libhdf5-serial-dev
             - netcdf-bin
             - libnetcdf-dev
     - env: TOXENV=py36
       name: "Python3.6 (Linux)"
       python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master)"
       python: 3.6
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
