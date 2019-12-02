@@ -313,8 +313,9 @@ def create_mask(
             df, geometry="Coordinates", crs=CRS().from_epsg(4326)
         )
 
-    # spatial join geodata points with region polygons
+    # spatial join geodata points with region polygons and remove duplicates
     point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="within")
+    point_in_poly = point_in_poly.loc[~point_in_poly.index.duplicated(keep="first")]
 
     # extract polygon ids for points
     mask = point_in_poly["index_right"]
@@ -329,6 +330,7 @@ def subset_shape(
     shape: Union[str, Path],
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
+    buffer: Optional[Union[int, float]] = None,
     wrap_lons: Optional[bool] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -342,8 +344,10 @@ def subset_shape(
     ----------
     ds : Union[xarray.DataArray, xarray.Dataset]
     shape : Union[str, Path]
-    raster_crs: Optional[Union[str, int]]
-    shape_crs: Optional[Union[str, int]]
+    raster_crs : Optional[Union[str, int]]
+    shape_crs : Optional[Union[str, int]]
+    buffer : Optional[Union[int, float]]
+      Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
     wrap_lons: Optional[bool]
       Manually set whether vector longitudes should extend from 0 to 360 degrees.
     start_date : Optional[str]
@@ -382,6 +386,9 @@ def subset_shape(
         ds = ds.drop("ts")
 
     poly = gpd.GeoDataFrame.from_file(shape)
+
+    if buffer is not None:
+        poly.geometry = poly.buffer(buffer)
 
     # Determine whether CRS types are the same between shape and raster
     if shape_crs is not None:

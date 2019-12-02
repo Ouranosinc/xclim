@@ -526,10 +526,13 @@ class TestSubsetShape:
     def test_simple(self):
         ds = xr.open_dataset(self.nc_file)
 
+        # Polygon crosses meridian, a warning should be raised
         with pytest.warns(UserWarning):
             sub = subset.subset_shape(ds, self.meridian_geojson)
 
+        # No time subsetting should occur.
         assert len(sub.tas) == 12
+        # Average temperature at surface for region in January (time=0)
         np.testing.assert_equal(np.mean(sub.tas.isel(time=0)), 285.057)
 
 
