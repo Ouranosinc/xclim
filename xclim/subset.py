@@ -427,7 +427,12 @@ def subset_shape(
     # TODO: This doesn't seem to do anything. Lots of NaNs still present.
     ds = ds.dropna(dim="lon", how="all")
     ds = ds.dropna(dim="lat", how="all")
-
+    if "lon" in ds.dims:
+        ds = ds.dropna(dim="lon", how="all")
+        ds = ds.dropna(dim="lat", how="all")
+    else:  # curvilinear case
+        for d in ds.lon.dims:
+            ds = ds.dropna(dim=d, how="all")
     # Add a CRS definition as a coordinate for reference purposes
     if wrap_lons:
         ds.coords["crs"] = 0
