@@ -748,6 +748,16 @@ class TestTGXN90p:
         assert out[5] == 25
 
 
+class TestTas:
+    def test_tas(self, tasmin_series, tasmax_series, tas_series):
+        tas = tas_series(np.ones(10))
+        tasmin = tasmin_series(np.zeros(10))
+        tasmax = tasmax_series(np.ones(10) * 2)
+
+        tas_xc = xci.tas(tasmin, tasmax)
+        xr.testing.assert_equal(tas, tas_xc)
+
+
 class TestTxMin:
     @staticmethod
     def time_series(values):
