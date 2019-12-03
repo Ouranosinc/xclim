@@ -172,11 +172,16 @@ def check_lons(func):
                 kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
                 kwargs[lon] = np.asarray(kwargs[lon])
-            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
+            if np.all(args[0].lon >= 0) and np.all(kwargs[lon] < 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] += 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] += 360
+            elif np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
+                raise NotImplementedError(
+                    "Input longitude bounds ({}) cross the 0 degree meridian but"
+                    " dataset longitudes are all positive.".format(kwargs[lon])
+                )
             if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] -= 360
@@ -316,7 +321,7 @@ def create_mask(
         )
 
     # spatial join geodata points with region polygons and remove duplicates
-    point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="within")
+    point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="intersects")
     point_in_poly = point_in_poly.loc[~point_in_poly.index.duplicated(keep="first")]
 
     # extract polygon ids for points
@@ -388,6 +393,15 @@ def subset_shape(
         ds = ds.drop("ts")
 
     poly = gpd.GeoDataFrame.from_file(shape)
+    # if poly doesn't cross prime meridian we can subet with subset_bbox first
+    # reduce using subset_bbox to reduce processing time
+    bounds = poly.bounds
+    lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
+    lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
+    if np.all(np.asarray(lon_bnds) >= 0) or np.all(np.asarray(lon_bnds) <= 0):
+        ds = subset_bbox(ds, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    if start_date or end_date:
+        ds = subset_time(ds, start_date=start_date, end_date=end_date)
 
     if buffer is not None:
         poly.geometry = poly.buffer(buffer)
@@ -437,9 +451,6 @@ def subset_shape(
     if wrap_lons:
         ds.coords["crs"] = 0
         ds.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
-
-    if start_date or end_date:
-        ds = subset_time(ds, start_date=start_date, end_date=end_date)
 
     return ds
 
