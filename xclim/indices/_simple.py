@@ -362,7 +362,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
 
     """
 
-    m7 = _rolling(q, dim='time', window=7, center=True, mode='mean').resample(time=freq)
+    m7 = _rolling(q, dim="time", window=7, center=True, mode="mean").resample(time=freq)
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim="time")

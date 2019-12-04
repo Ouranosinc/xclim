@@ -1109,7 +1109,7 @@ def _rolling(
     window: int = 1,
     mode: Union[str, Callable] = "sum",
     keep_attrs: bool = False,
-    **kwargs,
+    **kwargs
 ):
     """Utility function for rolling.sum and rolling.mean
 
