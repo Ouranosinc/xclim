@@ -5,6 +5,18 @@ Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
 
 See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
+
+Notes
+-----
+TODO: Skip computations over the ocean
+TODO: Vectorization over spatial chunks: replace math.expression by np.expression.
+TODO: Add references.
+
+We can parallelize spatially, but can we temporally ? Are fire seasons interrupted by winter everywhere ?
+
+A. The simplest option is probably to put all the logic inside the iterator as the matlab function does.
+
+
 D. Huard
 """
 import math
@@ -164,17 +176,61 @@ def start_up_temp(tas, thresh="6 C"):
     return xr.concat(out, dim="lat") + w - 1
 
 
-def initialize(snd, temp):
-    snow = significant_snow_cover(snd)
+def big_iterator(tas, pr, ws, rh, snd, mth, lat):
+    it = np.nditer(
+        [tas, pr, ws, rh, snd, mth, None, None, None],
+        [],
+        6 * [["readonly"]] + 3 * [["writeonly", "allocate"]]  # add
+        # no_broadcast?
+    )
 
-    ffmc = 85
-    dmc = 6
-    dc = 15
+    dc0 = np.nan
+    last_precip_index = 1e7  # So we catch cases where this is problematic.
 
+    with it:
+        for (t, p, w, h, s, m, ffmc, dmc, dc) in it:
+            i = it.index
 
-def spring_start_date(snd, min_snow_cover="10 cm"):
-    """Return for each year the date of the spring start, defined as the date when the site has been snow-free for
-    three consecutive days. """
+            if p >= precThresh:
+                last_precip_index = i
+
+            recent_snow_cover = snd[i - startShutDays : i].mean()
+            recent_temp = tas[i - startShutDays : i].mean()
+
+            # Winter shut-down conditions
+            if (recent_temp < tempThresh) or (recent_snow_cover >= snoDThresh):
+                ffmc0 = np.nan
+                dmc0 = np.nan
+                dc0 = np.nan
+
+            if np.isnan(dc0):
+                # Spring start-up conditions
+                antecedent_snow = snd[i - snowCoverDaysCalc : i]
+                snow_days = sum(antecedent_snow > snoDThresh)
+                ffmc0 = 85
+                if (snow_days / snowCoverDaysCalc >= minSnowDayFrac) and (
+                    antecedent_snow.mean() >= minWinterSnoD
+                ):
+                    dmc0 = 6
+                    dc0 = 15
+
+                else:
+                    n = i - last_precip_index
+                    dc0 = DCDryStartFactor * n
+                    dmc0 = DMCDryStartFactor * n
+
+            if ~np.isnan(dc0):
+                # Compute codes
+                ffmc[...] = _fine_fuel_moisture_code(t, p, w, h, ffmc0)
+                dmc[...] = _duff_moisture_code(t, p, h, m, lat, dmc0)
+                dc[...] = _drought_code(t, p, m, lat, dc0)
+
+                # Set initial values for next day
+                ffmc0 = ffmc
+                dmc0 = dmc
+                dc0 = dc
+
+    return it.operands[6:]
 
 
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
@@ -264,7 +320,9 @@ def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
     """
 
     it = np.nditer(
-        [tas, pr, ws, rh, None], [], 4 * [["readonly"]] + [["writeonly", "allocate"]]
+        [tas, pr, ws, rh, None],
+        [],
+        4 * [["readonly"]] + [["writeonly", "allocate"]],  # add no_broadcast?
     )
 
     with it:
