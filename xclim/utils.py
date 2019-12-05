@@ -1163,16 +1163,15 @@ def _rolling(
             out, coords=arr.coords, attrs=arr.attrs if keep_attrs else None
         ).transpose(*dims)
         return out
+    # If not a dask array or with unsupported kwargs, call the normal rolling.
+    rolling = arr.rolling(time=window)
+    if isinstance(mode, str):
+        out = getattr(rolling, mode)(allow_lazy=True)
     else:
-        # If not a dask array or with unsupported kwargs, call the normal rolling.
-        rolling = arr.rolling(time=window)
-        if isinstance(mode, str):
-            out = getattr(rolling, mode)(allow_lazy=True)
-        else:
-            out = rolling.reduce(mode, allow_lazy=True)
-        if keep_attrs:
-            out.attrs.update(**arr.attrs)
-        return out
+        out = rolling.reduce(mode, allow_lazy=True)
+    if keep_attrs:
+        out.attrs.update(**arr.attrs)
+    return out
 
 
 def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
