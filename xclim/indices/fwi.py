@@ -16,48 +16,51 @@ from xclim import generic
 from xclim import run_length as rl
 from xclim import utils
 
-snd_thresh = 0.1
-min_lat = -58
-max_lat = 75
-minLandFrac = 0.1
-minT = -10
-minPrec = 0.25
-snowCoverDaysCalc = 60
-minWinterSnoD = 0.1
-snoDThresh = 0.01
-minSnowDayFrac = 0.75
-startShutDays = 2
-tempThresh = 6
-precThresh = 1.0
-DCDryStartFactor = 5
-DMCDryStartFactor = 2
+default_params = dict(
+    snd_thresh=0.1,
+    min_lat=-58,
+    max_lat=75,
+    minLandFrac=0.1,
+    minT=-10,
+    minPrec=0.25,
+    snowCoverDaysCalc=60,
+    minWinterSnoD=0.1,
+    snoDThresh=0.01,
+    minSnowDayFrac=0.75,
+    startShutDays=2,
+    tempThresh=6,
+    precThresh=1.0,
+    DCDryStartFactor=5,
+    DMCDryStartFactor=2
+)
 """
 paramSets(currParam).History = cellstr(datestr(now)); paramDesc(currDesc) = cellstr('history'); currDesc = currDesc + 1;
-	paramSets(currParam).Source = cellstr('Robert Field'); paramDesc(currDesc) = cellstr('source'); currDesc = currDesc + 1;
-	paramSets(currParam).Title = cellstr('Global Fire Weather Database'); paramDesc(currDesc) = cellstr('title'); currDesc = currDesc + 1;
-	paramSets(currParam).Center = cellstr('NASA GISS / Columbia University'); paramDesc(currDesc) = cellstr('center'); currDesc = currDesc + 1;
+    paramSets(currParam).Source = cellstr('Robert Field'); paramDesc(currDesc) = cellstr('source'); currDesc = currDesc + 1;
+    paramSets(currParam).Title = cellstr('Global Fire Weather Database'); paramDesc(currDesc) = cellstr('title'); currDesc = currDesc + 1;
+    paramSets(currParam).Center = cellstr('NASA GISS / Columbia University'); paramDesc(currDesc) = cellstr('center'); currDesc = currDesc + 1;
 
-	paramSets(currParam).Name = cellstr('Default'); paramDesc(currDesc) = cellstr('Descriptive name for configuration'); currDesc = currDesc + 1;
-	paramSets(currParam).minLat = -58;				paramDesc(currDesc) = cellstr('Min latitude for analysis'); currDesc = currDesc + 1;
-	paramSets(currParam).maxLat = 75;				paramDesc(currDesc) = cellstr('Max latitude for analysis'); currDesc = currDesc + 1;
-	paramSets(currParam).minLandFrac = 0.1;			paramDesc(currDesc) = cellstr('Minimum grid cell land fraction for analysis'); currDesc = currDesc + 1;
-	paramSets(currParam).minT = -10;				paramDesc(currDesc) = cellstr('Mask out anything with mean annual Tsurf less than this'); currDesc = currDesc + 1;
-	paramSets(currParam).minPrec = 0.25; 			paramDesc(currDesc) = cellstr('Mask out anything with mean annual prec less than this'); currDesc = currDesc + 1;
+    paramSets(currParam).Name = cellstr('Default'); paramDesc(currDesc) = cellstr('Descriptive name for configuration'); currDesc = currDesc + 1;
+    paramSets(currParam).minLat = -58;              paramDesc(currDesc) = cellstr('Min latitude for analysis'); currDesc = currDesc + 1;
+    paramSets(currParam).maxLat = 75;               paramDesc(currDesc) = cellstr('Max latitude for analysis'); currDesc = currDesc + 1;
+    paramSets(currParam).minLandFrac = 0.1;         paramDesc(currDesc) = cellstr('Minimum grid cell land fraction for analysis'); currDesc = currDesc + 1;
+    paramSets(currParam).minT = -10;                paramDesc(currDesc) = cellstr('Mask out anything with mean annual Tsurf less than this'); currDesc = currDesc + 1;
+    paramSets(currParam).minPrec = 0.25;            paramDesc(currDesc) = cellstr('Mask out anything with mean annual prec less than this'); currDesc = currDesc + 1;
 
-	%These are what would be tested for sensitivity
-	paramSets(currParam).snoDThresh = 0.01;			paramDesc(currDesc) = cellstr('Minimum depth (m) for there to be considered snow on ground at any given time'); currDesc = currDesc + 1;
-	paramSets(currParam).snowCoverDaysCalc = 60;  	paramDesc(currDesc) = cellstr('Number of days prior to spring over which to determine if winter had substantial snow cover'); currDesc = currDesc + 1;
-	paramSets(currParam).minWinterSnoD = 0.1;     	paramDesc(currDesc) = cellstr('Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover'); currDesc = currDesc + 1;
-	paramSets(currParam).minSnowDayFrac = 0.75;   	paramDesc(currDesc) = cellstr('Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover');  currDesc = currDesc + 1;
-	paramSets(currParam).startShutDays = 2;       	paramDesc(currDesc) = cellstr('Number of previous days over which to consider start or end of winter'); currDesc = currDesc + 1;
-	paramSets(currParam).tempThresh = 6;         	paramDesc(currDesc) = cellstr('Temp thresh (C) to define start and end of winter'); currDesc = currDesc + 1;
-	paramSets(currParam).precThresh =1.0;         	paramDesc(currDesc) = cellstr('Min precip (mm/day) when determining if last three days had any precip'); currDesc = currDesc + 1;
-	paramSets(currParam).DCStart = 15;            	paramDesc(currDesc) = cellstr('DC starting value after wet winter'); currDesc = currDesc + 1;
-	paramSets(currParam).DMCStart = 6;            	paramDesc(currDesc) = cellstr('DMC starting value after wet winter'); currDesc = currDesc + 1;
-	paramSets(currParam).FFMCStart = 85;            paramDesc(currDesc) = cellstr('FFMC starting value after any winter'); currDesc = currDesc + 1;
-	paramSets(currParam).DCDryStartFactor=5;      	paramDesc(currDesc) = cellstr('DC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
-	paramSets(currParam).DMCDryStartFactor=2;     	paramDesc(currDesc) = cellstr('DMC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
-    paramSets(currParam).nClimSkipYears = 1;    """
+    %These are what would be tested for sensitivity
+    paramSets(currParam).snoDThresh = 0.01;         paramDesc(currDesc) = cellstr('Minimum depth (m) for there to be considered snow on ground at any given time'); currDesc = currDesc + 1;
+    paramSets(currParam).snowCoverDaysCalc = 60;    paramDesc(currDesc) = cellstr('Number of days prior to spring over which to determine if winter had substantial snow cover'); currDesc = currDesc + 1;
+    paramSets(currParam).minWinterSnoD = 0.1;       paramDesc(currDesc) = cellstr('Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover'); currDesc = currDesc + 1;
+    paramSets(currParam).minSnowDayFrac = 0.75;     paramDesc(currDesc) = cellstr('Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover');  currDesc = currDesc + 1;
+    paramSets(currParam).startShutDays = 2;         paramDesc(currDesc) = cellstr('Number of previous days over which to consider start or end of winter'); currDesc = currDesc + 1;
+    paramSets(currParam).tempThresh = 6;            paramDesc(currDesc) = cellstr('Temp thresh (C) to define start and end of winter'); currDesc = currDesc + 1;
+    paramSets(currParam).precThresh =1.0;           paramDesc(currDesc) = cellstr('Min precip (mm/day) when determining if last three days had any precip'); currDesc = currDesc + 1;
+    paramSets(currParam).DCStart = 15;              paramDesc(currDesc) = cellstr('DC starting value after wet winter'); currDesc = currDesc + 1;
+    paramSets(currParam).DMCStart = 6;              paramDesc(currDesc) = cellstr('DMC starting value after wet winter'); currDesc = currDesc + 1;
+    paramSets(currParam).FFMCStart = 85;            paramDesc(currDesc) = cellstr('FFMC starting value after any winter'); currDesc = currDesc + 1;
+    paramSets(currParam).DCDryStartFactor=5;        paramDesc(currDesc) = cellstr('DC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
+    paramSets(currParam).DMCDryStartFactor=2;       paramDesc(currDesc) = cellstr('DMC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
+    paramSets(currParam).nClimSkipYears = 1;
+"""
 
 
 def day_length(lat):
@@ -522,3 +525,74 @@ def dc_ufunc(tas, pr, mth, lat, dc0):
         output_dtypes=[np.float],
         # keep_attrs=True,
     )
+
+default_params = dict(
+    snd_thresh=0.1,
+    min_lat=-58,
+    max_lat=75,
+    minLandFrac=0.1,
+    minT=-10,
+    minPrec=0.25,
+    snowCoverDaysCalc=60,
+    minWinterSnoD=0.1,
+    snoDThresh=0.01,
+    minSnowDayFrac=0.75,
+    startShutDays=2,
+    tempThresh=6,
+    precThresh=1.0,
+    DCDryStartFactor=5,
+    DMCDryStartFactor=2,
+    DCStart=None,
+    FFMCStart=None,
+    DCStart=None
+)
+
+def calc_fwi(tas, pr, rh, ws, mth, lat, **params):
+
+    for k, v in default_params:
+        params.setdefault(k, v)
+
+    dc = xr.full_like(tas, np.nan, float)
+    dmc = xr.full_like(tas, np.nan, float)
+    ffmc = xr.full_like(tas, np.nan, float)
+    isi = xr.full_like(tas, np.nan, float)
+    bui = xr.full_like(tas, np.nan, float)
+    fwi = xr.full_like(tas, np.nan, float)
+    dsr = xr.full_like(tas, np.nan, float)
+
+    snow = pr.where(tas < 0.0)
+
+    dcprev = xr.full_like(tas.isel(time=0), np.nan, float)
+    dmcprev = xr.full_like(tas.isel(time=0), np.nan, float)
+    ffmcprev = xr.full_like(tas.isel(time=0), np.nan, float)
+
+    for itoday in range(params.snowCoverDaysCalc, len(tas.time)):
+        snow_cover_recent = snow.isel(time=slice(itoday - params['startShutDays'], itoday + 1)).mean('time')
+        snow_cover_history = snow.isel(time=slice(itoday - params['snowCoverDaysCalc'], itoday + 1))
+        snow_days = (snow_cover_history > params['snoDThresh']).astype(int).sum('time')
+        temp_recent = tas.isel(time=slice(itoday - params['startShutDays'], itoday + 1)).mean('time')
+
+        prec_history = pr.isel(time=slice(itoday - params['snowCoverDaysCalc'], itoday + 1))
+        days_since_last_prec = (prec_history > params['precThresh']).sortby(prec_history.time, ascending=False).argmax('time')
+        days_since_last_prec = days_since_last_prec.where(days_since_last_prec == 0, params['snowCoverDaysCalc'])
+
+        shut_down = ((temp_recent < params['tempThresh']) | 
+                     (snow_cover_recent >= params['snoDThresh']))
+        dcprev = dcprev.where(~shut_down)
+        dmcprev = dmcprev.where(~shut_down)
+        ffmcprev = ffmcprev.where(~shut_down)
+
+        start_up = ~dcprev.notnull() & ~shut_down
+        start_up_wet = (start_up &
+                        (snow_days / params['snowCoverDaysCalc'] >= params['minSnowDayFrac']) &
+                        (snow_cover_history.mean('time') >= params['minWinterSnoD']))
+        start_up_dry = start_up & ~start_up_wet
+        
+        dcprev = dcprev.where(start_up_wet, params['DCStart'])
+        dmcprev = dmcprev.where(start_up_wet, params['DMCStart'])
+        ffmcprev = ffmcprev.where(start_up_wet, params['FFMCStart'])
+
+        dcprev = dcprev.where(start_up_dry, params['DCDryStartFactor'] * days_since_last_prec)
+        dmcprev = dmcprev.where(start_up_dry, params['DMCDryStartFactor'] * days_since_last_prec)
+
+        
