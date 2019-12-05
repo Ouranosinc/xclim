@@ -7,6 +7,7 @@ from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
+from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -337,7 +338,8 @@ def heat_wave_frequency(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    window: int = 3,
+    mode: str = 'consecutive',
+    window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
@@ -345,7 +347,7 @@ def heat_wave_frequency(
 
     Number of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
-    over a minimum number of days.
+    over a minimum number of days. 
 
     Parameters
     ----------
@@ -358,8 +360,14 @@ def heat_wave_frequency(
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
     thresh_tasmax : str
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
-    window : int
+    mode : str
+      The method used to flag a heatwave, either "consecutive" or "mean".
+      If "consecutive" (default), temperatures must exceed their thresholds over all days of the window.
+      If "mean", the averaged temperatures over the window must exceed the thresholds.
+    window : int or sequence of float
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+      If mode is "mean", then a sequence of weights (sums to 1) to use when computing the running mean is accepted and
+      the window length will be inferred from the sequence.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -375,7 +383,9 @@ def heat_wave_frequency(
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities (Casati et al., 2013).
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    The "consecutive" mode comes from Robinson (2001), where the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    The "mean" mode comes from Lebel, Bustinza & Dubé (2017).
 
     References
     ----------
@@ -383,13 +393,30 @@ def heat_wave_frequency(
     Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
     https://doi.org/10.1175/JAMC-D-12-0341.1
 
+    Lebel, G., Bustinza, R. & Dubé, M. (2017). Analyse des impacts des vagues régionales de chaleur extrême sur la santé
+    au Québec de 2010 à 2015 : changements climatiques. Québec: INSPQ, Institut national de santé publique du Québec.
+    https://www.inspq.qc.ca/publications/2221
+    
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
+    if mode == "consecutive" and not np.isscalar(window):
+        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    if mode == "consecutive":
+        cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    elif mode == "mean":
+        if not np.isscalar(window):
+            weights = np.array(window)
+            window = len(window)
+        else:
+            weigths = np.array([1/window] * window)
+        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
+                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+
     group = cond.resample(time=freq)
     return group.apply(rl.windowed_run_events, window=window, dim="time")
 
@@ -406,7 +433,8 @@ def heat_wave_max_length(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    window: int = 3,
+    mode: str = 'consecutive',
+    window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
@@ -429,8 +457,14 @@ def heat_wave_max_length(
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
     thresh_tasmax : str
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
-    window : int
+    mode : str
+      The method used to flag a heatwave, either "consecutive" or "mean".
+      If "consecutive" (default), temperatures must exceed their thresholds over all days of the window.
+      If "mean", the averaged temperatures over the window must exceed the thresholds.
+    window : int or sequence of float
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+      If mode is "mean", then a sequence of weights (sums to 1) to use when computing the running mean is accepted and
+      the window length will be inferred from the sequence.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -446,7 +480,9 @@ def heat_wave_max_length(
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities (Casati et al., 2013).
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    The "consecutive" mode comes from Robinson (2001), where the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    The "mean" mode comes from Lebel, Bustinza & Dubé (2017).
 
     References
     ----------
@@ -454,13 +490,30 @@ def heat_wave_max_length(
     Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
     https://doi.org/10.1175/JAMC-D-12-0341.1
 
+    Lebel, G., Bustinza, R. & Dubé, M. (2017). Analyse des impacts des vagues régionales de chaleur extrême sur la santé
+    au Québec de 2010 à 2015 : changements climatiques. Québec: INSPQ, Institut national de santé publique du Québec.
+    https://www.inspq.qc.ca/publications/2221
+    
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
+    if mode == "consecutive" and not np.isscalar(window):
+        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    if mode == "consecutive":
+        cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    elif mode == "mean":
+        if not np.isscalar(window):
+            weights = np.array(window)
+            window = len(window)
+        else:
+            weigths = np.array([1/window] * window)
+        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
+                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+
     group = cond.resample(time=freq)
     max_l = group.apply(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
@@ -478,7 +531,8 @@ def heat_wave_total_length(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    window: int = 3,
+    mode: str = 'consecutive',
+    window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
@@ -498,8 +552,14 @@ def heat_wave_total_length(
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
     thresh_tasmax : str
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
-    window : int
+    mode : str
+      The method used to flag a heatwave, either "consecutive" or "mean".
+      If "consecutive" (default), temperatures must exceed their thresholds over all days of the window.
+      If "mean", the averaged temperatures over the window must exceed the thresholds.
+    window : int or sequence of float
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+      If mode is "mean", then a sequence of weights (sums to 1) to use when computing the running mean is accepted and
+      the window length will be inferred from the sequence.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -512,12 +572,25 @@ def heat_wave_total_length(
     -----
     See notes and references of `heat_wave_max_length`
     """
+    if mode == "consecutive" and not np.isscalar(window):
+        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
-    group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
+    if mode == "consecutive":
+        cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+        group = cond.resample(time=freq)
+        return group.apply(rl.windowed_run_count, args=(window,), dim="time")
+    elif mode == "mean":
+        if not np.isscalar(window):
+            weights = np.array(window)
+            window = len(window)
+        else:
+            weigths = np.array([1/window] * window)
+        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
+                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+        return cond.resample(time=freq).sum()
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
