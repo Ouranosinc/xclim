@@ -421,22 +421,18 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
 
 def _calc_perc(arr, p):
     dims = arr.dims
+    # make sure realization is the first dimension
+    if dims.index("realization") != 0:
+        arr = arr.transpose("realization", *[dim for dim in dims if dim != "realization"])
 
-    nan_count = np.isnan(arr).sum(axis=dims.index("realization"))
-    out = np.percentile(arr, p, axis=dims.index("realization"))
-    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])):
-        arr1 = arr.values.reshape(
-            arr.shape[dims.index("realization")],
-            int(arr.size / arr.shape[dims.index("realization")]),
-        )
+    nan_count = np.isnan(arr).sum(axis=0)
+    out = np.percentile(arr, p, axis=0)
+    if np.any((nan_count > 0) & (nan_count < arr.shape[0])):
+        arr1 = arr.values.reshape(arr.shape[0], int(arr.size / arr.shape[0]))
         # only use nanpercentile where we need it (slow performace compared to standard) :
-        nan_index = np.where(
-            (nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])
-        )
+        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[0]))
         t = np.ravel_multi_index(nan_index, nan_count.shape)
-        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
-            arr1[:, t], p, axis=dims.index("realization")
-        )
+        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=0)
 
     return out
 
