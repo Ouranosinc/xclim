@@ -112,17 +112,23 @@ class TestEnsembleStats:
             ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
         )
 
-    def test_calc_perc(self):
+    @pytest.mark.parametrize("transpose", [False, True])
+    def test_calc_perc(self, transpose):
         ens = ensembles.create_ensemble(self.nc_files_simple)
+        if transpose:
+            ens = ens.transpose()
         out1 = ensembles.ensemble_percentiles(ens)
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"][:, 0, 5, 5], 10), out1["tg_mean_p10"][0, 5, 5]
+            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 10),
+            out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"][:, 0, 5, 5], 50), out1["tg_mean_p50"][0, 5, 5]
+            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 50),
+            out1["tg_mean_p50"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"][:, 0, 5, 5], 90), out1["tg_mean_p90"][0, 5, 5]
+            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 90),
+            out1["tg_mean_p90"].isel(time=0, lon=5, lat=5),
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
