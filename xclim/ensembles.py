@@ -23,7 +23,7 @@ except ImportError:
 def create_ensemble(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
-    **xr_kwargs,
+    **xr_kwargs
 ) -> xr.Dataset:
 
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
@@ -209,7 +209,7 @@ def ensemble_percentiles(
 def _ens_checktimes(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
-    **xr_kwargs,
+    **xr_kwargs
 ) -> Tuple[bool, np.ndarray]:
     """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
     maximum time-step interval of all input files.
@@ -272,7 +272,7 @@ def _ens_align_datasets(
     mf_flag: bool = False,
     time_flag: bool = False,
     time_all=None,
-    **xr_kwargs,
+    **xr_kwargs
 ) -> xr.Dataset:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
     are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
@@ -450,7 +450,7 @@ def kmeans_reduce_ensemble(
     variable_weights: Optional[np.ndarray] = None,
     model_weights: Optional[np.ndarray] = None,
     sample_weights: Optional[np.ndarray] = None,
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
+    random_state: Optional[Union[int, np.random.RandomState]] = None
 ) -> Tuple[list, np.ndarray, dict]:
     """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
