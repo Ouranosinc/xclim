@@ -232,12 +232,12 @@ def _ens_checktimes(
     array of datetime64
       Series of unique time-steps covering all input datasets.
     """
-    xr_kwargs.setdefault('decode_times', False)
+    xr_kwargs.setdefault("decode_times", False)
     time_flag = False
     time_all = []
     for n in datasets:
         if mf_flag:
-            xr_kwargs.setdefault('chunks', {"time": 10})
+            xr_kwargs.setdefault("chunks", {"time": 10})
             ds = xr.open_mfdataset(n, **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
@@ -297,14 +297,14 @@ def _ens_align_datasets(
     -------
     List[xr.Dataset]
     """
-    xr_kwargs.setdefault('chunks', {"time": 10})
-    xr_kwargs.setdefault('decode_times', False)
+    xr_kwargs.setdefault("chunks", {"time": 10})
+    xr_kwargs.setdefault("decode_times", False)
 
     ds_all = []
     for n in datasets:
         # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
         if mf_flag:
-            ds = xr.open_mfdataset(n, combine='by_coords', **xr_kwargs)
+            ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
@@ -423,7 +423,9 @@ def _calc_perc(arr, p):
     dims = arr.dims
     # make sure realization is the first dimension
     if dims.index("realization") != 0:
-        arr = arr.transpose("realization", *[dim for dim in dims if dim != "realization"])
+        arr = arr.transpose(
+            "realization", *[dim for dim in dims if dim != "realization"]
+        )
 
     nan_count = np.isnan(arr).sum(axis=0)
     out = np.percentile(arr, p, axis=0)
@@ -432,7 +434,9 @@ def _calc_perc(arr, p):
         # only use nanpercentile where we need it (slow performace compared to standard) :
         nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[0]))
         t = np.ravel_multi_index(nan_index, nan_count.shape)
-        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(arr1[:, t], p, axis=0)
+        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
+            arr1[:, t], p, axis=0
+        )
 
     return out
 
@@ -446,7 +450,7 @@ def kmeans_reduce_ensemble(
     variable_weights: Optional[np.ndarray] = None,
     model_weights: Optional[np.ndarray] = None,
     sample_weights: Optional[np.ndarray] = None,
-    random_state: Optional[Union[int, np.random.RandomState]] = None
+    random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> Tuple[list, np.ndarray, dict]:
     """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
     reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
