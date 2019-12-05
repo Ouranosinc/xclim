@@ -245,6 +245,15 @@ class TestSubsetGridPoint:
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
+    def test_tolerance(self):
+        da = xr.open_dataset(self.nc_poslons).tas
+        lon = -72.5
+        lat = 46.2
+        with pytest.raises(ValueError):
+            subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1)
+
+        subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1e5)
+
 
 class TestSubsetBbox:
     nc_poslons = os.path.join(
@@ -506,3 +515,37 @@ class TestSubsetBbox:
             ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
             not in [q.message for q in record]
         )
+
+
+class TestDistance:
+    def test_values(self):
+        # Check values are OK. Values taken from pyproj test.
+        boston_lat = 42.0 + (15.0 / 60.0)
+        boston_lon = -71.0 - (7.0 / 60.0)
+        portland_lat = 45.0 + (31.0 / 60.0)
+        portland_lon = -123.0 - (41.0 / 60.0)
+
+        da = xr.DataArray(
+            0, coords={"lon": [boston_lon], "lat": [boston_lat]}, dims=["lon", "lat"]
+        )
+        d = subset.distance(da, lon=portland_lon, lat=portland_lat)
+        np.testing.assert_almost_equal(d, 4164074.239, decimal=3)
+
+    def test_broadcasting(self):
+        # Check output dimensions match lons and lats.
+        lon = np.linspace(-180, 180, 20)
+        lat = np.linspace(-90, 90, 30)
+        da = xr.Dataset(data_vars=None, coords={"lon": lon, "lat": lat})
+        da["data"] = xr.DataArray(
+            np.random.rand(lon.size, lat.size), dims=["lon", "lat"]
+        )
+
+        d = subset.distance(da, -34, 56)
+        assert d.dims == da.data.dims
+        assert d.shape == da.data.shape
+        assert d.units == "m"
+
+        # Example of how to get the actual 2D indices.
+        k = d.argmin()
+        i, j = np.unravel_index(k, da.data.shape)
+        assert d[i, j] == d.min()

@@ -946,6 +946,9 @@ class Indicator:
                 else:
                     mba[k] = v
 
+            if callable(val):
+                val = val(**mba)
+
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
         return out
@@ -955,7 +958,8 @@ class Indicator:
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get("freq")
+        freq = kwds.get("freq", "D")
+
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
 
