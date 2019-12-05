@@ -44,7 +44,7 @@ def create_ensemble(
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when "datasets" is a sequence of file paths.
 
-    xr_kwargs : 
+    xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
     Returns
@@ -222,7 +222,7 @@ def _ens_checktimes(
     mf_flag : bool
       If True climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when :datasets: is a sequence of file paths.
-    xr_kwargs : 
+    xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
     Returns
@@ -290,7 +290,7 @@ def _ens_align_datasets(
       True if time dimension is present among the "datasets"; Otherwise false.
     time_all : array of datetime64
       Series of unique time-steps covering all input Datasets.
-    xr_kwargs : 
+    xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
     Returns
