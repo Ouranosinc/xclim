@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pathlib import Path
+from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos
@@ -765,6 +767,49 @@ class TestThresholdCount:
         ts = tas_series(np.arange(365))
         out = utils.threshold_count(ts, "<", 50, "Y")
         np.testing.assert_array_equal(out, [50, 0])
+
+
+class TestRolling:
+    @pytest.mark.parametrize(
+        "mode,expected,error",
+        [
+            ("sum", 10, does_not_raise()),
+            ("max", 1, does_not_raise()),
+            (lambda x, axis: x[..., 1], 1, does_not_raise()),
+            ("notanumpyfunction", None, pytest.raises(NotImplementedError)),
+        ],
+    )
+    @pytest.mark.parametrize("dtype", [float, int, bool])
+    def test_rolling_ufunc(self, mode, expected, error, dtype):
+        ones = np.ones((100,), dtype=dtype)
+        if dtype is float:
+            ones[20] = np.nan
+
+        with error:
+            rolld = utils._get_rolling_func(10, mode=mode)(ones)
+            if dtype is float:
+                assert all(np.isnan(rolld[:9]))
+                if isinstance(mode, str):
+                    assert all(np.isnan(rolld[20:30]))
+            assert all(rolld[30:] == expected)
+
+    @pytest.mark.parametrize("mode", ["mean", "max"])
+    def test_rolling(self, mode):
+        fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+        ds_nd = xr.open_dataset(fn)
+        ds_dask = xr.open_dataset(fn, chunks={"time": 30})
+
+        res_nd_xr = getattr(ds_nd.pr.rolling(time=5), mode)()
+        res_nd_xc = utils._rolling(
+            ds_nd.pr, window=5, dim="time", mode=mode, keep_attrs=False
+        )
+        res_dask = utils._rolling(
+            ds_dask.pr, window=5, dim="time", mode=mode, keep_attrs=True
+        )
+
+        xr.testing.assert_identical(res_nd_xr, res_nd_xc)
+        xr.testing.assert_allclose(res_dask, res_nd_xr)
+        assert ds_dask.pr.attrs == res_dask.attrs
 
 
 class TestWindConversion:
