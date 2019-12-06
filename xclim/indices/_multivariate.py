@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Sequence
 
 import numpy as np
 import xarray
@@ -338,7 +338,7 @@ def heat_wave_frequency(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    mode: str = 'consecutive',
+    mode: str = "consecutive",
     window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -401,7 +401,9 @@ def heat_wave_frequency(
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
     if mode == "consecutive" and not np.isscalar(window):
-        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+        raise ValueError(
+            "Window as sequence of weights is only valid for the 'mean' mode."
+        )
 
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
@@ -412,10 +414,27 @@ def heat_wave_frequency(
         if not np.isscalar(window):
             weights = np.array(window)
             window = len(window)
+            if weights.sum() != 1:
+                raise ValueError("Weights used for the window must sum to 1.")
         else:
-            weigths = np.array([1/window] * window)
-        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
-                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+            weights = np.array([1 / window] * window)
+        cond = (
+            _rolling(
+                tasmin,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmin
+        ) & (
+            _rolling(
+                tasmax,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmax
+        )
 
     group = cond.resample(time=freq)
     return group.apply(rl.windowed_run_events, window=window, dim="time")
@@ -433,7 +452,7 @@ def heat_wave_max_length(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    mode: str = 'consecutive',
+    mode: str = "consecutive",
     window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -498,7 +517,9 @@ def heat_wave_max_length(
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
     if mode == "consecutive" and not np.isscalar(window):
-        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+        raise ValueError(
+            "Window as sequence of weights is only valid for the 'mean' mode."
+        )
 
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
@@ -509,10 +530,27 @@ def heat_wave_max_length(
         if not np.isscalar(window):
             weights = np.array(window)
             window = len(window)
+            if weights.sum() != 1:
+                raise ValueError("Weights used for the window must sum to 1.")
         else:
-            weigths = np.array([1/window] * window)
-        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
-                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+            weights = np.array([1 / window] * window)
+        cond = (
+            _rolling(
+                tasmin,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmin
+        ) & (
+            _rolling(
+                tasmax,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmax
+        )
 
     group = cond.resample(time=freq)
     max_l = group.apply(rl.longest_run, dim="time")
@@ -531,7 +569,7 @@ def heat_wave_total_length(
     tasmax: xarray.DataArray,
     thresh_tasmin: str = "22.0 degC",
     thresh_tasmax: str = "30 degC",
-    mode: str = 'consecutive',
+    mode: str = "consecutive",
     window: Union[int, Sequence[float]] = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -573,7 +611,9 @@ def heat_wave_total_length(
     See notes and references of `heat_wave_max_length`
     """
     if mode == "consecutive" and not np.isscalar(window):
-        raise ValueError("Window as sequence of weights is only valid for the 'mean' mode.")
+        raise ValueError(
+            "Window as sequence of weights is only valid for the 'mean' mode."
+        )
 
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
@@ -586,10 +626,27 @@ def heat_wave_total_length(
         if not np.isscalar(window):
             weights = np.array(window)
             window = len(window)
+            if weights.sum() != 1:
+                raise ValueError("Weights used for the window must sum to 1.")
         else:
-            weigths = np.array([1/window] * window)
-        cond = ((_rolling(tasmin, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmin) &
-                (_rolling(tasmax, window=window, dim="time", mode=lambda x, axis: np.sum(x * weights, axis=axis)) > thresh_tasmax))
+            weights = np.array([1 / window] * window)
+        cond = (
+            _rolling(
+                tasmin,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmin
+        ) & (
+            _rolling(
+                tasmax,
+                window=window,
+                dim="time",
+                mode=lambda x, axis: np.sum(x * weights, axis=axis),
+            )
+            > thresh_tasmax
+        )
         return cond.resample(time=freq).sum()
 
 

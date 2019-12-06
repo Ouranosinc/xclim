@@ -12,6 +12,7 @@ __all__ = [
     "tx_tn_days_above",
     "heat_wave_frequency",
     "heat_wave_max_length",
+    "heat_wave_total_length",
     "heat_wave_index",
     "tg",
     "tg_mean",
@@ -131,13 +132,30 @@ heat_wave_frequency = TasminTasmax(
     identifier="heat_wave_frequency",
     units="",
     standard_name="heat_wave_events",
-    long_name="Number of heat wave events (Tmin > {thresh_tasmin}"
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} number of heat wave events over a given period. "
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds : "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
-    "over a minimum number of days ({window}).",
+    long_name=lambda **kws: (
+        "Number of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "Number of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} over a {window} days mean)"
+    ),
+    description=lambda **kws: (
+        "{freq} number of heat wave events over a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
+        "over a minimum number of days ({window})."
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "{freq} number of heat wave events over a given period. "
+        "An event occurs when the running averages of the minimum and maximum"
+        " daily temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}, averaged with a "
+        "window of {window} days)."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_frequency,
@@ -147,13 +165,30 @@ heat_wave_max_length = TasminTasmax(
     identifier="heat_wave_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum length of heat wave events (Tmin > {thresh_tasmin}"
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} maximum length of heat wave events occuring in a given period."
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
-    "a minimum number of days ({window}).",
+    long_name=lambda **kws: (
+        "Maximum length of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "Maximum length of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} over a {window} days mean)"
+    ),
+    description=lambda **kws: (
+        "{freq} maximum length of heat wave events occuring in a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
+        "over a minimum number of days ({window})."
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "{freq} maximum length of heat wave events occuring in a given period. "
+        "An event occurs when the running averages of the minimum and maximum"
+        " daily temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}, averaged with a "
+        "window of {window} days)."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_max_length,
@@ -163,18 +198,34 @@ heat_wave_total_length = TasminTasmax(
     identifier="heat_wave_total_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Total length of heat wave events (Tmin > {thresh_tasmin}"
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} total length of heat wave events occuring in a given period."
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
-    "a minimum number of days ({window}).",
+    long_name=lambda **kws: (
+        "Total length of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "Total length of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} over a {window} days mean)"
+    ),
+    description=lambda **kws: (
+        "{freq} total length of heat wave events occuring in a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
+        "over a minimum number of days ({window})."
+    )
+    if kws["mode"] == "consecutive"
+    else (
+        "{freq} total length of heat wave events occuring in a given period. "
+        "An event occurs when the running averages of the minimum and maximum"
+        " daily temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}, averaged with a "
+        "window of {window} days)."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_total_length,
 )
-
 
 heat_wave_index = Tasmax(
     identifier="heat_wave_index",

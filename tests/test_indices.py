@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from contextlib import ExitStack as does_not_raise
 
 import xclim.indices as xci
 from xclim.utils import percentile_doy
@@ -401,87 +402,141 @@ class TestHeatWaveIndex:
 
 
 class TestHeatWaveFrequency:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 2),
+            ("22 C", "30 C", 4, None, 1),
+            ("10 C", "10 C", None, None, 1),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 3, "mean", 1),
+            ("22 C", "30 C", [0.2, 0.6, 0.2], "mean", 2),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        # some hw
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
+
         hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin=thresh_tasmin, thresh_tasmax=thresh_tasmax, **kwargs
         )
-        np.testing.assert_allclose(hwf.values, 2)
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4
-        )
-        np.testing.assert_allclose(hwf.values, 1)
-        # one long hw
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwf.values, 1)
-        # no hw
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwf.values, 0)
+        np.testing.assert_allclose(hwf.values, expected)
+
+    @pytest.mark.parametrize(
+        "window,mode", ([[0.5, 0.5], "consecutive"], [[1, 2], "mean"])
+    )
+    def test_arg_consistency_check(self, tasmax_series, tasmin_series, window, mode):
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        with pytest.raises(ValueError):
+            xci.heat_wave_frequency(tn, tx, window=window, mode=mode)
 
 
 class TestHeatWaveMaxLength:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 4),
+            ("10 C", "10 C", None, None, 10),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 5, None, 0),
+            ("22 C", "30 C", 3, "mean", 7),
+            ("22 C", "30 C", [0.2, 0.6, 0.2], "mean", 4),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
         # some hw
         hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin=thresh_tasmin, thresh_tasmax=thresh_tasmax, **kwargs
         )
-        np.testing.assert_allclose(hwml.values, 4)
+        np.testing.assert_allclose(hwml.values, expected)
 
-        # one long hw
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwml.values, 10)
-
-        # no hw
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwml.values, 0)
-
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
-        )
-        np.testing.assert_allclose(hwml.values, 0)
+    @pytest.mark.parametrize(
+        "window,mode", ([[0.5, 0.5], "consecutive"], [[1, 2], "mean"])
+    )
+    def test_arg_consistency_check(self, tasmax_series, tasmin_series, window, mode):
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        with pytest.raises(ValueError):
+            xci.heat_wave_max_length(tn, tx, window=window, mode=mode)
 
 
 class TestHeatWaveTotalLength:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 7),
+            ("10 C", "10 C", None, None, 10),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 5, None, 0),
+            ("22 C", "30 C", 4, "mean", 7),
+            ("22 C", "30 C", [0.1, 0.2, 0.6, 0.1], "mean", 6),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
         # some hw
         hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin=thresh_tasmin, thresh_tasmax=thresh_tasmax, **kwargs
         )
-        np.testing.assert_allclose(hwml.values, 7)
+        np.testing.assert_allclose(hwml.values, expected)
 
-        # one long hw
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwml.values, 10)
-
-        # no hw
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwml.values, 0)
-
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
-        )
-        np.testing.assert_allclose(hwml.values, 0)
+    @pytest.mark.parametrize(
+        "window,mode", ([[0.5, 0.5], "consecutive"], [[1, 2], "mean"])
+    )
+    def test_arg_consistency_check(self, tasmax_series, tasmin_series, window, mode):
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        with pytest.raises(ValueError):
+            xci.heat_wave_total_length(tn, tx, window=window, mode=mode)
 
 
 class TestTnDaysBelow:

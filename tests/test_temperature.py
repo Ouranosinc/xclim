@@ -589,7 +589,27 @@ class TestGrowingDegreeDays:
 
 
 class TestHeatWaveFrequency:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 2),
+            ("22 C", "30 C", 4, None, 1),
+            ("10 C", "10 C", None, None, 1),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 3, "mean", 1),
+            ("22 C", "30 C", [0.2, 0.6, 0.2], "mean", 2),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
         tn1 = np.zeros(366)
         tx1 = np.zeros(366)
         tn1[:10] = np.array([20, 23, 23, 23, 23, 21, 23, 23, 23, 23])
@@ -602,37 +622,57 @@ class TestHeatWaveFrequency:
         txC = tasmax_series(tx1, start="1/1/2000")
         txC.attrs["units"] = "C"
 
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
+
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
         hwfC = atmos.heat_wave_frequency(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+            tnC,
+            txC,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
         np.testing.assert_array_equal(hwf, hwfC)
-        np.testing.assert_allclose(hwf.values[:1], 2)
-
-        hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4, freq="YS"
-        )
-        np.testing.assert_allclose(hwf.values[:1], 1)
-
-        # one long hw
-        hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
-        )
-        np.testing.assert_allclose(hwf.values[:1], 1)
-        # no hw
-        hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
-        )
-        np.testing.assert_allclose(hwf.values[:1], 0)
+        np.testing.assert_allclose(hwf.values[:1], expected)
 
 
 class TestHeatWaveMaxLength:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 4),
+            ("10 C", "10 C", None, None, 10),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 5, None, 0),
+            ("22 C", "30 C", 3, "mean", 7),
+            ("22 C", "30 C", [0.2, 0.6, 0.2], "mean", 4),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
         tn1 = np.zeros(366)
         tx1 = np.zeros(366)
-        tn1[:10] = np.array([20, 23, 23, 23, 23, 21, 23, 23, 23, 23])
+        tn1[:10] = np.array([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
         tx1[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
 
         tn = tasmin_series(tn1 + K2C, start="1/1/2000")
@@ -642,30 +682,90 @@ class TestHeatWaveMaxLength:
         txC = tasmax_series(tx1, start="1/1/2000")
         txC.attrs["units"] = "C"
 
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
+
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
         hwfC = atmos.heat_wave_max_length(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+            tnC,
+            txC,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
         np.testing.assert_array_equal(hwf, hwfC)
-        np.testing.assert_allclose(hwf.values[:1], 4)
+        np.testing.assert_allclose(hwf.values[:1], expected)
 
-        hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS"
-        )
-        np.testing.assert_allclose(hwf.values[:1], 5)
 
-        # one long hw
-        hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
+class TestHeatWaveTotalLength:
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,mode,expected",
+        [
+            ("22 C", "30 C", None, None, 7),
+            ("10 C", "10 C", None, None, 10),
+            ("40 C", "40 C", None, None, 0),
+            ("22 C", "30 C", 5, None, 0),
+            ("22 C", "30 C", 4, "mean", 7),
+            ("22 C", "30 C", [0.1, 0.2, 0.6, 0.1], "mean", 6),
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        mode,
+        expected,
+    ):
+        tn1 = np.zeros(366)
+        tx1 = np.zeros(366)
+        tn1[:10] = np.array([20, 23, 23, 23, 23, 22, 23, 23, 23, 23])
+        tx1[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn1 + K2C, start="1/1/2000")
+        tx = tasmax_series(tx1 + K2C, start="1/1/2000")
+        tnC = tasmin_series(tn1, start="1/1/2000")
+        tnC.attrs["units"] = "C"
+        txC = tasmax_series(tx1, start="1/1/2000")
+        txC.attrs["units"] = "C"
+
+        kwargs = {}
+        if mode is not None:
+            kwargs["mode"] = mode
+        if window is not None:
+            kwargs["window"] = window
+
+        hwf = atmos.heat_wave_total_length(
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
-        np.testing.assert_allclose(hwf.values[:1], 10)
-        # no hw
-        hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
+        hwfC = atmos.heat_wave_total_length(
+            tnC,
+            txC,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            freq="YS",
+            **kwargs
         )
-        np.testing.assert_allclose(hwf.values[:1], 0)
+        np.testing.assert_array_equal(hwf, hwfC)
+        np.testing.assert_allclose(hwf.values[:1], expected)
 
 
 class TestHeatWaveIndex:
