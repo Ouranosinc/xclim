@@ -618,11 +618,7 @@ def heat_wave_total_length(
     thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
-    if mode == "consecutive":
-        cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
-        group = cond.resample(time=freq)
-        return group.apply(rl.windowed_run_count, args=(window,), dim="time")
-    elif mode == "mean":
+    if mode == "mean":
         if not np.isscalar(window):
             weights = np.array(window)
             window = len(window)
@@ -648,6 +644,11 @@ def heat_wave_total_length(
             > thresh_tasmax
         )
         return cond.resample(time=freq).sum()
+
+    # else  (mode == consecutive)
+    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    group = cond.resample(time=freq)
+    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
