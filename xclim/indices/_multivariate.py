@@ -347,7 +347,7 @@ def heat_wave_frequency(
 
     Number of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
-    over a minimum number of days. 
+    over a minimum number of days.
 
     Parameters
     ----------
@@ -396,7 +396,7 @@ def heat_wave_frequency(
     Lebel, G., Bustinza, R. & Dubé, M. (2017). Analyse des impacts des vagues régionales de chaleur extrême sur la santé
     au Québec de 2010 à 2015 : changements climatiques. Québec: INSPQ, Institut national de santé publique du Québec.
     https://www.inspq.qc.ca/publications/2221
-    
+
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
@@ -437,7 +437,11 @@ def heat_wave_frequency(
         )
 
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim="time")
+    return group.apply(
+        rl.windowed_run_events,
+        window=window if mode == "consecutive" else 1,
+        dim="time",
+    )
 
 
 @declare_units(
@@ -512,7 +516,7 @@ def heat_wave_max_length(
     Lebel, G., Bustinza, R. & Dubé, M. (2017). Analyse des impacts des vagues régionales de chaleur extrême sur la santé
     au Québec de 2010 à 2015 : changements climatiques. Québec: INSPQ, Institut national de santé publique du Québec.
     https://www.inspq.qc.ca/publications/2221
-    
+
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
@@ -554,7 +558,9 @@ def heat_wave_max_length(
 
     group = cond.resample(time=freq)
     max_l = group.apply(rl.longest_run, dim="time")
-    return max_l.where(max_l >= window, 0)
+    if mode == "consecutive":
+        return max_l.where(max_l >= window, 0)
+    return max_l
 
 
 @declare_units(
