@@ -1,3 +1,4 @@
+import copy
 import logging
 import warnings
 from functools import wraps
@@ -221,10 +222,11 @@ def wrap_lons_and_split_at_greenwich(func):
                     UserWarning,
                     stacklevel=4,
                 )
-
+            split_flag = False
             if (poly.geometry.total_bounds[0] < 0) and (
                 poly.geometry.total_bounds[2] > 0
             ):
+                split_flag = True
                 warnings.warn(
                     "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
                     " This feature is experimental. Output might not be accurate.",
@@ -256,6 +258,13 @@ def wrap_lons_and_split_at_greenwich(func):
             poly = poly.to_crs(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
             )
+            crs1 = poly.crs
+            if split_flag:
+                logging.warning(
+                    "Rebuffering split polygons to ensure edge inclusion in selection"
+                )
+                poly = gpd.GeoDataFrame(poly.buffer(0.000000001), columns=["geometry"])
+                poly.crs = crs1
             kwargs["poly"] = poly
 
         return func(*args, **kwargs)
@@ -389,19 +398,23 @@ def subset_shape(
     >>> prSub = \
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
-    if "ts" in ds.coords:
-        ds = ds.drop("ts")
-
+    # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
+    ds_copy = copy.deepcopy(ds)
     poly = gpd.GeoDataFrame.from_file(shape)
     # if poly doesn't cross prime meridian we can subet with subset_bbox first
     # reduce using subset_bbox to reduce processing time
     bounds = poly.bounds
     lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
     lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
-    if np.all(np.asarray(lon_bnds) >= 0) or np.all(np.asarray(lon_bnds) <= 0):
-        ds = subset_bbox(ds, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+
+    # Use subset bbox on bounds to reduce grid as much as possible
+    # Only case not implemented is when lon_bnds cross the 0 deg meridian but dataset grid has all positive lons
+    try:
+        ds_copy = subset_bbox(ds_copy, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    except NotImplementedError:
+        pass
     if start_date or end_date:
-        ds = subset_time(ds, start_date=start_date, end_date=end_date)
+        ds_copy = subset_time(ds_copy, start_date=start_date, end_date=end_date)
 
     if buffer is not None:
         poly.geometry = poly.buffer(buffer)
@@ -414,7 +427,7 @@ def subset_shape(
     if raster_crs is not None:
         raster_crs = CRS().from_user_input(raster_crs)
     else:
-        if np.min(ds.lon) >= 0 and np.max(ds.lon) <= 360:
+        if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
             # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
             raster_crs = CRS().from_string(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
@@ -433,26 +446,28 @@ def subset_shape(
             stacklevel=3,
         )
 
-    mask_2d = create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=poly, wrap_lons=wrap_lons)
+    mask_2d = create_mask(
+        x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
+    )
 
     # loop through variables
-    for v in ds.data_vars:
-        if set.issubset(set(mask_2d.dims), set(ds[v].dims)):
-            ds[v] = ds[v].where((~np.isnan(mask_2d)), drop=True)
+    for v in ds_copy.data_vars:
+        if set.issubset(set(mask_2d.dims), set(ds_copy[v].dims)):
+            ds_copy[v] = ds_copy[v].where((~np.isnan(mask_2d)), drop=True)
 
     # TODO: This doesn't seem to do anything. Lots of NaNs still present.
-    if "lon" in ds.dims:
-        ds = ds.dropna(dim="lon", how="all")
-        ds = ds.dropna(dim="lat", how="all")
+    if "lon" in ds_copy.dims:
+        ds_copy = ds_copy.dropna(dim="lon", how="all")
+        ds_copy = ds_copy.dropna(dim="lat", how="all")
     else:  # curvilinear case
-        for d in ds.lon.dims:
-            ds = ds.dropna(dim=d, how="all")
+        for d in ds_copy.lon.dims:
+            ds_copy = ds_copy.dropna(dim=d, how="all")
     # Add a CRS definition as a coordinate for reference purposes
     if wrap_lons:
-        ds.coords["crs"] = 0
-        ds.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
+        ds_copy.coords["crs"] = 0
+        ds_copy.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
 
-    return ds
+    return ds_copy
 
 
 # @check_date_signature
