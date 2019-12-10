@@ -522,10 +522,38 @@ class TestSubsetShape:
         TESTS_DATA, "cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"
     )
     lons_2d_nc_file = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
-
+    nc_file_neglons = os.path.join(
+        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
+    )
     meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
     poslons_geojson = os.path.join(TESTS_DATA, "cmip5", "poslons.json")
     eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
+    southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
+
+    def compare_vals(self, ds, sub, vari, flag_2d=False):
+        # check subsetted values against original
+        imask = np.where(~np.isnan(sub[vari].isel(time=0)))
+        if len(imask[0]) > 70:
+            np.random.RandomState = 42
+            ii = np.random.randint(0, len(imask[0]), 70)
+        else:
+            ii = np.arange(0, len(imask[0]))
+        for i in zip(imask[0][ii], imask[1][ii]):
+
+            if flag_2d:
+                lat1 = sub.lat[i[0], i[1]]
+                lon1 = sub.lon[i[0], i[1]]
+                np.testing.assert_array_equal(
+                    subset.subset_gridpoint(sub, lon=lon1, lat=lat1)[vari],
+                    subset.subset_gridpoint(ds, lon=lon1, lat=lat1)[vari],
+                )
+            else:
+                lat1 = sub.lat.isel(lat=i[0])
+                lon1 = sub.lon.isel(lon=i[1])
+                # print(lon1.values, lat1.values)
+                np.testing.assert_array_equal(
+                    sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
+                )
 
     def test_wraps(self):
         ds = xr.open_dataset(self.nc_file)
@@ -538,8 +566,9 @@ class TestSubsetShape:
         assert len(sub.tas) == 12
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tas.isel(time=0))), 285.057007
+            float(np.mean(sub.tas.isel(time=0))), 285.064423
         )
+        self.compare_vals(ds, sub, "tas")
 
     def test_no_wraps(self):
         ds = xr.open_dataset(self.nc_file)
@@ -547,11 +576,32 @@ class TestSubsetShape:
         with pytest.warns(None) as record:
             sub = subset.subset_shape(ds, self.poslons_geojson)
 
+        self.compare_vals(ds, sub, "tas")
+
         # No time subsetting should occur.
         assert len(sub.tas) == 12
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
             float(np.mean(sub.tas.isel(time=0))), 276.732483
+        )
+        # Check that no warnings are raised for meridian crossing
+        assert (
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
+            '" This feature is experimental. Output might not be accurate."'
+            not in [q.message for q in record]
+        )
+
+    def test_all_neglons(self):
+        ds = xr.open_dataset(self.nc_file_neglons)
+
+        with pytest.warns(None) as record:
+            sub = subset.subset_shape(ds, self.southern_qc_geojson)
+
+        self.compare_vals(ds, sub, "tasmax")
+
+        # Average temperature at surface for region in January (time=0)
+        np.testing.assert_array_almost_equal(
+            float(np.mean(sub.tasmax.isel(time=0))), 269.2540588378906
         )
         # Check that no warnings are raised for meridian crossing
         assert (
@@ -570,6 +620,10 @@ class TestSubsetShape:
                 start_date="1984-06-01",
                 end_date="1984-06-15",
             )
+
+        self.compare_vals(
+            ds.sel(time=slice("1984-06-01", "1984-06-15")), sub, "tasmax", flag_2d=True
+        )
 
         # Should only have 15 days of data.
         assert len(sub.tasmax) == 15
