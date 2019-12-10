@@ -30,7 +30,7 @@ requirements = [
     "rasterio>=1.0.28",
     "geopandas>=0.4",
     "cftime~=1.0.3.4",
-    "netCDF4>=1.4",
+    "netCDF4>=1.5",
     "dask[complete]",
     "bottleneck~=1.3.1",
     "xarray==0.13.0",

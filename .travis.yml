@@ -45,7 +45,7 @@ matrix:
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ -O libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip http://download.osgeo.org/libspatialindex/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
-        - sleep 2
+        - sleep 5
         - unzip /c/tmp/libspatialindex-1.8.0-win-msvc-2010-x64-x32 -d /c/tmp/
         - cmake /c/tmp/libspatialindex-1.8.0-win-msvc-2010-x64-x32
         - make install /c/temp/libspatiallibspatialindex-1.8.0-win-msvc-2008-x64-x32
