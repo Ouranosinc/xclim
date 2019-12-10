@@ -39,13 +39,13 @@ matrix:
             - libhdf5-serial-dev
             - netcdf-bin
             - libnetcdf-dev
-      script: travis_wait 30 tox -vv -e $TOXENV
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ http://download.osgeo.org/libspatialindex/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
+        - sleep 5
         - unzip /c/temp/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip -d /c/tmp/
         - cmake /c/temp/libspatialindex-1.8.0-win-msvc-2010-x64-x32
         - make install /c/temp/libspatiallibspatialindex-1.8.0-win-msvc-2008-x64-x32
