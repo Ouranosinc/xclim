@@ -33,9 +33,9 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-            - libgdal1-dev
-            - liblapack-dev
-            - libblas-dev
+#            - libgdal1-dev
+#            - liblapack-dev
+#            - libblas-dev
 #            - libhdf5-serial-dev
 #            - netcdf-bin
 #            - libnetcdf-dev
@@ -44,9 +44,9 @@ matrix:
       os: windows
       language: bash
       before_install:
-        - wget --directory-prefix=/c/temp/ http://download.osgeo.org/libspatialindex/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
+        - wget --directory-prefix=/c/temp/ -O libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip http://download.osgeo.org/libspatialindex/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
         - sleep 2
-        - unzip /c/tmp/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip -d /c/tmp/
+        - unzip /c/tmp/libspatialindex-1.8.0-win-msvc-2010-x64-x32 -d /c/tmp/
         - cmake /c/tmp/libspatialindex-1.8.0-win-msvc-2010-x64-x32
         - make install /c/temp/libspatiallibspatialindex-1.8.0-win-msvc-2008-x64-x32
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
