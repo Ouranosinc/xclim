@@ -45,10 +45,14 @@ matrix:
       os: windows
       language: bash
       before_install:
+        - wget --directory-prefix=/c/temp/ http://download.osgeo.org/libspatialindex/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
+        - unzip /c/temp/libspatialindex-1.8.0-win-msvc-2010-x64-x32.zip
+        - cmake /c/temp/libspatialindex-1.8.0-win-msvc-2010-x64-x32
+        - make install /c/temp/libspatiallibspatialindex-1.8.0-win-msvc-2008-x64-x32
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal
         - set PROJ_DIR=/c/OSGeo4W/
-        - set GDAL_VERSION=3.1
+        - set GDAL_VERSION=3.0
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
