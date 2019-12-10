@@ -538,7 +538,7 @@ class TestSubsetShape:
         assert len(sub.tas) == 12
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tas.isel(time=0))), 285.057007
+            float(np.mean(sub.tas.isel(time=0))), 285.064423
         )
 
     def test_no_wraps(self):
