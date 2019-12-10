@@ -529,6 +529,7 @@ class TestSubsetShape:
     poslons_geojson = os.path.join(TESTS_DATA, "cmip5", "poslons.json")
     eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
     southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
+    small_geojson = os.path.join(TESTS_DATA, "cmip5", "small_geojson.json")
 
     def compare_vals(self, ds, sub, vari, flag_2d=False):
         # check subsetted values against original
@@ -637,6 +638,20 @@ class TestSubsetShape:
             '" This feature is experimental. Output might not be accurate."'
             not in [q.message for q in record]
         )
+
+    def test_small_poly_buffer(self):
+        ds = xr.open_dataset(self.nc_file)
+
+        with pytest.raises(ValueError):
+            sub = subset.subset_shape(ds, self.small_geojson)
+
+        with pytest.raises(ValueError):
+            sub = subset.subset_shape(ds, self.small_geojson, buffer=0.6)
+
+        sub = subset.subset_shape(ds, self.small_geojson, buffer=5)
+        self.compare_vals(ds, sub, "tas")
+        assert len(sub.lon.values) == 3
+        assert len(sub.lat.values) == 3
 
 
 class TestDistance:
