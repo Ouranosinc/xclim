@@ -401,6 +401,10 @@ def subset_shape(
     # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
     ds_copy = copy.deepcopy(ds)
     poly = gpd.GeoDataFrame.from_file(shape)
+
+    if buffer is not None:
+        poly.geometry = poly.buffer(buffer)
+
     # if poly doesn't cross prime meridian we can subet with subset_bbox first
     # reduce using subset_bbox to reduce processing time
     bounds = poly.bounds
@@ -413,11 +417,15 @@ def subset_shape(
         ds_copy = subset_bbox(ds_copy, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
     except NotImplementedError:
         pass
+
+    if ds_copy.lon.size == 0 or ds_copy.lat.size == 0:
+        raise ValueError(
+            "No gridcell centroids found within provided polygon bounding box. "
+            'Try using the "buffer" option to create an expanded area'
+        )
+
     if start_date or end_date:
         ds_copy = subset_time(ds_copy, start_date=start_date, end_date=end_date)
-
-    if buffer is not None:
-        poly.geometry = poly.buffer(buffer)
 
     # Determine whether CRS types are the same between shape and raster
     if shape_crs is not None:
@@ -449,6 +457,12 @@ def subset_shape(
     mask_2d = create_mask(
         x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
     )
+
+    if np.all(np.isnan(mask_2d)):
+        raise ValueError(
+            "No gridcell centroids found within provided polygon. "
+            'Try using the "buffer" option to create an expanded areas or verify polygon '
+        )
 
     # loop through variables
     for v in ds_copy.data_vars:
