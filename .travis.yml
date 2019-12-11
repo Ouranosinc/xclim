@@ -84,6 +84,10 @@ matrix:
     - env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master)"
       python: 3.6
+      addons:
+          apt:
+              packages:
+                  - libspatialindex-dev
     - env: TOXENV=py35
       name: "Python3.5 (Linux)"
       python: 3.5
