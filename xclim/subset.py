@@ -9,13 +9,13 @@ from typing import Tuple
 from typing import Union
 
 import fiona
+import fiona.crs as fiocrs
 import geojson
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray
 from pyproj import Geod
-from rasterio.crs import CRS
 from shapely.geometry import LineString
 from shapely.geometry import Point
 from shapely.geometry import Polygon
@@ -33,8 +33,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def _read_geometries(
-    shape: Union[str, Path], crs: Optional[Union[str, int, dict]] = None
-) -> Tuple[List[geojson.geometry.Geometry], CRS]:
+    shape: Union[str, Path], crs: Optional[Union[str, int]] = None
+) -> Tuple[List[geojson.geometry.Geometry], dict]:
     """
     A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
       the shapely Shape object.
@@ -49,13 +49,19 @@ def _read_geometries(
     geom = list()
     geometry_types = list()
     try:
-        with fiona.open(shape) as fio:
+        with fiona.open(shape) as layer:
             logging.info("Vector read OK.")
             if crs:
-                shape_crs = CRS().from_user_input(crs)
+                try:
+                    shape_crs = fiocrs.from_epsg(crs)
+                except ValueError:
+                    try:
+                        shape_crs = fiocrs.from_string(crs)
+                    except ValueError:
+                        raise
             else:
-                shape_crs = CRS(fio.crs or 4326)
-            for i, feat in enumerate(fio):
+                shape_crs = layer.crs or fiocrs.from_epsg(4326)
+            for i, feat in enumerate(layer):
                 g = geojson.GeoJSON(feat)
                 geom.append(g["geometry"])
                 geometry_types.append(g["geometry"]["type"])
@@ -320,13 +326,13 @@ def create_mask(
 
     # create geodataframe (spatially referenced with shifted longitude values if needed).
     if wrap_lons:
-        shifted = CRS().from_proj4(
+        shifted = fiocrs.from_string(
             "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
         )
         gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=shifted)
     else:
         gdf_points = gpd.GeoDataFrame(
-            df, geometry="Coordinates", crs=CRS().from_epsg(4326)
+            df, geometry="Coordinates", crs=fiocrs.from_epsg(4326)
         )
 
     # spatial join geodata points with region polygons and remove duplicates
@@ -429,24 +435,36 @@ def subset_shape(
 
     # Determine whether CRS types are the same between shape and raster
     if shape_crs is not None:
-        shape_crs = CRS().from_user_input(shape_crs)
+        try:
+            shape_crs = fiocrs.from_epsg(shape_crs)
+        except ValueError:
+            try:
+                shape_crs = fiocrs.from_string(shape_crs)
+            except ValueError:
+                raise
     else:
-        shape_crs = CRS(poly.crs)
+        shape_crs = poly.crs
     if raster_crs is not None:
-        raster_crs = CRS().from_user_input(raster_crs)
+        try:
+            raster_crs = fiocrs.from_epsg(raster_crs)
+        except ValueError:
+            try:
+                raster_crs = fiocrs.from_string(raster_crs)
+            except ValueError:
+                raise
     else:
         if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
             # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
-            raster_crs = CRS().from_string(
+            raster_crs = fiocrs.from_string(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
             )
             wrap_lons = True
         else:
-            raster_crs = CRS().from_epsg(4326)
+            raster_crs = fiocrs.from_epsg(4326)
             wrap_lons = False
 
     if (shape_crs != raster_crs) or (
-        CRS().from_epsg(4326) not in [shape_crs, raster_crs]
+        fiocrs.from_epsg(4326) not in [shape_crs, raster_crs]
     ):
         warnings.warn(
             "CRS definitions are not similar or both not using WGS84. Caveat emptor.",
@@ -479,7 +497,9 @@ def subset_shape(
     # Add a CRS definition as a coordinate for reference purposes
     if wrap_lons:
         ds_copy.coords["crs"] = 0
-        ds_copy.coords["crs"].attrs = dict(spatial_ref=raster_crs.to_wkt())
+        ds_copy.coords["crs"].attrs = dict(
+            spatial_ref="+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+        )
 
     return ds_copy
 
