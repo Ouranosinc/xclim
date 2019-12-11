@@ -634,7 +634,7 @@ class TestHeatWaveFrequency:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         hwfC = atmos.heat_wave_frequency(
             tnC,
@@ -642,7 +642,7 @@ class TestHeatWaveFrequency:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], expected)
@@ -694,7 +694,7 @@ class TestHeatWaveMaxLength:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         hwfC = atmos.heat_wave_max_length(
             tnC,
@@ -702,7 +702,7 @@ class TestHeatWaveMaxLength:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], expected)
@@ -754,7 +754,7 @@ class TestHeatWaveTotalLength:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         hwfC = atmos.heat_wave_total_length(
             tnC,
@@ -762,7 +762,7 @@ class TestHeatWaveTotalLength:
             thresh_tasmin=thresh_tasmin,
             thresh_tasmax=thresh_tasmax,
             freq="YS",
-            **kwargs
+            **kwargs,
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], expected)
