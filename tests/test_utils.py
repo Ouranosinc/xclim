@@ -15,6 +15,8 @@
 # a first line of defense.
 import glob
 import os
+from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 
 import cftime
 import dask
@@ -22,8 +24,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from pathlib import Path
-from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos

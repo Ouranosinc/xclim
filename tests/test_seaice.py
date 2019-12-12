@@ -1,7 +1,9 @@
-import xarray as xr
 import numpy as np
-from xclim.indices import sea_ice_extent, sea_ice_area
+import xarray as xr
+
 from xclim import seaIce
+from xclim.indices import sea_ice_area
+from xclim.indices import sea_ice_extent
 
 
 class TestSeaIceExtent:
