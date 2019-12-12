@@ -50,9 +50,14 @@ __all__ = [
 # TODO: The pint library does not have a generic Unit or Quantitiy type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
 units.define(
-    pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
+    pint.unit.UnitDefinition(
+        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
+    )
 )
+
+units.define("1 = fraction = [] = frac")
 
 # Define commonly encountered units not defined by pint
 units.define(
@@ -144,7 +149,10 @@ def units2pint(value: Union[xr.DataArray, str]) -> Any:
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
+        if s == "%":
+            return "percent"
+        else:
+            return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
         unit = value
@@ -160,6 +168,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> Any:
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
+        AttributeError,
     ):  # Convert from CF-units to pint-compatible
         return units.parse_expression(_transform(unit)).units
 
@@ -191,7 +200,7 @@ def pint2cfunits(value: Any) -> str:
         return "{}{}{}".format(u, neg, p)
 
     out, n = re.subn(pat, repl, s)
-    return out
+    return out.replace("percent", "%")
 
 
 def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
@@ -332,7 +341,21 @@ def _check_units(val, dim):
 
 
 def declare_units(out_units, **units_by_name):
-    """Create a decorator to check units of function arguments."""
+    """Create a decorator to check units of function arguments.
+
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+
+    Examples
+    --------
+    In the following function definition:
+
+    @declare_units("K", tas=["temperature"])
+    def func(tas):
+       ...
+
+    the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
+
+    """
 
     def dec(func):
         # Match the signature of the function to the arguments given to the decorator
@@ -348,13 +371,23 @@ def declare_units(out_units, **units_by_name):
 
             out = func(*args, **kwargs)
 
-            # In the generic case, we use the default units that should have been propagated by the computation.
-            if "[" in out_units:
-                _check_units(out, out_units)
+            if "units" in out.attrs:
+                # Check that output units dimensions match expectations, e.g. [temperature]
+                if "[" in out_units:
+                    _check_units(out, out_units)
+                # Explicitly convert units if units are declared, e.g K
+                else:
+                    out = convert_units_to(out, out_units)
 
-            # Otherwise, we specify explicitly the units.
-            else:
+            # Otherwise, we impose the units if given.
+            elif "[" not in out_units:
                 out.attrs["units"] = out_units
+
+            else:
+                raise ValueError(
+                    "Output units are not propagated by computation nor specified by decorator."
+                )
+
             return out
 
         return wrapper
@@ -695,21 +728,29 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
+    standard_name = (
+        ""
+    )  # The set of permissible standard names is contained in the standard name table.
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = (
+        ""
+    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = (
+        ""
+    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = (
+        ""
+    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = (
         ""  # Miscellaneous information about the data or methods used to produce it.
     )

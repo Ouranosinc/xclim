@@ -155,3 +155,28 @@ def per_doy():
         )
 
     return _per_doy
+
+
+@pytest.fixture
+def areacella():
+    """Return a rectangular grid of grid cell area. """
+    r = 6100000
+    lon_bnds = np.arange(-180, 181, 1)
+    lat_bnds = np.arange(-90, 91, 1)
+    dlon = np.diff(lon_bnds)
+    dlat = np.diff(lat_bnds)
+    lon = np.mean(lon_bnds[:2]) + np.cumsum(dlon)
+    lat = np.mean(lat_bnds[:2]) + np.cumsum(dlat)
+    area = (
+        r
+        * np.radians(dlat)[:, np.newaxis]
+        * r
+        * np.cos(np.radians(lat)[:, np.newaxis])
+        * np.radians(dlon)
+    )
+    return xr.DataArray(
+        data=area,
+        dims=("lat", "lon"),
+        coords={"lon": lon, "lat": lat},
+        attrs={"r": r, "units": "m^2"},
+    )
