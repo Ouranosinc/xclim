@@ -24,7 +24,7 @@ requirements = [
     "scipy>=1.2",
     "pandas>=0.23",
     "cftime>=1.0.4.2",
-    "netCDF4>=1.5.3",
+    "netCDF4<1.5.3",
     "dask[complete]",
     "xarray>=0.14.1",
     "pyproj>=2.4.1",
