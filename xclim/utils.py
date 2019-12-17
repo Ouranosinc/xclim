@@ -11,7 +11,12 @@ import warnings
 from collections import defaultdict
 from collections import OrderedDict
 from inspect import signature
-
+from types import FunctionType
+from typing import Any
+from typing import Optional
+from typing import Union
+from typing import Callable
+import dask
 import numpy as np
 import pint
 import xarray as xr
@@ -19,6 +24,30 @@ from boltons.funcutils import wraps
 
 import xclim
 from . import checks
+
+__all__ = [
+    "units2pint",
+    "pint2cfunits",
+    "pint_multiply",
+    "convert_units_to",
+    "declare_units",
+    "threshold_count",
+    "percentile_doy",
+    "infer_doy_max",
+    "adjust_doy_calendar",
+    "get_daily_events",
+    "daily_downsampler",
+    "walk_map",
+    "Indicator",
+    "Indicator2D",
+    "parse_doc",
+    "format_kwargs",
+    "wrapped_partial",
+    "uas_vas_2_sfcwind",
+    "sfcwind_2_uas_vas",
+]
+
+# TODO: The pint library does not have a generic Unit or Quantitiy type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
@@ -37,6 +66,7 @@ units.define(
     "degC = kelvin; offset: 273.15 = celsius = C"
 )  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
+units.define("h = hour")
 
 # Default context.
 null = pint.Context("none")
@@ -97,12 +127,12 @@ calendars = {
 }
 
 
-def units2pint(value):
+def units2pint(value: Union[xr.DataArray, str]) -> Any:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or string
+    value : Union[xr.DataArray, str]
       Input data array or expression.
 
     Returns
@@ -134,12 +164,12 @@ def units2pint(value):
         return units.parse_expression(_transform(unit)).units
 
 
-def pint2cfunits(value):
+def pint2cfunits(value: Any) -> str:
     """Return a CF-Convention unit string from a `pint` unit.
 
     Parameters
     ----------
-    value : pint.Unit
+    value : pint.UnitRegistry
       Input unit.
 
     Returns
@@ -164,7 +194,7 @@ def pint2cfunits(value):
     return out
 
 
-def pint_multiply(da, q, out_units=None):
+def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     """Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
@@ -172,8 +202,8 @@ def pint_multiply(da, q, out_units=None):
     da : xr.DataArray
       Input array.
     q : pint.Quantity
-      Multiplicating factor.
-    out_units : str
+      Multiplicative factor.
+    out_units : Optional[str]
       Units the output array should be converted into.
     """
     a = 1 * units2pint(da)
@@ -185,18 +215,21 @@ def pint_multiply(da, q, out_units=None):
     return out
 
 
-def convert_units_to(source, target, context=None):
+def convert_units_to(
+    source: Union[str, xr.DataArray, Any],
+    target: Union[str, xr.DataArray, Any],
+    context: Optional[str] = None,
+):
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
-    source : str, pint.Quantity or xr.DataArray
+    source : Union[str, xr.DataArray, Any]
       The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str, pint.Unit or DataArray
+    target : Union[str, xr.DataArray, Any]
       Target array of values to which units must conform.
-    context : str
-
+    context : Optional[str]
 
     Returns
     -------
@@ -329,15 +362,17 @@ def declare_units(out_units, **units_by_name):
     return dec
 
 
-def threshold_count(da, op, thresh, freq):
+def threshold_count(
+    da: xr.DataArray, op: str, thresh: float, freq: str
+) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Input data.
-    op : {>, <, >=, <=, gt, lt, ge, le }
-      Logical operator, e.g. arr > thresh.
+    op : str
+      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
     thresh : float
       Threshold value.
     freq : str
@@ -346,7 +381,7 @@ def threshold_count(da, op, thresh, freq):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The number of days meeting the constraints for each period.
     """
     from xarray.core.ops import get_op
@@ -363,14 +398,16 @@ def threshold_count(da, op, thresh, freq):
     return c.resample(time=freq).sum(dim="time")
 
 
-def percentile_doy(arr, window=5, per=0.1):
+def percentile_doy(
+    arr: xr.DataArray, window: int = 5, per: float = 0.1
+) -> xr.DataArray:
     """Percentile value for each day of the year
 
     Return the climatological percentile over a moving window around each day of the year.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Input data.
     window : int
       Number of days around each day of the year to include in the calculation.
@@ -379,7 +416,7 @@ def percentile_doy(arr, window=5, per=0.1):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The percentiles indexed by the day of the year.
     """
     # TODO: Support percentile array, store percentile in coordinates.
@@ -462,12 +499,12 @@ def within_bnds_doy(arr, low, high):
     return (low < arr) * (arr < high)
 
 
-def infer_doy_max(arr):
+def infer_doy_max(arr: xr.DataArray) -> int:
     """Return the largest doy allowed by calendar.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Array with `time` coordinate.
 
     Returns
@@ -492,7 +529,7 @@ def infer_doy_max(arr):
     return doy_max
 
 
-def _interpolate_doy_calendar(source, doy_max):
+def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -500,14 +537,14 @@ def _interpolate_doy_calendar(source, doy_max):
 
     Parameters
     ----------
-    source : xarray.DataArray
+    source : xr.DataArray
       Array with `dayofyear` coordinates.
     doy_max : int
       Largest day of the year allowed by calendar.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
@@ -515,7 +552,7 @@ def _interpolate_doy_calendar(source, doy_max):
         raise AttributeError("source should have dayofyear coordinates.")
 
     # Interpolation of source to target dayofyear range
-    doy_max_source = source.dayofyear.max()
+    doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
     tmp = source.interpolate_na(dim="dayofyear")
@@ -526,7 +563,7 @@ def _interpolate_doy_calendar(source, doy_max):
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
-def adjust_doy_calendar(source, target):
+def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -534,14 +571,14 @@ def adjust_doy_calendar(source, target):
 
     Parameters
     ----------
-    source : xarray.DataArray
-      Array with `dayofyear` coordinates.
-    target : xarray.DataArray
+    source : xr.DataArray
+      Array with `dayofyear` coordinate.
+    target : xr.DataArray
       Array with `time` coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
@@ -554,7 +591,39 @@ def adjust_doy_calendar(source, target):
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def get_daily_events(da, da_value, operator):
+def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
+    """Create a temporal DataArray where each day takes the value defined by the day-of-year.
+
+    Parameters
+    ----------
+    doy : xr.DataArray
+      Array with `dayofyear` coordinate.
+    arr : xr.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xr.DataArray
+      An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
+      `doy`.
+    """
+    if "dayofyear" not in doy.coords:
+        raise AttributeError("`doy` should have dayofyear coordinates.")
+
+    # Adjust calendar
+    adoy = adjust_doy_calendar(doy, arr)
+
+    # Create array with arr shape and coords
+    out = xr.full_like(arr, np.nan)
+
+    # Fill with values from `doy`
+    d = out.time.dt.dayofyear.values
+    out.data = adoy.sel(dayofyear=d)
+
+    return out
+
+
+def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
     r"""
     function that returns a 0/1 mask when a condition is True or False
 
@@ -564,34 +633,33 @@ def get_daily_events(da, da_value, operator):
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
     da_value : float
-    operator : string
+    operator : str
 
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
 
     """
     events = operator(da, da_value) * 1
-    events = events.where(~np.isnan(da))
+    events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
 
 
-def daily_downsampler(da, freq="YS"):
+def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Daily climate data downsampler
 
     Parameters
     ----------
-    da : xarray.DataArray
-    freq : string
+    da : xr.DataArray
+    freq : str
 
     Returns
     -------
-    xarray.DataArray
-
+    xr.DataArray
 
     Note
     ----
@@ -651,14 +719,14 @@ def daily_downsampler(da, freq="YS"):
     return buffer.groupby("tags")
 
 
-def walk_map(d, func):
+def walk_map(d: dict, func: FunctionType):
     """Apply a function recursively to values of dictionary.
 
     Parameters
     ----------
     d : dict
       Input dictionary, possibly nested.
-    func : function
+    func : FunctionType
       Function to apply to dictionary values.
 
     Returns
@@ -689,15 +757,11 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = (
-        ""
-    )  # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = (
-        ""
-    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
@@ -707,17 +771,13 @@ class Indicator:
     flag = {"no-check": lambda x: False}
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = (
-        ""
-    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = (
-        ""
-    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
     comment = (
-        ""
-    )  # Miscellaneous information about the data or methods used to produce it.
+        ""  # Miscellaneous information about the data or methods used to produce it.
+    )
     notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
@@ -923,7 +983,7 @@ class Indicator:
         """The function computing the indicator."""
         raise NotImplementedError
 
-    def format(self, attrs, args=None):
+    def format(self, attrs: dict, args: dict = None):
         """Format attributes including {} tags with arguments.
         Parameters
         ----------
@@ -955,6 +1015,9 @@ class Indicator:
                 else:
                     mba[k] = v
 
+            if callable(val):
+                val = val(**mba)
+
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
         return out
@@ -964,7 +1027,8 @@ class Indicator:
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get("freq")
+        freq = kwds.get("freq", "D")
+
         miss = (checks.missing_any(da, freq) for da in args)
         return reduce(np.logical_or, miss)
 
@@ -1015,7 +1079,7 @@ def parse_doc(doc):
     return out
 
 
-def format_kwargs(attrs, params):
+def format_kwargs(attrs: dict, params: dict) -> None:
     """Modify attribute with argument values.
 
     Parameters
@@ -1043,9 +1107,258 @@ def format_kwargs(attrs, params):
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
-def wrapped_partial(func, *args, **kwargs):
+def wrapped_partial(func: FunctionType, *args, **kwargs):
     from functools import partial, update_wrapper
 
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func
+
+
+def _get_rolling_func(N, mode="sum"):
+    """Generate the rolling sum function to be mapped in rolling()"""
+
+    if mode in ["sum", "mean"]:
+        denom = 1 if mode == "sum" else N
+
+        def rolling_sum_na(x):
+            # First we get the rolling sum of the values.
+            cumsum = np.nancumsum(np.insert(x, 0, 0, axis=-1), axis=-1)
+            out = cumsum[..., N:] - cumsum[..., :-N]
+            # We get the rolling sum of where the data is nan. Non-zero values here are
+            # all elements where the rolling window had at least one nan.
+            # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
+            if np.any(np.isnan(x)):
+                isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=-1), axis=-1)
+                outna = isnasum[..., N:] - isnasum[..., :-N]
+                out[outna > 0] = np.nan
+            # dask will trim our output, so we pad.
+            # PB: I would like to get rid of this line, but passing "trim=false" to
+            # dask.map_overlap, f*cks up the shape.
+            return np.pad(
+                out / denom,
+                (x.ndim - 1) * [(0, 0)] + [(N - 1, 0)],
+                mode="constant",
+                constant_values=np.nan
+                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
+                else 0,
+            )
+
+        return rolling_sum_na
+
+    try:
+        if isinstance(mode, str):
+            # Get the reducing numpy function
+            func = getattr(np, mode)
+        else:
+            # Assume it is a callable
+            func = mode
+
+        def rolling_stride_na(x):
+            # rolling is an array with a new dimension of the same size as the window
+            # All values are copied so that the function can be applied along this dim.
+            shape = x.shape[:-1] + (x.shape[-1] - N + 1, N)
+            strides = x.strides + (x.strides[-1],)
+            rolling = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+            out = func(rolling, axis=-1)
+            return np.pad(
+                out,
+                [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
+                mode="constant",
+                constant_values=np.nan
+                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
+                else 0,
+            )
+
+        return rolling_stride_na
+    except AttributeError:
+        raise NotImplementedError(
+            "Rolling operation {mode} not known or yet implemented."
+        )
+
+
+def _rolling(
+    arr: xr.DataArray,
+    dim: str = "time",
+    window: int = 1,
+    mode: Union[str, Callable] = "sum",
+    keep_attrs: bool = False,
+    **kwargs
+):
+    """Utility function for rolling.sum and rolling.mean
+
+    This calls a custom dask mapping when the rolled dimension is chunked.
+    xarray is able to roll on chunked dimensions, but sometimes it tries to concatenate
+    them together, causing memory issues.
+    Also, the rolling operation is not lazy, this function is.
+
+    Calling this with window = 5, mode = 'sum' and dim = 'time' is equivalent to:
+
+    >>> arr.rolling(time=5, center=False, min_periods=5).sum()
+
+    Parameters
+    ----------
+    arr : DataArray
+        The data. If it is not stored in a dask array, this goes back to xr.rolling()
+    window : int
+        Window size along the rolled dimension (the default is 1)
+    mode : str,
+        The operation to apply on the rolled axis (the default is 'sum')
+        Any numpy function that accept the keyword axis and reduces along this axis is valid.
+        (If the arr is not a dask array, then any method of xr.core.rolling.DataArrayRolling)
+        Can also be a function accepting the array and "axis=-1". In that case, proper propagation
+        of NaN values is not assured.
+    dim : str
+        Dimension along which to roll (the default is 'time')
+    keep_attrs : bool
+        If True, transfers the attrs of the input array to the output one. (default is False)
+    kwargs :
+        If any other kwargs are passed, this defaults to the classical rolling as other options are not implemented.
+    Returns
+    -------
+    DataArray
+        The data with the rolling sum/mean applied along the specified dim.
+    """
+    # Only do this if the data is as dask array and no unsupported kwargs are requested.
+    if isinstance(arr.data, dask.array.Array) and not kwargs:
+        dims = arr.dims
+        # Transpose so to get the rolling dim in axis=0
+        arr = arr.transpose(*[dm for dm in dims if dm != dim], dim)
+        # Map the rolling function but with an overlap so the first element
+        # has a full window. Boundaries are nan so to imitate the default behavior.
+        out = arr.data.map_overlap(
+            _get_rolling_func(window, mode),
+            (arr.ndim - 1) * (0,) + (window - 1,),
+            boundary=np.nan,
+            dtype=arr.dtype,
+        )
+        # Recreate a DataArray from the dask output and transpose back to the input dim order
+        out = xr.DataArray(
+            out, coords=arr.coords, attrs=arr.attrs if keep_attrs else None
+        ).transpose(*dims)
+        return out
+    # If not a dask array or with unsupported kwargs, call the normal rolling.
+    rolling = arr.rolling(time=window)
+    if isinstance(mode, str):
+        out = getattr(rolling, mode)(allow_lazy=True)
+    else:
+        out = rolling.reduce(mode, allow_lazy=True)
+    if keep_attrs:
+        out.attrs.update(**arr.attrs)
+    return out
+
+
+def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
+    """Converts eastward and northward wind components to wind speed and direction.
+
+    Parameters
+    ----------
+    uas : xr.DataArray
+      Eastward wind velocity (m s-1)
+    vas : xr.DataArray
+      Northward wind velocity (m s-1)
+
+    Returns
+    -------
+    wind : xr.DataArray
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+
+    Notes
+    -----
+    Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
+    while stronger winds are set to 360°.
+    """
+    # TODO: Add an attribute check to switch between sfcwind and wind
+
+    # Converts the wind speed to m s-1
+    uas = convert_units_to(uas, "m/s")
+    vas = convert_units_to(vas, "m/s")
+
+    # Wind speed is the hypothenuse of "uas" and "vas"
+    wind = np.hypot(uas, vas)
+
+    # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
+    wind.attrs = uas.attrs
+    wind.name = "sfcWind"
+    wind.attrs["standard_name"] = "wind_speed"
+    wind.attrs["long_name"] = "Near-Surface Wind Speed"
+    wind.attrs["units"] = "m s-1"
+
+    # Calculate the angle
+    # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
+    windfromdir_math = np.degrees(np.arctan2(vas, uas))
+
+    # Convert the angle from the mathematical standard to the meteorological standard
+    windfromdir = (270 - windfromdir_math) % 360.0
+
+    # According to the meteorological standard, calm winds must have a direction of 0°
+    # while northerly winds have a direction of 360°
+    # On the Beaufort scale, calm winds are defined as < 0.5 m/s
+    windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
+    windfromdir = xr.where(wind < 0.5, 0, windfromdir)
+
+    # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
+    windfromdir.attrs = uas.attrs
+    windfromdir.name = "sfcWindfromdir"
+    windfromdir.attrs["standard_name"] = "wind_from_direction"
+    windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
+    windfromdir.attrs["units"] = "degree"
+
+    return wind, windfromdir
+
+
+def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
+    """Converts wind speed and direction to eastward and northward wind components.
+
+    Parameters
+    ----------
+    wind : xr.DataArray
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+
+    Returns
+    -------
+    uas : xr.DataArray
+      Eastward wind velocity (m s-1)
+    vas : xr.DataArray
+      Northward wind velocity (m s-1)
+
+    """
+    # TODO: Add an attribute check to switch between sfcwind and wind
+
+    # Converts the wind speed to m s-1
+    wind = convert_units_to(wind, "m/s")
+
+    # Converts the wind direction from the meteorological standard to the mathematical standard
+    windfromdir_math = (-windfromdir + 270) % 360.0
+
+    # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere
+    # if resample is not None:
+    #     wind = wind.resample(time=resample).mean(dim='time', keep_attrs=True)
+    #
+    #     # nb_per_day is the number of values each day. This should be calculated
+    #     windfromdir_math_per_day = windfromdir_math.reshape((len(wind.time), nb_per_day))
+    #     # Averages the subdaily angles around a circle, i.e. mean([0, 360]) = 0, not 180
+    #     windfromdir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
+    #                                       for angles in windfromdir_math_per_day])
+
+    uas = wind * np.cos(np.radians(windfromdir_math))
+    vas = wind * np.sin(np.radians(windfromdir_math))
+
+    # Add attributes to uas and vas. This is done by copying wind' attributes and overwriting a few of them
+    uas.attrs = wind.attrs
+    uas.name = "uas"
+    uas.attrs["standard_name"] = "eastward_wind"
+    uas.attrs["long_name"] = "Near-Surface Eastward Wind"
+    wind.attrs["units"] = "m s-1"
+
+    vas.attrs = wind.attrs
+    vas.name = "vas"
+    vas.attrs["standard_name"] = "northward_wind"
+    vas.attrs["long_name"] = "Near-Surface Northward Wind"
+    wind.attrs["units"] = "m s-1"
+
+    return uas, vas

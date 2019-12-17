@@ -26,8 +26,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.utils import percentile_doy
 
-xr.set_options(enable_cftimeindex=True)
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
@@ -277,6 +275,30 @@ class TestDaysOverPrecipThresh:
             out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
         )
 
+    def test_quantile(self, pr_series):
+        a = np.zeros(365)
+        a[:8] = np.arange(8)
+        pr = pr_series(a, start="1/1/2000")
+
+        # Create synthetic percentile
+        pr0 = pr_series(np.ones(365) * 5, start="1/1/2000")
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
+        np.testing.assert_array_almost_equal(
+            out[0], 2
+        )  # Only days 6 and 7 meet criteria.
+
+    def test_nd(self, pr_ndseries):
+        pr = pr_ndseries(np.ones((300, 2, 3)))
+        pr0 = pr_ndseries(np.zeros((300, 2, 3)))
+        per = pr0.quantile(0.5, dim="time", keep_attrs=True)
+        per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
+
+        out = xci.days_over_precip_thresh(pr, per, thresh="0.5 kg/m**2/s")
+        np.testing.assert_array_almost_equal(out, 300)
+
 
 class TestFreshetStart:
     def test_simple(self, tas_series):
@@ -311,10 +333,6 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 7),
-    reason="GrowingSeasonLength causes a dask-related SegFault",
-)
 class TestGrowingSeasonLength:
     def test_simple(self, tas_series):
         # test for different growing length
@@ -437,6 +455,35 @@ class TestHeatWaveMaxLength:
         np.testing.assert_allclose(hwml.values, 0)
 
 
+class TestHeatWaveTotalLength:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        # some hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+        )
+        np.testing.assert_allclose(hwml.values, 7)
+
+        # one long hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+        )
+        np.testing.assert_allclose(hwml.values, 10)
+
+        # no hw
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+        )
+        np.testing.assert_allclose(hwml.values, 0)
+
+        hwml = xci.heat_wave_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
+        )
+        np.testing.assert_allclose(hwml.values, 0)
+
+
 class TestTnDaysBelow:
     def test_simple(self, tasmin_series):
         a = np.zeros(365)
@@ -534,6 +581,21 @@ class TestPrecipAccumulation:
             (365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)
         ]
         np.testing.assert_allclose(out_std.values, target)
+
+    def test_mixed_phases(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[5:15] = 1
+        pr = pr_series(pr)
+
+        tas = np.ones(100) * 280
+        tas[5:10] = 270
+        tas = tas_series(tas)
+
+        outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="M")
+        outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="M")
+
+        np.testing.assert_array_equal(outsn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
 
 class TestRainOnFrozenGround:
@@ -684,6 +746,16 @@ class TestTGXN90p:
         assert out[0] == 30
         assert out[1] == 29
         assert out[5] == 25
+
+
+class TestTas:
+    def test_tas(self, tasmin_series, tasmax_series, tas_series):
+        tas = tas_series(np.ones(10))
+        tasmin = tasmin_series(np.zeros(10))
+        tasmax = tasmax_series(np.ones(10) * 2)
+
+        tas_xc = xci.tas(tasmin, tasmax)
+        xr.testing.assert_equal(tas, tas_xc)
 
 
 class TestTxMin:
@@ -912,7 +984,7 @@ class TestWinterRainRatio:
         tas[10:20] += 10
         tas = tas_series(tas + K2C, start="12/1/2000")
 
-        out = xci.winter_rain_ratio(pr, tas=tas)
+        out = xci.winter_rain_ratio(pr=pr, tas=tas)
         np.testing.assert_almost_equal(out, [10.0 / (31 + 31 + 28), 0])
 
 
@@ -934,24 +1006,3 @@ def cmip3_day_tas():
     )
     yield ds.tas
     ds.close()
-
-
-@pytest.fixture
-def response():
-    """Sample pytest fixture.
-
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
-    # import requests
-    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
-
-
-@pytest.mark.skip
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
-
-
-# x = Test_frost_days()
-# print('done')

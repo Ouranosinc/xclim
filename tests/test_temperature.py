@@ -175,13 +175,16 @@ class TestETR:
 
 
 class TestTmean:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
+    nc_files = (
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
     def test_Tmean_3d_data(self):
-        tas = xr.open_dataset(self.nc_file).tasmax
-        tas_C = xr.open_dataset(self.nc_file).tasmax
+        ds_tmax = xr.open_dataset(self.nc_files[0])
+        ds_tmin = xr.open_dataset(self.nc_files[1])
+        tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
         tas_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -600,27 +603,27 @@ class TestHeatWaveFrequency:
         txC.attrs["units"] = "C"
 
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         hwfC = atmos.heat_wave_frequency(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 2)
 
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4, freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 1)
 
         # one long hw
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 1)
         # no hw
         hwf = atmos.heat_wave_frequency(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
@@ -640,27 +643,27 @@ class TestHeatWaveMaxLength:
         txC.attrs["units"] = "C"
 
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         hwfC = atmos.heat_wave_max_length(
-            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
         )
         np.testing.assert_array_equal(hwf, hwfC)
         np.testing.assert_allclose(hwf.values[:1], 4)
 
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4
+            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 5)
 
         # one long hw
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 10)
         # no hw
         hwf = atmos.heat_wave_max_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
@@ -761,17 +764,16 @@ class TestDailyFreezeThaw:
         assert np.isnan(frzthw.values[0, -1, -1])
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 7),
-    reason="GrowingSeasonLength causes a dask-related SegFault",
-)
 class TestGrowingSeasonLength:
-    def test_single_year(self, tas_series):
+    @pytest.mark.parametrize("chunks", [None, {"time": 183.0}])
+    def test_single_year(self, tas_series, chunks):
         a = np.zeros(366) + K2C
         ts = tas_series(a, start="1/1/2000")
         tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
+        if chunks:
+            ts = ts.chunk(chunks)
 
         out = atmos.growing_season_length(ts)
 

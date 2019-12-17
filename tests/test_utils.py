@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pathlib import Path
+from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos
@@ -118,8 +120,12 @@ class TestEnsembleStats:
         )
 
         ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
-        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.min() == 1970
-        assert ens_mean.where(~np.isnan(ens_mean), drop=True).time.dt.year.max() == 2050
+        assert (
+            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.min() == 1970
+        )
+        assert (
+            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
+        )
 
     def test_calc_perc(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
@@ -212,7 +218,6 @@ class TestDailyDownsampler:
             # assert the values of resampler and grouper are the same
             assert np.allclose(x1.values, x2.values)
 
-    @pytest.mark.skip
     def test_365_day(self):
 
         # 365_day calendar
@@ -725,7 +730,7 @@ class TestSubsetBbox:
         # for irregular lat lon grids data matrix remains rectangular in native proj
         # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
         # Check only non-nans gridcells using mask
-        mask1 = ~np.isnan(out.sel(time=out.time[0]))
+        mask1 = ~(np.isnan(out.sel(time=out.time[0])))
 
         assert np.all(out.lon.values[mask1] >= np.min(self.lon))
         assert np.all(out.lon.values[mask1] <= np.max(self.lon))
@@ -776,3 +781,93 @@ def test_clim_mean_doy(tas_series):
     m, s = clim_mean_doy(da, window=3)
     np.testing.assert_array_equal(m[1:-1], np.arange(365, 365 * 2)[1:-1])
     np.testing.assert_array_almost_equal(s[1:-1], 298.0223, 4)
+
+    
+class TestRolling:
+    @pytest.mark.parametrize(
+        "mode,expected,error",
+        [
+            ("sum", 10, does_not_raise()),
+            ("max", 1, does_not_raise()),
+            (lambda x, axis: x[..., 1], 1, does_not_raise()),
+            ("notanumpyfunction", None, pytest.raises(NotImplementedError)),
+        ],
+    )
+    @pytest.mark.parametrize("dtype", [float, int, bool])
+    def test_rolling_ufunc(self, mode, expected, error, dtype):
+        ones = np.ones((100,), dtype=dtype)
+        if dtype is float:
+            ones[20] = np.nan
+
+        with error:
+            rolld = utils._get_rolling_func(10, mode=mode)(ones)
+            if dtype is float:
+                assert all(np.isnan(rolld[:9]))
+                if isinstance(mode, str):
+                    assert all(np.isnan(rolld[20:30]))
+            assert all(rolld[30:] == expected)
+
+    @pytest.mark.parametrize("mode", ["mean", "max"])
+    def test_rolling(self, mode):
+        fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+        ds_nd = xr.open_dataset(fn)
+        ds_dask = xr.open_dataset(fn, chunks={"time": 30})
+
+        res_nd_xr = getattr(ds_nd.pr.rolling(time=5), mode)()
+        res_nd_xc = utils._rolling(
+            ds_nd.pr, window=5, dim="time", mode=mode, keep_attrs=False
+        )
+        res_dask = utils._rolling(
+            ds_dask.pr, window=5, dim="time", mode=mode, keep_attrs=True
+        )
+
+        xr.testing.assert_identical(res_nd_xr, res_nd_xc)
+        xr.testing.assert_allclose(res_dask, res_nd_xr)
+        assert ds_dask.pr.attrs == res_dask.attrs
+
+
+class TestWindConversion:
+    da_uas = xr.DataArray(
+        np.array([[3.6, -3.6], [-1, 0]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_uas.attrs["units"] = "km/h"
+    da_vas = xr.DataArray(
+        np.array([[3.6, 3.6], [-1, -18]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_vas.attrs["units"] = "km/h"
+    da_wind = xr.DataArray(
+        np.array([[np.hypot(3.6, 3.6), np.hypot(3.6, 3.6)], [np.hypot(1, 1), 18]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_wind.attrs["units"] = "km/h"
+    da_windfromdir = xr.DataArray(
+        np.array([[225, 135], [0, 360]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+
+    def test_uas_vas_2_sfcwind(self):
+        wind, windfromdir = utils.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
+
+        assert np.all(
+            np.around(wind.values, decimals=10)
+            == np.around(self.da_wind.values / 3.6, decimals=10)
+        )
+        assert np.all(
+            np.around(windfromdir.values, decimals=10)
+            == np.around(self.da_windfromdir.values, decimals=10)
+        )
+
+    def test_sfcwind_2_uas_vas(self):
+        uas, vas = utils.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
+
+        assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
+        assert np.all(
+            np.around(vas.values, decimals=10)
+            == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
+        )

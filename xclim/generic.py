@@ -4,6 +4,7 @@
 import dask
 import numpy as np
 import xarray as xr
+from xclim.utils import _rolling
 
 
 def select_time(da, **indexer):
@@ -102,31 +103,42 @@ def fit(da, dist="norm"):
     """
     # Get the distribution
     dc = get_dist(dist)
+    shape_params = [] if dc.shapes is None else dc.shapes.split(",")
+    dist_params = shape_params + ["loc", "scale"]
 
-    # Fit the parameters (lazy computation)
-    data = dask.array.apply_along_axis(
-        dc.fit, da.get_axis_num("time"), da.dropna("time", how="all")
-    )
+    # Fit the parameters.
+    # This would also be the place to impose constraints on the series minimum length if needed.
+    def fitfunc(arr):
+        """Fit distribution parameters."""
+        x = np.ma.masked_invalid(arr).compressed()
+
+        # Return NaNs if array is empty.
+        if len(x) <= 1:
+            return [np.nan,] * len(dist_params)
+
+        # Fill with NaNs if one of the parameters is NaN
+        params = dc.fit(x)
+        if np.isnan(params).any():
+            params[:] = np.nan
+
+        return params
+
+    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
+    data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
 
     # Count the number of values used for the fit.
-    # n = arr.count(dim='time')
+    # n = da.notnull().count(dim='time')
 
-    # Create a view to a DataArray with the desired dimensions to copy them over to the parameter array.
-    mean = da.mean(dim="time", keep_attrs=True)
+    # Coordinates for the distribution parameters
+    coords = dict(da.coords.items())
+    coords.pop("time")
+    coords["dparams"] = dist_params
 
-    # Create coordinate for the distribution parameters
-    coords = dict(mean.coords.items())
-    coords["dparams"] = ([] if dc.shapes is None else dc.shapes.split(",")) + [
-        "loc",
-        "scale",
-    ]
+    # Dimensions for the distribution parameters
+    dims = ["dparams",] + list(da.dims)
+    dims.remove("time")
 
-    # TODO: add time and time_bnds coordinates (Low will work on this)
-    # time.attrs['climatology'] = 'climatology_bounds'
-    # coords['time'] =
-    # coords['climatology_bounds'] =
-
-    out = xr.DataArray(data=data, coords=coords, dims=(u"dparams",) + mean.dims)
+    out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
     out.attrs["original_name"] = getattr(da, "standard_name", "")
     out.attrs[
@@ -194,7 +206,7 @@ def fa(da, t, dist="norm", mode="high"):
     # Create dimensions
     dims = list(p.dims)
     dims.remove("dparams")
-    dims.insert(0, u"return_period")
+    dims.insert(0, "return_period")
 
     # TODO: add time and time_bnds coordinates (Low will work on this)
     # time.attrs['climatology'] = 'climatology_bounds'
@@ -251,16 +263,14 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
 
     """
     # Apply rolling average
-    attrs = da.attrs.copy()
     if window > 1:
-        da = da.rolling(time=window, center=False).mean()
-        da.attrs.update(attrs)
+        da = _rolling(da, window=window, dim="time", keep_attrs=True, mode="mean")
 
     # Assign default resampling frequency if not provided
     freq = freq or default_freq(**indexer)
 
     # Extract the time series of min or max over the period
-    sel = select_resample_op(da, op=mode, freq=freq, **indexer).dropna(dim="time")
+    sel = select_resample_op(da, op=mode, freq=freq, **indexer)
 
     # Frequency analysis
     return fa(sel, t, dist, mode)

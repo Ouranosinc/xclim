@@ -6,6 +6,8 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 
+from xclim.utils import _rolling
+
 logging.captureWarnings(True)
 npts_opt = 9000
 
@@ -201,7 +203,7 @@ def first_run(da, window, dim="time", ufunc_1dim="auto"):
         da = da.astype("int")
         i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": 1})
         ind = xr.broadcast(i, da)[0].chunk(da.chunks)
-        wind_sum = da.rolling(time=window).sum()
+        wind_sum = _rolling(da, dim="time", window=window, mode="sum")
         out = ind.where(wind_sum >= window).min(dim=dim) - (
             window - 1
         )  # remove window -1 as rolling result index is last element of the moving window
@@ -444,7 +446,7 @@ def first_run_ufunc(x, window, index=None):
         kwargs={"window": window},
     )
 
-    if index is not None and ~np.isnan(ind):
+    if index is not None and ~(np.isnan(ind)):
         val = getattr(x.indexes["time"], index)
         i = int(ind.data)
         ind.data = val[i]

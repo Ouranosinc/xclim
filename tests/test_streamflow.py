@@ -28,6 +28,14 @@ class Test_FA:
         )
         assert out.shape == (1, 2, 3)
 
+    def test_empty(self, ndq_series):
+        q = ndq_series.copy()
+        q[:, 0, 0] = np.nan
+        out = streamflow.freq_analysis(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        assert np.isnan(out.values[:, 0, 0]).all()
+
 
 class TestStats:
     def test_simple(self, ndq_series):
@@ -37,10 +45,11 @@ class TestStats:
     def test_missing(self, ndq_series):
         a = ndq_series
         a = ndq_series.where(~((a.time.dt.dayofyear == 5) * (a.time.dt.year == 1902)))
+        assert a.shape == (5000, 2, 3)
         out = streamflow.stats(a, op="max", month=1)
 
-        np.testing.assert_array_equal(out[1].isnull(), False)
-        np.testing.assert_array_equal(out[2].isnull(), True)
+        np.testing.assert_array_equal(out.sel(time="1900").isnull(), False)
+        np.testing.assert_array_equal(out.sel(time="1902").isnull(), True)
 
 
 class TestFit:
