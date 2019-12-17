@@ -5,9 +5,9 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
+from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
-from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -243,9 +243,10 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
 
         DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     dtr = tasmax - tasmin
     out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = str(q.units)
     return out
 
 
@@ -281,9 +282,10 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = str(q.units)
     return out
 
 
@@ -318,11 +320,13 @@ def extreme_temperature_range(
 
         ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
+
     tx_max = tasmax.resample(time=freq).max(dim="time")
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = str(q.units)
     return out
 
 

@@ -90,6 +90,7 @@ class TasminTasmax(Indicator2D):
         for da in (dan, dax):
             checks.check_valid(da, "cell_methods", "time: maximum within days")
             checks.check_valid(da, "standard_name", "air_temperature")
+        assert dan.units == dax.units
 
     @abc.abstractmethod
     def compute(*args, **kwds):
