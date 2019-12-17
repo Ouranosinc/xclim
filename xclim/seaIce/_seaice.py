@@ -19,7 +19,6 @@ class SicArea(Indicator2D):
 
     def validate(self, da):
         """Input validation."""
-        pass
 
     def missing(self, *args, **kwds):
         """Return whether an output is considered missing or not."""

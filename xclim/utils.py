@@ -152,8 +152,8 @@ def units2pint(value: Union[xr.DataArray, str]) -> Any:
         """Convert a CF-unit string to a pint expression."""
         if s == "%":
             return "percent"
-        else:
-            return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
+
+        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
         unit = value
