@@ -5,6 +5,7 @@ from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
+from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -362,7 +363,7 @@ def growing_season_length(
     # compute growth season length on resampled data
     thresh = utils.convert_units_to(thresh, tas)
 
-    c = ((tas > thresh) * 1).rolling(time=window).sum().chunk(tas.chunks)
+    c = _rolling(((tas > thresh) * 1), window=window, dim="time", mode="sum")
 
     def compute_gsl(c):
         nt = c.time.size
