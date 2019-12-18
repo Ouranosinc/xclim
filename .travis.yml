@@ -55,6 +55,7 @@ matrix:
           packages:
             - netcdf
             - python@3
+            - spatialindex
       before_install:
         - python3 -m pip install --upgrade setuptools
         - python3 -m pip install --upgrade pip
