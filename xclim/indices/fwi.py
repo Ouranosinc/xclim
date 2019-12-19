@@ -28,7 +28,8 @@ from xclim import generic
 from xclim import run_length as rl
 from xclim import utils
 
-default_params = dict(
+
+DEFAULT_PARAMS = dict(
     snd_thresh=0.1,
     min_lat=-58,
     max_lat=75,
@@ -43,7 +44,10 @@ default_params = dict(
     tempThresh=6,
     precThresh=1.0,
     DCDryStartFactor=5,
-    DMCDryStartFactor=2
+    DMCDryStartFactor=2,
+    DCStart=None,
+    FFMCStart=None,
+    DMCStart=None,
 )
 """
 paramSets(currParam).History = cellstr(datestr(now)); paramDesc(currDesc) = cellstr('history'); currDesc = currDesc + 1;
@@ -74,21 +78,31 @@ paramSets(currParam).History = cellstr(datestr(now)); paramDesc(currDesc) = cell
     paramSets(currParam).nClimSkipYears = 1;
 """
 
-
-def day_length(lat):
-    """Return the average day length by month within latitudinal bounds."""
-    lat_bnds = (-90, -30, -10, 10, 30, 90)
-
-    dl = [
+DAY_LENGTHS = np.array(
+    [
         [11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8],
         [10.1, 9.6, 9.1, 8.5, 8.1, 7.8, 7.9, 8.3, 8.9, 9.4, 9.9, 10.2],
         12 * [9],
         [7.9, 8.4, 8.9, 9.5, 9.9, 10.2, 10.1, 9.7, 9.1, 8.6, 8.1, 7.8],
         [6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6],
     ]
+)
 
+
+DAY_LENGTH_FACTORS = np.array(
+    [
+        [6.4, 5.0, 2.4, 0.4, -1.6, -1.6, -1.6, -1.6, -1.6, 0.9, 3.8, 5.8],
+        12 * [1.39],
+        [-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6],
+    ]
+)
+
+
+def day_length(lat):
+    """Return the average day length by month within latitudinal bounds."""
+    lat_bnds = (-90, -30, -10, 10, 30, 90)
     i = np.digitize(lat, lat_bnds) - 1
-    return dl[i]
+    return DAY_LENGTHS[i]
 
 
 def day_length_factor(lat, kind="gfwed"):
@@ -99,141 +113,79 @@ def day_length_factor(lat, kind="gfwed"):
     Taken from GFWED code.
     """
     lat_bnds = (-90, -15, 15, 90)
-    dlf = [
-        [6.4, 5.0, 2.4, 0.4, -1.6, -1.6, -1.6, -1.6, -1.6, 0.9, 3.8, 5.8],
-        12 * [1.39],
-        [-1.6, -1.6, -1.6, 0.9, 3.8, 5.8, 6.4, 5.0, 2.4, 0.4, -1.6, -1.6],
-    ]
     i = np.digitize(lat, lat_bnds) - 1
-    return dlf[i]
+    return DAY_LENGTH_FACTORS[i]
 
 
-def significant_snow_cover(snd, min_snow_days=0.75, min_snd="10 cm", snd_thresh="1 cm"):
-    """Return whether or not a site report significant snow cover for each year.
+# def significant_snow_cover(snd, min_snow_days=0.75, min_snd="10 cm", snd_thresh="1 cm"):
+#     """Return whether or not a site report significant snow cover for each year.
 
-    Snow cover is considered significant if the number of days with snow is above a given fraction and if the mean
-    snow depth is above a threshold.
-    """
-    msnd = utils.convert_units_to(min_snd, snd)
-    sndt = utils.convert_units_to(snd_thresh, snd)
+#     Snow cover is considered significant if the number of days with snow is above a given fraction and if the mean
+#     snow depth is above a threshold.
+#     """
+#     msnd = utils.convert_units_to(min_snd, snd)
+#     sndt = utils.convert_units_to(snd_thresh, snd)
 
-    north = (
-        snd.sel(lat=slice(0, None))
-        .sel(time=snd.time.dt.month.isin([1, 2]))
-        .resample(time="A")
-    )
-    south = (
-        snd.sel(lat=slice(None, -1e-6))
-        .sel(time=snd.time.dt.month.isin([7, 8]))
-        .resample(time="A")
-    )
+#     north = (
+#         snd.sel(lat=slice(0, None))
+#         .sel(time=snd.time.dt.month.isin([1, 2]))
+#         .resample(time="A")
+#     )
+#     south = (
+#         snd.sel(lat=slice(None, -1e-6))
+#         .sel(time=snd.time.dt.month.isin([7, 8]))
+#         .resample(time="A")
+#     )
 
-    def condition(winter_snow):
-        """Return if the winter snow mean depth is above threshold and snow covered the ground for at least a
-        fraction of the winter."""
-        c1 = winter_snow.mean() > msnd
-        c2 = winter_snow.apply(lambda x: np.sum((x > sndt) * 1)) >= (
-            winter_snow.count() * min_snow_days
-        )
-        return c1 * c2
+#     def condition(winter_snow):
+#         """Return if the winter snow mean depth is above threshold and snow covered the ground for at least a
+#         fraction of the winter."""
+#         c1 = winter_snow.mean() > msnd
+#         c2 = winter_snow.apply(lambda x: np.sum((x > sndt) * 1)) >= (
+#             winter_snow.count() * min_snow_days
+#         )
+#         return c1 * c2
 
-    out = [condition(hemi) for hemi in [south, north]]
-    return xr.concat(out, dim="lat")
-
-
-def start_up_snow(snd, snd_thresh="1 cm"):
-    """Return day of year at which snow depth is below threshold for three consecutive days."""
-    w = 3
-    sndt = utils.convert_units_to(snd_thresh, snd)
-    under = snd < sndt
-
-    north = under.sel(lat=slice(0, None)).resample(time="A")
-    south = (
-        under.sel(lat=slice(None, -1e-6))
-        .sel(time=snd.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-        .resample(time="A")
-    )
-
-    out = [
-        g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-    ]
-    return xr.concat(out, dim="lat") + w - 1
+#     out = [condition(hemi) for hemi in [south, north]]
+#     return xr.concat(out, dim="lat")
 
 
-def start_up_temp(tas, thresh="6 C"):
-    """Return the date at which the mean temperature is above threshold for three consecutive days."""
-    w = 3
-    t = utils.convert_units_to(thresh, tas)
-    over = tas > t
+# def start_up_snow(snd, snd_thresh="1 cm"):
+#     """Return day of year at which snow depth is below threshold for three consecutive days."""
+#     w = 3
+#     sndt = utils.convert_units_to(snd_thresh, snd)
+#     under = snd < sndt
 
-    north = over.sel(lat=slice(0, None)).resample(time="A")
-    south = (
-        over.sel(lat=slice(None, -1e-6))
-        .sel(time=tas.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-        .resample(time="A")
-    )
+#     north = under.sel(lat=slice(0, None)).resample(time="A")
+#     south = (
+#         under.sel(lat=slice(None, -1e-6))
+#         .sel(time=snd.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
+#         .resample(time="A")
+#     )
 
-    out = [
-        g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-    ]
-    return xr.concat(out, dim="lat") + w - 1
+#     out = [
+#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
+#     ]
+#     return xr.concat(out, dim="lat") + w - 1
 
 
-def big_iterator(tas, pr, ws, rh, snd, mth, lat):
-    it = np.nditer(
-        [tas, pr, ws, rh, snd, mth, None, None, None],
-        [],
-        6 * [["readonly"]] + 3 * [["writeonly", "allocate"]]  # add
-        # no_broadcast?
-    )
+# def start_up_temp(tas, thresh="6 C"):
+#     """Return the date at which the mean temperature is above threshold for three consecutive days."""
+#     w = 3
+#     t = utils.convert_units_to(thresh, tas)
+#     over = tas > t
 
-    dc0 = np.nan
-    last_precip_index = 1e7  # So we catch cases where this is problematic.
+#     north = over.sel(lat=slice(0, None)).resample(time="A")
+#     south = (
+#         over.sel(lat=slice(None, -1e-6))
+#         .sel(time=tas.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
+#         .resample(time="A")
+#     )
 
-    with it:
-        for (t, p, w, h, s, m, ffmc, dmc, dc) in it:
-            i = it.index
-
-            if p >= precThresh:
-                last_precip_index = i
-
-            recent_snow_cover = snd[i - startShutDays : i].mean()
-            recent_temp = tas[i - startShutDays : i].mean()
-
-            # Winter shut-down conditions
-            if (recent_temp < tempThresh) or (recent_snow_cover >= snoDThresh):
-                ffmc0 = np.nan
-                dmc0 = np.nan
-                dc0 = np.nan
-
-            if np.isnan(dc0):
-                # Spring start-up conditions
-                antecedent_snow = snd[i - snowCoverDaysCalc : i]
-                snow_days = sum(antecedent_snow > snoDThresh)
-                ffmc0 = 85
-                if (snow_days / snowCoverDaysCalc >= minSnowDayFrac) and (
-                    antecedent_snow.mean() >= minWinterSnoD
-                ):
-                    dmc0 = 6
-                    dc0 = 15
-
-                else:
-                    n = i - last_precip_index
-                    dc0 = DCDryStartFactor * n
-                    dmc0 = DMCDryStartFactor * n
-
-            if ~np.isnan(dc0):
-                # Compute codes
-                ffmc[...] = _fine_fuel_moisture_code(t, p, w, h, ffmc0)
-                dmc[...] = _duff_moisture_code(t, p, h, m, lat, dmc0)
-                dc[...] = _drought_code(t, p, m, lat, dc0)
-
-                # Set initial values for next day
-                ffmc0 = ffmc
-                dmc0 = dmc
-                dc0 = dc
-
-    return it.operands[6:]
+#     out = [
+#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
+#     ]
+#     return xr.concat(out, dim="lat") + w - 1
 
 
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
@@ -294,7 +246,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
     ffmc = (59.5 * (250.0 - m)) / (147.2 + m)  # *Eq.10*#
     if ffmc > 101.0:
         ffmc = 101.0
-    if ffmc <= 0.0:
+    elif ffmc <= 0.0:
         ffmc = 0.0
 
     return ffmc
@@ -497,12 +449,12 @@ def build_up_index(dmc, dc):
     array
       Build up index.
     """
-    bui = xr.where(
+    bui = np.where(
         dmc <= 0.4 * dc,
         (0.8 * dc * dmc) / (dmc + 0.4 * dc),  # *Eq.27a*#
         dmc - (1.0 - 0.8 * dc / (dmc + 0.4 * dc)) * (0.92 + (0.0114 * dmc) ** 1.7),
     )  # *Eq.27b*#
-    return bui.clip(0, np.inf)
+    return np.clip(bui, 0, None)
 
 
 def fire_weather_index(isi, bui):
@@ -520,137 +472,194 @@ def fire_weather_index(isi, bui):
     array
       Build up index.
     """
-    bb = xr.where(
+    bb = np.where(
         bui <= 80.0,
         0.1 * isi * (0.626 * bui ** 0.809 + 2.0),  # *Eq.28a*#
         0.1 * isi * (1000.0 / (25.0 + 108.64 / np.exp(0.023 * bui))),
     )  # *Eq.28b*#
 
-    fwi = xr.where(
+    fwi = np.where(
         bb <= 1.0, bb, np.exp(2.72 * (0.434 * np.log(bb)) ** 0.647)  # *Eq.30b*#
     )  # *Eq.30a*#
 
     return fwi
 
 
-def ffmc_ufunc(tas, pr, ws, rh, ffmc0):
-    return xr.apply_ufunc(
-        fine_fuel_moisture_code,
-        tas,
-        pr,
-        ws,
-        rh,
-        ffmc0,
-        input_core_dims=4 * (("time",),) + ((),),
-        output_core_dims=(("time",),),
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[np.float],
-        # keep_attrs=True,
-    )
+def daily_severity_rating(fwi):
+    """Daily severity rating
+
+    Parameters
+    ----------
+    fwi : array
+      Fire weather index
+
+    Returns
+    -------
+    array
+      Daily severity rating.
+    """
+    return 0.0272 * fwi ** 1.77
 
 
-def dmc_ufunc(tas, pr, rh, mth, lat, dmc0):
-    return xr.apply_ufunc(
-        duff_moisture_code,
-        tas,
-        pr,
-        rh,
-        mth,
-        lat,
-        dmc0,
-        input_core_dims=4 * (("time",),) + 2 * ((),),
-        output_core_dims=(("time",),),
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[np.float],
-        # keep_attrs=True,
-    )
+# def ffmc_ufunc(tas, pr, ws, rh, ffmc0):
+#     return xr.apply_ufunc(
+#         fine_fuel_moisture_code,
+#         tas,
+#         pr,
+#         ws,
+#         rh,
+#         ffmc0,
+#         input_core_dims=4 * (("time",),) + ((),),
+#         output_core_dims=(("time",),),
+#         vectorize=True,
+#         dask="parallelized",
+#         output_dtypes=[np.float],
+#         # keep_attrs=True,
+#     )
 
 
-def dc_ufunc(tas, pr, mth, lat, dc0):
-    return xr.apply_ufunc(
-        drought_code,
-        tas,
-        pr,
-        mth,
-        lat,
-        dc0,
-        input_core_dims=3 * (("time",),) + 2 * ((),),
-        output_core_dims=(("time",),),
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[np.float],
-        # keep_attrs=True,
-    )
+# def dmc_ufunc(tas, pr, rh, mth, lat, dmc0):
+#     return xr.apply_ufunc(
+#         duff_moisture_code,
+#         tas,
+#         pr,
+#         rh,
+#         mth,
+#         lat,
+#         dmc0,
+#         input_core_dims=4 * (("time",),) + 2 * ((),),
+#         output_core_dims=(("time",),),
+#         vectorize=True,
+#         dask="parallelized",
+#         output_dtypes=[np.float],
+#         # keep_attrs=True,
+#     )
 
-default_params = dict(
-    snd_thresh=0.1,
-    min_lat=-58,
-    max_lat=75,
-    minLandFrac=0.1,
-    minT=-10,
-    minPrec=0.25,
-    snowCoverDaysCalc=60,
-    minWinterSnoD=0.1,
-    snoDThresh=0.01,
-    minSnowDayFrac=0.75,
-    startShutDays=2,
-    tempThresh=6,
-    precThresh=1.0,
-    DCDryStartFactor=5,
-    DMCDryStartFactor=2,
-    DCStart=None,
-    FFMCStart=None,
-    DCStart=None
-)
 
-def calc_fwi(tas, pr, rh, ws, mth, lat, **params):
+# def dc_ufunc(tas, pr, mth, lat, dc0):
+#     return xr.apply_ufunc(
+#         drought_code,
+#         tas,
+#         pr,
+#         mth,
+#         lat,
+#         dc0,
+#         input_core_dims=3 * (("time",),) + 2 * ((),),
+#         output_core_dims=(("time",),),
+#         vectorize=True,
+#         dask="parallelized",
+#         output_dtypes=[np.float],
+#         # keep_attrs=True,
+#     )
 
-    for k, v in default_params:
+
+def calc_indices(tas, pr, rh, ws, snow, mth, lat, **params):
+    """Big iterator, iterating in time, vectorized in space."""
+    dc = np.zeros_like(tas) * np.nan
+    dmc = np.zeros_like(tas) * np.nan
+    ffmc = np.zeros_like(tas) * np.nan
+    isi = np.zeros_like(tas) * np.nan
+    bui = np.zeros_like(tas) * np.nan
+    fwi = np.zeros_like(tas) * np.nan
+    # dsr = np.zeros_like(tas) * np.nan
+
+    if "start_date" in params:
+        dcprev = params["dc0"]
+        dmcprev = params["dmc0"]
+        ffmcprev = params["ffmc0"]
+    else:
+        dcprev = np.zeros_like(tas[0, ...]) * np.nan
+        dmcprev = np.zeros_like(tas[0, ...]) * np.nan
+        ffmcprev = np.zeros_like(tas[0, ...]) * np.nan
+
+    for it in range(params.get("start", params["snowCoverDaysCalc"]), tas.shape[-1]):
+        snow_cover_recent = snow[..., it - params["startShutDays"] : it + 1].mean(
+            axis=-1
+        )
+        snow_cover_history = snow[..., it - params["snowCoverDaysCalc"] : it + 1]
+        snow_days = (snow_cover_history > params["snoDThresh"]).astype(int).sum(axis=-1)
+        temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
+
+        prec_history = pr[..., it - params["snowCoverDaysCalc"] : it + 1]
+        days_since_last_prec = (prec_history > params["precThresh"])[::-1].argmax(
+            axis=-1
+        )
+        days_since_last_prec = np.where(
+            days_since_last_prec == 0, days_since_last_prec, params["snowCoverDaysCalc"]
+        )
+
+        shut_down = (temp_recent < params["tempThresh"]) | (
+            snow_cover_recent >= params["snoDThresh"]
+        )
+        dcprev[shut_down] = np.nan
+        dmcprev[shut_down] = np.nan
+        ffmcprev[shut_down] = np.nan
+
+        start_up = np.isnan(dcprev) & ~shut_down
+        start_up_wet = (
+            start_up
+            & (snow_days / params["snowCoverDaysCalc"] >= params["minSnowDayFrac"])
+            & (snow_cover_history.mean(axis=0) >= params["minWinterSnoD"])
+        )
+        start_up_dry = start_up & ~start_up_wet
+
+        dcprev[start_up_wet] = params["DCStart"]
+        dmcprev[start_up_wet] = params["DMCStart"]
+        dcprev[start_up_dry] = params["DCDryStartFactor"] * days_since_last_prec
+        dmcprev[start_up_dry] = params["DMCDryStartFactor"] * days_since_last_prec
+        ffmcprev[start_up] = params["FFMCStart"]
+
+        dc[..., it] = drought_code(tas[..., it], pr[..., it], mth[..., it], lat, dcprev)
+        dmc[..., it] = duff_moisture_code(
+            tas[..., it], pr[..., it], rh[..., it], mth[..., it], lat, dmcprev
+        )
+        ffmc[..., it] = fine_fuel_moisture_code(
+            tas[..., it], pr[..., it], ws[..., it], rh[..., it], ffmcprev
+        )
+
+        isi[..., it] = initial_spread_index(ws[..., it], ffmc[..., it])
+        bui[..., it] = build_up_index(dmc[..., it], dc[..., it])
+
+        fwi[..., it] = fire_weather_index(isi[..., it], bui[..., it])
+        # dsr[..., it] = daily_severity_rating(fwi[..., it])
+
+        dcprev[...] = dc[..., it]
+        dmcprev[...] = dmc[..., it]
+        ffmcprev[...] = ffmc[..., it]
+
+    return dc, dmc, ffmc, isi, bui, fwi  # , dsr
+
+
+def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
+    for k, v in DEFAULT_PARAMS:
         params.setdefault(k, v)
 
-    dc = xr.full_like(tas, np.nan, float)
-    dmc = xr.full_like(tas, np.nan, float)
-    ffmc = xr.full_like(tas, np.nan, float)
-    isi = xr.full_like(tas, np.nan, float)
-    bui = xr.full_like(tas, np.nan, float)
-    fwi = xr.full_like(tas, np.nan, float)
-    dsr = xr.full_like(tas, np.nan, float)
+    if "start_date" in params:
+        params["start"] = int(
+            abs(snow.time - np.datetime64(params["start_date"])).argmin("time")
+        )
+        if params["start"] < params["snowCoverDaysCalc"]:
+            raise ValueError(
+                "Input data must start at least {} days before the specified start date.".format(
+                    params["snowCoverDaysCalc"]
+                )
+            )
+        elif not all(var0 in params for var0 in ["dc0", "dmc0", "ffmc0"]):
+            raise ValueError(
+                "If a start date is specified, initial maps dc0, dmc0 and ffmc0 must also be given."
+            )
 
-    snow = pr.where(tas < 0.0)
-
-    dcprev = xr.full_like(tas.isel(time=0), np.nan, float)
-    dmcprev = xr.full_like(tas.isel(time=0), np.nan, float)
-    ffmcprev = xr.full_like(tas.isel(time=0), np.nan, float)
-
-    for itoday in range(params.snowCoverDaysCalc, len(tas.time)):
-        snow_cover_recent = snow.isel(time=slice(itoday - params['startShutDays'], itoday + 1)).mean('time')
-        snow_cover_history = snow.isel(time=slice(itoday - params['snowCoverDaysCalc'], itoday + 1))
-        snow_days = (snow_cover_history > params['snoDThresh']).astype(int).sum('time')
-        temp_recent = tas.isel(time=slice(itoday - params['startShutDays'], itoday + 1)).mean('time')
-
-        prec_history = pr.isel(time=slice(itoday - params['snowCoverDaysCalc'], itoday + 1))
-        days_since_last_prec = (prec_history > params['precThresh']).sortby(prec_history.time, ascending=False).argmax('time')
-        days_since_last_prec = days_since_last_prec.where(days_since_last_prec == 0, params['snowCoverDaysCalc'])
-
-        shut_down = ((temp_recent < params['tempThresh']) | 
-                     (snow_cover_recent >= params['snoDThresh']))
-        dcprev = dcprev.where(~shut_down)
-        dmcprev = dmcprev.where(~shut_down)
-        ffmcprev = ffmcprev.where(~shut_down)
-
-        start_up = ~dcprev.notnull() & ~shut_down
-        start_up_wet = (start_up &
-                        (snow_days / params['snowCoverDaysCalc'] >= params['minSnowDayFrac']) &
-                        (snow_cover_history.mean('time') >= params['minWinterSnoD']))
-        start_up_dry = start_up & ~start_up_wet
-        
-        dcprev = dcprev.where(start_up_wet, params['DCStart'])
-        dmcprev = dmcprev.where(start_up_wet, params['DMCStart'])
-        ffmcprev = ffmcprev.where(start_up_wet, params['FFMCStart'])
-
-        dcprev = dcprev.where(start_up_dry, params['DCDryStartFactor'] * days_since_last_prec)
-        dmcprev = dmcprev.where(start_up_dry, params['DMCDryStartFactor'] * days_since_last_prec)
-
-        
+    return xr.apply_ufunc(
+        calc_indices,
+        tas,
+        pr,
+        rh,
+        ws,
+        snow,
+        tas.time.dt.month,
+        lat,
+        kwargs=params,
+        input_core_dims=7 * (("time",),) + 1 * ((),),
+        output_core_dims=6 * (("time",),),
+        dask="allowed",
+    )
