@@ -16,6 +16,7 @@ matrix:
       addons:
         apt:
           packages:
+            - libspatialindex-dev
             - pandoc
     - env: TOXENV=black
       name: "Black and flake8 compliance"
@@ -32,7 +33,6 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-            - libnetcdf4
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
@@ -81,7 +81,13 @@ matrix:
           apt:
               packages:
                   - libspatialindex-dev
-
+    - env: TOXENV=py35
+      name: "Python3.5 (Linux)"
+      python: 3.5
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
@@ -91,23 +97,6 @@ before_install:
     - sudo -H pip install --upgrade pip
 
 install:
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH="$HOME/miniconda/bin:$PATH"
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    # Useful for debugging any issues with conda
-    - conda info -a
-    # Prepare env with Python version
-    - conda create -n finch python=$TRAVIS_PYTHON_VERSION
-    # Update now the env with our environment
-    - conda env update -f environment.yml
-    - conda activate xclim
-    # Packages for testing
-    - conda install pytest flake8
-    # Install
-    - python setup.py install
     - pip install -U tox-travis
 
 script: tox -e $TOXENV
