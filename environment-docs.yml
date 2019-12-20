@@ -1,4 +1,4 @@
-name: xclim
+name: raven
 channels:
 - conda-forge
 - defaults
