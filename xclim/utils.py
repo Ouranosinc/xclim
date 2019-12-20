@@ -13,9 +13,10 @@ from collections import OrderedDict
 from inspect import signature
 from types import FunctionType
 from typing import Any
+from typing import Callable
 from typing import Optional
 from typing import Union
-from typing import Callable
+
 import dask
 import numpy as np
 import pint
@@ -960,8 +961,12 @@ class Indicator:
         from functools import reduce
 
         freq = kwds.get("freq", "D")
-
-        miss = (checks.missing_any(da, freq) for da in args)
+        if freq is not None:
+            # We flag any period with missing data
+            miss = (checks.missing_any(da, freq) for da in args)
+        else:
+            # There is no resampling, we flag where one of the input is missing
+            miss = (da.isnull() for da in args)
         return reduce(np.logical_or, miss)
 
     def validate(self, da):
