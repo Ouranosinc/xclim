@@ -100,7 +100,7 @@ install:
     # Useful for debugging any issues with conda
     - conda info -a
     # Prepare env with Python version
-    - conda create -n finch python=$TRAVIS_PYTHON_VERSION
+    - conda create -n xclim python=$TRAVIS_PYTHON_VERSION
     # Update now the env with our environment
     - conda env update -f environment.yml
     - conda activate xclim
