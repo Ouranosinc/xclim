@@ -9,7 +9,7 @@ python:
   version: 3.6
 
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: docs/conf.py
 
 conda:
   environment: readthedocs_environment.yml
