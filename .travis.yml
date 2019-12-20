@@ -102,6 +102,7 @@ install:
     - conda create -n xclim python=$TRAVIS_PYTHON_VERSION
     # Update now the env with our environment
     - conda env update -f environment.yml
+    - conda init bash
     - conda activate xclim
     # Packages for testing
     - conda install pytest flake8
