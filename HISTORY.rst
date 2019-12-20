@@ -8,7 +8,7 @@ History
 * Added a `tolerance` argument to `subset_gridpoint` raising an error if distance to closest point is larger than tolerance.
 * Created land module for standardized access to streamflow indices.
 * Enhancement to utils.Indicator to have more dynamic attributes using callables.
-* Added indices `heat_wave_total_length` and `tas` / `tg`.
+* Added indices `heat_wave_total_length` and `tas`, an indice to compute mean tas from tasmin and tasmax.
 * Fixed a bug with typed call signatures that caused downstream failures on library import.
 * Added a `_rolling` util function to fix memory issues on large dask datasets.
 * Added the `subset_shape` function to subset utilities for clipping region-masked datasets via polygons.
