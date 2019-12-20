@@ -8,6 +8,8 @@ import dask.array
 import numpy as np
 import xarray as xr
 
+from xclim.utils import _rolling
+
 
 def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
@@ -268,10 +270,8 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
 
     """
     # Apply rolling average
-    attrs = da.attrs.copy()
     if window > 1:
-        da = da.rolling(time=window, center=False).mean()
-        da.attrs.update(attrs)
+        da = _rolling(da, window=window, dim="time", keep_attrs=True, mode="mean")
 
     # Assign default resampling frequency if not provided
     freq = freq or default_freq(**indexer)

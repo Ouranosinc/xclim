@@ -7,7 +7,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-import scipy.stats
+import scipy
 import xarray as xr
 from sklearn.cluster import KMeans
 
@@ -25,6 +25,7 @@ except ImportError:
 def create_ensemble(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
+    **xr_kwargs
 ) -> xr.Dataset:
 
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
@@ -44,6 +45,9 @@ def create_ensemble(
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when "datasets" is a sequence of file paths.
+
+    xr_kwargs :
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
@@ -72,7 +76,7 @@ def create_ensemble(
 
     dim = "realization"
 
-    time_flag, time_all = _ens_checktimes(datasets, mf_flag)
+    time_flag, time_all = _ens_checktimes(datasets, mf_flag, **xr_kwargs)
 
     ds1 = _ens_align_datasets(datasets, mf_flag, time_flag, time_all)
 
@@ -206,6 +210,7 @@ def ensemble_percentiles(
 def _ens_checktimes(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
+    **xr_kwargs
 ) -> Tuple[bool, np.ndarray]:
     """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
     maximum time-step interval of all input files.
@@ -218,6 +223,8 @@ def _ens_checktimes(
     mf_flag : bool
       If True climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when :datasets: is a sequence of file paths.
+    xr_kwargs :
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
@@ -226,19 +233,18 @@ def _ens_checktimes(
     array of datetime64
       Series of unique time-steps covering all input datasets.
     """
-
+    xr_kwargs.setdefault("decode_times", False)
     time_flag = False
     time_all = []
     for n in datasets:
         if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
+            xr_kwargs.setdefault("chunks", {"time": 10})
+            ds = xr.open_mfdataset(n, **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
             else:
-                ds = xr.open_dataset(n, decode_times=False)
+                ds = xr.open_dataset(n, **xr_kwargs)
 
         if hasattr(ds, "time"):
             ds["time"] = xr.decode_cf(ds).time
@@ -267,6 +273,7 @@ def _ens_align_datasets(
     mf_flag: bool = False,
     time_flag: bool = False,
     time_all=None,
+    **xr_kwargs
 ) -> List[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
     are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
@@ -284,24 +291,26 @@ def _ens_align_datasets(
       True if time dimension is present among the "datasets"; Otherwise false.
     time_all : array of datetime64
       Series of unique time-steps covering all input Datasets.
+    xr_kwargs :
+      Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
     List[xr.Dataset]
     """
+    xr_kwargs.setdefault("chunks", {"time": 10})
+    xr_kwargs.setdefault("decode_times", False)
 
     ds_all = []
     for n in datasets:
         logging.info("Accessing file ", datasets.index(n) + 1, " of ", len(datasets))
         if mf_flag:
-            ds = xr.open_mfdataset(
-                n, concat_dim="time", decode_times=False, chunks={"time": 10}
-            )
+            ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
             else:
-                ds = xr.open_dataset(n, decode_times=False, chunks={"time": 10})
+                ds = xr.open_dataset(n, **xr_kwargs)
 
         if time_flag:
 
@@ -413,29 +422,21 @@ def _calc_percentiles_blocks(ens, v, values, time_block):
 
 def _calc_perc(arr, p):
     dims = arr.dims
-    # make sure time is the second dimension
-    if dims.index("time") != 1:
-        dims1 = [dims[dims.index("realization")], dims[dims.index("time")]]
-        for d in dims:
-            if d not in dims1:
-                dims1.append(d)
-        arr = arr.transpose(*dims1)
-        dims = dims1
+    # make sure realization is the first dimension
+    if dims.index("realization") != 0:
+        arr = arr.transpose(
+            "realization", *[dim for dim in dims if dim != "realization"]
+        )
 
-    nan_count = np.isnan(arr).sum(axis=dims.index("realization"))
-    out = np.percentile(arr, p, axis=dims.index("realization"))
-    if np.any((nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])):
-        arr1 = arr.values.reshape(
-            arr.shape[dims.index("realization")],
-            int(arr.size / arr.shape[dims.index("realization")]),
-        )
+    nan_count = np.isnan(arr).sum(axis=0)
+    out = np.percentile(arr, p, axis=0)
+    if np.any((nan_count > 0) & (nan_count < arr.shape[0])):
+        arr1 = arr.values.reshape(arr.shape[0], int(arr.size / arr.shape[0]))
         # only use nanpercentile where we need it (slow performace compared to standard) :
-        nan_index = np.where(
-            (nan_count > 0) & (nan_count < arr.shape[dims.index("realization")])
-        )
+        nan_index = np.where((nan_count > 0) & (nan_count < arr.shape[0]))
         t = np.ravel_multi_index(nan_index, nan_count.shape)
         out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
-            arr1[:, t], p, axis=dims.index("realization")
+            arr1[:, t], p, axis=0
         )
 
     return out
@@ -601,6 +602,9 @@ def kmeans_reduce_ensemble(
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
         fig_data["realizations"] = n_sim
+
+    else:
+        fig_data = None
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(

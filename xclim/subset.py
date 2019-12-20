@@ -1,14 +1,78 @@
+import copy
+import logging
 import warnings
 from functools import wraps
+from pathlib import Path
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import fiona
+import fiona.crs as fiocrs
+import geojson
+import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray
 from pyproj import Geod
+from shapely.geometry import LineString
+from shapely.geometry import Point
+from shapely.geometry import Polygon
+from shapely.ops import cascaded_union
+from shapely.ops import split
 
-__all__ = ["subset_bbox", "subset_gridpoint", "subset_time"]
+__all__ = [
+    "create_mask",
+    "subset_bbox",
+    "subset_gridpoint",
+    "subset_shape",
+    "subset_time",
+]
+logging.basicConfig(level=logging.INFO)
+
+
+def _read_geometries(
+    shape: Union[str, Path], crs: Optional[Union[str, int]] = None
+) -> Tuple[List[geojson.geometry.Geometry], dict]:
+    """
+    A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
+      the shapely Shape object.
+    """
+    try:
+        if shape is None:
+            raise ValueError
+    except (KeyError, ValueError):
+        logging.exception("No shape provided.")
+        raise
+
+    geom = list()
+    geometry_types = list()
+    try:
+        with fiona.open(shape) as layer:
+            logging.info("Vector read OK.")
+            if crs:
+                try:
+                    shape_crs = fiocrs.from_epsg(crs)
+                except ValueError:
+                    try:
+                        shape_crs = fiocrs.from_string(crs)
+                    except ValueError:
+                        raise
+            else:
+                shape_crs = layer.crs or fiocrs.from_epsg(4326)
+            for i, feat in enumerate(layer):
+                g = geojson.GeoJSON(feat)
+                geom.append(g["geometry"])
+                geometry_types.append(g["geometry"]["type"])
+    except fiona.errors.DriverError:
+        logging.exception("Unable to read shape.")
+        raise
+
+    if len(geom) >= 1:
+        logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
+        return geom, shape_crs
+    raise RuntimeError("No geometries found.")
 
 
 def check_date_signature(func):
@@ -115,19 +179,485 @@ def check_lons(func):
                 kwargs[lon] = np.asarray(args[0].lon.min(), args[0].lon.max())
             else:
                 kwargs[lon] = np.asarray(kwargs[lon])
-            if np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
+            if np.all(args[0].lon >= 0) and np.all(kwargs[lon] < 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] += 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] += 360
+            elif np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
+                raise NotImplementedError(
+                    "Input longitude bounds ({}) cross the 0 degree meridian but"
+                    " dataset longitudes are all positive.".format(kwargs[lon])
+                )
             if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
                     kwargs[lon] -= 360
                 else:
                     kwargs[lon][kwargs[lon] < 0] -= 360
+
         return func(*args, **kwargs)
 
     return func_checker
+
+
+def wrap_lons_and_split_at_greenwich(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator to split and reproject polygon vectors in a GeoDataFram whose values cross the Greenwich Meridian.
+         Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
+         the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
+         transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
+
+         Returns a GeoDataFrame with the new features in a wrap_lon WGS84 projection if needed.
+        """
+        try:
+            poly = kwargs["poly"]
+            x_dim = kwargs["x_dim"]
+            wrap_lons = kwargs["wrap_lons"]
+        except KeyError:
+            return func(*args, **kwargs)
+
+        if wrap_lons:
+            if (np.min(x_dim) < 0 and np.max(x_dim) >= 360) or (
+                np.min(x_dim) < -180 and np.max >= 180
+            ):
+                warnings.warn(
+                    "Dataset doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
+                    " Tread with caution.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+            split_flag = False
+            if (poly.geometry.total_bounds[0] < 0) and (
+                poly.geometry.total_bounds[2] > 0
+            ):
+                split_flag = True
+                warnings.warn(
+                    "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
+                    " This feature is experimental. Output might not be accurate.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+                # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
+                union = Polygon(cascaded_union(poly.geometry))
+                meridian = LineString([Point(0, 90), Point(0, -90)])
+                buffered = meridian.buffer(0.000000001)
+                split_polygons = split(union, meridian)
+                buffered_split_polygons = [
+                    feat for feat in split_polygons.difference(buffered)
+                ]
+
+                # Load split features into a new GeoDataFrame with WGS84 CRS
+                split_gdf = gpd.GeoDataFrame(
+                    list(range(len(buffered_split_polygons))),
+                    geometry=buffered_split_polygons,
+                    crs={"init": "epsg:4326"},
+                )
+                # split_gdf.crs = CRS.from_epsg(4326)
+                split_gdf.columns = ["index", "geometry"]
+
+                poly = split_gdf
+
+            # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
+            poly = poly.to_crs(
+                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+            )
+            crs1 = poly.crs
+            if split_flag:
+                logging.warning(
+                    "Rebuffering split polygons to ensure edge inclusion in selection"
+                )
+                poly = gpd.GeoDataFrame(poly.buffer(0.000000001), columns=["geometry"])
+                poly.crs = crs1
+            kwargs["poly"] = poly
+
+        return func(*args, **kwargs)
+
+    return func_checker
+
+
+@wrap_lons_and_split_at_greenwich
+def create_mask(
+    *,
+    x_dim: xarray.DataArray = None,
+    y_dim: xarray.DataArray = None,
+    poly: gpd.GeoDataFrame = None,
+    wrap_lons: bool = False
+):
+    """
+    Parameters
+    ----------
+    x_dim : xarray.DataArray
+      X or longitudinal dimension of xarray object.
+    y_dim : xarray.DataArray
+      Y or latitudinal dimension of xarray object.
+    poly : gpd.GeoDataFrame
+      GeoDataFrame used to create the xarray.DataArray mask.
+    wrap_lons : bool
+      Shift vector longitudes by -180,180 degrees to 0,360 degrees; Default = False
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
+        # create a 2d grid of lon, lat values
+        lon1, lat1 = np.meshgrid(
+            np.asarray(x_dim.values), np.asarray(y_dim.values), indexing="ij"
+        )
+        dims_out = x_dim.dims + y_dim.dims
+        coords_out = dict()
+        coords_out[dims_out[0]] = x_dim.values
+        coords_out[dims_out[1]] = y_dim.values
+    else:
+        lon1 = x_dim.values
+        lat1 = y_dim.values
+        dims_out = x_dim.dims
+        coords_out = x_dim.coords
+
+    # create pandas Dataframe from NetCDF lat and lon points
+    df = pd.DataFrame(
+        {"id": np.arange(0, lon1.size), "lon": lon1.flatten(), "lat": lat1.flatten()}
+    )
+    df["Coordinates"] = list(zip(df.lon, df.lat))
+    df["Coordinates"] = df["Coordinates"].apply(Point)
+
+    # create geodataframe (spatially referenced with shifted longitude values if needed).
+    if wrap_lons:
+        shifted = fiocrs.from_string(
+            "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+        )
+        gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=shifted)
+    else:
+        gdf_points = gpd.GeoDataFrame(
+            df, geometry="Coordinates", crs=fiocrs.from_epsg(4326)
+        )
+
+    # spatial join geodata points with region polygons and remove duplicates
+    point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="intersects")
+    point_in_poly = point_in_poly.loc[~point_in_poly.index.duplicated(keep="first")]
+
+    # extract polygon ids for points
+    mask = point_in_poly["index_right"]
+    mask_2d = np.array(mask).reshape(lat1.shape[0], lat1.shape[1])
+    mask_2d = xarray.DataArray(mask_2d, dims=dims_out, coords=coords_out)
+    return mask_2d
+
+
+@check_date_signature
+def subset_shape(
+    ds: Union[xarray.DataArray, xarray.Dataset],
+    shape: Union[str, Path],
+    raster_crs: Optional[Union[str, int]] = None,
+    shape_crs: Optional[Union[str, int]] = None,
+    buffer: Optional[Union[int, float]] = None,
+    wrap_lons: Optional[bool] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> Union[xarray.DataArray, xarray.Dataset]:
+    """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
+
+    Return a subsetted data array for grid points falling within the area of a Polygon and/or MultiPolygon shape,
+      or grid points along the path of a LineString and/or MultiLineString.
+
+    Parameters
+    ----------
+    ds : Union[xarray.DataArray, xarray.Dataset]
+    shape : Union[str, Path]
+    raster_crs : Optional[Union[str, int]]
+    shape_crs : Optional[Union[str, int]]
+    buffer : Optional[Union[int, float]]
+      Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
+    wrap_lons: Optional[bool]
+      Manually set whether vector longitudes should extend from 0 to 360 degrees.
+    start_date : Optional[str]
+    end_date : Optional[str]
+    start_yr : int
+      Deprecated
+        First year of the subset. Defaults to first year of input data-array.
+    end_yr : int
+      Deprecated
+        Last year of the subset. Defaults to last year of input data-array.
+
+    Returns
+    -------
+    Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> import rioxarray
+    >>> import xarray as xr
+    >>> pr = xarray.open_dataset('pr.day.nc').pr
+    Subset data array by shape and multiple years
+    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+    Subset data array by shape and single year
+    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
+    Subset multiple variables in a single dataset
+    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
+    >>> dsSub = subset.subset_shape(ds, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03', end_date='1999-08')
+    # Subset with specific start_dates and end_dates
+    >>> prSub = \
+            subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
+    """
+    # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
+    ds_copy = copy.deepcopy(ds)
+    poly = gpd.GeoDataFrame.from_file(shape)
+
+    if buffer is not None:
+        poly.geometry = poly.buffer(buffer)
+
+    # if poly doesn't cross prime meridian we can subet with subset_bbox first
+    # reduce using subset_bbox to reduce processing time
+    bounds = poly.bounds
+    lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
+    lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
+
+    # Use subset bbox on bounds to reduce grid as much as possible
+    # Only case not implemented is when lon_bnds cross the 0 deg meridian but dataset grid has all positive lons
+    try:
+        ds_copy = subset_bbox(ds_copy, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+    except NotImplementedError:
+        pass
+
+    if ds_copy.lon.size == 0 or ds_copy.lat.size == 0:
+        raise ValueError(
+            "No gridcell centroids found within provided polygon bounding box. "
+            'Try using the "buffer" option to create an expanded area'
+        )
+
+    if start_date or end_date:
+        ds_copy = subset_time(ds_copy, start_date=start_date, end_date=end_date)
+
+    # Determine whether CRS types are the same between shape and raster
+    if shape_crs is not None:
+        try:
+            shape_crs = fiocrs.from_epsg(shape_crs)
+        except ValueError:
+            try:
+                shape_crs = fiocrs.from_string(shape_crs)
+            except ValueError:
+                raise
+    else:
+        shape_crs = poly.crs
+    if raster_crs is not None:
+        try:
+            raster_crs = fiocrs.from_epsg(raster_crs)
+        except ValueError:
+            try:
+                raster_crs = fiocrs.from_string(raster_crs)
+            except ValueError:
+                raise
+    else:
+        if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
+            # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
+            raster_crs = fiocrs.from_string(
+                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+            )
+            wrap_lons = True
+        else:
+            raster_crs = fiocrs.from_epsg(4326)
+            wrap_lons = False
+
+    if (shape_crs != raster_crs) or (
+        fiocrs.from_epsg(4326) not in [shape_crs, raster_crs]
+    ):
+        warnings.warn(
+            "CRS definitions are not similar or both not using WGS84. Caveat emptor.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+    mask_2d = create_mask(
+        x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
+    )
+
+    if np.all(np.isnan(mask_2d)):
+        raise ValueError(
+            "No gridcell centroids found within provided polygon. "
+            'Try using the "buffer" option to create an expanded areas or verify polygon '
+        )
+
+    # loop through variables
+    for v in ds_copy.data_vars:
+        if set.issubset(set(mask_2d.dims), set(ds_copy[v].dims)):
+            ds_copy[v] = ds_copy[v].where((~np.isnan(mask_2d)), drop=True)
+
+    # TODO: This doesn't seem to do anything. Lots of NaNs still present.
+    if "lon" in ds_copy.dims:
+        ds_copy = ds_copy.dropna(dim="lon", how="all")
+        ds_copy = ds_copy.dropna(dim="lat", how="all")
+    else:  # curvilinear case
+        for d in ds_copy.lon.dims:
+            ds_copy = ds_copy.dropna(dim=d, how="all")
+    # Add a CRS definition as a coordinate for reference purposes
+    if wrap_lons:
+        ds_copy.coords["crs"] = 0
+        ds_copy.coords["crs"].attrs = dict(
+            spatial_ref="+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+        )
+
+    return ds_copy
+
+
+# @check_date_signature
+# def subset_shape(
+#     da: Union[xarray.DataArray, xarray.Dataset],
+#     shape: Union[str, Path],
+#     start_date: Optional[str] = None,
+#     end_date: Optional[str] = None,
+#     da_crs: Optional[str] = None,
+#     geometry: Optional[List[geojson.GeoJSON]] = None,
+#     shape_crs: Optional[str] = None,
+# ) -> Union[xarray.DataArray, xarray.Dataset]:
+#     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
+#
+#     Return a subsetted data array for grid points falling within the area of a polygon and/or MultiPolygon shape,
+#       or grid points along the path of a LineString and/or MultiLineString.
+#
+#     Parameters
+#     ----------
+#     da : Union[xarray.DataArray, xarray.Dataset]
+#       Input data.
+#     shape : Union[str, Path, geometry.GeometryCollection]
+#       Path to a single-layer vector file, or a shapely GeometryCollection object.
+#     start_date : Optional[str]
+#       Start date of the subset.
+#       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+#       Defaults to first day of input data-array.
+#     end_date : Optional[str]
+#       End date of the subset.
+#       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+#       Defaults to last day of input data-array.
+#     geometry: Optional[List[geojson.GeoJSON]]
+#       A list of all GeoJSON shapes to be used in clipping the xarray.DataArray or xarray.Dataset
+#     da_crs : Optional[Union[int, dict, str]]
+#       CRS of the xarray.DataArray or xarray.Dataset provided. Default: dict(epsg=4326).
+#     shape_crs : Optional[Union[int, dict, str]]
+#       CRS of the geometries provided. If passing GeometryCollections as shapes, CRS must be explicitly stated.
+#     start_yr : int
+#       Deprecated
+#         First year of the subset. Defaults to first year of input data-array.
+#     end_yr : int
+#       Deprecated
+#         Last year of the subset. Defaults to last year of input data-array.
+#
+#     Returns
+#     -------
+#     Union[xarray.DataArray, xarray.Dataset]
+#       Subsetted xarray.DataArray or xarray.Dataset
+#
+#     Warnings
+#     --------
+#     This functions relies on the rioxarray library and requires xarray Datasets and DataArrays that have been read with
+#      the `rioxarray` library imported. Attempting to use this function with pure xarray objects will raise exceptions.
+#
+#     Examples
+#     --------
+#     >>> from xclim import subset
+#     >>> import rioxarray
+#     >>> import xarray as xr
+#     >>> ds = xarray.open_dataset('pr.day.nc')
+#     Subset lat lon and years
+#     >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+#     Subset data array lat, lon and single year
+#     >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
+#     Subset data array single year keep entire lon, lat grid
+#     >>> prSub = subset.subset_bbox(ds.pr, start_yr='1990', end_yr='1990') # one year only entire grid
+#     Subset multiple variables in a single dataset
+#     >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
+#     >>> dsSub = subset.subset_bbox(ds, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+#      # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+#     >>> prSub = subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03', end_date='1999-08')
+#     # Subset with specific start_dates and end_dates
+#     >>> prSub = \
+#             subset.subset_time(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
+#     """
+#
+#     if geometry and shape_crs:
+#         shape_crs = rasterio.crs.CRS.from_user_input(shape_crs)
+#     else:
+#         geometry, shape_crs = _read_geometries(shape, crs=shape_crs)
+#
+#     try:
+#         # NetCDF data doesn't typically have defined CRS. Ensure this is the case and append one if needed.
+#         if da.rio.crs is None:
+#             if da_crs is None:
+#
+#                 if "rlon" in da.dims or "rlat" in da.dims:
+#                     raise NotImplementedError("Rotated poles are not supported.")
+#
+#                 else:
+#                     crs = rasterio.crs.CRS.from_epsg(4326)
+#                     if np.any(da.lon < -180) or np.any(da.lon > 360):
+#                         raise rasterio.crs.CRSError(
+#                             "NetCDF doesn't seem to be in EPSG:4326. Set CRS manually."
+#                         )
+#
+#                     # Convert longitudes from 0,+360 to -180,+180
+#                     if np.any(da.lon > 180):
+#                         lon_attrs = da.lon.attrs.copy()
+#                         fix_lon = da.lon.values
+#                         fix_lon[fix_lon > 180] = fix_lon[fix_lon > 180] - 360
+#
+#                         # Correct lon_bnds in xarray.Datasets
+#                         if isinstance(da, xarray.Dataset):
+#                             if "lon_bnds" in da.data_vars:
+#                                 fix_lon_bnds = da.lon_bnds.values
+#                                 fix_lon_bnds[fix_lon_bnds > 180] = (
+#                                     fix_lon_bnds[fix_lon_bnds > 180] - 360
+#                                 )
+#                         da = da.assign_coords(lon=fix_lon)
+#                         da = da.sortby("lon")
+#                         da.lon.attrs = lon_attrs
+#             else:
+#                 crs = rasterio.crs.CRS.from_user_input(da_crs)
+#         else:
+#             crs = da.rio.crs
+#
+#     except Exception as e:
+#         logging.exception(e)
+#         raise
+#
+#     if shape_crs != crs:
+#         raise rasterio.crs.CRSError("Shape and Raster CRS are not the same.")
+#
+#     if isinstance(da, xarray.Dataset):
+#         # Create a new empty xarray.Dataset and populate with corrected/clipped variables
+#         ds_out = xarray.Dataset(data_vars=None, attrs=da.attrs)
+#         for v in da.data_vars:
+#             if "lon" in da[v].dims and "lat" in da[v].dims:
+#                 dss = da[v]
+#                 # Identify spatial dimensions
+#                 dss.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+#                 dss.rio.write_crs(crs, inplace=True)
+#                 ds_out[v] = dss.rio.clip(
+#                     geometry, crs=dss.rio.crs, all_touched=True, drop=True, invert=False
+#                 )
+#
+#         for v in da.data_vars:
+#             if not ("lon" in da[v].dims and "lat" in da[v].dims):
+#                 if "lat" in da[v].dims:
+#                     ds_out[v] = da[v].sel(lat=ds_out.lat)
+#                 elif "lon" in da[v].dims:
+#                     ds_out[v] = da[v].sel(lon=ds_out.lon)
+#                 else:
+#                     ds_out[v] = da[v]
+#     else:
+#         da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+#         da.rio.write_crs(crs, inplace=True)
+#         ds_out = da.rio.clip(
+#             geometry, crs=crs, all_touched=True, drop=True, invert=False
+#         )
+#
+#     if start_date or end_date:
+#         ds_out = subset_time(ds_out, start_date=start_date, end_date=end_date)
+#
+#     return ds_out
 
 
 @check_lons
@@ -144,6 +674,7 @@ def subset_bbox(
     Return a subsetted data array for grid points falling within a spatial bounding box
     defined by longitude and latitudinal bounds and for dates falling within provided bounds.
 
+    TODO: returns the what?
     In the case of a lat-lon rectilinear grid, this simply returns the
 
     Parameters
@@ -169,7 +700,6 @@ def subset_bbox(
       Deprecated
         Last year of the subset. Defaults to last year of input data-array.
 
-
     Returns
     -------
     Union[xarray.DataArray, xarray.Dataset]
@@ -180,18 +710,20 @@ def subset_bbox(
     >>> from xclim import subset
     >>> ds = xarray.open_dataset('pr.day.nc')
     Subset lat lon and years
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
     Subset data array lat, lon and single year
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1990')
+    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1990')
     Subset dataarray single year keep entire lon, lat grid
-    >>> prSub = subset.subset_bbox(ds.pr,start_yr='1990',end_yr='1990') # one year only entire grid
+    >>> prSub = subset.subset_bbox(ds.pr, start_yr='1990', end_yr='1990') # one year only entire grid
     Subset multiple variables in a single dataset
     >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_bbox(ds,lon_bnds=[-75,-70],lat_bnds=[40,45],start_yr='1990',end_yr='1999')
+    >>> dsSub = subset.subset_bbox(ds, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
      # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03',end_date='1999-08')
+    >>> prSub = \
+        subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],start_date='1990-03', end_date='1999-08')
     # Subset with specific start_dates and end_dates
-    >>> prSub = subset.subset_time(ds.pr,lon_bnds=[-75,-70],lat_bnds=[40,45],start_date='1990-03-13',end_date='1990-08-17')
+    >>> prSub = subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],\
+                                    start_date='1990-03-13', end_date='1990-08-17')
     """
     # start_date, end_date = _check_times(
     #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
@@ -219,12 +751,14 @@ def subset_bbox(
             lat_b = assign_bounds(lat_bnds, da.lat)
             lat_cond = in_bounds(lat_b, da.lat)
         else:
+            lat_b = None
             lat_cond = True
 
         if lon_bnds is not None:
             lon_b = assign_bounds(lon_bnds, da.lon)
             lon_cond = in_bounds(lon_b, da.lon)
         else:
+            lon_b = None
             lon_cond = True
 
         # Crop original array using slice, which is faster than `where`.
@@ -398,7 +932,9 @@ def subset_gridpoint(
         else:
             raise (
                 Exception(
-                    'subset_gridpoint() requires input data with "lon" and "lat" coordinates or data variables.'
+                    '{} requires input data with "lon" and "lat" coordinates or data variables.'.format(
+                        subset_gridpoint.__name__
+                    )
                 )
             )
 
@@ -488,9 +1024,13 @@ def distance(da, lon, lat):
     Note
     ----
     To get the indices from closest point, use
-    >>> d = distance(da)
+    >>> import numpy as np
+    >>> import xarray as xr
+    >>> import xclim.subset
+    >>> da = xr.open_dataset("/path/to/file.nc").variable
+    >>> d = xclim.subset.distance(da)
     >>> k = d.argmin()
-    >>> i, j = numpy.unravel_index(k, d.shape)
+    >>> i, j = np.unravel_index(k, d.shape)
 
     """
     g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly

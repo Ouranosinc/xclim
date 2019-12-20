@@ -765,12 +765,15 @@ class TestDailyFreezeThaw:
 
 
 class TestGrowingSeasonLength:
-    def test_single_year(self, tas_series):
+    @pytest.mark.parametrize("chunks", [None, {"time": 183.0}])
+    def test_single_year(self, tas_series, chunks):
         a = np.zeros(366) + K2C
         ts = tas_series(a, start="1/1/2000")
         tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
+        if chunks:
+            ts = ts.chunk(chunks)
 
         out = atmos.growing_season_length(ts)
 
