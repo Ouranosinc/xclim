@@ -33,6 +33,8 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
+            - libnetcdf-dev
+            - libhdf5-dev
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
