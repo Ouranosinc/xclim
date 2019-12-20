@@ -4,6 +4,7 @@
 import dask
 import numpy as np
 import xarray as xr
+
 from xclim.utils import _rolling
 
 
@@ -114,7 +115,7 @@ def fit(da, dist="norm"):
 
         # Return NaNs if array is empty.
         if len(x) <= 1:
-            return [np.nan,] * len(dist_params)
+            return [np.nan] * len(dist_params)
 
         # Fill with NaNs if one of the parameters is NaN
         params = dc.fit(x)
@@ -135,7 +136,7 @@ def fit(da, dist="norm"):
     coords["dparams"] = dist_params
 
     # Dimensions for the distribution parameters
-    dims = ["dparams",] + list(da.dims)
+    dims = ["dparams"] + list(da.dims)
     dims.remove("time")
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)

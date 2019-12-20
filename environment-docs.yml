@@ -1,0 +1,10 @@
+name: raven
+channels:
+- conda-forge
+- defaults
+dependencies:
+- sphinx
+- nbsphinx
+- ipython
+- guzzle-sphinx-theme
+- pandoc

@@ -194,7 +194,7 @@ class TestEnsembleReduction:
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False,
+            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
         )
 
         assert ids == [0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 15, 20, 22]
@@ -371,7 +371,7 @@ class TestEnsembleReduction:
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=True,
+            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=True
         )
 
         assert ids == [0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 15, 20, 22]

@@ -13,9 +13,10 @@ from collections import OrderedDict
 from inspect import signature
 from types import FunctionType
 from typing import Any
+from typing import Callable
 from typing import Optional
 from typing import Union
-from typing import Callable
+
 import dask
 import numpy as np
 import pint
