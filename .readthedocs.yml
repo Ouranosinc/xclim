@@ -1,11 +1,17 @@
+version: 2
+
+formats: all
+
 build:
-  image: latest
+    image: latest
 
 python:
   version: 3.6
   pip_install: true
-  extra_requirements:
-      - docs
+  extra_requirements: docs
 
-formats:
-    - none
+sphinx:
+  configuration: docs/source/conf.py
+
+conda:
+  environment: readthedocs_environment.yml
