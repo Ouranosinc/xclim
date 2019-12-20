@@ -90,31 +90,6 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-autoapi_type = "python"
-autoapi_dirs = ["../../xclim"]
-autoapi_file_pattern = "*.py"
-autoapi_options = ["members", "undoc-members", "private-members"]
-
-autodoc_mock_imports = [
-    "scipy",
-    "numpy",
-    "pandas",
-    "fiona",
-    "rtree",
-    "geojson",
-    "shapely",
-    "geopandas",
-    "cftime",
-    "netCDF4",
-    "dask",
-    "bottleneck",
-    "xarray",
-    "pyproj",
-    "pint",
-    "boltons",
-    "scikit-learn",
-]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
