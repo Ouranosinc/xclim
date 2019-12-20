@@ -303,7 +303,7 @@ def _ens_align_datasets(
 
     ds_all = []
     for n in datasets:
-        logging.info("Accessing file ", datasets.index(n) + 1, " of ", len(datasets))
+        logging.info("Accessing {} of {}".format(n, len(datasets)))
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
