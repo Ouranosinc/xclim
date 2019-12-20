@@ -85,6 +85,26 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
+autodoc_mock_imports = [
+    "scipy",
+    "numpy",
+    "pandas",
+    "fiona",
+    "rtree",
+    "geojson",
+    "shapely",
+    "geopandas",
+    "cftime",
+    "netCDF4",
+    "dask",
+    "bottleneck",
+    "xarray",
+    "pyproj",
+    "pint",
+    "boltons",
+    "scikit-learn",
+]
+
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
