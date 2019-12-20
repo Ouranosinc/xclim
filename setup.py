@@ -70,7 +70,7 @@ setup(
     ],
     description=DESCRIPTION,
     python_requires=REQUIRES_PYTHON,
-    # install_requires=requirements,
+    install_requires=requirements,
     license=LICENSE,
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
