@@ -1,10 +1,5 @@
 version: 2
 
-formats: all
-
-build:
-    image: latest
-
 python:
   version: 3.6
 
@@ -13,3 +8,5 @@ sphinx:
 
 conda:
   environment: readthedocs_environment.yml
+
+formats: all

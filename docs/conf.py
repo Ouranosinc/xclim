@@ -85,6 +85,16 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
+napoleon_use_param = False
+napoleon_use_ivar = True
+
+autoapi_type = "python"
+autoapi_dirs = ["../../xclim"]
+autoapi_file_pattern = "*.py"
+autoapi_options = ["members", "undoc-members", "private-members"]
+
 autodoc_mock_imports = [
     "scipy",
     "numpy",
@@ -105,11 +115,6 @@ autodoc_mock_imports = [
     "scikit-learn",
 ]
 
-napoleon_numpy_docstring = True
-napoleon_use_rtype = False
-napoleon_use_param = False
-napoleon_use_ivar = True
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -123,9 +128,9 @@ source_suffix = [".rst", ".ipynb"]
 master_doc = "index"
 
 # General information about the project.
-project = u"xclim"
-copyright = u"2018, Ouranos Inc., Travis Logan, and contributors"
-author = u"Travis Logan"
+project = "xclim"
+copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -219,14 +224,14 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", u"xclim Documentation", u"Travis Logan", "manual")
+    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
 ]
 
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "xclim", u"xclim Documentation", [author], 1)]
+man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -237,7 +242,7 @@ texinfo_documents = [
     (
         master_doc,
         "xclim",
-        u"xclim Documentation",
+        "xclim Documentation",
         author,
         "xclim",
         "One line description of project.",
