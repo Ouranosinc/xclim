@@ -8,29 +8,22 @@ See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
 Notes
 -----
-TODO: Skip computations over the ocean
-TODO: Vectorization over spatial chunks: replace math.expression by np.expression.
+TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
+TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
 TODO: Add references.
-
-We can parallelize spatially, but can we temporally ? Are fire seasons interrupted by winter everywhere ?
-
-A. The simplest option is probably to put all the logic inside the iterator as the matlab function does.
-
-
-D. Huard
 """
 import math
 
 import numpy as np
 import xarray as xr
 
-from xclim import generic
-from xclim import run_length as rl
-from xclim import utils
+# from xclim import generic
+# from xclim import run_length as rl
+# from xclim import utils
 
 
 DEFAULT_PARAMS = dict(
-    snd_thresh=0.1,
+    # snd_thresh=0.1,
     min_lat=-58,
     max_lat=75,
     minLandFrac=0.1,
@@ -45,9 +38,9 @@ DEFAULT_PARAMS = dict(
     precThresh=1.0,
     DCDryStartFactor=5,
     DMCDryStartFactor=2,
-    DCStart=None,
-    FFMCStart=None,
-    DMCStart=None,
+    DCStart=15.0,
+    FFMCStart=85.0,
+    DMCStart=6.0,
 )
 """
 paramSets(currParam).History = cellstr(datestr(now)); paramDesc(currDesc) = cellstr('history'); currDesc = currDesc + 1;
@@ -275,17 +268,16 @@ def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
     """
 
     it = np.nditer(
-        [tas, pr, ws, rh, None],
+        [tas, pr, ws, rh, ffmc0, None],
         [],
-        4 * [["readonly"]] + [["writeonly", "allocate"]],  # add no_broadcast?
+        5 * [["readonly"]] + [["writeonly", "allocate"]],  # add no_broadcast?
     )
 
     with it:
-        for (t, p, w, h, out) in it:
-            it[4] = _fine_fuel_moisture_code(t, p, w, h, ffmc0)
-            ffmc0 = it[4]
+        for (t, p, w, h, ffmc, out) in it:
+            it[5] = _fine_fuel_moisture_code(t, p, w, h, ffmc)
 
-        return it.operands[4]
+        return it.operands[5]
 
 
 def _duff_moisture_code(t, p, h, mth, lat, dmc0):
@@ -344,15 +336,16 @@ def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
       Duff moisture code
     """
     it = np.nditer(
-        [tas, pr, rh, mth, None], [], 4 * [["readonly"]] + [["writeonly", "allocate"]]
+        [tas, pr, rh, mth, lat, dmc0, None],
+        [],
+        6 * [["readonly"]] + [["writeonly", "allocate"]],
     )
 
     with it:
-        for (t, p, h, m, out) in it:
-            it[4] = _duff_moisture_code(t, p, h, m, lat, dmc0)
-            dmc0 = it[4]
+        for (t, p, h, m, l, dmc, out) in it:
+            it[6] = _duff_moisture_code(t, p, h, m, l, dmc)
 
-        return it.operands[4]
+        return it.operands[6]
 
 
 def _drought_code(t, p, mth, lat, dc0):
@@ -402,15 +395,16 @@ def drought_code(tas, pr, mth, lat, dc0):
       Drought code
     """
     it = np.nditer(
-        [tas, pr, mth, None], [], 3 * [["readonly"]] + [["writeonly", "allocate"]]
+        [tas, pr, mth, lat, dc0, None],
+        [],
+        5 * [["readonly"]] + [["writeonly", "allocate"]],
     )
 
     with it:
-        for (t, p, m, out) in it:
-            it[3] = _drought_code(t, p, m, lat, dc0)
-            dc0 = it[3]
+        for (t, p, m, l, dc, out) in it:
+            it[5] = _drought_code(t, p, m, l, dc)
 
-        return it.operands[3]
+        return it.operands[5]
 
 
 def initial_spread_index(ws, ffmc):
@@ -599,14 +593,18 @@ def calc_indices(tas, pr, rh, ws, snow, mth, lat, **params):
         start_up_wet = (
             start_up
             & (snow_days / params["snowCoverDaysCalc"] >= params["minSnowDayFrac"])
-            & (snow_cover_history.mean(axis=0) >= params["minWinterSnoD"])
+            & (snow_cover_history.mean(axis=-1) >= params["minWinterSnoD"])
         )
         start_up_dry = start_up & ~start_up_wet
 
         dcprev[start_up_wet] = params["DCStart"]
         dmcprev[start_up_wet] = params["DMCStart"]
-        dcprev[start_up_dry] = params["DCDryStartFactor"] * days_since_last_prec
-        dmcprev[start_up_dry] = params["DMCDryStartFactor"] * days_since_last_prec
+        dcprev[start_up_dry] = (
+            params["DCDryStartFactor"] * days_since_last_prec[start_up_dry]
+        )
+        dmcprev[start_up_dry] = (
+            params["DMCDryStartFactor"] * days_since_last_prec[start_up_dry]
+        )
         ffmcprev[start_up] = params["FFMCStart"]
 
         dc[..., it] = drought_code(tas[..., it], pr[..., it], mth[..., it], lat, dcprev)
@@ -631,7 +629,7 @@ def calc_indices(tas, pr, rh, ws, snow, mth, lat, **params):
 
 
 def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
-    for k, v in DEFAULT_PARAMS:
+    for k, v in DEFAULT_PARAMS.items():
         params.setdefault(k, v)
 
     if "start_date" in params:
@@ -659,7 +657,7 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
         tas.time.dt.month,
         lat,
         kwargs=params,
-        input_core_dims=7 * (("time",),) + 1 * ((),),
+        input_core_dims=6 * (("time",),) + 1 * ((),),
         output_core_dims=6 * (("time",),),
         dask="allowed",
     )
