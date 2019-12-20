@@ -140,7 +140,7 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 3.5, 3.6, 3.7 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
