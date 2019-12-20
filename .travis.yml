@@ -81,13 +81,7 @@ matrix:
           apt:
               packages:
                   - libspatialindex-dev
-    - env: TOXENV=py35
-      name: "Python3.5 (Linux)"
-      python: 3.5
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
+
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
