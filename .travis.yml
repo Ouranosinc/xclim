@@ -10,13 +10,14 @@ branches:
 matrix:
   fast_finish: true
   include:
-    - env: TOXENV=docs
+    - env:
+        - TOXENV=docs
+        - READTHEDOCS=true
       name: "Documentation"
       python: 3.6
       addons:
         apt:
           packages:
-            - libspatialindex-dev
             - pandoc
     - env: TOXENV=black
       name: "Black and flake8 compliance"
@@ -81,9 +82,9 @@ matrix:
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
       addons:
-          apt:
-              packages:
-                  - libspatialindex-dev
+        apt:
+          packages:
+            - libspatialindex-dev
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
