@@ -47,6 +47,7 @@ matrix:
         - set GDAL_VERSION=3.0
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - printenv
         - python -m pip install --upgrade pip wheel
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
