@@ -39,7 +39,7 @@ matrix:
     - env:
         - TOXENV=py37-windows
         - PROJ_DIR=/c/OSGeo4W/
-        - GDAL_VERSION=3.0
+        - GDAL_VERSION=3.1
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
@@ -92,7 +92,7 @@ matrix:
     - env:
       - TOXENV=py37-windows
       - PROJ_DIR=/c/OSGeo4W/
-      - GDAL_VERSION=3.0
+      - GDAL_VERSION=3.1
     - env: TOXENV=py36-xarray
 
 before_install:
