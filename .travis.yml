@@ -38,8 +38,9 @@ matrix:
             - libhdf5-dev
     - env:
         - TOXENV=py37-windows
-        - PROJ_DIR=/c/OSGeo4W/
-        - GDAL_VERSION=3.0
+        - PROJ_DIR=/c/OSGeo4W64
+        - GDAL_VERSION=3.0.0
+        - GDAL_DATA=/c/OSGeo4W64/share/gdal
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
@@ -48,7 +49,7 @@ matrix:
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin/:$PATH"
+        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
         - printenv
         - python -m pip install --upgrade pip wheel
     - env: TOXENV=py37-macOS
@@ -92,7 +93,8 @@ matrix:
     - env:
       - TOXENV=py37-windows
       - PROJ_DIR=/c/OSGeo4W/
-      - GDAL_VERSION=3.0
+      - GDAL_VERSION=3.0.0
+      - GDAL_DATA=/c/OSGeo4W64/share/gdal
     - env: TOXENV=py36-xarray
 
 before_install:
