@@ -26,13 +26,15 @@ matrix:
           packages:
             - libspatialindex-dev
     - env: TOXENV=py38-dev
-      name: "Python 3.8-development (Linux)"
+      name: "Python3.8 (Linux)"
       python: 3.8-dev
       dist: xenial
       addons:
         apt:
           packages:
             - libspatialindex-dev
+            - libnetcdf-dev
+            - libhdf5-dev
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
@@ -75,19 +77,13 @@ matrix:
           packages:
             - libspatialindex-dev
     - env: TOXENV=py36-xarray
-      name: "Python3.6 (Linux + xarray@master)"
+      name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
       addons:
           apt:
               packages:
                   - libspatialindex-dev
-    - env: TOXENV=py35
-      name: "Python3.5 (Linux)"
-      python: 3.5
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
+
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows

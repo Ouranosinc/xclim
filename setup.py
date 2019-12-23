@@ -11,7 +11,7 @@ DESCRIPTION = "Derived climate variables built with xarray."
 URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
-REQUIRES_PYTHON = ">=3.5.0"
+REQUIRES_PYTHON = ">=3.6.0"
 VERSION = "0.12.3"
 LICENSE = "Apache Software License 2.0"
 
@@ -22,20 +22,20 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "numpy>=1.16",
+    "xarray>=0.14.1",
     "scipy>=1.2",
-    "numpy>=1.15",
     "pandas>=0.23",
+    "cftime",
+    "netCDF4",
     "fiona>=1.8",
     "geojson>=2.5.0",
     "shapely>=1.6",
     "geopandas>=0.4",
-    "cftime~=1.0.3.4",
-    "netCDF4>=1.5",
     "dask[complete]",
+    "pyproj",
+    "pint>=0.9",
     "bottleneck~=1.3.1",
-    "xarray==0.13.0",
-    "pyproj==2.4.1",
-    "pint>=0.8",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
 ]
@@ -67,7 +67,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

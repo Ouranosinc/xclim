@@ -963,9 +963,13 @@ class Indicator:
         """Return whether an output is considered missing or not."""
         from functools import reduce
 
-        freq = kwds.get("freq", "D")
-
-        miss = (checks.missing_any(da, freq) for da in args)
+        freq = kwds.get("freq")
+        if freq is not None:
+            # We flag any period with missing data
+            miss = (checks.missing_any(da, freq) for da in args)
+        else:
+            # There is no resampling, we flag where one of the input is missing
+            miss = (da.isnull() for da in args)
         return reduce(np.logical_or, miss)
 
     def validate(self, da):
