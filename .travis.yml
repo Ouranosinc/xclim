@@ -45,7 +45,7 @@ matrix:
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex
         - set PROJ_DIR=/c/OSGeo4W/
         - set GDAL_VERSION=3.0
-        - set GEOS_LIBRARY_PATH=/c/OSGeo4W/
+        - set GEOS_LIBRARY_PATH=/c/OSGeo4W/bin
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
