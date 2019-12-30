@@ -346,7 +346,6 @@ def create_mask(
     return mask_2d
 
 
-@check_date_signature
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path],
@@ -365,21 +364,25 @@ def subset_shape(
     Parameters
     ----------
     ds : Union[xarray.DataArray, xarray.Dataset]
+      Input values.
     shape : Union[str, Path]
+      Path to shape file. Supports formats compatible with geopandas.
     raster_crs : Optional[Union[str, int]]
+      EPSG number or PROJ4 string.
     shape_crs : Optional[Union[str, int]]
+      EPSG number or PROJ4 string.
     buffer : Optional[Union[int, float]]
       Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
     wrap_lons: Optional[bool]
       Manually set whether vector longitudes should extend from 0 to 360 degrees.
-    start_date : Optional[str]
+        start_date : Optional[str]
+    Start date of the subset.
+      Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+      Defaults to first day of input data-array.
     end_date : Optional[str]
-    start_yr : int
-      Deprecated
-        First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated
-        Last year of the subset. Defaults to last year of input data-array.
+      End date of the subset.
+      Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
+      Defaults to last day of input data-array.
 
     Returns
     -------
@@ -388,7 +391,6 @@ def subset_shape(
     Examples
     --------
     >>> from xclim import subset
-    >>> import rioxarray
     >>> import xarray as xr
     >>> pr = xarray.open_dataset('pr.day.nc').pr
     Subset data array by shape and multiple years
@@ -411,13 +413,12 @@ def subset_shape(
     if buffer is not None:
         poly.geometry = poly.buffer(buffer)
 
-    # if poly doesn't cross prime meridian we can subet with subset_bbox first
-    # reduce using subset_bbox to reduce processing time
+    # Get the shape's bounding box
     bounds = poly.bounds
     lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
     lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
 
-    # Use subset bbox on bounds to reduce grid as much as possible
+    # If polygon doesn't cross prime meridian, subset bbox first to reduce processing time
     # Only case not implemented is when lon_bnds cross the 0 deg meridian but dataset grid has all positive lons
     try:
         ds_copy = subset_bbox(ds_copy, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
@@ -444,6 +445,7 @@ def subset_shape(
                 raise
     else:
         shape_crs = poly.crs
+
     if raster_crs is not None:
         try:
             raster_crs = fiocrs.from_epsg(raster_crs)
@@ -487,13 +489,14 @@ def subset_shape(
         if set.issubset(set(mask_2d.dims), set(ds_copy[v].dims)):
             ds_copy[v] = ds_copy[v].where((~np.isnan(mask_2d)), drop=True)
 
-    # TODO: This doesn't seem to do anything. Lots of NaNs still present.
+    # Remove coordinates where all values are outside of region mask
     if "lon" in ds_copy.dims:
         ds_copy = ds_copy.dropna(dim="lon", how="all")
         ds_copy = ds_copy.dropna(dim="lat", how="all")
     else:  # curvilinear case
         for d in ds_copy.lon.dims:
             ds_copy = ds_copy.dropna(dim=d, how="all")
+
     # Add a CRS definition as a coordinate for reference purposes
     if wrap_lons:
         ds_copy.coords["crs"] = 0
