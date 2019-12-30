@@ -3,14 +3,11 @@ import logging
 import warnings
 from functools import wraps
 from pathlib import Path
-from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import fiona
 import fiona.crs as fiocrs
-import geojson
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -29,50 +26,6 @@ __all__ = [
     "subset_shape",
     "subset_time",
 ]
-logging.basicConfig(level=logging.INFO)
-
-
-def _read_geometries(
-    shape: Union[str, Path], crs: Optional[Union[str, int]] = None
-) -> Tuple[List[geojson.geometry.Geometry], dict]:
-    """
-    A decorator to perform a check to verify a geometry is valid. Returns the function with geom set to
-      the shapely Shape object.
-    """
-    try:
-        if shape is None:
-            raise ValueError
-    except (KeyError, ValueError):
-        logging.exception("No shape provided.")
-        raise
-
-    geom = list()
-    geometry_types = list()
-    try:
-        with fiona.open(shape) as layer:
-            logging.info("Vector read OK.")
-            if crs:
-                try:
-                    shape_crs = fiocrs.from_epsg(crs)
-                except ValueError:
-                    try:
-                        shape_crs = fiocrs.from_string(crs)
-                    except ValueError:
-                        raise
-            else:
-                shape_crs = layer.crs or fiocrs.from_epsg(4326)
-            for i, feat in enumerate(layer):
-                g = geojson.GeoJSON(feat)
-                geom.append(g["geometry"])
-                geometry_types.append(g["geometry"]["type"])
-    except fiona.errors.DriverError:
-        logging.exception("Unable to read shape.")
-        raise
-
-    if len(geom) >= 1:
-        logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
-        return geom, shape_crs
-    raise RuntimeError("No geometries found.")
 
 
 def check_date_signature(func):
