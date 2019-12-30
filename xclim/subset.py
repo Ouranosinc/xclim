@@ -129,7 +129,7 @@ def check_start_end_dates(func):
             warnings.warn(
                 "start_date and end_date require dates in (type: str) "
                 'using formats of "%Y", "%Y-%m" or "%Y-%m-%d".',
-                Warning,
+                UserWarning,
                 stacklevel=2,
             )
             kwargs["start_date"] = str(kwargs["start_date"])
@@ -141,7 +141,7 @@ def check_start_end_dates(func):
             warnings.warn(
                 '"start_date" not found within input date time range. Defaulting to minimum time step in '
                 "xarray object.",
-                Warning,
+                UserWarning,
                 stacklevel=2,
             )
             kwargs["start_date"] = da.time.min().dt.strftime("%Y").values
@@ -151,7 +151,7 @@ def check_start_end_dates(func):
             warnings.warn(
                 '"end_date" not found within input date time range. Defaulting to maximum time step in '
                 "xarray object.",
-                Warning,
+                UserWarning,
                 stacklevel=2,
             )
             kwargs["end_date"] = da.time.max().dt.strftime("%Y").values

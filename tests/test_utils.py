@@ -15,6 +15,8 @@
 # a first line of defense.
 import glob
 import os
+from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 
 import cftime
 import dask
@@ -22,12 +24,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from pathlib import Path
-from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos
-from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
@@ -503,7 +502,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
-    def test_raise(self):
+    def test_type_warn_then_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             with pytest.warns(Warning):
@@ -511,6 +510,7 @@ class TestSubsetGridPoint:
                     da, lon=-72.4, lat=46.1, start_date=2056, end_date=2055
                 )
 
+    def test_raise(self):
         da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
