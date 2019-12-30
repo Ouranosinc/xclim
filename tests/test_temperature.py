@@ -175,13 +175,16 @@ class TestETR:
 
 
 class TestTmean:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
+    nc_files = (
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
+        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
     def test_Tmean_3d_data(self):
-        tas = xr.open_dataset(self.nc_file).tasmax
-        tas_C = xr.open_dataset(self.nc_file).tasmax
+        ds_tmax = xr.open_dataset(self.nc_files[0])
+        ds_tmin = xr.open_dataset(self.nc_files[1])
+        tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
         tas_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -762,12 +765,15 @@ class TestDailyFreezeThaw:
 
 
 class TestGrowingSeasonLength:
-    def test_single_year(self, tas_series):
+    @pytest.mark.parametrize("chunks", [None, {"time": 183.0}])
+    def test_single_year(self, tas_series, chunks):
         a = np.zeros(366) + K2C
         ts = tas_series(a, start="1/1/2000")
         tt = (ts.time.dt.month >= 5) & (ts.time.dt.month <= 8)
         offset = np.random.uniform(low=5.5, high=23, size=(tt.sum().values,))
         ts[tt] = ts[tt] + offset
+        if chunks:
+            ts = ts.chunk(chunks)
 
         out = atmos.growing_season_length(ts)
 

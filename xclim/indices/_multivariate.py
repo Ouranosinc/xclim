@@ -7,6 +7,7 @@ from xclim import run_length as rl
 from xclim import utils
 from xclim.utils import declare_units
 from xclim.utils import units
+from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -33,6 +34,7 @@ __all__ = [
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
+    "tas",
     "tg90p",
     "tg10p",
     "tn90p",
@@ -695,7 +697,7 @@ def rain_on_frozen_ground_days(
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
         return frozen.all(axis=axis)
 
-    tcond = (tas > frz).rolling(time=8).reduce(func)
+    tcond = _rolling((tas > frz), window=8, dim="time", mode=func)
     pcond = pr > t
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
@@ -799,6 +801,27 @@ def fraction_over_precip_thresh(
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
     return over / total
+
+
+@declare_units("K", tasmin="[temperature]", tasmax="[temperature]")
+def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
+    """Average temperature from minimum and maximum temperatures.
+
+    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum (daily) temperature [℃] or [K]
+    tasmax : xarray.DataArray
+        Maximum (daily) temperature [℃] or [K]
+
+    Returns
+    -------
+    xarray.DataArray
+        Mean (daily) temperature [°C]
+    """
+    return (tasmax + tasmin) / 2
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")

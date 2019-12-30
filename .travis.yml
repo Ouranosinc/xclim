@@ -16,31 +16,34 @@ matrix:
       addons:
         apt:
           packages:
+            - libspatialindex-dev
             - pandoc
     - env: TOXENV=black
       name: "Black and flake8 compliance"
       python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py38-dev
-      name: "Python 3.8-development (Linux)"
+      name: "Python3.8 (Linux)"
       python: 3.8-dev
       dist: xenial
       addons:
         apt:
           packages:
-            - liblapack-dev
-            - libblas-dev
-            - libhdf5-serial-dev
-            - netcdf-bin
+            - libspatialindex-dev
             - libnetcdf-dev
-      script: travis_wait 30 tox -vv -e $TOXENV
+            - libhdf5-dev
     - env: TOXENV=py37-windows
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj
+        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex
         - set PROJ_DIR=/c/OSGeo4W/
+        - set GDAL_VERSION=3.0
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
@@ -54,6 +57,10 @@ matrix:
           packages:
             - netcdf
             - python@3
+            - spatialindex
+      before_install:
+        - python3 -m pip install --upgrade setuptools
+        - python3 -m pip install --upgrade pip
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
@@ -61,18 +68,22 @@ matrix:
       addons:
         apt:
           packages:
-            - libhdf5-serial-dev
-            - netcdf-bin
-            - libnetcdf-dev
+            - libspatialindex-dev
     - env: TOXENV=py36
       name: "Python3.6 (Linux)"
       python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py36-xarray
-      name: "Python3.6 (Linux + xarray@master)"
+      name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
-    - env: TOXENV=py35
-      name: "Python3.5 (Linux)"
-      python: 3.5
+      addons:
+          apt:
+              packages:
+                  - libspatialindex-dev
+
   allow_failures:
     - env: TOXENV=py37-macOS
     - env: TOXENV=py37-windows
