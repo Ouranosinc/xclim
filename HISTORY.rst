@@ -12,6 +12,7 @@ History
 * Fixed a bug with typed call signatures that caused downstream failures on library import.
 * Added a `_rolling` util function to fix memory issues on large dask datasets.
 * Added the `subset_shape` function to subset utilities for clipping region-masked datasets via polygons.
+* Improved `DeprecationWarnings` and `UserWarnings` ensemble for xclim subsetting functions
 
 0.11.x-beta (2019-10-17)
 ------------------------
