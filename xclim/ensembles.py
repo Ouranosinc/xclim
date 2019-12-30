@@ -7,6 +7,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scipy
+import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
@@ -115,7 +116,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     >>> ens_means_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    dsOut = ens._drop_vars(names=set(ens.data_vars))
+    dsOut = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
 
         dsOut["{}_mean".format(v)] = ens[v].mean(dim="realization")
@@ -181,7 +182,7 @@ def ensemble_percentiles(
 
     """
 
-    ds_out = ens._drop_vars(names=set(ens.data_vars))
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -339,7 +340,7 @@ def _ens_align_datasets(
 
 
 def _calc_percentiles_simple(ens, v, values):
-    ds_out = ens._drop_vars(names=set(ens.data_vars))
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -370,7 +371,7 @@ def _calc_percentiles_simple(ens, v, values):
 
 
 def _calc_percentiles_blocks(ens, v, values, time_block):
-    ds_out = ens._drop_vars(names=set(ens.data_vars))
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -553,6 +554,8 @@ def kmeans_reduce_ensemble(
         fig_data = {}
         if max_clusters is not None:
             fig_data["max_clusters"] = max_clusters
+    else:
+        fig_data = None
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -589,14 +592,10 @@ def kmeans_reduce_ensemble(
     n_clusters = _get_nclust(method, n_sim, rsq, max_clusters)
 
     if make_graph:
-
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
         fig_data["realizations"] = n_sim
-
-    else:
-        fig_data = None
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(

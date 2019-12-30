@@ -375,8 +375,8 @@ def subset_shape(
       Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
     wrap_lons: Optional[bool]
       Manually set whether vector longitudes should extend from 0 to 360 degrees.
-        start_date : Optional[str]
-    Start date of the subset.
+    start_date : Optional[str]
+      Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to first day of input data-array.
     end_date : Optional[str]
