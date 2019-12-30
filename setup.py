@@ -35,13 +35,13 @@ requirements = [
     "dask[complete]",
     "pyproj",
     "pint>=0.9",
-    "bottleneck~=1.3.1",
+    "bottleneck>=1.2",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
 ]
 
 if not os.getenv("READTHEDOCS"):
-    requirements.append("rtree>=0.8")
+    requirements.append("rtree>=0.9")
 
 setup_requirements = ["pytest-runner"]
 
