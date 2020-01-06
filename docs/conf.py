@@ -103,9 +103,9 @@ source_suffix = [".rst", ".ipynb"]
 master_doc = "index"
 
 # General information about the project.
-project = u"xclim"
-copyright = u"2018, Ouranos Inc., Travis Logan, and contributors"
-author = u"Travis Logan"
+project = "xclim"
+copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -199,14 +199,14 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", u"xclim Documentation", u"Travis Logan", "manual")
+    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
 ]
 
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "xclim", u"xclim Documentation", [author], 1)]
+man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -217,7 +217,7 @@ texinfo_documents = [
     (
         master_doc,
         "xclim",
-        u"xclim Documentation",
+        "xclim Documentation",
         author,
         "xclim",
         "One line description of project.",

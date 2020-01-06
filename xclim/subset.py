@@ -245,6 +245,7 @@ def wrap_lons_and_split_at_greenwich(func):
                 meridian = LineString([Point(0, 90), Point(0, -90)])
                 buffered = meridian.buffer(0.000000001)
                 split_polygons = split(union, meridian)
+                # TODO: This doesn't seem to be thread safe in Travis CI on macOS. Merits testing with a local machine.
                 buffered_split_polygons = [
                     feat for feat in split_polygons.difference(buffered)
                 ]
