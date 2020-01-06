@@ -273,7 +273,7 @@ def convert_units_to(
         tu_u = pint2cfunits(tu)
         with units.context(context or "none"):
             out = units.convert(source, fu, tu)
-            out.attrs["units"] = tu_u
+            out.attrs["units"] = f"{tu_u:~P}"  # Condensed pretty print
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
@@ -1149,7 +1149,7 @@ def _rolling(
     window: int = 1,
     mode: Union[str, Callable] = "sum",
     keep_attrs: bool = False,
-    **kwargs
+    **kwargs,
 ):
     """Utility function for rolling.sum and rolling.mean
 
