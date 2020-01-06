@@ -165,8 +165,8 @@ def areacella():
     lat_bnds = np.arange(-90, 91, 1)
     dlon = np.diff(lon_bnds)
     dlat = np.diff(lat_bnds)
-    lon = np.mean(lon_bnds[:2]) + np.cumsum(dlon)
-    lat = np.mean(lat_bnds[:2]) + np.cumsum(dlat)
+    lon = np.convolve(lon_bnds, [0.5, 0.5], "valid")
+    lat = np.convolve(lat_bnds, [0.5, 0.5], "valid")
     area = (
         r
         * np.radians(dlat)[:, np.newaxis]

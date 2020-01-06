@@ -61,8 +61,6 @@ units.define(
     )
 )
 
-units.define("1 = fraction = [] = frac")
-
 # Define commonly encountered units not defined by pint
 units.define(
     "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "

@@ -743,9 +743,9 @@ def sea_ice_area(sic, area, thresh="15 pct"):
     -----
     To compute sea ice area over a given region, first mask the sea ice concentration.
     """
-    thresh = units.Quantity(thresh)
     t = utils.convert_units_to(thresh, sic)
-    out = xarray.dot(sic.where(sic >= t, 0), area) * thresh.to("dimensionless") / t
+    factor = utils.convert_units_to("100 pct", sic)
+    out = xarray.dot(sic.where(sic >= t, 0), area) / factor
     out.attrs["units"] = area.units
     return out
 
@@ -775,8 +775,7 @@ def sea_ice_extent(sic, area, thresh="15 pct"):
     To compute sea ice extent over a given region, first mask the sea ice concentration.
     """
     t = utils.convert_units_to(thresh, sic)
-    extent = xarray.where(sic >= t, 1, 0)
-    out = xarray.dot(extent, area)
+    out = xarray.dot(sic >= t, area)
     out.attrs["units"] = area.units
     return out
 
