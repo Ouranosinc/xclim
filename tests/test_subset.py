@@ -102,11 +102,12 @@ class TestSubsetGridPoint:
         yr_st = "1950"
         yr_ed = "2099"
 
-        out = subset.subset_gridpoint(
-            da,
-            start_date="{yr_st}-01".format(yr_st=yr_st),
-            end_date="{yr_ed}-01".format(yr_ed=yr_ed),
-        )
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(
+                da,
+                start_date="{yr_st}-01".format(yr_st=yr_st),
+                end_date="{yr_ed}-01".format(yr_ed=yr_ed),
+            )
         np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
 
@@ -116,19 +117,26 @@ class TestSubsetGridPoint:
         yr_st = "2050"
 
         # start date only
-        out = subset.subset_gridpoint(da, start_date="{yr_st}-01".format(yr_st=yr_st))
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(
+                da, start_date="{yr_st}-01".format(yr_st=yr_st)
+            )
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
 
-        out = subset.subset_gridpoint(da, start_date="{yr_st}-07".format(yr_st=yr_st))
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(
+                da, start_date="{yr_st}-07".format(yr_st=yr_st)
+            )
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.min().dt.month, 7)
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.max(), da.time.max())
 
-        out = subset.subset_gridpoint(
-            da, start_date="{yr_st}-07-15".format(yr_st=yr_st)
-        )
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(
+                da, start_date="{yr_st}-07-15".format(yr_st=yr_st)
+            )
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.min().dt.month, 7)
         np.testing.assert_array_equal(out.time.min().dt.day, 15)
@@ -143,13 +151,17 @@ class TestSubsetGridPoint:
         yr_ed = "2059"
 
         # end date only
-        out = subset.subset_gridpoint(da, end_date="{yr_ed}-01".format(yr_ed=yr_ed))
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(da, end_date="{yr_ed}-01".format(yr_ed=yr_ed))
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.max().dt.month, 1)
         np.testing.assert_array_equal(out.time.max().dt.day, 31)
         np.testing.assert_array_equal(out.time.min(), da.time.min())
 
-        out = subset.subset_gridpoint(da, end_date="{yr_ed}-06-15".format(yr_ed=yr_ed))
+        with pytest.warns(UserWarning):
+            out = subset.subset_gridpoint(
+                da, end_date="{yr_ed}-06-15".format(yr_ed=yr_ed)
+            )
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.max().dt.month, 6)
         np.testing.assert_array_equal(out.time.max().dt.day, 15)
@@ -312,9 +324,10 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
-        )
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=str(yr_st)
+            )
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
@@ -324,9 +337,10 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
 
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
-        )
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=str(yr_ed)
+            )
         assert out.lon.values.size != 0
         assert out.lat.values.size != 0
         assert np.all(out.lon >= np.min(self.lon))
@@ -643,10 +657,10 @@ class TestSubsetShape:
         ds = xr.open_dataset(self.nc_file)
 
         with pytest.raises(ValueError):
-            sub = subset.subset_shape(ds, self.small_geojson)
+            subset.subset_shape(ds, self.small_geojson)
 
         with pytest.raises(ValueError):
-            sub = subset.subset_shape(ds, self.small_geojson, buffer=0.6)
+            subset.subset_shape(ds, self.small_geojson, buffer=0.6)
 
         sub = subset.subset_shape(ds, self.small_geojson, buffer=5)
         self.compare_vals(ds, sub, "tas")

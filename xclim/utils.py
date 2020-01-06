@@ -34,6 +34,7 @@ __all__ = [
     "pint_multiply",
     "convert_units_to",
     "declare_units",
+    "units",
     "threshold_count",
     "percentile_doy",
     "infer_doy_max",
