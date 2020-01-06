@@ -64,8 +64,8 @@ matrix:
             - spatialindex
       before_install:
         - printenv
-        - python -m pip install --upgrade setuptools
-        - python -m pip install --upgrade pip
+#        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
+#        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
