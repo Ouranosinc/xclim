@@ -10,13 +10,14 @@ branches:
 matrix:
   fast_finish: true
   include:
-    - env: TOXENV=docs
+    - env:
+        - TOXENV=docs
+        - READTHEDOCS=true
       name: "Documentation"
       python: 3.6
       addons:
         apt:
           packages:
-            - libspatialindex-dev
             - pandoc
     - env: TOXENV=black
       name: "Black and flake8 compliance"
@@ -35,17 +36,21 @@ matrix:
             - libspatialindex-dev
             - libnetcdf-dev
             - libhdf5-dev
-    - env: TOXENV=py37-windows
+    - env:
+        - TOXENV=py37-windows
+        - PROJ_DIR=/c/OSGeo4W64
+        - GDAL_VERSION=3.0.0
+        - GDAL_DATA=/c/OSGeo4W64/share/gdal
       name: "Python3.7 (Windows)"
       os: windows
       language: bash
       before_install:
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex
-        - set PROJ_DIR=/c/OSGeo4W/
-        - set GDAL_VERSION=3.0
+        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
         - choco install python --version=3.7.5
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
+        - printenv
         - python -m pip install --upgrade pip wheel
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
@@ -80,16 +85,20 @@ matrix:
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
       addons:
-          apt:
-              packages:
-                  - libspatialindex-dev
-
+        apt:
+          packages:
+            - libspatialindex-dev
   allow_failures:
     - env: TOXENV=py37-macOS
-    - env: TOXENV=py37-windows
+    - env:
+      - TOXENV=py37-windows
+      - PROJ_DIR=/c/OSGeo4W64
+      - GDAL_VERSION=3.0.0
+      - GDAL_DATA=/c/OSGeo4W64/share/gdal
     - env: TOXENV=py36-xarray
 
 before_install:
+    - printenv
     - sudo -H pip install --upgrade pip
 
 install:
