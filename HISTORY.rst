@@ -14,6 +14,7 @@ History
 * Added the `subset_shape` function to subset utilities for clipping region-masked datasets via polygons.
 * Fixed a bug where certain dependencies caused ReadTheDocs builds to fail.
 * Added many statically typed function signatures for better function documentation.
+* Improved `DeprecationWarnings` and `UserWarnings` ensemble for xclim subsetting functions
 
 0.11.x-beta (2019-10-17)
 ------------------------

@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from xclim import streamflow
+with pytest.warns(DeprecationWarning):
+    from xclim import streamflow
 
 
 def test_base_flow_index(ndq_series):

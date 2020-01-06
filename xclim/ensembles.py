@@ -8,6 +8,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scipy
+import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
@@ -109,15 +110,15 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     Examples
     --------
     >>> from xclim import ensembles
-    >>> import glob
-    >>> ncfiles = glob.glob('/*tas*.nc')
+    >>> from pathlib import Path
+    >>> ncfiles = Path().rglob('*tas*.nc')
     Create ensemble dataset
     >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate ensemble statistics
     >>> ens_mean_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
 
         ds_out["{}_mean".format(v)] = ens[v].mean(dim="realization")
@@ -126,7 +127,6 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
         ds_out["{}_min".format(v)] = ens[v].min(dim="realization")
         for vv in ds_out.data_vars:
             ds_out[vv].attrs = ens[v].attrs
-
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
                 ds_out[vv].attrs["description"] = (
@@ -182,7 +182,7 @@ def ensemble_percentiles(
     >>> print(ens_percs['tas_p25'])
     """
 
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -272,7 +272,7 @@ def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     time_flag: bool = False,
-    time_all=None,
+    time_all: np.array = None,
     **xr_kwargs
 ) -> List[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
@@ -289,7 +289,7 @@ def _ens_align_datasets(
       Only applicable when datasets is a sequence of file paths.
     time_flag : bool
       True if time dimension is present among the "datasets"; Otherwise false.
-    time_all : array of datetime64
+    time_all : np.array
       Series of unique time-steps covering all input Datasets.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
@@ -340,7 +340,7 @@ def _ens_align_datasets(
 
 
 def _calc_percentiles_simple(ens, v, values):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -371,7 +371,7 @@ def _calc_percentiles_simple(ens, v, values):
 
 
 def _calc_percentiles_blocks(ens, v, values, time_block):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -562,6 +562,8 @@ def kmeans_reduce_ensemble(
         fig_data = {}
         if max_clusters is not None:
             fig_data["max_clusters"] = max_clusters
+    else:
+        fig_data = None
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -602,9 +604,6 @@ def kmeans_reduce_ensemble(
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
         fig_data["realizations"] = n_sim
-
-    else:
-        fig_data = None
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(
