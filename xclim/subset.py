@@ -78,13 +78,23 @@ def check_start_end_dates(func):
             # use string for last year only - .sel() will include all time steps
             kwargs["end_date"] = da.time.max().dt.strftime("%Y").values
 
+        if isinstance(kwargs["start_date"], int) or isinstance(kwargs["end_date"], int):
+            warnings.warn(
+                "start_date and end_date require dates in (type: str) "
+                'using formats of "%Y", "%Y-%m" or "%Y-%m-%d".',
+                UserWarning,
+                stacklevel=2,
+            )
+            kwargs["start_date"] = str(kwargs["start_date"])
+            kwargs["end_date"] = str(kwargs["end_date"])
+
         try:
             da.time.sel(time=kwargs["start_date"])
         except KeyError:
             warnings.warn(
                 '"start_date" not found within input date time range. Defaulting to minimum time step in '
                 "xarray object.",
-                Warning,
+                UserWarning,
                 stacklevel=2,
             )
             kwargs["start_date"] = da.time.min().dt.strftime("%Y").values
@@ -94,7 +104,7 @@ def check_start_end_dates(func):
             warnings.warn(
                 '"end_date" not found within input date time range. Defaulting to maximum time step in '
                 "xarray object.",
-                Warning,
+                UserWarning,
                 stacklevel=2,
             )
             kwargs["end_date"] = da.time.max().dt.strftime("%Y").values
@@ -103,7 +113,11 @@ def check_start_end_dates(func):
             da.time.sel(time=kwargs["start_date"]).min()
             > da.time.sel(time=kwargs["end_date"]).max()
         ):
-            raise ValueError("Start date is after end date.")
+            raise ValueError(
+                'Start date ("{}") is after end date ("{}").'.format(
+                    kwargs["start_date"], kwargs["end_date"]
+                )
+            )
 
         return func(*args, **kwargs)
 
@@ -198,6 +212,7 @@ def wrap_lons_and_split_at_greenwich(func):
                 meridian = LineString([Point(0, 90), Point(0, -90)])
                 buffered = meridian.buffer(0.000000001)
                 split_polygons = split(union, meridian)
+                # TODO: This doesn't seem to be thread safe in Travis CI on macOS. Merits testing with a local machine.
                 buffered_split_polygons = [
                     feat for feat in split_polygons.difference(buffered)
                 ]
@@ -328,8 +343,8 @@ def subset_shape(
       Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
     wrap_lons: Optional[bool]
       Manually set whether vector longitudes should extend from 0 to 360 degrees.
-        start_date : Optional[str]
-    Start date of the subset.
+    start_date : Optional[str]
+      Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to first day of input data-array.
     end_date : Optional[str]

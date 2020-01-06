@@ -19,7 +19,8 @@ from typing import Union
 
 import dask
 import numpy as np
-import pint
+import pint.converters
+import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -27,11 +28,13 @@ import xclim
 from . import checks
 
 __all__ = [
+    "units",
     "units2pint",
     "pint2cfunits",
     "pint_multiply",
     "convert_units_to",
     "declare_units",
+    "units",
     "threshold_count",
     "percentile_doy",
     "infer_doy_max",
@@ -48,7 +51,7 @@ __all__ = [
     "sfcwind_2_uas_vas",
 ]
 
-# TODO: The pint library does not have a generic Unit or Quantitiy type at the moment. Using "Any" as a stand-in.
+# TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
@@ -128,7 +131,7 @@ calendars = {
 }
 
 
-def units2pint(value: Union[xr.DataArray, str]) -> Any:
+def units2pint(value: Union[xr.DataArray, str]):
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -138,7 +141,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> Any:
 
     Returns
     -------
-    pint.Unit
+    pint.unit.UnitDefinition
       Units of the data array.
 
     """
@@ -273,8 +276,9 @@ def convert_units_to(
         else:
             fu = units.degC
         warnings.warn(
-            "Future versions of XCLIM will require explicit unit specifications.",
+            "Future versions of xclim will require explicit unit specifications.",
             FutureWarning,
+            stacklevel=3,
         )
         return (source * fu).to(tu).m
 
@@ -283,7 +287,7 @@ def convert_units_to(
     )
 
 
-def _check_units(val, dim):
+def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
         return
 

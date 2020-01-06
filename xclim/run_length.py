@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Run length algorithms module"""
 import logging
+from typing import List
+from typing import Sequence
+from typing import Union
 from warnings import warn
 
 import numpy as np
@@ -17,8 +20,8 @@ def get_npts(da):
 
         Parameters
         ----------
-        da : N-dimensional xarray.DataArray
-          Input array
+        da : xarray.DataArray
+          N-dimensional input array
 
         Returns
         -------
@@ -53,9 +56,10 @@ def rle(da, dim="time", max_chunk=1000000):
     chunk_dim = b[dim].size
     # divide extra dims into equal size
     # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
+    chunksize_ex_dims = None
     if ndims > 1:
         chunksize_ex_dims = np.round(np.power(max_chunk / chunk_dim, 1 / (ndims - 1)))
-    chunks = {}
+    chunks = dict()
     chunks[dim] = -1
     for dd in b.dims:
         if dd != dim:
@@ -70,16 +74,18 @@ def rle(da, dim="time", max_chunk=1000000):
     return d
 
 
-def longest_run(da, dim="time", ufunc_1dim="auto"):
+def longest_run(
+    da: xr.DataArray, dim: str = "time", ufunc_1dim: Union[str, bool] = "auto"
+):
     """Return the length of the longest consecutive run of True values.
 
         Parameters
         ----------
-        arr : N-dimensional array (boolean)
-          Input array
-        dim : Xarray dimension (default = 'time')
-          Dimension along which to calculate consecutive run
-        ufunc_1dim : optional, one of 'auto' (default), True or False
+        da : xr.DataArray
+          N-dimensional array (boolean)
+        dim : str
+          Dimension along which to calculate consecutive run; Default: 'time'.
+        ufunc_1dim : Union[str, bool]
           Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
           usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
           for dataarray with a small number of gridpoints.
@@ -171,8 +177,7 @@ def first_run(da, window, dim="time", ufunc_1dim="auto"):
 
         Parameters
         ----------
-        ----------
-        arr : N-dimensional Xarray data array  (boolean)
+        da : N-dimensional Xarray data array  (boolean)
           Input array
         window : int
           Minimum duration of consecutive run to accumulate values.
@@ -220,7 +225,6 @@ def rle_1d(arr):
 
     Returns
     -------
-    (values, run lengths, start positions)
     values : np.array
       The values taken by arr over each run
     run lengths : np.array
@@ -255,8 +259,7 @@ def first_run_1d(arr, window):
 
     Parameters
     ----------
-    ----------
-    arr : bool array
+    arr : xr.DataArray
       Input array
     window : int
       Minimum duration of consecutive run to accumulate values.
