@@ -61,7 +61,6 @@ matrix:
           update: true
           packages:
             - netcdf
-            - python
             - spatialindex
       before_install:
         - printenv
