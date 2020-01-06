@@ -70,7 +70,8 @@ def _read_geometries(
         raise
 
     if len(geom) >= 1:
-        logging.info("Shapes found are {}.".format(", ".join(set(geometry_types))))
+        types = ", ".join(set(geometry_types))
+        logging.info(f"Shapes found are {types}.")
         return geom, shape_crs
     raise RuntimeError("No geometries found.")
 
@@ -161,9 +162,7 @@ def check_start_end_dates(func):
             > da.time.sel(time=kwargs["end_date"]).max()
         ):
             raise ValueError(
-                'Start date ("{}") is after end date ("{}").'.format(
-                    kwargs["start_date"], kwargs["end_date"]
-                )
+                f'Start date ("{kwargs["start_date"]}") is after end date ("{kwargs["end_date"]}").'
             )
 
         return func(*args, **kwargs)
@@ -200,8 +199,8 @@ def check_lons(func):
                     kwargs[lon][kwargs[lon] < 0] += 360
             elif np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
                 raise NotImplementedError(
-                    "Input longitude bounds ({}) cross the 0 degree meridian but"
-                    " dataset longitudes are all positive.".format(kwargs[lon])
+                    f"Input longitude bounds ({kwargs[lon]}) cross the 0 degree meridian but"
+                    " dataset longitudes are all positive."
                 )
             if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
@@ -299,7 +298,7 @@ def create_mask(
     x_dim: xarray.DataArray = None,
     y_dim: xarray.DataArray = None,
     poly: gpd.GeoDataFrame = None,
-    wrap_lons: bool = False
+    wrap_lons: bool = False,
 ):
     """
     Parameters
@@ -950,18 +949,14 @@ def subset_gridpoint(
         else:
             raise (
                 Exception(
-                    '{} requires input data with "lon" and "lat" coordinates or data variables.'.format(
-                        subset_gridpoint.__name__
-                    )
+                    f'{subset_gridpoint.__name__} requires input data with "lon" and "lat" coordinates or data variables.'
                 )
             )
 
     if tolerance is not None:
         if dist.min() > tolerance:
             raise ValueError(
-                "Distance to closest point ({}) is larger than tolerance ({})".format(
-                    dist, tolerance
-                )
+                f"Distance to closest point ({dist}) is larger than tolerance ({tolerance})"
             )
 
     if start_date or end_date:

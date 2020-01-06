@@ -5,9 +5,9 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
+from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
-from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -1208,7 +1208,7 @@ def winter_rain_ratio(
     pr: xarray.DataArray = None,
     prsn: xarray.DataArray = None,
     tas: xarray.DataArray = None,
-    freq: str = "QS-DEC"
+    freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     """Ratio of rainfall to total precipitation during winter
 

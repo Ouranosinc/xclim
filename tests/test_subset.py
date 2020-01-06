@@ -81,14 +81,10 @@ class TestSubsetGridPoint:
         # test different but equivalent strings
         out = subset.subset_gridpoint(da, start_date=yr_st, end_date=yr_ed)
         out1 = subset.subset_gridpoint(
-            da,
-            start_date="{yr_st}-01".format(yr_st=yr_st),
-            end_date="{yr_ed}-12".format(yr_ed=yr_ed),
+            da, start_date=f"{yr_st}-01", end_date=f"{yr_ed}-12"
         )
         out2 = subset.subset_gridpoint(
-            da,
-            start_date="{yr_st}-01-01".format(yr_st=yr_st),
-            end_date="{yr_ed}-12-31".format(yr_ed=yr_ed),
+            da, start_date=f"{yr_st}-01-01", end_date=f"{yr_ed}-12-31"
         )
         np.testing.assert_array_equal(out, out1)
         np.testing.assert_array_equal(out, out2)
@@ -104,9 +100,7 @@ class TestSubsetGridPoint:
 
         with pytest.warns(UserWarning):
             out = subset.subset_gridpoint(
-                da,
-                start_date="{yr_st}-01".format(yr_st=yr_st),
-                end_date="{yr_ed}-01".format(yr_ed=yr_ed),
+                da, start_date=f"{yr_st}-01", end_date=f"{yr_ed}-01"
             )
         np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
@@ -118,25 +112,19 @@ class TestSubsetGridPoint:
 
         # start date only
         with pytest.warns(UserWarning):
-            out = subset.subset_gridpoint(
-                da, start_date="{yr_st}-01".format(yr_st=yr_st)
-            )
+            out = subset.subset_gridpoint(da, start_date=f"{yr_st}-01")
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
 
         with pytest.warns(UserWarning):
-            out = subset.subset_gridpoint(
-                da, start_date="{yr_st}-07".format(yr_st=yr_st)
-            )
+            out = subset.subset_gridpoint(da, start_date=f"{yr_st}-07")
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.min().dt.month, 7)
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
         np.testing.assert_array_equal(out.time.max(), da.time.max())
 
         with pytest.warns(UserWarning):
-            out = subset.subset_gridpoint(
-                da, start_date="{yr_st}-07-15".format(yr_st=yr_st)
-            )
+            out = subset.subset_gridpoint(da, start_date=f"{yr_st}-07-15")
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
         np.testing.assert_array_equal(out.time.min().dt.month, 7)
         np.testing.assert_array_equal(out.time.min().dt.day, 15)
@@ -152,16 +140,14 @@ class TestSubsetGridPoint:
 
         # end date only
         with pytest.warns(UserWarning):
-            out = subset.subset_gridpoint(da, end_date="{yr_ed}-01".format(yr_ed=yr_ed))
+            out = subset.subset_gridpoint(da, end_date=f"{yr_ed}-01")
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.max().dt.month, 1)
         np.testing.assert_array_equal(out.time.max().dt.day, 31)
         np.testing.assert_array_equal(out.time.min(), da.time.min())
 
         with pytest.warns(UserWarning):
-            out = subset.subset_gridpoint(
-                da, end_date="{yr_ed}-06-15".format(yr_ed=yr_ed)
-            )
+            out = subset.subset_gridpoint(da, end_date=f"{yr_ed}-06-15")
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.max().dt.month, 6)
         np.testing.assert_array_equal(out.time.max().dt.day, 15)
@@ -174,14 +160,10 @@ class TestSubsetGridPoint:
         yr_ed = "2059"
 
         out = subset.subset_gridpoint(
-            da,
-            start_date="{yr_st}-07-01".format(yr_st=yr_st),
-            end_date="{yr_ed}-06-30".format(yr_ed=yr_ed),
+            da, start_date=f"{yr_st}-07-01", end_date=f"{yr_ed}-06-30"
         )
         out1 = subset.subset_gridpoint(
-            da,
-            start_date="{yr_st}-07".format(yr_st=yr_st),
-            end_date="{yr_ed}-06".format(yr_ed=yr_ed),
+            da, start_date=f"{yr_st}-07", end_date=f"{yr_ed}-06"
         )
         np.testing.assert_array_equal(out, out1)
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))

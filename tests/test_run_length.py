@@ -20,6 +20,7 @@ class TestRLE:
         values[1:11] = 1
         da = xr.DataArray(values, coords={"time": time}, dims="time")
 
+        # TODO: Add an assertion check to this test
         v, l, p = rl.rle_1d(da != 0)
 
 
