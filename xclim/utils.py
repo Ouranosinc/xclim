@@ -25,7 +25,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 
 import xclim
-from . import checks
+from xclim import checks
 
 __all__ = [
     "units",
@@ -131,7 +131,7 @@ calendars = {
 }
 
 
-def units2pint(value: Union[xr.DataArray, str]):
+def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -182,7 +182,7 @@ def pint2cfunits(value: Any) -> str:
       Units following CF-Convention.
     """
     # Print units using abbreviations (millimeter -> mm)
-    s = "{:~}".format(value)
+    s = f"{value:~}"
 
     # Search and replace patterns
     pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
