@@ -61,11 +61,12 @@ matrix:
           update: true
           packages:
             - netcdf
-            - python@3
+            - python
             - spatialindex
       before_install:
-        - python3 -m pip install --upgrade setuptools
-        - python3 -m pip install --upgrade pip
+        - printenv
+        - python -m pip install --upgrade setuptools
+        - python -m pip install --upgrade pip
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
