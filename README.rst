@@ -1,6 +1,6 @@
-===================================
-xclim: Climate indices computations
-===================================
+==========================================
+xclim: Climate indices computations |logo|
+==========================================
 
 |license| |build| |pypi| |conda| |coveralls| |codefactor| |zenodo| |black| |docs| |gitter|
 
@@ -86,3 +86,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
         :target: https://github.com/python/black
         :alt: Python Black
+
+.. |logo| image:: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo-small.png
+        :target: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo-small.png
+        :alt: xclim
