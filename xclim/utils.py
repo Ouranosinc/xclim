@@ -766,6 +766,7 @@ class Indicator:
             "MAM": "spring",
             "JJA": "summer",
             "SON": "fall",
+            "norm": "Normal",
         },
         "description": {
             "YS": "Annual",
@@ -775,6 +776,7 @@ class Indicator:
             "MAM": "spring",
             "JJA": "summer",
             "SON": "fall",
+            "norm": "Normal",
         },
         "var_name": {"DJF": "winter", "MAM": "spring", "JJA": "summer", "SON": "fall"},
     }

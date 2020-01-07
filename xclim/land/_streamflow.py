@@ -55,6 +55,7 @@ base_flow_index = Streamflow(
     identifier="base_flow_index",
     units="",
     long_name="Base flow index",
+    description="Minimum 7-day average flow divided by the mean flow.",
     compute=base_flow_index,
 )
 
@@ -84,7 +85,7 @@ fit = Fit(
     units="",
     standard_name="{dist} parameters",
     long_name="{dist} distribution parameters",
-    description="Parameters of the {dist} distribution fitted ",
+    description="Parameters of the {dist} distribution",
     cell_methods="time: fit",
     compute=generic.fit,
 )

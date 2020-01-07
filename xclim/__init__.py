@@ -3,7 +3,10 @@
 import sys
 from functools import partial
 
+from xclim import atmos
 from xclim import indices
+from xclim import land
+from xclim import seaIce
 
 # from .stats import fit, test
 
@@ -134,7 +137,16 @@ def __build_icclim(mode="warn"):
         # 'SD50cm': None,
     }
 
-    mod = build_module("xclim.icclim", mapping, doc="""ICCLIM indices""", mode=mode)
+    mod = build_module(
+        "xclim.icclim",
+        mapping,
+        doc="""
+                       ==============
+                       ICCLIM indices
+                       ==============
+                       """,
+        mode=mode,
+    )
     return mod
 
 

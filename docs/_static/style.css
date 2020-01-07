@@ -1,0 +1,52 @@
+@import url("theme.css");
+
+.wy-side-nav-search>a img.logo,
+.wy-side-nav-search .wy-dropdown>a img.logo {
+  width: 12rem
+}
+
+.wy-side-nav-search {
+  background-color: #eee;
+}
+
+.wy-side-nav-search>div.version {
+  display: inline;
+  color: rgb(23, 84, 159);
+}
+
+.wy-nav-top {
+  background-color: #555;
+}
+
+table.colwidths-given {
+    table-layout: fixed;
+    width: 100%;
+}
+table.docutils td {
+    white-space: unset;
+    word-wrap: break-word;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+td.name {
+    font-weight: 500;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+dd {
+  margin: 0 0 0 2em;
+  padding-bottom: 0.5em;
+}
+
+dt var {
+    font-family: Monospace;
+    font-style: normal;
+}

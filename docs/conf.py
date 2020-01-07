@@ -15,7 +15,7 @@
 import os
 import sys
 
-import guzzle_sphinx_theme
+import xclim
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -25,46 +25,45 @@ import guzzle_sphinx_theme
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
-import xclim
-import xclim.utils as xcu
 
-
-def _get_indicators(modules):
+def _get_indicators(module):
     """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
 
     modules : sequence
       Sequence of modules to inspect.
     """
+    import xclim.utils as xcu
+
     out = []
-    for obj in modules:
-        for key, val in obj.__dict__.items():
-            if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
-                out.append(val)
+    for key, val in module.__dict__.items():
+        if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
+            out.append(val)
 
     return out
 
 
-def _indicator_table():
+def _indicator_table(realm):
     """Return a sequence of dicts storing metadata about all available indices."""
-    from xclim import atmos
-    #import xclim.land as land
-    from xclim import seaIce
     import inspect
+    import warnings
 
-    inds = _get_indicators([atmos, seaIce])
+    inds = _get_indicators(getattr(xclim, realm))
     table = []
     for ind in inds:
         # Apply default values
         args = {
-            name: p.default
+            name: p.default if p.default != inspect._empty else f"<{name}>"
             for (name, p) in ind._sig.parameters.items()
-            if p.default != inspect._empty
         }
-        table.append(ind.json(args))
+        try:
+            table.append(ind.json(args))
+        except KeyError:
+            print(f"{ind.identifier} could not be documented.")
     return table
 
 
-indicators = _indicator_table()
+realms = ("atmos", "land", "seaIce")
+indicators = {realm: _indicator_table(realm) for realm in realms}
 
 # -- General configuration ---------------------------------------------
 
@@ -83,7 +82,6 @@ extensions = [
     "sphinx.ext.todo",
     "rstjinja",
     "nbsphinx",
-    "guzzle_sphinx_theme",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
@@ -150,8 +148,7 @@ todo_include_todos = True
 html_title = "XClim Official Documentation"
 html_short_title = "XClim"
 
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
-html_theme = "guzzle_sphinx_theme"  # 'alabaster
+html_theme = "sphinx_rtd_theme"
 
 html_context = {"indicators": indicators}
 
@@ -159,14 +156,15 @@ html_context = {"indicators": indicators}
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {
-    "project_nav_name": "XClim {}".format(xclim.__version__),
-    "homepage": "index",
-}
+html_theme_options = {"logo_only": True}
 
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
 }
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/_images/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
