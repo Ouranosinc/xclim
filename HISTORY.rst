@@ -4,6 +4,8 @@ History
 
 0.13.x (2020-01-10)
 -------------------
+* Documentation improvements: list of indicators, RTD theme, notebook example.
+* Added `sea_ice_extent` and `sea_ice_area` indicators.
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
 
 0.12.x-beta (2019-11-18)
