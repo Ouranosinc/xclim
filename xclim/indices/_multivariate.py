@@ -5,7 +5,6 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
-from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
 
@@ -701,7 +700,7 @@ def rain_on_frozen_ground_days(
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
         return frozen.all(axis=axis)
 
-    tcond = _rolling((tas > frz), window=8, dim="time", mode=func)
+    tcond = (tas > frz).rolling(time=8).reduce(func, allow_lazy=True)
     pcond = pr > t
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
