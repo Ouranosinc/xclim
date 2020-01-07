@@ -3,7 +3,6 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
-from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
 
@@ -38,7 +37,7 @@ __all__ = [
     "tropical_nights",
 ]
 
-# TODO: Add docstring for window
+
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
     r"""Cold spell days
@@ -373,7 +372,7 @@ def growing_season_length(
     # compute growth season length on resampled data
     thresh = utils.convert_units_to(thresh, tas)
 
-    c = _rolling(((tas > thresh) * 1), window=window, dim="time", mode="sum")
+    c = ((tas > thresh) * 1).rolling(time=window).sum(allow_lazy=True, skipna=False)
 
     def compute_gsl(c):
         nt = c.time.size
