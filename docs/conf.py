@@ -82,7 +82,6 @@ extensions = [
     "sphinx.ext.todo",
     "rstjinja",
     "nbsphinx",
-    "guzzle_sphinx_theme",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
