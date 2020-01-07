@@ -7,7 +7,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-import scipy
 import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
@@ -314,15 +313,16 @@ def _ens_align_datasets(
 
         if time_flag:
 
-            ds["time"] = xr.decode_cf(ds).time
-
-            ds["time"].values = pd.to_datetime(
+            cal1 = xr.decode_cf(ds).time
+            ds.drop_vars("time")
+            ds["time"] = pd.to_datetime(
                 {
-                    "year": ds.time.dt.year,
-                    "month": ds.time.dt.month,
-                    "day": ds.time.dt.day,
+                    "year": cal1.time.dt.year,
+                    "month": cal1.time.dt.month,
+                    "day": cal1.time.dt.day,
                 }
-            )
+            ).values
+
             # if dataset does not have the same time steps pad with nans
             if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
                 coords = {}
