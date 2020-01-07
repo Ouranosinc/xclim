@@ -1,6 +1,6 @@
-======
-xclim
-======
+===================================
+xclim: Climate indices computations
+===================================
 
 .. image:: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo.png
         :align: center
@@ -19,12 +19,9 @@ xclim
 
 ----
 
-|build| |coveralls| |codefactor| |zenodo| |black|
+|license| |build| |coveralls| |codefactor| |zenodo| |black| |docs| |gitter|
 
-* Documentation: |docs|
-* Chat with us: |gitter|
-
-``xclim`` is a library of functions to compute climate indices. It is built using xarray and can benefit from the parallelization handling provided by dask. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
+``xclim`` is a library of functions to compute climate indices from observations or model simulations. It is built using `xarray`_ and can benefit from the parallelization handling provided by `dask`_. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -33,18 +30,30 @@ For example, the following would compute monthly mean temperature from daily mea
   import xclim
   import xarray as xr
   ds = xr.open_dataset(filename)
-  tg = xclim.icclim.TG(ds.tas, freq='YS')
+  tg = xclim.ICCLIM.TG(ds.tas, freq='YS')
 
-For applications where meta-data and missing values are important to get right, ``xclim`` also provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This provides a mechanism for users to customize the indices to their own specifications and preferences.
+For applications where meta-data and missing values are important to get right, ``xclim`` provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
 
-``xclim`` is still in active development at the moment, but is close to being production ready. We're are currently nearing a release candidate (as of Q2 2019). If you're interested in participating to the development, please leave us a message on the issue tracker.
+xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration.
 
-* Free software: |license|
+.. _xarray: http://xarray.pydata.org/
+.. _dask: https://dask.org/
+
+
+Documentation
+-------------
+The official documentation is at https://xclim.readthedocs.io/
+
+
+Contributing
+------------
+``xclim`` is in active development and it's being used in production by climate services specialists. If you're interested in participating to the development, want to  suggest features, new indices or report bugs, please leave us a message on the `issue tracker <https://github.com/Ouranosinc/xclim/issues>`_. There is also a chat room on gitter (|gitter|).
+
 
 Credits
 -------
 
-This work is made possible thanks to the contributions of the Canadian Center for Climate Services.
+This work is made possible thanks to the contribution of the Canadian Center for Climate Services.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
