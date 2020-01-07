@@ -7,6 +7,7 @@ History
 * Documentation improvements: list of indicators, RTD theme, notebook example.
 * Added `sea_ice_extent` and `sea_ice_area` indicators.
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
+* Fixed `ensembles.create_ensemble` errors for builds against xarray master branch.
 
 0.12.x-beta (2019-11-18)
 ------------------------
