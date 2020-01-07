@@ -2,7 +2,6 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
-from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
 
@@ -362,7 +361,11 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
 
     """
 
-    m7 = _rolling(q, dim="time", window=7, center=True, mode="mean").resample(time=freq)
+    m7 = (
+        q.rolling(time=7, center=True)
+        .mean(allow_lazy=True, skipna=False)
+        .resample(time=freq)
+    )
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim="time")
@@ -554,7 +557,7 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     """
 
     # rolling sum of the values
-    arr = _rolling(pr, window=window, dim="time", mode="sum")
+    arr = pr.rolling(time=window).sum(allow_lazy=True, skipna=False)
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
     out.attrs["units"] = pr.units
