@@ -93,7 +93,7 @@ class TestDTR:
         dtr1 = max1 - min1
 
         np.testing.assert_array_equal(dtr, dtrC)
-
+        assert dtr.attrs["units"] == "K"
         assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
 
         assert np.isnan(dtr.values[1, 1, 0])
@@ -125,7 +125,7 @@ class TestDTRVar:
         dtrC = atmos.daily_temperature_range_variability(tasmax_C, tasmin_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
-
+        assert dtr.attrs["units"] == "K"
         dtr1a = max1 - min1
         dtr1 = abs(np.diff(dtr1a))
         np.testing.assert_array_equal(dtr, dtrC)
