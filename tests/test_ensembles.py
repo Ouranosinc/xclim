@@ -58,6 +58,7 @@ class TestEnsembleStats:
     def test_create_ensemble(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         assert len(ens.realization) == len(self.nc_files_simple)
+        assert len(ens.time) == 151
 
         # create again using xr.Dataset objects
         ds_all = []
@@ -94,6 +95,7 @@ class TestEnsembleStats:
         assert len(ens.realization) == len(self.nc_files)
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
+        assert len(ens.time) == 151
 
         ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
         # assert padded with nans
