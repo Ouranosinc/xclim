@@ -189,7 +189,7 @@ def pint2cfunits(value: Any) -> str:
       Units following CF-Convention.
     """
     # Print units using abbreviations (millimeter -> mm)
-    s = "{:~}".format(value)
+    s = f"{value:~}"
 
     # Search and replace patterns
     pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
@@ -273,7 +273,7 @@ def convert_units_to(
         tu_u = pint2cfunits(tu)
         with units.context(context or "none"):
             out = units.convert(source, fu, tu)
-            out.attrs["units"] = f"{tu_u:~P}"  # Condensed pretty print
+            out.attrs["units"] = tu_u
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
@@ -352,9 +352,11 @@ def declare_units(out_units, **units_by_name):
     --------
     In the following function definition:
 
-    @declare_units("K", tas=["temperature"])
-    def func(tas):
-       ...
+    .. code::
+
+       @declare_units("K", tas=["temperature"])
+       def func(tas):
+          ...
 
     the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
 

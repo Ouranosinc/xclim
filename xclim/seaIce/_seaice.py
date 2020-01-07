@@ -1,3 +1,7 @@
+"""
+Sea ice indicators
+------------------
+"""
 import abc
 
 from xclim import checks
