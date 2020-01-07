@@ -38,7 +38,7 @@ def _get_indicators(modules):
     out = []
     for obj in modules:
         for key, val in obj.__dict__.items():
-            if isinstance(val, xcu.Indicator):
+            if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
                 out.append(val)
 
     return out
@@ -46,10 +46,12 @@ def _get_indicators(modules):
 
 def _indicator_table():
     """Return a sequence of dicts storing metadata about all available indices."""
-    import xclim.atmos as atmos
+    from xclim import atmos
+    #import xclim.land as land
+    from xclim import seaIce
     import inspect
 
-    inds = _get_indicators([atmos])
+    inds = _get_indicators([atmos, seaIce])
     table = []
     for ind in inds:
         # Apply default values
@@ -103,9 +105,9 @@ source_suffix = [".rst", ".ipynb"]
 master_doc = "index"
 
 # General information about the project.
-project = u"xclim"
-copyright = u"2018, Ouranos Inc., Travis Logan, and contributors"
-author = u"Travis Logan"
+project = "xclim"
+copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -199,14 +201,14 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", u"xclim Documentation", u"Travis Logan", "manual")
+    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
 ]
 
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "xclim", u"xclim Documentation", [author], 1)]
+man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -217,7 +219,7 @@ texinfo_documents = [
     (
         master_doc,
         "xclim",
-        u"xclim Documentation",
+        "xclim Documentation",
         author,
         "xclim",
         "One line description of project.",

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The setup script."""
+import os
+
 from setuptools import find_packages
 from setuptools import setup
 
@@ -27,7 +29,6 @@ requirements = [
     "cftime",
     "netCDF4",
     "fiona>=1.8",
-    "rtree>=0.8",
     "geojson>=2.5.0",
     "shapely>=1.6",
     "geopandas>=0.4",
@@ -38,6 +39,9 @@ requirements = [
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
 ]
+
+if not os.getenv("READTHEDOCS"):
+    requirements.append("rtree>=0.9")
 
 setup_requirements = ["pytest-runner"]
 

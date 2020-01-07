@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import List
 from typing import Optional
@@ -7,6 +8,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scipy
+import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
@@ -14,9 +16,10 @@ from sklearn.cluster import KMeans
 try:
     import matplotlib.pyplot as plt
 
+    logging.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
-
 except ImportError:
+    logging.info("Matplotlib not found. No graph data will be produced.")
     MPL_INSTALLED = False
 
 
@@ -61,15 +64,15 @@ def create_ensemble(
     --------
     >>> from xclim import ensembles
     >>> import glob
-    >>> ncfiles = glob.glob('/*.nc')
+    >>> datasets = glob.glob('/*.nc')
     >>> ens = ensembles.create_ensemble(datasets)
     >>> print(ens)
     # Using multifile datasets:
     # simulation 1 is a list of .nc files (e.g. separated by time)
-    >>> datasets = glob.glob('dir/*.nc')
+    >>> datasets = glob.glob('/dir/*.nc')
     # simulation 2 is also a list of .nc files
-    >>> datasets.append(glob.glob('dir2/*.nc'))
-    >>> ens = utils.create_ensemble(datasets, mf_flag=True)
+    >>> datasets.append(glob.glob('/dir2/*.nc'))
+    >>> ens = ensembles.create_ensemble(datasets, mf_flag=True)
     """
 
     dim = "realization"
@@ -107,34 +110,33 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     Examples
     --------
     >>> from xclim import ensembles
-    >>> import glob
-    >>> ncfiles = glob.glob('/*tas*.nc')
+    >>> from pathlib import Path
+    >>> ncfiles = Path().rglob('*tas*.nc')
     Create ensemble dataset
     >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate ensemble statistics
-    >>> ens_means_std = ensembles.ensemble_mean_std_max_min(ens)
+    >>> ens_mean_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    dsOut = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
 
-        dsOut[v + "_mean"] = ens[v].mean(dim="realization")
-        dsOut[v + "_stdev"] = ens[v].std(dim="realization")
-        dsOut[v + "_max"] = ens[v].max(dim="realization")
-        dsOut[v + "_min"] = ens[v].min(dim="realization")
-        for vv in dsOut.data_vars:
-            dsOut[vv].attrs = ens[v].attrs
-
-            if "description" in dsOut[vv].attrs.keys():
+        ds_out["{}_mean".format(v)] = ens[v].mean(dim="realization")
+        ds_out["{}_stdev".format(v)] = ens[v].std(dim="realization")
+        ds_out["{}_max".format(v)] = ens[v].max(dim="realization")
+        ds_out["{}_min".format(v)] = ens[v].min(dim="realization")
+        for vv in ds_out.data_vars:
+            ds_out[vv].attrs = ens[v].attrs
+            if "description" in ds_out[vv].attrs.keys():
                 vv.split()
-                dsOut[vv].attrs["description"] = (
-                    dsOut[vv].attrs["description"]
+                ds_out[vv].attrs["description"] = (
+                    ds_out[vv].attrs["description"]
                     + " : "
                     + vv.split("_")[-1]
                     + " of ensemble"
                 )
 
-    return dsOut
+    return ds_out
 
 
 def ensemble_percentiles(
@@ -170,18 +172,17 @@ def ensemble_percentiles(
     Create ensemble dataset
     >>> ens = ensembles.create_ensemble(ncfiles)
     Calculate default ensemble percentiles
-    >>> ens_percs = ensembles.ensemble_statistics(ens)
+    >>> ens_percs = ensembles.ensemble_percentiles(ens)
     >>> print(ens_percs['tas_p10'])
     Calculate non-default percentiles (25th and 75th)
-    >>> ens_percs = ensembles.ensemble_statistics(ens, values=(25,75))
+    >>> ens_percs = ensembles.ensemble_percentiles(ens, values=(25, 50, 75))
     >>> print(ens_percs['tas_p25'])
     Calculate by time blocks (n=10) if ensemble size is too large to load in memory
-    >>> ens_percs = ensembles.ensemble_statistics(ens, time_block=10)
+    >>> ens_percs = ensembles.ensemble_percentiles(ens, time_block=10)
     >>> print(ens_percs['tas_p25'])
-
     """
 
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens.dims)
     for v in ens.data_vars:
         # Percentile calculation requires load to memory : automate size for large ensemble objects
@@ -271,9 +272,9 @@ def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     time_flag: bool = False,
-    time_all=None,
+    time_all: np.array = None,
     **xr_kwargs
-) -> xr.Dataset:
+) -> List[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
     are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
     padded with NaN values
@@ -288,7 +289,7 @@ def _ens_align_datasets(
       Only applicable when datasets is a sequence of file paths.
     time_flag : bool
       True if time dimension is present among the "datasets"; Otherwise false.
-    time_all : array of datetime64
+    time_all : np.array
       Series of unique time-steps covering all input Datasets.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
@@ -302,7 +303,7 @@ def _ens_align_datasets(
 
     ds_all = []
     for n in datasets:
-        # print('accessing file ', ncfiles.index(n) + 1, ' of ', len(ncfiles))
+        logging.info("Accessing {} of {}".format(n, len(datasets)))
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
@@ -328,10 +329,10 @@ def _ens_align_datasets(
                 for c in [c for c in ds.coords if "time" not in c]:
                     coords[c] = ds.coords[c]
                 coords["time"] = time_all
-                dsTmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
+                ds_tmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
                 for v in ds.data_vars:
-                    dsTmp[v] = ds[v]
-                ds = dsTmp
+                    ds_tmp[v] = ds[v]
+                ds = ds_tmp
             # ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
         ds_all.append(ds)
 
@@ -339,7 +340,7 @@ def _ens_align_datasets(
 
 
 def _calc_percentiles_simple(ens, v, values):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -370,7 +371,7 @@ def _calc_percentiles_simple(ens, v, values):
 
 
 def _calc_percentiles_blocks(ens, v, values, time_block):
-    ds_out = ens.drop(ens.data_vars)
+    ds_out = ens.drop_vars(names=set(ens.data_vars))
     dims = list(ens[v].dims)
     outdims = [x for x in dims if "realization" not in x]
 
@@ -486,7 +487,8 @@ def kmeans_reduce_ensemble(
       initialization. Use an int to make the randomness deterministic.
       See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
     make_graph: bool
-      output a dictionary of input for displays a plot of R² vs. the number of clusters
+      output a dictionary of input for displays a plot of R² vs. the number of clusters.
+      Defaults to True if matplotlib is installed in runtime environment.
 
     Notes
     -----
@@ -531,7 +533,9 @@ def kmeans_reduce_ensemble(
     Examples
     --------
     >>> from xclim import ensembles
+    >>> from glob import glob
     # Start with ensemble datasets for temperature and precipitation
+    >>> temperature_datasets, precip_datasets = glob("/path/to/temp_data/*.nc"), glob("/path/to/precip_data/*.nc")
     >>> ensTas = ensembles.create_ensemble(temperature_datasets)
     >>> ensPr = ensembles.create_ensemble(precip_datasets)
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
@@ -545,14 +549,21 @@ def kmeans_reduce_ensemble(
     >>> dTas = FutTas - HistTas
     # Create selection criteria xr.DataArray
     >>> crit = xr.concat((dTas,dPr), dim='criteria')
+    >>> crit = crit.criteria
     # Create clusters and select realization ids of reduced ensemble
-    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
-    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
+    >>> ids, cluster, fig_data = \
+    ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> ids, cluster, fig_data = \
+    ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
+    fig_data = None
+
     if make_graph:
         fig_data = {}
         if max_clusters is not None:
             fig_data["max_clusters"] = max_clusters
+    else:
+        fig_data = None
 
     data = data.transpose("realization", "criteria")
     # initialize the variables
@@ -589,14 +600,10 @@ def kmeans_reduce_ensemble(
     n_clusters = _get_nclust(method, n_sim, rsq, max_clusters)
 
     if make_graph:
-
         fig_data["method"] = method
         fig_data["rsq"] = rsq
         fig_data["n_clusters"] = n_clusters
         fig_data["realizations"] = n_sim
-
-    else:
-        fig_data = None
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
     kmeans = KMeans(
@@ -715,7 +722,10 @@ def plot_rsqprofile(fig_data):
 
     Examples
     --------
-    >>> [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> import xarray as xr
+    >>> from xclim import ensembles
+    >>> crit = xr.open_dataset("/path/to/file.nc").criteria
+    >>> ids, cluster, fig_data = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)
     >>> plot_rsqprofile(fig_data)
     """
 

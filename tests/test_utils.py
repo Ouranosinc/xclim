@@ -15,6 +15,8 @@
 # a first line of defense.
 import glob
 import os
+from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 
 import cftime
 import dask
@@ -22,12 +24,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from pathlib import Path
-from contextlib import ExitStack as does_not_raise
 
 from xclim import __version__
 from xclim import atmos
-from xclim import ensembles
 from xclim import indices
 from xclim import subset
 from xclim import utils
@@ -347,6 +346,13 @@ class TestUnits:
             fu.to("mmday")
             tu.to("mmday")
 
+    def test_fraction(self):
+        q = 5 * units.percent
+        assert q.to("dimensionless") == 0.05
+
+        q = 5 * units.parse_units("pct")
+        assert q.to("dimensionless") == 0.05
+
 
 class TestConvertUnitsTo:
     def test_deprecation(self, tas_series):
@@ -354,22 +360,34 @@ class TestConvertUnitsTo:
             out = utils.convert_units_to(0, units.K)
             assert out == 273.15
 
+        with pytest.warns(FutureWarning):
             out = utils.convert_units_to(10, units.mm / units.day, context="hydro")
             assert out == 10
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start="1/1/2001")
             out = indices.tx_days_above(tas, 30)
-            out1 = indices.tx_days_above(tas, "30 degC")
-            out2 = indices.tx_days_above(tas, "303.15 K")
-            np.testing.assert_array_equal(out, out1)
-            np.testing.assert_array_equal(out, out2)
+
+        out1 = indices.tx_days_above(tas, "30 degC")
+        out2 = indices.tx_days_above(tas, "303.15 K")
+        np.testing.assert_array_equal(out, out1)
+        np.testing.assert_array_equal(out, out2)
+
+    def test_fraction(self):
+        out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
+        assert out == 0.1
 
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
         u = units("mm/d")
         assert pint2cfunits(u.units) == "mm d-1"
+
+        u = units("percent")
+        assert pint2cfunits(u.units) == "%"
+
+        u = units("pct")
+        assert pint2cfunits(u.units) == "%"
 
     def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
@@ -382,6 +400,9 @@ class TestUnitConversion:
 
         u = units2pint("2 kg m-2 s-1")
         assert (str(u)) == "kilogram / meter ** 2 / second"
+
+        u = units2pint("%")
+        assert str(u) == "percent"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -432,23 +453,23 @@ class TestSubsetGridPoint:
 
         da = xr.open_dataset(self.nc_poslons).tas
         da["lon"] -= 360
-        yr_st = 2050
-        yr_ed = 2059
+        yr_st = "2050"
+        yr_ed = "2059"
 
         out = subset.subset_gridpoint(
-            da, lon=lon, lat=lat, start_yr=yr_st, end_yr=yr_ed
+            da, lon=lon, lat=lat, start_date=yr_st, end_date=yr_ed
         )
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
+        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
 
         # test time only
-        out = subset.subset_gridpoint(da, start_yr=yr_st, end_yr=yr_ed)
+        out = subset.subset_gridpoint(da, start_date=yr_st, end_date=yr_ed)
         np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
+        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
 
     def test_irregular(self):
 
@@ -503,11 +524,15 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lon, lon + 360, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
-    def test_raise(self):
+    def test_type_warn_then_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
-            subset.subset_gridpoint(da, lon=-72.4, lat=46.1, start_yr=2056, end_yr=2055)
+            with pytest.warns(Warning):
+                subset.subset_gridpoint(
+                    da, lon=-72.4, lat=46.1, start_date=2056, end_date=2055
+                )
 
+    def test_raise(self):
         da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
@@ -525,7 +550,10 @@ class TestSubsetBbox:
     lat = [42, 46.1]
 
     def test_dataset(self):
-        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace("tasmax", "tasmin")])
+        da = xr.open_mfdataset(
+            [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
+            combine="by_coords",
+        )
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
@@ -544,35 +572,39 @@ class TestSubsetBbox:
 
         da = xr.open_dataset(self.nc_poslons).tas
         da["lon"] -= 360
-        yr_st = 2050
-        yr_ed = 2059
+        yr_st = "2050"
+        yr_ed = "2059"
 
         out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st, end_yr=yr_ed
+            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=yr_st, end_date=yr_ed
         )
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
+        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
 
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=yr_st
-        )
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=yr_st
+            )
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
 
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat, end_yr=yr_ed)
+        with pytest.warns(Warning):
+            out = subset.subset_bbox(
+                da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=yr_ed
+            )
         assert np.all(out.lon >= np.min(self.lon))
         assert np.all(out.lon <= np.max(self.lon))
         assert np.all(out.lat >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
+        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
         np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
 
     def test_irregular(self):
@@ -607,9 +639,10 @@ class TestSubsetBbox:
     def test_raise(self):
         da = xr.open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
-            subset.subset_bbox(
-                da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
-            )
+            with pytest.warns(Warning):
+                subset.subset_bbox(
+                    da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
+                )
 
         da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
         with pytest.raises(Exception):

@@ -88,8 +88,10 @@ class Tasmax(Indicator):
 class TasminTasmax(Indicator2D):
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
-            checks.check_valid(da, "cell_methods", "time: maximum within days")
             checks.check_valid(da, "standard_name", "air_temperature")
+        checks.check_valid(dan, "cell_methods", "time: minimum within days")
+        checks.check_valid(dax, "cell_methods", "time: maximum within days")
+        assert dan.units == dax.units
 
     @abc.abstractmethod
     def compute(*args, **kwds):

@@ -3,9 +3,9 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
+from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
-from xclim.utils import _rolling
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -33,6 +33,8 @@ __all__ = [
     "wetdays",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_tx_days",
+    "sea_ice_area",
+    "sea_ice_extent",
     "tropical_nights",
 ]
 
@@ -138,7 +140,9 @@ def daily_pr_intensity(pr, thresh="1 mm/day", freq="YS"):
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
-def maximum_consecutive_wet_days(pr: xarray.DataArray, thresh="1 mm/day", freq="YS"):
+def maximum_consecutive_wet_days(
+    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+):
     r"""Consecutive wet days.
 
     Returns the maximum number of consecutive wet days.
@@ -179,7 +183,9 @@ def maximum_consecutive_wet_days(pr: xarray.DataArray, thresh="1 mm/day", freq="
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
-def cooling_degree_days(tas: xarray.DataArray, thresh="18 degC", freq="YS"):
+def cooling_degree_days(
+    tas: xarray.DataArray, thresh: str = "18 degC", freq: str = "YS"
+):
     r"""Cooling degree days
 
     Sum of degree days above the temperature threshold at which spaces are cooled.
@@ -217,7 +223,9 @@ def cooling_degree_days(tas: xarray.DataArray, thresh="18 degC", freq="YS"):
 
 
 @declare_units("", tas="[temperature]", thresh="[temperature]")
-def freshet_start(tas: xarray.DataArray, thresh="0 degC", window=5, freq="YS"):
+def freshet_start(
+    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: int = "YS"
+):
     r"""First day consistently exceeding threshold temperature.
 
     Returns first day of period where a temperature threshold is exceeded
@@ -259,7 +267,9 @@ def freshet_start(tas: xarray.DataArray, thresh="0 degC", window=5, freq="YS"):
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
-def growing_degree_days(tas: xarray.DataArray, thresh="4.0 degC", freq="YS"):
+def growing_degree_days(
+    tas: xarray.DataArray, thresh: str = "4.0 degC", freq: str = "YS"
+):
     r"""Growing degree-days over threshold temperature value [℃].
 
     The sum of degree-days over the threshold temperature.
@@ -295,7 +305,7 @@ def growing_degree_days(tas: xarray.DataArray, thresh="4.0 degC", freq="YS"):
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def growing_season_length(
-    tas: xarray.DataArray, thresh="5.0 degC", window=6, freq="YS"
+    tas: xarray.DataArray, thresh: str = "5.0 degC", window: int = 6, freq: str = "YS"
 ):
     r"""Growing season length.
 
@@ -383,7 +393,12 @@ def growing_season_length(
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
-def heat_wave_index(tasmax: xarray.DataArray, thresh="25.0 degC", window=5, freq="YS"):
+def heat_wave_index(
+    tasmax: xarray.DataArray,
+    thresh: str = "25.0 degC",
+    window: str = 5,
+    freq: str = "YS",
+):
     r"""Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
@@ -412,7 +427,9 @@ def heat_wave_index(tasmax: xarray.DataArray, thresh="25.0 degC", window=5, freq
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
-def heating_degree_days(tas: xarray.DataArray, thresh="17.0 degC", freq="YS"):
+def heating_degree_days(
+    tas: xarray.DataArray, thresh: str = "17.0 degC", freq: str = "YS"
+):
     r"""Heating degree days
 
     Sum of degree days below the temperature threshold at which spaces are heated.
@@ -446,7 +463,9 @@ def heating_degree_days(tas: xarray.DataArray, thresh="17.0 degC", freq="YS"):
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
-def tn_days_below(tasmin: xarray.DataArray, thresh="-10.0 degC", freq="YS"):
+def tn_days_below(
+    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
+):
     r"""Number of days with tmin below a threshold in
 
     Number of days where daily minimum temperature is below a threshold.
@@ -480,7 +499,9 @@ def tn_days_below(tasmin: xarray.DataArray, thresh="-10.0 degC", freq="YS"):
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
-def tx_days_above(tasmax: xarray.DataArray, thresh="25.0 degC", freq="YS"):
+def tx_days_above(
+    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+):
     r"""Number of summer days
 
     Number of days where daily maximum temperature exceed a threshold.
@@ -514,7 +535,9 @@ def tx_days_above(tasmax: xarray.DataArray, thresh="25.0 degC", freq="YS"):
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
-def warm_day_frequency(tasmax: xarray.DataArray, thresh="30 degC", freq="YS"):
+def warm_day_frequency(
+    tasmax: xarray.DataArray, thresh: str = "30 degC", freq: str = "YS"
+):
     r"""Frequency of extreme warm days
 
     Return the number of days with tasmax > thresh per period
@@ -548,7 +571,9 @@ def warm_day_frequency(tasmax: xarray.DataArray, thresh="30 degC", freq="YS"):
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
-def warm_night_frequency(tasmin: xarray.DataArray, thresh="22 degC", freq="YS"):
+def warm_night_frequency(
+    tasmin: xarray.DataArray, thresh: str = "22 degC", freq: str = "YS"
+):
     r"""Frequency of extreme warm nights
 
     Return the number of days with tasmin > thresh per period
@@ -573,7 +598,7 @@ def warm_night_frequency(tasmin: xarray.DataArray, thresh="22 degC", freq="YS"):
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
-def wetdays(pr: xarray.DataArray, thresh="1.0 mm/day", freq="YS"):
+def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
     r"""Wet days
 
     Return the total number of days during period with precipitation over threshold.
@@ -601,7 +626,7 @@ def wetdays(pr: xarray.DataArray, thresh="1.0 mm/day", freq="YS"):
     >>> import xarray as xr
     >>> import xclim.utils
     >>> pr = xr.open_dataset('pr.day.nc').pr
-    >>> wd = xclim.indices.wetdays(pr, pr_min = 5., freq="QS-DEC")
+    >>> wd = xclim.indices.wetdays(pr, pr_min=5., freq="QS-DEC")
     """
     thresh = utils.convert_units_to(thresh, pr, "hydro")
 
@@ -610,7 +635,9 @@ def wetdays(pr: xarray.DataArray, thresh="1.0 mm/day", freq="YS"):
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
-def maximum_consecutive_dry_days(pr: xarray.DataArray, thresh="1 mm/day", freq="YS"):
+def maximum_consecutive_dry_days(
+    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+):
     r"""Maximum number of consecutive dry days
 
     Return the maximum number of consecutive days within the period where precipitation
@@ -651,7 +678,9 @@ def maximum_consecutive_dry_days(pr: xarray.DataArray, thresh="1 mm/day", freq="
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
-def maximum_consecutive_tx_days(tasmax: xarray.DataArray, thresh="25 degC", freq="YS"):
+def maximum_consecutive_tx_days(
+    tasmax: xarray.DataArray, thresh: str = "25 degC", freq: str = "YS"
+):
     r"""Maximum number of consecutive summer days (Tx > 25℃)
 
     Return the maximum number of consecutive days within the period where temperature is above a certain threshold.
@@ -690,8 +719,82 @@ def maximum_consecutive_tx_days(tasmax: xarray.DataArray, thresh="25 degC", freq
     return group.apply(rl.longest_run, dim="time")
 
 
+@declare_units("[area]", sic="[]", area="[area]", thresh="[]")
+def sea_ice_area(sic, area, thresh="15 pct"):
+    """Return the total sea ice area.
+
+    Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
+    usually set to 15%.
+
+    Parameters
+    ----------
+    sic : xarray.DataArray
+      Sea ice concentration [0,1].
+    area : xarray.DataArray
+      Grid cell area [m²]
+    thresh : str
+      Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
+
+    Returns
+    -------
+    Sea ice area [m²].
+
+    Notes
+    -----
+    To compute sea ice area over a subregion, first mask or subset the input sea ice concentration data.
+
+    References
+    ----------
+    `What is the difference between sea ice area and extent
+    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+
+    """
+    t = utils.convert_units_to(thresh, sic)
+    factor = utils.convert_units_to("100 pct", sic)
+    out = xarray.dot(sic.where(sic >= t, 0), area) / factor
+    out.attrs["units"] = area.units
+    return out
+
+
+@declare_units("[area]", sic="[]", area="[area]", thresh="[]")
+def sea_ice_extent(sic, area, thresh="15 pct"):
+    """Return the total sea ice extent.
+
+    Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice
+    concentration is above a threshold usually set to 15%.
+
+    Parameters
+    ----------
+    sic : xarray.DataArray
+      Sea ice concentration [0,1].
+    area : xarray.DataArray
+      Grid cell area [m²]
+    thresh : str
+      Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
+
+    Returns
+    -------
+    Sea ice extent [m²].
+
+    Notes
+    -----
+    To compute sea ice area over a subregion, first mask or subset the input sea ice concentration data.
+
+    References
+    ----------
+    `What is the difference between sea ice area and extent
+    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+    """
+    t = utils.convert_units_to(thresh, sic)
+    out = xarray.dot(sic >= t, area)
+    out.attrs["units"] = area.units
+    return out
+
+
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
-def tropical_nights(tasmin: xarray.DataArray, thresh="20.0 degC", freq="YS"):
+def tropical_nights(
+    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+):
     r"""Tropical nights
 
     The number of days with minimum daily temperature above threshold.

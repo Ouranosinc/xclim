@@ -860,6 +860,7 @@ class TestTgMaxTgMinIndices:
     def test_static_daily_temperature_range(self, tasmax_series, tasmin_series):
         tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
         dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+        assert dtr.units == "K"
         output = np.mean(tasmax - tasmin)
 
         np.testing.assert_equal(dtr, output)
