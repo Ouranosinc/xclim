@@ -1,12 +1,12 @@
-<!--Please ensure the PR fulfills the follwing requirements-->
+<!--Please ensure the PR fulfills the following requirements! -->
+<!-- If this is your first PR, make sure to add your details to the AUTHORS.rst! -->
 ### Pull Request Checklist:
 - [ ] This PR addresses an already opened issue (for bug fixes / features)
+    - This PR fixes #xyz
 - [ ] Tests for the changes have been added (for bug fixes / features)
-- [ ] Docs have been added / updated (for bug fixes / features)
-- [ ] HISTORY.rst has been updated
-
-### After merging to master and before closing the branch:
-- [ ] bumpversion (minor / major / patch) has been called on `master` branch
+- [ ] Documentation has been added / updated (for bug fixes / features)
+- [ ] HISTORY.rst has been updated (with summary of main changes)
+- [ ] `bumpversion (minor / major / patch)` has been called on this branch
 - [ ] Tags have been pushed
 
 * **What kind of change does this PR introduce?** <!--(Bug fix, feature, docs update, etc.)-->
@@ -16,6 +16,3 @@
 
 
 * **Other information**:
-
-<!--* When merging, please put `fixes #{issue number}` in your comment to auto-close the issue that your PR addresses. Thanks!-->
-This PR fixes #xyz
