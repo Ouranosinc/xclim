@@ -5,7 +5,6 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
-from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
 
