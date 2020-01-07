@@ -4,6 +4,8 @@ History
 
 0.13.x (2020-01-10)
 -------------------
+* Documentation improvements: list of indicators, RTD theme, notebook example.
+* Added `sea_ice_extent` and `sea_ice_area` indicators.
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
 * Fixed `ensembles.create_ensemble` errors for builds against xarray master branch.
 
