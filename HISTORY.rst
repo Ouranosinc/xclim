@@ -5,7 +5,7 @@ History
 0.13.x (2020-01-10)
 -------------------
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
-* Fixed ensembles.create_ensemble errors for builds against xarray master branch.
+* Fixed `ensembles.create_ensemble` errors for builds against xarray master branch.
 
 0.12.x-beta (2019-11-18)
 ------------------------
