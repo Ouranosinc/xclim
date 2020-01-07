@@ -346,6 +346,13 @@ class TestUnits:
             fu.to("mmday")
             tu.to("mmday")
 
+    def test_fraction(self):
+        q = 5 * units.percent
+        assert q.to("dimensionless") == 0.05
+
+        q = 5 * units.parse_units("pct")
+        assert q.to("dimensionless") == 0.05
+
 
 class TestConvertUnitsTo:
     def test_deprecation(self, tas_series):
@@ -353,22 +360,34 @@ class TestConvertUnitsTo:
             out = utils.convert_units_to(0, units.K)
             assert out == 273.15
 
+        with pytest.warns(FutureWarning):
             out = utils.convert_units_to(10, units.mm / units.day, context="hydro")
             assert out == 10
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start="1/1/2001")
             out = indices.tx_days_above(tas, 30)
-            out1 = indices.tx_days_above(tas, "30 degC")
-            out2 = indices.tx_days_above(tas, "303.15 K")
-            np.testing.assert_array_equal(out, out1)
-            np.testing.assert_array_equal(out, out2)
+
+        out1 = indices.tx_days_above(tas, "30 degC")
+        out2 = indices.tx_days_above(tas, "303.15 K")
+        np.testing.assert_array_equal(out, out1)
+        np.testing.assert_array_equal(out, out2)
+
+    def test_fraction(self):
+        out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
+        assert out == 0.1
 
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
         u = units("mm/d")
         assert pint2cfunits(u.units) == "mm d-1"
+
+        u = units("percent")
+        assert pint2cfunits(u.units) == "%"
+
+        u = units("pct")
+        assert pint2cfunits(u.units) == "%"
 
     def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
@@ -381,6 +400,9 @@ class TestUnitConversion:
 
         u = units2pint("2 kg m-2 s-1")
         assert (str(u)) == "kilogram / meter ** 2 / second"
+
+        u = units2pint("%")
+        assert str(u) == "percent"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -632,49 +654,6 @@ class TestThresholdCount:
         ts = tas_series(np.arange(365))
         out = utils.threshold_count(ts, "<", 50, "Y")
         np.testing.assert_array_equal(out, [50, 0])
-
-
-class TestRolling:
-    @pytest.mark.parametrize(
-        "mode,expected,error",
-        [
-            ("sum", 10, does_not_raise()),
-            ("max", 1, does_not_raise()),
-            (lambda x, axis: x[..., 1], 1, does_not_raise()),
-            ("notanumpyfunction", None, pytest.raises(NotImplementedError)),
-        ],
-    )
-    @pytest.mark.parametrize("dtype", [float, int, bool])
-    def test_rolling_ufunc(self, mode, expected, error, dtype):
-        ones = np.ones((100,), dtype=dtype)
-        if dtype is float:
-            ones[20] = np.nan
-
-        with error:
-            rolld = utils._get_rolling_func(10, mode=mode)(ones)
-            if dtype is float:
-                assert all(np.isnan(rolld[:9]))
-                if isinstance(mode, str):
-                    assert all(np.isnan(rolld[20:30]))
-            assert all(rolld[30:] == expected)
-
-    @pytest.mark.parametrize("mode", ["mean", "max"])
-    def test_rolling(self, mode):
-        fn = Path(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-        ds_nd = xr.open_dataset(fn)
-        ds_dask = xr.open_dataset(fn, chunks={"time": 30})
-
-        res_nd_xr = getattr(ds_nd.pr.rolling(time=5), mode)()
-        res_nd_xc = utils._rolling(
-            ds_nd.pr, window=5, dim="time", mode=mode, keep_attrs=False
-        )
-        res_dask = utils._rolling(
-            ds_dask.pr, window=5, dim="time", mode=mode, keep_attrs=True
-        )
-
-        xr.testing.assert_identical(res_nd_xr, res_nd_xc)
-        xr.testing.assert_allclose(res_dask, res_nd_xr)
-        assert ds_dask.pr.attrs == res_dask.attrs
 
 
 class TestWindConversion:

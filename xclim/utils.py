@@ -54,8 +54,11 @@ __all__ = [
 # TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
 units.define(
-    pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
+    pint.unit.UnitDefinition(
+        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
+    )
 )
 
 # Define commonly encountered units not defined by pint
@@ -148,6 +151,9 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
+        if s == "%":
+            return "percent"
+
         return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
@@ -164,6 +170,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
+        AttributeError,
     ):  # Convert from CF-units to pint-compatible
         return units.parse_expression(_transform(unit)).units
 
@@ -195,7 +202,7 @@ def pint2cfunits(value: Any) -> str:
         return f"{u}{neg}{p}"
 
     out, n = re.subn(pat, repl, s)
-    return out
+    return out.replace("percent", "%")
 
 
 def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
@@ -333,7 +340,23 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
 
 
 def declare_units(out_units, **units_by_name):
-    """Create a decorator to check units of function arguments."""
+    """Create a decorator to check units of function arguments.
+
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+
+    Examples
+    --------
+    In the following function definition:
+
+    .. code::
+
+       @declare_units("K", tas=["temperature"])
+       def func(tas):
+          ...
+
+    the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
+
+    """
 
     def dec(func):
         # Match the signature of the function to the arguments given to the decorator
@@ -349,13 +372,23 @@ def declare_units(out_units, **units_by_name):
 
             out = func(*args, **kwargs)
 
-            # In the generic case, we use the default units that should have been propagated by the computation.
-            if "[" in out_units:
-                _check_units(out, out_units)
+            if "units" in out.attrs:
+                # Check that output units dimensions match expectations, e.g. [temperature]
+                if "[" in out_units:
+                    _check_units(out, out_units)
+                # Explicitly convert units if units are declared, e.g K
+                else:
+                    out = convert_units_to(out, out_units)
 
-            # Otherwise, we specify explicitly the units.
-            else:
+            # Otherwise, we impose the units if given.
+            elif "[" not in out_units:
                 out.attrs["units"] = out_units
+
+            else:
+                raise ValueError(
+                    "Output units are not propagated by computation nor specified by decorator."
+                )
+
             return out
 
         return wrapper
@@ -1046,139 +1079,6 @@ def wrapped_partial(func: FunctionType, *args, **kwargs):
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func
-
-
-def _get_rolling_func(N, mode="sum"):
-    """Generate the rolling sum function to be mapped in rolling()"""
-
-    if mode in ["sum", "mean"]:
-        denom = 1 if mode == "sum" else N
-
-        def rolling_sum_na(x):
-            # First we get the rolling sum of the values.
-            cumsum = np.nancumsum(np.insert(x, 0, 0, axis=-1), axis=-1)
-            out = cumsum[..., N:] - cumsum[..., :-N]
-            # We get the rolling sum of where the data is nan. Non-zero values here are
-            # all elements where the rolling window had at least one nan.
-            # Around 1.5x to 2x slower, but imitates the behavior of xr.rolling()
-            if np.any(np.isnan(x)):
-                isnasum = np.cumsum(np.insert(np.isnan(x), 0, 0, axis=-1), axis=-1)
-                outna = isnasum[..., N:] - isnasum[..., :-N]
-                out[outna > 0] = np.nan
-            # dask will trim our output, so we pad.
-            # PB: I would like to get rid of this line, but passing "trim=false" to
-            # dask.map_overlap, f*cks up the shape.
-            return np.pad(
-                out / denom,
-                (x.ndim - 1) * [(0, 0)] + [(N - 1, 0)],
-                mode="constant",
-                constant_values=np.nan
-                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
-                else 0,
-            )
-
-        return rolling_sum_na
-
-    try:
-        if isinstance(mode, str):
-            # Get the reducing numpy function
-            func = getattr(np, mode)
-        else:
-            # Assume it is a callable
-            func = mode
-
-        def rolling_stride_na(x):
-            # rolling is an array with a new dimension of the same size as the window
-            # All values are copied so that the function can be applied along this dim.
-            shape = x.shape[:-1] + (x.shape[-1] - N + 1, N)
-            strides = x.strides + (x.strides[-1],)
-            rolling = np.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
-            out = func(rolling, axis=-1)
-            return np.pad(
-                out,
-                [(0, 0)] * (x.ndim - 1) + [(N - 1, 0)],
-                mode="constant",
-                constant_values=np.nan
-                if np.core.numerictypes.issubdtype(x.dtype, np.floating)
-                else 0,
-            )
-
-        return rolling_stride_na
-    except AttributeError:
-        raise NotImplementedError(
-            "Rolling operation {mode} not known or yet implemented."
-        )
-
-
-def _rolling(
-    arr: xr.DataArray,
-    dim: str = "time",
-    window: int = 1,
-    mode: Union[str, Callable] = "sum",
-    keep_attrs: bool = False,
-    **kwargs,
-):
-    """Utility function for rolling.sum and rolling.mean
-
-    This calls a custom dask mapping when the rolled dimension is chunked.
-    xarray is able to roll on chunked dimensions, but sometimes it tries to concatenate
-    them together, causing memory issues.
-    Also, the rolling operation is not lazy, this function is.
-
-    Calling this with window = 5, mode = 'sum' and dim = 'time' is equivalent to:
-
-    >>> arr.rolling(time=5, center=False, min_periods=5).sum()
-
-    Parameters
-    ----------
-    arr : DataArray
-        The data. If it is not stored in a dask array, this goes back to xr.rolling()
-    window : int
-        Window size along the rolled dimension (the default is 1)
-    mode : str,
-        The operation to apply on the rolled axis (the default is 'sum')
-        Any numpy function that accept the keyword axis and reduces along this axis is valid.
-        (If the arr is not a dask array, then any method of xr.core.rolling.DataArrayRolling)
-        Can also be a function accepting the array and "axis=-1". In that case, proper propagation
-        of NaN values is not assured.
-    dim : str
-        Dimension along which to roll (the default is 'time')
-    keep_attrs : bool
-        If True, transfers the attrs of the input array to the output one. (default is False)
-    kwargs :
-        If any other kwargs are passed, this defaults to the classical rolling as other options are not implemented.
-    Returns
-    -------
-    DataArray
-        The data with the rolling sum/mean applied along the specified dim.
-    """
-    # Only do this if the data is as dask array and no unsupported kwargs are requested.
-    if isinstance(arr.data, dask.array.Array) and not kwargs:
-        dims = arr.dims
-        # Transpose so to get the rolling dim in axis=0
-        arr = arr.transpose(*[dm for dm in dims if dm != dim], dim)
-        # Map the rolling function but with an overlap so the first element
-        # has a full window. Boundaries are nan so to imitate the default behavior.
-        out = arr.data.map_overlap(
-            _get_rolling_func(window, mode),
-            (arr.ndim - 1) * (0,) + (window - 1,),
-            boundary=np.nan,
-            dtype=arr.dtype,
-        )
-        # Recreate a DataArray from the dask output and transpose back to the input dim order
-        out = xr.DataArray(
-            out, coords=arr.coords, attrs=arr.attrs if keep_attrs else None
-        ).transpose(*dims)
-        return out
-    # If not a dask array or with unsupported kwargs, call the normal rolling.
-    rolling = arr.rolling(time=window)
-    if isinstance(mode, str):
-        out = getattr(rolling, mode)(allow_lazy=True)
-    else:
-        out = rolling.reduce(mode, allow_lazy=True)
-    if keep_attrs:
-        out.attrs.update(**arr.attrs)
-    return out
 
 
 def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):

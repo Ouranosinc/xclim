@@ -6,6 +6,10 @@ History
 * Reformatted code to make better use of Python3.6 conventions (f-strings and object signatures).
 
 
+0.13.x (2020-01-10)
+-------------------
+* Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
+
 0.12.x-beta (2019-11-18)
 ------------------------
 * Added a distance function computing the geodesic distance to a point.

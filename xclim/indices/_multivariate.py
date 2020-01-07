@@ -243,9 +243,10 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
 
         DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     dtr = tasmax - tasmin
     out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = f"{q.units:~}"
     return out
 
 
@@ -281,9 +282,10 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = f"{q.units:~}"
     return out
 
 
@@ -318,11 +320,13 @@ def extreme_temperature_range(
 
         ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
+    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
+
     tx_max = tasmax.resample(time=freq).max(dim="time")
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = tasmax.units
+    out.attrs["units"] = f"{q.units:~}"
     return out
 
 
@@ -697,7 +701,7 @@ def rain_on_frozen_ground_days(
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
         return frozen.all(axis=axis)
 
-    tcond = _rolling((tas > frz), window=8, dim="time", mode=func)
+    tcond = (tas > frz).rolling(time=8).reduce(func, allow_lazy=True)
     pcond = pr > t
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")

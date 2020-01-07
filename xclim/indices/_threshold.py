@@ -3,7 +3,6 @@ import xarray
 
 from xclim import run_length as rl
 from xclim import utils
-from xclim.utils import _rolling
 from xclim.utils import declare_units
 from xclim.utils import units
 
@@ -33,10 +32,12 @@ __all__ = [
     "wetdays",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_tx_days",
+    "sea_ice_area",
+    "sea_ice_extent",
     "tropical_nights",
 ]
 
-# TODO: Add docstring for window
+
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
     r"""Cold spell days
@@ -371,7 +372,7 @@ def growing_season_length(
     # compute growth season length on resampled data
     thresh = utils.convert_units_to(thresh, tas)
 
-    c = _rolling(((tas > thresh) * 1), window=window, dim="time", mode="sum")
+    c = ((tas > thresh) * 1).rolling(time=window).sum(allow_lazy=True, skipna=False)
 
     def compute_gsl(c):
         nt = c.time.size
@@ -715,6 +716,78 @@ def maximum_consecutive_tx_days(
     group = (tasmax > t).resample(time=freq)
 
     return group.apply(rl.longest_run, dim="time")
+
+
+@declare_units("[area]", sic="[]", area="[area]", thresh="[]")
+def sea_ice_area(sic, area, thresh="15 pct"):
+    """Return the total sea ice area.
+
+    Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
+    usually set to 15%.
+
+    Parameters
+    ----------
+    sic : xarray.DataArray
+      Sea ice concentration [0,1].
+    area : xarray.DataArray
+      Grid cell area [m²]
+    thresh : str
+      Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
+
+    Returns
+    -------
+    Sea ice area [m²].
+
+    Notes
+    -----
+    To compute sea ice area over a subregion, first mask or subset the input sea ice concentration data.
+
+    References
+    ----------
+    `What is the difference between sea ice area and extent
+    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+
+    """
+    t = utils.convert_units_to(thresh, sic)
+    factor = utils.convert_units_to("100 pct", sic)
+    out = xarray.dot(sic.where(sic >= t, 0), area) / factor
+    out.attrs["units"] = area.units
+    return out
+
+
+@declare_units("[area]", sic="[]", area="[area]", thresh="[]")
+def sea_ice_extent(sic, area, thresh="15 pct"):
+    """Return the total sea ice extent.
+
+    Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice
+    concentration is above a threshold usually set to 15%.
+
+    Parameters
+    ----------
+    sic : xarray.DataArray
+      Sea ice concentration [0,1].
+    area : xarray.DataArray
+      Grid cell area [m²]
+    thresh : str
+      Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
+
+    Returns
+    -------
+    Sea ice extent [m²].
+
+    Notes
+    -----
+    To compute sea ice area over a subregion, first mask or subset the input sea ice concentration data.
+
+    References
+    ----------
+    `What is the difference between sea ice area and extent
+    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+    """
+    t = utils.convert_units_to(thresh, sic)
+    out = xarray.dot(sic >= t, area)
+    out.attrs["units"] = area.units
+    return out
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
