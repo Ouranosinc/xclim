@@ -346,6 +346,13 @@ class TestUnits:
             fu.to("mmday")
             tu.to("mmday")
 
+    def test_fraction(self):
+        q = 5 * units.percent
+        assert q.to("dimensionless") == 0.05
+
+        q = 5 * units.parse_units("pct")
+        assert q.to("dimensionless") == 0.05
+
 
 class TestConvertUnitsTo:
     def test_deprecation(self, tas_series):
@@ -353,22 +360,34 @@ class TestConvertUnitsTo:
             out = utils.convert_units_to(0, units.K)
             assert out == 273.15
 
+        with pytest.warns(FutureWarning):
             out = utils.convert_units_to(10, units.mm / units.day, context="hydro")
             assert out == 10
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start="1/1/2001")
             out = indices.tx_days_above(tas, 30)
-            out1 = indices.tx_days_above(tas, "30 degC")
-            out2 = indices.tx_days_above(tas, "303.15 K")
-            np.testing.assert_array_equal(out, out1)
-            np.testing.assert_array_equal(out, out2)
+
+        out1 = indices.tx_days_above(tas, "30 degC")
+        out2 = indices.tx_days_above(tas, "303.15 K")
+        np.testing.assert_array_equal(out, out1)
+        np.testing.assert_array_equal(out, out2)
+
+    def test_fraction(self):
+        out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
+        assert out == 0.1
 
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
         u = units("mm/d")
         assert pint2cfunits(u.units) == "mm d-1"
+
+        u = units("percent")
+        assert pint2cfunits(u.units) == "%"
+
+        u = units("pct")
+        assert pint2cfunits(u.units) == "%"
 
     def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
@@ -381,6 +400,9 @@ class TestUnitConversion:
 
         u = units2pint("2 kg m-2 s-1")
         assert (str(u)) == "kilogram / meter ** 2 / second"
+
+        u = units2pint("%")
+        assert str(u) == "percent"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
