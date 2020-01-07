@@ -54,8 +54,11 @@ __all__ = [
 # TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
 units.define(
-    pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
+    pint.unit.UnitDefinition(
+        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
+    )
 )
 
 # Define commonly encountered units not defined by pint
@@ -148,6 +151,9 @@ def units2pint(value: Union[xr.DataArray, str]):
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
+        if s == "%":
+            return "percent"
+
         return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
@@ -164,6 +170,7 @@ def units2pint(value: Union[xr.DataArray, str]):
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
+        AttributeError,
     ):  # Convert from CF-units to pint-compatible
         return units.parse_expression(_transform(unit)).units
 
@@ -182,7 +189,7 @@ def pint2cfunits(value: Any) -> str:
       Units following CF-Convention.
     """
     # Print units using abbreviations (millimeter -> mm)
-    s = "{:~}".format(value)
+    s = f"{value:~}"
 
     # Search and replace patterns
     pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
@@ -195,7 +202,7 @@ def pint2cfunits(value: Any) -> str:
         return "{}{}{}".format(u, neg, p)
 
     out, n = re.subn(pat, repl, s)
-    return out
+    return out.replace("percent", "%")
 
 
 def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
@@ -337,7 +344,23 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
 
 
 def declare_units(out_units, **units_by_name):
-    """Create a decorator to check units of function arguments."""
+    """Create a decorator to check units of function arguments.
+
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+
+    Examples
+    --------
+    In the following function definition:
+
+    .. code::
+
+       @declare_units("K", tas=["temperature"])
+       def func(tas):
+          ...
+
+    the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
+
+    """
 
     def dec(func):
         # Match the signature of the function to the arguments given to the decorator
@@ -353,13 +376,23 @@ def declare_units(out_units, **units_by_name):
 
             out = func(*args, **kwargs)
 
-            # In the generic case, we use the default units that should have been propagated by the computation.
-            if "[" in out_units:
-                _check_units(out, out_units)
+            if "units" in out.attrs:
+                # Check that output units dimensions match expectations, e.g. [temperature]
+                if "[" in out_units:
+                    _check_units(out, out_units)
+                # Explicitly convert units if units are declared, e.g K
+                else:
+                    out = convert_units_to(out, out_units)
 
-            # Otherwise, we specify explicitly the units.
-            else:
+            # Otherwise, we impose the units if given.
+            elif "[" not in out_units:
                 out.attrs["units"] = out_units
+
+            else:
+                raise ValueError(
+                    "Output units are not propagated by computation nor specified by decorator."
+                )
+
             return out
 
         return wrapper
@@ -1118,7 +1151,7 @@ def _rolling(
     window: int = 1,
     mode: Union[str, Callable] = "sum",
     keep_attrs: bool = False,
-    **kwargs
+    **kwargs,
 ):
     """Utility function for rolling.sum and rolling.mean
 

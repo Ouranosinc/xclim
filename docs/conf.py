@@ -38,7 +38,7 @@ def _get_indicators(modules):
     out = []
     for obj in modules:
         for key, val in obj.__dict__.items():
-            if isinstance(val, xcu.Indicator):
+            if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
                 out.append(val)
 
     return out
@@ -46,10 +46,12 @@ def _get_indicators(modules):
 
 def _indicator_table():
     """Return a sequence of dicts storing metadata about all available indices."""
-    import xclim.atmos as atmos
+    from xclim import atmos
+    #import xclim.land as land
+    from xclim import seaIce
     import inspect
 
-    inds = _get_indicators([atmos])
+    inds = _get_indicators([atmos, seaIce])
     table = []
     for ind in inds:
         # Apply default values
