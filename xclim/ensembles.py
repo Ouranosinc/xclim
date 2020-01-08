@@ -33,7 +33,8 @@ def create_ensemble(
     Returns an xarray dataset object containing input data from the list of netcdf files concatenated along
     a new dimension (name:'realization'). In the case where input files have unequal time dimensions, the output
     ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, datasets not
-    covering the entire time span have their data padded with NaN values. Attributes of the firest
+    covering the entire time span have their data padded with NaN values.
+    Dataset and variable attributes of the first dataset are copied to the resulting dataset.
 
     Parameters
     ----------

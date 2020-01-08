@@ -9,6 +9,7 @@ History
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
 * Fixed `ensembles.create_ensemble` errors for builds against xarray master branch.
 * Reformatted code to make better use of Python3.6 conventions (f-strings and object signatures).
+* Improvement of `ensemble.ensemble_percentile` and `ensemble.create_ensemble`.
 
 0.12.x-beta (2019-11-18)
 ------------------------
