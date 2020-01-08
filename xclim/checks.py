@@ -201,7 +201,7 @@ def missing_any(da, freq, **indexer):
         else:
             t = pd.date_range(t0, t1, freq="D")
 
-        sda = xr.DataArray(data=np.empty(len(t)), coords={"time": t}, dims=("time",))
+        sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
         st = generic.select_time(sda, **indexer)
         sn = st.notnull().resample(time=freq).sum(dim="time")
         miss = sn != c
