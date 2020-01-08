@@ -184,14 +184,11 @@ def ensemble_percentiles(
     for v in ens.data_vars:
         # Percentile calculation forbids chunking along realization
         if keep_chunk_size is None and len(ens.chunks.get("realization", [])) > 1:
-            if (
+            keep_chunk_size = (
                 np.prod(ens[v].isel(realization=0).data.chunksize)
                 * ens.realization.size
                 > 2e8
-            ):
-                keep_chunk_size = True
-            else:
-                keep_chunk_size = False
+            )
 
         for p in values:
             if len(ens.chunks.get("realization", [])) > 1:
