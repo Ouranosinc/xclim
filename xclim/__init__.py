@@ -12,7 +12,7 @@ from xclim import seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.13.0-beta"
+__version__ = "0.13.0"
 
 
 def build_module(name, objs, doc="", source=None, mode="ignore"):
