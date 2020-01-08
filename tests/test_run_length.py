@@ -21,6 +21,9 @@ class TestRLE:
         da = xr.DataArray(values, coords={"time": time}, dims="time")
 
         v, l, p = rl.rle_1d(da != 0)
+        np.testing.assert_array_equal(v, [False, True, False])
+        np.testing.assert_array_equal(l, [1, 10, 354])
+        np.testing.assert_array_equal(p, [0, 1, 11])
 
 
 class TestLongestRun:

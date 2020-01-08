@@ -146,9 +146,7 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     out.attrs["original_name"] = getattr(da, "standard_name", "")
     out.attrs[
         "description"
-    ] = "Parameters of the {} distribution fitted over {}".format(
-        dist, getattr(da, "standard_name", "")
-    )
+    ] = f"Parameters of the {dist} distribution fitted over {getattr(da, 'standard_name', '')}"
     out.attrs["estimator"] = "Maximum likelihood"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
@@ -199,7 +197,7 @@ def fa(
             return dc.ppf(1.0 / t, *x)
 
     else:
-        raise ValueError("mode `{}` should be either 'max' or 'min'".format(mode))
+        raise ValueError(f"mode `{mode}` should be either 'max' or 'min'")
 
     data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
@@ -220,10 +218,10 @@ def fa(
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = p.attrs
-    out.attrs["standard_name"] = "{} quantiles".format(dist)
-    out.attrs["long_name"] = "{} return period values for {}".format(
-        dist, getattr(da, "standard_name", "")
-    )
+    out.attrs["standard_name"] = f"{dist} quantiles"
+    out.attrs[
+        "long_name"
+    ] = f"{dist} return period values for {getattr(da, 'standard_name', '')}"
     out.attrs["cell_methods"] = (
         out.attrs.get("cell_methods", "") + " dparams: ppf"
     ).strip()
@@ -302,6 +300,6 @@ def get_dist(dist):
 
     dc = getattr(stats, dist, None)
     if dc is None:
-        e = "Statistical distribution `{}` is not in scipy.stats.".format(dist)
+        e = f"Statistical distribution `{dist}` is not in scipy.stats."
         raise ValueError(e)
     return dc

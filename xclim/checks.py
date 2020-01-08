@@ -28,12 +28,10 @@ def check_valid(var, key, expected):
 
     att = getattr(var, key, None)
     if att is None:
-        e = "Variable does not have a `{}` attribute.".format(key)
+        e = f"Variable does not have a `{key}` attribute."
         warn(e)
     elif att != expected:
-        e = "Variable has a non-conforming {}. Got `{}`, expected `{}`".format(
-            key, att, expected
-        )
+        e = f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`"
         warn(e)
 
 

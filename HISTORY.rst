@@ -8,6 +8,7 @@ History
 * Added `sea_ice_extent` and `sea_ice_area` indicators.
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
 * Fixed `ensembles.create_ensemble` errors for builds against xarray master branch.
+* Reformatted code to make better use of Python3.6 conventions (f-strings and object signatures).
 
 0.12.x-beta (2019-11-18)
 ------------------------
@@ -21,7 +22,8 @@ History
 * Added the `subset_shape` function to subset utilities for clipping region-masked datasets via polygons.
 * Fixed a bug where certain dependencies caused ReadTheDocs builds to fail.
 * Added many statically typed function signatures for better function documentation.
-* Improved `DeprecationWarnings` and `UserWarnings` ensemble for xclim subsetting functions
+* Improved `DeprecationWarnings` and `UserWarnings` ensemble for xclim subsetting functions.
+* Dropped support for Python3.5.
 
 0.11.x-beta (2019-10-17)
 ------------------------

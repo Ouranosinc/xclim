@@ -25,7 +25,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 
 import xclim
-from . import checks
+from xclim import checks
 
 __all__ = [
     "units",
@@ -134,7 +134,7 @@ calendars = {
 }
 
 
-def units2pint(value: Union[xr.DataArray, str]):
+def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -163,7 +163,7 @@ def units2pint(value: Union[xr.DataArray, str]):
     elif isinstance(value, units.Quantity):
         return value.units
     else:
-        raise NotImplementedError("Value of type {} not supported.".format(type(value)))
+        raise NotImplementedError(f"Value of type {type(value)} not supported.")
 
     try:  # Pint compatible
         return units.parse_expression(unit).units
@@ -199,7 +199,7 @@ def pint2cfunits(value: Any) -> str:
         p = p or (1 if i else "")
         neg = "-" if i else ("^" if p else "")
 
-        return "{}{}{}".format(u, neg, p)
+        return f"{u}{neg}{p}"
 
     out, n = re.subn(pat, repl, s)
     return out.replace("percent", "%")
@@ -289,9 +289,7 @@ def convert_units_to(
         )
         return (source * fu).to(tu).m
 
-    raise NotImplementedError(
-        "source of type {} is not supported.".format(type(source))
-    )
+    raise NotImplementedError(f"source of type {type(source)} is not supported.")
 
 
 def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
@@ -337,9 +335,7 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
         (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise AttributeError(
-            "Value's dimension {} does not match expected units {}.".format(
-                val_dim, expected
-            )
+            f"Value's dimension {val_dim} does not match expected units {expected}."
         )
 
 
@@ -429,7 +425,7 @@ def threshold_count(
     elif op in binary_ops.values():
         pass
     else:
-        raise ValueError("Operation `{}` not recognized.".format(op))
+        raise ValueError(f"Operation `{op}` not recognized.")
 
     func = getattr(da, "_binary_op")(get_op(op))
     c = func(da, thresh) * 1
@@ -685,7 +681,7 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
             ys.append(y + s)
         l_tags = ys
     else:
-        raise RuntimeError("freqency {:s} not implemented".format(freq))
+        raise RuntimeError(f"freqency `{freq}` not implemented")
 
     # add tags to buffer DataArray
     buffer = da.copy()
@@ -733,7 +729,8 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = ""  # The set of permissible standard names is contained in the standard name table.
+    # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
@@ -747,14 +744,15 @@ class Indicator:
     title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = ""  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""
     comment = (
         ""  # Miscellaneous information about the data or methods used to produce it.
     )
     notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
-    months = {"m{}".format(i): calendar.month_name[i].lower() for i in range(1, 13)}
+    months = {f"m{i}": calendar.month_name[i].lower() for i in range(1, 13)}
     _attrs_mapping = {
         "cell_methods": {
             "YS": "years",
@@ -846,7 +844,7 @@ class Indicator:
         for i in range(self._nvar):
             p = self._parameters[i]
             for attr in ["history", "cell_methods"]:
-                attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
+                attrs[attr] += f"{p}: " if self._nvar > 1 else ""
                 attrs[attr] += getattr(ba.arguments[p], attr, "")
                 if attrs[attr]:
                     attrs[attr] += "\n" if attr == "history" else " "

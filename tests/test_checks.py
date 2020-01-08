@@ -101,7 +101,7 @@ class TestMissingAnyFills:
         np.testing.assert_equal(miss, [True])
 
         with pytest.raises(ValueError, match=r"No data for selected period."):
-            miss = checks.missing_any(ts, freq="YS", month=1)
+            checks.missing_any(ts, freq="YS", month=1)
 
         miss = checks.missing_any(ts, freq="YS", month=[7, 8])
         np.testing.assert_equal(miss, [True])
