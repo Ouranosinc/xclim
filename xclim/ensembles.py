@@ -196,7 +196,7 @@ def ensemble_percentiles(
                     var = ens[v].chunk(
                         {
                             "realization": -1,
-                            "time": len(ens.chunks["time"]) * len(ens.realization.size),
+                            "time": len(ens.chunks["time"]) * ens.realization.size,
                         }
                     )
                 else:
