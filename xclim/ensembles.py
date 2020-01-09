@@ -182,8 +182,8 @@ def ensemble_percentiles(
 
     ds_out = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
-        # Percentile calculation forbids chunking along realization
         if keep_chunk_size is None and len(ens.chunks.get("realization", [])) > 1:
+            # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
             keep_chunk_size = (
                 np.prod(ens[v].isel(realization=0).data.chunksize)
                 * ens.realization.size
@@ -191,13 +191,16 @@ def ensemble_percentiles(
             )
 
         for p in values:
+            # Percentile calculation forbids chunking along realization
             if len(ens.chunks.get("realization", [])) > 1:
                 if keep_chunk_size:
+                    # Smart rechunk on dimension where chunks are the largest
+                    chkDim, chks = max(
+                        ens.chunks.items(),
+                        key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
+                    )
                     var = ens[v].chunk(
-                        {
-                            "realization": -1,
-                            "time": len(ens.chunks["time"]) * ens.realization.size,
-                        }
+                        {"realization": -1, chkDim: len(chks) * ens.realization.size,}
                     )
                 else:
                     var = ens[v].chunk({"realization": -1})
