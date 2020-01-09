@@ -197,7 +197,7 @@ def fa(
             return dc.ppf(1.0 / t, *x)
 
     else:
-        raise ValueError(f"mode `{mode}` should be either 'max' or 'min'")
+        raise ValueError(f"mode '{mode}' should be either 'max' or 'min'")
 
     data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
