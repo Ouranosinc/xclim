@@ -47,7 +47,7 @@ def create_ensemble(
       Only applicable when "datasets" is a sequence of file paths.
 
     xr_kwargs :
-      Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` is mf_flag is True)
+      Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
 
     Returns
     -------
@@ -362,6 +362,21 @@ def _ens_align_datasets(
 
 
 def _calc_perc(arr, p=50):
+    """Ufunc-like computing a percentile over the last axis of the array.
+
+    Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
+
+    Parameters
+    ----------
+    arr : np.array
+        Percentile is computed over the last axis.
+    p : scalar
+        Percentile to compute, between 0 and 100. (the default is 50)
+
+    Returns
+    -------
+    np.array
+    """
     nan_count = np.isnan(arr).sum(axis=-1)
     out = np.percentile(arr, p, axis=-1)
     nans = (nan_count > 0) & (nan_count < arr.shape[-1])
