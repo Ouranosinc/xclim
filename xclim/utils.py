@@ -28,6 +28,7 @@ import xclim
 from xclim import checks
 
 __all__ = [
+    "available_indicators",
     "units",
     "units2pint",
     "pint2cfunits",
@@ -50,6 +51,14 @@ __all__ = [
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
 ]
+
+
+available_indicators = {}
+
+
+def register_indicator(indicator):
+    available_indicators[indicator.identifier] = indicator
+
 
 # TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
@@ -827,6 +836,10 @@ class Indicator:
         for key in ["abstract", "title", "notes", "references"]:
             setattr(self, key, getattr(self, key) or meta.get(key, ""))
 
+        self._parameters_doc = meta.get("parameters", {})
+
+        register_indicator(self)
+
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
@@ -1038,7 +1051,10 @@ def parse_doc(doc):
         if header in ["Notes", "References"]:
             out[header.lower()] = content.replace("\n    ", "\n")
         elif header == "Parameters":
-            pass
+            out["parameters"] = {
+                name: doc.strip()
+                for name, doc in re.findall(r"(\w*)\ :\ .*[\r\n]+([^\r\n]+)", content)
+            }
         elif header == "Returns":
             match = re.search(r"xarray\.DataArray\s*(.*)", content)
             if match:
