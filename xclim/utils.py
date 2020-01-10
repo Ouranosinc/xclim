@@ -13,7 +13,6 @@ from collections import OrderedDict
 from inspect import signature
 from types import FunctionType
 from typing import Any
-from typing import Callable
 from typing import Optional
 from typing import Union
 
@@ -163,7 +162,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     elif isinstance(value, units.Quantity):
         return value.units
     else:
-        raise NotImplementedError(f"Value of type {type(value)} not supported.")
+        raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
     try:  # Pint compatible
         return units.parse_expression(unit).units
@@ -289,7 +288,7 @@ def convert_units_to(
         )
         return (source * fu).to(tu).m
 
-    raise NotImplementedError(f"source of type {type(source)} is not supported.")
+    raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
 def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
@@ -329,13 +328,13 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
     elif dim == "[length]":
         tu = "m"
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Dimension `{dim}` is not supported.")
 
     try:
         (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise AttributeError(
-            f"Value's dimension {val_dim} does not match expected units {expected}."
+            f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
         )
 
 
@@ -496,7 +495,7 @@ def infer_doy_max(arr: xr.DataArray) -> int:
                 "Cannot infer the calendar from a series less than a year long."
             )
         if doy_max not in [360, 365, 366]:
-            raise ValueError("The target array's calendar is not recognized")
+            raise ValueError(f"The target array's calendar `{cal}` is not recognized.")
 
     return doy_max
 
@@ -521,7 +520,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
 
     """
     if "dayofyear" not in source.coords.keys():
-        raise AttributeError("source should have dayofyear coordinates.")
+        raise AttributeError("Source should have `dayofyear` coordinates.")
 
     # Interpolation of source to target dayofyear range
     doy_max_source = int(source.dayofyear.max())
@@ -580,7 +579,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
       `doy`.
     """
     if "dayofyear" not in doy.coords:
-        raise AttributeError("`doy` should have dayofyear coordinates.")
+        raise AttributeError("Source should have `dayofyear` coordinates.")
 
     # Adjust calendar
     adoy = adjust_doy_calendar(doy, arr)
@@ -650,12 +649,12 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
-        years = ["{:04d}".format(y) for y in da.time.dt.year.values]
-        months = ["{:02d}".format(m) for m in da.time.dt.month.values]
+        years = [f"{y:04d}" for y in da.time.dt.year.values]
+        months = [f"{m:02d}" for m in da.time.dt.month.values]
     else:
         # cannot use year, month, season attributes, not available for all calendars ...
-        years = ["{:04d}".format(v.year) for v in da.time.values]
-        months = ["{:02d}".format(v.month) for v in da.time.values]
+        years = [f"{v.year:04d}" for v in da.time.values]
+        months = [f"{v.month:02d}" for v in da.time.values]
     seasons = [
         "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
         for m in months
@@ -681,7 +680,7 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
             ys.append(y + s)
         l_tags = ys
     else:
-        raise RuntimeError(f"freqency `{freq}` not implemented")
+        raise RuntimeError(f"Frequency `{freq}` not implemented.")
 
     # add tags to buffer DataArray
     buffer = da.copy()
@@ -1111,7 +1110,7 @@ def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
     uas = convert_units_to(uas, "m/s")
     vas = convert_units_to(vas, "m/s")
 
-    # Wind speed is the hypothenuse of "uas" and "vas"
+    # Wind speed is the hypotenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
 
     # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them

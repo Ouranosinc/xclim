@@ -45,10 +45,10 @@ respectively.
    ----------
    <standard_name> : xarray.DataArray
      <Long_name> of variable [acceptable units].
-   threshold : string
+   threshold : Union[str, float, int]
      Description of the threshold / units.
      e.g. The 10th percentile of historical temperature [K].
-   freq : str, optional
+   freq : Optional[str]
      Resampling frequency.
 
    Returns
