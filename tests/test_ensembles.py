@@ -137,10 +137,13 @@ class TestEnsembleStats:
         out1 = ensembles.ensemble_percentiles(ens, values=(25, 75))
         assert np.all(out1["tg_mean_p75"] > out1["tg_mean_p25"])
 
-    def test_calc_perc_blocks(self):
+    @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
+    def test_calc_perc_dask(self, keep_chunk_size):
         ens = ensembles.create_ensemble(self.nc_files_simple)
-        out1 = ensembles.ensemble_percentiles(ens)
-        out2 = ensembles.ensemble_percentiles(ens, values=(10, 50, 90), time_block=10)
+        out2 = ensembles.ensemble_percentiles(
+            ens.chunk({"time": 2}), values=(10, 50, 90), keep_chunk_size=keep_chunk_size
+        )
+        out1 = ensembles.ensemble_percentiles(ens.load())
         np.testing.assert_array_equal(out1["tg_mean_p10"], out2["tg_mean_p10"])
         np.testing.assert_array_equal(out1["tg_mean_p50"], out2["tg_mean_p50"])
         np.testing.assert_array_equal(out1["tg_mean_p90"], out2["tg_mean_p90"])
