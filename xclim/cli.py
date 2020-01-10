@@ -3,7 +3,6 @@
 xclim command line interface module
 """
 import inspect
-import sys
 
 import click
 
@@ -32,8 +31,11 @@ def _get_indicator(indname):
     return xcmodules[modname].__dict__[indname]
 
 
-def _process_indicator(indicator):
+def _process_indicator(ctx, indicator, **kwargs):
     print(f"processing {indicator.identifier}")
+    print(ctx.obj)
+    ctx.obj["input"] = indicator.compute
+    print(kwargs)
 
 
 def _create_command(name):
@@ -49,8 +51,9 @@ def _create_command(name):
             )
         )
 
-    def _process():
-        return _process_indicator(indicator)
+    @click.pass_context
+    def _process(ctx, **kwargs):
+        return _process_indicator(ctx, indicator, **kwargs)
 
     return click.Command(
         name,
@@ -72,22 +75,37 @@ def list(module, info):
     If MODULE is ommitted, lists everything.
     """
     if len(module) == 0:
-        module == "all"
-    print("Listing all available indicators for computation.", end="\n\n")
+        module = "all"
+    formatter = click.HelpFormatter()
+    formatter.write_heading("Listing all available indicators for computation.")
     for xcmod in [atmos, land, seaIce]:
         modname = xcmod.__name__.split(".")[-1]
         if module == "all" or modname in module:
-            print(f"Indicators in module : {modname}")
-            for name, ind in module.__dict__.items():
-                if isinstance(ind, xc.utils.Indicator):
-                    print(
-                        f"\t{name} "
-                        + (f"{ind.identifier}" if ind.identifier != name else "")
-                    )
-                    print(f"\t\t{ind.long_name}")
-                    if info:
-                        print(ind.abstract)
-                    print()
+            with formatter.section(
+                click.style("Indicators in module ", fg="blue")
+                + click.style(f"{modname}", fg="yellow")
+            ):
+                formatter.write_dl(
+                    [
+                        (
+                            click.style(name, fg="yellow")
+                            + (
+                                (" (" + ind.var_name + ")")
+                                if ind.var_name != name
+                                else ""
+                            ),
+                            ind.long_name
+                            + (
+                                ("\n" + ind.abstract.replace("\n    ", ""))
+                                if info
+                                else ""
+                            ),
+                        )
+                        for name, ind in xcmod.__dict__.items()
+                        if isinstance(ind, xc.utils.Indicator)
+                    ]
+                )
+    click.echo(formatter.getvalue())
 
 
 @click.command()
@@ -139,7 +157,21 @@ class XclimCli(click.MultiCommand):
         return command
 
 
-cli = XclimCli(help="Command line tool to compute indices on netCDF datasets")
+@click.command(
+    cls=XclimCli,
+    help="Command line tool to compute indices on netCDF datasets",
+    chain=True,
+)
+@click.option(
+    "-i", "--input", help="Input files. Can be a netCDF path or a glob pattern."
+)
+@click.pass_context
+def cli(ctx, **kwargs):
+    if ctx.invoked_subcommand in ["list", "info"]:
+        print("In cli but not doing anything")
+    else:
+        print("In cli, I have to compute!")
+        ctx.obj = kwargs
 
 
 if __name__ == "__main__":
