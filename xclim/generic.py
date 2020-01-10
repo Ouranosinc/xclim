@@ -197,7 +197,7 @@ def fa(
             return dc.ppf(1.0 / t, *x)
 
     else:
-        raise ValueError(f"mode `{mode}` should be either 'max' or 'min'")
+        raise ValueError(f"Mode `{mode}` should be either 'max' or 'min'.")
 
     data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
@@ -300,6 +300,6 @@ def get_dist(dist):
 
     dc = getattr(stats, dist, None)
     if dc is None:
-        e = f"Statistical distribution `{dist}` is not in scipy.stats."
+        e = f"Statistical distribution `{dist}` is not found in scipy.stats."
         raise ValueError(e)
     return dc
