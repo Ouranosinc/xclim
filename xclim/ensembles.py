@@ -144,8 +144,7 @@ def ensemble_percentiles(
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
-    Returns a Dataset containing ensemble statistics for input climate simulations.
-    Alternatively calculate ensemble percentiles (default) or ensemble mean and standard deviation.
+    Returns a Dataset containing ensemble percentiles for input climate simulations.
 
     Parameters
     ----------
@@ -155,7 +154,7 @@ def ensemble_percentiles(
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : Optional[bool]
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
-      If True, the dataset is rechunked along 'time' so that the chunks keep the same size (approx)
+      If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
       If False, no shrinking is performed, resulting in much larger chunks
       If not defined, the function decides which is best
 
@@ -184,31 +183,30 @@ def ensemble_percentiles(
 
     ds_out = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
-        if keep_chunk_size is None and len(ens.chunks.get("realization", [])) > 1:
-            # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
-            keep_chunk_size = (
-                np.prod(ens[v].isel(realization=0).data.chunksize)
-                * ens.realization.size
-                > 2e8
-            )
+        # Percentile calculation forbids any chunks along realization
+        if len(ens.chunks.get("realization", [])) > 1:
+            if keep_chunk_size is None:
+                # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
+                keep_chunk_size = (
+                    np.prod(ens[v].isel(realization=0).data.chunksize)
+                    * ens.realization.size
+                    > 2e8
+                )
+            if keep_chunk_size:
+                # Smart rechunk on dimension where chunks are the largest
+                chkDim, chks = max(
+                    ens.chunks.items(),
+                    key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
+                )
+                var = ens[v].chunk(
+                    {"realization": -1, chkDim: len(chks) * ens.realization.size,}
+                )
+            else:
+                var = ens[v].chunk({"realization": -1})
+        else:
+            var = ens[v]
 
         for p in values:
-            # Percentile calculation forbids chunking along realization
-            if len(ens.chunks.get("realization", [])) > 1:
-                if keep_chunk_size:
-                    # Smart rechunk on dimension where chunks are the largest
-                    chkDim, chks = max(
-                        ens.chunks.items(),
-                        key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
-                    )
-                    var = ens[v].chunk(
-                        {"realization": -1, chkDim: len(chks) * ens.realization.size,}
-                    )
-                else:
-                    var = ens[v].chunk({"realization": -1})
-            else:
-                var = ens[v]
-
             perc = xr.apply_ufunc(
                 _calc_perc,
                 var,
@@ -226,7 +224,7 @@ def ensemble_percentiles(
             if "description" in ds_out[perc.name].attrs:
                 ds_out[perc.name].attrs[
                     "description"
-                ] = f"{ds_out[perc.ame].attrs['description']} : {p}th percentile of ensemble"
+                ] = f"{ds_out[perc.name].attrs['description']} : {p}th percentile of ensemble"
             else:
                 ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
 
