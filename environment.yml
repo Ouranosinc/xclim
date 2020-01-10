@@ -15,3 +15,4 @@ dependencies:
  - pint>=0.9
  - boltons>=19.2
  - scikit-learn>=0.21.3
+ - Click

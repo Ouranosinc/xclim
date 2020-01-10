@@ -38,6 +38,7 @@ requirements = [
     "bottleneck~=1.3.1",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
+    "Click",
 ]
 
 if not os.getenv("READTHEDOCS"):
@@ -86,6 +87,10 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    entry_points="""
+        [console_scripts]
+        xclim=xclim.cli:cli
+    """,
     url=URL,
     version=VERSION,
     zip_safe=False,
