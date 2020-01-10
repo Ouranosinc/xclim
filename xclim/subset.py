@@ -1,5 +1,4 @@
 import copy
-import logging
 import warnings
 from functools import wraps
 from pathlib import Path
@@ -232,8 +231,10 @@ def wrap_lons_and_split_at_greenwich(func):
             )
             crs1 = poly.crs
             if split_flag:
-                logging.warning(
-                    "Rebuffering split polygons to ensure edge inclusion in selection"
+                warnings.warn(
+                    "Rebuffering split polygons to ensure edge inclusion in selection",
+                    UserWarning,
+                    stacklevel=4,
                 )
                 poly = gpd.GeoDataFrame(poly.buffer(0.000000001), columns=["geometry"])
                 poly.crs = crs1

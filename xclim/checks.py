@@ -28,11 +28,13 @@ def check_valid(var, key, expected):
 
     att = getattr(var, key, None)
     if att is None:
-        e = f"Variable does not have a `{key}` attribute."
-        warn(e)
+        warn(f"Variable does not have a `{key}` attribute.", UserWarning, stacklevel=3)
     elif att != expected:
-        e = f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`"
-        warn(e)
+        warn(
+            f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 def assert_daily(var):
@@ -134,7 +136,7 @@ def valid_daily_mean_discharge(comp):
 def valid_missing_data_threshold(comp, threshold=0):
     r"""Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
-    pass
+    raise NotImplementedError
 
 
 def check_is_dataarray(comp):
@@ -169,7 +171,7 @@ def missing_any(da, freq, **indexer):
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
-    from . import generic
+    from xclim import generic
 
     if "-" in freq:
         pfreq, anchor = freq.split("-")
