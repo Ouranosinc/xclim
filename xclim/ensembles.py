@@ -176,7 +176,7 @@ def ensemble_percentiles(
     Calculate non-default percentiles (25th and 75th)
     >>> ens_percs = ensembles.ensemble_percentiles(ens, values=(25, 50, 75))
     >>> print(ens_percs['tas_p25'])
-    If the original array as many small chunks, it might be more efficient to do :
+    If the original array has many small chunks, it might be more efficient to do:
     >>> ens_percs = ensembles.ensemble_percentiles(ens, keep_chunk_size=False)
     >>> print(ens_percs['tas_p25'])
     """
@@ -218,7 +218,7 @@ def ensemble_percentiles(
                 output_dtypes=[ens[v].dtype],
             )
 
-            perc.name = v + f"_p{p:02d}"
+            perc.name = f"{v}_p{p:02d}"
             ds_out[perc.name] = perc
 
             if "description" in ds_out[perc.name].attrs:
