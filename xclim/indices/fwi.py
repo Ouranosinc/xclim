@@ -368,7 +368,7 @@ def _drought_code(t, p, mth, lat, dc0):
             dc = dr + pe
         else:
             dc = pe
-    elif p <= 2.8:
+    else:  # f p <= 2.8:
         dc = dc0 + pe
     return dc
 
