@@ -18,6 +18,7 @@ try:
 
     logging.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
+
 except ImportError:
     logging.info("Matplotlib not found. No graph data will be produced.")
     MPL_INSTALLED = False
@@ -120,10 +121,10 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     ds_out = ens.drop_vars(names=set(ens.data_vars))
     for v in ens.data_vars:
 
-        ds_out["{}_mean".format(v)] = ens[v].mean(dim="realization")
-        ds_out["{}_stdev".format(v)] = ens[v].std(dim="realization")
-        ds_out["{}_max".format(v)] = ens[v].max(dim="realization")
-        ds_out["{}_min".format(v)] = ens[v].min(dim="realization")
+        ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
+        ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
+        ds_out[f"{v}_max"] = ens[v].max(dim="realization")
+        ds_out[f"{v}_min"] = ens[v].min(dim="realization")
         for vv in ds_out.data_vars:
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
@@ -197,7 +198,7 @@ def ensemble_percentiles(
             # loop through blocks
             warnings.warn(
                 f"Large ensemble size detected: statistics will be"
-                f" calculated in blocks of {int(time_block)} time-steps",
+                f" calculated in blocks of {int(time_block)} time-steps.",
                 UserWarning,
                 stacklevel=2,
             )
@@ -360,14 +361,9 @@ def _calc_percentiles_simple(ens, v, values):
         if "description" in ds_out[outvar].attrs.keys():
             ds_out[outvar].attrs[
                 "description"
-            ] = "{} : {}th percentile of ensemble".format(
-                ds_out[outvar].attrs["description"], str(p)
-            )
+            ] = f"{ds_out[outvar].attrs['description']} : {p}th percentile of ensemble"
         else:
-            ds_out[outvar].attrs["description"] = "{}th percentile of ensemble".format(
-                str(p)
-            )
-
+            ds_out[outvar].attrs["description"] = f"{p}th percentile of ensemble"
     return ds_out
 
 
@@ -699,9 +695,7 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
-        raise Exception(
-            "unknown selection method : {meth}".format(meth=list(method.keys()))
-        )
+        raise Exception(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
         warnings.warn(
             f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "
@@ -742,24 +736,19 @@ def plot_rsqprofile(fig_data):
     plt.title("R² of groups vs. full ensemble")
     if "rsq_cutoff" in fig_data["method"].keys():
         col = "k--"
-        label = "R² selection > {rsq_cut} (n = {n_clusters})".format(
-            rsq_cut=fig_data["method"]["rsq_cutoff"], n_clusters=n_clusters
-        )
-
+        label = f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters})"
         if "max_clusters" in fig_data.keys():
 
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
-                label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
-                    rsq=rsq[n_clusters - 1].round(2),
-                    n_clusters=n_clusters,
-                    max_clust=fig_data["max_clusters"],
+                label = (
+                    f"R² selection = {rsq[n_clusters - 1].round(2)} (n = {n_clusters}) :"
+                    f" Max cluster set to {fig_data['max_clusters']}"
                 )
             else:
-                label = "R² selection > {rsq_cut} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
-                    rsq_cut=fig_data["method"]["rsq_cutoff"],
-                    n_clusters=n_clusters,
-                    max_clust=fig_data["max_clusters"],
+                label = (
+                    f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters}) :"
+                    f" Max cluster set to {fig_data['max_clusters']}"
                 )
 
         plt.plot(
@@ -789,19 +778,16 @@ def plot_rsqprofile(fig_data):
             linewidth=0.5,
         )
         col = "k--"
-        label = "Optimized R² cost / benefit (n = {n_clusters})".format(
-            n_clusters=n_clusters
-        )
+        label = f"Optimized R² cost / benefit (n = {n_clusters})"
         if "max_clusters" in fig_data.keys():
             opt = rsq - onetoone
             imax = np.where(opt == opt.max())[0]
 
             if rsq[n_clusters - 1] < rsq[imax]:
                 col = "r--"
-            label = "R² selection = {rsq} (n = {n_clusters}) : Max cluster set to {max_clust}".format(
-                rsq=rsq[n_clusters - 1].round(2),
-                n_clusters=n_clusters,
-                max_clust=fig_data["max_clusters"],
+            label = (
+                f"R² selection = {rsq[n_clusters - 1].round(2)} (n = {n_clusters}) :"
+                f" Max cluster set to {fig_data['max_clusters']}"
             )
 
         plt.plot(
@@ -817,9 +803,7 @@ def plot_rsqprofile(fig_data):
             (0, n_clusters, n_clusters),
             (rsq[n_clusters - 1], rsq[n_clusters - 1], 0),
             "k--",
-            label="n = {n_clusters} (R² selection = {rsq})".format(
-                rsq=rsq[n_clusters - 1].round(2), n_clusters=n_clusters
-            ),
+            label=f"n = {n_clusters} (R² selection = {rsq[n_clusters - 1].round(2)})",
             linewidth=0.75,
         )
         plt.legend(loc="lower right")
