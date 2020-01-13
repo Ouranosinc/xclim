@@ -284,10 +284,11 @@ def create_mask(
     Get a mask from all polygons in 'regions.json'
     >>> mask = subset.create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
     >>> ds = ds.assign_coords(regions=mask)
-    Extra step to retrieve the names of those polygons stored in the "id" column
-    >>> ds = ds.assign_coords(names=xr.DataArray(polys.id, dims=('names',)))
     Operations can be applied to each regions with  `groupby`. Ex:
-    >>> ds.groupby('regions').mean()
+    >>> ds = ds.groupby('regions').mean()
+    Extra step to retrieve the names of those polygons stored in the "id" column
+    >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
+    >>> ds = ds.assign_coords(regions_names=region_names)
     """
     # Check for intersections
     for i, (inda, pola) in enumerate(poly.iterrows()):
