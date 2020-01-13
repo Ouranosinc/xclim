@@ -302,7 +302,7 @@ def _duff_moisture_code(t, p, h, mth, lat, dmc0):
                 b = 6.2 * math.log(dmc0) - 17.2  # *Eq.13c*#
         wmr = wmi + (1000 * rw) / (48.77 + b * rw)  # *Eq.14*#
         pr = 43.43 * (5.6348 - math.log(wmr - 20.0))  # *Eq.15*#
-    elif p <= 1.5:
+    else:  # p <= 1.5
         pr = dmc0
     if pr < 0.0:
         pr = 0.0
