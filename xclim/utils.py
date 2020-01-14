@@ -1032,7 +1032,8 @@ def parse_doc(doc):
         if len(content) == 1:
             out["title"] = content[0]
         elif len(content) == 2:
-            out["title"], out["abstract"] = content
+            out["title"], abstract = content
+            out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):
         header, content = sections[i : i + 2]

@@ -9,12 +9,8 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
-from xclim import atmos
-from xclim import land
-from xclim import seaIce
 
-
-xcmodules = {"atmos": atmos, "land": land, "seaIce": seaIce}
+xcmodules = {"atmos": xc.atmos, "land": xc.land, "seaIce": xc.seaIce}
 
 
 def _get_indicator(indname):
@@ -67,7 +63,7 @@ def _process_indicator(indicator, ctx, **params):
         ):  # a Dataset is expected
             if key == "tas" and val is None and key not in dsin.data_vars:
                 # Special case for tas.
-                params["tas"] = atmos.tg(dsin.tasmin, dsin.tasmax)
+                params["tas"] = xc.atmos.tg(dsin.tasmin, dsin.tasmax)
             else:
                 params[key] = dsin[
                     val or key
@@ -84,7 +80,7 @@ def _create_command(name):
     for name, param in indicator._sig.parameters.items():
         params.append(
             click.Option(
-                param_decls=["--" + name],
+                param_decls=[f"--{name}"],
                 default=None if param.default is inspect._empty else param.default,
                 show_default=True,
                 help=indicator._parameters_doc.get(name),
@@ -109,7 +105,7 @@ def _create_command(name):
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def list(module, info):
+def indices(module, info):
     """List all indicators in MODULE
 
     If MODULE is ommitted, lists everything.
@@ -118,33 +114,24 @@ def list(module, info):
         module = "all"
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    for xcmod in [atmos, land, seaIce]:
+    for xcmod in [xc.atmos, xc.land, xc.seaIce]:
         modname = xcmod.__name__.split(".")[-1]
         if module == "all" or modname in module:
             with formatter.section(
                 click.style("Indicators in module ", fg="blue")
                 + click.style(f"{modname}", fg="yellow")
             ):
-                formatter.write_dl(
-                    [
-                        (
-                            click.style(name, fg="yellow")
-                            + (
-                                (" (" + ind.var_name + ")")
-                                if ind.var_name != name
-                                else ""
-                            ),
-                            ind.long_name
-                            + (
-                                ("\n" + ind.abstract.replace("\n    ", ""))
-                                if info
-                                else ""
-                            ),
-                        )
-                        for name, ind in xcmod.__dict__.items()
-                        if isinstance(ind, xc.utils.Indicator)
-                    ]
-                )
+                rows = []
+                for name, ind in xcmod.__dict__.items():
+                    if isinstance(ind, xc.utils.Indicator):
+                        left = click.style(name, fg="yellow")
+                        if ind.var_name != name:
+                            left += f" ({ind.var_name})"
+                        right = ind.long_name
+                        if info:
+                            right += "\n" + ind.abstract
+                        rows.append((left, right))
+                formatter.write_dl(rows)
     click.echo(formatter.getvalue())
 
 
@@ -188,10 +175,10 @@ def info(ctx, indicator):
 
 class XclimCli(click.MultiCommand):
     def list_commands(self, ctx):
-        return ["list", "info"]
+        return "indices", "info"
 
     def get_command(self, ctx, name):
-        command = {"list": list, "info": info}.get(name)
+        command = {"indices": indices, "info": info}.get(name)
         if command is None:
             command = _create_command(name)
         return command
