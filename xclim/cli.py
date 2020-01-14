@@ -33,7 +33,7 @@ def _get_input(ctx):
     arg = ctx.obj["input"]
     if isinstance(arg, xr.Dataset):
         return arg
-    elif isinstance(arg, tuple) or "*" in arg:
+    if isinstance(arg, tuple) or "*" in arg:
         ctx.obj["xr_kwargs"].setdefault("combine", "by_coords")
         ds = xr.open_mfdataset(arg, **ctx.obj["xr_kwargs"])
     else:
@@ -74,8 +74,8 @@ def _process_indicator(indicator, ctx, **params):
     ctx.obj["ds_out"] = dsout
 
 
-def _create_command(name):
-    indicator = _get_indicator(name)
+def _create_command(indname):
+    indicator = _get_indicator(indname)
     params = []
     for name, param in indicator._sig.parameters.items():
         params.append(
