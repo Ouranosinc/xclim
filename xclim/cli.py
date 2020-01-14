@@ -92,7 +92,7 @@ def _create_command(indname):
         return _process_indicator(indicator, ctx, **kwargs)
 
     return click.Command(
-        name,
+        indname,
         callback=_process,
         params=params,
         help=indicator.abstract,
