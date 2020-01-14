@@ -87,6 +87,5 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
         :target: https://github.com/python/black
         :alt: Python Black
 
-.. |logo| image:: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo-small.png
-        :target: https://github.com/Ouranosinc/xclim/blob/master/_static/_images/xclim-logo-small.png
-        :alt: xclim
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
+        :target: https://github.com/Ouranosinc/xclim

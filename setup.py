@@ -77,7 +77,7 @@ setup(
     install_requires=requirements,
     license=LICENSE,
     long_description=readme + "\n\n" + history,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     include_package_data=True,
     keywords=KEYWORDS,
     name=NAME,
