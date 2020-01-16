@@ -1,5 +1,3 @@
-.. highlight:: shell
-
 ============
 Contributing
 ============
@@ -91,7 +89,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ conda install -c conda-forge black pytest tox
 
     $ black xclim tests
-    $ python setup.py test OR pytest test
+    $ python setup.py test
     $ tox
 
 6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
@@ -110,7 +108,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     $ git commit -m "Your detailed description of your changes."
     # `pre-commit` will run checks at this point:
-    # if no errors are found, chnages will be committed.
+    # if no errors are found, changes will be committed.
     # if errors are found, modifications will be mades. Simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
@@ -125,14 +123,15 @@ Before you submit a pull request, please follow these guidelines:
 1. Open an *issue* on our `GitHub repository`_ with your issue that you'd like to fix or feature that you'd like to implement.
 2. Perform the changes, commit and push them either to new a branch within Ouranosinc/xclim or to your personal fork of xclim.
 
-.. warning:: Try to keep your contributions within the scope of the issue that you are addressing.
+.. warning::
+     Try to keep your contributions within the scope of the issue that you are addressing.
      While it might be tempting to fix other aspects of the library as it comes up, it's better to
      simply to flag the problems in case others are already working on it.
 
      Consider adding a "**# TODO:**" comment if the need arises.
 
 3. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
-   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not decrease.**
+   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
    Please ensure that the docstrings adhere to one of the following standards:
@@ -140,30 +139,30 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 2.7, 3.4, 3.5, and 3.6 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
     https://travis-ci.org/Ouranosinc/xclim/pull_requests
 
-.. warning:: PEP8 is strongly enforced. Ensure that your changes pass **flake8** tests
-    prior to pushing your final commits to your branch. PEP8 errors are treated as build errors
-    and will block your pull request from being pushed to *master*
-
+.. warning::
+    PEP8 and Black is strongly enforced. Ensure that your changes pass **Flake8** and **Black**
+    tests prior to pushing your final commits to your branch. Code formatting errors are treated
+    as build errors and will block your pull request from being accepted.
 
 Tips
 ----
 
 To run a subset of tests::
 
-$ py.test tests.test_xclim
+$ pytest tests.test_xclim
 
 
 Versioning
 ----------
 
-In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
-The method we use is as such::
+In order to update and release the library to PyPI, it's good to use a semantic versioning scheme.
+The method we use is as follows::
 
   major.minor.patch-release
 
@@ -171,11 +170,11 @@ The method we use is as such::
 
 **Minor** is to be used when adding a module, process or set of components;
 
-**Patch** should be used for bug fixes and optimizations
+**Patch** should be used for bug fixes and optimizations;
 
-**Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
+**Release** is a keyword used to specify the degree of production readiness (`beta` [, and optionally, `gamma`])
 
-  An increment to the Major or Minor will reset the Release to `alpha`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
+  An increment to the Major or Minor will reset the Release to `beta`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
 
 Deploying
 ---------

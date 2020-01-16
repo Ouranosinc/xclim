@@ -11,23 +11,54 @@ import warnings
 from collections import defaultdict
 from collections import OrderedDict
 from inspect import signature
+from types import FunctionType
+from typing import Any
+from typing import Optional
+from typing import Union
 
+import dask
 import numpy as np
-import pint
+import pint.converters
+import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
 
 import xclim
-from . import checks
+from xclim import checks
+
+__all__ = [
+    "units",
+    "units2pint",
+    "pint2cfunits",
+    "pint_multiply",
+    "convert_units_to",
+    "declare_units",
+    "units",
+    "threshold_count",
+    "percentile_doy",
+    "infer_doy_max",
+    "adjust_doy_calendar",
+    "get_daily_events",
+    "daily_downsampler",
+    "walk_map",
+    "Indicator",
+    "Indicator2D",
+    "parse_doc",
+    "format_kwargs",
+    "wrapped_partial",
+    "uas_vas_2_sfcwind",
+    "sfcwind_2_uas_vas",
+]
+
+# TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-units.define('fraction = []')
-units.define('percent = 1e-2 fraction = pct')
-# units.define('% = pct') # Does not seem to do anything...
-# units.define(pint.unit.UnitDefinition('percent', 'pct', ('%', ), pint.converters.ScaleConverter(0.01)))
-# units.define(
-#     pint.unit.UnitDefinition("percent", "%", (), pint.converters.ScaleConverter(0.01))
-# )
+units.define(
+    pint.unit.UnitDefinition(
+        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
+    )
+)
+
 
 # Define commonly encountered units not defined by pint
 units.define(
@@ -103,24 +134,27 @@ calendars = {
 }
 
 
-def units2pint(value):
+def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or string
+    value : Union[xr.DataArray, str]
       Input data array or expression.
 
     Returns
     -------
-    pint.Unit
+    pint.unit.UnitDefinition
       Units of the data array.
 
     """
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        return re.subn(r"\^?(-?\d)", r"**\g<1>", s)[0]
+        if s == "%":
+            return "percent"
+
+        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
         unit = value
@@ -129,24 +163,25 @@ def units2pint(value):
     elif isinstance(value, units.Quantity):
         return value.units
     else:
-        raise NotImplementedError("Value of type {} not supported.".format(type(value)))
+        raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
-    unit = unit.replace('%', 'pct')
+    unit = unit.replace("%", "pct")
     try:  # Pint compatible
         return units.parse_expression(unit).units
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
+        AttributeError,
     ):  # Convert from CF-units to pint-compatible
         return units.parse_expression(_transform(unit)).units
 
 
-def pint2cfunits(value):
+def pint2cfunits(value: Any) -> str:
     """Return a CF-Convention unit string from a `pint` unit.
 
     Parameters
     ----------
-    value : pint.Unit
+    value : pint.UnitRegistry
       Input unit.
 
     Returns
@@ -155,7 +190,7 @@ def pint2cfunits(value):
       Units following CF-Convention.
     """
     # Print units using abbreviations (millimeter -> mm)
-    s = "{:~}".format(value)
+    s = f"{value:~}"
 
     # Search and replace patterns
     pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
@@ -165,13 +200,13 @@ def pint2cfunits(value):
         p = p or (1 if i else "")
         neg = "-" if i else ("^" if p else "")
 
-        return "{}{}{}".format(u, neg, p)
+        return f"{u}{neg}{p}"
 
     out, n = re.subn(pat, repl, s)
-    return out
+    return out.replace("percent", "%")
 
 
-def pint_multiply(da, q, out_units=None):
+def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     """Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
@@ -179,8 +214,8 @@ def pint_multiply(da, q, out_units=None):
     da : xr.DataArray
       Input array.
     q : pint.Quantity
-      Multiplicating factor.
-    out_units : str
+      Multiplicative factor.
+    out_units : Optional[str]
       Units the output array should be converted into.
     """
     a = 1 * units2pint(da)
@@ -192,18 +227,21 @@ def pint_multiply(da, q, out_units=None):
     return out
 
 
-def convert_units_to(source, target, context=None):
+def convert_units_to(
+    source: Union[str, xr.DataArray, Any],
+    target: Union[str, xr.DataArray, Any],
+    context: Optional[str] = None,
+):
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
-    source : str, pint.Quantity or xr.DataArray
+    source : Union[str, xr.DataArray, Any]
       The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str, pint.Unit or DataArray
+    target : Union[str, xr.DataArray, Any]
       Target array of values to which units must conform.
-    context : str
-
+    context : Optional[str]
 
     Returns
     -------
@@ -246,19 +284,28 @@ def convert_units_to(source, target, context=None):
         else:
             fu = units.degC
         warnings.warn(
-            "Future versions of XCLIM will require explicit unit specifications.",
+            "Future versions of xclim will require explicit unit specifications.",
             FutureWarning,
+            stacklevel=3,
         )
         return (source * fu).to(tu).m
 
-    raise NotImplementedError(
-        "source of type {} is not supported.".format(type(source))
-    )
+    raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def _check_units(val, dim):
+def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
         return
+
+    if str(val).startswith("UNSET "):
+        from warnings import warn
+
+        warnings.warn(
+            "This index calculation will soon require user-specified thresholds.",
+            FutureWarning,
+            stacklevel=4,
+        )
+        val = str(val).replace("UNSET ", "")
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(val, (int, float)):
@@ -283,20 +330,34 @@ def _check_units(val, dim):
     elif dim == "[length]":
         tu = "m"
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Dimension `{dim}` is not supported.")
 
     try:
         (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise AttributeError(
-            "Value's dimension {} does not match expected units {}.".format(
-                val_dim, expected
-            )
+            f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
         )
 
 
 def declare_units(out_units, **units_by_name):
-    """Create a decorator to check units of function arguments."""
+    """Create a decorator to check units of function arguments.
+
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+
+    Examples
+    --------
+    In the following function definition:
+
+    .. code::
+
+       @declare_units("K", tas=["temperature"])
+       def func(tas):
+          ...
+
+    the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
+
+    """
 
     def dec(func):
         # Match the signature of the function to the arguments given to the decorator
@@ -312,13 +373,23 @@ def declare_units(out_units, **units_by_name):
 
             out = func(*args, **kwargs)
 
-            # In the generic case, we use the default units that should have been propagated by the computation.
-            if "[" in out_units:
-                _check_units(out, out_units)
+            if "units" in out.attrs:
+                # Check that output units dimensions match expectations, e.g. [temperature]
+                if "[" in out_units:
+                    _check_units(out, out_units)
+                # Explicitly convert units if units are declared, e.g K
+                else:
+                    out = convert_units_to(out, out_units)
 
-            # Otherwise, we specify explicitly the units.
-            else:
+            # Otherwise, we impose the units if given.
+            elif "[" not in out_units:
                 out.attrs["units"] = out_units
+
+            else:
+                raise ValueError(
+                    "Output units are not propagated by computation nor specified by decorator."
+                )
+
             return out
 
         return wrapper
@@ -326,15 +397,17 @@ def declare_units(out_units, **units_by_name):
     return dec
 
 
-def threshold_count(da, op, thresh, freq):
+def threshold_count(
+    da: xr.DataArray, op: str, thresh: float, freq: str
+) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Input data.
-    op : {>, <, >=, <=, gt, lt, ge, le }
-      Logical operator, e.g. arr > thresh.
+    op : str
+      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
     thresh : float
       Threshold value.
     freq : str
@@ -343,7 +416,7 @@ def threshold_count(da, op, thresh, freq):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The number of days meeting the constraints for each period.
     """
     from xarray.core.ops import get_op
@@ -353,21 +426,23 @@ def threshold_count(da, op, thresh, freq):
     elif op in binary_ops.values():
         pass
     else:
-        raise ValueError("Operation `{}` not recognized.".format(op))
+        raise ValueError(f"Operation `{op}` not recognized.")
 
     func = getattr(da, "_binary_op")(get_op(op))
     c = func(da, thresh) * 1
     return c.resample(time=freq).sum(dim="time")
 
 
-def percentile_doy(arr, window=5, per=0.1):
+def percentile_doy(
+    arr: xr.DataArray, window: int = 5, per: float = 0.1
+) -> xr.DataArray:
     """Percentile value for each day of the year
 
     Return the climatological percentile over a moving window around each day of the year.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Input data.
     window : int
       Number of days around each day of the year to include in the calculation.
@@ -376,7 +451,7 @@ def percentile_doy(arr, window=5, per=0.1):
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The percentiles indexed by the day of the year.
     """
     # TODO: Support percentile array, store percentile in coordinates.
@@ -397,12 +472,12 @@ def percentile_doy(arr, window=5, per=0.1):
     return p
 
 
-def infer_doy_max(arr):
+def infer_doy_max(arr: xr.DataArray) -> int:
     """Return the largest doy allowed by calendar.
 
     Parameters
     ----------
-    arr : xarray.DataArray
+    arr : xr.DataArray
       Array with `time` coordinate.
 
     Returns
@@ -422,12 +497,12 @@ def infer_doy_max(arr):
                 "Cannot infer the calendar from a series less than a year long."
             )
         if doy_max not in [360, 365, 366]:
-            raise ValueError("The target array's calendar is not recognized")
+            raise ValueError(f"The target array's calendar `{cal}` is not recognized.")
 
     return doy_max
 
 
-def _interpolate_doy_calendar(source, doy_max):
+def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -435,22 +510,22 @@ def _interpolate_doy_calendar(source, doy_max):
 
     Parameters
     ----------
-    source : xarray.DataArray
+    source : xr.DataArray
       Array with `dayofyear` coordinates.
     doy_max : int
       Largest day of the year allowed by calendar.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
     if "dayofyear" not in source.coords.keys():
-        raise AttributeError("source should have dayofyear coordinates.")
+        raise AttributeError("Source should have `dayofyear` coordinates.")
 
     # Interpolation of source to target dayofyear range
-    doy_max_source = source.dayofyear.max()
+    doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
     tmp = source.interpolate_na(dim="dayofyear")
@@ -461,7 +536,7 @@ def _interpolate_doy_calendar(source, doy_max):
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
-def adjust_doy_calendar(source, target):
+def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -469,14 +544,14 @@ def adjust_doy_calendar(source, target):
 
     Parameters
     ----------
-    source : xarray.DataArray
-      Array with `dayofyear` coordinates.
-    target : xarray.DataArray
+    source : xr.DataArray
+      Array with `dayofyear` coordinate.
+    target : xr.DataArray
       Array with `time` coordinate.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
@@ -489,7 +564,39 @@ def adjust_doy_calendar(source, target):
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def get_daily_events(da, da_value, operator):
+def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
+    """Create a temporal DataArray where each day takes the value defined by the day-of-year.
+
+    Parameters
+    ----------
+    doy : xr.DataArray
+      Array with `dayofyear` coordinate.
+    arr : xr.DataArray
+      Array with `time` coordinate.
+
+    Returns
+    -------
+    xr.DataArray
+      An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
+      `doy`.
+    """
+    if "dayofyear" not in doy.coords:
+        raise AttributeError("Source should have `dayofyear` coordinates.")
+
+    # Adjust calendar
+    adoy = adjust_doy_calendar(doy, arr)
+
+    # Create array with arr shape and coords
+    out = xr.full_like(arr, np.nan)
+
+    # Fill with values from `doy`
+    d = out.time.dt.dayofyear.values
+    out.data = adoy.sel(dayofyear=d)
+
+    return out
+
+
+def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
     r"""
     function that returns a 0/1 mask when a condition is True or False
 
@@ -499,34 +606,33 @@ def get_daily_events(da, da_value, operator):
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
     da_value : float
-    operator : string
+    operator : str
 
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
 
     """
     events = operator(da, da_value) * 1
-    events = events.where(~np.isnan(da))
+    events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
 
 
-def daily_downsampler(da, freq="YS"):
+def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Daily climate data downsampler
 
     Parameters
     ----------
-    da : xarray.DataArray
-    freq : string
+    da : xr.DataArray
+    freq : str
 
     Returns
     -------
-    xarray.DataArray
-
+    xr.DataArray
 
     Note
     ----
@@ -545,12 +651,12 @@ def daily_downsampler(da, freq="YS"):
 
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
-        years = ["{:04d}".format(y) for y in da.time.dt.year.values]
-        months = ["{:02d}".format(m) for m in da.time.dt.month.values]
+        years = [f"{y:04d}" for y in da.time.dt.year.values]
+        months = [f"{m:02d}" for m in da.time.dt.month.values]
     else:
         # cannot use year, month, season attributes, not available for all calendars ...
-        years = ["{:04d}".format(v.year) for v in da.time.values]
-        months = ["{:02d}".format(v.month) for v in da.time.values]
+        years = [f"{v.year:04d}" for v in da.time.values]
+        months = [f"{v.month:02d}" for v in da.time.values]
     seasons = [
         "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
         for m in months
@@ -576,7 +682,7 @@ def daily_downsampler(da, freq="YS"):
             ys.append(y + s)
         l_tags = ys
     else:
-        raise RuntimeError("freqency {:s} not implemented".format(freq))
+        raise RuntimeError(f"Frequency `{freq}` not implemented.")
 
     # add tags to buffer DataArray
     buffer = da.copy()
@@ -586,14 +692,14 @@ def daily_downsampler(da, freq="YS"):
     return buffer.groupby("tags")
 
 
-def walk_map(d, func):
+def walk_map(d: dict, func: FunctionType):
     """Apply a function recursively to values of dictionary.
 
     Parameters
     ----------
     d : dict
       Input dictionary, possibly nested.
-    func : function
+    func : FunctionType
       Function to apply to dictionary values.
 
     Returns
@@ -624,36 +730,30 @@ class Indicator:
     _nvar = 1
 
     # CF-Convention metadata to be attributed to the output variable. May use tags {<tag>} formatted at runtime.
-    standard_name = (
-        ""
-    )  # The set of permissible standard names is contained in the standard name table.
+    # The set of permissible standard names is contained in the standard name table.
+    standard_name = ""
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = (
-        ""
-    )  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = (
-        ""
-    )  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
-    references = (
-        ""
-    )  # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    # Published or web-based references that describe the data or methods used to produce it. Parsed.
+    references = ""
     comment = (
-        ""
-    )  # Miscellaneous information about the data or methods used to produce it.
+        ""  # Miscellaneous information about the data or methods used to produce it.
+    )
     notes = ""  # Mathematical formulation. Parsed.
 
     # Tag mappings between keyword arguments and long-form text.
-    months = {"m{}".format(i): calendar.month_name[i].lower() for i in range(1, 13)}
+    months = {f"m{i}": calendar.month_name[i].lower() for i in range(1, 13)}
     _attrs_mapping = {
         "cell_methods": {
             "YS": "years",
@@ -667,6 +767,7 @@ class Indicator:
             "MAM": "spring",
             "JJA": "summer",
             "SON": "fall",
+            "norm": "Normal",
         },
         "description": {
             "YS": "Annual",
@@ -676,6 +777,7 @@ class Indicator:
             "MAM": "spring",
             "JJA": "summer",
             "SON": "fall",
+            "norm": "Normal",
         },
         "var_name": {"DJF": "winter", "MAM": "spring", "JJA": "summer", "SON": "fall"},
     }
@@ -743,7 +845,7 @@ class Indicator:
         for i in range(self._nvar):
             p = self._parameters[i]
             for attr in ["history", "cell_methods"]:
-                attrs[attr] += "{}: ".format(p) if self._nvar > 1 else ""
+                attrs[attr] += f"{p}: " if self._nvar > 1 else ""
                 attrs[attr] += getattr(ba.arguments[p], attr, "")
                 if attrs[attr]:
                     attrs[attr] += "\n" if attr == "history" else " "
@@ -851,7 +953,7 @@ class Indicator:
         """The function computing the indicator."""
         raise NotImplementedError
 
-    def format(self, attrs, args=None):
+    def format(self, attrs: dict, args: dict = None):
         """Format attributes including {} tags with arguments.
 
         Parameters
@@ -884,6 +986,9 @@ class Indicator:
                 else:
                     mba[k] = v
 
+            if callable(val):
+                val = val(**mba)
+
             out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
 
         return out
@@ -894,7 +999,12 @@ class Indicator:
         from functools import reduce
 
         freq = kwds.get("freq")
-        miss = (checks.missing_any(da, freq) for da in args)
+        if freq is not None:
+            # We flag any period with missing data
+            miss = (checks.missing_any(da, freq) for da in args)
+        else:
+            # There is no resampling, we flag where one of the input is missing
+            miss = (da.isnull() for da in args)
         return reduce(np.logical_or, miss)
 
     def validate(self, da):
@@ -938,7 +1048,7 @@ def parse_doc(doc):
     return out
 
 
-def format_kwargs(attrs, params):
+def format_kwargs(attrs: dict, params: dict) -> None:
     """Modify attribute with argument values.
 
     Parameters
@@ -966,9 +1076,125 @@ def format_kwargs(attrs, params):
         attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
-def wrapped_partial(func, *args, **kwargs):
+def wrapped_partial(func: FunctionType, *args, **kwargs):
     from functools import partial, update_wrapper
 
     partial_func = partial(func, *args, **kwargs)
     update_wrapper(partial_func, func)
     return partial_func
+
+
+def uas_vas_2_sfcwind(uas: xr.DataArray = None, vas: xr.DataArray = None):
+    """Converts eastward and northward wind components to wind speed and direction.
+
+    Parameters
+    ----------
+    uas : xr.DataArray
+      Eastward wind velocity (m s-1)
+    vas : xr.DataArray
+      Northward wind velocity (m s-1)
+
+    Returns
+    -------
+    wind : xr.DataArray
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+
+    Notes
+    -----
+    Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
+    while stronger winds are set to 360°.
+    """
+    # TODO: Add an attribute check to switch between sfcwind and wind
+
+    # Converts the wind speed to m s-1
+    uas = convert_units_to(uas, "m/s")
+    vas = convert_units_to(vas, "m/s")
+
+    # Wind speed is the hypotenuse of "uas" and "vas"
+    wind = np.hypot(uas, vas)
+
+    # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
+    wind.attrs = uas.attrs
+    wind.name = "sfcWind"
+    wind.attrs["standard_name"] = "wind_speed"
+    wind.attrs["long_name"] = "Near-Surface Wind Speed"
+    wind.attrs["units"] = "m s-1"
+
+    # Calculate the angle
+    # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
+    windfromdir_math = np.degrees(np.arctan2(vas, uas))
+
+    # Convert the angle from the mathematical standard to the meteorological standard
+    windfromdir = (270 - windfromdir_math) % 360.0
+
+    # According to the meteorological standard, calm winds must have a direction of 0°
+    # while northerly winds have a direction of 360°
+    # On the Beaufort scale, calm winds are defined as < 0.5 m/s
+    windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
+    windfromdir = xr.where(wind < 0.5, 0, windfromdir)
+
+    # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
+    windfromdir.attrs = uas.attrs
+    windfromdir.name = "sfcWindfromdir"
+    windfromdir.attrs["standard_name"] = "wind_from_direction"
+    windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
+    windfromdir.attrs["units"] = "degree"
+
+    return wind, windfromdir
+
+
+def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
+    """Converts wind speed and direction to eastward and northward wind components.
+
+    Parameters
+    ----------
+    wind : xr.DataArray
+      Wind velocity (m s-1)
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+
+    Returns
+    -------
+    uas : xr.DataArray
+      Eastward wind velocity (m s-1)
+    vas : xr.DataArray
+      Northward wind velocity (m s-1)
+
+    """
+    # TODO: Add an attribute check to switch between sfcwind and wind
+
+    # Converts the wind speed to m s-1
+    wind = convert_units_to(wind, "m/s")
+
+    # Converts the wind direction from the meteorological standard to the mathematical standard
+    windfromdir_math = (-windfromdir + 270) % 360.0
+
+    # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere
+    # if resample is not None:
+    #     wind = wind.resample(time=resample).mean(dim='time', keep_attrs=True)
+    #
+    #     # nb_per_day is the number of values each day. This should be calculated
+    #     windfromdir_math_per_day = windfromdir_math.reshape((len(wind.time), nb_per_day))
+    #     # Averages the subdaily angles around a circle, i.e. mean([0, 360]) = 0, not 180
+    #     windfromdir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
+    #                                       for angles in windfromdir_math_per_day])
+
+    uas = wind * np.cos(np.radians(windfromdir_math))
+    vas = wind * np.sin(np.radians(windfromdir_math))
+
+    # Add attributes to uas and vas. This is done by copying wind' attributes and overwriting a few of them
+    uas.attrs = wind.attrs
+    uas.name = "uas"
+    uas.attrs["standard_name"] = "eastward_wind"
+    uas.attrs["long_name"] = "Near-Surface Eastward Wind"
+    wind.attrs["units"] = "m s-1"
+
+    vas.attrs = wind.attrs
+    vas.name = "vas"
+    vas.attrs["standard_name"] = "northward_wind"
+    vas.attrs["long_name"] = "Near-Surface Northward Wind"
+    wind.attrs["units"] = "m s-1"
+
+    return uas, vas

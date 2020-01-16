@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -22,61 +21,54 @@ class TestRainOnFrozenGround:
         TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
     )
 
-    def test_3d_data_with_nans(self):
+    @pytest.mark.parametrize("prunits,prfac", [("kg m-2 s-1", 1), ("mm/day", 86400)])
+    @pytest.mark.parametrize(
+        "tasunits,tasoffset,chunks", [(None, None, {"time": 73.0}), ("C", K2C, None)]
+    )
+    def test_3d_data_with_nans(self, prunits, prfac, tasunits, tasoffset, chunks):
         pr = xr.open_dataset(self.nc_pr).pr
-        prMM = pr.copy()
-        prMM.values *= 86400.0
-        prMM.attrs["units"] = "mm/day"
+        pr2 = pr.copy()
+        pr2.values *= prfac
+        pr2.attrs["units"] = prunits
 
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmax = xr.open_dataset(self.nc_tasmax, chunks=chunks).tasmax
+        tasmin = xr.open_dataset(self.nc_tasmin, chunks=chunks).tasmin
         tas = 0.5 * (tasmax + tasmin)
         tas.attrs = tasmax.attrs
-        tasC = tas.copy()
-        tasC.values -= K2C
-        tasC.attrs["units"] = "C"
+        tas2 = tas.copy()
+        if chunks:
+            tas2 = tas2.chunk(chunks)
+        if tasunits:
+            tas2.values -= tasoffset
+            tas2.attrs["units"] = tasunits
 
-        prMM.values[10, 1, 0] = np.nan
+        pr2.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
 
-        out1 = atmos.rain_on_frozen_ground_days(pr, tas, freq="MS")
-        out2 = atmos.rain_on_frozen_ground_days(prMM, tas, freq="MS")
-        out3 = atmos.rain_on_frozen_ground_days(prMM, tasC, freq="MS")
-        out4 = atmos.rain_on_frozen_ground_days(pr, tasC, freq="MS")
-        pr.attrs["units"] = "kg m-2 s-1"
-        out5 = atmos.rain_on_frozen_ground_days(pr, tas, freq="MS")
-        out6 = atmos.rain_on_frozen_ground_days(pr, tasC, freq="MS")
-        np.testing.assert_array_equal(out1, out2)
-        np.testing.assert_array_equal(out1, out3)
-        np.testing.assert_array_equal(out1, out4)
-        np.testing.assert_array_equal(out1, out5)
-        np.testing.assert_array_equal(out1, out6)
+        outref = atmos.rain_on_frozen_ground_days(pr, tas, freq="MS")
+        out21 = atmos.rain_on_frozen_ground_days(pr2, tas, freq="MS")
+        out22 = atmos.rain_on_frozen_ground_days(pr2, tas2, freq="MS")
+        out12 = atmos.rain_on_frozen_ground_days(pr, tas2, freq="MS")
 
-        assert np.isnan(out1.values[0, 1, 0])
+        np.testing.assert_array_equal(outref, out21)
+        np.testing.assert_array_equal(outref, out22)
+        np.testing.assert_array_equal(outref, out12)
 
-        assert np.isnan(out1.values[0, -1, -1])
-
-        # synthetic data
-        tas1 = tas[0:31, 47, 8] * 0 + K2C - 1
-        tas1.attrs = tas.attrs
-        pr1 = pr[0:31, 47, 8] * 0 + 25
-        pr1.attrs = pr.attrs
-        tas1[10] += 5
-        tas1[20] += 5
-
-        rfrz = atmos.rain_on_frozen_ground_days(pr1, tas1, freq="MS")
-
-        np.testing.assert_array_equal(rfrz, 2)
+        assert np.isnan(out22.values[0, 1, 0])
+        assert np.isnan(out22.values[0, -1, -1])
 
 
 class TestPrecipAccumulation:
     # TODO: replace by fixture
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = os.path.join(
+        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
+    )
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr  # mm/s
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
+        prMM = xr.open_dataset(self.nc_pr).pr
         prMM *= 86400
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -103,6 +95,21 @@ class TestPrecipAccumulation:
         assert np.isnan(out1.values[0, 1, 0])
 
         assert np.isnan(out1.values[0, -1, -1])
+
+    def test_with_different_phases(self):
+        # test with different phases
+        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = xr.open_dataset(self.nc_tasmin).tasmin  # K
+
+        out_tot = atmos.precip_accumulation(pr, freq="MS")
+        out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
+        out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, freq="MS")
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+        assert "solid" in out_sol.long_name
+        assert "liquid" in out_liq.long_name
+        assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
 
 class TestWetDays:
@@ -227,40 +234,38 @@ class TestMaxNDay:
 
     nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    @pytest.mark.parametrize(
+        "units,factor,chunks",
+        [
+            ("mm/day", 86400.0, None),
+            ("kg m-2 s-1", 1, None),
+            ("mm/s", 1, {"time": 73.0}),
+        ],
+    )
+    def test_3d_data_with_nans(self, units, factor, chunks):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
-        prMM.values *= 86400.0
-        prMM.attrs["units"] = "mm/day"
+        pr1 = xr.open_dataset(self.nc_file).pr
+        pr2 = xr.open_dataset(self.nc_file, chunks=chunks).pr
+        pr2.values *= factor
+        pr2.attrs["units"] = units
         # put a nan somewhere
-        prMM.values[10, 1, 0] = np.nan
-        pr.values[10, 1, 0] = np.nan
+        pr2.values[10, 1, 0] = np.nan
+        pr1.values[10, 1, 0] = np.nan
         wind = 3
-        out1 = atmos.max_n_day_precipitation_amount(pr, window=wind, freq="MS")
-        out2 = atmos.max_n_day_precipitation_amount(prMM, window=wind, freq="MS")
-
-        # test kg m-2 s-1
-        pr.attrs["units"] = "kg m-2 s-1"
-        out3 = atmos.max_n_day_precipitation_amount(pr, window=wind, freq="MS")
+        out1 = atmos.max_n_day_precipitation_amount(pr1, window=wind, freq="MS")
+        out2 = atmos.max_n_day_precipitation_amount(pr2, window=wind, freq="MS")
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 3)
 
-        x1 = prMM[:31, 0, 0].values
+        x1 = pr1[:31, 0, 0].values * 86400
         df = pd.DataFrame({"pr": x1})
         rx3 = df.rolling(wind).sum().max()
 
         assert np.allclose(rx3, out1.values[0, 0, 0])
-
         assert np.isnan(out1.values[0, 1, 0])
-
         assert np.isnan(out1.values[0, -1, -1])
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 5), reason="too slow to evaluate on python2.7"
-)
 class TestMaxConsecWetDays:
     # TODO: replace by fixture
     nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
@@ -300,9 +305,6 @@ class TestMaxConsecWetDays:
         # assert (np.isnan(wds.values[0, -1, -1]))
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 5), reason="too slow to evaluate on python2.7"
-)
 class TestMaxConsecDryDays:
     # TODO: replace by fixture
     nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")

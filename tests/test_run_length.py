@@ -5,9 +5,7 @@ import pandas as pd
 import xarray as xr
 
 from xclim import run_length as rl
-from xclim.testing.common import tas_series
 
-TAS_SERIES = tas_series
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
@@ -23,6 +21,9 @@ class TestRLE:
         da = xr.DataArray(values, coords={"time": time}, dims="time")
 
         v, l, p = rl.rle_1d(da != 0)
+        np.testing.assert_array_equal(v, [False, True, False])
+        np.testing.assert_array_equal(l, [1, 10, 354])
+        np.testing.assert_array_equal(p, [0, 1, 11])
 
 
 class TestLongestRun:

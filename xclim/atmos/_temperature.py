@@ -13,6 +13,7 @@ __all__ = [
     "heat_wave_frequency",
     "heat_wave_max_length",
     "heat_wave_index",
+    "tg",
     "tg_mean",
     "tg10p",
     "tg90p",
@@ -87,8 +88,10 @@ class Tasmax(Indicator):
 class TasminTasmax(Indicator2D):
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
-            checks.check_valid(da, "cell_methods", "time: maximum within days")
             checks.check_valid(da, "standard_name", "air_temperature")
+        checks.check_valid(dan, "cell_methods", "time: minimum within days")
+        checks.check_valid(dax, "cell_methods", "time: maximum within days")
+        assert dan.units == dax.units
 
     @abc.abstractmethod
     def compute(*args, **kwds):
@@ -158,6 +161,23 @@ heat_wave_max_length = TasminTasmax(
     compute=indices.heat_wave_max_length,
 )
 
+heat_wave_total_length = TasminTasmax(
+    identifier="heat_wave_total_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Total length of heat wave events (Tmin > {thresh_tasmin}"
+    "and Tmax > {thresh_tasmax} for >= {window} days)",
+    description="{freq} total length of heat wave events occuring in a given period."
+    "An event occurs when the minimum and maximum daily "
+    "temperature both exceeds specific thresholds "
+    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
+    "a minimum number of days ({window}).",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.heat_wave_total_length,
+)
+
+
 heat_wave_index = Tasmax(
     identifier="heat_wave_index",
     units="days",
@@ -167,6 +187,16 @@ heat_wave_index = Tasmax(
     "defined as five or more consecutive days over {thresh}.",
     cell_methods="",
     compute=indices.heat_wave_index,
+)
+
+tg = TasminTasmax(
+    identifier="tg",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Daily mean temperature",
+    description="Estimated mean temperature from maximum and minimum temperatures",
+    cell_methods="",
+    compute=indices.tas,
 )
 
 tg_mean = Tas(
@@ -306,7 +336,7 @@ daily_freezethaw_cycles = TasminTasmax(
     standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
-    ": Tmax > 0℃ and Tmin < 0℃.",
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
     compute=indices.daily_freezethaw_cycles,
 )

@@ -28,13 +28,13 @@ def check_valid(var, key, expected):
 
     att = getattr(var, key, None)
     if att is None:
-        e = "Variable does not have a `{}` attribute.".format(key)
-        warn(e)
+        warn(f"Variable does not have a `{key}` attribute.", UserWarning, stacklevel=3)
     elif att != expected:
-        e = "Variable has a non-conforming {}. Got `{}`, expected `{}`".format(
-            key, att, expected
+        warn(
+            f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
+            UserWarning,
+            stacklevel=3,
         )
-        warn(e)
 
 
 def assert_daily(var):
@@ -136,7 +136,7 @@ def valid_daily_mean_discharge(comp):
 def valid_missing_data_threshold(comp, threshold=0):
     r"""Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
-    pass
+    raise NotImplementedError
 
 
 def check_is_dataarray(comp):
@@ -171,7 +171,7 @@ def missing_any(da, freq, **indexer):
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
-    from . import generic
+    from xclim import generic
 
     if "-" in freq:
         pfreq, anchor = freq.split("-")
@@ -203,7 +203,7 @@ def missing_any(da, freq, **indexer):
         else:
             t = pd.date_range(t0, t1, freq="D")
 
-        sda = xr.DataArray(data=np.empty(len(t)), coords={"time": t}, dims=("time",))
+        sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
         st = generic.select_time(sda, **indexer)
         sn = st.notnull().resample(time=freq).sum(dim="time")
         miss = sn != c

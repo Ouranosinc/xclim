@@ -1,6 +1,14 @@
 Utilities
 =========
 
+Generic
+-------
+.. automodule:: xclim.generic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 Ensembles
 ---------
 .. automodule:: xclim.ensembles
@@ -26,3 +34,13 @@ Run-Length Calculations
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+Other Utilities
+---------------
+
+.. automodule:: xclim.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+

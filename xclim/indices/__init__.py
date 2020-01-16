@@ -1,14 +1,28 @@
 # -*- coding: utf-8 -*-
-
 """
+===============
 Indices library
 ===============
 
-This module describes climate indicator functions. Functions are listed in alphabetical order and describe the raw
-computation performed over xarray.DataArrays. DataArrays should carry unit information to allow for any needed
-unit conversions. The output's attributes (CF-Convention) are not modified. Validation checks and output attributes
-are handled by indicator classes described in files named by the physical variable (temperature, precip, streamflow).
+This module contains climate indices functions operating on `xarray.DataArray`. Most of these
+functions operate on daily time series, but some might accept monthly time series as well. All
+functions perform units checks to make sure that inputs have the expected dimensions (for example
+have units of temperature, whether it is celsius, kelvin or fahrenheit), and the the `units`
+attribute of the output DataArray.
 
+.. note::
+
+    Indices functions do not perform missing value checks, and do not set CF-Convention attributes
+    (long_name, standard_name, description, cell_methods, etc). These functionalities are provided by
+    :class:`xclim.utils.Indicator` instances found in the :mod:`xclim.atmos`, :mod:`xclim.land` and
+    :mod:`xclim.seaIce` modules.
+
+"""
+from ._multivariate import *
+from ._simple import *
+from ._threshold import *
+
+"""
 Notes for docstring
 -------------------
 
@@ -31,10 +45,10 @@ respectively.
    ----------
    <standard_name> : xarray.DataArray
      <Long_name> of variable [acceptable units].
-   threshold : string
+   threshold : Union[str, float, int]
      Description of the threshold / units.
      e.g. The 10th percentile of historical temperature [K].
-   freq : str, optional
+   freq : Optional[str]
      Resampling frequency.
 
    Returns
@@ -68,11 +82,5 @@ Indice descriptions
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 
-from ._simple import *
-from ._threshold import *
-from ._multivariate import *
-
-# TODO: Define a unit conversion system for temperature [K, C, F] and precipitation [mm h-1, Kg m-2 s-1] metrics
-# TODO: Move utility functions to another file.
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/

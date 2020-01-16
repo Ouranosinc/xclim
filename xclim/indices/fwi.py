@@ -633,7 +633,7 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
     for k, v in DEFAULT_PARAMS.items():
         params.setdefault(k, v)
 
-    if "start_date" in params:
+    if params.get("start_date"):
         params["start"] = int(
             abs(snow.time - np.datetime64(params["start_date"])).argmin("time")
         )
@@ -643,7 +643,7 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
                     params["snowCoverDaysCalc"]
                 )
             )
-        elif not all(var0 in params for var0 in ["dc0", "dmc0", "ffmc0"]):
+        elif not all(params.get(var0) for var0 in ["dc0", "dmc0", "ffmc0"]):
             raise ValueError(
                 "If a start date is specified, initial maps dc0, dmc0 and ffmc0 must also be given."
             )
@@ -657,9 +657,9 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
         snow,
         tas.time.dt.month,
         lat,
-        params.pop("dc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
-        params.pop("dmc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
-        params.pop("ffmc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
+        params.pop("dc0", None) or (xr.zeros_like(tas.isel(time=0)) * np.nan),
+        params.pop("dmc0", None) or (xr.zeros_like(tas.isel(time=0)) * np.nan),
+        params.pop("ffmc0", None) or (xr.zeros_like(tas.isel(time=0)) * np.nan),
         kwargs=params,
         input_core_dims=6 * (("time",),) + 4 * ((),),
         output_core_dims=6 * (("time",),),

@@ -6,11 +6,10 @@ def as_tuple(x):
     if isinstance(x, (list, tuple)):
         return x
     else:
-        return (x, )
+        return (x,)
 
 
 class TestFile:
-
     def __init__(self, name, path=None, url=None):
         """Register a test file.
 
@@ -72,5 +71,3 @@ class TestDataSet:
 
     def __call__(self):
         return [f() for f in self.files]
-
-

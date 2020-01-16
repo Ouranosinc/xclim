@@ -33,6 +33,3 @@ Table of indicators
       background-color: #dddddd;
     }
    </style>
-
-
-
