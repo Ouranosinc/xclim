@@ -2,6 +2,11 @@
 History
 =======
 
+0.14.x
+------
+* Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
+
+
 0.13.x (2020-01-10)
 -------------------
 * Documentation improvements: list of indicators, RTD theme, notebook example.

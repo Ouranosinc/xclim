@@ -1,5 +1,6 @@
 import os
 
+import geopandas as gpd
 import numpy as np
 import pytest
 import xarray as xr
@@ -526,6 +527,7 @@ class TestSubsetShape:
     eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
     southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
     small_geojson = os.path.join(TESTS_DATA, "cmip5", "small_geojson.json")
+    multi_regions_geojson = os.path.join(TESTS_DATA, "cmip5", "multi_regions.json")
 
     def compare_vals(self, ds, sub, vari, flag_2d=False):
         # check subsetted values against original
@@ -648,6 +650,17 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
         assert len(sub.lon.values) == 3
         assert len(sub.lat.values) == 3
+
+    def test_mask_multiregions(self):
+        ds = xr.open_dataset(self.nc_file)
+        regions = gpd.read_file(self.multi_regions_geojson)
+
+        mask = subset.create_mask(
+            x_dim=ds.lon, y_dim=ds.lat, poly=regions, wrap_lons=True
+        )
+        vals, counts = np.unique(mask.values[mask.notnull()], return_counts=True)
+        assert all(vals == [0, 1, 2])
+        assert all(counts == [58, 250, 22])
 
 
 class TestDistance:
