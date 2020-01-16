@@ -1,5 +1,7 @@
 """
 Adapted from:
+Matlab code CalcFWITimeSeriesWithStartup.m from GFWED made for using MERRA2 data.
+This was a translation of FWI.vba of the Canadian Fire Weather Index system.
 Updated source code for calculating fire danger indices in the Canadian Forest Fire Weather Index System
 Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
 
@@ -10,7 +12,9 @@ Notes
 -----
 TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
 TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
-TODO: Add references.
+TODO: Add references
+TODO: Alternative computation of start up / shut down without snow_depth
+TODO: Allow computation of DC/DMC/FFMC independently
 """
 import math
 
@@ -183,7 +187,8 @@ def day_length_factor(lat, kind="gfwed"):
 
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
     """Scalar computation of the fine fuel moisture code."""
-
+    if np.isnan(ffmc0):
+        return np.nan
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
     if p > 0.5:
         rf = p - 0.5  # *Eq.2*#
@@ -282,7 +287,8 @@ def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
 
 def _duff_moisture_code(t, p, h, mth, lat, dmc0):
     """Scalar computation of the Duff moisture code."""
-
+    if np.isnan(dmc0):
+        return np.nan
     el = day_length(lat)
 
     if t < -1.1:
@@ -350,13 +356,15 @@ def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
 
 def _drought_code(t, p, mth, lat, dc0):
     """Scalar computation of the drought code."""
+    if np.isnan(dc0):
+        return np.nan
 
     fl = day_length_factor(lat)
 
     if t < -2.8:
         t = -2.8
     pe = (0.36 * (t + 2.8) + fl[mth - 1]) / 2  # *Eq.22*#
-    if pe <= 0.0:
+    if pe < 0.0:
         pe = 0.0
 
     if p > 2.8:
@@ -547,7 +555,7 @@ def daily_severity_rating(fwi):
 #     )
 
 
-def calc_indices(tas, pr, rh, ws, snow, mth, lat, **params):
+def calc_indices(tas, pr, rh, ws, snow, mth, lat, dcprev, dmcprev, ffmcprev, **params):
     """Big iterator, iterating in time, vectorized in space."""
     dc = np.zeros_like(tas) * np.nan
     dmc = np.zeros_like(tas) * np.nan
@@ -557,34 +565,27 @@ def calc_indices(tas, pr, rh, ws, snow, mth, lat, **params):
     fwi = np.zeros_like(tas) * np.nan
     # dsr = np.zeros_like(tas) * np.nan
 
-    if "start_date" in params:
-        dcprev = params["dc0"]
-        dmcprev = params["dmc0"]
-        ffmcprev = params["ffmc0"]
-    else:
-        dcprev = np.zeros_like(tas[0, ...]) * np.nan
-        dmcprev = np.zeros_like(tas[0, ...]) * np.nan
-        ffmcprev = np.zeros_like(tas[0, ...]) * np.nan
-
     for it in range(params.get("start", params["snowCoverDaysCalc"]), tas.shape[-1]):
         snow_cover_recent = snow[..., it - params["startShutDays"] : it + 1].mean(
             axis=-1
         )
-        snow_cover_history = snow[..., it - params["snowCoverDaysCalc"] : it + 1]
-        snow_days = (snow_cover_history > params["snoDThresh"]).astype(int).sum(axis=-1)
+        snow_cover_history = snow[..., it - params["snowCoverDaysCalc"] + 1 : it + 1]
+        snow_days = np.count_nonzero(snow_cover_history > params["snoDThresh"], axis=-1)
         temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
 
-        prec_history = pr[..., it - params["snowCoverDaysCalc"] : it + 1]
-        days_since_last_prec = (prec_history > params["precThresh"])[::-1].argmax(
-            axis=-1
-        )
+        prec_history = np.flip(pr[..., : it + 1], axis=-1)
+        days_with_prec = prec_history >= params["precThresh"]
+        days_since_last_prec = days_with_prec.argmax(axis=-1)
         days_since_last_prec = np.where(
-            days_since_last_prec == 0, days_since_last_prec, params["snowCoverDaysCalc"]
+            np.any(days_with_prec, axis=-1),
+            days_since_last_prec,
+            params["snowCoverDaysCalc"],
         )
 
         shut_down = (temp_recent < params["tempThresh"]) | (
             snow_cover_recent >= params["snoDThresh"]
         )
+
         dcprev[shut_down] = np.nan
         dmcprev[shut_down] = np.nan
         ffmcprev[shut_down] = np.nan
@@ -656,8 +657,11 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
         snow,
         tas.time.dt.month,
         lat,
+        params.pop("dc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
+        params.pop("dmc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
+        params.pop("ffmc0", xr.zeros_like(tas.isel(time=0)) * np.nan),
         kwargs=params,
-        input_core_dims=6 * (("time",),) + 1 * ((),),
+        input_core_dims=6 * (("time",),) + 4 * ((),),
         output_core_dims=6 * (("time",),),
         dask="allowed",
     )
