@@ -236,7 +236,7 @@ class TestSubsetGridPoint:
             subset.subset_gridpoint(
                 da, lon=-72.4, lat=46.1, start_date="2055", end_date="2052"
             )
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
@@ -487,7 +487,7 @@ class TestSubsetBbox:
                 end_date="2055",
             )
 
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 

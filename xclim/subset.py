@@ -1,4 +1,5 @@
 import copy
+import logging
 import warnings
 from functools import wraps
 from pathlib import Path
@@ -164,6 +165,38 @@ def check_lons(func):
     return func_checker
 
 
+def check_latlon_dimnames(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator examining the names of the latitude and longitude dimensions and renames them temporarily if needed.
+        """
+
+        if range(len(args)) == 0:
+            return func(*args, **kwargs)
+        else:
+            formatted_args = list()
+            for i in range(len(args)):
+                try:
+                    ds = args[i]
+                    if isinstance(ds, (xarray.DataArray, xarray.Dataset)):
+                        dims = ds.dims
+                    else:
+                        raise TypeError
+                except (IndexError, TypeError):
+                    logging.error(f"No file or no dimensions found in arg {args[i]}.")
+                    formatted_args.append(args[i])
+                    continue
+
+                if not {"lon", "lat"}.issubset(dims):
+                    if {"latitude", "longitude"}.issubset(dims):
+                        ds = ds.rename({"latitude": "lat", "longitude": "lon"})
+                formatted_args.append(ds)
+        return func(*formatted_args, **kwargs)
+
+    return func_checker
+
+
 def wrap_lons_and_split_at_greenwich(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
@@ -219,7 +252,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs={"init": "epsg:4326"},
+                        crs={"epsg:4326"},
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
                     # split_gdf.columns = ["index", "geometry"]
@@ -344,6 +377,7 @@ def create_mask(
     return mask_2d
 
 
+@check_latlon_dimnames
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path],
@@ -505,6 +539,7 @@ def subset_shape(
     return ds_copy
 
 
+@check_latlon_dimnames
 @check_lons
 @check_date_signature
 def subset_bbox(
@@ -684,6 +719,7 @@ def _check_desc_coords(coord, bounds, dim):
     return bounds
 
 
+@check_latlon_dimnames
 @check_lons
 @check_date_signature
 def subset_gridpoint(
