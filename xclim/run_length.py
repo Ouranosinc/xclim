@@ -262,7 +262,8 @@ def rle_1d(
     if n == 0:
         e = "run length array empty"
         warn(e)
-        return None, None, None
+        # Returning None makes some other 1d func below fail.
+        return np.array(np.nan), 0, np.array(np.nan)
 
     y = np.array(ia[1:] != ia[:-1])  # pairwise unequal (string safe)
     i = np.append(np.where(y), n - 1)  # must include last element position
