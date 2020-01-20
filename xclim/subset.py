@@ -178,13 +178,10 @@ def check_latlon_dimnames(func):
         formatted_args = list()
         conv = dict()
         for argument in args:
-            try:
-                if isinstance(argument, (xarray.DataArray, xarray.Dataset)):
-                    dims = argument.dims
-                else:
-                    raise TypeError
-            except TypeError:
-                logging.error(f"No file or no dimensions found in arg `{argument}`.")
+            if isinstance(argument, (xarray.DataArray, xarray.Dataset)):
+                dims = argument.dims
+            else:
+                logging.info(f"No file or no dimensions found in arg `{argument}`.")
                 formatted_args.append(argument)
                 continue
 
