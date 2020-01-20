@@ -420,8 +420,7 @@ growing_season_length = Tas(
     description="{freq} number of days between the first occurrence of at least "
     "six consecutive days with mean daily temperature over {thresh} and "
     "the first occurrence of at least {window} consecutive days with "
-    "mean daily temperature below {thresh} after July 1st in the northern "
-    "hemisphere and January 1st in the southern hemisphere",
+    "mean daily temperature below {thresh} after {mid_date}.",
     cell_methods="",
     compute=indices.growing_season_length,
 )
