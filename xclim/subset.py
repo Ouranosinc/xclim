@@ -176,6 +176,7 @@ def check_latlon_dimnames(func):
             return func(*args, **kwargs)
 
         formatted_args = list()
+        conv = dict()
         for argument in args:
             try:
                 if isinstance(argument, (xarray.DataArray, xarray.Dataset)):
@@ -186,12 +187,35 @@ def check_latlon_dimnames(func):
                 logging.error(f"No file or no dimensions found in arg {argument}.")
                 formatted_args.append(argument)
                 continue
+            try:
+                if not {"lon", "lat"}.issubset(dims) or {"rlon", "rlat"}.issubset(dims):
 
-            if not {"lon", "lat"}.issubset(dims):
-                if {"latitude", "longitude"}.issubset(dims):
-                    argument = argument.rename({"latitude": "lat", "longitude": "lon"})
+                    if {"long"}.issubset(dims):
+                        conv["long"] = "lon"
+                    elif {"latitude", "longitude"}.issubset(dims):
+                        conv["latitude"] = "lat"
+                        conv["longitude"] = "lon"
+                    elif {"lats", "lons"}.issubset(dims):
+                        conv["lats"] = "lat"
+                        conv["lons"] = "lon"
+                    else:
+                        pass
+                    argument = argument.rename(conv)
+
+            except ValueError:
+                logging.error(
+                    f"Lat and Lon dimensions are not found among dimensions: {list(dims)}."
+                )
+                raise
+
             formatted_args.append(argument)
-        return func(*formatted_args, **kwargs)
+
+        final = func(*formatted_args, **kwargs)
+
+        for k, v in conv.items():
+            final = final.rename({v: k})
+
+        return final
 
     return func_checker
 

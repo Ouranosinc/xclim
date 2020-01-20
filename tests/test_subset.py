@@ -382,6 +382,13 @@ class TestSubsetBbox:
         assert np.all(out.lat >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
 
+    def test_badly_named_latlons(self):
+        da = xr.open_dataset(self.nc_file)
+        new_latlons = {"lat": "latitude", "lon": "longitude"}
+        da = da.rename(new_latlons)
+        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert {"latitude", "longitude"}.issubset(out.dims)
+
     def test_single_bounds_rectilinear(self):
         da = xr.open_dataset(self.nc_file).tasmax
 
