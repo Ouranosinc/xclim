@@ -188,7 +188,7 @@ def check_latlon_dimnames(func):
                 formatted_args.append(argument)
                 continue
 
-            if not {"lon", "lat"}.issubset(dims) or not {"rlon", "rlat"}.issubset(dims):
+            if not {"lon", "lat"}.issubset(dims):
                 if {"long"}.issubset(dims):
                     conv["long"] = "lon"
                 elif {"latitude", "longitude"}.issubset(dims):
@@ -197,7 +197,7 @@ def check_latlon_dimnames(func):
                 elif {"lats", "lons"}.issubset(dims):
                     conv["lats"] = "lat"
                     conv["lons"] = "lon"
-                if not conv:
+                if not conv and not {"rlon", "rlat"}.issubset(dims):
                     warnings.warn(
                         f"lat and lon-like dimensions are not found among arg `{argument}` dimensions: {list(dims)}."
                     )

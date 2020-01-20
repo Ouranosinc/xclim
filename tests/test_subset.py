@@ -384,10 +384,22 @@ class TestSubsetBbox:
 
     def test_badly_named_latlons(self):
         da = xr.open_dataset(self.nc_file)
-        new_latlons = {"lat": "latitude", "lon": "longitude"}
-        da = da.rename(new_latlons)
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        extended_latlons = {"lat": "latitude", "lon": "longitude"}
+        da_extended_names = da.rename(extended_latlons)
+        out = subset.subset_bbox(
+            da_extended_names, lon_bnds=self.lon, lat_bnds=self.lat
+        )
         assert {"latitude", "longitude"}.issubset(out.dims)
+
+        long_for_some_reason = {"lon": "long"}
+        da_long = da.rename(long_for_some_reason)
+        out = subset.subset_bbox(da_long, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert {"long"}.issubset(out.dims)
+
+        lons_lats = {"lon": "lons", "lat": "lats"}
+        da_lonslats = da.rename(lons_lats)
+        out = subset.subset_bbox(da_lonslats, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert {"lons", "lats"}.issubset(out.dims)
 
     def test_single_bounds_rectilinear(self):
         da = xr.open_dataset(self.nc_file).tasmax
