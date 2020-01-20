@@ -183,8 +183,8 @@ def check_latlon_dimnames(func):
                     dims = argument.dims
                 else:
                     raise TypeError
-            except (IndexError, TypeError):
-                logging.error(f"No file or no dimensions found in arg {argument}.")
+            except TypeError:
+                logging.error(f"No file or no dimensions found in arg `{argument}`.")
                 formatted_args.append(argument)
                 continue
             try:
