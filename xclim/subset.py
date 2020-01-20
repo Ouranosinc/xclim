@@ -187,26 +187,21 @@ def check_latlon_dimnames(func):
                 logging.error(f"No file or no dimensions found in arg `{argument}`.")
                 formatted_args.append(argument)
                 continue
-            try:
-                if not {"lon", "lat"}.issubset(dims) or {"rlon", "rlat"}.issubset(dims):
 
-                    if {"long"}.issubset(dims):
-                        conv["long"] = "lon"
-                    elif {"latitude", "longitude"}.issubset(dims):
-                        conv["latitude"] = "lat"
-                        conv["longitude"] = "lon"
-                    elif {"lats", "lons"}.issubset(dims):
-                        conv["lats"] = "lat"
-                        conv["lons"] = "lon"
-                    else:
-                        pass
-                    argument = argument.rename(conv)
-
-            except ValueError:
-                logging.error(
-                    f"Lat and Lon dimensions are not found among dimensions: {list(dims)}."
-                )
-                raise
+            if not {"lon", "lat"}.issubset(dims) or not {"rlon", "rlat"}.issubset(dims):
+                if {"long"}.issubset(dims):
+                    conv["long"] = "lon"
+                elif {"latitude", "longitude"}.issubset(dims):
+                    conv["latitude"] = "lat"
+                    conv["longitude"] = "lon"
+                elif {"lats", "lons"}.issubset(dims):
+                    conv["lats"] = "lat"
+                    conv["lons"] = "lon"
+                if not conv:
+                    warnings.warn(
+                        f"lat and lon-like dimensions are not found among arg `{argument}` dimensions: {list(dims)}."
+                    )
+                argument = argument.rename(conv)
 
             formatted_args.append(argument)
 
