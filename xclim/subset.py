@@ -169,7 +169,9 @@ def check_latlon_dimnames(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator examining the names of the latitude and longitude dimensions and renames them temporarily if needed.
+        A decorator examining the names of the latitude and longitude dimensions and renames them temporarily.
+         Checks here ensure that the names supplied via the xarray object dims are changed to be synonymous with subset
+         algorithm dimensions, conversions are saved and are then undone to the processed file.
         """
 
         if range(len(args)) == 0:
