@@ -193,37 +193,38 @@ def wrap_lons_and_split_at_greenwich(func):
                     stacklevel=4,
                 )
             split_flag = False
-            if (poly.geometry.total_bounds[0] < 0) and (
-                poly.geometry.total_bounds[2] > 0
-            ):
-                split_flag = True
-                warnings.warn(
-                    "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
-                    " This feature is experimental. Output might not be accurate.",
-                    UserWarning,
-                    stacklevel=4,
-                )
+            for (index, feature) in poly.iterrows():
+                if (feature.geometry.bounds[0] < 0) and (
+                    feature.geometry.bounds[2] > 0
+                ):
+                    split_flag = True
+                    warnings.warn(
+                        "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
+                        " This feature is experimental. Output might not be accurate.",
+                        UserWarning,
+                        stacklevel=4,
+                    )
 
-                # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
-                union = Polygon(cascaded_union(poly.geometry))
-                meridian = LineString([Point(0, 90), Point(0, -90)])
-                buffered = meridian.buffer(0.000000001)
-                split_polygons = split(union, meridian)
-                # TODO: This doesn't seem to be thread safe in Travis CI on macOS. Merits testing with a local machine.
-                buffered_split_polygons = [
-                    feat for feat in split_polygons.difference(buffered)
-                ]
+                    # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
+                    union = Polygon(cascaded_union(feature.geometry))
+                    meridian = LineString([Point(0, 90), Point(0, -90)])
+                    buffered = meridian.buffer(0.000000001)
+                    split_polygons = split(union, meridian)
+                    # TODO: This doesn't seem to be thread safe in Travis CI on macOS. Merits testing with a local machine.
+                    buffered_split_polygons = [
+                        feat for feat in split_polygons.difference(buffered)
+                    ]
 
-                # Load split features into a new GeoDataFrame with WGS84 CRS
-                split_gdf = gpd.GeoDataFrame(
-                    list(range(len(buffered_split_polygons))),
-                    geometry=buffered_split_polygons,
-                    crs={"init": "epsg:4326"},
-                )
-                # split_gdf.crs = CRS.from_epsg(4326)
-                split_gdf.columns = ["index", "geometry"]
+                    # Cannot assign iterable with `at` (pydata/pandas#26333) so a small hack:
+                    # Load split features into a new GeoDataFrame with WGS84 CRS
+                    split_gdf = gpd.GeoDataFrame(
+                        geometry=[cascaded_union(buffered_split_polygons)],
+                        crs={"init": "epsg:4326"},
+                    )
+                    poly.at[[index], "geometry"] = split_gdf.geometry.values
+                    # split_gdf.columns = ["index", "geometry"]
 
-                poly = split_gdf
+                    # feature = split_gdf
 
             # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
             poly = poly.to_crs(
@@ -238,6 +239,7 @@ def wrap_lons_and_split_at_greenwich(func):
                 )
                 poly = gpd.GeoDataFrame(poly.buffer(0.000000001), columns=["geometry"])
                 poly.crs = crs1
+
             kwargs["poly"] = poly
 
         return func(*args, **kwargs)
@@ -253,7 +255,10 @@ def create_mask(
     poly: gpd.GeoDataFrame = None,
     wrap_lons: bool = False,
 ):
-    """
+    """Creates a mask with values corresponding to the features in a GeoDataFrame.
+
+    The returned mask's points have the value of the first geometry of `poly` they fall in.
+
     Parameters
     ----------
     x_dim : xarray.DataArray
@@ -268,7 +273,33 @@ def create_mask(
     Returns
     -------
     xarray.DataArray
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> import xarray as xr
+    >>> import geopandas as gpd
+    >>> ds = xr.open_dataset('example.nc')
+    >>> polys = gpd.read_file('regions.json')
+    Get a mask from all polygons in 'regions.json'
+    >>> mask = subset.create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
+    >>> ds = ds.assign_coords(regions=mask)
+    Operations can be applied to each regions with  `groupby`. Ex:
+    >>> ds = ds.groupby('regions').mean()
+    Extra step to retrieve the names of those polygons stored in the "id" column
+    >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
+    >>> ds = ds.assign_coords(regions_names=region_names)
     """
+    # Check for intersections
+    for i, (inda, pola) in enumerate(poly.iterrows()):
+        for (indb, polb) in poly.loc[i + 1 :].iterrows():
+            if pola.geometry.intersects(polb.geometry):
+                warnings.warn(
+                    f"List of shapes contains overlap between {inda} and {indb}. Only {inda} will be used.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
     if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
         lon1, lat1 = np.meshgrid(
