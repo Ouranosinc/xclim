@@ -27,7 +27,8 @@ __all__ = [
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
     "extreme_temperature_range",
-    "fire_weather_index",
+    "fire_weather_indexes",
+    "drought_code",
     "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
@@ -334,10 +335,22 @@ def extreme_temperature_range(
 @declare_units(
     "", tas="[temperature]", pr="[precipitation]", ws="[speed]", rh="[]", snd="[length]"
 )
-def fire_weather_index(
-    tas, pr, ws, rh, snd, ffmc0=None, dmc0=None, dc0=None, start_date=None
+def fire_weather_indexes(
+    tas: xarray.DataArray,
+    pr: xarray.DataArray,
+    ws: xarray.DataArray,
+    rh: xarray.DataArray,
+    lat: xarray.DataArray,
+    snd: xarray.DataArray = None,
+    ffmc0: xarray.DataArray = None,
+    dmc0: xarray.DataArray = None,
+    dc0: xarray.DataArray = None,
+    start_date: str = None,
+    **params,
 ):
-    r"""Fire weather index
+    r"""Fire weather indexes.
+
+    Computes the 6 fire weather indexes as defined by the GFWED.
 
     Parameters
     ----------
@@ -349,37 +362,100 @@ def fire_weather_index(
       Noon wind speed.
     rh : xarray.DataArray
       Noon relative humidity.
+    lat : xarray.DataArray
+      Latitude coordinate
     snd : xarray.DataArray
       Noon snow depth.
-    ffmc0 : float, xarray.DataArray
+    ffmc0 : xarray.DataArray
       Initial values of the fine fuel moisture code.
-    dmc0 : float, xarray.DataArray
+    dmc0 : xarray.DataArray
       Initial values of the Duff moisture code.
-    dc0 : float, xarray.DataArray
+    dc0 : xarray.DataArray
       Initial values of the drought code.
+    start_date : str, datetime.datetime
+      Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
+    params :
+        Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
     """
     tas = utils.convert_units_to(tas, "C")
     pr = utils.convert_units_to(pr, "mm/day")
     ws = utils.convert_units_to(ws, "km/h")
     rh = utils.convert_units_to(rh, "pct")
-    snd = utils.convert_units_to(snd, "m")
+    if snd is not None:
+        snd = utils.convert_units_to(snd, "m")
 
-    if "lat" not in tas.coords:
-        raise AttributeError("Meteorological variables should have coordinate `lat`.")
+    if dc0 is None:
+        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+    if dmc0 is None:
+        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+    if ffmc0 is None:
+        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
 
-    dc, dmc, ffmc, isi, bui, out = fwi.all_ufunc(
-        tas,
-        pr,
-        rh,
-        ws,
-        snd,
-        tas.lat,
+    params["start_date"] = start_date
+
+    out = fwi.fire_weather_ufunc(
+        tas=tas,
+        pr=pr,
+        rh=rh,
+        ws=ws,
+        lat=lat,
         dc0=dc0,
         dmc0=dmc0,
         ffmc0=ffmc0,
-        start_date=start_date,
+        snd=snd,
+        indices=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"],
+        **params,
     )
-    return out
+    return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
+
+
+@declare_units("", tas="[temperature]", pr="[precipitation]", snd="[length]")
+def drought_code(
+    tas: xarray.DataArray,
+    pr: xarray.DataArray,
+    lat: xarray.DataArray,
+    snd: xarray.DataArray = None,
+    dc0: xarray.DataArray = None,
+    start_date: str = None,
+    **params,
+):
+    r"""Drought code
+
+    The drought code is part of the Fire Weather Indexes defined by the GFWED.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Noon temperature.
+    pr : xarray.DataArray
+      Rain fall in open over previous 24 hours, at noon.
+    lat : xarray.DataArray
+      Latitude coordinate
+    snd : xarray.DataArray
+      Noon snow depth.
+    dc0 : xarray.DataArray
+      Initial values of the drought code.
+    start_date : str, datetime.datetime
+      Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
+    params :
+      Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    tas = utils.convert_units_to(tas, "C")
+    pr = utils.convert_units_to(pr, "mm/day")
+    if snd is not None:
+        snd = utils.convert_units_to(snd, "m")
+
+    if dc0 is None:
+        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+
+    out = fwi.fire_weather_ufunc(
+        tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indices=["DC"], **params
+    )
+    return out["DC"]
 
 
 @declare_units(
