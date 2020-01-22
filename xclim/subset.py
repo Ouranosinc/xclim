@@ -1,4 +1,5 @@
 import copy
+import logging
 import warnings
 from functools import wraps
 from pathlib import Path
@@ -164,6 +165,55 @@ def check_lons(func):
     return func_checker
 
 
+def check_latlon_dimnames(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator examining the names of the latitude and longitude dimensions and renames them temporarily.
+         Checks here ensure that the names supplied via the xarray object dims are changed to be synonymous with subset
+         algorithm dimensions, conversions are saved and are then undone to the processed file.
+        """
+
+        if range(len(args)) == 0:
+            return func(*args, **kwargs)
+
+        formatted_args = list()
+        conv = dict()
+        for argument in args:
+            if isinstance(argument, (xarray.DataArray, xarray.Dataset)):
+                dims = argument.dims
+            else:
+                logging.info(f"No file or no dimensions found in arg `{argument}`.")
+                formatted_args.append(argument)
+                continue
+
+            if not {"lon", "lat"}.issubset(dims):
+                if {"long"}.issubset(dims):
+                    conv["long"] = "lon"
+                elif {"latitude", "longitude"}.issubset(dims):
+                    conv["latitude"] = "lat"
+                    conv["longitude"] = "lon"
+                elif {"lats", "lons"}.issubset(dims):
+                    conv["lats"] = "lat"
+                    conv["lons"] = "lon"
+                if not conv and not {"rlon", "rlat"}.issubset(dims):
+                    warnings.warn(
+                        f"lat and lon-like dimensions are not found among arg `{argument}` dimensions: {list(dims)}."
+                    )
+                argument = argument.rename(conv)
+
+            formatted_args.append(argument)
+
+        final = func(*formatted_args, **kwargs)
+
+        for k, v in conv.items():
+            final = final.rename({v: k})
+
+        return final
+
+    return func_checker
+
+
 def wrap_lons_and_split_at_greenwich(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
@@ -219,7 +269,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs={"init": "epsg:4326"},
+                        crs={"epsg:4326"},
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
                     # split_gdf.columns = ["index", "geometry"]
@@ -344,6 +394,7 @@ def create_mask(
     return mask_2d
 
 
+@check_latlon_dimnames
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path],
@@ -505,6 +556,7 @@ def subset_shape(
     return ds_copy
 
 
+@check_latlon_dimnames
 @check_lons
 @check_date_signature
 def subset_bbox(
@@ -684,6 +736,7 @@ def _check_desc_coords(coord, bounds, dim):
     return bounds
 
 
+@check_latlon_dimnames
 @check_lons
 @check_date_signature
 def subset_gridpoint(
