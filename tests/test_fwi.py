@@ -15,9 +15,6 @@ from xclim.indices.fwi import duff_moisture_code
 from xclim.indices.fwi import fine_fuel_moisture_code
 from xclim.indices.fwi import fire_weather_index
 from xclim.indices.fwi import initial_spread_index
-from xclim.indices.fwi import significant_snow_cover
-from xclim.indices.fwi import start_up_snow
-from xclim.indices.fwi import start_up_temp
 
 
 class TestFireWeatherIndex:
@@ -151,43 +148,6 @@ class TestFireWeatherIndex:
     def test_day_lengh_factor(self):
         assert day_length_factor(44)[0] == -1.6
 
-    def test_significant_snow_cover(self):
-        n = 1000
-        a = np.ones((n, 5)) * 0.3
-        time = xr.cftime_range("2000-01-01", periods=n, freq="D")
-        lat = [-65.0, -12.0, 0, 14.0, 46.0]
-        snd = xr.DataArray(
-            data=a,
-            coords={"time": time, "lat": lat},
-            dims=("time", "lat"),
-            attrs={"units": "m"},
-        )
-        out = significant_snow_cover(snd)
-        assert out.shape == (3, 5)
-        np.testing.assert_array_equal(out, True)
-
-        snd -= 0.25
-        out = significant_snow_cover(snd)
-        np.testing.assert_array_equal(out, False)
-
-    def test_start_up_snow(self):
-        n = 365
-        a = np.zeros((n, 5))
-        # Add some snow in winter
-        a[180:230, :2] = 1
-        a[0:60, 3:] = 1
-        time = xr.cftime_range("2000-01-01", periods=n, freq="D")
-        lat = [-65.0, -12.0, 0, 14.0, 46.0]
-        snd = xr.DataArray(
-            data=a,
-            coords={"time": time, "lat": lat},
-            dims=("time", "lat"),
-            attrs={"units": "m"},
-        )
-
-        out = start_up_snow(snd)
-        np.testing.assert_array_equal(out, [[233, 233, 3, 63, 63]])
-
 
 testdata = """mth day temp rh ws pr ffmc dmc dc isi bui fwi
 4 13 17.0 42.0 25.0 0.0 87.7 8.5 19.0 10.9 8.5 10.1
@@ -253,8 +213,8 @@ def test_ufunc():
     def func1d(values, init):
         if init < 15:
             return init + np.cumsum(values)
-        else:
-            return init - np.cumsum(values)
+
+        return init - np.cumsum(values)
 
     xr.apply_ufunc(
         func1d,

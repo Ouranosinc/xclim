@@ -50,8 +50,6 @@ __all__ = [
     "sfcwind_2_uas_vas",
 ]
 
-# TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 units.define(
     pint.unit.UnitDefinition(
@@ -176,6 +174,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
         return units.parse_expression(_transform(unit)).units
 
 
+# Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 def pint2cfunits(value: Any) -> str:
     """Return a CF-Convention unit string from a `pint` unit.
 

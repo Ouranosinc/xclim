@@ -13,7 +13,6 @@ Notes
 TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
 TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
 TODO: Add references
-TODO: Alternative computation of start up / shut down without snow_depth
 TODO: Allow computation of DC/DMC/FFMC independently
 """
 import math
@@ -21,13 +20,30 @@ import math
 import numpy as np
 import xarray as xr
 
-# from xclim import generic
-# from xclim import run_length as rl
-# from xclim import utils
+"""
+Parameters definition
+---------------------
 
+min_lat: Min latitude for analysis
+max_lat: Max latitude for analysis
+minLandFrac: Minimum grid cell land fraction for analysis
+minT: Mask out anything with mean annual Tsurf less than this
+minPrec: Mask out anything with mean annual prec less than this
+snowCoverDaysCalc: Number of days prior to spring over which to determine if winter had substantial snow cover
+minWinterSnoD: Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover
+snoDThresh: Minimum depth (m) for there to be considered snow on ground at any given time
+minSnowDayFrac: Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover
+startShutDays: Number of previous days over which to consider start or end of winter
+tempThresh: Temp thresh (C) to define start and end of winter
+precThresh: Min precip (mm/day) when determining if last three days had any precip
+DCDryStartFactor: DC number of days since precip mult factor for dry start.
+DMCDryStartFactor: DMC number of days since precip mult factor for dry start.
+DCStart: DC starting value after wet winter
+FFMCStart: FFMC starting value after any winter
+DMCStart: DMC starting value after wet winter
+"""
 
 DEFAULT_PARAMS = dict(
-    # snd_thresh=0.1,
     min_lat=-58,
     max_lat=75,
     minLandFrac=0.1,
@@ -46,34 +62,6 @@ DEFAULT_PARAMS = dict(
     FFMCStart=85.0,
     DMCStart=6.0,
 )
-"""
-paramSets(currParam).History = cellstr(datestr(now)); paramDesc(currDesc) = cellstr('history'); currDesc = currDesc + 1;
-    paramSets(currParam).Source = cellstr('Robert Field'); paramDesc(currDesc) = cellstr('source'); currDesc = currDesc + 1;
-    paramSets(currParam).Title = cellstr('Global Fire Weather Database'); paramDesc(currDesc) = cellstr('title'); currDesc = currDesc + 1;
-    paramSets(currParam).Center = cellstr('NASA GISS / Columbia University'); paramDesc(currDesc) = cellstr('center'); currDesc = currDesc + 1;
-
-    paramSets(currParam).Name = cellstr('Default'); paramDesc(currDesc) = cellstr('Descriptive name for configuration'); currDesc = currDesc + 1;
-    paramSets(currParam).minLat = -58;              paramDesc(currDesc) = cellstr('Min latitude for analysis'); currDesc = currDesc + 1;
-    paramSets(currParam).maxLat = 75;               paramDesc(currDesc) = cellstr('Max latitude for analysis'); currDesc = currDesc + 1;
-    paramSets(currParam).minLandFrac = 0.1;         paramDesc(currDesc) = cellstr('Minimum grid cell land fraction for analysis'); currDesc = currDesc + 1;
-    paramSets(currParam).minT = -10;                paramDesc(currDesc) = cellstr('Mask out anything with mean annual Tsurf less than this'); currDesc = currDesc + 1;
-    paramSets(currParam).minPrec = 0.25;            paramDesc(currDesc) = cellstr('Mask out anything with mean annual prec less than this'); currDesc = currDesc + 1;
-
-    %These are what would be tested for sensitivity
-    paramSets(currParam).snoDThresh = 0.01;         paramDesc(currDesc) = cellstr('Minimum depth (m) for there to be considered snow on ground at any given time'); currDesc = currDesc + 1;
-    paramSets(currParam).snowCoverDaysCalc = 60;    paramDesc(currDesc) = cellstr('Number of days prior to spring over which to determine if winter had substantial snow cover'); currDesc = currDesc + 1;
-    paramSets(currParam).minWinterSnoD = 0.1;       paramDesc(currDesc) = cellstr('Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover'); currDesc = currDesc + 1;
-    paramSets(currParam).minSnowDayFrac = 0.75;     paramDesc(currDesc) = cellstr('Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover');  currDesc = currDesc + 1;
-    paramSets(currParam).startShutDays = 2;         paramDesc(currDesc) = cellstr('Number of previous days over which to consider start or end of winter'); currDesc = currDesc + 1;
-    paramSets(currParam).tempThresh = 6;            paramDesc(currDesc) = cellstr('Temp thresh (C) to define start and end of winter'); currDesc = currDesc + 1;
-    paramSets(currParam).precThresh =1.0;           paramDesc(currDesc) = cellstr('Min precip (mm/day) when determining if last three days had any precip'); currDesc = currDesc + 1;
-    paramSets(currParam).DCStart = 15;              paramDesc(currDesc) = cellstr('DC starting value after wet winter'); currDesc = currDesc + 1;
-    paramSets(currParam).DMCStart = 6;              paramDesc(currDesc) = cellstr('DMC starting value after wet winter'); currDesc = currDesc + 1;
-    paramSets(currParam).FFMCStart = 85;            paramDesc(currDesc) = cellstr('FFMC starting value after any winter'); currDesc = currDesc + 1;
-    paramSets(currParam).DCDryStartFactor=5;        paramDesc(currDesc) = cellstr('DC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
-    paramSets(currParam).DMCDryStartFactor=2;       paramDesc(currDesc) = cellstr('DMC number of days since precip mult factor for dry start.'); currDesc = currDesc + 1;
-    paramSets(currParam).nClimSkipYears = 1;
-"""
 
 DAY_LENGTHS = np.array(
     [
@@ -84,7 +72,6 @@ DAY_LENGTHS = np.array(
         [6.5, 7.5, 9, 12.8, 13.9, 13.9, 12.4, 10.9, 9.4, 8, 7, 6],
     ]
 )
-
 
 DAY_LENGTH_FACTORS = np.array(
     [
@@ -112,77 +99,6 @@ def day_length_factor(lat, kind="gfwed"):
     lat_bnds = (-90, -15, 15, 90)
     i = np.digitize(lat, lat_bnds) - 1
     return DAY_LENGTH_FACTORS[i]
-
-
-# def significant_snow_cover(snd, min_snow_days=0.75, min_snd="10 cm", snd_thresh="1 cm"):
-#     """Return whether or not a site report significant snow cover for each year.
-
-#     Snow cover is considered significant if the number of days with snow is above a given fraction and if the mean
-#     snow depth is above a threshold.
-#     """
-#     msnd = utils.convert_units_to(min_snd, snd)
-#     sndt = utils.convert_units_to(snd_thresh, snd)
-
-#     north = (
-#         snd.sel(lat=slice(0, None))
-#         .sel(time=snd.time.dt.month.isin([1, 2]))
-#         .resample(time="A")
-#     )
-#     south = (
-#         snd.sel(lat=slice(None, -1e-6))
-#         .sel(time=snd.time.dt.month.isin([7, 8]))
-#         .resample(time="A")
-#     )
-
-#     def condition(winter_snow):
-#         """Return if the winter snow mean depth is above threshold and snow covered the ground for at least a
-#         fraction of the winter."""
-#         c1 = winter_snow.mean() > msnd
-#         c2 = winter_snow.apply(lambda x: np.sum((x > sndt) * 1)) >= (
-#             winter_snow.count() * min_snow_days
-#         )
-#         return c1 * c2
-
-#     out = [condition(hemi) for hemi in [south, north]]
-#     return xr.concat(out, dim="lat")
-
-
-# def start_up_snow(snd, snd_thresh="1 cm"):
-#     """Return day of year at which snow depth is below threshold for three consecutive days."""
-#     w = 3
-#     sndt = utils.convert_units_to(snd_thresh, snd)
-#     under = snd < sndt
-
-#     north = under.sel(lat=slice(0, None)).resample(time="A")
-#     south = (
-#         under.sel(lat=slice(None, -1e-6))
-#         .sel(time=snd.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-#         .resample(time="A")
-#     )
-
-#     out = [
-#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-#     ]
-#     return xr.concat(out, dim="lat") + w - 1
-
-
-# def start_up_temp(tas, thresh="6 C"):
-#     """Return the date at which the mean temperature is above threshold for three consecutive days."""
-#     w = 3
-#     t = utils.convert_units_to(thresh, tas)
-#     over = tas > t
-
-#     north = over.sel(lat=slice(0, None)).resample(time="A")
-#     south = (
-#         over.sel(lat=slice(None, -1e-6))
-#         .sel(time=tas.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-#         .resample(time="A")
-#     )
-
-#     out = [
-#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-#     ]
-#     return xr.concat(out, dim="lat") + w - 1
 
 
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
@@ -643,7 +559,7 @@ def all_ufunc(tas, pr, rh, ws, snow, lat, **params):
                     params["snowCoverDaysCalc"]
                 )
             )
-        elif not all(params.get(var0) for var0 in ["dc0", "dmc0", "ffmc0"]):
+        if not all(params.get(var0) for var0 in ["dc0", "dmc0", "ffmc0"]):
             raise ValueError(
                 "If a start date is specified, initial maps dc0, dmc0 and ffmc0 must also be given."
             )
