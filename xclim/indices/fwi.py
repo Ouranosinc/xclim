@@ -149,44 +149,6 @@ def day_length_factor(lat, kind="gfwed"):
 #     return xr.concat(out, dim="lat")
 
 
-# def start_up_snow(snd, snd_thresh="1 cm"):
-#     """Return day of year at which snow depth is below threshold for three consecutive days."""
-#     w = 3
-#     sndt = utils.convert_units_to(snd_thresh, snd)
-#     under = snd < sndt
-
-#     north = under.sel(lat=slice(0, None)).resample(time="A")
-#     south = (
-#         under.sel(lat=slice(None, -1e-6))
-#         .sel(time=snd.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-#         .resample(time="A")
-#     )
-
-#     out = [
-#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-#     ]
-#     return xr.concat(out, dim="lat") + w - 1
-
-
-# def start_up_temp(tas, thresh="6 C"):
-#     """Return the date at which the mean temperature is above threshold for three consecutive days."""
-#     w = 3
-#     t = utils.convert_units_to(thresh, tas)
-#     over = tas > t
-
-#     north = over.sel(lat=slice(0, None)).resample(time="A")
-#     south = (
-#         over.sel(lat=slice(None, -1e-6))
-#         .sel(time=tas.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-#         .resample(time="A")
-#     )
-
-#     out = [
-#         g.apply(rl.first_run_ufunc, window=w, index="dayofyear") for g in [south, north]
-#     ]
-#     return xr.concat(out, dim="lat") + w - 1
-
-
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
     """Scalar computation of the fine fuel moisture code."""
     if np.isnan(ffmc0):
@@ -509,58 +471,6 @@ def daily_severity_rating(fwi):
     return 0.0272 * fwi ** 1.77
 
 
-# def ffmc_ufunc(tas, pr, ws, rh, ffmc0):
-#     return xr.apply_ufunc(
-#         fine_fuel_moisture_code,
-#         tas,
-#         pr,
-#         ws,
-#         rh,
-#         ffmc0,
-#         input_core_dims=4 * (("time",),) + ((),),
-#         output_core_dims=(("time",),),
-#         vectorize=True,
-#         dask="parallelized",
-#         output_dtypes=[np.float],
-#         # keep_attrs=True,
-#     )
-
-
-# def dmc_ufunc(tas, pr, rh, mth, lat, dmc0):
-#     return xr.apply_ufunc(
-#         duff_moisture_code,
-#         tas,
-#         pr,
-#         rh,
-#         mth,
-#         lat,
-#         dmc0,
-#         input_core_dims=4 * (("time",),) + 2 * ((),),
-#         output_core_dims=(("time",),),
-#         vectorize=True,
-#         dask="parallelized",
-#         output_dtypes=[np.float],
-#         # keep_attrs=True,
-#     )
-
-
-# def dc_ufunc(tas, pr, mth, lat, dc0):
-#     return xr.apply_ufunc(
-#         drought_code,
-#         tas,
-#         pr,
-#         mth,
-#         lat,
-#         dc0,
-#         input_core_dims=3 * (("time",),) + 2 * ((),),
-#         output_core_dims=(("time",),),
-#         vectorize=True,
-#         dask="parallelized",
-#         output_dtypes=[np.float],
-#         # keep_attrs=True,
-#     )
-
-
 def _fire_weather_calc(*args, **params):
     """Main function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead.
 
@@ -580,9 +490,11 @@ def _fire_weather_calc(*args, **params):
         tas, pr, rh, mth, lat, ind_prevs["DMC"] = args
     elif (indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]) and len(args) == 5:
         tas, pr, rh, ws, ind_prevs["FFMC"] = args
-    elif indexes == ["DC", "DMC", "BUI"] and len(args) == 7:
+    elif (indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]) and len(
+        args
+    ) == 7:
         tas, pr, rh, mth, lat, ind_prevs["DC"], ind_prevs["DMC"] = args
-    elif indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"] and len(args) == 9:
+    elif {"DC", "DMC", "FFMC"}.issubset(indexes) and len(args) == 9:
         (
             tas,
             pr,
@@ -595,9 +507,12 @@ def _fire_weather_calc(*args, **params):
             ind_prevs["FFMC"],
         ) = args
     else:
-        TypeError(
+        raise TypeError(
             "Invalid combination of indexes and/or missing/too many input arguments."
         )
+
+    for name, ind_prev in ind_prevs.items():
+        ind_prevs[name] = ind_prev.copy()
 
     ind_data = OrderedDict()
     for indice in indexes:
@@ -703,6 +618,8 @@ def _fire_weather_calc(*args, **params):
         for ind, ind_prev in ind_prevs.items():
             ind_prev[...] = ind_data[ind][..., it]
 
+    if len(indexes) == 1:
+        return ind_data[indexes[0]]
     return tuple(ind_data.values())
 
 
@@ -744,9 +661,7 @@ def fire_weather_ufunc(
     ffmc0 : xr.DataArray, optional
         FFMC the day before `start_date`, defaults to NaN.
     indexes : Sequence[str], optional
-        Which indexes to compute. Valid values are:
-        ['DC'], ['DMC'], ['FFMC'], ['FFMC', 'ISI'], ['DC', 'DMC', 'BUI'] and
-        ['DC', 'DMC', 'FFMC', 'ISI', 'BUI', 'FWI'] <- default.
+        Which indexes to compute. If intermediate indexes are needed, they will be added to the list and output.
     start_date : str, optional
         Date at which to start the computation.
         Defaults to `snowCoverDaysCalc` after the beginning of tas.
@@ -765,8 +680,20 @@ def fire_weather_ufunc(
     for k, v in DEFAULT_PARAMS.items():
         params.setdefault(k, v)
 
-    indexes = params.setdefault(
-        "indexes", indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+    indexes = set(
+        params.setdefault(
+            "indexes", indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+        )
+    )
+    if "FWI" in indexes:
+        indexes.update({"ISI", "BUI"})
+    if "BUI" in indexes:
+        indexes.update({"DC", "DMC"})
+    if "ISI" in indexes:
+        indexes.update({"FFMC"})
+    indexes = sorted(
+        list(indexes),
+        key=lambda ele: ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"].index(ele),
     )
 
     if indexes == ["DC"]:
@@ -778,10 +705,16 @@ def fire_weather_ufunc(
     elif indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]:
         args = [tas, pr, rh, ws, ffmc0]
         nargs = (4, 1)
-    elif indexes == ["DC", "DMC", "BUI"]:
+    elif indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]:
         args = [tas, pr, rh, tas.time.dt.month, lat, dc0, dmc0]
         nargs = (4, 3)
-    elif indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]:
+    elif (
+        indexes == ["DC", "DMC", "FFMC"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI"]
+        or indexes == ["DC", "DMC", "FFMC", "BUI"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+    ):
         args = [tas, pr, rh, ws, tas.time.dt.month, lat, dc0, dmc0, ffmc0]
         nargs = (5, 4)
     else:
@@ -821,4 +754,6 @@ def fire_weather_ufunc(
         output_core_dims=len(indexes) * (("time",),),
         dask="forbidden",
     )
+    if len(indexes) == 1:
+        return {indexes[0]: das}
     return {ind: da for ind, da in zip(indexes, das)}

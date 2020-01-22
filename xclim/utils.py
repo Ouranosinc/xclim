@@ -340,7 +340,7 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
         )
 
 
-def declare_units(out_units, **units_by_name):
+def declare_units(out_units, check_output=True, **units_by_name):
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
@@ -372,23 +372,23 @@ def declare_units(out_units, **units_by_name):
                 _check_units(val, bound_units.arguments.get(name, None))
 
             out = func(*args, **kwargs)
+            if check_output:
+                if "units" in out.attrs:
+                    # Check that output units dimensions match expectations, e.g. [temperature]
+                    if "[" in out_units:
+                        _check_units(out, out_units)
+                    # Explicitly convert units if units are declared, e.g K
+                    else:
+                        out = convert_units_to(out, out_units)
 
-            if "units" in out.attrs:
-                # Check that output units dimensions match expectations, e.g. [temperature]
-                if "[" in out_units:
-                    _check_units(out, out_units)
-                # Explicitly convert units if units are declared, e.g K
+                # Otherwise, we impose the units if given.
+                elif "[" not in out_units:
+                    out.attrs["units"] = out_units
+
                 else:
-                    out = convert_units_to(out, out_units)
-
-            # Otherwise, we impose the units if given.
-            elif "[" not in out_units:
-                out.attrs["units"] = out_units
-
-            else:
-                raise ValueError(
-                    "Output units are not propagated by computation nor specified by decorator."
-                )
+                    raise ValueError(
+                        "Output units are not propagated by computation nor specified by decorator."
+                    )
 
             return out
 

@@ -139,3 +139,12 @@ solid_precip_accumulation = Pr(
     _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
 )
+
+drought_code = PrTas(
+    identifier="DC",
+    units="",
+    standard_name="drought_code",
+    long_name="Drought Code",
+    description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
+    compute=indices.drought_code,
+)

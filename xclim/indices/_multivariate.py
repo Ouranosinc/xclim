@@ -333,7 +333,13 @@ def extreme_temperature_range(
 
 
 @declare_units(
-    "", tas="[temperature]", pr="[precipitation]", ws="[speed]", rh="[]", snd="[length]"
+    "",
+    check_output=False,
+    tas="[temperature]",
+    pr="[precipitation]",
+    ws="[speed]",
+    rh="[]",
+    snd="[length]",
 )
 def fire_weather_indexes(
     tas: xarray.DataArray,
@@ -348,9 +354,11 @@ def fire_weather_indexes(
     start_date: str = None,
     **params,
 ):
-    r"""Fire weather indexes.
+    r"""Return the six daily fire weather indexes.
 
-    Computes the 6 fire weather indexes as defined by the GFWED.
+    Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
+    the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
+    the Initial Spread Index, the Build Up Index and the Fire Weather Index.
 
     Parameters
     ----------
@@ -376,6 +384,18 @@ def fire_weather_indexes(
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
     params :
         Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
+
+    Returns
+    -------
+    DC, DMC, FFMC, ISI, BUI, FWI
+
+    Notes
+    -----
+    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
+
+    References
+    ----------
+    Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
     tas = utils.convert_units_to(tas, "C")
     pr = utils.convert_units_to(pr, "mm/day")
@@ -419,9 +439,9 @@ def drought_code(
     start_date: str = None,
     **params,
 ):
-    r"""Drought code
+    r"""Return the daily drought code
 
-    The drought code is part of the Fire Weather Indexes defined by the GFWED.
+    The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
 
     Parameters
     ----------
@@ -442,7 +462,15 @@ def drought_code(
 
     Returns
     -------
-    xarray.DataArray
+    Drought code [-]
+
+    Notes
+    -----
+    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
+
+    References
+    ----------
+    Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
     tas = utils.convert_units_to(tas, "C")
     pr = utils.convert_units_to(pr, "mm/day")
@@ -450,10 +478,12 @@ def drought_code(
         snd = utils.convert_units_to(snd, "m")
 
     if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
+
+    params["start_date"] = start_date
 
     out = fwi.fire_weather_ufunc(
-        tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indices=["DC"], **params
+        tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indexes=["DC"], **params
     )
     return out["DC"]
 
