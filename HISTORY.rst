@@ -7,6 +7,7 @@ History
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
 * Improve the memory use of `indices.growing_season_length`.
 * Better handling of data with atypically named `lat` and `lon` dimensions.
+* Added 6 Fire Weather Indexes.
 
 0.13.x (2020-01-10)
 -------------------

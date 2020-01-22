@@ -15,6 +15,7 @@ __all__ = [
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
+    "drought_code",
 ]
 
 
