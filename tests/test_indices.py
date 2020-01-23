@@ -983,6 +983,48 @@ class TestTG:
         pass
 
 
+class TestFireWeatherIndex:
+    nc_gfwed = os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")
+
+    def test_fire_weather_indexes(self):
+        ds = xr.open_dataset(self.nc_gfwed)
+        fwis = xci.fire_weather_indexes(
+            ds.tas,
+            ds.prbc,
+            ds.sfcwind,
+            ds.rh,
+            ds.lat,
+            snd=ds.snow_depth,
+            ffmc0=ds.FFMC.sel(time="2017-03-02"),
+            dmc0=ds.DMC.sel(time="2017-03-02"),
+            dc0=ds.DC.sel(time="2017-03-02"),
+            start_date="2017-03-03",
+            start_up_mode="snow_depth",
+        )
+        for ind, name in zip(fwis, ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]):
+            xr.testing.assert_allclose(
+                ind.sel(time=slice("2017-03-03", None)),
+                ds[name].sel(time=slice("2017-03-03", None)),
+                rtol=1e-4,
+            )
+
+    def test_drought_code(self):
+        ds = xr.open_dataset(self.nc_gfwed)
+        dc = xci.drought_code(
+            ds.tas,
+            ds.prbc,
+            ds.lat,
+            snd=ds.snow_depth,
+            dc0=ds.DC.sel(time="2017-03-02"),
+            start_date="2017-03-03",
+            start_up_mode="snow_depth",
+        )
+        xr.testing.assert_allclose(
+            dc.sel(time=slice("2017-03-03", None)),
+            ds.DC.sel(time=slice("2017-03-03", None)),
+        )
+
+
 @pytest.fixture(scope="session")
 def cmip3_day_tas():
     # xr.set_options(enable_cftimeindex=False)
