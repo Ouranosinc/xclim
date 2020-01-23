@@ -50,15 +50,13 @@ __all__ = [
     "sfcwind_2_uas_vas",
 ]
 
-# TODO: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-
 units.define(
     pint.unit.UnitDefinition(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
     )
 )
+
 
 # Define commonly encountered units not defined by pint
 units.define(
@@ -72,7 +70,8 @@ units.define(
     "degC = kelvin; offset: 273.15 = celsius = C"
 )  # add 'C' as an abbrev for celsius (default Coulomb)
 units.define("d = day")
-units.define("h = hour")
+units.define("h = hour")  # Not the Planck constant...
+units.define("[speed] = [length] / [time]")
 
 # Default context.
 null = pint.Context("none")
@@ -164,6 +163,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
+    unit = unit.replace("%", "pct")
     try:  # Pint compatible
         return units.parse_expression(unit).units
     except (
@@ -174,6 +174,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
         return units.parse_expression(_transform(unit)).units
 
 
+# Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 def pint2cfunits(value: Any) -> str:
     """Return a CF-Convention unit string from a `pint` unit.
 
@@ -338,7 +339,7 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
         )
 
 
-def declare_units(out_units, **units_by_name):
+def declare_units(out_units, check_output=True, **units_by_name):
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
@@ -370,23 +371,23 @@ def declare_units(out_units, **units_by_name):
                 _check_units(val, bound_units.arguments.get(name, None))
 
             out = func(*args, **kwargs)
+            if check_output:
+                if "units" in out.attrs:
+                    # Check that output units dimensions match expectations, e.g. [temperature]
+                    if "[" in out_units:
+                        _check_units(out, out_units)
+                    # Explicitly convert units if units are declared, e.g K
+                    else:
+                        out = convert_units_to(out, out_units)
 
-            if "units" in out.attrs:
-                # Check that output units dimensions match expectations, e.g. [temperature]
-                if "[" in out_units:
-                    _check_units(out, out_units)
-                # Explicitly convert units if units are declared, e.g K
+                # Otherwise, we impose the units if given.
+                elif "[" not in out_units:
+                    out.attrs["units"] = out_units
+
                 else:
-                    out = convert_units_to(out, out_units)
-
-            # Otherwise, we impose the units if given.
-            elif "[" not in out_units:
-                out.attrs["units"] = out_units
-
-            else:
-                raise ValueError(
-                    "Output units are not propagated by computation nor specified by decorator."
-                )
+                    raise ValueError(
+                        "Output units are not propagated by computation nor specified by decorator."
+                    )
 
             return out
 

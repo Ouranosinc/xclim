@@ -462,7 +462,7 @@ def first_run_ufunc(
 
     if index is not None and ~(np.isnan(ind)):
         val = getattr(x.indexes["time"], index)
-        i = int(ind.data)
+        i = ind.data.astype(int)
         ind.data = val[i]
 
     return ind
