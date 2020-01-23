@@ -180,3 +180,33 @@ def areacella():
         coords={"lon": lon, "lat": lat},
         attrs={"r": r, "units": "m^2"},
     )
+
+
+@pytest.fixture
+def rh_series():
+    def _rh_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rh",
+            attrs={"standard_name": "relative humidity", "units": "%",},
+        )
+
+    return _rh_series
+
+
+@pytest.fixture
+def ws_series():
+    def _ws_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="ws",
+            attrs={"standard_name": "wind speed", "units": "km h-1",},
+        )
+
+    return _ws_series

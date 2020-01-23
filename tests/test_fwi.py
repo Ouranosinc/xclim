@@ -1,87 +1,98 @@
 import os
 
-import pytest
 import numpy as np
+import pytest
 import xarray as xr
 
+from xclim.indices.fwi import build_up_index
 from xclim.indices.fwi import day_length
 from xclim.indices.fwi import day_length_factor
+from xclim.indices.fwi import drought_code
+from xclim.indices.fwi import duff_moisture_code
+from xclim.indices.fwi import fine_fuel_moisture_code
+from xclim.indices.fwi import fire_weather_index
 from xclim.indices.fwi import fire_weather_ufunc
-from xclim.indices.fwi import fine_fuel_moisture_code, duff_moisture_code, drought_code
-from xclim.indices.fwi import initial_spread_index, build_up_index, fire_weather_index
+from xclim.indices.fwi import initial_spread_index
+
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
 class TestFireWeatherIndex:
     """Note that some of the lines in the code are not exercised by the test data."""
-    nc_gfwed = os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")
 
     def get_data(self):
         import io
         import pandas as pd
+
         f = io.StringIO(CFS_data)
-        return pd.read_table(f, sep=' ', header=0)
+        return pd.read_table(f, sep=" ", header=0)
 
     def test_fine_fuel_moisture_code(self):
         d = self.get_data()
 
-        ffmc0 = 85.0
+        ffmc = np.full(d.shape[0] + 1, np.nan)
+        ffmc[0] = 85
+        for i, row in d.iterrows():
+            ffmc[i + 1] = fine_fuel_moisture_code(
+                row["temp"], row["pr"], row["ws"], row["rh"], ffmc[i]
+            )
 
-        ffmc = fine_fuel_moisture_code(d['temp'][1:], d['pr'][1:], d['ws'][1:], d['rh'][1:], d['ffmc'][0])
-
-        np.testing.assert_array_almost_equal(ffmc, d['ffmc'][1:], 1)
+        np.testing.assert_allclose(ffmc[1:], d["ffmc"], rtol=1e-2)
 
     def test_duff_moisture_code(self):
         d = self.get_data()
 
-        dmc0 = 6.0
+        dmc = np.full(d.shape[0] + 1, np.nan)
+        dmc[0] = 6
+        for i, row in d.iterrows():
+            dmc[i + 1] = duff_moisture_code(
+                row["temp"],
+                row["pr"],
+                row["rh"],
+                row["mth"].astype(int),
+                row["lat"],
+                dmc[i],
+            )
 
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), d['lat'], dmc0)
-
-        np.testing.assert_array_almost_equal(dmc, d['dmc'], 1)
+        np.testing.assert_allclose(dmc[1:], d["dmc"], rtol=1e-1)
 
     def test_drought_code(self):
         d = self.get_data()
 
-        dc0 = 15.0
+        dc = np.full(d.shape[0] + 1, np.nan)
+        dc[0] = 15
+        for i, row in d.iterrows():
+            dc[i + 1] = drought_code(
+                row["temp"], row["pr"], row["mth"].astype(int), row["lat"], dc[i]
+            )
 
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), d['lat'], dc0)
-
-        np.testing.assert_array_almost_equal(dc, d['dc'], 1)
+        np.testing.assert_allclose(dc[1:], d["dc"], rtol=1e-2)
 
     def test_initial_spread_index(self):
         # Note that using the rounded data as input creates rounding errors.
         d = self.get_data()
-        ffmc0 = 85.0
-        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
-        isi = initial_spread_index(d['ws'], ffmc)
-        np.testing.assert_array_almost_equal(isi, d['isi'], 1)
+
+        isi = np.full(d.shape[0], np.nan)
+        for i, row in d.iterrows():
+            isi[i] = initial_spread_index(row["ws"], row["ffmc"])
+        np.testing.assert_allclose(isi, d["isi"], rtol=0.1, atol=0.1)
 
     def test_build_up_index(self):
         d = self.get_data()
 
-        dmc0 = 6.0
-        dc0 = 15.0
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), d['lat'], dmc0)
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), d['lat'], dc0)
-
-        bui = build_up_index(dmc, dc)
-        np.testing.assert_array_almost_equal(bui, d['bui'], 1)
+        bui = np.full(d.shape[0], np.nan)
+        for i, row in d.iterrows():
+            bui[i] = build_up_index(row["dmc"], row["dc"])
+        np.testing.assert_allclose(bui, d["bui"], rtol=1e-2)
 
     def test_fire_weather_index(self):
         d = self.get_data()
 
-        dmc0 = 6.0
-        dc0 = 15.0
-        ffmc0 = 85.0
-        ffmc = fine_fuel_moisture_code(d['temp'], d['pr'], d['ws'], d['rh'], ffmc0)
-        dmc = duff_moisture_code(d['temp'], d['pr'], d['rh'], d['mth'].astype(int), d['lat'], dmc0)
-        dc = drought_code(d['temp'], d['pr'], d['mth'].astype(int), d['lat'], dc0)
-        isi = initial_spread_index(d['ws'].values, ffmc)
-        bui = build_up_index(dmc, dc)
-        fwi = fire_weather_index(isi, bui)
-        np.testing.assert_array_almost_equal(fwi, d['fwi'], 1)
+        fwi = np.full(d.shape[0], np.nan)
+        for i, row in d.iterrows():
+            fwi[i] = fire_weather_index(row["isi"], row["bui"])
+        np.testing.assert_allclose(fwi, d["fwi"], rtol=0.4)
 
     def test_day_length(self):
         assert day_length(44)[0] == 6.5
@@ -89,18 +100,29 @@ class TestFireWeatherIndex:
     def test_day_lengh_factor(self):
         assert day_length_factor(44)[0] == -1.6
 
-    def test_fire_weather_ufunc_errors(self):
-        ds = xr.open_dataset(self.nc_gfwed)
+    def test_fire_weather_ufunc_errors(
+        self, tas_series, pr_series, rh_series, ws_series
+    ):
+        tas = tas_series(np.ones(100), start="2017-01-01")
+        pr = pr_series(np.ones(100), start="2017-01-01")
+        rh = rh_series(np.ones(100), start="2017-01-01")
+        ws = ws_series(np.ones(100), start="2017-01-01")
+
+        snd = xr.full_like(tas, 0)
+        lat = xr.full_like(tas.isel(time=0), 45)
+        DC0 = xr.full_like(tas.isel(time=0), np.nan)
+        DMC0 = xr.full_like(tas.isel(time=0), np.nan)
+        FFMC0 = xr.full_like(tas.isel(time=0), np.nan)
 
         # Test invalid combination
         with pytest.raises(TypeError):
             fire_weather_ufunc(
-                tas=ds.tas,
-                pr=ds.prbc,
-                rh=ds.rh,
-                ws=ds.sfcwind,
-                lat=ds.lat,
-                dc0=ds.DC.isel(time=0),
+                tas=tas,
+                pr=pr,
+                rh=rh,
+                ws=ws,
+                lat=lat,
+                dc0=DC0,
                 indexes=["DC", "ISI"],
                 start_up_mode="precip",
             )
@@ -108,30 +130,30 @@ class TestFireWeatherIndex:
         # Test missing arguments
         with pytest.raises(TypeError):
             fire_weather_ufunc(
-                tas=ds.tas,
-                pr=ds.prbc,  # lat=ds.lat,
-                dc0=ds.DC.isel(time=0),
+                tas=tas,
+                pr=pr,  # lat=lat,
+                dc0=DC0,
                 indexes=["DC"],
                 start_up_mode="precip",
             )
 
         with pytest.raises(TypeError):
             fire_weather_ufunc(
-                tas=ds.tas,
-                pr=ds.prbc,
-                lat=ds.lat,
-                dc0=ds.DC.isel(time=0),
+                tas=tas,
+                pr=pr,
+                lat=lat,
+                dc0=DC0,
                 indexes=["DC"],
                 start_up_mode="snow_depth",
             )
         # Test starting too early
         with pytest.raises(ValueError):
             fire_weather_ufunc(
-                tas=ds.tas,
-                pr=ds.prbc,
-                lat=ds.lat,
-                snd=ds.snow_depth,
-                dc0=ds.DC.isel(time=0),
+                tas=tas,
+                pr=pr,
+                lat=lat,
+                snd=snd,
+                dc0=DC0,
                 indexes=["DC"],
                 start_up_mode="snow_depth",
                 start_date="2017-01-01",
@@ -139,11 +161,11 @@ class TestFireWeatherIndex:
 
         # Test output is complete
         out = fire_weather_ufunc(
-            tas=ds.tas,
-            pr=ds.prbc,
-            lat=ds.lat,
-            snd=ds.snow_depth,
-            dc0=ds.DC.sel(time="2017-03-02"),
+            tas=tas,
+            pr=pr,
+            lat=lat,
+            snd=snd,
+            dc0=DC0,
             indexes=["DC"],
             start_up_mode="snow_depth",
             start_date="2017-03-03",
@@ -152,15 +174,15 @@ class TestFireWeatherIndex:
         assert len(out.keys()) == 1
 
         out = fire_weather_ufunc(
-            tas=ds.tas,
-            pr=ds.prbc,
-            rh=ds.rh,
-            ws=ds.sfcwind,
-            lat=ds.lat,
-            snd=ds.snow_depth,
-            dc0=ds.DC.sel(time="2017-03-02"),
-            dmc0=ds.DMC.sel(time="2017-03-02"),
-            ffmc0=ds.FFMC.sel(time="2017-03-02"),
+            tas=tas,
+            pr=pr,
+            rh=rh,
+            ws=ws,
+            lat=lat,
+            snd=snd,
+            dc0=DC0,
+            dmc0=DMC0,
+            ffmc0=FFMC0,
             indexes=["DC", "DMC", "FFMC"],
             start_up_mode="snow_depth",
             start_date="2017-03-03",

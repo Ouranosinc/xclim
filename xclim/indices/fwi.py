@@ -171,6 +171,8 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
 def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
     """Fine fuel moisture code
 
+    This function iterates over spatial dimensions only.
+
     Parameters
     ----------
     tas: array
@@ -182,12 +184,12 @@ def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
     rh : array
       Noon relative humidity [%].
     ffmc0 : float
-      Initial value of the fine fuel moisture code.
+      Previous value of the fine fuel moisture code.
 
     Returns
     -------
     array
-      Fine fuel moisture code
+      Fine fuel moisture code at the next timestep
     """
 
     it = np.nditer(
@@ -243,6 +245,8 @@ def _duff_moisture_code(t, p, h, mth, lat, dmc0):
 def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
     """Duff moisture code
 
+    This function iterates over spatial dimensions only.
+
     Parameters
     ----------
     tas: array
@@ -256,12 +260,12 @@ def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
     lat : float
       Latitude.
     dmc0 : float
-      Initial value of the Duff moisture code.
+      Previous value of the Duff moisture code.
 
     Returns
     -------
     array
-      Duff moisture code
+      Duff moisture code at the next timestep
     """
     it = np.nditer(
         [tas, pr, rh, mth, lat, dmc0, None],
@@ -306,6 +310,8 @@ def _drought_code(t, p, mth, lat, dc0):
 def drought_code(tas, pr, mth, lat, dc0):
     """Drought code
 
+    This function iterates over spatial dimensions only.
+
     Parameters
     ----------
     tas: array
@@ -317,12 +323,12 @@ def drought_code(tas, pr, mth, lat, dc0):
     lat : float
       Latitude.
     dc0 : float
-      Initial value of the drought code.
+      Previous value of the drought code.
 
     Returns
     -------
     array
-      Drought code
+      Drought code at the next timestep
     """
     it = np.nditer(
         [tas, pr, mth, lat, dc0, None],

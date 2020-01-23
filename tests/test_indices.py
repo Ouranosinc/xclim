@@ -983,6 +983,10 @@ class TestTG:
         pass
 
 
+@pytest.mark.skipif(
+    not os.path.exists(os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")),
+    reason="GFWED test data must be downloaded manually to test the Fire Weather indices.",
+)
 class TestFireWeatherIndex:
     nc_gfwed = os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")
 
