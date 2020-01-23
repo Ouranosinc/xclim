@@ -7,24 +7,9 @@ Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
 
 See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
-
-Notes
------
-TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
-TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
-TODO: Add references
-TODO: Allow computation of DC/DMC/FFMC independently
-"""
-import math
-from collections import OrderedDict
-from typing import Sequence
-
-import numpy as np
-import xarray as xr
-
-"""
 Parameters definition
 ---------------------
+Default values for the following parameters are stored in the DEFAULT_PARAMS dict.
 
 min_lat: Min latitude for analysis
 max_lat: Max latitude for analysis
@@ -41,9 +26,22 @@ precThresh: Min precip (mm/day) when determining if last three days had any prec
 DCDryStartFactor: DC number of days since precip mult factor for dry start.
 DMCDryStartFactor: DMC number of days since precip mult factor for dry start.
 DCStart: DC starting value after wet winter
-FFMCStart: FFMC starting value after any winter
 DMCStart: DMC starting value after wet winter
+FFMCStart: FFMC starting value after any winter
+
+Notes
+-----
+TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
+TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
+TODO: Add references
+TODO: Allow computation of DC/DMC/FFMC independently
 """
+import math
+from collections import OrderedDict
+from typing import Sequence
+
+import numpy as np
+import xarray as xr
 
 DEFAULT_PARAMS = dict(
     min_lat=-58,
@@ -630,7 +628,8 @@ def fire_weather_ufunc(
         Defaults to 'snow_depth', which needs additional input `snd`.
     **params :
         Other keyword arguments for the Fire Weather Indexes computation.
-        Default values of those are stored in `xclim.indexes.fwi.DEFAULT_PARAMS`
+        Default values of those are stored in `xclim.indices.fwi.DEFAULT_PARAMS`
+        See this `xclim.indices.fwi`'s doc for details.
 
     Returns
     -------
