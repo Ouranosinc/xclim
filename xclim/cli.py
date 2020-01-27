@@ -74,7 +74,9 @@ def _process_indicator(indicator, ctx, **params):
                     )
                 except KeyError:
                     raise click.UsageError(
-                        f"Dataset neither provides needed variable {key} nor the pair {ctx.obj['tas_from']} that could be used to construct it. Set the '--tas-from' global option or directly give a name with the '--tas' indicator option.",
+                        f"Dataset neither provides needed variable {key} nor the pair "
+                        f"{ctx.obj['tas_from']} that could be used to construct it. "
+                        "Set the '--tas-from' global option or directly give a name with the '--tas' indicator option.",
                         ctx,
                     )
             else:
@@ -83,7 +85,8 @@ def _process_indicator(indicator, ctx, **params):
                     params[key] = dsin[val or key]
                 except KeyError:
                     raise click.BadArgumentUsage(
-                        f"Variable {val or key} absent from input dataset. You can provide an alternative name with --{key}",
+                        "Variable {val or key} absent from input dataset. "
+                        f"You can provide an alternative name with --{key}",
                         ctx,
                     )
 
@@ -220,7 +223,8 @@ class XclimCli(click.MultiCommand):
 @click.option(
     "--tas-from",
     nargs=2,
-    help="Variable names in the input dataset for 'tasmin' and 'tasmax', used when 'tas' is needed but absent from the dataset",
+    help="Variable names in the input dataset for 'tasmin' and 'tasmax', "
+    "used when 'tas' is needed but absent from the dataset",
     default=("tasmax", "tasmin"),
 )
 @click.option("--version", is_flag=True, help="Prints xclim's version number and exits")
