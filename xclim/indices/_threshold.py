@@ -1,5 +1,7 @@
 import numpy as np
 import xarray
+import datetime
+from typing import Union
 
 from xclim import run_length as rl
 from xclim import utils
@@ -304,15 +306,21 @@ def growing_degree_days(
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def growing_season_length(
-    tas: xarray.DataArray, thresh: str = "5.0 degC", window: int = 6, freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: str = "5.0 degC",
+    window: int = 6,
+    mid_date: str = "07-01",
+    freq: str = "YS",
 ):
     r"""Growing season length.
 
     The number of days between the first occurrence of at least
     six consecutive days with mean daily temperature over 5℃ and
     the first occurrence of at least six consecutive days with
-    mean daily temperature below 5℃ after July 1st in the northern
-    hemisphere and January 1st in the southern hemisphere.
+    mean daily temperature below 5℃ after a certain date. (Usually
+    July 1st in the northern hemisphere and January 1st in the southern hemisphere.)
+
+    WARNING: The default values are only valid for the northern hemisphere.
 
     Parameters
     ---------
@@ -322,6 +330,8 @@ def growing_season_length(
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '5.0 degC'.
     window : int
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
+    mid_date : str
+      Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -344,50 +354,45 @@ def growing_season_length(
     .. math::
 
         TG_{ij} < 5 ℃
+
+    Examples
+    --------
+    If working in the Southern Hemisphere, one can use:
+    >>> gsl = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')
     """
-
-    # i = xr.DataArray(np.arange(tas.time.size), dims='time')
-    # ind = xr.broadcast(i, tas)[0]
-    #
-    # c = ((tas > thresh) * 1).rolling(time=window).sum()
-    # i1 = ind.where(c == window).resample(time=freq).min(dim='time')
-    #
-    # # Resample sets the time to T00:00.
-    # i11 = i1.reindex_like(c, method='ffill')
-    #
-    # # TODO: Adjust for southern hemisphere
-    #
-    # #i2 = ind.where(c == 0).where(tas.time.dt.month >= 7)
-    # # add check to make sure indice of end of growing season is after growing season start
-    # i2 = ind.where((c==0) & (ind > i11)).where(tas.time.dt.month >= 7)
-    #
-    # d = i2 - i11
-    #
-    # # take min value (first occurence after july)
-    # gsl = d.resample(time=freq).min(dim='time')
-    #
-    # # turn nan into 0
-    # gsl = xr.where(np.isnan(gsl), 0, gsl)
-
-    # compute growth season length on resampled data
     thresh = utils.convert_units_to(thresh, tas)
 
-    c = ((tas > thresh) * 1).rolling(time=window).sum(allow_lazy=True, skipna=False)
+    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
 
-    def compute_gsl(c):
-        nt = c.time.size
-        i = xarray.DataArray(np.arange(nt), dims="time").chunk({"time": 1})
-        ind = xarray.broadcast(i, c)[0].chunk(c.chunks)
-        i1 = ind.where(c == window).min(dim="time")
-        i1 = xarray.where(np.isnan(i1), nt, i1)
-        i11 = i1.reindex_like(c, method="ffill")
-        i2 = ind.where((c == 0) & (ind > i11)).where(c.time.dt.month >= 7)
-        i2 = xarray.where(np.isnan(i2), nt, i2)
-        d = (i2 - i1).min(dim="time")
-        return d
+    def compute_gsl(yrdata):
+        if (
+            yrdata.chunks is not None
+            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
+        ):
+            yrdata = yrdata.chunk({"time": -1})
+        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
+        if (
+            mid_idx.size == 0
+        ):  # The mid date is not in the group. Happens at boundaries.
+            allNans = xarray.full_like(yrdata.isel(time=0), np.nan)
+            allNans.attrs = {}
+            return allNans
+        end = rl.first_run(
+            yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
+            window,
+            "time",
+        )
+        beg = rl.first_run(yrdata > thresh, window, "time")
+        sl = end - beg
+        sl = xarray.where(
+            beg.isnull() & end.notnull(), 0, sl
+        )  # If everything is under thresh
+        sl = xarray.where(
+            beg.notnull() & end.isnull(), yrdata.time.size - beg, sl
+        )  # If gs is not ended at end of year
+        return sl.where(sl >= 0)  # When end happens before beg.
 
-    gsl = c.resample(time=freq).apply(compute_gsl)
-
+    gsl = tas.resample(time=freq).map(compute_gsl)
     return gsl
 
 

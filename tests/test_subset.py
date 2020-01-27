@@ -1,5 +1,6 @@
 import os
 
+import geopandas as gpd
 import numpy as np
 import pytest
 import xarray as xr
@@ -235,7 +236,7 @@ class TestSubsetGridPoint:
             subset.subset_gridpoint(
                 da, lon=-72.4, lat=46.1, start_date="2055", end_date="2052"
             )
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
@@ -381,6 +382,25 @@ class TestSubsetBbox:
         assert np.all(out.lat >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
 
+    def test_badly_named_latlons(self):
+        da = xr.open_dataset(self.nc_file)
+        extended_latlons = {"lat": "latitude", "lon": "longitude"}
+        da_extended_names = da.rename(extended_latlons)
+        out = subset.subset_bbox(
+            da_extended_names, lon_bnds=self.lon, lat_bnds=self.lat
+        )
+        assert {"latitude", "longitude"}.issubset(out.dims)
+
+        long_for_some_reason = {"lon": "long"}
+        da_long = da.rename(long_for_some_reason)
+        out = subset.subset_bbox(da_long, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert {"long"}.issubset(out.dims)
+
+        lons_lats = {"lon": "lons", "lat": "lats"}
+        da_lonslats = da.rename(lons_lats)
+        out = subset.subset_bbox(da_lonslats, lon_bnds=self.lon, lat_bnds=self.lat)
+        assert {"lons", "lats"}.issubset(out.dims)
+
     def test_single_bounds_rectilinear(self):
         da = xr.open_dataset(self.nc_file).tasmax
 
@@ -486,7 +506,7 @@ class TestSubsetBbox:
                 end_date="2055",
             )
 
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
+        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
@@ -526,6 +546,7 @@ class TestSubsetShape:
     eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
     southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
     small_geojson = os.path.join(TESTS_DATA, "cmip5", "small_geojson.json")
+    multi_regions_geojson = os.path.join(TESTS_DATA, "cmip5", "multi_regions.json")
 
     def compare_vals(self, ds, sub, vari, flag_2d=False):
         # check subsetted values against original
@@ -648,6 +669,17 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
         assert len(sub.lon.values) == 3
         assert len(sub.lat.values) == 3
+
+    def test_mask_multiregions(self):
+        ds = xr.open_dataset(self.nc_file)
+        regions = gpd.read_file(self.multi_regions_geojson)
+
+        mask = subset.create_mask(
+            x_dim=ds.lon, y_dim=ds.lat, poly=regions, wrap_lons=True
+        )
+        vals, counts = np.unique(mask.values[mask.notnull()], return_counts=True)
+        assert all(vals == [0, 1, 2])
+        assert all(counts == [58, 250, 22])
 
 
 class TestDistance:

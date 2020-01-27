@@ -15,6 +15,7 @@ __all__ = [
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
+    "drought_code",
 ]
 
 
@@ -138,4 +139,13 @@ solid_precip_accumulation = Pr(
     cell_methods="time: sum within days time: sum over days",
     _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
+)
+
+drought_code = PrTas(
+    identifier="DC",
+    units="",
+    standard_name="drought_code",
+    long_name="Drought Code",
+    description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
+    compute=indices.drought_code,
 )

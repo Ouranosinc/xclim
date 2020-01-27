@@ -413,12 +413,16 @@ class TestUnitConversion:
 
 class TestCheckUnits:
     def test_basic(self):
+        utils._check_units("%", "[]")
+        utils._check_units("pct", "[]")
         utils._check_units("mm/day", "[precipitation]")
         utils._check_units("mm/s", "[precipitation]")
         utils._check_units("kg/m2/s", "[precipitation]")
         utils._check_units("kg/m2", "[length]")
         utils._check_units("cms", "[discharge]")
         utils._check_units("m3/s", "[discharge]")
+        utils._check_units("m/s", "[speed]")
+        utils._check_units("km/h", "[speed]")
 
         with pytest.raises(AttributeError):
             utils._check_units("mm", "[precipitation]")

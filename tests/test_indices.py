@@ -334,48 +334,32 @@ class TestGrowingDegreeDays:
 
 
 class TestGrowingSeasonLength:
-    def test_simple(self, tas_series):
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", 0),  # No growing season
+            ("2000-01-01", "2000-12-31", 365),  # All year growing season
+            ("2000-07-10", "2001-01-01", np.nan),  # End happens before start
+            ("2000-06-15", "2001-01-01", 199),  # No end
+            ("2000-06-15", "2000-07-15", 31),  # Normal case
+        ],
+    )
+    def test_simple(self, tas_series, d1, d2, expected):
         # test for different growing length
 
-        # generate 5 years of data
-        a = np.zeros(366 * 2 + 365 * 3)
-        tas = tas_series(a, start="2000/1/1")
-
-        # 2000 : no growing season
-
-        # 2001 : growing season all year
-        d1 = "27-12-2000"
-        d2 = "31-12-2001"
-        buffer = tas.sel(time=slice(d1, d2))
-        tas = tas.where(~tas.time.isin(buffer.time), 280)
-
-        # 2002 : growing season in June only
-        d1 = "6-1-2002"
-        d2 = "6-10-2002"
-        buffer = tas.sel(time=slice(d1, d2))
-        tas = tas.where(~tas.time.isin(buffer.time), 280)
-        #
-        # comment:
-        # correct answer should be 10 (i.e. there are 10 days
-        # with tas > 5 degC) but current definition imposes end
-        # of growing season to be equal or later than July 1st.
-
-        # growing season in Aug only
-        d1 = "8-1-2003"
-        d2 = "8-10-2003"
-        buffer = tas.sel(time=slice(d1, d2))
-        tas = tas.where(~tas.time.isin(buffer.time), 280)
-
-        # growing season from June to end of July
-        d1 = "6-1-2004"
-        d2 = "7-31-2004"
-        buffer = tas.sel(time=slice(d1, d2))
-        tas = tas.where(~tas.time.isin(buffer.time), 280)
-
+        # generate a year of data
+        tas = tas_series(np.zeros(365), start="2000/1/1")
+        warm_period = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(warm_period.time), 280)
         gsl = xci.growing_season_length(tas)
-        target = [0, 365, 25, 10, 61]
+        np.testing.assert_array_equal(gsl, expected)
 
-        np.testing.assert_array_equal(gsl, target)
+    def test_southhemisphere(self, tas_series):
+        tas = tas_series(np.zeros(2 * 365), start="2000/1/1")
+        warm_period = tas.sel(time=slice("2000-11-01", "2001-03-01"))
+        tas = tas.where(~tas.time.isin(warm_period.time), 280)
+        gsl = xci.growing_season_length(tas, mid_date="01-01", freq="AS-Jul")
+        np.testing.assert_array_equal(gsl.sel(time="2000-07-01"), 121)
 
 
 class TestHeatingDegreeDays:
@@ -997,6 +981,52 @@ class TestTG:
 
     def compare_against_icclim(self, cmip3_day_tas):
         pass
+
+
+@pytest.mark.skipif(
+    not os.path.exists(os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")),
+    reason="GFWED test data must be downloaded manually to test the Fire Weather indices.",
+)
+class TestFireWeatherIndex:
+    nc_gfwed = os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")
+
+    def test_fire_weather_indexes(self):
+        ds = xr.open_dataset(self.nc_gfwed)
+        fwis = xci.fire_weather_indexes(
+            ds.tas,
+            ds.prbc,
+            ds.sfcwind,
+            ds.rh,
+            ds.lat,
+            snd=ds.snow_depth,
+            ffmc0=ds.FFMC.sel(time="2017-03-02"),
+            dmc0=ds.DMC.sel(time="2017-03-02"),
+            dc0=ds.DC.sel(time="2017-03-02"),
+            start_date="2017-03-03",
+            start_up_mode="snow_depth",
+        )
+        for ind, name in zip(fwis, ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]):
+            xr.testing.assert_allclose(
+                ind.sel(time=slice("2017-03-03", None)),
+                ds[name].sel(time=slice("2017-03-03", None)),
+                rtol=1e-4,
+            )
+
+    def test_drought_code(self):
+        ds = xr.open_dataset(self.nc_gfwed)
+        dc = xci.drought_code(
+            ds.tas,
+            ds.prbc,
+            ds.lat,
+            snd=ds.snow_depth,
+            dc0=ds.DC.sel(time="2017-03-02"),
+            start_date="2017-03-03",
+            start_up_mode="snow_depth",
+        )
+        xr.testing.assert_allclose(
+            dc.sel(time=slice("2017-03-03", None)),
+            ds.DC.sel(time=slice("2017-03-03", None)),
+        )
 
 
 @pytest.fixture(scope="session")

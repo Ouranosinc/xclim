@@ -31,6 +31,8 @@ def _get_indicator(indname):
 
 def _get_input(ctx):
     arg = ctx.obj["input"]
+    if arg is None:
+        raise click.BadOptionUsage("input", "No input file name given.", ctx.parent)
     if isinstance(arg, xr.Dataset):
         return arg
     if isinstance(arg, tuple) or "*" in arg:
@@ -46,7 +48,11 @@ def _get_input(ctx):
 def _get_output(ctx):
     if "ds_out" not in ctx.obj:
         dsin = _get_input(ctx)
-        ctx.obj["ds_out"] = dsin.drop_vars(dsin.data_vars)
+        ctx.obj["ds_out"] = xr.Dataset(attrs=dsin.attrs)
+        if ctx.obj["output"] is None:
+            raise click.BadOptionUsage(
+                "output", "No output file name given.", ctx.parent
+            )
     return ctx.obj["ds_out"]
 
 
@@ -58,16 +64,28 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        if (
-            indicator._sig.parameters[key].default is inspect._empty
-        ):  # a Dataset is expected
+        # a Dataset is expected
+        if indicator._sig.parameters[key].default is inspect._empty:
             if key == "tas" and val is None and key not in dsin.data_vars:
                 # Special case for tas.
-                params["tas"] = xc.atmos.tg(dsin.tasmin, dsin.tasmax)
+                try:
+                    params["tas"] = xc.atmos.tg(
+                        dsin[ctx.obj["tas_from"][0]], dsin[ctx.obj["tas_from"][1]]
+                    )
+                except KeyError:
+                    raise click.UsageError(
+                        f"Dataset neither provides needed variable {key} nor the pair {ctx.obj['tas_from']} that could be used to construct it. Set the '--tas-from' global option or directly give a name with the '--tas' indicator option.",
+                        ctx,
+                    )
             else:
-                params[key] = dsin[
-                    val or key
-                ]  # Either a variable name was given or the key is the name
+                # Either a variable name was given or the key is the name
+                try:
+                    params[key] = dsin[val or key]
+                except KeyError:
+                    raise click.BadArgumentUsage(
+                        f"Variable {val or key} absent from input dataset. You can provide an alternative name with --{key}",
+                        ctx,
+                    )
 
     var = indicator(**params)
     dsout = dsout.assign({var.name: var})
@@ -189,6 +207,7 @@ class XclimCli(click.MultiCommand):
     chain=True,
     help="Command line tool to compute indices on netCDF datasets",
     invoke_without_command=True,
+    subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",
 )
 @click.option(
     "-i",
@@ -198,6 +217,12 @@ class XclimCli(click.MultiCommand):
 )
 @click.option("-o", "--output", help="Output filepath. A new file will be created")
 @click.option("-v", "--verbose", help="Make it more verbose", count=True)
+@click.option(
+    "--tas-from",
+    nargs=2,
+    help="Variable names in the input dataset for 'tasmin' and 'tasmax', used when 'tas' is needed but absent from the dataset",
+    default=("tasmax", "tasmin"),
+)
 @click.option("--version", is_flag=True, help="Prints xclim's version number and exits")
 @click.pass_context
 def cli(ctx, **kwargs):
