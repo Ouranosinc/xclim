@@ -85,7 +85,7 @@ def _process_indicator(indicator, ctx, **params):
                     params[key] = dsin[val or key]
                 except KeyError:
                     raise click.BadArgumentUsage(
-                        "Variable {val or key} absent from input dataset. "
+                        f"Variable {val or key} absent from input dataset. "
                         f"You can provide an alternative name with --{key}",
                         ctx,
                     )
