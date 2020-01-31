@@ -44,3 +44,8 @@ repos:
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
+-   repo: https://github.com/kynan/nbstripout
+    rev: master
+    hooks:
+    -   id: nbstripout
+        files: ".ipynb"
