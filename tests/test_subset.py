@@ -673,7 +673,7 @@ class TestSubsetShape:
     def test_mask_multiregions(self):
         ds = xr.open_dataset(self.nc_file)
         regions = gpd.read_file(self.multi_regions_geojson)
-
+        regions.set_index("id")
         mask = subset.create_mask(
             x_dim=ds.lon, y_dim=ds.lat, poly=regions, wrap_lons=True
         )
