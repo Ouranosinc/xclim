@@ -6,7 +6,6 @@ xclim xarray.DataArray utilities module
 import calendar
 import datetime as dt
 import functools
-import json
 import re
 import warnings
 from collections import defaultdict
@@ -21,12 +20,12 @@ import dask
 import numpy as np
 import pint.converters
 import pint.unit
-import pkg_resources
 import xarray as xr
 from boltons.funcutils import wraps
 
 import xclim
 from xclim import checks
+from xclim.locales import get_indicator_local_attrs
 
 __all__ = [
     "units",
@@ -50,11 +49,7 @@ __all__ = [
     "wrapped_partial",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
-    "metadata_locale",
 ]
-
-
-_locales = []
 
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
@@ -918,7 +913,9 @@ class Indicator:
             "comment",
             "references",
         ]
-        return {k: getattr(self, k) for k in names if getattr(self, k)}
+        attrs = {k: getattr(self, k) for k in names if getattr(self, k)}
+        attrs.update(get_indicator_local_attrs(self.identifier))
+        return attrs
 
     def json(self, args=None):
         """Return a dictionary representation of the class.
@@ -1204,40 +1201,3 @@ def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = Non
     wind.attrs["units"] = "m s-1"
 
     return uas, vas
-
-
-class metadata_locale:
-    """Set a locale for the metadata output globally or within a context.
-    """
-
-    def __init__(self, **locales):
-        self.old_locales = _locales
-        for locale in locales:
-            if locale not in self.list_locales():
-                self._raise_locale_error(locale)
-
-    @staticmethod
-    def list_locales():
-        locale_list = pkg_resources.resource_listdir(__package__, "locales")
-        return [locale.split(".")[0] for locale in locale_list]
-
-    @staticmethod
-    def get_locale_dict(locale):
-        if locale not in metadata_locale.list_locales():
-            metadata_locale._raise_locale_error(locale)
-        else:
-            return json.load(
-                pkg_resources.resource_stream(__package__, f"locales/{locale}.json")
-            )
-
-    @staticmethod
-    def _raise_locale_error(locale):
-        raise ValueError(
-            f"Locale {locale} not available. Use `{metadata_locale.__class__.__name__.list_locales()}` to see available languages."
-        )
-
-    def __enter__(self):
-        return
-
-    def __exit__(self, type, value, traceback):
-        _locales[:] = self.old_locales

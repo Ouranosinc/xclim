@@ -1,5 +1,319 @@
 {
-  "atmos.tg_mean": {
-    "title": "Moyenne des températures journalières"
-  }
+    "attrs_mapping": {
+        "modifiers": ["", "_f", "_pl", "_fpl"],
+        "long_name": {
+            "YS": ["annuel", "annuelle", "annuels", "anuelles"],
+            "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
+            "QS-DEC": ["saisonier", "saisonière", "saisoniers", "saisonières"],
+            "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
+            "MAM": ["printanier", "printanière", "printaniers", "printanières"],
+            "JJA": ["estival", "estivale", "estivaux", "estivales"],
+            "SON": ["automnal", "automnale", "automnaux", "automnales"],
+            "norm": ["normal", "normale", "normaux", "normales"],
+            "m1": ["janvier"],
+            "m2": ["février"],
+            "m3": ["mars"],
+            "m4": ["avril"],
+            "m5": ["mai"],
+            "m6": ["juin"],
+            "m7": ["juillet"],
+            "m8": ["août"],
+            "m9": ["septembre"],
+            "m10": ["octobre"],
+            "m11": ["novembre"],
+            "m12": ["decembre"]
+        },
+        "description": {
+            "YS": ["annuel", "annuelle", "annuels", "anuelles"],
+            "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
+            "QS-DEC": ["saisonier", "saisonière", "saisoniers", "saisonières"],
+            "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
+            "MAM": ["printanier", "printanière", "printaniers", "printanières"],
+            "JJA": ["estival", "estivale", "estivaux", "estivales"],
+            "SON": ["automnal", "automnale", "automnaux", "automnales"],
+            "norm": ["normal", "normale", "normaux", "normales"],
+            "m1": ["janvier"],
+            "m2": ["février"],
+            "m3": ["mars"],
+            "m4": ["avril"],
+            "m5": ["mai"],
+            "m6": ["juin"],
+            "m7": ["juillet"],
+            "m8": ["août"],
+            "m9": ["septembre"],
+            "m10": ["octobre"],
+            "m11": ["novembre"],
+            "m12": ["decembre"]
+        }
+    },
+    "atmos.rain_frzgr": {
+        "long_name": "Number of rain on frozen ground days",
+        "description": "{freq} number of days with rain above {thresh} after a series of seven days with average daily temperature below 0℃. Precipitation is assumed to be rain when thedaily average temperature is above 0℃.",
+        "comment": ""
+    },
+    "atmos.rx1day": {
+        "long_name": "maximum 1-day total precipitation",
+        "description": "{freq} maximum 1-day total precipitation",
+        "comment": ""
+    },
+    "atmos.max_n_day_precipitation_amount": {
+        "long_name": "maximum {window}-day total precipitation",
+        "description": "{freq} maximum {window}-day total precipitation.",
+        "comment": ""
+    },
+    "atmos.wetdays": {
+        "long_name": "Number of wet days (precip >= {thresh})",
+        "description": "{freq} number of days with daily precipitation over {thresh}.",
+        "comment": ""
+    },
+    "atmos.cdd": {
+        "long_name": "Maximum consecutive dry days (Precip < {thresh})",
+        "description": "{freq} maximum number of days with daily precipitation below {thresh}.",
+        "comment": ""
+    },
+    "atmos.cwd": {
+        "long_name": "Maximum consecutive wet days (Precip >= {thresh})",
+        "description": "{freq} maximum number of days with daily precipitation over {thresh}.",
+        "comment": ""
+    },
+    "atmos.sdii": {
+        "long_name": "Average precipitation during Wet Days (SDII)",
+        "description": "{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation for days with daily precipitation over {thresh}.",
+        "comment": ""
+    },
+    "atmos.prcptot": {
+        "long_name": "Total precipitation",
+        "description": "{freq} total precipitation",
+        "comment": ""
+    },
+    "atmos.liquidprcptot": {
+        "long_name": "Total liquid precipitation",
+        "description": "{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
+        "comment": ""
+    },
+    "atmos.solidprcptot": {
+        "long_name": "Total solid precipitation",
+        "description": "{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
+        "comment": ""
+    },
+    "atmos.DC": {
+        "long_name": "Drought Code",
+        "description": "Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
+        "comment": ""
+    },
+    "atmos.tn_days_below": {
+        "long_name": "Number of days with Tmin < {thresh}",
+        "description": "{freq} number of days where daily minimum temperature is below {thresh}",
+        "comment": ""
+    },
+    "atmos.tx_days_above": {
+        "long_name": "Number of days with Tmax > {thresh}",
+        "description": "{freq} number of days where daily maximum temperature exceeds {thresh}",
+        "comment": ""
+    },
+    "atmos.tx_tn_days_above": {
+        "long_name": "Number of days with Tmax > {thresh_tasmax} and Tmin > {thresh_tasmin}",
+        "description": "{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}",
+        "comment": ""
+    },
+    "atmos.heat_wave_frequency": {
+        "long_name": "Number of heat wave events (Tmin > {thresh_tasmin}and Tmax > {thresh_tasmax} for >= {window} days)",
+        "description": "{freq} number of heat wave events over a given period. An event occurs when the minimum and maximum daily temperature both exceeds specific thresholds : (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
+        "comment": ""
+    },
+    "atmos.heat_wave_max_length": {
+        "long_name": "Maximum length of heat wave events (Tmin > {thresh_tasmin}and Tmax > {thresh_tasmax} for >= {window} days)",
+        "description": "{freq} maximum length of heat wave events occuring in a given period.An event occurs when the minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
+        "comment": ""
+    },
+    "atmos.heat_wave_index": {
+        "long_name": "Number of days that are part of a heatwave",
+        "description": "{freq} number of days that are part of a heatwave, defined as five or more consecutive days over {thresh}.",
+        "comment": ""
+    },
+    "atmos.tg": {
+        "long_name": "Daily mean temperature",
+        "description": "Estimated mean temperature from maximum and minimum temperatures",
+        "comment": ""
+    },
+    "atmos.tg_mean": {
+        "long_name": "Mean daily mean temperature",
+        "description": "{freq} mean of daily mean temperature.",
+        "comment": ""
+    },
+    "atmos.tg10p": {
+        "long_name": "Number of days when Tmean < 10th percentile",
+        "description": "{freq} number of days with mean daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.tg90p": {
+        "long_name": "Number of days when Tmean > 90th percentile",
+        "description": "{freq} number of days with mean daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.tn_min": {
+        "long_name": "Minimum daily minimum temperature",
+        "description": "{freq} minimum of daily minimum temperature.",
+        "comment": ""
+    },
+    "atmos.tn_max": {
+        "long_name": "Maximum daily minimum temperature",
+        "description": "{freq} maximum of daily minimum temperature.",
+        "comment": ""
+    },
+    "atmos.tn_mean": {
+        "long_name": "Mean daily minimum temperature",
+        "description": "{freq} mean of daily minimum temperature.",
+        "comment": ""
+    },
+    "atmos.tn10p": {
+        "long_name": "Number of days when Tmin < 10th percentile",
+        "description": "{freq} number of days with minimum daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.tn90p": {
+        "long_name": "Number of days when Tmin > 90th percentile",
+        "description": "{freq} number of days with minimum daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.tx_min": {
+        "long_name": "Minimum daily maximum temperature",
+        "description": "{freq} minimum of daily maximum temperature.",
+        "comment": ""
+    },
+    "atmos.tx_max": {
+        "long_name": "Maximum daily maximum temperature",
+        "description": "{freq} maximum of daily maximum temperature.",
+        "comment": ""
+    },
+    "atmos.tx_mean": {
+        "long_name": "Mean daily maximum temperature",
+        "description": "{freq} mean of daily maximum temperature.",
+        "comment": ""
+    },
+    "atmos.tx10p": {
+        "long_name": "Number of days when Tmax < 10th percentile",
+        "description": "{freq} number of days with maximum daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.tx90p": {
+        "long_name": "Number of days when Tmax > 90th percentile",
+        "description": "{freq} number of days with maximum daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
+        "comment": ""
+    },
+    "atmos.dtr": {
+        "long_name": "Mean Diurnal Temperature Range",
+        "description": "{freq} mean diurnal temperature range",
+        "comment": ""
+    },
+    "atmos.dtrvar": {
+        "long_name": "Mean Diurnal Temperature Range Variability",
+        "description": "{freq} mean diurnal temparature range variability (defined as the average day-to-day variation in daily temperature range for the given time period)",
+        "comment": ""
+    },
+    "atmos.etr": {
+        "long_name": "Intra-period Extreme Temperature Range",
+        "description": "{freq} range between the maximum of daily max temperature (tx_max) and the minimum of daily min temperature (tn_min)",
+        "comment": ""
+    },
+    "atmos.cold_spell_duration_index": {
+        "long_name": "Cold Spell Duration Index, count of days with at least {window} consecutive days when Tmin < 10th percentile",
+        "description": "{freq} number of days with at least {window} consecutive days where the daily minimum temperature is below the 10th percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the  1961-1990 period",
+        "comment": ""
+    },
+    "atmos.cold_spell_days": {
+        "long_name": "cold spell index",
+        "description": "{freq} number of days that are part of a cold spell, defined as {window} or more consecutive days with mean daily temperature below  {thresh}.",
+        "comment": ""
+    },
+    "atmos.dlyfrzthw": {
+        "long_name": "daily freezethaw cycles",
+        "description": "{freq} number of days with a diurnal freeze-thaw cycle : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
+        "comment": ""
+    },
+    "atmos.cooling_degree_days": {
+        "long_name": "Cooling Degree Days (Tmean > {thresh})",
+        "description": "{freq} cooling degree days above {thresh}.",
+        "comment": ""
+    },
+    "atmos.heating_degree_days": {
+        "long_name": "Heating Degree Days (Tmean < {thresh})",
+        "description": "{freq} heating degree days below {thresh}.",
+        "comment": ""
+    },
+    "atmos.growing_degree_days": {
+        "long_name": "growing degree days above {thresh}",
+        "description": "{freq} growing degree days above {thresh}",
+        "comment": ""
+    },
+    "atmos.freshet_start": {
+        "long_name": "Day of year of spring freshet start",
+        "description": "Day of year of spring freshet start, defined as the first day a temperature threshold of {thresh} is exceeded for at least {window} days.",
+        "comment": ""
+    },
+    "atmos.frost_days": {
+        "long_name": "Number of Frost Days (Tmin < 0C)",
+        "description": "{freq} number of days with minimum daily temperature below 0℃.",
+        "comment": ""
+    },
+    "atmos.ice_days": {
+        "long_name": "Number of Ice Days (Tmax < 0℃)",
+        "description": "{freq} number of days with maximum daily temperature below 0℃",
+        "comment": ""
+    },
+    "atmos.consecutive_frost_days": {
+        "long_name": "Maximum number of consecutive days with Tmin < 0C",
+        "description": "{freq} maximum number of consecutive days with minimum daily temperature below 0℃",
+        "comment": ""
+    },
+    "atmos.growing_season_length": {
+        "long_name": "ETCCDI Growing Season Length (Tmean > {thresh})",
+        "description": "{freq} number of days between the first occurrence of at least six consecutive days with mean daily temperature over {thresh} and the first occurrence of at least {window} consecutive days with mean daily temperature below {thresh} after {mid_date}.",
+        "comment": ""
+    },
+    "atmos.tropical_nights": {
+        "long_name": "Number of Tropical Nights (Tmin > {thresh})",
+        "description": "{freq} number of Tropical Nights : defined as days with minimum daily temperature above {thresh}",
+        "comment": ""
+    },
+    "land.base_flow_index": {
+        "long_name": "Base flow index",
+        "description": "Minimum 7-day average flow divided by the mean flow.",
+        "comment": ""
+    },
+    "land.freq_analysis": {
+        "long_name": "N-year return period {mode} {indexer} {window}-day flow",
+        "description": "Streamflow frequency analysis for the {mode} {indexer} {window}-day flow estimated using the {dist} distribution.",
+        "comment": ""
+    },
+    "land.stats": {
+        "long_name": "{freq} {op} of {indexer} daily flow ",
+        "description": "{freq} {op} of {indexer} daily flow",
+        "comment": ""
+    },
+    "land.fit": {
+        "long_name": "{dist} distribution parameters",
+        "description": "Parameters of the {dist} distribution",
+        "comment": ""
+    },
+    "land.doy_qmax": {
+        "long_name": "Day of the year of the maximum over {indexer}",
+        "description": "Day of the year of the maximum over {indexer}",
+        "comment": ""
+    },
+    "land.doy_qmin": {
+        "long_name": "Day of the year of the minimum over {indexer}",
+        "description": "Day of the year of the minimum over {indexer}",
+        "comment": ""
+    },
+    "seaIce.sea_ice_area": {
+        "long_name": "Sea ice area",
+        "description": "The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
+        "comment": ""
+    },
+    "seaIce.sea_ice_extent": {
+        "long_name": "Sea ice extent",
+        "description": "The sum of ocean areas where sea ice concentration is at least {thresh}.",
+        "comment": ""
+    }
 }
