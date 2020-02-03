@@ -3,6 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Doc-generated files
+docs/notebooks/dask-worker-space/
+docs/notebooks/monthly_growing_degree_days_data.nc
+docs/xclim.atmos.rst
+docs/xclim.indices.rst
+docs/xclim.land.rst
+docs/xclim.rst
+docs/xclim.seaIce.rst
+
 # C extensions
 *.so
 
