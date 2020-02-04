@@ -1,6 +1,6 @@
-=========
-Notebooks
-=========
+========
+Examples
+========
 
 .. toctree::
    :maxdepth: 1

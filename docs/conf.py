@@ -34,10 +34,10 @@ def _get_indicators(module):
     """
     import xclim.utils as xcu
 
-    out = []
+    out = {}
     for key, val in module.__dict__.items():
         if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
-            out.append(val)
+            out[key] = val
 
     return out
 
@@ -45,20 +45,21 @@ def _get_indicators(module):
 def _indicator_table(realm):
     """Return a sequence of dicts storing metadata about all available indices."""
     import inspect
-    import warnings
 
     inds = _get_indicators(getattr(xclim, realm))
-    table = []
-    for ind in inds:
+    table = {}
+    for indname, ind in inds.items():
         # Apply default values
         args = {
             name: p.default if p.default != inspect._empty else f"<{name}>"
             for (name, p) in ind._sig.parameters.items()
         }
         try:
-            table.append(ind.json(args))
+            table[indname] = ind.json(args)
         except KeyError:
             print(f"{ind.identifier} could not be documented.")
+        else:
+            table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
@@ -80,6 +81,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.coverage",
     "sphinx.ext.todo",
+    "sphinx.ext.autosectionlabel",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",

@@ -786,6 +786,7 @@ def precip_accumulation(
     --------
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")

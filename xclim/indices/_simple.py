@@ -95,8 +95,10 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
 
     Examples
     --------
+
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
     at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr
     >>> t = xr.open_dataset('tas.day.nc')
     >>> tg = tm_mean(t, freq="QS-DEC")
@@ -516,6 +518,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
     at an annual frequency:
+
     >>> import xarray as xr
     >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
@@ -550,6 +553,7 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
     at an annual frequency:
+
     >>> import xarray as xr
     >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> window = 5

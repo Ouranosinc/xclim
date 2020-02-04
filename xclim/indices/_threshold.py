@@ -1,7 +1,8 @@
-import numpy as np
-import xarray
 import datetime
 from typing import Union
+
+import numpy as np
+import xarray
 
 from xclim import run_length as rl
 from xclim import utils
@@ -358,6 +359,7 @@ def growing_season_length(
     Examples
     --------
     If working in the Southern Hemisphere, one can use:
+
     >>> gsl = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')
     """
     thresh = utils.convert_units_to(thresh, tas)

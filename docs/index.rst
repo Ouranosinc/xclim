@@ -19,13 +19,11 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/usage
    notebooks/index
    indicators
-   indices
+   api
    icclim
-   utilities
    contributing
    authors
    history
-   itable
 
 Indices and tables
 ==================
