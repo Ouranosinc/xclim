@@ -55,7 +55,7 @@ docs_requirements = [
     "ipython",
     "ipykernel",
     "jupyter_client",
-    "matplotblib",
+    "matplotlib",
 ]
 
 dev_requirements = []
