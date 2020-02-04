@@ -53,6 +53,7 @@ docs_requirements = [
     "nbsphinx",
     "pandoc",
     "ipython",
+    "ipykernel",
     "jupyter_client",
 ]
 
