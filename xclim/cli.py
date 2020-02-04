@@ -30,6 +30,11 @@ def _get_indicator(indname):
 
 
 def _get_input(ctx):
+    """Return the input dataset stored in the given context.
+
+    If the dataset is not open, opens it with open_dataset if a single path was given,
+    or with open_mfdataset if a tuple or glob path was given.
+    """
     arg = ctx.obj["input"]
     if arg is None:
         raise click.BadOptionUsage("input", "No input file name given.", ctx.parent)
@@ -46,6 +51,10 @@ def _get_input(ctx):
 
 
 def _get_output(ctx):
+    """Return the output dataset stored in the given context.
+
+    If the output dataset doesn't exist, create it.
+    """
     if "ds_out" not in ctx.obj:
         dsin = _get_input(ctx)
         ctx.obj["ds_out"] = xr.Dataset(attrs=dsin.attrs)
@@ -57,6 +66,10 @@ def _get_output(ctx):
 
 
 def _process_indicator(indicator, ctx, **params):
+    """Add given climate indicator to the output dataset
+    from variables in the input one.
+    Cmputation is not triggered here if dask is enabled.
+    """
     click.echo(
         f"Processing : {indicator.format({'long_name': indicator.long_name}, params)['long_name']}"
     )
@@ -64,8 +77,9 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        # a Dataset is expected
-        if indicator._sig.parameters[key].default is inspect._empty:
+        # A DataArray is expected, it has to come from the input dataset
+        # All other parameters are passed as is.
+        if "DataArray" in indicator._sig.parameters[key].annotation:
             if key == "tas" and val is None and key not in dsin.data_vars:
                 # Special case for tas.
                 try:
@@ -96,6 +110,7 @@ def _process_indicator(indicator, ctx, **params):
 
 
 def _create_command(indname):
+    """Generate a Click.Command from an xclim Indicator."""
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator._sig.parameters.items():
