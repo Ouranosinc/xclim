@@ -47,7 +47,14 @@ setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest", "tox"]
 
-docs_requirements = ["sphinx", "sphinx-rtd-theme", "nbsphinx", "pandoc", "ipython"]
+docs_requirements = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "pandoc",
+    "ipython",
+    "jupyter_client",
+]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
