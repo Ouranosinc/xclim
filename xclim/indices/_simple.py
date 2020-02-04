@@ -396,13 +396,13 @@ def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
     Notes
     -----
     Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
-    0\celsius]`, that is, the days when the temperature crosses the freezing point.
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0^\circ C] \neq [p_{i+1} <
+    0^\circ C]`, that is, the days when the temperature crosses the freezing point.
     Then the maximum number of consecutive frost days is given by
 
     .. math::
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.

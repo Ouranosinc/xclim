@@ -93,7 +93,13 @@ napoleon_use_param = False
 napoleon_use_ivar = True
 
 nbsphinx_execute = "always"
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
 
+.. only:: html
+
+    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
+"""
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
