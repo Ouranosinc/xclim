@@ -6,6 +6,8 @@ from contextlib import ExitStack as does_not_raise
 import numpy as np
 import pytest
 import xarray as xr
+from click import BadOptionUsage
+from click import UsageError
 from click.testing import CliRunner
 
 import xclim as xc
@@ -176,3 +178,30 @@ def test_missing_variable(tas_series, tmp_path):
     )
     assert results.exit_code == 2
     assert "tasmin absent from input dataset." in results.output
+
+
+@pytest.mark.parametrize(
+    "options,output",
+    [
+        (["--dask-nthreads", "2"], "Error: '--dask-maxmem' must be given"),
+        (["--dask-nthreads", "2", "--dask-maxmem", "1GB"], "Dask client started"),
+        (["--chunks", "time:90"], "Writing everything to file"),
+        (["--chunks", "time:90,lat:5"], "Writing everything to file"),
+        (["--version"], xc.__version__),
+    ],
+)
+def test_global_options(tas_series, tmp_path, options, output):
+    tas = tas_series(np.ones(366,), start="1/1/2000")
+    tas = xr.concat([tas] * 10, dim="lat")
+    input_file = tmp_path / "tas.nc"
+    output_file = tmp_path / "out.nc"
+
+    tas.to_netcdf(input_file)
+
+    runner = CliRunner()
+    results = runner.invoke(
+        cli,
+        ["-i", str(input_file), "-o", str(output_file)] + options + ["atmos.tg_mean"],
+    )
+
+    assert output in results.output

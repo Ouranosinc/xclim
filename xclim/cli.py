@@ -79,7 +79,7 @@ def _process_indicator(indicator, ctx, **params):
     for key, val in params.items():
         # A DataArray is expected, it has to come from the input dataset
         # All other parameters are passed as is.
-        if "DataArray" in indicator._sig.parameters[key].annotation:
+        if issubclass(xr.DataArray, indicator._sig.parameters[key].annotation):
             if key == "tas" and val is None and key not in dsin.data_vars:
                 # Special case for tas.
                 try:
@@ -292,8 +292,7 @@ def cli(ctx, **kwargs):
     if kwargs["chunks"] is not None:
         kwargs["chunks"] = {
             dim: int(num)
-            for spec in kwargs["chunks"].split(",")
-            for dim, num in spec.split(":")
+            for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
         }
 
     kwargs["xr_kwargs"] = {"chunks": kwargs["chunks"] or {}}
