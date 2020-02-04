@@ -243,17 +243,60 @@ class XclimCli(click.MultiCommand):
     default=("tasmax", "tasmin"),
 )
 @click.option("--version", is_flag=True, help="Prints xclim's version number and exits")
+@click.option(
+    "--dask-nthreads",
+    type=int,
+    help="Start a dask.distributed Client with this many threads and 1 worker. If not specified, the local schedular is used. If specified, '--dask-maxmem' must also be given",
+)
+@click.option(
+    "--dask-maxmem",
+    help="Memory limit for the dask.distributed Client as a human readable string (ex: 4GB). If specified, '--dask-nthreads' must also be specified.",
+)
+@click.option(
+    "--chunks",
+    help="Chunks to use when opening the input dataset(s). Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
+)
 @click.pass_context
 def cli(ctx, **kwargs):
+    """Entry point for the command line interface.
+    Manages the global options.
+    """
     if kwargs["version"]:
         click.echo(f"xclim {xc.__version__}")
     elif ctx.invoked_subcommand is None:
         raise click.UsageError("Missing command.", ctx)
+
     if len(kwargs["input"]) == 0:
         kwargs["input"] = None
     elif len(kwargs["input"]) == 1:
         kwargs["input"] = kwargs["input"][0]
-    kwargs["xr_kwargs"] = {"chunks": {}}
+
+    if kwargs["dask_nthreads"] is not None:
+        if kwargs["dask_maxmem"] is None:
+            raise click.BadOptionUsage(
+                "dask_nthreads",
+                "'--dask-maxmem' must be given if '--dask-nthreads' is given.",
+                ctx,
+            )
+
+        from dask.distributed import Client
+
+        client = Client(
+            n_workers=1,
+            threads_per_worker=kwargs["dask_nthreads"],
+            memory_limit=kwargs["dask_maxmem"],
+        )
+        click.echo(
+            f"Dask client started. The dashboard is available at http://127.0.0.1:{client.scheduler_info()['services']['dashboard']}/status"
+        )
+    if kwargs["chunks"] is not None:
+        kwargs["chunks"] = {
+            dim: int(num)
+            for spec in kwargs["chunks"].split(",")
+            for dim, num in spec.split(":")
+        }
+
+    kwargs["xr_kwargs"] = {"chunks": kwargs["chunks"] or {}}
     ctx.obj = kwargs
 
 
