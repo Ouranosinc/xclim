@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Tests for `xclim` package, command line interface
-from contextlib import ExitStack as does_not_raise
-
 import numpy as np
 import pytest
 import xarray as xr
-from click import BadOptionUsage
-from click import UsageError
 from click.testing import CliRunner
 
 import xclim as xc
+from xclim.cli import _isusable
 from xclim.cli import cli
 
 
@@ -42,7 +39,7 @@ def test_indices(modules, modname):
 
     for module in modules:
         for name, ind in module.__dict__.items():
-            if isinstance(ind, xc.utils.Indicator):
+            if _isusable(ind):
                 assert name in results.output
 
 
@@ -50,7 +47,7 @@ def test_indices(modules, modname):
     "indicator,indname",
     [
         (xc.atmos.heating_degree_days, "atmos.heating_degree_days"),
-        (xc.seaIce.sea_ice_area, "seaIce.sea_ice_area"),
+        (xc.land.base_flow_index, "land.base_flow_index"),
     ],
 )
 def test_indicator_help(indicator, indname):
@@ -61,23 +58,38 @@ def test_indicator_help(indicator, indname):
         assert name in results.output
 
 
-def test_normal_computation(tas_series, tmp_path):
-    tas = tas_series(np.ones(366,), start="1/1/2000")
-    input_file = tmp_path / "tas.nc"
+@pytest.mark.parametrize(
+    "indicator,expected",
+    [
+        ("atmos.tg_mean", 274.15),
+        ("atmos.daily_temperature_range_variability", 0.0),
+        ("atmos.heating_degree_days", 5856.0),
+        ("atmos.solid_precip_accumulation", 31622400.0),
+    ],
+)
+def test_normal_computation(
+    tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected
+):
+    tasmin = tasmin_series(np.ones(366,) + 273.15, start="1/1/2000")
+    tasmax = tasmax_series(np.ones(366,) + 273.15, start="1/1/2000")
+    pr = pr_series(np.ones(366,), start="1/1/2000")
+    ds = xr.Dataset(data_vars={"tasmin": tasmin, "tasmax": tasmax, "pr": pr})
+    input_file = tmp_path / "in.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file)
+    ds.to_netcdf(input_file)
 
     runner = CliRunner()
     results = runner.invoke(
-        cli, ["-i", str(input_file), "-o", str(output_file), "atmos.tg_mean"]
+        cli, ["-i", str(input_file), "-o", str(output_file), indicator]
     )
 
-    assert "Processing : Mean daily mean temperature" in results.output
+    assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
     out = xr.open_dataset(output_file)
-    assert out.tg_mean[0] == 1.0
+    outvar = list(out.data_vars.values())[0]
+    np.testing.assert_allclose(outvar[0], expected)
 
 
 @pytest.mark.parametrize("name_suffix", ["", "the_"])
@@ -205,3 +217,10 @@ def test_global_options(tas_series, tmp_path, options, output):
     )
 
     assert output in results.output
+
+
+def test_unusable_indicator():
+    runner = CliRunner()
+    results = runner.invoke(cli, ["seaIce.sea_ice_extent", "--help"],)
+
+    assert "exists but is not yet usable through the command line." in results.output

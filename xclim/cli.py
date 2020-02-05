@@ -13,6 +13,15 @@ import xclim as xc
 xcmodules = {"atmos": xc.atmos, "land": xc.land, "seaIce": xc.seaIce}
 
 
+def _isusable(indicator):
+    return isinstance(indicator, xc.utils.Indicator) and all(
+        [
+            param.annotation is not inspect._empty
+            for param in indicator._sig.parameters.values()
+        ]
+    )
+
+
 def _get_indicator(indname):
     if "." in indname:
         modname, indname = indname.split(".")
@@ -26,7 +35,14 @@ def _get_indicator(indname):
             f"Indicator '{indname}' or module '{modname}' not found in xclim."
         )
 
-    return xcmodules[modname].__dict__[indname]
+    indicator = xcmodules[modname].__dict__[indname]
+
+    if not _isusable(xcmodules[modname].__dict__[indname]):
+        raise click.BadArgumentUsage(
+            f"Indicator '{indname}' exists but is not yet usable through the command line."
+        )
+
+    return indicator
 
 
 def _get_input(ctx):
@@ -77,10 +93,15 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
+        click.echo(f"Parsing {key} = {val}")
+        if val == "None":
+            params[key] = None
         # A DataArray is expected, it has to come from the input dataset
         # All other parameters are passed as is.
-        if issubclass(xr.DataArray, indicator._sig.parameters[key].annotation):
-            if key == "tas" and val is None and key not in dsin.data_vars:
+        # TODO:  Find a better way to test this.
+        elif indicator._sig.parameters[key].annotation is xr.DataArray:
+
+            if key == "tas" and val == "tas" and key not in dsin.data_vars:
                 # Special case for tas.
                 try:
                     params["tas"] = xc.atmos.tg(
@@ -97,13 +118,13 @@ def _process_indicator(indicator, ctx, **params):
                 # Either a variable name was given or the key is the name
                 try:
                     params[key] = dsin[val or key]
+                    click.echo(params[key])
                 except KeyError:
                     raise click.BadArgumentUsage(
                         f"Variable {val or key} absent from input dataset. "
-                        f"You can provide an alternative name with --{key}",
+                        f"You should provide a name with --{key}",
                         ctx,
                     )
-
     var = indicator(**params)
     dsout = dsout.assign({var.name: var})
     ctx.obj["ds_out"] = dsout
@@ -117,9 +138,12 @@ def _create_command(indname):
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=None if param.default is inspect._empty else param.default,
+                default=name
+                if param.default is inspect._empty
+                else (param.default or "None"),
                 show_default=True,
                 help=indicator._parameters_doc.get(name),
+                metavar="VAR_NAME" if param.annotation is xr.DataArray else "TEXT",
             )
         )
 
@@ -150,7 +174,7 @@ def indices(module, info):
         module = "all"
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    for xcmod in [xc.atmos, xc.land, xc.seaIce]:
+    for xcmod in [xc.atmos, xc.land]:
         modname = xcmod.__name__.split(".")[-1]
         if module == "all" or modname in module:
             with formatter.section(
@@ -159,7 +183,7 @@ def indices(module, info):
             ):
                 rows = []
                 for name, ind in xcmod.__dict__.items():
-                    if isinstance(ind, xc.utils.Indicator):
+                    if _isusable(ind):
                         left = click.style(name, fg="yellow")
                         if ind.var_name != name:
                             left += f" ({ind.var_name})"
@@ -176,8 +200,6 @@ def indices(module, info):
 @click.pass_context
 def info(ctx, indicator):
     """Gives information about INDICATOR.
-
-    Same as "xclim INDICATOR --help"
 
     INDICATOR must include its module (ex: atmos.tg_mean)
     """

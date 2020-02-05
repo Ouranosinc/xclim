@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Run length algorithms module"""
 import logging
+from typing import Any
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -272,7 +273,9 @@ def rle_1d(
     return ia[i], rl, pos
 
 
-def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
+def first_run_1d(
+    arr: Sequence[Union[int, float]], window: int, index: Optional[Sequence]
+) -> Any:
     """Return the index of the first item of a run of at least a given length.
 
     Parameters
@@ -292,6 +295,8 @@ def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
 
     if np.isinf(ind):
         return np.nan
+    if index is not None:
+        return index[ind]
     return ind
 
 
@@ -432,7 +437,7 @@ def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
 
 
 def first_run_ufunc(
-    x: xr.DataArray, window, index: Optional[str] = None
+    x: xr.DataArray, window, index: Optional[Union[xr.DataArray, str]] = None
 ) -> xr.apply_ufunc:
     """Dask-parallel version of first_run_1d, ie the first entry in array of consecutive true values.
 
@@ -441,13 +446,19 @@ def first_run_ufunc(
     x : xr.DataArray
       Input array (bool)
     window : int
-    index: Optional[str]
+      Minimum length of the run
+    index: Optional[Union[xr.DataArray, str]]
+      Instead of returning integer indexes, returns the value of `index` at that index.
+      If a string, the correspondig index is extracted from x.indexes["time"].
 
     Returns
     -------
     out : func
       A function operating along the time dimension of a dask-array.
     """
+
+    if isinstance(index, str):
+        index = getattr(x.indexes["time"], index)
 
     ind = xr.apply_ufunc(
         first_run_1d,
@@ -457,12 +468,7 @@ def first_run_ufunc(
         dask="parallelized",
         output_dtypes=[np.float],
         keep_attrs=True,
-        kwargs={"window": window},
+        kwargs={"window": window, "index": index},
     )
-
-    if index is not None and ~(np.isnan(ind)):
-        val = getattr(x.indexes["time"], index)
-        i = ind.data.astype(int)
-        ind.data = val[i]
 
     return ind
