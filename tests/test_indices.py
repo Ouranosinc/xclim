@@ -733,18 +733,20 @@ class TestTGXN90p:
 
 
 class TestTas:
-    @pytest.mark.parametrize("tasmin_units", ['K', 'degC'])
-    @pytest.mark.parametrize("tasmax_units", ['K', 'degC'])
-    def test_tas(self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units):
-        tas = tas_series(np.ones(10) + (K2C if tasmin_units == 'K' else 0))
-        tas.attrs['units'] = tasmin_units
-        tasmin = tasmin_series(np.zeros(10) + (K2C if tasmin_units == 'K' else 0))
-        tasmin.attrs['units'] = tasmin_units
-        tasmax = tasmax_series(np.ones(10) * 2 + (K2C if tasmax_units == 'K' else 0))
-        tasmax.attrs['units'] = tasmax_units
+    @pytest.mark.parametrize("tasmin_units", ["K", "degC"])
+    @pytest.mark.parametrize("tasmax_units", ["K", "degC"])
+    def test_tas(
+        self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units
+    ):
+        tas = tas_series(np.ones(10) + (K2C if tasmin_units == "K" else 0))
+        tas.attrs["units"] = tasmin_units
+        tasmin = tasmin_series(np.zeros(10) + (K2C if tasmin_units == "K" else 0))
+        tasmin.attrs["units"] = tasmin_units
+        tasmax = tasmax_series(np.ones(10) * 2 + (K2C if tasmax_units == "K" else 0))
+        tasmax.attrs["units"] = tasmax_units
 
         tas_xc = xci.tas(tasmin, tasmax)
-        assert tas_xc.attrs['units'] == tasmin_units
+        assert tas_xc.attrs["units"] == tasmin_units
         xr.testing.assert_equal(tas, tas_xc)
 
 

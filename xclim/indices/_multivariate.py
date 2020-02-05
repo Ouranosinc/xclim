@@ -985,7 +985,7 @@ def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     """
     tasmax = utils.convert_units_to(tasmax, tasmin)
     tas = (tasmax + tasmin) / 2
-    tas.attrs['units'] = tasmin.attrs['units']
+    tas.attrs["units"] = tasmin.attrs["units"]
     return tas
 
 
