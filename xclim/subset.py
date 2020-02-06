@@ -345,7 +345,7 @@ def create_mask(
         for (indb, polb) in poly.iloc[i + 1 :].iterrows():
             if pola.geometry.intersects(polb.geometry):
                 warnings.warn(
-                    f"List of shapes contains overlap between {inda} and {indb}. Only {inda} will be used.",
+                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
                     UserWarning,
                     stacklevel=4,
                 )
@@ -397,7 +397,7 @@ def create_mask(
 @check_latlon_dimnames
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
-    shape: Union[str, Path],
+    shape: Union[str, Path, gpd.GeoDataFrame],
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
     buffer: Optional[Union[int, float]] = None,
@@ -414,8 +414,8 @@ def subset_shape(
     ----------
     ds : Union[xarray.DataArray, xarray.Dataset]
       Input values.
-    shape : Union[str, Path]
-      Path to shape file. Supports formats compatible with geopandas.
+    shape : Union[str, Path, gpd.GeoDataFrame]
+      Path to shape file, or directly a geodataframe. Supports formats compatible with geopandas.
     raster_crs : Optional[Union[str, int]]
       EPSG number or PROJ4 string.
     shape_crs : Optional[Union[str, int]]
@@ -457,7 +457,10 @@ def subset_shape(
     """
     # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
     ds_copy = copy.deepcopy(ds)
-    poly = gpd.GeoDataFrame.from_file(shape)
+    if isinstance(shape, gpd.GeoDataFrame):
+        poly = shape
+    else:
+        poly = gpd.GeoDataFrame.from_file(shape)
 
     if buffer is not None:
         poly.geometry = poly.buffer(buffer)
