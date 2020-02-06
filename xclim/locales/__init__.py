@@ -54,6 +54,7 @@ from typing import Any
 from typing import Mapping
 from typing import Optional
 from typing import Sequence
+from typing import Tuple
 from typing import Union
 
 import pkg_resources
@@ -95,14 +96,15 @@ def get_best_locale(locale: str):
     return None
 
 
-def get_local_dict(locale: Union[str, Sequence[str]]):
+def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
     """Return all translated metadata for a given locale.
 
     Parameters
     ----------
     locale : str or sequence of str
-        POSIX locale string or a tuple of the 2-char locale string and a path to a json
-        file defining translation of attributes.
+        POSIX locale name or a tuple of the locale name and a translation dict, or
+        a tuple of the locale name and a path to a json file defining translation
+        of attributes.
 
     Raises
     ------
@@ -125,6 +127,8 @@ def get_local_dict(locale: Union[str, Sequence[str]]):
             locale,
             json.load(pkg_resources.resource_stream(__package__, f"{locale}.json")),
         )
+    if isinstance(locale[1], dict):
+        return locale
     with open(locale[1]) as locf:
         return locale[0], json.load(locf)
 
@@ -185,26 +189,27 @@ class TranslatableStr(UserString):
         >>> s.format(adj1='nice', adj2=`evil`)
         "Le chien est nice, l'oie est evil"
         """
-        for key, val in kwargs.copy().items():
-            if (
-                isinstance(val, str)
-                and val.startswith("{")
-                and val[1:-1] in self.translations
-            ):
-                kwargs.update(
-                    {
-                        f"{key}{modifier}": value
-                        for modifier, value in zip(
-                            self.modifiers, self.translations[val[1:-1]]
-                        )
-                    }
-                )
+        if self.translations is not None:
+            for key, val in kwargs.copy().items():
+                if (
+                    isinstance(val, str)
+                    and val.startswith("{")
+                    and val[1:-1] in self.translations
+                ):
+                    kwargs.update(
+                        {
+                            f"{key}{modifier}": value
+                            for modifier, value in zip(
+                                self.modifiers, self.translations[val[1:-1]]
+                            )
+                        }
+                    )
         return super().format(*args, **kwargs)
 
 
 def get_local_attrs(
     indicator: Any,
-    *locales: Union[str, Sequence[str]],
+    *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
     fill_missing: bool = True,
     append_locale_name: bool = True,
@@ -252,7 +257,6 @@ def get_local_attrs(
         loc_name, loc_dict = get_local_dict(locale)
         loc_name = f"_{loc_name}" if append_locale_name else ""
         ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
-
         local_attrs = loc_dict.get(ind_name)
         if local_attrs is None:
             warnings.warn(
@@ -260,7 +264,7 @@ def get_local_attrs(
             )
         else:
             for name in TRANSLATABLE_ATTRS:
-                if (names is not None and name in names) and (
+                if (names is None or name in names) and (
                     fill_missing or name in local_attrs
                 ):
                     attrs[f"{name}{loc_name}"] = TranslatableStr(
@@ -271,7 +275,7 @@ def get_local_attrs(
     return attrs
 
 
-def set_locales(*locales: Union[str, Sequence[str]]):
+def set_locales(*locales: Union[str, Sequence[str], Tuple[str, dict]]):
     """Set the current locales.
 
     All indicators computed through atmos, land or seaIce will have additionnal metadata
@@ -280,8 +284,9 @@ def set_locales(*locales: Union[str, Sequence[str]]):
     Parameters
     ----------
     *locales : str or tuple of str
-        POSIX locale name or a tuple of the locale name and a path to a json
-        file defining translation of attributes.
+        POSIX locale name or a tuple of the locale name and a translation dict, or
+        a tuple of the locale name and a path to a json file defining translation
+        of attributes.
 
     Raises
     ------
@@ -289,9 +294,11 @@ def set_locales(*locales: Union[str, Sequence[str]]):
         If a requested locale is not available.
     """
     for locale in locales:
-        if (isinstance(locale, str) and get_best_locale(locale) is None) or not Path(
-            locale[1]
-        ).is_file():
+        if (isinstance(locale, str) and get_best_locale(locale) is None) or (
+            not isinstance(locale, str)
+            and isinstance(locale[1], str)
+            and not Path(locale[1]).is_file()
+        ):
             raise UnavailableLocaleError(locale)
     LOCALES[:] = locales
 
@@ -300,13 +307,15 @@ class metadata_locale:
     """Set a locale for the metadata output within a context.
     """
 
-    def __init__(self, **locales: str):
+    def __init__(self, *locales: Union[str, Sequence[str], Tuple[str, dict]]):
         """Create the context object to manage locales.
 
         Parameters
         ----------
         **locales : str
-            Requested locales as 2-char strings.
+            POSIX locale name or a tuple of the locale name and a translation dict, or
+            a tuple of the locale name and a path to a json file defining translation
+            of attributes.
 
         Raises
         ------
@@ -324,10 +333,10 @@ class metadata_locale:
 
     def __enter__(self):
         self.old_locales = LOCALES[:]
-        set_locales(self.locales)
+        set_locales(*self.locales)
 
     def __exit__(self, type, value, traceback):
-        set_locales(self.old_locales)
+        set_locales(*self.old_locales)
 
 
 class UnavailableLocaleError(ValueError):

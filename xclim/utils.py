@@ -46,7 +46,6 @@ __all__ = [
     "Indicator",
     "Indicator2D",
     "parse_doc",
-    "format_kwargs",
     "wrapped_partial",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -757,35 +756,21 @@ class Indicator:
     # Tag mappings between keyword arguments and long-form text.
     months = {f"m{i}": calendar.month_name[i].lower() for i in range(1, 13)}
     _attrs_mapping = {
-        "cell_methods": {
-            "YS": "years",
-            "MS": "months",
-        },  # I don't think this is necessary.
-        "long_name": {
-            "YS": "Annual",
-            "MS": "Monthly",
-            "QS-DEC": "Seasonal",
-            "DJF": "winter",
-            "MAM": "spring",
-            "JJA": "summer",
-            "SON": "fall",
-            "norm": "Normal",
-        },
-        "description": {
-            "YS": "Annual",
-            "MS": "Monthly",
-            "QS-DEC": "Seasonal",
-            "DJF": "winter",
-            "MAM": "spring",
-            "JJA": "summer",
-            "SON": "fall",
-            "norm": "Normal",
-        },
-        "var_name": {"DJF": "winter", "MAM": "spring", "JJA": "summer", "SON": "fall"},
+        "YS": "Annual",
+        "MS": "Monthly",
+        "QS-DEC": "Seasonal",
+        "DJF": "winter",
+        "MAM": "spring",
+        "JJA": "summer",
+        "SON": "fall",
+        "norm": "Normal",
+        "DJF": "winter",
+        "MAM": "spring",
+        "JJA": "summer",
+        "SON": "fall",
     }
 
-    for k, v in _attrs_mapping.items():
-        v.update(months)
+    _attrs_mapping.update(months)
 
     # Whether or not the compute function is a partial.
     _partial = False
@@ -998,7 +983,7 @@ class Indicator:
             mba = {"indexer": "annual"}
             # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
             for k, v in args.items():
-                if isinstance(v, str) and v in self._attrs_mapping.get(key, {}).keys():
+                if isinstance(v, str) and v in self._attrs_mapping.keys():
                     mba[k] = "{{{}}}".format(v)
                 elif isinstance(v, dict):
                     if v:
@@ -1016,7 +1001,7 @@ class Indicator:
             if callable(val):
                 val = val(**mba)
 
-            out[key] = val.format(**mba).format(**self._attrs_mapping.get(key, {}))
+            out[key] = val.format(**mba).format(**self._attrs_mapping)
 
         return out
 
@@ -1073,34 +1058,6 @@ def parse_doc(doc):
                 out["long_name"] = match.groups()[0]
 
     return out
-
-
-def format_kwargs(attrs: dict, params: dict) -> None:
-    """Modify attribute with argument values.
-
-    Parameters
-    ----------
-    attrs : dict
-      Attributes to be assigned to function output. The values of the attributes in braces will be replaced the
-      the corresponding args values.
-    params : dict
-      A BoundArguments.arguments dictionary storing a function's arguments.
-    """
-    attrs_mapping = {
-        "cell_methods": {"YS": "years", "MS": "months"},
-        "long_name": {"YS": "Annual", "MS": "Monthly"},
-    }
-
-    for key, val in attrs.items():
-        mba = {}
-        # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-        for k, v in params.items():
-            if isinstance(v, str) and v in attrs_mapping.get(key, {}).keys():
-                mba[k] = "{" + v + "}"
-            else:
-                mba[k] = v
-
-        attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
 def wrapped_partial(func: FunctionType, *args, **kwargs):
