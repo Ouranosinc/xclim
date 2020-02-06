@@ -663,7 +663,9 @@ def subset_bbox(
         args = {}
         for i, d in enumerate(da.lat.dims):
             coords = da[d][ind[i]]
-            args[d] = slice(coords.min(), coords.max())
+            args[d] = slice(coords.min().values, coords.max().values)
+        # If the dims of lat and lon do not have coords, sel defaults to isel,
+        # and then the last element is not returned.
         da = da.sel(**args)
 
         # Recompute condition on cropped coordinates
