@@ -2,7 +2,7 @@
     "attrs_mapping": {
         "modifiers": ["", "_f", "_pl", "_fpl"],
         "long_name": {
-            "YS": ["annuel", "annuelle", "annuels", "anuelles"],
+            "YS": ["annuel", "annuelle", "annuels", "annuelles"],
             "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
             "QS-DEC": ["saisonier", "saisonière", "saisoniers", "saisonières"],
             "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
@@ -24,7 +24,7 @@
             "m12": ["decembre"]
         },
         "description": {
-            "YS": ["annuel", "annuelle", "annuels", "anuelles"],
+           "YS": ["annuel", "annuelle", "annuels", "annuelles"],
             "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
             "QS-DEC": ["saisonier", "saisonière", "saisoniers", "saisonières"],
             "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
@@ -47,273 +47,268 @@
         }
     },
     "atmos.rain_frzgr": {
-        "long_name": "Number of rain on frozen ground days",
-        "description": "{freq} number of days with rain above {thresh} after a series of seven days with average daily temperature below 0℃. Precipitation is assumed to be rain when thedaily average temperature is above 0℃.",
-        "comment": ""
+        "long_name": "Nombre de jours de pluie sur sol gelé",
+        "description": "Nombre {freq} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0℃. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0℃.",
+        "title": "Nombre de jours de pluie sur sol gelé"
     },
     "atmos.rx1day": {
-        "long_name": "maximum 1-day total precipitation",
-        "description": "{freq} maximum 1-day total precipitation",
-        "comment": ""
+        "long_name": "Précipitation maximale en 1 jour",
+        "description": "Précipitation maximale en 1 jour {freq_f}",
+        "title": "Précipitation maximale en 1 jour dans une période donnée."
     },
     "atmos.max_n_day_precipitation_amount": {
-        "long_name": "maximum {window}-day total precipitation",
-        "description": "{freq} maximum {window}-day total precipitation.",
-        "comment": ""
+        "long_name": "Précipitation maximale sur {window} jours",
+        "description": "Précipitation maximale sur {window} jours {freq_f}",
+        "title": "Précipitation maximale cumulée sur un nombre de jours donné."
     },
     "atmos.wetdays": {
-        "long_name": "Number of wet days (precip >= {thresh})",
-        "description": "{freq} number of days with daily precipitation over {thresh}.",
-        "comment": ""
+        "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
+        "description": "Nombre {freq} de jours où les précipitations sont au-dessus de {thresh}.",
+        "title": "Jours mouillés"
     },
     "atmos.cdd": {
-        "long_name": "Maximum consecutive dry days (Precip < {thresh})",
-        "description": "{freq} maximum number of days with daily precipitation below {thresh}.",
-        "comment": ""
+        "long_name": "Durée maximale d'une période sèche",
+        "description": "Nombre {freq} maximal de jours consécutifs où les précipitations sont sous {thresh}.",
+        "title": "Nombre maximal de jour secs consécutifs"
     },
     "atmos.cwd": {
-        "long_name": "Maximum consecutive wet days (Precip >= {thresh})",
-        "description": "{freq} maximum number of days with daily precipitation over {thresh}.",
-        "comment": ""
+        "long_name": "Durée maximale d'une période pluvieuse",
+        "description": "Nombre {freq} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
+        "title": "Durée de période pluvieuse"
     },
     "atmos.sdii": {
-        "long_name": "Average precipitation during Wet Days (SDII)",
-        "description": "{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation for days with daily precipitation over {thresh}.",
-        "comment": ""
+        "long_name": "Indice simple de l'intensité des précipitations",
+        "description": "Indice simple d'intensité des précipitations {freq} [SDII]. Moyenne {freq_f} de la précpitation journalière pour les jours où la précipitation est au-dessus de {thresh}.",
+        "title": "Indice simple de l'intensité des précipitations"
     },
     "atmos.prcptot": {
-        "long_name": "Total precipitation",
-        "description": "{freq} total precipitation",
-        "comment": ""
+        "long_name": "Précipitation totale",
+        "description": "Précipitation totale {freq_f}",
+        "title": "Précipitation accumulée totale (liquide ou solide)"
     },
     "atmos.liquidprcptot": {
-        "long_name": "Total liquid precipitation",
-        "description": "{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
-        "comment": ""
+        "long_name": "Précipitation liquide totale",
+        "description": "Précipitation liquide totale {freq_f}, estimée comme la précipitation lorsque la température moyenne est >= 0°C",
+        "title": "Précipitation liquide accumulée totale"
     },
     "atmos.solidprcptot": {
-        "long_name": "Total solid precipitation",
-        "description": "{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
-        "comment": ""
+        "long_name": "Précipitation solide totale",
+        "description": "Précipitation solide totale {freq_f}, estimée comme la précipitation lorsque la température moyenne est < 0°C",
+        "title": "Précipitation solide accumulée totale"
     },
     "atmos.DC": {
-        "long_name": "Drought Code",
-        "description": "Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
-        "comment": ""
+        "long_name": "Indice de sécheresse",
+        "description": "Code numérique de le teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'",
+        "title": "Indice de sécheresse quotidien"
     },
     "atmos.tn_days_below": {
-        "long_name": "Number of days with Tmin < {thresh}",
-        "description": "{freq} number of days where daily minimum temperature is below {thresh}",
-        "comment": ""
+        "long_name": "Nombre de jours avec Tmin < {thresh}",
+        "description": "Nombre {freq} de jours où la température journalière minimale est sous {thresh}",
+        "title": "Nombre de jours avec tmin sous un certain seuil"
     },
     "atmos.tx_days_above": {
-        "long_name": "Number of days with Tmax > {thresh}",
-        "description": "{freq} number of days where daily maximum temperature exceeds {thresh}",
-        "comment": ""
+        "long_name": "Nombre de jours avec Tmax > {thresh}",
+        "description": "Nombre {freq} de jours où la température journalière maximale est au-dessus de {thresh}",
+        "title": "Nombre de jours avec tmax au-dessus d'un certain seuil"
     },
     "atmos.tx_tn_days_above": {
-        "long_name": "Number of days with Tmax > {thresh_tasmax} and Tmin > {thresh_tasmin}",
-        "description": "{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}",
-        "comment": ""
+        "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
+        "description": "Nombre {freq} de jours où la température journalière maximale excède {thresh_tasmax} et la température journalière minimale excède {thresh_tasmin}",
+        "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes"
     },
     "atmos.heat_wave_frequency": {
-        "long_name": "Number of heat wave events (Tmin > {thresh_tasmin}and Tmax > {thresh_tasmax} for >= {window} days)",
-        "description": "{freq} number of heat wave events over a given period. An event occurs when the minimum and maximum daily temperature both exceeds specific thresholds : (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
-        "comment": ""
+        "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
+        "description": "Nombre {freq} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+        "title": "Fréquence des vagues de chaleur"
     },
     "atmos.heat_wave_max_length": {
-        "long_name": "Maximum length of heat wave events (Tmin > {thresh_tasmin}and Tmax > {thresh_tasmax} for >= {window} days)",
-        "description": "{freq} maximum length of heat wave events occuring in a given period.An event occurs when the minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
-        "comment": ""
+        "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
+        "description": "Longueur maximale {freq_f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours."
     },
     "atmos.heat_wave_index": {
-        "long_name": "Number of days that are part of a heatwave",
-        "description": "{freq} number of days that are part of a heatwave, defined as five or more consecutive days over {thresh}.",
-        "comment": ""
+        "long_name": "Nombre de jours de vague de chaleur",
+        "description": "Nombre {freq} de jours de vague de chaleur, définie comme cinq jours consécutifs ou plus où la température est au-dessus de {thresh}.",
+        "title": "Indice de vague de chaleur"
     },
     "atmos.tg": {
-        "long_name": "Daily mean temperature",
-        "description": "Estimated mean temperature from maximum and minimum temperatures",
-        "comment": ""
+        "long_name": "température journalière moyenne",
+        "description": "température journalière moyenne estimée par la médiane des températures maximimales et minimales.",
+        "title": "Moyenne des températures maximales et minimales"
     },
     "atmos.tg_mean": {
-        "long_name": "Mean daily mean temperature",
-        "description": "{freq} mean of daily mean temperature.",
-        "comment": ""
+        "long_name": "Moyenne de la température journalière moyenne",
+        "description": "Moyenne {freq_f} de la température journalière moyenne",
+        "title": "Moyenne de la température journalière moyenne"
     },
     "atmos.tg10p": {
-        "long_name": "Number of days when Tmean < 10th percentile",
-        "description": "{freq} number of days with mean daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température est au-dessus du 10e percentile",
+        "description": "Nombre {freq} de jours où la température est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température est au-dessus du 10e percentile"
     },
     "atmos.tg90p": {
-        "long_name": "Number of days when Tmean > 90th percentile",
-        "description": "{freq} number of days with mean daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température est au-dessus du 90e percentile",
+        "description": "Nombre {freq} de jours où la température est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température est au-dessus du 90e percentile"
     },
     "atmos.tn_min": {
-        "long_name": "Minimum daily minimum temperature",
-        "description": "{freq} minimum of daily minimum temperature.",
-        "comment": ""
+        "long_name": "Minimum de la température journalière minimale",
+        "description": "Minimum {freq} de la température journalière minimale",
+        "title": "Minimum de la température minimale"
     },
     "atmos.tn_max": {
-        "long_name": "Maximum daily minimum temperature",
-        "description": "{freq} maximum of daily minimum temperature.",
-        "comment": ""
+        "long_name": "Maximum de la température journalière minimale",
+        "description": "Maximum {freq} de la température journalière minimale",
+        "title": "Maximum de la température minimale"
     },
     "atmos.tn_mean": {
-        "long_name": "Mean daily minimum temperature",
-        "description": "{freq} mean of daily minimum temperature.",
-        "comment": ""
+        "long_name": "Moyenne de la température journalière minimale",
+        "description": "Moyenne {freq_f} de la température journalière minimale",
+        "title": "Moyenne de la température minimale"
     },
     "atmos.tn10p": {
-        "long_name": "Number of days when Tmin < 10th percentile",
-        "description": "{freq} number of days with minimum daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température minimale est au-dessus du 10e percentile",
+        "description": "Nombre {freq} de jours où la température minimale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température minimale est au-dessus du 10e percentile"
     },
     "atmos.tn90p": {
-        "long_name": "Number of days when Tmin > 90th percentile",
-        "description": "{freq} number of days with minimum daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
+        "description": "Nombre {freq} de jours où la température minimale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température minimale est au-dessus du 90e percentile"
     },
     "atmos.tx_min": {
-        "long_name": "Minimum daily maximum temperature",
-        "description": "{freq} minimum of daily maximum temperature.",
-        "comment": ""
+        "long_name": "Minimum de la température journalière maximale",
+        "description": "Minimum {freq} de la température journalière maximale",
+        "title": "Minimum de la température maximale"
     },
     "atmos.tx_max": {
-        "long_name": "Maximum daily maximum temperature",
-        "description": "{freq} maximum of daily maximum temperature.",
-        "comment": ""
+        "long_name": "Maximum de la température journalière maximale",
+        "description": "Maximum {freq} de la température journalière maximale",
+        "title": "Maximum de la température maximale"
     },
     "atmos.tx_mean": {
-        "long_name": "Mean daily maximum temperature",
-        "description": "{freq} mean of daily maximum temperature.",
-        "comment": ""
+        "long_name": "Moyenne de la température journalière maximale",
+        "description": "Moyenne {freq_f} de la température journalière maximale",
+        "title": "Moyenne de la température maximale"
     },
     "atmos.tx10p": {
-        "long_name": "Number of days when Tmax < 10th percentile",
-        "description": "{freq} number of days with maximum daily temperature below the 10th percentile.The 10th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température maximale est au-dessus du 10e percentile",
+        "description": "Nombre {freq} de jours où la température maximale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température maximale est au-dessus du 10e percentile"
     },
     "atmos.tx90p": {
-        "long_name": "Number of days when Tmax > 90th percentile",
-        "description": "{freq} number of days with maximum daily temperature above the 90th percentile.The 90th percentile is to be computed for a 5 day window centered on each calendar day for a reference period.",
-        "comment": ""
+        "long_name": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
+        "description": "Nombre {freq} de jours où la température maximale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Nombre de jours où la température maximale est au-dessus du 90e percentile"
     },
     "atmos.dtr": {
-        "long_name": "Mean Diurnal Temperature Range",
-        "description": "{freq} mean diurnal temperature range",
-        "comment": ""
+        "long_name": "Amplitude de la température diurne",
+        "description": "Moyenne {freq_f} de l'amplitude diurne de température",
+        "comment": "",
+        "title": "Amplitude de la température diurne"
     },
     "atmos.dtrvar": {
-        "long_name": "Mean Diurnal Temperature Range Variability",
-        "description": "{freq} mean diurnal temparature range variability (defined as the average day-to-day variation in daily temperature range for the given time period)",
-        "comment": ""
+        "long_name": "Variabilité de l'amplitude de la température diurne",
+        "description": "Variabilité {freq_f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
+        "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne"
     },
     "atmos.etr": {
-        "long_name": "Intra-period Extreme Temperature Range",
-        "description": "{freq} range between the maximum of daily max temperature (tx_max) and the minimum of daily min temperature (tn_min)",
-        "comment": ""
+        "long_name": "Amplitude des températures extrêmes",
+        "description": "Calcul {freq} de l'intervalle entre le maximum de la température journalière maximale et le minimum de la température journalière minimale",
+        "title": "Intervalle des températures extrêmes"
     },
     "atmos.cold_spell_duration_index": {
-        "long_name": "Cold Spell Duration Index, count of days with at least {window} consecutive days when Tmin < 10th percentile",
-        "description": "{freq} number of days with at least {window} consecutive days where the daily minimum temperature is below the 10th percentile. The 10th percentile should be computed for a 5-day window centred on each calendar day in the  1961-1990 period",
-        "comment": ""
+        "long_name": "Indice de durée des vagues de froid",
+        "description": "Nombre {freq} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins {window} jours consécutifs. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+        "title": "Indice de durée des vagues de froid"
     },
     "atmos.cold_spell_days": {
-        "long_name": "cold spell index",
-        "description": "{freq} number of days that are part of a cold spell, defined as {window} or more consecutive days with mean daily temperature below  {thresh}.",
-        "comment": ""
+        "long_name": "Jours de vagues de froid",
+        "description": "Nombre {freq} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+        "title": "Jours de vague de froid"
     },
     "atmos.dlyfrzthw": {
-        "long_name": "daily freezethaw cycles",
-        "description": "{freq} number of days with a diurnal freeze-thaw cycle : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
-        "comment": ""
+        "long_name": "Cycles de gel-dégel quotidien",
+        "description": "Nombre {freq} de jours avec un gel-dégel : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
+        "title": "Nombre de jours avec un cycle de gel-dégel"
     },
     "atmos.cooling_degree_days": {
-        "long_name": "Cooling Degree Days (Tmean > {thresh})",
-        "description": "{freq} cooling degree days above {thresh}.",
-        "comment": ""
+        "long_name": "Degré-jour de réfrigération (Tmoy > {thresh})",
+        "description": "Cumul {freq} des degrés-jours de réfrigération (Température au-dessus de {thresh})",
+        "title": "Degré-jour de réfrigération"
     },
     "atmos.heating_degree_days": {
-        "long_name": "Heating Degree Days (Tmean < {thresh})",
-        "description": "{freq} heating degree days below {thresh}.",
-        "comment": ""
+        "long_name": "Degré-jour de chauffe (Tmoy < {thresh})",
+        "description": "Cumul {freq} des degrés-jours de chauffe (Température au-dessus de {thresh}).",
+        "title": "Degré-jour de chauffe"
     },
     "atmos.growing_degree_days": {
-        "long_name": "growing degree days above {thresh}",
-        "description": "{freq} growing degree days above {thresh}",
-        "comment": ""
+        "long_name": "Degré-jour de croissance (Tmoy > {thresh})",
+        "description": "{Cumul freq} des degrés-jours de croissance (Température au-dessus de {thresh})",
+        "title": "Degré-jour de croissance"
     },
     "atmos.freshet_start": {
-        "long_name": "Day of year of spring freshet start",
-        "description": "Day of year of spring freshet start, defined as the first day a temperature threshold of {thresh} is exceeded for at least {window} days.",
-        "comment": ""
+        "long_name": "Jour de l'année du début de la crue nivale",
+        "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
+        "title": "Nième jour consécutif où la température excède un seuil"
     },
     "atmos.frost_days": {
-        "long_name": "Number of Frost Days (Tmin < 0C)",
-        "description": "{freq} number of days with minimum daily temperature below 0℃.",
-        "comment": ""
+        "long_name": "Nombre de jours de gel (Tmin < 0C)",
+        "description": "Nombre {freq} de jour où la température journalière minimale est sous 0℃.",
+        "title": "Jours de gel"
     },
     "atmos.ice_days": {
-        "long_name": "Number of Ice Days (Tmax < 0℃)",
-        "description": "{freq} number of days with maximum daily temperature below 0℃",
-        "comment": ""
+        "long_name": "Nombre de jours de givre (Tmax < 0℃)",
+        "description": "Nombre {freq} de jours où la température journalière maximale est sous 0°C",
+        "title": "Nombre de jours de givre"
     },
     "atmos.consecutive_frost_days": {
-        "long_name": "Maximum number of consecutive days with Tmin < 0C",
-        "description": "{freq} maximum number of consecutive days with minimum daily temperature below 0℃",
-        "comment": ""
+        "long_name": "Durée maximale des périodes de gel (Tmin < 0℃)",
+        "description": "Durée maximale {freq_f} des périodes où la température journalière minimale est sous 0℃",
+        "title": "Durée maximale des périodes de gel (Tmin < 0℃)"
     },
     "atmos.growing_season_length": {
-        "long_name": "ETCCDI Growing Season Length (Tmean > {thresh})",
-        "description": "{freq} number of days between the first occurrence of at least six consecutive days with mean daily temperature over {thresh} and the first occurrence of at least {window} consecutive days with mean daily temperature below {thresh} after {mid_date}.",
-        "comment": ""
+        "long_name": "Durée de la saison de végétation",
+        "description": "Nombre {freq} de jours entre la première occurence d'au moins {window} jours consecutifs où la température journalière moyenne dépasse {thresh} et le première occurence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}."
     },
     "atmos.tropical_nights": {
-        "long_name": "Number of Tropical Nights (Tmin > {thresh})",
-        "description": "{freq} number of Tropical Nights : defined as days with minimum daily temperature above {thresh}",
-        "comment": ""
+        "long_name": "Nombre de nuits tropicales (Tmin > {thresh})",
+        "description": "Nombre {freq} de nuits tropicales : definies comme des jours avec une température journalière moyenne au-dessus de {thresh}",
+        "title": "Nombre de nuits tropicales"
     },
     "land.base_flow_index": {
-        "long_name": "Base flow index",
-        "description": "Minimum 7-day average flow divided by the mean flow.",
-        "comment": ""
+        "long_name": "Flux de base",
+        "description": "Flux moyen sur 7 jours minimum divisé par le flux moyen",
+        "title": "Flux de base"
     },
     "land.freq_analysis": {
-        "long_name": "N-year return period {mode} {indexer} {window}-day flow",
-        "description": "Streamflow frequency analysis for the {mode} {indexer} {window}-day flow estimated using the {dist} distribution.",
-        "comment": ""
+        "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
+        "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist}",
+        "title": "Période de retour"
     },
     "land.stats": {
-        "long_name": "{freq} {op} of {indexer} daily flow ",
-        "description": "{freq} {op} of {indexer} daily flow",
-        "comment": ""
+        "long_name": "{op} du {indexer} {freq} du flux journalier",
+        "description": "{op} du {indexer} {freq} du flux journalier",
+        "title": "Calcul de statistiques sur des sous-périodes."
     },
     "land.fit": {
-        "long_name": "{dist} distribution parameters",
-        "description": "Parameters of the {dist} distribution",
-        "comment": ""
+        "long_name": "Paramètres d'une distribution {dist}",
+        "description": "Paramètres d'une distribution {dist}",
+        "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données."
     },
     "land.doy_qmax": {
-        "long_name": "Day of the year of the maximum over {indexer}",
-        "description": "Day of the year of the maximum over {indexer}",
-        "comment": ""
+        "long_name": "Jour de l'année du maximum le long de {indexer}",
+        "description": "Jour de l'année du maximum le long de {indexer}"
     },
     "land.doy_qmin": {
-        "long_name": "Day of the year of the minimum over {indexer}",
-        "description": "Day of the year of the minimum over {indexer}",
-        "comment": ""
+        "long_name": "Jour de l'année du minimum le long de {indexer}",
+        "description": "Jour de l'année du minimum le long de {indexer}"
     },
     "seaIce.sea_ice_area": {
-        "long_name": "Sea ice area",
-        "description": "The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
-        "comment": ""
+        "long_name": "Surface de banquise",
+        "description": "La somme des surfaces recouvertes de glace de mer là où sa concentration est d'au moins {thresh}."
     },
     "seaIce.sea_ice_extent": {
-        "long_name": "Sea ice extent",
-        "description": "The sum of ocean areas where sea ice concentration is at least {thresh}.",
-        "comment": ""
+        "long_name": "Étendu de banquise",
+        "description": "L'aire de toutes les régions où la concentration de glace de mer est d'au moins {thresh}."
     }
 }

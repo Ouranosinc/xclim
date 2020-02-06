@@ -48,15 +48,18 @@ TRANSLATABLE_ATTRS : list
 """
 import json
 import warnings
+from collections import UserString
 from pathlib import Path
 from typing import Any
+from typing import Mapping
+from typing import Optional
 from typing import Sequence
 from typing import Union
 
 import pkg_resources
 
 LOCALES = []
-TRANSLATABLE_ATTRS = ["long_name", "description", "comment"]
+TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title"]
 
 
 def list_locales():
@@ -65,13 +68,40 @@ def list_locales():
     return [locale.split(".")[0] for locale in locale_list if locale.endswith(".json")]
 
 
-def get_locale_dict(locale: Union[str, Sequence[str]]):
+def get_best_locale(locale: str):
+    """Get the best fitting available locale.
+
+    for existing locales : ['fr', 'fr-BE', 'en-US'],
+    'fr-CA' returns 'fr', 'en' -> 'en-US' and 'en-GB' -> 'en-US'.
+
+    Parameters
+    ----------
+    locale : str
+        The requested locale, as a 2-char language code or language_territory code.
+
+    Returns
+    -------
+    str or None:
+        The best available locale. None is none are available.
+    """
+    available = list_locales()
+    if locale in available:
+        return locale
+    locale = locale[:2]
+    if locale in available:
+        return locale
+    if locale in [av[:2] for av in available]:
+        return [av for av in available if av[:2] == locale][0]
+    return None
+
+
+def get_local_dict(locale: Union[str, Sequence[str]]):
     """Return all translated metadata for a given locale.
 
     Parameters
     ----------
     locale : str or sequence of str
-        2-char locale strings or tuple of the 2-char locale string and a path to a json
+        POSIX locale string or a tuple of the 2-char locale string and a path to a json
         file defining translation of attributes.
 
     Raises
@@ -82,67 +112,103 @@ def get_locale_dict(locale: Union[str, Sequence[str]]):
     Returns
     -------
     str
-        The 2-char locale string
+        The best fitting locale string
     dict
         The available translations in this locale.
     """
     if isinstance(locale, str):
-        if locale not in list_locales():
+        locale = get_best_locale(locale)
+        if locale is None:
             raise UnavailableLocaleError(locale)
-        else:
-            return (
-                locale,
-                json.load(pkg_resources.resource_stream(__package__, f"{locale}.json")),
-            )
+
+        return (
+            locale,
+            json.load(pkg_resources.resource_stream(__package__, f"{locale}.json")),
+        )
     with open(locale[1]) as locf:
         return locale[0], json.load(locf)
 
 
-def get_local_format(attribute, mapping, modifiers):
-    """Return a formatting function for attribute
+class TranslatableStr(UserString):
+    """A string that can to translate certain arguments passed to format()`.
 
-    Allows for more control in locale-dependent string mapping.
-    The returned function parses the parameters passed to format the string
-    and replaces formattable-values by all available translation and their
-    modified versions, as defined in this modules' doc.
-
-    Parameters
-    ----------
-    attribute : str
-        Attribute template string
-    mapping : dict
-        A mapping from a parameter value to a list of (str) translations of this
-        parameter for different modifiers.
-    modifiers : list of str
-        A list of modifiers suffixes.
-
-    Returns
-    -------
-    callable
-        A formatting function for `attribute`.
-        In addition to formatting the function also capitalizes its output.
-
-    Examples
-    --------
-    >>> func = get_local_format('Moyenne {freq_f} de X', {'YS': ['annuel', 'annuelle']}, ['', '_f'])
-    >>> func(freq='{YS}')
-    "Moyenne annuelle de X"
+    See the doc of format() for more details.
     """
 
-    def local_format(**kwargs):
+    def __init__(
+        self,
+        string: str,
+        translations: Mapping[str, Sequence[str]],
+        modifiers: Sequence[str],
+    ):
+        """Initialize the translatable string.
+
+        Parameters
+        ----------
+        string : str
+            Data to potentatially translate.
+        translations : Mapping[str, Sequence[str]]
+            A mapping from a string to translate to its possible translations.
+        modifiers : Sequence[str]
+            The list of modifiers, must be the as long as the longest value of `translations`.
+        """
+        super().__init__(string)
+        self.translations = translations
+        self.modifiers = modifiers
+
+    def format(self, *args, **kwargs):
+        """Format the string by translating translatable arguments.
+
+        Does the same as str.format(), but if any of the input
+        keyword arguments is a translatable string (identified by braces { }),
+        all possible translations are passed to the formatting. The keyword is
+        removed from the arguments and replaces by all versions of `keyword` + `modifier`.
+
+        Example
+        -------
+        Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
+        to french and that we know that possible values of `adj` are `nice` and `evil`.
+        In french, the genre of the noun changes the adjective (cat = chat is masculine,
+        and goose = oie is feminine) so we initialize the string as:
+
+        >>> s = TranslatableStr("Le chien est {adj1_m}, l'oie est {adj2_f}",
+                                {'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']},
+                                ['_m', '_f'])
+        >>> s.format(adj1='{nice}', adj2='{evil}')
+        "Le chien est beau, l'oie est méchante"
+
+        `TranslatableStr.format()` saw that '{nice}' was translatable and added
+        `adj1_m='beau', adj1_f='belle'` to the arguments passed to `str.format`.
+        If a string is to be translate is has to be encapsulated in curly braces,
+        or else it is given as is and the modifer it not applied:
+
+        >>> s.format(adj1='nice', adj2=`evil`)
+        "Le chien est nice, l'oie est evil"
+        """
         for key, val in kwargs.copy().items():
-            if val.startswith("{") and val[1:-1] in mapping:
-                kwargs.pop(key)
+            if (
+                isinstance(val, str)
+                and val.startswith("{")
+                and val[1:-1] in self.translations
+            ):
                 kwargs.update(
                     {
                         f"{key}{modifier}": value
-                        for modifier, value in zip(modifiers, mapping[val[1:-1]])
+                        for modifier, value in zip(
+                            self.modifiers, self.translations[val[1:-1]]
+                        )
                     }
                 )
-        return attribute.format(**kwargs).capitalize()
+        return super().format(*args, **kwargs)
 
 
-def get_indicator_local_attrs(indicator: Any, *locales: Union[str, Sequence[str]]):
+def get_local_attrs(
+    indicator: Any,
+    *locales: Union[str, Sequence[str]],
+    names: Optional[Sequence[str]] = None,
+    fill_missing: bool = True,
+    append_locale_name: bool = True,
+):
     """Get all attributes of an indicator in the requested locales.
 
     Parameters
@@ -153,6 +219,19 @@ def get_indicator_local_attrs(indicator: Any, *locales: Union[str, Sequence[str]
         2-char locale strings or tuple of the 2-char locale string and a path to a json
         file defining translation of attributes. If none are give, defaults to the
         currently globally set in xclim.locales.LOCALES
+    names : Optional[Sequence[str]]
+        If given, only returns translations of attributes in this list.
+    fill_missing : bool
+        If True (default), fill untranslated attributes by the default (english) ones.
+    append_locale_name : bool
+        If True (default), append the locale name (as "{attr_name}_{locale}") to the
+        returned attributes.
+
+    Raises
+    ------
+    ValueError
+        If `append_locale_name` is False and multiple `locales` are requested.
+        .
 
     Returns
     -------
@@ -162,26 +241,33 @@ def get_indicator_local_attrs(indicator: Any, *locales: Union[str, Sequence[str]
     """
     if not locales:
         locales = LOCALES
+
+    if not append_locale_name and len(locales) > 1:
+        raise ValueError(
+            "`append_locale_name` cannot be False if multiple locales are requested."
+        )
+
     attrs = {}
     for locale in locales:
-        loc_name, loc_dict = get_locale_dict(locale)
+        loc_name, loc_dict = get_local_dict(locale)
+        loc_name = f"_{loc_name}" if append_locale_name else ""
         ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
+
         local_attrs = loc_dict.get(ind_name)
         if local_attrs is None:
             warnings.warn(
                 f"Attributes of indicator {ind_name} in language {locale} were requested, but none were found."
             )
         else:
-            attrs.update(
-                {
-                    f"{name}_{loc_name}": get_local_format(
-                        attr,
+            for name in TRANSLATABLE_ATTRS:
+                if (names is not None and name in names) and (
+                    fill_missing or name in local_attrs
+                ):
+                    attrs[f"{name}{loc_name}"] = TranslatableStr(
+                        local_attrs.get(name, getattr(indicator, name)),
                         loc_dict["attrs_mapping"].get(name),
                         loc_dict["attrs_mapping"]["modifiers"],
                     )
-                    for name, attr in local_attrs.items()
-                }
-            )
     return attrs
 
 
@@ -194,7 +280,7 @@ def set_locales(*locales: Union[str, Sequence[str]]):
     Parameters
     ----------
     *locales : str or tuple of str
-        2-char locale strings or tuple of the 2-char locale string and a path to a json
+        POSIX locale name or a tuple of the locale name and a path to a json
         file defining translation of attributes.
 
     Raises
@@ -203,7 +289,9 @@ def set_locales(*locales: Union[str, Sequence[str]]):
         If a requested locale is not available.
     """
     for locale in locales:
-        if locale not in list_locales() and not Path(locale[1]).is_file():
+        if (isinstance(locale, str) and get_best_locale(locale) is None) or not Path(
+            locale[1]
+        ).is_file():
             raise UnavailableLocaleError(locale)
     LOCALES[:] = locales
 
@@ -248,18 +336,18 @@ class UnavailableLocaleError(ValueError):
 
     def __init__(self, locale):
         super().__init__(
-            f"Locale {locale} not available. Use `metadata_locale.list_locales()` to see available languages."
+            f"Locale {locale} not available. Use `xclim.locales.list_locales()` to see available languages."
         )
 
 
-def generate_locale_dict(locale: str, init_english: bool = False):
+def generate_local_dict(locale: str, init_english: bool = False):
     """Generate a dictionary with keys for each indicators and translatable attributes.
 
     Parameters
     ----------
     locale : str
-        Locale 2-char string
-    init_english : bool, optional
+        Locale in the POSIX format
+    init_english : bool
         If True, fills the initial dictionary with the english versions of the attributes.
         Defaults to False.
     """
@@ -273,8 +361,9 @@ def generate_locale_dict(locale: str, init_english: bool = False):
             ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
             indicators[ind_name] = indicator
 
-    if locale in list_locales():
-        locname, attrs = get_locale_dict(locale)
+    best_locale = get_best_locale(locale)
+    if best_locale is not None:
+        locname, attrs = get_local_dict(best_locale)
         for ind_name in attrs.copy().keys():
             if ind_name not in indicators:
                 attrs.pop(ind_name)

@@ -14,6 +14,7 @@ from inspect import signature
 from types import FunctionType
 from typing import Any
 from typing import Optional
+from typing import Sequence
 from typing import Union
 
 import dask
@@ -25,7 +26,7 @@ from boltons.funcutils import wraps
 
 import xclim
 from xclim import checks
-from xclim.locales import get_indicator_local_attrs
+from xclim.locales import get_local_attrs
 
 __all__ = [
     "units",
@@ -901,6 +902,25 @@ class Indicator:
 
         return ma_out.rename(vname)
 
+    def translate_attrs(
+        self, locale: Union[str, Sequence[str]], fill_missing: bool = True
+    ):
+        """Return a dictionary of unformated translated translatable attributes.
+
+        Translatable attributes are defined in xclim.locales.TRANSLATABLE_ATTRS
+
+        Parameters
+        ----------
+        locale : Union[str, Sequence[str]]
+            The POSIX name of the locale or a tuple of a locale name and a path to a
+            json file defining the translations. See `xclim.locale` for details.
+        fill_missing : bool
+            If True (default fill the missing attributes by their english values.
+        """
+        return get_local_attrs(
+            self, locale, fill_missing=fill_missing, append_locale_name=False
+        )
+
     @property
     def cf_attrs(self):
         """CF-Convention attributes of the output value."""
@@ -914,7 +934,11 @@ class Indicator:
             "references",
         ]
         attrs = {k: getattr(self, k) for k in names if getattr(self, k)}
-        attrs.update(get_indicator_local_attrs(self.identifier))
+        attrs.update(
+            get_local_attrs(
+                self, names=names, fill_missing=False, append_locale_name=True
+            )
+        )
         return attrs
 
     def json(self, args=None):
