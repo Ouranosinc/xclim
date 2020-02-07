@@ -342,7 +342,7 @@ def create_mask(
     """
     # Check for intersections
     for i, (inda, pola) in enumerate(poly.iterrows()):
-        for (indb, polb) in poly.loc[i + 1 :].iterrows():
+        for (indb, polb) in poly.iloc[i + 1 :].iterrows():
             if pola.geometry.intersects(polb.geometry):
                 warnings.warn(
                     f"List of shapes contains overlap between {inda} and {indb}. Only {inda} will be used.",
