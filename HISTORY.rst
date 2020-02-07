@@ -5,6 +5,7 @@ History
 0.14.x
 ------
 * Refactoring of the documentation.
+* Modified `subset_shape` to support subsetting with GeoPandas datatypes directly.
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
 * Improve the memory use of `indices.growing_season_length`.
 * Better handling of data with atypically named `lat` and `lon` dimensions.
