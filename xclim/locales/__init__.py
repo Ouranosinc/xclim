@@ -10,12 +10,9 @@ These files are expected to be defined as in this example for french:
 ```json
 {
     "attrs_mapping" : {
-        "modifiers": ["", "_f", _mpl", "_fpl"],
-        "description": {
-            "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
-            ... and so on for other frequent parameters translation...
-        }
-        ... and so on for other translatable attributes...
+        "modifiers": ["", "_f", "_mpl", "_fpl"],
+        "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
+        ... and so on for other frequent parameters translation...
     },
     "atmos.dtrvar" : {
         "long_name": "Variabilité de l'intervalle de température moyen",
@@ -267,10 +264,10 @@ def get_local_attrs(
                 if (names is None or name in names) and (
                     fill_missing or name in local_attrs
                 ):
+                    ind_dict = loc_dict["attrs_mapping"].copy()
+                    mods = ind_dict.pop("modifiers", [""])
                     attrs[f"{name}{loc_name}"] = TranslatableStr(
-                        local_attrs.get(name, getattr(indicator, name)),
-                        loc_dict["attrs_mapping"].get(name),
-                        loc_dict["attrs_mapping"]["modifiers"],
+                        local_attrs.get(name, getattr(indicator, name)), ind_dict, mods,
                     )
     return attrs
 
@@ -382,10 +379,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     attrs_mapping = attrs.setdefault("attrs_mapping", {})
     attrs_mapping.setdefault("modifiers", [""])
     for key, value in xc.utils.Indicator._attrs_mapping.items():
-        if key in TRANSLATABLE_ATTRS:
-            attrs_mapping.setdefault(
-                key, {param: [val] for param, val in value.items()}
-            )
+        attrs_mapping.setdefault(key, [value])
 
     eng_attr = ""
     for ind_name, indicator in indicators.items():
