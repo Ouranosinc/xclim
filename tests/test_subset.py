@@ -349,9 +349,9 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
         assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
 
-    def test_irregular_datset(self):
+    def test_irregular_dataset(self):
         da = xr.open_dataset(self.nc_2dlonlat)
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
+        out = subset.subset_bbox(da, lon_bnds=[-150, 100], lat_bnds=[10, 60])
         variables = list(da.data_vars)
         variables.pop(variables.index("tasmax"))
         # only tasmax should be subsetted/masked others should remain untouched
@@ -360,8 +360,14 @@ class TestSubsetBbox:
             np.testing.assert_array_equal(out[v], da[v])
 
         # ensure results are equal to previous test on DataArray only
-        out1 = subset.subset_bbox(da.tasmax, lon_bnds=self.lon, lat_bnds=self.lat)
+        out1 = subset.subset_bbox(da.tasmax, lon_bnds=[-150, 100], lat_bnds=[10, 60])
         np.testing.assert_array_equal(out1, out.tasmax)
+
+        # additional test if dimensions have no coordinates
+        da = da.drop_vars(["rlon", "rlat"])
+        subset.subset_bbox(da.tasmax, lon_bnds=[-150, 100], lat_bnds=[10, 60])
+        # We don't test for equality with previous datasets.
+        # Without coords, sel defaults to isel which doesn't include the last element.
 
     # test datasets with descending coords
     def test_inverted_coords(self):
@@ -646,9 +652,7 @@ class TestSubsetShape:
         # Should only have 15 days of data.
         assert len(sub.tasmax) == 15
         # Average max temperature at surface for region on June 1st, 1984 (time=0)
-        np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tasmax.isel(time=0))), 289.634968
-        )
+        np.testing.assert_allclose(float(np.mean(sub.tasmax.isel(time=0))), 289.634968)
         # Check that no warnings are raised for meridian crossing
         assert (
             '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'

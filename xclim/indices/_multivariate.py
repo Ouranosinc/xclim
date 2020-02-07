@@ -966,7 +966,7 @@ def fraction_over_precip_thresh(
     return over / total
 
 
-@declare_units("K", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
 def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     """Average temperature from minimum and maximum temperatures.
 
@@ -982,9 +982,12 @@ def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray
-        Mean (daily) temperature [°C]
+        Mean (daily) temperature [same units as tasmin]
     """
-    return (tasmax + tasmin) / 2
+    tasmax = utils.convert_units_to(tasmax, tasmin)
+    tas = (tasmax + tasmin) / 2
+    tas.attrs["units"] = tasmin.attrs["units"]
+    return tas
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
