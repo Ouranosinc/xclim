@@ -5,7 +5,7 @@ __pycache__/
 
 # Doc-generated files
 docs/notebooks/dask-worker-space/
-docs/notebooks/monthly_growing_degree_days_data.nc
+docs/notebooks/*.nc
 
 # C extensions
 *.so

@@ -6,3 +6,5 @@ Examples
    :maxdepth: 1
 
    example
+   subset
+   ensembles
