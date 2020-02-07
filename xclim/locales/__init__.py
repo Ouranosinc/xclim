@@ -333,7 +333,7 @@ class metadata_locale:
         self.old_locales = LOCALES[:]
         set_locales(*self.locales)
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *args, **kwargs):
         set_locales(*self.old_locales)
 
 

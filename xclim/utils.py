@@ -764,10 +764,6 @@ class Indicator:
         "JJA": "summer",
         "SON": "fall",
         "norm": "Normal",
-        "DJF": "winter",
-        "MAM": "spring",
-        "JJA": "summer",
-        "SON": "fall",
     }
 
     _attrs_mapping.update(months)
