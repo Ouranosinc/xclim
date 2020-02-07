@@ -75,7 +75,7 @@ def get_best_locale(locale: str):
     Parameters
     ----------
     locale : str
-        The requested locale, as a 2-char language code or language_territory code.
+        The requested locale, as an IETF language tag (lang or lang-territory)
 
     Returns
     -------
@@ -85,11 +85,11 @@ def get_best_locale(locale: str):
     available = list_locales()
     if locale in available:
         return locale
-    locale = locale[:2]
+    locale = locale.split("-")[0]
     if locale in available:
         return locale
-    if locale in [av[:2] for av in available]:
-        return [av for av in available if av[:2] == locale][0]
+    if locale in [av.split("-")[0] for av in available]:
+        return [av for av in available if av.split("-")[0] == locale][0]
     return None
 
 
@@ -99,8 +99,8 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
     Parameters
     ----------
     locale : str or sequence of str
-        POSIX locale name or a tuple of the locale name and a translation dict, or
-        a tuple of the locale name and a path to a json file defining translation
+        IETF language tag or a tuple of the language tag and a translation dict, or
+        a tuple of the language tag and a path to a json file defining translation
         of attributes.
 
     Raises
@@ -218,15 +218,16 @@ def get_local_attrs(
     indicator : Union[utils.Indicator, utils.Indicator2D]
         Indicator object
     *locales : str
-        2-char locale strings or tuple of the 2-char locale string and a path to a json
-        file defining translation of attributes. If none are give, defaults to the
-        currently globally set in xclim.locales.LOCALES
+        IETF language tag or a tuple of the language tag and a translation dict, or
+        a tuple of the language tag and a path to a json file defining translation
+        of attributes. If none are given, defaults to the currently globally set in
+        xclim.locales.LOCALES
     names : Optional[Sequence[str]]
         If given, only returns translations of attributes in this list.
     fill_missing : bool
         If True (default), fill untranslated attributes by the default (english) ones.
     append_locale_name : bool
-        If True (default), append the locale name (as "{attr_name}_{locale}") to the
+        If True (default), append the language tag (as "{attr_name}_{locale}") to the
         returned attributes.
 
     Raises
@@ -281,8 +282,8 @@ def set_locales(*locales: Union[str, Sequence[str], Tuple[str, dict]]):
     Parameters
     ----------
     *locales : str or tuple of str
-        POSIX locale name or a tuple of the locale name and a translation dict, or
-        a tuple of the locale name and a path to a json file defining translation
+        IETF language tag or a tuple of the language tag and a translation dict, or
+        a tuple of the language tag and a path to a json file defining translation
         of attributes.
 
     Raises
@@ -310,8 +311,8 @@ class metadata_locale:
         Parameters
         ----------
         **locales : str
-            POSIX locale name or a tuple of the locale name and a translation dict, or
-            a tuple of the locale name and a path to a json file defining translation
+            IETF language tag or a tuple of the language tag and a translation dict, or
+            a tuple of the language tag and a path to a json file defining translation
             of attributes.
 
         Raises
@@ -352,7 +353,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     Parameters
     ----------
     locale : str
-        Locale in the POSIX format
+        Locale in the IETF format
     init_english : bool
         If True, fills the initial dictionary with the english versions of the attributes.
         Defaults to False.
