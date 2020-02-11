@@ -937,6 +937,6 @@ def distance(da, lon, lat):
     def func(lons, lats):
         return g.inv(*np.broadcast_arrays(lons, lats, lon, lat))[2]
 
-    out = xarray.apply_ufunc(func, da.lon, da.lat)
+    out = xarray.apply_ufunc(func, da.lon.load(), da.lat.load())
     out.attrs["units"] = "m"
     return out
