@@ -82,7 +82,6 @@ setup(
     keywords=KEYWORDS,
     name=NAME,
     packages=find_packages(),
-    package_data={"xclim": "locale/*.json"},
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
