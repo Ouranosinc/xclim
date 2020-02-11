@@ -100,7 +100,7 @@ matrix:
           - conda config --set always_yes yes --set changeps1 no
           - conda install setuptools
           - conda update -q conda
-          - conda create -n finch -c conda-forge python=$TRAVIS_PYTHON_VERSION
+          - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
           - conda env update -f environment.yml
           - conda install pytest coveralls pytest-cov
           - source activate xclim
