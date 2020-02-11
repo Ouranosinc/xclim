@@ -45,16 +45,16 @@ TRANSLATABLE_ATTRS : list
 """
 import json
 import warnings
-from collections import UserString
 from pathlib import Path
 from typing import Any
-from typing import Mapping
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
 
 import pkg_resources
+
+from xclim.utils import AttrFormatter
 
 LOCALES = []
 TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title"]
@@ -130,80 +130,6 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         return locale[0], json.load(locf)
 
 
-class TranslatableStr(UserString):
-    """A string that can to translate certain arguments passed to format()`.
-
-    See the doc of format() for more details.
-    """
-
-    def __init__(
-        self,
-        string: str,
-        translations: Mapping[str, Sequence[str]],
-        modifiers: Sequence[str],
-    ):
-        """Initialize the translatable string.
-
-        Parameters
-        ----------
-        string : str
-            Data to potentatially translate.
-        translations : Mapping[str, Sequence[str]]
-            A mapping from a string to translate to its possible translations.
-        modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `translations`.
-        """
-        super().__init__(string)
-        self.translations = translations
-        self.modifiers = modifiers
-
-    def format(self, *args, **kwargs):
-        """Format the string by translating translatable arguments.
-
-        Does the same as str.format(), but if any of the input
-        keyword arguments is a translatable string (identified by braces { }),
-        all possible translations are passed to the formatting. The keyword is
-        removed from the arguments and replaces by all versions of `keyword` + `modifier`.
-
-        Example
-        -------
-        Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
-        to french and that we know that possible values of `adj` are `nice` and `evil`.
-        In french, the genre of the noun changes the adjective (cat = chat is masculine,
-        and goose = oie is feminine) so we initialize the string as:
-
-        >>> s = TranslatableStr("Le chien est {adj1_m}, l'oie est {adj2_f}",
-                                {'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']},
-                                ['_m', '_f'])
-        >>> s.format(adj1='{nice}', adj2='{evil}')
-        "Le chien est beau, l'oie est méchante"
-
-        `TranslatableStr.format()` saw that '{nice}' was translatable and added
-        `adj1_m='beau', adj1_f='belle'` to the arguments passed to `str.format`.
-        If a string is to be translate is has to be encapsulated in curly braces,
-        or else it is given as is and the modifer it not applied:
-
-        >>> s.format(adj1='nice', adj2=`evil`)
-        "Le chien est nice, l'oie est evil"
-        """
-        if self.translations is not None:
-            for key, val in kwargs.copy().items():
-                if (
-                    isinstance(val, str)
-                    and val.startswith("{")
-                    and val[1:-1] in self.translations
-                ):
-                    kwargs.update(
-                        {
-                            f"{key}{modifier}": value
-                            for modifier, value in zip(
-                                self.modifiers, self.translations[val[1:-1]]
-                            )
-                        }
-                    )
-        return super().format(*args, **kwargs)
-
-
 def get_local_attrs(
     indicator: Any,
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
@@ -265,12 +191,26 @@ def get_local_attrs(
                 if (names is None or name in names) and (
                     fill_missing or name in local_attrs
                 ):
-                    ind_dict = loc_dict["attrs_mapping"].copy()
-                    mods = ind_dict.pop("modifiers", [""])
-                    attrs[f"{name}{loc_name}"] = TranslatableStr(
-                        local_attrs.get(name, getattr(indicator, name)), ind_dict, mods,
+                    attrs[f"{name}{loc_name}"] = local_attrs.get(
+                        name, getattr(indicator, name)
                     )
     return attrs
+
+
+def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
+    """Return an AttrFormatter instance for the given locale.
+
+    Parameters
+    ----------
+    locale : str or tuple of str
+        IETF language tag or a tuple of the language tag and a translation dict, or
+        a tuple of the language tag and a path to a json file defining translation
+        of attributes.
+    """
+    loc_name, loc_dict = get_local_dict(locale)
+    attrs_mapping = loc_dict["attrs_mapping"].copy()
+    mods = attrs_mapping.pop("modifiers")
+    return AttrFormatter(attrs_mapping, mods)
 
 
 def set_locales(*locales: Union[str, Sequence[str], Tuple[str, dict]]):
@@ -363,7 +303,9 @@ def generate_local_dict(locale: str, init_english: bool = False):
     indicators = {}
     for module in [xc.atmos, xc.land, xc.seaIce]:
         for indicator in module.__dict__.values():
-            if not isinstance(indicator, (xc.utils.Indicator, xc.utils.Indicator2D)):
+            if not isinstance(
+                indicator, (xc.indicator.Indicator, xc.indicator.Indicator2D)
+            ):
                 continue
             ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
             indicators[ind_name] = indicator
@@ -379,8 +321,8 @@ def generate_local_dict(locale: str, init_english: bool = False):
 
     attrs_mapping = attrs.setdefault("attrs_mapping", {})
     attrs_mapping.setdefault("modifiers", [""])
-    for key, value in xc.utils.Indicator._attrs_mapping.items():
-        attrs_mapping.setdefault(key, [value])
+    for key, value in xc.utils.default_formatter.mapping.items():
+        attrs_mapping.setdefault(key, [value[0]])
 
     eng_attr = ""
     for ind_name, indicator in indicators.items():
