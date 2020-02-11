@@ -26,9 +26,9 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py38-dev
+    - env: TOXENV=py38
       name: "Python3.8 (Linux)"
-      python: 3.8-dev
+      python: 3.8
       dist: xenial
       addons:
         apt:
@@ -64,8 +64,9 @@ matrix:
             - spatialindex
       before_install:
         - printenv
-#        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
-#        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
+        - brew link --overwrite python
+        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
+        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
@@ -88,6 +89,20 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
+    - env: TOXENV=conda-38
+      name: "Python3.8 (Linux w/Anaconda)"
+      python: 3.8
+      before_install:
+          - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          - bash miniconda.sh -b -p $HOME/miniconda
+          - export PATH="$HOME/miniconda/bin:$PATH"
+          - hash -r
+          - conda config --set always_yes yes --set changeps1 no
+          - conda install setuptools
+          - conda update -q conda
+          - conda create -n finch -c conda-forge python=$TRAVIS_PYTHON_VERSION
+          - conda env update -f environment.yml
+          - source activate xclim
   allow_failures:
     - env: TOXENV=py37-macOS
     - env:
