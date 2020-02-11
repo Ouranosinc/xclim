@@ -89,7 +89,7 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=conda-38
+    - env: TOXENV=py38-conda
       name: "Python3.8 (Linux w/Anaconda)"
       python: 3.8
       before_install:
