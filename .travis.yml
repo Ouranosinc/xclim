@@ -89,8 +89,8 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py38-conda
-      name: "Python3.8 (Linux w/Anaconda)"
+    - env: TOXENV=py38-anaconda
+      name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
       before_install:
           - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -102,8 +102,15 @@ matrix:
           - conda update -q conda
           - conda create -n finch -c conda-forge python=$TRAVIS_PYTHON_VERSION
           - conda env update -f environment.yml
+          - conda install pytest coveralls pytest-cov
           - source activate xclim
+      install:
+          - conda install pip
+          - pip install -e .
+      script:
+          - py.test --cov xclim
   allow_failures:
+    - env: TOXENV=py38-anaconda
     - env: TOXENV=py37-macOS
     - env:
       - TOXENV=py37-windows
