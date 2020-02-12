@@ -1,21 +1,15 @@
-from . import checks
-from . import indices as _ind
-from .utils import Indicator
+import warnings
 
+from .land import base_flow_index
+from .land import doy_qmax
+from .land import doy_qmin
+from .land import fit
+from .land import freq_analysis
+from .land import stats
 
-class BaseFlowIndex(Indicator):
-    identifier = 'tx_max'
-    units = 'm3 s-1'
-    required_units = 'K'
-    long_name = 'streamflow'  # discharge ?
-    standard_name = 'water_volume_transport_in_river_channel'
-    description = 'Maximum daily maximum temperature over period.'
-    keywords = ''
-
-    compute = _ind.base_flow_index
-
-    def cfprobe(self, q):
-        checks.check_valid(q, 'standard_name', 'water_volume_transport_in_river_channel')
-
-    def validate(self, q):
-        checks.assert_daily(q)
+# TODO: Remove this file as per DeprecationWarning advises
+warnings.warn(
+    f"{__name__} will be deprecated in xclim v0.13.x. Please begin using the 'xclim.land' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

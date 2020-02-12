@@ -1,7 +1,8 @@
 import datetime as dt
+import logging
 from functools import wraps
 from warnings import warn
-import logging
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -21,16 +22,19 @@ logging.captureWarnings(True)
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
 
+
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
 
     att = getattr(var, key, None)
     if att is None:
-        e = 'Variable does not have a `{}` attribute.'.format(key)
-        warn(e)
+        warn(f"Variable does not have a `{key}` attribute.", UserWarning, stacklevel=3)
     elif att != expected:
-        e = 'Variable has a non-conforming {}. Got `{}`, expected `{}`'.format(key, att, expected)
-        warn(e)
+        warn(
+            f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 def assert_daily(var):
@@ -42,7 +46,7 @@ def assert_daily(var):
 
     # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now
     if isinstance(t0.values, np.datetime64):
-        if pd.infer_freq(var.time.to_pandas()) != 'D':
+        if pd.infer_freq(var.time.to_pandas()) != "D":
             raise ValueError("time series is not recognized as daily.")
 
     # Check that the first time step is one day.
@@ -57,55 +61,55 @@ def assert_daily(var):
 def check_valid_temperature(var, units):
     r"""Check that variable is air temperature."""
 
-    check_valid(var, 'standard_name', 'air_temperature')
-    check_valid(var, 'units', units)
+    check_valid(var, "standard_name", "air_temperature")
+    check_valid(var, "units", units)
     assert_daily(var)
 
 
 def check_valid_discharge(var):
     r"""Check that the variable is a discharge."""
     #
-    check_valid(var, 'standard_name', 'water_volume_transport_in_river_channel')
-    check_valid(var, 'units', 'm3 s-1')
+    check_valid(var, "standard_name", "water_volume_transport_in_river_channel")
+    check_valid(var, "units", "m3 s-1")
 
 
-def valid_daily_min_temperature(comp, units='K'):
+def valid_daily_min_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmin, *args, **kwds):
         check_valid_temperature(tasmin, units)
-        check_valid(tasmin, 'cell_methods', 'time: minimum within days')
+        check_valid(tasmin, "cell_methods", "time: minimum within days")
         return comp(tasmin, **kwds)
 
     return func
 
 
-def valid_daily_mean_temperature(comp, units='K'):
+def valid_daily_mean_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tas, *args, **kwds):
         check_valid_temperature(tas, units)
-        check_valid(tas, 'cell_methods', 'time: mean within days')
+        check_valid(tas, "cell_methods", "time: mean within days")
         return comp(tas, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_temperature(comp, units='K'):
+def valid_daily_max_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on a valid temperature dataset."""
 
     @wraps(comp)
     def func(tasmax, *args, **kwds):
         check_valid_temperature(tasmax, units)
-        check_valid(tasmax, 'cell_methods', 'time: maximum within days')
+        check_valid(tasmax, "cell_methods", "time: maximum within days")
         return comp(tasmax, *args, **kwds)
 
     return func
 
 
-def valid_daily_max_min_temperature(comp, units='K'):
+def valid_daily_max_min_temperature(comp, units="K"):
     r"""Decorator to check that a computation runs on valid min and max temperature datasets."""
 
     @wraps(comp)
@@ -132,7 +136,7 @@ def valid_daily_mean_discharge(comp):
 def valid_missing_data_threshold(comp, threshold=0):
     r"""Check that the relative number of missing data points does not exceed a threshold."""
     # TODO
-    pass
+    raise NotImplementedError
 
 
 def check_is_dataarray(comp):
@@ -147,7 +151,8 @@ def check_is_dataarray(comp):
     return func
 
 
-def missing_any(da, freq, **kwds):
+# This function can probably be made simpler once CFPeriodIndex is implemented.
+def missing_any(da, freq, **indexer):
     r"""Return a boolean DataArray indicating whether there are missing days in the resampled array.
 
     Parameters
@@ -156,27 +161,54 @@ def missing_any(da, freq, **kwds):
       Input array at daily frequency.
     freq : str
       Resampling frequency.
+    **indexer : {dim: indexer, }, optional
+      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+      considered.
 
     Returns
     -------
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
+    from xclim import generic
 
-    c = da.notnull().resample(time=freq).sum(dim='time')
-
-    if '-' in freq:
-        pfreq, anchor = freq.split('-')
+    if "-" in freq:
+        pfreq, anchor = freq.split("-")
     else:
         pfreq = freq
 
-    if pfreq.endswith('S'):
-        start_time = c.indexes['time']
+    # Compute the number of days in the time series during each period at the given frequency.
+    selected = generic.select_time(da, **indexer)
+    if selected.time.size == 0:
+        raise ValueError("No data for selected period.")
+
+    c = selected.notnull().resample(time=freq).sum(dim="time")
+
+    # Otherwise simply use the start and end dates to find the expected number of days.
+    if pfreq.endswith("S"):
+        start_time = c.indexes["time"]
         end_time = start_time.shift(1, freq=freq)
     else:
-        end_time = c.indexes['time']
+        end_time = c.indexes["time"]
         start_time = end_time.shift(-1, freq=freq)
 
+    if indexer:
+        # Create a full synthetic time series and compare the number of days with the original series.
+        t0 = str(start_time[0].date())
+        t1 = str(end_time[-1].date())
+        if isinstance(c.indexes["time"], xr.CFTimeIndex):
+            cal = da.time.encoding.get("calendar")
+            t = xr.cftime_range(t0, t1, freq="D", calendar=cal)
+        else:
+            t = pd.date_range(t0, t1, freq="D")
+
+        sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
+        st = generic.select_time(sda, **indexer)
+        sn = st.notnull().resample(time=freq).sum(dim="time")
+        miss = sn != c
+        return miss
+
     n = (end_time - start_time).days
-    nda = xr.DataArray(n.values, coords={'time': c.time}, dims='time')
+    nda = xr.DataArray(n.values, coords={"time": c.time}, dims="time")
     return c != nda

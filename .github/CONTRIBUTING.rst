@@ -1,5 +1,3 @@
-.. highlight:: shell
-
 ============
 Contributing
 ============
@@ -60,38 +58,62 @@ Get Started!
 Ready to contribute? Here's how to set up `xclim` for local development.
 
 1. Fork the `xclim` repo on GitHub.
+
 2. Clone your fork locally::
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
+    # For virtualenv environments:
     $ mkvirtualenv xclim
+
+    # For Anaconda/Miniconda environments:
+    $ conda create -n xclim python=3.6
+
     $ cd xclim/
-    $ pip install -e .    
+    $ pip install -e .
 
 4. Create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
-   Now you can make your changes locally.
+   Now you can make your changes locally!
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+5. When you're done making changes, check that you verify your changes with `black` and run the tests, including testing other Python versions with `tox`::
 
-    $ flake8 xclim tests
-    $ python setup.py test or py.test
+    # For virtualenv environments:
+    $ pip install black pytest tox
+
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge black pytest tox
+
+    $ black xclim tests
+    $ python setup.py test
     $ tox
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
 
-6. Commit your changes and push your branch to GitHub::
+    # For virtualenv environments:
+    $ pip install pre-commit
 
-    $ git add .
+    # For Anaconda/Miniconda environments:
+    $ conda install -c conda-forge pre_commit
+
+    $ pre-commit install
+
+7. Commit your changes and push your branch to GitHub::
+
+    $ git add *
+
     $ git commit -m "Your detailed description of your changes."
+    # `pre-commit` will run checks at this point:
+    # if no errors are found, changes will be committed.
+    # if errors are found, modifications will be mades. Simply `git commit` again.
+
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -101,14 +123,15 @@ Before you submit a pull request, please follow these guidelines:
 1. Open an *issue* on our `GitHub repository`_ with your issue that you'd like to fix or feature that you'd like to implement.
 2. Perform the changes, commit and push them either to new a branch within Ouranosinc/xclim or to your personal fork of xclim.
 
-.. warning:: Try to keep your contributions within the scope of the issue that you are addressing.
+.. warning::
+     Try to keep your contributions within the scope of the issue that you are addressing.
      While it might be tempting to fix other aspects of the library as it comes up, it's better to
      simply to flag the problems in case others are already working on it.
 
      Consider adding a "**# TODO:**" comment if the need arises.
 
 3. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
-   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not decrease.**
+   If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
    Please ensure that the docstrings adhere to one of the following standards:
@@ -116,40 +139,42 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 2.7, 3.4, 3.5, and 3.6 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
     https://travis-ci.org/Ouranosinc/xclim/pull_requests
 
-.. warning:: PEP8 is strongly enforced. Ensure that your changes pass **flake8** tests
-    prior to pushing your final commits to your branch. PEP8 errors are treated as build errors
-    and will block your pull request from being pushed to *master*
-
+.. warning::
+    PEP8 and Black is strongly enforced. Ensure that your changes pass **Flake8** and **Black**
+    tests prior to pushing your final commits to your branch. Code formatting errors are treated
+    as build errors and will block your pull request from being accepted.
 
 Tips
 ----
 
 To run a subset of tests::
 
-$ py.test tests.test_xclim
+$ pytest tests.test_xclim
 
 
 Versioning
 ----------
 
-In order to update and release the library to PyPi, it's good to use a semantic versioning scheme.
-The method we use is as such::
+In order to update and release the library to PyPI, it's good to use a semantic versioning scheme.
+The method we use is as follows::
 
-  major.minor-release
+  major.minor.patch-release
 
 **Major** releases denote major changes resulting in a stable API;
 
-**Minor** is to be used when adding a module or set of components;
+**Minor** is to be used when adding a module, process or set of components;
 
-**Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
+**Patch** should be used for bug fixes and optimizations;
 
-  An increment to the Major or Minor will reset the Release to `alpha`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
+**Release** is a keyword used to specify the degree of production readiness (`beta` [, and optionally, `gamma`])
+
+  An increment to the Major or Minor will reset the Release to `beta`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
 
 Deploying
 ---------
@@ -158,7 +183,7 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (**including an entry in HISTORY.rst**).
 Then run::
 
-$ bumpversion minor # possible options: major / minor / release
+$ bumpversion <option> # possible options: major / minor / patch / release
 $ git push
 $ git push --tags
 
