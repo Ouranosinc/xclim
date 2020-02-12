@@ -5,6 +5,7 @@ History
 0.14.x
 ------
 * Internationalization of xclim : add `locales` submodule for localized metadata.
+* Fix in `subset.subset_gridpoint` for dask array coordinates.
 * Modified `subset_shape` to support subsetting with GeoPandas datatypes directly.
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
 * Improve the memory use of `indices.growing_season_length`.
