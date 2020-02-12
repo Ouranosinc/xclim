@@ -225,7 +225,7 @@ def cooling_degree_days(
 
 @declare_units("", tas="[temperature]", thresh="[temperature]")
 def freshet_start(
-    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: int = "YS"
+    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: str = "YS"
 ):
     r"""First day consistently exceeding threshold temperature.
 
@@ -245,7 +245,7 @@ def freshet_start(
 
     Returns
     -------
-    float
+    xarray.DataArray
       Day of the year when temperature exceeds threshold over a given number of days for the first time. If there are
       no such day, return np.nan.
 
@@ -400,7 +400,7 @@ def growing_season_length(
 def heat_wave_index(
     tasmax: xarray.DataArray,
     thresh: str = "25.0 degC",
-    window: str = 5,
+    window: int = 5,
     freq: str = "YS",
 ):
     r"""Heat wave index.
