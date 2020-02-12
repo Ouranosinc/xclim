@@ -183,6 +183,13 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
+        # dask for lon lat
+        da.lon.chunk({"rlon": 10})
+        da.lat.chunk({"rlon": 10})
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+
         # test_irregular transposed:
         da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
         dims = list(da1.dims)
