@@ -93,6 +93,7 @@ matrix:
       name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
       before_install:
+          - printenv
           - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
           - bash miniconda.sh -b -p $HOME/miniconda
           - export PATH="$HOME/miniconda/bin:$PATH"
@@ -101,9 +102,9 @@ matrix:
           - conda install setuptools
           - conda update -q conda
           - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
+          - source activate xclim
           - conda env update -f environment.yml
           - conda install pytest coveralls pytest-cov
-          - source activate xclim
       install:
           - conda install pip
           - pip install -e .
@@ -121,7 +122,7 @@ matrix:
 
 before_install:
     - printenv
-    - sudo -H pip install --upgrade pip
+    - pip install --upgrade pip
 
 install:
     - pip install -U tox-travis
