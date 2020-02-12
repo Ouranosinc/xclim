@@ -1,13 +1,13 @@
 language: python
 
-sudo: false
+os: linux
 
 branches:
   only:
     - master
     - ^v[0-9]+\.[0-9]+[\.]?[a-c-]?[0-9]?[\w-]+\b
 
-matrix:
+jobs:
   fast_finish: true
   include:
     - env:
@@ -26,9 +26,9 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py38-dev
+    - env: TOXENV=py38
       name: "Python3.8 (Linux)"
-      python: 3.8-dev
+      python: 3.8
       dist: xenial
       addons:
         apt:
@@ -43,7 +43,7 @@ matrix:
         - GDAL_DATA=/c/OSGeo4W64/share/gdal
       name: "Python3.7 (Windows)"
       os: windows
-      language: bash
+      language: shell
       before_install:
         - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
         - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
@@ -55,7 +55,7 @@ matrix:
     - env: TOXENV=py37-macOS
       name: "Python3.7 (macOS)"
       os: osx
-      language: minimal
+      language: shell
       addons:
         homebrew:
           update: true
@@ -64,8 +64,9 @@ matrix:
             - spatialindex
       before_install:
         - printenv
-#        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
-#        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
+        - brew link --overwrite python
+        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
+        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
@@ -88,7 +89,29 @@ matrix:
         apt:
           packages:
             - libspatialindex-dev
+    - env: TOXENV=py38-anaconda
+      name: "Python3.8 (Linux + Anaconda)"
+      python: 3.8
+      before_install:
+          - printenv
+          - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          - bash miniconda.sh -b -p $HOME/miniconda
+          - export PATH="$HOME/miniconda/bin:$PATH"
+          - hash -r
+          - conda config --set always_yes yes --set changeps1 no
+          - conda install setuptools
+          - conda update -q conda
+          - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
+          - source activate xclim
+          - conda env update -f environment.yml
+          - conda install pytest coveralls pytest-cov
+      install:
+          - conda install pip
+          - pip install -e .
+      script:
+          - py.test --cov xclim
   allow_failures:
+    - env: TOXENV=py38-anaconda
     - env: TOXENV=py37-macOS
     - env:
       - TOXENV=py37-windows
@@ -99,7 +122,7 @@ matrix:
 
 before_install:
     - printenv
-    - sudo -H pip install --upgrade pip
+    - pip install --upgrade pip
 
 install:
     - pip install -U tox-travis
@@ -110,11 +133,10 @@ before_deploy:
     - echo "$TRAVIS_TAG" "$TRAVIS_COMMIT"
 
 deploy:
-  skip_cleanup: true
   skip_existing: true
   provider: pypi
   distributions: sdist bdist_wheel
-  user: Zeitsperre
+  username: Zeitsperre
   password:
     secure: Fk0EFrbBumFHXWoCdTCdrsTp9lSnrksqhEbsXLYFhmfnsFtzQ9z4Uhs4sgyzNeA0VsIJ3q2RnPaSrgDXxDzguzSrm9R2tKjgSoZxrdaMKOaHwkJjkF+5DKqBUpjhGQmlLVt0u31vGBS3u8OE18cP4CxZOuPM2Dx2dnHLB9mVZAC8dlt5SBxS2HtC8J8IYilR/v4fkTt6niZPnaozsViBCiybnzyrylJsYeVhTj7p1buscw/yogZPylNV+O1Dn8GLXe7Viw3ZO5kIyEq96NMTBwpXtbgQmUClcGB6m1J+mx6wE0nh9abo69EtGOuaiCY9XqEgO7J8zZNIG2hC3Smy3+o96ltPopl3C2ZJebvM3aVqNx+GHnSkmAYw/VYtGb9Psd5IzafixTIQkBP6Qab8GGj2+iaeriLgTFqUEvxtywZZovQKHtXgPyy1kcztGSY/hygObQu4Ixvx8BjkzATfMKKkc3B8MBOeFnsxm7gn5IAhukbIh8JHTU4t2sHHJUVAbor3p7luGkZUp6ygoOuYsKNpER+cr39GLVV5p+IAY2Lm69aKSXkJe0tvPRouii2TNfnNU+S8ygbZ/6fqK5VTS1eLG0ehXXCxSDBkqt4xw4IFsoDFwObsjVSzKzcOP0UAqDWZhiHoiPLDxUfW/nA2JoTHrM3tBiXzWAZenS5y7Pc=
   on:
