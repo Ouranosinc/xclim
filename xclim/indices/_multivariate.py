@@ -51,7 +51,7 @@ __all__ = [
 
 @declare_units("days", tasmin="[temperature]", tn10="[temperature]")
 def cold_spell_duration_index(
-    tasmin: xarray.DataArray, tn10: float, window: int = 6, freq: str = "YS"
+    tasmin: xarray.DataArray, tn10: xarray.DataArray, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Cold spell duration index
 
@@ -62,8 +62,8 @@ def cold_spell_duration_index(
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
-    tn10 : float
-      10th percentile of daily minimum temperature.
+    tn10 : xarray.DataArray
+      10th percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell. Default: 6.
     freq : str
@@ -965,7 +965,7 @@ def fraction_over_precip_thresh(
     return over / total
 
 
-@declare_units("K", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
 def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     """Average temperature from minimum and maximum temperatures.
 
@@ -981,9 +981,12 @@ def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray
-        Mean (daily) temperature [°C]
+        Mean (daily) temperature [same units as tasmin]
     """
-    return (tasmax + tasmin) / 2
+    tasmax = utils.convert_units_to(tasmax, tasmin)
+    tas = (tasmax + tasmin) / 2
+    tas.attrs["units"] = tasmin.attrs["units"]
+    return tas
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
