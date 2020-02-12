@@ -51,7 +51,7 @@ __all__ = [
 
 @declare_units("days", tasmin="[temperature]", tn10="[temperature]")
 def cold_spell_duration_index(
-    tasmin: xarray.DataArray, tn10: float, window: int = 6, freq: str = "YS"
+    tasmin: xarray.DataArray, tn10: xarray.DataArray, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Cold spell duration index
 
@@ -62,8 +62,8 @@ def cold_spell_duration_index(
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
-    tn10 : float
-      10th percentile of daily minimum temperature.
+    tn10 : xarray.DataArray
+      10th percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell. Default: 6.
     freq : str
