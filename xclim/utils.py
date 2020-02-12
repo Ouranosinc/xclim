@@ -10,29 +10,30 @@ import re
 import warnings
 from collections import defaultdict
 from collections import OrderedDict
+from datetime import timedelta
 from inspect import signature
 from types import FunctionType
 from typing import Any
 from typing import Optional
 from typing import Union
 
-import dask
 import numpy as np
 import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray.coding.cftime_offsets import MonthBegin
+from xarray.coding.cftime_offsets import MonthEnd
+from xarray.coding.cftime_offsets import QuarterBegin
+from xarray.coding.cftime_offsets import QuarterEnd
+from xarray.coding.cftime_offsets import to_offset
+from xarray.coding.cftime_offsets import YearBegin
+from xarray.coding.cftime_offsets import YearEnd
+from xarray.coding.cftimeindex import CFTimeIndex
+from xarray.core.resample import DataArrayResample
 
 import xclim
 from xclim import checks
-
-from datetime import timedelta
-from xarray.coding.cftimeindex import CFTimeIndex
-from xarray.coding.cftime_offsets import (YearBegin, YearEnd,
-                                          QuarterBegin, QuarterEnd,
-                                          MonthBegin, MonthEnd, to_offset)
-from xarray.core.resample import DataArrayResample
-
 
 __all__ = [
     "units",
@@ -53,6 +54,11 @@ __all__ = [
     "Indicator2D",
     "parse_doc",
     "format_kwargs",
+    "cfindex_start_time",
+    "cfindex_end_time",
+    "cftime_start_time",
+    "cftime_end_time",
+    "time_bnds",
     "wrapped_partial",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -1106,7 +1112,7 @@ def cftime_start_time(date, freq):
 
     freq = to_offset(freq)
     if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
-        raise ValueError('Invalid frequency: ' + freq.rule_code())
+        raise ValueError("Invalid frequency: " + freq.rule_code())
     elif isinstance(freq, YearEnd):
         month = freq.month
         return date - YearEnd(n=1, month=month) + timedelta(days=1)
@@ -1141,7 +1147,7 @@ def cftime_end_time(date, freq):
     """
     freq = to_offset(freq)
     if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
-        raise ValueError('Invalid frequency: ' + freq.rule_code())
+        raise ValueError("Invalid frequency: " + freq.rule_code())
     elif isinstance(freq, YearEnd):
         mod_freq = YearBegin(n=freq.n, month=freq.month)
     elif isinstance(freq, QuarterEnd):
@@ -1237,12 +1243,22 @@ def time_bnds(group, freq):
     elif isinstance(group, DataArrayResample):
         if isinstance(group._full_index, CFTimeIndex):
             cfindex = group._full_index
+        else:
+            raise TypeError(
+                "Index must be a CFTimeIndex, but got an instance of {}".format(
+                    type(group).__name__
+                )
+            )
     else:
-        raise TypeError('index must be a CFTimeIndex, but got '
-                        'an instance of %r' % type(group).__name__)
+        raise TypeError(
+            "Index must be a CFTimeIndex, but got an instance of {}".format(
+                type(group).__name__
+            )
+        )
 
-    return tuple(zip(cfindex_start_time(cfindex, freq),
-                     cfindex_end_time(cfindex, freq)))
+    return tuple(
+        zip(cfindex_start_time(cfindex, freq), cfindex_end_time(cfindex, freq))
+    )
 
 
 def wrapped_partial(func: FunctionType, *args, **kwargs):
