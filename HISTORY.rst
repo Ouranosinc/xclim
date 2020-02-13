@@ -5,12 +5,13 @@ History
 0.14.x
 ------
 * Refactoring of the documentation.
+* Creation of `time_bnds` variables when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.
 * Modified `subset_shape` to support subsetting with GeoPandas datatypes directly.
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
 * Improve the memory use of `indices.growing_season_length`.
 * Better handling of data with atypically named `lat` and `lon` dimensions.
-* Added 6 Fire Weather Indexes.
+* Added six Fire Weather indices.
 
 0.13.x (2020-01-10)
 -------------------
