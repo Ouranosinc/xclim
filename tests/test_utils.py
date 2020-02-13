@@ -689,19 +689,18 @@ def da(index):
 def test_time_bnds(freq, datetime_index, cftime_index):
     da_datetime = da(datetime_index).resample(time=freq)
     da_cftime = da(cftime_index).resample(time=freq)
+
     cftime_bounds = time_bnds(da_cftime, freq=freq)
     cftime_starts, cftime_ends = zip(*cftime_bounds)
     cftime_starts = CFTimeIndex(cftime_starts).to_datetimeindex()
     cftime_ends = CFTimeIndex(cftime_ends).to_datetimeindex()
+
     # cftime resolution goes down to microsecond only, code below corrects
     # that to allow for comparison with pandas datetime
     cftime_ends += np.timedelta64(999, "ns")
     datetime_starts = da_datetime._full_index.to_period(freq).start_time
     datetime_ends = da_datetime._full_index.to_period(freq).end_time
-    print(cftime_starts)
-    print(datetime_starts)
-    print(cftime_ends)
-    print(datetime_ends)
+
     assert_array_equal(cftime_starts, datetime_starts)
     assert_array_equal(cftime_ends, datetime_ends)
 
