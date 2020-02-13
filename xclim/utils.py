@@ -1113,16 +1113,15 @@ def cftime_start_time(date, freq):
     freq = to_offset(freq)
     if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
         raise ValueError("Invalid frequency: " + freq.rule_code())
-    elif isinstance(freq, YearEnd):
+    if isinstance(freq, YearEnd):
         month = freq.month
         return date - YearEnd(n=1, month=month) + timedelta(days=1)
-    elif isinstance(freq, QuarterEnd):
+    if isinstance(freq, QuarterEnd):
         month = freq.month
         return date - QuarterEnd(n=1, month=month) + timedelta(days=1)
-    elif isinstance(freq, MonthEnd):
+    if isinstance(freq, MonthEnd):
         return date - MonthEnd(n=1) + timedelta(days=1)
-    else:
-        return date
+    return date
 
 
 def cftime_end_time(date, freq):
@@ -1148,7 +1147,7 @@ def cftime_end_time(date, freq):
     freq = to_offset(freq)
     if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
         raise ValueError("Invalid frequency: " + freq.rule_code())
-    elif isinstance(freq, YearEnd):
+    if isinstance(freq, YearEnd):
         mod_freq = YearBegin(n=freq.n, month=freq.month)
     elif isinstance(freq, QuarterEnd):
         mod_freq = QuarterBegin(n=freq.n, month=freq.month)
