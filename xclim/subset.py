@@ -257,7 +257,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     )
 
                     # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
-                    if feature.geometry.type == "MultiPolygon":
+                    if isinstance(feature.geometry, MultiPolygon):
                         union = MultiPolygon(cascaded_union(feature.geometry))
                     else:
                         union = Polygon(cascaded_union(feature.geometry))
