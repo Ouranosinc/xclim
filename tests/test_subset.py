@@ -555,6 +555,7 @@ class TestSubsetShape:
         TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
     )
     meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
+    meridian_multi_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian_multi.json")
     poslons_geojson = os.path.join(TESTS_DATA, "cmip5", "poslons.json")
     eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
     southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
@@ -597,9 +598,15 @@ class TestSubsetShape:
         assert len(sub.tas) == 12
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tas.isel(time=0))), 285.064423
+            float(np.mean(sub.tas.isel(time=0))), 285.064453
         )
         self.compare_vals(ds, sub, "tas")
+
+        poly = gpd.read_file(self.meridian_multi_geojson)
+        subtas = subset.subset_shape(ds.tas, poly)
+        np.testing.assert_array_almost_equal(
+            float(np.mean(subtas.isel(time=0))), 281.091553
+        )
 
     def test_no_wraps(self):
         ds = xr.open_dataset(self.nc_file)
