@@ -14,6 +14,7 @@ import pandas as pd
 import xarray
 from pyproj import Geod
 from shapely.geometry import LineString
+from shapely.geometry import MultiPolygon
 from shapely.geometry import Point
 from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
@@ -218,7 +219,7 @@ def wrap_lons_and_split_at_greenwich(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator to split and reproject polygon vectors in a GeoDataFram whose values cross the Greenwich Meridian.
+        A decorator to split and reproject polygon vectors in a GeoDataFrame whose values cross the Greenwich Meridian.
          Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
          the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
          transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
@@ -256,7 +257,10 @@ def wrap_lons_and_split_at_greenwich(func):
                     )
 
                     # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
-                    union = Polygon(cascaded_union(feature.geometry))
+                    if isinstance(feature.geometry, MultiPolygon):
+                        union = MultiPolygon(cascaded_union(feature.geometry))
+                    else:
+                        union = Polygon(cascaded_union(feature.geometry))
                     meridian = LineString([Point(0, 90), Point(0, -90)])
                     buffered = meridian.buffer(0.000000001)
                     split_polygons = split(union, meridian)
@@ -435,7 +439,8 @@ def subset_shape(
 
     Returns
     -------
-    Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]
+    Union[xarray.DataArray, xarray.Dataset]
+        A subsetted copy of  `ds`
 
     Examples
     --------
@@ -456,9 +461,13 @@ def subset_shape(
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
     # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
-    ds_copy = copy.deepcopy(ds)
+    if isinstance(ds, xarray.DataArray):
+        ds_copy = copy.deepcopy(ds._to_temp_dataset())
+    else:
+        ds_copy = copy.deepcopy(ds)
+
     if isinstance(shape, gpd.GeoDataFrame):
-        poly = shape
+        poly = shape.copy()
     else:
         poly = gpd.GeoDataFrame.from_file(shape)
 
@@ -530,7 +539,7 @@ def subset_shape(
         x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
     )
 
-    if np.all(np.isnan(mask_2d)):
+    if np.all(mask_2d.isnull()):
         raise ValueError(
             "No gridcell centroids found within provided polygon. "
             'Try using the "buffer" option to create an expanded areas or verify polygon '
@@ -539,15 +548,12 @@ def subset_shape(
     # loop through variables
     for v in ds_copy.data_vars:
         if set.issubset(set(mask_2d.dims), set(ds_copy[v].dims)):
-            ds_copy[v] = ds_copy[v].where((~np.isnan(mask_2d)), drop=True)
+            ds_copy[v] = ds_copy[v].where(mask_2d.notnull())
 
     # Remove coordinates where all values are outside of region mask
-    if "lon" in ds_copy.dims:
-        ds_copy = ds_copy.dropna(dim="lon", how="all")
-        ds_copy = ds_copy.dropna(dim="lat", how="all")
-    else:  # curvilinear case
-        for d in ds_copy.lon.dims:
-            ds_copy = ds_copy.dropna(dim=d, how="all")
+    for dim in mask_2d.dims:
+        mask_2d = mask_2d.dropna(dim, how="all")
+    ds_copy = ds_copy.sel({dim: mask_2d[dim] for dim in mask_2d.dims})
 
     # Add a CRS definition as a coordinate for reference purposes
     if wrap_lons:
@@ -556,6 +562,8 @@ def subset_shape(
             spatial_ref="+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
         )
 
+    if isinstance(ds, xarray.DataArray):
+        return ds._from_temp_dataset(ds_copy)
     return ds_copy
 
 
