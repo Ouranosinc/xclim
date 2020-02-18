@@ -4,6 +4,7 @@ History
 
 0.14.x
 ------
+* Added support for pint 0.10
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.
 * Creation of `time_bnds` variables when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.
