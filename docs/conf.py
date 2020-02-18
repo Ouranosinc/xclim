@@ -56,8 +56,8 @@ def _indicator_table(realm):
         }
         try:
             table[indname] = ind.json(args)
-        except KeyError:
-            print(f"{ind.identifier} could not be documented.")
+        except KeyError as err:
+            print(f"{ind.identifier} could not be documented.({err})")
         else:
             table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table

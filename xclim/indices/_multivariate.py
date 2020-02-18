@@ -437,9 +437,10 @@ def drought_code(
     snd: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
     start_date: str = None,
+    start_up_mode: str = "snow_depth",
     **params,
 ):
-    r"""Return the daily drought code
+    r"""The daily drought code (FWI component)
 
     The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
 
@@ -481,6 +482,7 @@ def drought_code(
         dc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
+    params["start_up_mode"] = start_up_mode
 
     out = fwi.fire_weather_ufunc(
         tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indexes=["DC"], **params

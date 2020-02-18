@@ -11,6 +11,7 @@ __all__ = [
     "tx_days_above",
     "tx_tn_days_above",
     "heat_wave_frequency",
+    "heat_wave_total_length",
     "heat_wave_max_length",
     "heat_wave_index",
     "tg",
