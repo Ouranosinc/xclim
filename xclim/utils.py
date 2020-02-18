@@ -272,7 +272,11 @@ def convert_units_to(
 
         tu_u = pint2cfunits(tu)
         with units.context(context or "none"):
-            out = units.convert(source, fu, tu)
+            out = xr.DataArray(
+                data=units.convert(source.values, fu, tu),
+                coords=source.coords,
+                attrs=source.attrs,
+            )
             out.attrs["units"] = tu_u
             return out
 
