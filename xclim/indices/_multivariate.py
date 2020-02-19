@@ -1398,4 +1398,4 @@ def winter_rain_ratio(
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
-    return ratio[winter]
+    return ratio.sel(time=winter)
