@@ -4,6 +4,8 @@ History
 
 0.14.x
 ------
+* Add `atmos.heat_wave_total_length` (fixing a namespace issue)
+* Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.
 * Creation of `time_bnds` variables when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.
