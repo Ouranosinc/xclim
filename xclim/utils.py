@@ -294,6 +294,11 @@ def convert_units_to(
         fu = units2pint(source)
 
         if fu == tu:
+            if target == tu:
+                return source
+
+            # The units are the same, but the symbol is not.
+            source.attrs["units"] = target
             return source
 
         tu_u = pint2cfunits(tu)
