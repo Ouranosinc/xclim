@@ -137,8 +137,9 @@ class TestParseDoc:
 class TestPercentileDOY:
     def test_simple(self, tas_series):
         tas = tas_series(np.arange(365), start="1/1/2001")
+        tas = xr.concat((tas, tas), "dim0")
         p1 = percentile_doy(tas, window=5, per=0.5)
-        assert p1.sel(dayofyear=3).data == 2
+        assert p1.sel(dayofyear=3, dim0=0).data == 2
         assert p1.attrs["units"] == "K"
 
 
