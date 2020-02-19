@@ -290,6 +290,7 @@ def convert_units_to(
                 data=units.convert(source.values, fu, tu),
                 coords=source.coords,
                 attrs=source.attrs,
+                name=source.name,
             )
             out.attrs["units"] = tu_u
             return out
