@@ -83,6 +83,7 @@ if version.parse(pint.__version__) >= version.parse("0.10"):
     units.define(
         "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
     )
+
 else:
     units.define("degC = kelvin; offset: 273.15 = celsius = C")
     units.define("d = day")
