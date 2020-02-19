@@ -20,6 +20,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/index
    indicators
    api
+   notebooks/units
    icclim
    contributing
    authors
