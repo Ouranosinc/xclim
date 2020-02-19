@@ -273,7 +273,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs={"epsg:4326"},
+                        crs="epsg:4326",
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
                     # split_gdf.columns = ["index", "geometry"]
