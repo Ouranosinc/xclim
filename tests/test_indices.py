@@ -972,13 +972,15 @@ class TestWinterRainRatio:
     def test_simple(self, pr_series, tas_series):
         pr = np.ones(450)
         pr = pr_series(pr, start="12/1/2000")
+        pr = xr.concat((pr, pr), "dim0")
 
         tas = np.zeros(450) - 1
         tas[10:20] += 10
         tas = tas_series(tas + K2C, start="12/1/2000")
+        tas = xr.concat((tas, tas), "dim0")
 
         out = xci.winter_rain_ratio(pr=pr, tas=tas)
-        np.testing.assert_almost_equal(out, [10.0 / (31 + 31 + 28), 0])
+        np.testing.assert_almost_equal(out.isel(dim0=0), [10.0 / (31 + 31 + 28), 0])
 
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
