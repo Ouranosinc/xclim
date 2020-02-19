@@ -22,6 +22,7 @@ import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
+from packaging import version
 from xarray.coding.cftime_offsets import MonthBegin
 from xarray.coding.cftime_offsets import MonthEnd
 from xarray.coding.cftime_offsets import QuarterBegin
@@ -71,20 +72,29 @@ units.define(
     )
 )
 
-
 # Define commonly encountered units not defined by pint
-units.define(
-    "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
-    "= degreeN"
-)
-units.define(
-    "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
-)
-units.define(
-    "degC = kelvin; offset: 273.15 = celsius = C"
-)  # add 'C' as an abbrev for celsius (default Coulomb)
-units.define("d = day")
-units.define("h = hour")  # Not the Planck constant...
+if version.parse(pint.__version__) >= version.parse("0.10"):
+    units.define("@alias degC = C")
+    units.define("@alias day = d")
+    units.define("@alias hour = h")  # Not the Planck constant...
+    units.define(
+        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+    )
+    units.define(
+        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+    )
+else:
+    units.define("degC = kelvin; offset: 273.15 = celsius = C")
+    units.define("d = day")
+    units.define("h = hour")
+    units.define(
+        "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
+        "= degreeN"
+    )
+    units.define(
+        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
+    )
+
 units.define("[speed] = [length] / [time]")
 
 # Default context.
