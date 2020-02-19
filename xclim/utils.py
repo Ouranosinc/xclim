@@ -74,7 +74,8 @@ units.define(
 
 # Define commonly encountered units not defined by pint
 if version.parse(pint.__version__) >= version.parse("0.10"):
-    units.define("@alias degC = C")
+    units.define("@alias degC = C = deg_C")
+    units.define("@alias degK = deg_K")
     units.define("@alias day = d")
     units.define("@alias hour = h")  # Not the Planck constant...
     units.define(
@@ -85,7 +86,7 @@ if version.parse(pint.__version__) >= version.parse("0.10"):
     )
 
 else:
-    units.define("degC = kelvin; offset: 273.15 = celsius = C")
+    units.define("degC = kelvin; offset: 273.15 = celsius = C = deg_C")
     units.define("d = day")
     units.define("h = hour")
     units.define(
