@@ -483,7 +483,7 @@ def percentile_doy(
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
     if p.dayofyear.max() == 366:
-        p = adjust_doy_calendar(p.loc[p.dayofyear < 366], arr)
+        p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
 
     p.attrs.update(arr.attrs.copy())
     return p
