@@ -4,6 +4,7 @@ History
 
 0.14.x
 ------
+* Added support for pint 0.10
 * Add `atmos.heat_wave_total_length` (fixing a namespace issue)
 * Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.

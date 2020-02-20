@@ -34,7 +34,7 @@ requirements = [
     "geopandas>=0.4",
     "dask[complete]>=2.6",
     "pyproj>=2.4",
-    "pint==0.9",
+    "pint>=0.9",
     "bottleneck~=1.3.1",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",

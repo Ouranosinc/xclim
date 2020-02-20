@@ -243,12 +243,19 @@ class TestIndicator:
         out = atmos.wetdays(
             pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day
         )
-        assert out.attrs["long_name"] == "Number of wet days (precip >= 1 mm/day)"
+        # pint 0.10 now pretty print day as d.
+        assert out.attrs["long_name"] in [
+            "Number of wet days (precip >= 1 mm/day)",
+            "Number of wet days (precip >= 1 mm/d)",
+        ]
 
         out = atmos.wetdays(
             pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day
         )
-        assert out.attrs["long_name"] == "Number of wet days (precip >= 1.5 mm/day)"
+        assert out.attrs["long_name"] in [
+            "Number of wet days (precip >= 1.5 mm/day)",
+            "Number of wet days (precip >= 1.5 mm/d)",
+        ]
 
 
 class TestKwargs:
@@ -373,6 +380,7 @@ class TestConvertUnitsTo:
         out2 = indices.tx_days_above(tas, "303.15 K")
         np.testing.assert_array_equal(out, out1)
         np.testing.assert_array_equal(out, out2)
+        assert out1.name == tas.name
 
     def test_fraction(self):
         out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
