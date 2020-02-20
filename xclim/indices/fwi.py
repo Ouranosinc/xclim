@@ -1,40 +1,66 @@
 """
-Adapted from:
-Matlab code CalcFWITimeSeriesWithStartup.m from GFWED made for using MERRA2 data.
-This was a translation of FWI.vba of the Canadian Fire Weather Index system.
-Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System
-Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+==============================
+Fire Weather Indices Submodule
+==============================
 
-See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
+Methods defined here are used by :func:`xclim.indices.drought_code` and :func:`xclim.indices.fire_weather_indexes`.
 
-Parameters definition
----------------------
-Default values for the following parameters are stored in the DEFAULT_PARAMS dict.
+Adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using
+MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system.
 
-min_lat: Min latitude for analysis
-max_lat: Max latitude for analysis
-minLandFrac: Minimum grid cell land fraction for analysis
-minT: Mask out anything with mean annual Tsurf less than this
-minPrec: Mask out anything with mean annual prec less than this
-snowCoverDaysCalc: Number of days prior to spring over which to determine if winter had substantial snow cover
-minWinterSnoD: Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover
-snoDThresh: Minimum depth (m) for there to be considered snow on ground at any given time
-minSnowDayFrac: Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover
-startShutDays: Number of previous days over which to consider start or end of winter
-tempThresh: Temp thresh (C) to define start and end of winter
-precThresh: Min precip (mm/day) when determining if last three days had any precip
-DCDryStartFactor: DC number of days since precip mult factor for dry start.
-DMCDryStartFactor: DMC number of days since precip mult factor for dry start.
-DCStart: DC starting value after wet winter
-DMCStart: DMC starting value after wet winter
-FFMCStart: FFMC starting value after any winter
 
-Notes
------
-TODO: Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25
-TODO: Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions
-TODO: Add references
-TODO: Allow computation of DC/DMC/FFMC independently
+Default values for the following parameters are stored in the DEFAULT_PARAMS dict. The current implementation doesn't use all those parameters, so it might be useless to modify them.
+
+Parameters
+----------
+
+    min_lat : float
+        Min latitude for analysis
+    max_lat : float
+        Max latitude for analysis
+    minLandFrac : float
+        Minimum grid cell land fraction for analysis
+    minT : float
+        Mask out anything with mean annual Tsurf less than this
+    minPrec : float
+        Mask out anything with mean annual prec less than this
+    snowCoverDaysCalc : int
+        Number of days prior to spring over which to determine if winter had substantial snow cover
+    minWinterSnoD : float
+        Minimum mean depth (m) during past snowCoverDaysCalc days for winter to be considered having had substantial snow cover
+    snoDThresh : float
+        Minimum depth (m) for there to be considered snow on ground at any given time
+    minSnowDayFrac : float
+        Minimum fraction of days during snowCoverDaysCalc where snow cover was greater than snoDThresh for winter to be considered having had substantial snow cover
+    startShutDays : int
+        Number of previous days over which to consider start or end of winter
+    tempThresh : float
+        Temp thresh (C) to define start and end of winter
+    precThresh : float
+        Min precip (mm/day) when determining if last three days had any precip
+    DCDryStartFactor : float
+        DC number of days since precip mult factor for dry start.
+    DMCDryStartFactor : float
+        DMC number of days since precip mult factor for dry start.
+    DCStart : float
+        DC starting value after wet winter
+    DMCStart : float
+        DMC starting value after wet winter
+    FFMCStart : float
+        FFMC starting value after any winter
+
+References
+----------
+Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+
+https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
+
+.. todo::
+
+    Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25,
+    Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions,
+    Add references,
+    Allow computation of DC/DMC/FFMC independently,
 """
 import math
 from collections import OrderedDict
@@ -94,7 +120,7 @@ def day_length_factor(lat, kind="gfwed"):
 
     Note
     ----
-    Taken from GFWED code.
+    Values taken from GFWED code.
     """
     lat_bnds = (-90, -15, 15, 90)
     i = np.digitize(lat, lat_bnds) - 1

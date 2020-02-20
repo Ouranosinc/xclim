@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
     -   id: trailing-whitespace
         language_version: python3
@@ -31,12 +31,12 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.8.0
+    rev: v1.9.0
     hooks:
     -   id: reorder-python-imports
         language_version: python3
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.25.1
+    rev: v1.26.2
     hooks:
     -   id: pyupgrade
         language_version: python3
@@ -44,3 +44,9 @@ repos:
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.3.7
+    hooks:
+    -   id: nbstripout
+        language_version: python3
+        files: ".ipynb"
