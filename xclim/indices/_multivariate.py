@@ -248,7 +248,7 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
     q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     dtr = tasmax - tasmin
     out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -287,7 +287,7 @@ def daily_temperature_range_variability(
     q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -328,7 +328,7 @@ def extreme_temperature_range(
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
