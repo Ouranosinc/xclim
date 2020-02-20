@@ -292,16 +292,13 @@ def convert_units_to(
 
     if isinstance(source, xr.DataArray):
         fu = units2pint(source)
+        tu_u = pint2cfunits(tu)
 
         if fu == tu:
-            if target == tu:
-                return source
-
-            # The units are the same, but the symbol is not.
-            source.attrs["units"] = target
+            # The units are the same, but the symbol may not be.
+            source.attrs["units"] = tu_u
             return source
 
-        tu_u = pint2cfunits(tu)
         with units.context(context or "none"):
             out = xr.DataArray(
                 data=units.convert(source.values, fu, tu),
