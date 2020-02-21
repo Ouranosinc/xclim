@@ -2,9 +2,14 @@
 History
 =======
 
-0.14.x
+0.15.x
 ------
 * Internationalization of xclim : add `locales` submodule for localized metadata.
+
+0.14.x (2020-02-21)
+-------------------
+* Refactoring of the documentation.
+* Added support for pint 0.10
 * Add `atmos.heat_wave_total_length` (fixing a namespace issue)
 * Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.

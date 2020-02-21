@@ -239,6 +239,7 @@ class TestConvertUnitsTo:
         out2 = indices.tx_days_above(tas, "303.15 K")
         np.testing.assert_array_equal(out, out1)
         np.testing.assert_array_equal(out, out2)
+        assert out1.name == tas.name
 
     def test_fraction(self):
         out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")

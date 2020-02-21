@@ -95,8 +95,10 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
 
     Examples
     --------
+
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
     at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr
     >>> t = xr.open_dataset('tas.day.nc')
     >>> tg = tm_mean(t, freq="QS-DEC")
@@ -394,13 +396,13 @@ def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
     Notes
     -----
     Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0\celsius] \neq [p_{i+1} <
-    0\celsius]`, that is, the days when the temperature crosses the freezing point.
+    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0^\circ C] \neq [p_{i+1} <
+    0^\circ C]`, that is, the days when the temperature crosses the freezing point.
     Then the maximum number of consecutive frost days is given by
 
     .. math::
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
@@ -516,6 +518,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 1-day total
     at an annual frequency:
+
     >>> import xarray as xr
     >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
@@ -550,6 +553,7 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the highest 5-day total precipitation
     at an annual frequency:
+
     >>> import xarray as xr
     >>> pr = xr.open_dataset('pr.day.nc').pr
     >>> window = 5

@@ -23,8 +23,8 @@ import numpy as np
 import pint.converters
 import pint.unit
 import xarray as xr
-
 from boltons.funcutils import wraps
+from packaging import version
 from xarray.coding.cftime_offsets import MonthBegin
 from xarray.coding.cftime_offsets import MonthEnd
 from xarray.coding.cftime_offsets import QuarterBegin
@@ -54,7 +54,6 @@ __all__ = [
     "default_formatter",
     "AttrFormatter",
     "parse_doc",
-    "format_kwargs",
     "cfindex_start_time",
     "cfindex_end_time",
     "cftime_start_time",
@@ -73,20 +72,31 @@ units.define(
     )
 )
 
-
 # Define commonly encountered units not defined by pint
-units.define(
-    "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
-    "= degreeN"
-)
-units.define(
-    "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
-)
-units.define(
-    "degC = kelvin; offset: 273.15 = celsius = C"
-)  # add 'C' as an abbrev for celsius (default Coulomb)
-units.define("d = day")
-units.define("h = hour")  # Not the Planck constant...
+if version.parse(pint.__version__) >= version.parse("0.10"):
+    units.define("@alias degC = C = deg_C")
+    units.define("@alias degK = deg_K")
+    units.define("@alias day = d")
+    units.define("@alias hour = h")  # Not the Planck constant...
+    units.define(
+        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+    )
+    units.define(
+        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+    )
+
+else:
+    units.define("degC = kelvin; offset: 273.15 = celsius = C = deg_C")
+    units.define("d = day")
+    units.define("h = hour")
+    units.define(
+        "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
+        "= degreeN"
+    )
+    units.define(
+        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
+    )
+
 units.define("[speed] = [length] / [time]")
 
 # Default context.
@@ -282,13 +292,20 @@ def convert_units_to(
 
     if isinstance(source, xr.DataArray):
         fu = units2pint(source)
+        tu_u = pint2cfunits(tu)
 
         if fu == tu:
+            # The units are the same, but the symbol may not be.
+            source.attrs["units"] = tu_u
             return source
 
-        tu_u = pint2cfunits(tu)
         with units.context(context or "none"):
-            out = units.convert(source, fu, tu)
+            out = xr.DataArray(
+                data=units.convert(source.values, fu, tu),
+                coords=source.coords,
+                attrs=source.attrs,
+                name=source.name,
+            )
             out.attrs["units"] = tu_u
             return out
 
@@ -840,34 +857,6 @@ def parse_doc(doc):
                 out["long_name"] = match.groups()[0]
 
     return out
-
-
-def format_kwargs(attrs: dict, params: dict) -> None:
-    """Modify attribute with argument values.
-
-    Parameters
-    ----------
-    attrs : dict
-      Attributes to be assigned to function output. The values of the attributes in braces will be replaced the
-      the corresponding args values.
-    params : dict
-      A BoundArguments.arguments dictionary storing a function's arguments.
-    """
-    attrs_mapping = {
-        "cell_methods": {"YS": "years", "MS": "months"},
-        "long_name": {"YS": "Annual", "MS": "Monthly"},
-    }
-
-    for key, val in attrs.items():
-        mba = {}
-        # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-        for k, v in params.items():
-            if isinstance(v, str) and v in attrs_mapping.get(key, {}).keys():
-                mba[k] = "{" + v + "}"
-            else:
-                mba[k] = v
-
-        attrs[key] = val.format(**mba).format(**attrs_mapping.get(key, {}))
 
 
 def cftime_start_time(date, freq):
