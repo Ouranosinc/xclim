@@ -12,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.13.4-beta"
+VERSION = "0.14.0"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -34,7 +34,7 @@ requirements = [
     "geopandas>=0.4",
     "dask[complete]>=2.6",
     "pyproj>=2.4",
-    "pint==0.9",
+    "pint>=0.9",
     "bottleneck~=1.3.1",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
@@ -47,7 +47,16 @@ setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest", "tox"]
 
-docs_requirements = ["sphinx", "sphinx-rtd-theme", "nbsphinx", "pandoc", "ipython"]
+docs_requirements = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "pandoc",
+    "ipython",
+    "ipykernel",
+    "jupyter_client",
+    "matplotlib",
+]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:

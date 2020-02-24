@@ -243,12 +243,19 @@ class TestIndicator:
         out = atmos.wetdays(
             pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day
         )
-        assert out.attrs["long_name"] == "Number of wet days (precip >= 1 mm/day)"
+        # pint 0.10 now pretty print day as d.
+        assert out.attrs["long_name"] in [
+            "Number of wet days (precip >= 1 mm/day)",
+            "Number of wet days (precip >= 1 mm/d)",
+        ]
 
         out = atmos.wetdays(
             pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day
         )
-        assert out.attrs["long_name"] == "Number of wet days (precip >= 1.5 mm/day)"
+        assert out.attrs["long_name"] in [
+            "Number of wet days (precip >= 1.5 mm/day)",
+            "Number of wet days (precip >= 1.5 mm/d)",
+        ]
 
 
 class TestKwargs:
@@ -271,8 +278,9 @@ class TestParseDoc:
 class TestPercentileDOY:
     def test_simple(self, tas_series):
         tas = tas_series(np.arange(365), start="1/1/2001")
+        tas = xr.concat((tas, tas), "dim0")
         p1 = percentile_doy(tas, window=5, per=0.5)
-        assert p1.sel(dayofyear=3).data == 2
+        assert p1.sel(dayofyear=3, dim0=0).data == 2
         assert p1.attrs["units"] == "K"
 
 
@@ -372,6 +380,7 @@ class TestConvertUnitsTo:
         out2 = indices.tx_days_above(tas, "303.15 K")
         np.testing.assert_array_equal(out, out1)
         np.testing.assert_array_equal(out, out2)
+        assert out1.name == tas.name
 
     def test_fraction(self):
         out = utils.convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")

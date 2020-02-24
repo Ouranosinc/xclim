@@ -50,3 +50,7 @@ dt var {
     font-family: Monospace;
     font-style: normal;
 }
+
+.xr-attrs dt {
+  display: inline !important;
+}

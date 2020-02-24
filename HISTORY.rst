@@ -2,10 +2,14 @@
 History
 =======
 
-0.14.x
-------
+0.14.x (2020-02-21)
+-------------------
+* Refactoring of the documentation.
+* Added support for pint 0.10
+* Add `atmos.heat_wave_total_length` (fixing a namespace issue)
+* Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.
-* Creation of `time_bnds` variables when resampling data encoded with `CFTimeIndex` (non-standard calendars).
+* Added utility functions to compute `time_bnds` when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.
 * Modified `subset_shape` to support subsetting with GeoPandas datatypes directly.
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.

@@ -1,7 +1,8 @@
-import numpy as np
-import xarray
 import datetime
 from typing import Union
+
+import numpy as np
+import xarray
 
 from xclim import run_length as rl
 from xclim import utils
@@ -172,7 +173,7 @@ def maximum_consecutive_wet_days(
     .. math::
 
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0\celsius]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
@@ -358,6 +359,7 @@ def growing_season_length(
     Examples
     --------
     If working in the Southern Hemisphere, one can use:
+
     >>> gsl = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')
     """
     thresh = utils.convert_units_to(thresh, tas)

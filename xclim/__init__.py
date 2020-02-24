@@ -12,7 +12,7 @@ from xclim import seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.13.4-beta"
+__version__ = "0.14.0"
 
 
 def build_module(name, objs, doc="", source=None, mode="ignore"):
@@ -141,10 +141,19 @@ def __build_icclim(mode="warn"):
         "xclim.icclim",
         mapping,
         doc="""
-                       ==============
-                       ICCLIM indices
-                       ==============
-                       """,
+            ==============
+            ICCLIM indices
+            ==============
+            The European Climate Assessment & Dataset project (`ECAD`_) defines
+            a set of 26 core climate indides. Those have been made accessible
+            directly in xclim through their ECAD name for compatibility. Hoewever,
+            the methods in this module are only wrappers around the corresponding
+            methods of  `xclim.indices`. Note that none of the checks performed by
+            the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
+            are performed in this module.
+
+            .. _ECAD: https://www.ecad.eu/
+            """,
         mode=mode,
     )
     return mod

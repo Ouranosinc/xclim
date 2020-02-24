@@ -248,7 +248,7 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
     q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     dtr = tasmax - tasmin
     out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -287,7 +287,7 @@ def daily_temperature_range_variability(
     q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -328,7 +328,7 @@ def extreme_temperature_range(
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -437,9 +437,10 @@ def drought_code(
     snd: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
     start_date: str = None,
+    start_up_mode: str = "snow_depth",
     **params,
 ):
-    r"""Return the daily drought code
+    r"""The daily drought code (FWI component)
 
     The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
 
@@ -481,6 +482,7 @@ def drought_code(
         dc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
+    params["start_up_mode"] = start_up_mode
 
     out = fwi.fire_weather_ufunc(
         tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indexes=["DC"], **params
@@ -786,6 +788,7 @@ def precip_accumulation(
     --------
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
@@ -1398,4 +1401,4 @@ def winter_rain_ratio(
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
-    return ratio[winter]
+    return ratio.sel(time=winter)
