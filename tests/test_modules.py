@@ -40,3 +40,10 @@ class TestICCLIM:
         from xclim import icclim
 
         assert getattr(icclim, "TG", None) is not None
+
+
+class TestPCC:
+    def test_exists(self):
+        from xclim import pcc
+
+        assert getattr(pcc, "date_of_first_fall_frost", None) is not None

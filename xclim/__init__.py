@@ -2,6 +2,7 @@
 """Top-level package for xclim."""
 import sys
 from functools import partial
+from typing import Optional
 
 from xclim import atmos
 from xclim import indices
@@ -15,7 +16,13 @@ __email__ = "logan.travis@ouranos.ca"
 __version__ = "0.14.0"
 
 
-def build_module(name, objs, doc="", source=None, mode="ignore"):
+def build_module(
+    name: str,
+    objs: dict,
+    doc: str = "",
+    source: Optional[object] = None,
+    mode: str = "ignore",
+):
     """Create a module from imported objects.
 
     Parameters
@@ -27,10 +34,10 @@ def build_module(name, objs, doc="", source=None, mode="ignore"):
       keyed by the name they will take in the created module.
     doc : str
       Docstring of the new module.
-    source : Module object
+    source : object
       Module where objects are defined if not explicitly given.
-    mode : {'raise', 'warn', 'ignore'}
-      How to deal with missing objects.
+    mode : str
+      How to deal with missing objects. Acceptable parameters are 'raise', 'warn', or 'ignore'.
 
 
     Returns
@@ -81,9 +88,9 @@ def build_module(name, objs, doc="", source=None, mode="ignore"):
     return out
 
 
-def __build_icclim(mode="warn"):
+def __build_icclim(mode: str = "warn"):
 
-    #  ['SD', 'SD1', 'SD5cm', 'SD50cm',
+    #  'SD', 'SD1', 'SD5cm', 'SD50cm',
 
     # TODO : Complete mappings for ICCLIM indices
     mapping = {
@@ -145,10 +152,10 @@ def __build_icclim(mode="warn"):
             ICCLIM indices
             ==============
             The European Climate Assessment & Dataset project (`ECAD`_) defines
-            a set of 26 core climate indides. Those have been made accessible
-            directly in xclim through their ECAD name for compatibility. Hoewever,
+            a set of 26 core climate indices. Those have been made accessible
+            directly in xclim through their ECAD name for compatibility. However,
             the methods in this module are only wrappers around the corresponding
-            methods of  `xclim.indices`. Note that none of the checks performed by
+            methods of `xclim.indices`. Note that none of the checks performed by
             the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
             are performed in this module.
 
@@ -159,4 +166,45 @@ def __build_icclim(mode="warn"):
     return mod
 
 
+def __build_pcc(mode: str = "warn"):
+    mapping = dict(
+        longest_spell_of_30_degrees_celsius_days=partial(
+            indices.heat_wave_max_length,
+            thresh_tasmin="0 degC",
+            thresh_tasmax="30 degC",
+            window=1,
+        ),
+        # average_length_of_heat_waves=None,
+        coldest_minimum_temperature=indices.tn_min,
+        cooling_degree_days=indices.cooling_degree_days,
+        # corn_heat_units=None,
+        date_of_first_fall_frost=partial(
+            indices.growing_season_end, thresh="0 degC", mid_date="07-15", window=1
+        ),
+        date_of_last_spring_frost=partial(indices.last_spring_frost),
+    )
+
+    mod = build_module(
+        "xclim.pcc",
+        mapping,
+        doc="""
+            ==============================
+            Prairie Climate Centre indices
+            ==============================
+            The Prairie Climate Centre (`PCC`_) defines a set of 23 core climate `indices`_.
+            They have been made accessible directly in xclim by their climate atlas names.
+            However, the methods in this module are only wrappers around the corresponding
+            methods of `xclim.indices`. Note that none of the checks performed by
+            the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
+            are performed in this module.
+
+            .. _PCC: http://prairieclimatecentre.ca/
+            .. _indices: https://climateatlas.ca/variables
+            """,
+        mode=mode,
+    )
+    return mod
+
+
 ICCLIM = __build_icclim("ignore")
+PCC = __build_pcc("ignore")

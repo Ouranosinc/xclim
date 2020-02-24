@@ -1,5 +1,4 @@
 import datetime
-from typing import Union
 
 import numpy as np
 import xarray
@@ -25,7 +24,9 @@ __all__ = [
     "cooling_degree_days",
     "freshet_start",
     "growing_degree_days",
+    "growing_season_end",
     "growing_season_length",
+    "last_spring_frost",
     "heat_wave_index",
     "heating_degree_days",
     "tn_days_below",
@@ -42,7 +43,9 @@ __all__ = [
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
-def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
+def cold_spell_days(
+    tas, thresh: str = "-10 degC", window: int = 5, freq: str = "AS-JUL"
+):
     r"""Cold spell days
 
     The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
@@ -84,7 +87,7 @@ def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
-def daily_pr_intensity(pr, thresh="1 mm/day", freq="YS"):
+def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
@@ -236,18 +239,18 @@ def freshet_start(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature [℃] or [K].
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'
+      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
     window : int
-      Minimum number of days with temperature above threshold needed for evaluation
+      Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
       Resampling frequency; Defaults to "YS".
 
     Returns
     -------
     xarray.DataArray
-      Day of the year when temperature exceeds threshold over a given number of days for the first time. If there are
+      Day of the year when temperature exceeds threshold over a given number of days for the first time. If there is
       no such day, return np.nan.
 
     Notes
@@ -259,13 +262,72 @@ def freshet_start(
 
        \prod_{j=i}^{i+w} [x_j > thresh]
 
-    is true, where :math:`w` is the number of days the temperature threshold should be exceeded,  and :math:`[P]` is
+    is true, where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
     thresh = utils.convert_units_to(thresh, tas)
     over = tas > thresh
     group = over.resample(time=freq)
     return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
+
+
+@declare_units("", tas="[temperature]", thresh="[temperature]")
+def growing_season_end(
+    tas: xarray.DataArray,
+    thresh: str = "5.0 degC",
+    mid_date: str = "07-01",
+    window: int = 5,
+    freq: str = "YS",
+):
+    r"""First day of consistent inferior threshold temperature.
+
+    Returns first day of period where a temperature is inferior to a threshold
+    over a given number of days.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K].
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default '5.0 degC'.
+    mid_date : str
+      Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+    window : int
+      Minimum number of days with temperature below threshold needed for evaluation.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
+      If there is no such day, return np.nan.
+    """
+    thresh = utils.convert_units_to(thresh, tas)
+    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
+
+    def compute_growing_season_end(yrdata):
+        if (
+            yrdata.chunks is not None
+            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
+        ):
+            yrdata = yrdata.chunk({"time": -1})
+        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
+        if (
+            mid_idx.size == 0
+        ):  # The mid date is not in the group. Happens at boundaries.
+            all_nans = xarray.full_like(yrdata.isel(time=0), np.nan)
+            all_nans.attrs = {}
+            return all_nans
+        end = rl.first_run(
+            yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
+            window,
+            "time",
+        )
+        return end
+
+    gsl = tas.resample(time=freq).map(compute_growing_season_end)
+    return gsl
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -396,6 +458,38 @@ def growing_season_length(
 
     gsl = tas.resample(time=freq).map(compute_gsl)
     return gsl
+
+
+@declare_units("days", tas="[temperature]", thresh="[temperature]")
+def last_spring_frost(
+    tas: xarray.DataArray,
+    thresh: str = "0 degC",
+    mid_date: str = "07-01",
+    freq: str = "YS",
+):
+    r"""Last day of temperatures inferior to a threshold temperature.
+
+    Returns last day of period where a temperature is inferior to a threshold
+    over a given number of days and limited to a final calendar date.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K].
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
+    mid_date : str
+      Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
+      If there is no such day, return np.nan.
+    """
+    raise NotImplementedError
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
@@ -726,7 +820,7 @@ def maximum_consecutive_tx_days(
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_area(sic, area, thresh="15 pct"):
+def sea_ice_area(sic, area, thresh: str = "15 pct"):
     """Return the total sea ice area.
 
     Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
@@ -763,7 +857,7 @@ def sea_ice_area(sic, area, thresh="15 pct"):
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_extent(sic, area, thresh="15 pct"):
+def sea_ice_extent(sic, area, thresh: str = "15 pct"):
     """Return the total sea ice extent.
 
     Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice

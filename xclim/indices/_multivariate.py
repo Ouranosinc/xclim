@@ -1343,7 +1343,7 @@ def warm_spell_duration_index(
     tx90 : float
       90th percentile of daily maximum temperature [℃] or [K]
     window : int
-      Minimum number of days with temperature below threshold to qualify as a warm spell.
+      Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency; Defaults to "YS".
 
