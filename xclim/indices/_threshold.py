@@ -50,7 +50,7 @@ def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
 
     Parameters
     ----------
-    tas : xarrray.DataArray
+    tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
     thresh : str
       Threshold temperature below which a cold spell begins [℃] or [K]. Default: '-10 degC'
@@ -411,7 +411,7 @@ def heat_wave_index(
 
     Parameters
     ----------
-    tasmax : xarrray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : str
       Threshold temperature on which to designate a heatwave [℃] or [K]. Default: '25.0 degC'.
