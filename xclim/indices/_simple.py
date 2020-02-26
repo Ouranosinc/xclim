@@ -342,7 +342,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
 
     Returns
     -------
-    xarray.DataArrray
+    xarray.DataArray
       Base flow index.
 
     Notes
@@ -460,7 +460,7 @@ def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):
 
     Parameters
     ----------
-    tasmax : xarrray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS" (yearly).
