@@ -65,6 +65,7 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 import math
 from collections import OrderedDict
 from typing import Sequence
+from warnings import warn
 
 import numpy as np
 import xarray as xr
@@ -455,6 +456,64 @@ def daily_severity_rating(fwi):
     return 0.0272 * fwi ** 1.77
 
 
+def _shut_down_and_start_ups(
+    it, dcprev=None, tas=None, snd=None, start_up_mode=None, **params
+):
+    # Shut down
+    temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
+    shut_down = temp_recent < params["tempThresh"]
+    if start_up_mode == "snow_depth":
+        snow_cover_recent = snd[..., it - params["startShutDays"] : it + 1].mean(
+            axis=-1
+        )
+        snow_cover_history = snd[..., it - params["snowCoverDaysCalc"] + 1 : it + 1]
+        snow_days = np.count_nonzero(snow_cover_history > params["snoDThresh"], axis=-1)
+
+        shut_down = shut_down | (snow_cover_recent >= params["snoDThresh"])
+    elif start_up_mode is not None:
+        raise NotImplementedError(
+            "Only start_up_mode snow_depth is currently implemented."
+        )
+
+    # Startup
+    start_up = np.isnan(dcprev) & ~shut_down
+    if start_up_mode == "snow_depth":
+        start_up_wet = (
+            start_up
+            & (snow_days / params["snowCoverDaysCalc"] >= params["minSnowDayFrac"])
+            & (snow_cover_history.mean(axis=-1) >= params["minWinterSnoD"])
+        )
+        start_up_dry = start_up & ~start_up_wet
+    elif start_up_mode is not None:
+        raise NotImplementedError(
+            "Only start_up_mode snow_depth is currently implemented."
+        )
+    else:
+        start_up_wet = start_up
+        start_up_dry = 0 * start_up_wet
+
+    return shut_down, start_up_wet, start_up_dry
+
+
+def _fwi_arg_decompressor(*args, indexes=None, start_up_mode=None):
+    tas = pr = rh = ws = mth = lat = dcprev = dmcprev = ffmcprev = snd = None
+    if start_up_mode == "snow_depth":
+        *args, snd = args
+    if indexes == ["DC"] and len(args) == 5:
+        tas, pr, mth, lat, dcprev = args
+    elif indexes == ["DMC"] and len(args) == 6:
+        tas, pr, rh, mth, lat, dmcprev = args
+    elif (indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]) and len(args) == 5:
+        tas, pr, rh, ws, ffmcprev = args
+    elif (indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]) and len(
+        args
+    ) == 7:
+        tas, pr, rh, mth, lat, dcprev, dmcprev = args
+    elif {"DC", "DMC", "FFMC"}.issubset(indexes) and len(args) == 9:
+        (tas, pr, rh, ws, mth, lat, dcprev, dmcprev, ffmcprev,) = args
+    return tas, pr, rh, ws, mth, lat, dcprev, dmcprev, ffmcprev, snd
+
+
 def _fire_weather_calc(*args, **params):
     """Main function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead.
 
@@ -463,49 +522,33 @@ def _fire_weather_calc(*args, **params):
     The number of input arguments depends on which indexes are needed, given by param `indexes`.
     """
     indexes = params["indexes"]
-    start_up_mode = params.get("start_up_mode", "snow_depth")
+    start_up_mode = params.pop("start_up_mode", "snow_depth")
     ind_prevs = OrderedDict()
 
-    if start_up_mode == "snow_depth":
-        *args, snow = args
-    if indexes == ["DC"] and len(args) == 5:
-        tas, pr, mth, lat, ind_prevs["DC"] = args
-    elif indexes == ["DMC"] and len(args) == 6:
-        tas, pr, rh, mth, lat, ind_prevs["DMC"] = args
-    elif (indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]) and len(args) == 5:
-        tas, pr, rh, ws, ind_prevs["FFMC"] = args
-    elif (indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]) and len(
-        args
-    ) == 7:
-        tas, pr, rh, mth, lat, ind_prevs["DC"], ind_prevs["DMC"] = args
-    elif {"DC", "DMC", "FFMC"}.issubset(indexes) and len(args) == 9:
-        (
-            tas,
-            pr,
-            rh,
-            ws,
-            mth,
-            lat,
-            ind_prevs["DC"],
-            ind_prevs["DMC"],
-            ind_prevs["FFMC"],
-        ) = args
-    else:
-        raise TypeError(
-            "Invalid combination of indexes and/or missing/too many input arguments."
-        )
+    (
+        tas,
+        pr,
+        rh,
+        ws,
+        mth,
+        lat,
+        ind_prevs["DC"],
+        ind_prevs["DMC"],
+        ind_prevs["FFMC"],
+        snd,
+    ) = _fwi_arg_decompressor(*args, indexes=indexes, start_up_mode=start_up_mode)
 
-    for name, ind_prev in ind_prevs.items():
-        ind_prevs[name] = ind_prev.copy()
+    for name, ind_prev in ind_prevs.copy().items():
+        if ind_prev is None:
+            ind_prevs.pop(name)
+        else:
+            ind_prevs[name] = ind_prev.copy()
 
     ind_data = OrderedDict()
     for indice in indexes:
         ind_data[indice] = np.zeros_like(tas) * np.nan
 
     for it in range(params.get("start", params["snowCoverDaysCalc"]), tas.shape[-1]):
-
-        temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
-
         prec_history = np.flip(pr[..., : it + 1], axis=-1)
         days_with_prec = prec_history >= params["precThresh"]
         days_since_last_prec = days_with_prec.argmax(axis=-1)
@@ -515,44 +558,17 @@ def _fire_weather_calc(*args, **params):
             params["snowCoverDaysCalc"],
         )
 
-        # Shut down
-        if start_up_mode == "snow_depth":
-            snow_cover_recent = snow[..., it - params["startShutDays"] : it + 1].mean(
-                axis=-1
-            )
-            snow_cover_history = snow[
-                ..., it - params["snowCoverDaysCalc"] + 1 : it + 1
-            ]
-            snow_days = np.count_nonzero(
-                snow_cover_history > params["snoDThresh"], axis=-1
-            )
-
-            shut_down = (temp_recent < params["tempThresh"]) | (
-                snow_cover_recent >= params["snoDThresh"]
-            )
-        else:
-            raise NotImplementedError(
-                "Only start_up_mode snow_depth is currently implemented."
-            )
+        shut_down, start_up_wet, start_up_dry = _shut_down_and_start_ups(
+            it,
+            dcprev=list(ind_prevs.values())[0],
+            tas=tas,
+            snd=snd,
+            start_up_mode=start_up_mode,
+            **params,
+        )
 
         for ind_prev in ind_prevs.values():
             ind_prev[shut_down] = np.nan
-
-        # Startup
-        start_up = np.isnan(list(ind_prevs.values())[0]) & ~shut_down
-
-        if start_up_mode == "snow_depth":
-            start_up_wet = (
-                start_up
-                & (snow_days / params["snowCoverDaysCalc"] >= params["minSnowDayFrac"])
-                & (snow_cover_history.mean(axis=-1) >= params["minWinterSnoD"])
-            )
-            start_up_dry = start_up & ~start_up_wet
-        else:
-            # I know this line is useless, but it's explicit.
-            raise NotImplementedError(
-                "Only start_up_mode snow_depth is currently implemented."
-            )
 
         if "DC" in ind_prevs:
             ind_prevs["DC"][start_up_wet] = params["DCStart"]
@@ -565,7 +581,7 @@ def _fire_weather_calc(*args, **params):
                 params["DMCDryStartFactor"] * days_since_last_prec[start_up_dry]
             )
         if "FFMC" in ind_prevs:
-            ind_prevs["FFMC"][start_up] = params["FFMCStart"]
+            ind_prevs["FFMC"][start_up_wet | start_up_dry] = params["FFMCStart"]
 
         # Main computation
         if "DC" in indexes:
@@ -605,6 +621,63 @@ def _fire_weather_calc(*args, **params):
     if len(indexes) == 1:
         return ind_data[indexes[0]]
     return tuple(ind_data.values())
+
+
+def _fwi_arg_compressor(
+    tas: xr.DataArray = None,
+    pr: xr.DataArray = None,
+    rh: xr.DataArray = None,
+    ws: xr.DataArray = None,
+    snd: xr.DataArray = None,
+    lat: xr.DataArray = None,
+    dc0: xr.DataArray = None,
+    dmc0: xr.DataArray = None,
+    ffmc0: xr.DataArray = None,
+    start_up_mode: str = None,
+    indexes: Sequence[str] = None,
+):
+    if indexes == ["DC"]:
+        args = [tas, pr, tas.time.dt.month, lat, dc0]
+        nargs = (3, 2)
+    elif indexes == ["DMC"]:
+        args = [tas, pr, rh, tas.time.dt.month, lat, dmc0]
+        nargs = (4, 2)
+    elif indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]:
+        args = [tas, pr, rh, ws, ffmc0]
+        nargs = (4, 1)
+    elif indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]:
+        args = [tas, pr, rh, tas.time.dt.month, lat, dc0, dmc0]
+        nargs = (4, 3)
+    elif (
+        indexes == ["DC", "DMC", "FFMC"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI"]
+        or indexes == ["DC", "DMC", "FFMC", "BUI"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+    ):
+        args = [tas, pr, rh, ws, tas.time.dt.month, lat, dc0, dmc0, ffmc0]
+        nargs = (5, 4)
+    else:
+        raise TypeError("Invalid index combination.")
+
+    if start_up_mode == "snow_depth":
+        args = args + [snd]
+
+    for i in range(len(args)):
+        if args[i] is None:
+            raise TypeError(
+                f"Missing input argument #{i} for index combination {indexes}"
+            )
+        elif hasattr(args[i], "data") and isinstance(
+            args[i].data, xr.core.duck_array_ops.dask_array_type
+        ):
+            # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
+            warn(
+                f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
+            )
+            args[i] = args[i].load()
+
+    return args, nargs
 
 
 def fire_weather_ufunc(
@@ -681,32 +754,19 @@ def fire_weather_ufunc(
         key=lambda ele: ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"].index(ele),
     )
 
-    if indexes == ["DC"]:
-        args = [tas, pr, tas.time.dt.month, lat, dc0]
-        nargs = (3, 2)
-    elif indexes == ["DMC"]:
-        args = [tas, pr, rh, tas.time.dt.month, lat, dmc0]
-        nargs = (4, 2)
-    elif indexes == ["FFMC"] or indexes == ["FFMC", "ISI"]:
-        args = [tas, pr, rh, ws, ffmc0]
-        nargs = (4, 1)
-    elif indexes == ["DC", "DMC"] or indexes == ["DC", "DMC", "BUI"]:
-        args = [tas, pr, rh, tas.time.dt.month, lat, dc0, dmc0]
-        nargs = (4, 3)
-    elif (
-        indexes == ["DC", "DMC", "FFMC"]
-        or indexes == ["DC", "DMC", "FFMC", "ISI"]
-        or indexes == ["DC", "DMC", "FFMC", "BUI"]
-        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI"]
-        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
-    ):
-        args = [tas, pr, rh, ws, tas.time.dt.month, lat, dc0, dmc0, ffmc0]
-        nargs = (5, 4)
-    else:
-        raise TypeError("Invalid index combination.")
-    for arg in args:
-        if arg is None:
-            raise TypeError(f"Missing input arguments for index combination {indexes}")
+    args, nargs = _fwi_arg_compressor(
+        tas=tas,
+        pr=pr,
+        rh=rh,
+        ws=ws,
+        snd=snd,
+        lat=lat,
+        dc0=dc0,
+        dmc0=dmc0,
+        ffmc0=ffmc0,
+        start_up_mode=start_up_mode,
+        indexes=indexes,
+    )
 
     if start_date is not None:
         params["start"] = int(abs(tas.time - np.datetime64(start_date)).argmin("time"))
@@ -719,17 +779,12 @@ def fire_weather_ufunc(
             )
 
     if start_up_mode == "snow_depth":
-        if snd is not None:
-            args = args + [snd]
-            snowdims = (("time",),)
-        else:
-            raise TypeError(
-                "For start up mode 'snow_depth', the snow_depth timeseries must be given."
-            )
+        snowdims = (("time",),)
     else:
         snowdims = ()
 
     params["start_up_mode"] = start_up_mode
+    params["indexes"] = indexes
 
     das = xr.apply_ufunc(
         _fire_weather_calc,

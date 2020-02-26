@@ -405,11 +405,11 @@ def fire_weather_indexes(
         snd = utils.convert_units_to(snd, "m")
 
     if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if dmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dmc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if ffmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        ffmc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
 
