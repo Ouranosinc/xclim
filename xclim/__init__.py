@@ -8,6 +8,7 @@ from xclim import atmos
 from xclim import indices
 from xclim import land
 from xclim import seaIce
+from xclim import utils
 
 # from .stats import fit, test
 
@@ -168,20 +169,29 @@ def __build_icclim(mode: str = "warn"):
 
 def __build_pcc(mode: str = "warn"):
     mapping = dict(
-        longest_spell_of_30_degrees_celsius_days=partial(
-            indices.heat_wave_max_length,
-            thresh_tasmin="0 degC",
-            thresh_tasmax="30 degC",
-            window=1,
-        ),
+        longest_spell_of_30_degrees_celsius_days=indices.longest_hot_spell,
         # average_length_of_heat_waves=None,
         coldest_minimum_temperature=indices.tn_min,
         cooling_degree_days=indices.cooling_degree_days,
         # corn_heat_units=None,
-        date_of_first_fall_frost=partial(
+        date_of_first_fall_frost=utils.wrapped_partial(
             indices.growing_season_end, thresh="0 degC", mid_date="07-15", window=1
         ),
-        date_of_last_spring_frost=partial(indices.last_spring_frost),
+        date_of_last_spring_frost=indices.date_of_last_spring_frost,
+        dry_days=indices.dry_days,
+        days_above_32_degrees_celsius=utils.wrapped_partial(
+            indices.tx_days_above, thresh="32 degC"
+        ),
+        days_above_34_degrees_celsius=utils.wrapped_partial(
+            indices.tx_days_above, thresh="34 degC"
+        ),
+        freeze_thaw_cycles=utils.wrapped_partial(
+            indices.daily_freezethaw_cycles,
+            thresh_tasmax="0 degC",
+            thresh_tasmin="-1 degC",
+        ),
+        freezing_degree_days=indices.freezing_degree_days,
+        frost_days=indices.frost_days,
     )
 
     mod = build_module(

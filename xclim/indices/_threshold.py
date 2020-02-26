@@ -23,10 +23,11 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "cooling_degree_days",
     "freshet_start",
+    "freezing_degree_days",
     "growing_degree_days",
     "growing_season_end",
     "growing_season_length",
-    "last_spring_frost",
+    "date_of_last_spring_frost",
     "heat_wave_index",
     "heating_degree_days",
     "tn_days_below",
@@ -34,6 +35,7 @@ __all__ = [
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
+    "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_tx_days",
     "sea_ice_area",
@@ -142,6 +144,39 @@ def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     return sd / wd
+
+
+@declare_units("days", pr="[precipitation]", thresh="[precipitation]")
+def dry_days(pr: xarray.DataArray, thresh: str = "0.2 mm/d", freq: str = "YS"):
+    r"""Dry days
+
+    The number of days with daily precipitation below threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation [mm/d or kg/m²/s]
+    thresh : str
+      Threshold temperature on which to base evaluation. Default: '0.2 mm/d'.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days with daily precipitation below threshold.
+
+    Notes
+    -----
+    Let :math:`PR_{ij}` be the daily precipitation at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        \sum PR_{ij} < Threshold [mm/day]
+    """
+    thresh = utils.convert_units_to(thresh, pr)
+    return pr.pipe(lambda x: (pr < thresh) * 1).resample(time=freq).sum(dim="time")
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
@@ -271,6 +306,80 @@ def freshet_start(
     return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
 
 
+@declare_units("C days", tas="[temperature]", thresh="[temperature]")
+def freezing_degree_days(
+    tas: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+):
+    r"""Freezing degree-days below threshold temperature value [℃].
+
+    The sum of degree-days below the threshold temperature.
+
+    Parameters
+    ---------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0 degC'.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      The sum of freezing degree-days below 0℃
+
+    Notes
+    -----
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
+    freezing degree days are:
+
+    .. math::
+
+        GD4_j = \sum_{i=1}^I ({0}-TG_{ij} | TG_{ij} < {0}℃)
+    """
+    thresh = utils.convert_units_to(thresh, tas)
+    return (
+        tas.pipe(lambda x: thresh - x).clip(min=0).resample(time=freq).sum(dim="time")
+    )
+
+
+@declare_units("C days", tas="[temperature]", thresh="[temperature]")
+def growing_degree_days(
+    tas: xarray.DataArray, thresh: str = "4.0 degC", freq: str = "YS"
+):
+    r"""Growing degree-days over threshold temperature value [℃].
+
+    The sum of degree-days over the threshold temperature.
+
+    Parameters
+    ---------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '4.0 degC'.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      The sum of growing degree-days above 4℃
+
+    Notes
+    -----
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
+    growing degree days are:
+
+    .. math::
+
+        GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
+    """
+    thresh = utils.convert_units_to(thresh, tas)
+    return (
+        tas.pipe(lambda x: x - thresh).clip(min=0).resample(time=freq).sum(dim="time")
+    )
+
+
 @declare_units("", tas="[temperature]", thresh="[temperature]")
 def growing_season_end(
     tas: xarray.DataArray,
@@ -326,45 +435,7 @@ def growing_season_end(
         )
         return end
 
-    gsl = tas.resample(time=freq).map(compute_growing_season_end)
-    return gsl
-
-
-@declare_units("C days", tas="[temperature]", thresh="[temperature]")
-def growing_degree_days(
-    tas: xarray.DataArray, thresh: str = "4.0 degC", freq: str = "YS"
-):
-    r"""Growing degree-days over threshold temperature value [℃].
-
-    The sum of degree-days over the threshold temperature.
-
-    Parameters
-    ---------
-    tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
-    thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '4.0 degC'.
-    freq : str
-      Resampling frequency; Defaults to "YS".
-
-    Returns
-    -------
-    xarray.DataArray
-      The sum of growing degree-days above 4℃
-
-    Notes
-    -----
-    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
-    growing degree days are:
-
-    .. math::
-
-        GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
-    """
-    thresh = utils.convert_units_to(thresh, tas)
-    return (
-        tas.pipe(lambda x: x - thresh).clip(min=0).resample(time=freq).sum(dim="time")
-    )
+    return tas.resample(time=freq).map(compute_growing_season_end)
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
@@ -461,7 +532,7 @@ def growing_season_length(
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
-def last_spring_frost(
+def date_of_last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
     mid_date: str = "07-01",
@@ -489,7 +560,38 @@ def last_spring_frost(
       Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
       If there is no such day, return np.nan.
     """
-    raise NotImplementedError
+    thresh = utils.convert_units_to(thresh, tas)
+    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
+
+    def compute_final_frost_event(yrdata):
+        if (
+            yrdata.chunks is not None
+            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
+        ):
+            yrdata = yrdata.chunk({"time": -1})
+        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
+        if (
+            mid_idx.size == 0
+        ):  # The mid date is not in the group. Happens at boundaries.
+            all_nans = xarray.full_like(yrdata.isel(time=0), np.nan)
+            all_nans.attrs = {}
+            return all_nans
+
+        # ind3d, _ = xarray.broadcast(yrdata.time, yrdata)
+        # masked = ind3d.where(yrdata > thresh)
+        # dates_removed = masked.where(yrdata.time <= yrdata.time[mid_idx][0])
+        # end_index = dates_removed.max()
+
+        # end = rl.first_run(
+        #     yrdata.where(yrdata.time <= yrdata.time[mid_idx][0]) < thresh,
+        #     1,
+        #     "time",
+        # )
+
+        # return end_index
+        raise NotImplementedError
+
+    return tas.resample(time=freq).map(compute_final_frost_event)
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")

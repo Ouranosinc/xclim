@@ -34,6 +34,7 @@ __all__ = [
     "heat_wave_max_length",
     "heat_wave_total_length",
     "liquid_precip_ratio",
+    "longest_hot_spell",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
     "tas",
@@ -626,6 +627,66 @@ def heat_wave_max_length(
     thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    group = cond.resample(time=freq)
+    max_l = group.apply(rl.longest_run, dim="time")
+    return max_l.where(max_l >= window, 0)
+
+
+@declare_units(
+    "days", tasmax="[temperature]", thresh_tasmax="[temperature]",
+)
+def longest_hot_spell(
+    tasmax: xarray.DataArray,
+    thresh_tasmax: str = "30 degC",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    # Dev note : we should decide if it is deg K or C
+    r"""Heat wave max length
+
+    Longest spell of high temperatures over a given period.
+
+    The longest series of consecutive days with tasmax ≥ 30 °C. Here, there is no minimum threshold for number of
+    days in a row that must be reached or exceeded to count as a spell. A year with zero +30 °C days will return a
+    longest spell value of zero.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Maximum length of continuous hot days at the wanted frequency
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    References
+    ----------
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    """
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+
+    cond = tasmax > thresh_tasmax
     group = cond.resample(time=freq)
     max_l = group.apply(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
