@@ -536,6 +536,7 @@ def date_of_last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
     mid_date: str = "07-01",
+    window: int = 1,
     freq: str = "YS",
 ):
     r"""Last day of temperatures inferior to a threshold temperature.
@@ -551,6 +552,8 @@ def date_of_last_spring_frost(
       Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
     mid_date : str
       Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
+    window : int
+      Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -577,19 +580,30 @@ def date_of_last_spring_frost(
             all_nans.attrs = {}
             return all_nans
 
-        # ind3d, _ = xarray.broadcast(yrdata.time, yrdata)
-        # masked = ind3d.where(yrdata > thresh)
-        # dates_removed = masked.where(yrdata.time <= yrdata.time[mid_idx][0])
-        # end_index = dates_removed.max()
+        yrbeginning = yrdata.where(yrdata.time <= yrdata.time[mid_idx][0])
+        frost_days = yrbeginning < thresh
+        reverse_fdo = frost_days.sortby("time", ascending=False)
 
-        # end = rl.first_run(
-        #     yrdata.where(yrdata.time <= yrdata.time[mid_idx][0]) < thresh,
-        #     1,
-        #     "time",
-        # )
+        final_frost_day = rl.first_run(reverse_fdo, window, "time",).fillna(-1)
 
-        # return end_index
-        raise NotImplementedError
+        # TODO: This is not lazy, we need to revisit this with a better rolling function that finds indexes
+        time = reverse_fdo.time.reset_coords(
+            set(reverse_fdo.time.coords).difference({"time"})
+        ).time
+        time = xarray.concat(
+            (
+                time,
+                xarray.DataArray(
+                    [time[-1].values - datetime.timedelta(1, 0, 0)],
+                    dims=("time",),
+                    coords={"time": [time[-1].values - datetime.timedelta(1, 0, 0)]},
+                ),
+            ),
+            "time",
+        )
+        times = time.isel(time=final_frost_day.load().astype(int))
+
+        return times.where(times != time[-1])
 
     return tas.resample(time=freq).map(compute_final_frost_event)
 
