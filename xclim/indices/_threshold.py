@@ -20,7 +20,6 @@ xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 __all__ = [
     "cold_spell_days",
     "daily_pr_intensity",
-    "maximum_consecutive_wet_days",
     "cooling_degree_days",
     "freshet_start",
     "freezing_degree_days",
@@ -37,7 +36,9 @@ __all__ = [
     "wetdays",
     "dry_days",
     "maximum_consecutive_dry_days",
+    "maximum_consecutive_frost_free_days",
     "maximum_consecutive_tx_days",
+    "maximum_consecutive_wet_days",
     "sea_ice_area",
     "sea_ice_extent",
     "tropical_nights",
@@ -893,13 +894,57 @@ def maximum_consecutive_dry_days(
     return group.apply(rl.longest_run, dim="time")
 
 
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def maximum_consecutive_frost_free_days(
+    tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+):
+    r"""Maximum number of consecutive frost free days (Tn > 0℃)
+
+    Return the maximum number of consecutive days within the period where the
+    minimum temperature is above a certain threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Max daily temperature [K]
+    thresh : str
+      Threshold temperature [K].
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive frost free days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
+    above which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive frost free days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+    """
+    t = utils.convert_units_to(thresh, tasmin)
+    group = (tasmin > t).resample(time=freq)
+
+    return group.apply(rl.longest_run, dim="time")
+
+
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray, thresh: str = "25 degC", freq: str = "YS"
 ):
     r"""Maximum number of consecutive summer days (Tx > 25℃)
 
-    Return the maximum number of consecutive days within the period where temperature is above a certain threshold.
+    Return the maximum number of consecutive days within the period where
+    the maximum temperature is above a certain threshold.
 
     Parameters
     ----------

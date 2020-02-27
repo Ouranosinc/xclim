@@ -192,6 +192,7 @@ def __build_pcc(mode: str = "warn"):
         ),
         freezing_degree_days=indices.freezing_degree_days,
         frost_days=indices.frost_days,
+        frost_free_season=indices.maximum_consecutive_frost_free_days,
     )
 
     mod = build_module(
