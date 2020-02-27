@@ -168,33 +168,69 @@ def __build_icclim(mode: str = "warn"):
 
 
 def __build_pcc(mode: str = "warn"):
+
     mapping = dict(
-        longest_spell_of_30_degrees_celsius_days=indices.longest_hot_spell,
-        # average_length_of_heat_waves=None,
+        # average_length_of_heat_waves,
         coldest_minimum_temperature=indices.tn_min,
         cooling_degree_days=indices.cooling_degree_days,
-        # corn_heat_units=None,
+        # corn_heat_units,
         date_of_first_fall_frost=utils.wrapped_partial(
             indices.growing_season_end, thresh="0 degC", mid_date="07-15", window=1
         ),
         date_of_last_spring_frost=indices.date_of_last_spring_frost,
+        days_above_32_celsius=utils.wrapped_partial(
+            indices.tx_days_above, thresh="32.0 degC"
+        ),
+        days_above_34_celsius=utils.wrapped_partial(
+            indices.tx_days_above, thresh="34.0 degC"
+        ),
         dry_days=indices.dry_days,
-        days_above_32_degrees_celsius=utils.wrapped_partial(
-            indices.tx_days_above, thresh="32 degC"
-        ),
-        days_above_34_degrees_celsius=utils.wrapped_partial(
-            indices.tx_days_above, thresh="34 degC"
-        ),
         freeze_thaw_cycles=utils.wrapped_partial(
             indices.daily_freezethaw_cycles,
             thresh_tasmax="0 degC",
-            thresh_tasmin="-1 degC",
+            thresh_tasmin="-1.0 degC",
         ),
         freezing_degree_days=indices.freezing_degree_days,
         frost_days=indices.frost_days,
         frost_free_season=indices.maximum_consecutive_frost_free_days,
+        growing_degree_days_base_4_celsius=partial(
+            indices.growing_degree_days, thresh="4.0 degC"
+        ),
+        growing_degree_days_base_5_celsius=partial(
+            indices.growing_degree_days, thresh="5.0 degC"
+        ),
+        growing_degree_days_base_10_celsius=partial(
+            indices.growing_degree_days, thresh="10.0 degC"
+        ),
+        growing_degree_days_base_15_celsius=partial(
+            indices.growing_degree_days, thresh="15.0 degC"
+        ),
+        heating_degree_days=partial(indices.heating_degree_days, thresh="18.0 degC"),
+        heavy_precipitation_days_10mm=partial(indices.wetdays, thresh="10.0 mm/day"),
+        heavy_precipitation_days_20mm=partial(indices.wetdays, thresh="20.0 mm/day"),
+        hot_season=partial(indices.maximum_consecutive_tx_days, thresh="30.0 degC"),
+        icing_days=indices.ice_days,
+        longest_spell_of_30_celsius_days=indices.longest_hot_spell,
+        max_1_day_precipitation=indices.max_1day_precipitation_amount,
+        max_3_day_precipitation=partial(
+            indices.max_n_day_precipitation_amount, window=3
+        ),
+        max_5_day_precipitation=partial(
+            indices.max_n_day_precipitation_amount, window=5
+        ),
+        # maximum_temperature,
+        mean_temperature=indices.tas,
+        mild_winter_days=partial(indices.tn_days_below, thresh="-5.0 degC"),
+        # minimum_temperature,
+        number_of_heat_waves=indices.hot_spell_frequency,
+        summer_days=indices.tx_days_above,
+        tropical_nights=indices.tropical_nights,  # FIXME: This indicator uses '>', not '>=' as PCC demands
+        very_cold_days=partial(indices.tn_days_below, thresh="-30.0 degC"),
+        very_hot_days=partial(indices.tx_days_above, thresh="-30.0 degC"),
+        warmest_maximum_temperature=indices.tx_max,
+        wet_days=partial(indices.wetdays, thresh="0.2 mm/day"),
+        winter_days=partial(indices.tn_days_below, thresh="-15.0 degC"),
     )
-
     mod = build_module(
         "xclim.pcc",
         mapping,

@@ -29,6 +29,8 @@ __all__ = [
     "date_of_last_spring_frost",
     "heat_wave_index",
     "heating_degree_days",
+    "longest_hot_spell",
+    "hot_spell_frequency",
     "tn_days_below",
     "tx_days_above",
     "warm_day_frequency",
@@ -581,15 +583,15 @@ def date_of_last_spring_frost(
             all_nans.attrs = {}
             return all_nans
 
-        yrbeginning = yrdata.where(yrdata.time <= yrdata.time[mid_idx][0])
-        frost_days = yrbeginning < thresh
-        reverse_fdo = frost_days.sortby("time", ascending=False)
+        spring_season = yrdata.where(yrdata.time <= yrdata.time[mid_idx][0])
+        frost_days = spring_season < thresh
+        reverse_frost_days = frost_days.sortby("time", ascending=False)
 
-        final_frost_day = rl.first_run(reverse_fdo, window, "time",).fillna(-1)
+        final_frost_day = rl.first_run(reverse_frost_days, window, "time",).fillna(-1)
 
         # TODO: This is not lazy, we need to revisit this with a better rolling function that finds indexes
-        time = reverse_fdo.time.reset_coords(
-            set(reverse_fdo.time.coords).difference({"time"})
+        time = reverse_frost_days.time.reset_coords(
+            set(reverse_frost_days.time.coords).difference({"time"})
         ).time
         time = xarray.concat(
             (
@@ -679,11 +681,128 @@ def heating_degree_days(
     return tas.pipe(lambda x: thresh - x).clip(0).resample(time=freq).sum(dim="time")
 
 
+@declare_units(
+    "days", tasmax="[temperature]", thresh_tasmax="[temperature]",
+)
+def longest_hot_spell(
+    tasmax: xarray.DataArray,
+    thresh_tasmax: str = "30 degC",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    # Dev note : we should decide if it is deg K or C
+    r"""Longest hot spell
+
+    Longest spell of high temperatures over a given period.
+
+    The longest series of consecutive days with tasmax ≥ 30 °C. Here, there is no minimum threshold for number of
+    days in a row that must be reached or exceeded to count as a spell. A year with zero +30 °C days will return a
+    longest spell value of zero.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Maximum length of continuous hot days at the wanted frequency
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    References
+    ----------
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    """
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+
+    cond = tasmax > thresh_tasmax
+    group = cond.resample(time=freq)
+    max_l = group.apply(rl.longest_run, dim="time")
+    return max_l.where(max_l >= window, 0)
+
+
+@declare_units(
+    "", tasmax="[temperature]", thresh_tasmax="[temperature]",
+)
+def hot_spell_frequency(
+    tasmax: xarray.DataArray,
+    thresh_tasmax: str = "30 degC",
+    window: int = 3,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    # Dev note : we should decide if it is deg K or C
+    r"""Hot spell frequency
+
+    Number of hot spells over a given period. A hot spell is defined as an event
+    where the maximum daily temperature exceeds a specific threshold
+    over a minimum number of days.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K]
+    thresh_tasmax : str
+      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+    window : int
+      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of heatwave at the wanted frequency
+
+    Notes
+    -----
+    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
+    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
+    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities (Casati et al., 2013).
+
+    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+
+    References
+    ----------
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
+    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
+    https://doi.org/10.1175/JAMC-D-12-0341.1
+
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
+    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    """
+    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
+
+    cond = tasmax > thresh_tasmax
+    group = cond.resample(time=freq)
+    return group.apply(rl.windowed_run_events, window=window, dim="time")
+
+
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
 def tn_days_below(
     tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
 ):
-    r"""Number of days with tmin below a threshold in
+    r"""Number of days with tmin below a threshold
 
     Number of days where daily minimum temperature is below a threshold.
 
