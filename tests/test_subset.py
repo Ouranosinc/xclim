@@ -222,6 +222,26 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out2.lat, lat, 1)
         np.testing.assert_array_equal(out, out2.tasmax)
 
+        # Dataset with lon and lat as 1D arrays
+        lon = -60
+        lat = -45
+        da = xr.DataArray(
+            np.random.rand(5, 4),
+            dims=("time", "site"),
+            coords={"time": np.arange(5), "site": np.arange(4)},
+        )
+        ds = xr.Dataset(
+            data_vars={
+                "da": da,
+                "lon": ("site", np.linspace(lon, lon + 10, 4)),
+                "lat": ("site", np.linspace(lat, lat + 5, 4)),
+            }
+        )
+        gp = subset.subset_gridpoint(ds, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(gp.lon, lon)
+        np.testing.assert_almost_equal(gp.lat, lat)
+        assert gp.site == 0
+
     def test_positive_lons(self):
         da = xr.open_dataset(self.nc_poslons).tas
         lon = -72.4

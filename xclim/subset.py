@@ -832,13 +832,10 @@ def subset_gridpoint(
                 dist = distance(da, lon, lat)
 
                 # Find the indices for the closest point
-                iy, ix = np.unravel_index(dist.argmin(), dist.shape)
+                inds = np.unravel_index(dist.argmin(), dist.shape)
 
                 # Select data from closest point
-                xydims = [x for x in dist.dims]
-                args = dict()
-                args[xydims[0]] = iy
-                args[xydims[1]] = ix
+                args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
                 da = da.isel(**args)
         else:
             raise (
