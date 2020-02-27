@@ -4,6 +4,7 @@ History
 
 0.15.x
 ------
+* Add feature to retrieve coordinate values instead of index in `run_length.first_run`. Add `run_length.last_run`.
 * Fix bug in subset_gridpoint to work on lat/lon coords of any dimension when they are not a dimension of the data.
 
 0.14.x (2020-02-21)
