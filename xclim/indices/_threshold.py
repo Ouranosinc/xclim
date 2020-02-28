@@ -319,16 +319,16 @@ def growing_degree_days(
     Parameters
     ---------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature [℃] or [K].
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '4.0 degC'.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency. Default: "YS".
 
     Returns
     -------
     xarray.DataArray
-      The sum of growing degree-days above 4℃
+      The sum of growing degree-days above a given threshold.
 
     Notes
     -----
@@ -355,8 +355,8 @@ def growing_season_end(
 ):
     r"""First day of consistent inferior threshold temperature.
 
-    Returns first day of period where a temperature is inferior to a threshold
-    over a given number of days.
+    Returns the first day of period where a temperature is inferior to a threshold
+    over a given run of days.
 
     Parameters
     ----------
@@ -369,7 +369,7 @@ def growing_season_end(
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -414,17 +414,17 @@ def growing_season_length(
     r"""Growing season length.
 
     The number of days between the first occurrence of at least
-    six consecutive days with mean daily temperature over 5℃ and
-    the first occurrence of at least six consecutive days with
-    mean daily temperature below 5℃ after a certain date. (Usually
-    July 1st in the northern hemisphere and January 1st in the southern hemisphere.)
+    six consecutive days with mean daily temperature over a threshold (default: 5℃) and
+    the first occurrence of at least six consecutive days with mean daily temperature
+    below the same threshold after a certain date. (Usually July 1st in the northern
+    hemisphere and January 1st in the southern hemisphere.)
 
-    WARNING: The default values are only valid for the northern hemisphere.
+    WARNING: The default calendar values are only valid for the northern hemisphere.
 
     Parameters
     ---------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature [℃] or [K].
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '5.0 degC'.
     window : int
@@ -432,7 +432,7 @@ def growing_season_length(
     mid_date : str
       Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency. Default: "YS".
 
     Returns
     -------
@@ -464,7 +464,7 @@ def growing_season_length(
 
     mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
 
-    def compute_gsl(yrdata):
+    def compute_growing_season_length(yrdata):
         if (
             yrdata.chunks is not None
             and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
@@ -474,9 +474,9 @@ def growing_season_length(
         if (
             mid_idx.size == 0
         ):  # The mid date is not in the group. Happens at boundaries.
-            allNans = xarray.full_like(yrdata.isel(time=0), np.nan)
-            allNans.attrs = {}
-            return allNans
+            all_Nans = xarray.full_like(yrdata.isel(time=0), np.nan)
+            all_Nans.attrs = {}
+            return all_Nans
         end = rl.first_run(
             yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
             window,
@@ -492,7 +492,7 @@ def growing_season_length(
         )  # If gs is not ended at end of year
         return sl.where(sl >= 0)  # When end happens before beg.
 
-    gsl = tas.resample(time=freq).map(compute_gsl)
+    gsl = tas.resample(time=freq).map(compute_growing_season_length)
     return gsl
 
 
@@ -1135,7 +1135,10 @@ def sea_ice_extent(sic, area, thresh: str = "15 pct"):
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
 def tropical_nights(
-    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray,
+    thresh: str = "20.0 degC",
+    greater_or_equal_to: bool = False,
+    freq: str = "YS",
 ):
     r"""Tropical nights
 
@@ -1147,6 +1150,8 @@ def tropical_nights(
       Minimum daily temperature [℃] or [K]
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
+    greater_or_equal_to : bool
+      Whether or not the threshold value is included in the calculation cutoff. Default: False.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -1165,6 +1170,13 @@ def tropical_nights(
         TN_{ij} > Threshold [℃]
     """
     thresh = utils.convert_units_to(thresh, tasmin)
+
     return (
-        tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
+        tasmin.pipe(
+            lambda x: (tasmin > thresh) * 1
+            if not greater_or_equal_to
+            else (tasmin >= thresh) * 1
+        )
+        .resample(time=freq)
+        .sum(dim="time")
     )

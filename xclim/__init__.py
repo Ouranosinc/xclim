@@ -169,6 +169,11 @@ def __build_icclim(mode: str = "warn"):
 
 def __build_pcc(mode: str = "warn"):
 
+    # average_length_of_heat_waves
+    # corn_heat_units
+    # maximum_temperature
+    # minimum_temperature
+
     mapping = dict(
         # average_length_of_heat_waves,
         coldest_minimum_temperature=indices.tn_min,
@@ -234,7 +239,7 @@ def __build_pcc(mode: str = "warn"):
         # minimum_temperature,
         number_of_heat_waves=indices.hot_spell_frequency,
         summer_days=indices.tx_days_above,
-        tropical_nights=indices.tropical_nights,  # FIXME: This indicator uses '>', not '>=' as PCC demands
+        tropical_nights=wrapped_partial(indices.tropical_nights, greater_or_equal=True),
         very_cold_days=wrapped_partial(indices.tn_days_below, thresh="-30.0 degC"),
         very_hot_days=wrapped_partial(indices.tx_days_above, thresh="-30.0 degC"),
         warmest_maximum_temperature=indices.tx_max,
