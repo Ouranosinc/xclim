@@ -264,8 +264,9 @@ def freshet_start(
     """
     thresh = utils.convert_units_to(thresh, tas)
     over = tas > thresh
-    group = over.resample(time=freq)
-    return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
+    return over.resample(time=freq).map(
+        rl.first_run, dim="time", window=window, coord="dayofyear"
+    )
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
