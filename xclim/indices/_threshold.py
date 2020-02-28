@@ -22,7 +22,6 @@ __all__ = [
     "daily_pr_intensity",
     "cooling_degree_days",
     "freshet_start",
-    "freezing_degree_days",
     "growing_degree_days",
     "growing_season_end",
     "growing_season_length",
@@ -307,43 +306,6 @@ def freshet_start(
     over = tas > thresh
     group = over.resample(time=freq)
     return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
-
-
-@declare_units("C days", tas="[temperature]", thresh="[temperature]")
-def freezing_degree_days(
-    tas: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
-):
-    r"""Freezing degree-days below threshold temperature value [℃].
-
-    The sum of degree-days below the threshold temperature.
-
-    Parameters
-    ---------
-    tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
-    thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0 degC'.
-    freq : str
-      Resampling frequency; Defaults to "YS".
-
-    Returns
-    -------
-    xarray.DataArray
-      The sum of freezing degree-days below 0℃
-
-    Notes
-    -----
-    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
-    freezing degree days are:
-
-    .. math::
-
-        GD4_j = \sum_{i=1}^I ({0}-TG_{ij} | TG_{ij} < {0}℃)
-    """
-    thresh = utils.convert_units_to(thresh, tas)
-    return (
-        tas.pipe(lambda x: thresh - x).clip(min=0).resample(time=freq).sum(dim="time")
-    )
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")

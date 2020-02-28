@@ -190,7 +190,9 @@ def __build_pcc(mode: str = "warn"):
             thresh_tasmax="0 degC",
             thresh_tasmin="-1.0 degC",
         ),
-        freezing_degree_days=indices.freezing_degree_days,
+        freezing_degree_days=utils.wrapped_partial(
+            indices.heating_degree_days, thresh="0 degC"
+        ),
         frost_days=indices.frost_days,
         frost_free_season=indices.maximum_consecutive_frost_free_days,
         growing_degree_days_base_4_celsius=partial(
