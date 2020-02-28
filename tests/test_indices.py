@@ -14,9 +14,9 @@
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
 # import cftime
+# import sys
 import calendar
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -985,12 +985,26 @@ class TestWinterRainRatio:
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
-    def test_cmip3(self, cmip3_day_tas):
+    def test_cmip3_tgmean(self, cmip3_day_tas):
         pytest.importorskip("xarray", "0.11.4")
         xci.tg_mean(cmip3_day_tas)
 
-    def compare_against_icclim(self, cmip3_day_tas):
-        pass
+    def test_cmip3_tgmin(self, cmip3_day_tas):
+        pytest.importorskip("xarray", "0.11.4")
+        xci.tg_min(cmip3_day_tas)
+
+    def test_cmip3_tgmax(self, cmip3_day_tas):
+        pytest.importorskip("xarray", "0.11.4")
+        xci.tg_max(cmip3_day_tas)
+
+    def test_indice_against_icclim(self, cmip3_day_tas):
+        pytest.importorskip("xarray", "0.11.4")
+        from xclim import icclim
+
+        ind = xci.tg_mean(cmip3_day_tas)
+        icclim = icclim.TG(cmip3_day_tas)
+
+        np.testing.assert_array_equal(icclim, ind)
 
 
 @pytest.mark.skipif(
