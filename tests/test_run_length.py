@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from xclim import run_length as rl
@@ -139,19 +140,58 @@ class TestLongestRun:
 class TestFirstRun:
     nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
-    def test_simple(self):
+    def test_run_1d(self):
         a = np.zeros(100, bool)
         a[10:20] = 1
         i = rl.first_run_1d(a, 5)
         assert 10 == i
 
+    def test_real_data(self):
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
-        lt_orig = da3d.resample(time="M").apply(rl.first_run_ufunc, window=5)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.first_run_ufunc, window=5)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.first_run, window=5, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
+
+    @pytest.mark.parametrize(
+        "coord,expected",
+        [(False, 30), (True, np.datetime64("2000-01-31")), ("dayofyear", 31)],
+    )
+    @pytest.mark.parametrize(
+        "use_dask,use_1dim", [(True, False), (False, False), (False, True)]
+    )
+    def test_simple(self, tas_series, coord, expected, use_dask, use_1dim):
+        t = np.zeros(60)
+        t[30:40] = 2
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.first_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=use_1dim)
+        np.testing.assert_array_equal(out.load(), expected)
+
+    @pytest.mark.parametrize(
+        "coord,expected",
+        [(False, 39), (True, np.datetime64("2000-02-09")), ("dayofyear", 40)],
+    )
+    @pytest.mark.parametrize(
+        "use_dask,use_1dim", [(True, False), (False, False), (False, True)]
+    )
+    def test_last_run(self, tas_series, coord, expected, use_dask, use_1dim):
+        t = np.zeros(60)
+        t[30:40] = 2
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.last_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=use_1dim)
+        np.testing.assert_array_equal(out.load(), expected)
 
 
 class TestWindowedRunEvents:

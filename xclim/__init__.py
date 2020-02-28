@@ -14,7 +14,7 @@ from xclim.utils import wrapped_partial
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.14.0"
+__version__ = "0.14.1-beta"
 
 
 def build_module(
