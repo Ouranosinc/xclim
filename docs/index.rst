@@ -22,6 +22,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    api
    notebooks/units
    icclim
+   pcc
    contributing
    authors
    history
