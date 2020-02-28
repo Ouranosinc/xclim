@@ -28,8 +28,8 @@ __all__ = [
     "date_of_last_spring_frost",
     "heat_wave_index",
     "heating_degree_days",
-    "longest_hot_spell",
     "hot_spell_frequency",
+    "hot_spell_max_length",
     "tn_days_below",
     "tx_days_above",
     "warm_day_frequency",
@@ -646,7 +646,7 @@ def heating_degree_days(
 @declare_units(
     "days", tasmax="[temperature]", thresh_tasmax="[temperature]",
 )
-def longest_hot_spell(
+def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh_tasmax: str = "30 degC",
     window: int = 1,

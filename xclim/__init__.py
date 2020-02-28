@@ -225,7 +225,7 @@ def __build_pcc(mode: str = "warn"):
             indices.maximum_consecutive_tx_days, thresh="30.0 degC"
         ),
         icing_days=indices.ice_days,
-        longest_spell_of_30_celsius_days=indices.longest_hot_spell,
+        longest_spell_of_30_celsius_days=indices.hot_spell_max_length,
         max_1_day_precipitation=indices.max_1day_precipitation_amount,
         max_3_day_precipitation=wrapped_partial(
             indices.max_n_day_precipitation_amount, window=3

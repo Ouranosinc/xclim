@@ -152,7 +152,7 @@ heat_wave_max_length = TasminTasmax(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum length of heat wave events (Tmin > {thresh_tasmin}"
     "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} maximum length of heat wave events occuring in a given period."
+    description="{freq} maximum length of heat wave events occurring in a given period."
     "An event occurs when the minimum and maximum daily "
     "temperature both exceeds specific thresholds "
     "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
@@ -168,7 +168,7 @@ heat_wave_total_length = TasminTasmax(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Total length of heat wave events (Tmin > {thresh_tasmin}"
     "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} total length of heat wave events occuring in a given period."
+    description="{freq} total length of heat wave events occurring in a given period."
     "An event occurs when the minimum and maximum daily "
     "temperature both exceeds specific thresholds "
     "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
@@ -188,6 +188,32 @@ heat_wave_index = Tasmax(
     "defined as five or more consecutive days over {thresh}.",
     cell_methods="",
     compute=indices.heat_wave_index,
+)
+
+hot_spell_frequency = Tasmax(
+    identifier="hot_spell_frequency",
+    units="",
+    standard_name="hot_spell_events",
+    long_name="Number of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)",
+    description="{freq} number of hot spell events over a given period. "
+    "An event occurs when the maximum daily temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) "
+    "over a minimum number of days ({window}).",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.hot_spell_frequency,
+)
+
+hot_spell_max_length = Tasmax(
+    identifier="heat_wave_max_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Maximum length of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)",
+    description="{freq} maximum length of hot spell events occurring in a given period. "
+    "An event occurs when the maximum daily temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) "
+    "over a minimum number of days ({window}).",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.hot_spell_max_length,
 )
 
 tg = TasminTasmax(
@@ -411,6 +437,17 @@ consecutive_frost_days = Tasmin(
     "minimum daily temperature below 0℃",
     cell_methods="time: min within days time: maximum over days",
     compute=indices.consecutive_frost_days,
+)
+
+maximum_consecutive_frost_free_days = Tasmin(
+    identifier="consecutive_frost_free_days",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Maximum number of consecutive days with Tmin > {thresh}",
+    description="{freq} maximum number of consecutive days with "
+    "minimum daily temperature below {thresh",
+    cell_methods="time: min within days time: maximum over days",
+    compute=indices.maximum_consecutive_frost_free_days,
 )
 
 growing_season_length = Tas(
