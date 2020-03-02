@@ -76,7 +76,7 @@ def doymax(da: xr.DataArray):
 
 def doymin(da: xr.DataArray):
     """Return the day of year of the minimum value."""
-    i = da.argmax(dim="time")
+    i = da.argmin(dim="time")
     out = da.time.dt.dayofyear[i]
     out.attrs["units"] = ""
     return out
