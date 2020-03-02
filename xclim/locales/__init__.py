@@ -57,7 +57,7 @@ import pkg_resources
 from xclim.utils import AttrFormatter
 
 LOCALES = []
-TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title"]
+TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title", "abstract"]
 
 
 def list_locales():
