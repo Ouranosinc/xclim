@@ -27,7 +27,7 @@
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
     "title": "Nombre de jours de pluie sur sol gelé",
     "comment": "",
-    "abstract": "Nombre de jours avec des précpitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
+    "abstract": "Nombre de jours avec des précpitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
   },
   "atmos.rx1day": {
     "long_name": "Précipitation maximale en 1 jour",
@@ -167,7 +167,7 @@
     "description": "Nombre {freq:m} de jours où la température est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
     "title": "Nombre de jours où la température est au-dessus du 10e percentile",
     "comment": "",
-    "abstract": "Nombre de jours où la température est au-dessus du 10e percentile",
+    "abstract": "Nombre de jours où la température est au-dessus du 10e percentile"
   },
   "atmos.tg90p": {
     "long_name": "Nombre de jours où la température est au-dessus du 90e percentile",
