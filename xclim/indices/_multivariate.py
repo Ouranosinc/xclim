@@ -442,7 +442,8 @@ def drought_code(
 ):
     r"""The daily drought code (FWI component)
 
-    The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
+    The drought code is part of the Canadian Forest Fire Weather Index System.
+    It is a numeric rating of the average moisture content of organic layers.
 
     Parameters
     ----------

@@ -37,7 +37,7 @@ def build_module(
       Docstring of the new module.
     source : object
       Module where objects are defined if not explicitly given.
-    mode : str
+    mode : {'raise', 'warn', 'ignore'}
       How to deal with missing objects. Acceptable parameters are 'raise', 'warn', or 'ignore'.
 
 

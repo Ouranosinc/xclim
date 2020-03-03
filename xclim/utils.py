@@ -372,7 +372,7 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
         )
 
 
-def declare_units(out_units, check_output=True, **units_by_name):
+def declare_units(out_units, check_output: bool = True, **units_by_name):
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
@@ -438,8 +438,8 @@ def threshold_count(
     ----------
     da : xr.DataArray
       Input data.
-    op : str
-      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
+    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
+      Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
     thresh : float
       Threshold value.
     freq : str
