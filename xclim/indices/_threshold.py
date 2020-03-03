@@ -398,7 +398,7 @@ def growing_season_end(
             yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
             window,
             "time",
-            coord='daofyear',
+            coord="daofyear",
         )
         return end
 
@@ -1137,10 +1137,7 @@ def sea_ice_extent(sic, area, thresh: str = "15 pct"):
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
 def tropical_nights(
-    tasmin: xarray.DataArray,
-    thresh: str = "20.0 degC",
-    greater_or_equal_to: bool = False,
-    freq: str = "YS",
+    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS",
 ):
     r"""Tropical nights
 
@@ -1152,8 +1149,6 @@ def tropical_nights(
       Minimum daily temperature [℃] or [K]
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
-    greater_or_equal_to : bool
-      Whether or not the threshold value is included in the calculation cutoff. Default: False.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -1174,11 +1169,5 @@ def tropical_nights(
     thresh = utils.convert_units_to(thresh, tasmin)
 
     return (
-        tasmin.pipe(
-            lambda x: (tasmin > thresh) * 1
-            if not greater_or_equal_to
-            else (tasmin >= thresh) * 1
-        )
-        .resample(time=freq)
-        .sum(dim="time")
+        tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
     )

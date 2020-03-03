@@ -239,7 +239,9 @@ def __build_pcc(mode: str = "warn"):
         # minimum_temperature,
         number_of_heat_waves=indices.hot_spell_frequency,
         summer_days=indices.tx_days_above,
-        tropical_nights=wrapped_partial(indices.tropical_nights, greater_or_equal=True),
+        tropical_nights=wrapped_partial(
+            indices.tropical_nights
+        ),  # TODO: This indice require greater_than_or_equal_to
         very_cold_days=wrapped_partial(indices.tn_days_below, thresh="-30.0 degC"),
         very_hot_days=wrapped_partial(indices.tx_days_above, thresh="-30.0 degC"),
         warmest_maximum_temperature=indices.tx_max,
