@@ -3,7 +3,7 @@
     "modifiers": ["m", "f", "mpl", "fpl"],
     "YS": ["annuel", "annuelle", "annuels", "annuelles"],
     "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
-    "QS-DEC": ["saisonier", "saisonière", "saisoniers", "saisonières"],
+    "QS-DEC": ["saisonnier", "saisonnière", "saisonniers", "saisonnières"],
     "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
     "MAM": ["printanier", "printanière", "printaniers", "printanières"],
     "JJA": ["estival", "estivale", "estivaux", "estivales"],
@@ -24,10 +24,10 @@
   },
   "atmos.rain_frzgr": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
-    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
+    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
     "title": "Nombre de jours de pluie sur sol gelé",
     "comment": "",
-    "abstract": "Nombre de jours avec des précpitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérés comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
+    "abstract": "Nombre de jours avec des précipitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
   },
   "atmos.rx1day": {
     "long_name": "Précipitation maximale en 1 jour",
@@ -48,12 +48,12 @@
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "comment": "",
-    "abstract": "Nombre de jours où les précipitations sont-audessus d'un seuil."
+    "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
   },
   "atmos.cdd": {
     "long_name": "Durée maximale d'une période sèche",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont sous {thresh}.",
-    "title": "Nombre maximal de jour secs consécutifs",
+    "title": "Nombre maximal de jours secs consécutifs",
     "comment": "",
     "abstract": "Période la plus longue où la précipitation est sous un seuil."
   },
@@ -66,7 +66,7 @@
   },
   "atmos.sdii": {
     "long_name": "Indice simple de l'intensité des précipitations",
-    "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précpitation journalière pour les jours où la précipitation est au-dessus de {thresh}.",
+    "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précipitation journalière pour les jours où la précipitation est au-dessus de {thresh}.",
     "title": "Indice simple de l'intensité des précipitations",
     "comment": "",
     "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil."
@@ -90,14 +90,14 @@
     "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est < 0°C",
     "title": "Précipitation solide accumulée totale",
     "comment": "",
-    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est sous 0°C"
+    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est sous 0°C."
   },
   "atmos.DC": {
     "long_name": "Indice de sécheresse",
     "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'",
     "title": "Indice de sécheresse quotidien",
     "comment": "",
-    "abstract": "L'indice de sécherre fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques"
+    "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
   },
   "atmos.tn_days_below": {
     "long_name": "Nombre de jours avec Tmin < {thresh}",
@@ -118,28 +118,28 @@
     "description": "Nombre {freq:m} de jours où la température journalière maximale excède {thresh_tasmax} et la température journalière minimale excède {thresh_tasmin}",
     "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes",
     "comment": "",
-    "abstract": "Nombre de jours où les températures journalières maximale et minimales sont au-dessus de seuils donnés."
+    "abstract": "Nombre de jours où les températures journalières maximales et minimales sont au-dessus de seuils donnés."
   },
   "atmos.heat_wave_frequency": {
     "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours)",
     "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Fréquence des vagues de chaleur",
     "comment": "",
-    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils données durant un certain nombre de jours."
+    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
   },
   "atmos.heat_wave_total_length": {
     "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
     "description": "Durée totale {freq:f} des vagues de chaleur. UnAn event occurs when the minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
     "comment": "",
     "title": "Durée totale des vagues de chaleur",
-    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils données durant un certain nombre de jours."
+    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
   },
   "atmos.heat_wave_max_length": {
     "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
     "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "comment": "",
     "title": "",
-    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils données durant un certain nombre de jours."
+    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
   },
   "atmos.heat_wave_index": {
     "long_name": "Nombre de jours de vague de chaleur",
@@ -150,10 +150,10 @@
   },
   "atmos.tg": {
     "long_name": "température journalière moyenne",
-    "description": "température journalière moyenne estimée par la médiane des températures maximimales et minimales.",
+    "description": "température journalière moyenne estimée par la médiane des températures maximales et minimales.",
     "title": "Moyenne des températures maximales et minimales",
     "comment": "",
-    "abstract": "La température journalière moyenne en assumant une distribution symmétrique des températures.  Tg = (Tx + Tn) / 2"
+    "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
   },
   "atmos.tg_mean": {
     "long_name": "Moyenne de la température journalière moyenne",
@@ -318,7 +318,7 @@
   },
   "atmos.frost_days": {
     "long_name": "Nombre de jours de gel (Tmin < 0C)",
-    "description": "Nombre {freq:m} de jour où la température journalière minimale est sous 0°C.",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous 0°C.",
     "title": "Jours de gel",
     "comment": "",
     "abstract": "Nombre de jours où la température journalière minimale est sous 0°C."
@@ -339,14 +339,14 @@
   },
   "atmos.growing_season_length": {
     "long_name": "Durée de la saison de végétation",
-    "description": "Nombre {freq:m} de jours entre la première occurence d'au moins {window} jours consecutifs où la température journalière moyenne dépasse {thresh} et le première occurence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température journalière moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
     "comment": "",
     "title": "Durée de la saison de croissance",
     "abstract": "Nombre de jours entre la première série de N jours avec des températures journalières moyennes au-dessus d'un seuil et la première série de N jours avec des températures journalières moyennes sous ce même seuil."
   },
   "atmos.tropical_nights": {
     "long_name": "Nombre de nuits tropicales (Tmin > {thresh})",
-    "description": "Nombre {freq:m} de nuits tropicales : definies comme des jours avec une température minimale au-dessus de {thresh}",
+    "description": "Nombre {freq:m} de nuits tropicales : définies comme des jours avec une température minimale au-dessus de {thresh}",
     "title": "Nombre de nuits tropicales",
     "comment": "",
     "abstract": "Nombre de jours où la température minimale est au-dessus d'un seuil."
