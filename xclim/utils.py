@@ -34,7 +34,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
 import xclim
-from xclim import checks
+from . import checks
 
 __all__ = [
     "units",
