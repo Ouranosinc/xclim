@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from xclim import indices
-from xclim.indicator import Indicator
-from xclim.indicator import Indicator2D
-from xclim.utils import wrapped_partial
+from xclim.indicators import Indicator
+from xclim.indicators import Indicator2D
+from xclim.indicators.utils import wrapped_partial
 
 __all__ = [
     "rain_on_frozen_ground_days",

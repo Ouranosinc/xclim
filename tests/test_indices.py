@@ -16,7 +16,6 @@
 # import cftime
 import calendar
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -24,7 +23,9 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim.utils import percentile_doy
+from xclim.indices.calendar import percentile_doy
+from xclim.indices.utils import sfcwind_2_uas_vas
+from xclim.indices.utils import uas_vas_2_sfcwind
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
@@ -1047,3 +1048,50 @@ def cmip3_day_tas():
     )
     yield ds.tas
     ds.close()
+
+
+class TestWindConversion:
+    da_uas = xr.DataArray(
+        np.array([[3.6, -3.6], [-1, 0]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_uas.attrs["units"] = "km/h"
+    da_vas = xr.DataArray(
+        np.array([[3.6, 3.6], [-1, -18]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_vas.attrs["units"] = "km/h"
+    da_wind = xr.DataArray(
+        np.array([[np.hypot(3.6, 3.6), np.hypot(3.6, 3.6)], [np.hypot(1, 1), 18]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+    da_wind.attrs["units"] = "km/h"
+    da_windfromdir = xr.DataArray(
+        np.array([[225, 135], [0, 360]]),
+        coords={"lon": [-72, -72], "lat": [55, 55]},
+        dims=["lon", "lat"],
+    )
+
+    def test_uas_vas_2_sfcwind(self):
+        wind, windfromdir = uas_vas_2_sfcwind(self.da_uas, self.da_vas)
+
+        assert np.all(
+            np.around(wind.values, decimals=10)
+            == np.around(self.da_wind.values / 3.6, decimals=10)
+        )
+        assert np.all(
+            np.around(windfromdir.values, decimals=10)
+            == np.around(self.da_windfromdir.values, decimals=10)
+        )
+
+    def test_sfcwind_2_uas_vas(self):
+        uas, vas = sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
+
+        assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
+        assert np.all(
+            np.around(vas.values, decimals=10)
+            == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
+        )

@@ -8,7 +8,7 @@ import pytest
 
 import xclim.locales as xloc
 from xclim import atmos
-from xclim.utils import default_formatter
+from xclim.indicators.utils import default_formatter
 
 
 esperanto = (

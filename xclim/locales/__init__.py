@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""xclim Internationalization module
+"""
+Internationalization
+====================
 
 Defines methods and object to help the internationalization of metadata for the
 climate indicators computed by xclim.
@@ -7,20 +9,20 @@ climate indicators computed by xclim.
 All the methods and objects in this module use localization data given in json files.
 These files are expected to be defined as in this example for french:
 
-```json
-{
-    "attrs_mapping" : {
-        "modifiers": ["", "_f", "_mpl", "_fpl"],
-        "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
-        ... and so on for other frequent parameters translation...
-    },
-    "atmos.dtrvar" : {
-        "long_name": "Variabilité de l'intervalle de température moyen",
-        "description": "Variabilité {freq_f} de l'intervalle de température moyen."
-    },
-    ... and so on for other indicators...
-}
-```
+.. code-block::
+
+    {
+        "attrs_mapping" : {
+            "modifiers": ["", "f", "mpl", "fpl"],
+            "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
+            ... and so on for other frequent parameters translation...
+        },
+        "atmos.dtrvar" : {
+            "long_name": "Variabilité de l'intervalle de température moyen",
+            "description": "Variabilité {freq:f} de l'intervalle de température moyen."
+        },
+        ... and so on for other indicators...
+    }
 
 Indicators are named by their module and identifier, which can differ from the callable name.
 In this case, the indicator is called through `atmos.daily_temperature_range_variability`,
@@ -28,19 +30,19 @@ but its identifier is `dtrvar`.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually
 translated from "YS" to "annual". However, in french and in this sentence, the feminine
-form should be used, so the "_f" modifier is added by the translator so that the
+form should be used, so the "f" modifier is added by the translator so that the
 formatting function knows which translation to use. Acceptable entries for the mappings
-are limited to what is already defined in `xclim.utils.Indicator._attrs_mapping`.
+are limited to what is already defined in `xclim.indicators.utils.default_formatter`.
 
-The "attrs_mapping" and its key "modifiers" are mandatory in the locale dict, all other
+The "attrs_mapping" and its "modifiers" key are mandatory in the locale dict, all other
 entries (translations of frequent parameters and all indicator entries) are optional.
 
 Attributes
 ----------
-LOCALES : list
-    List of currently set locales. Computing indicator through a xclim.utils.Indicator
+LOCALES
+    List of currently set locales. Computing indicator through a xclim.indicators.indicator.Indicator
     object will add metadata in these languages as available.
-TRANSLATABLE_ATTRS : list
+TRANSLATABLE_ATTRS
     List of attributes to consider translatable when generating locale dictionaries.
 """
 import json
@@ -54,7 +56,7 @@ from typing import Union
 
 import pkg_resources
 
-from xclim.utils import AttrFormatter
+from xclim.indicators.utils import AttrFormatter
 
 LOCALES = []
 TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title", "abstract"]
@@ -180,7 +182,7 @@ def get_local_attrs(
     for locale in locales:
         loc_name, loc_dict = get_local_dict(locale)
         loc_name = f"_{loc_name}" if append_locale_name else ""
-        ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
+        ind_name = f"{indicator.__module__.split('.')[2]}.{indicator.identifier}"
         local_attrs = loc_dict.get(ind_name)
         if local_attrs is None:
             warnings.warn(
@@ -304,10 +306,10 @@ def generate_local_dict(locale: str, init_english: bool = False):
     for module in [xc.atmos, xc.land, xc.seaIce]:
         for indicator in module.__dict__.values():
             if not isinstance(
-                indicator, (xc.indicator.Indicator, xc.indicator.Indicator2D)
+                indicator, (xc.indicators.Indicator, xc.indicators.Indicator2D)
             ):
                 continue
-            ind_name = f"{indicator.__module__.split('.')[1]}.{indicator.identifier}"
+            ind_name = f"{indicator.__module__.split('.')[2]}.{indicator.identifier}"
             indicators[ind_name] = indicator
 
     best_locale = get_best_locale(locale)
@@ -321,7 +323,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
 
     attrs_mapping = attrs.setdefault("attrs_mapping", {})
     attrs_mapping.setdefault("modifiers", [""])
-    for key, value in xc.utils.default_formatter.mapping.items():
+    for key, value in xc.indicators.utils.default_formatter.mapping.items():
         attrs_mapping.setdefault(key, [value[0]])
 
     eng_attr = ""

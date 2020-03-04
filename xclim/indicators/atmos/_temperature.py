@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import abc
 
-from xclim import checks
 from xclim import indices
-from xclim.indicator import Indicator
-from xclim.indicator import Indicator2D
+from xclim.indicators import checks
+from xclim.indicators import Indicator
+from xclim.indicators import Indicator2D
 
 __all__ = [
     "tn_days_below",

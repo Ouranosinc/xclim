@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from xclim import checks
-from xclim import generic
-from xclim.indicator import Indicator
+from xclim.indicators import checks
+from xclim.indicators import Indicator
+from xclim.indicators.utils import wrapped_partial
 from xclim.indices import base_flow_index
-from xclim.utils import wrapped_partial
+from xclim.indices import generic
 
 # from boltons.funcutils import FunctionBuilder
 # import calendar

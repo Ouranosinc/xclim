@@ -1,9 +1,10 @@
 import xarray
 
-from xclim import run_length as rl
-from xclim import utils
-from xclim.utils import declare_units
-from xclim.utils import units
+from xclim.indices import run_length as rl
+from xclim.units import convert_units_to
+from xclim.units import declare_units
+from xclim.units import pint_multiply
+from xclim.units import units
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -525,7 +526,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     """
 
     out = pr.resample(time=freq).max(dim="time", keep_attrs=True)
-    return utils.convert_units_to(out, "mm/day", "hydro")
+    return convert_units_to(out, "mm/day", "hydro")
 
 
 @declare_units("mm", pr="[precipitation]")
@@ -566,4 +567,4 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
 
     out.attrs["units"] = pr.units
     # Adjust values and units to make sure they are daily
-    return utils.pint_multiply(out, 1 * units.day, "mm")
+    return pint_multiply(out, 1 * units.day, "mm")

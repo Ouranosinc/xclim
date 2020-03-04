@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-xclim indicator module
+Indicator base submodule
+========================
 """
 import datetime as dt
 import re
@@ -15,15 +16,15 @@ import numpy as np
 from boltons.funcutils import wraps
 
 import xclim
-from xclim import checks
+from xclim.indicators import checks
+from xclim.indicators.utils import AttrFormatter
+from xclim.indicators.utils import default_formatter
+from xclim.indicators.utils import parse_doc
 from xclim.locales import get_local_attrs
 from xclim.locales import get_local_formatter
 from xclim.locales import LOCALES
-from xclim.utils import AttrFormatter
-from xclim.utils import convert_units_to
-from xclim.utils import default_formatter
-from xclim.utils import parse_doc
-from xclim.utils import units
+from xclim.units import convert_units_to
+from xclim.units import units
 
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and

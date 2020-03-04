@@ -7,8 +7,13 @@ import pytest
 
 from xclim import __version__
 from xclim import atmos
-from xclim.indicator import Indicator
-from xclim.utils import units
+from xclim.indicators import Indicator
+from xclim.indicators.utils import AttrFormatter
+from xclim.indicators.utils import default_formatter
+from xclim.indicators.utils import parse_doc
+from xclim.indicators.utils import walk_map
+from xclim.indices import tg_mean
+from xclim.units import units
 
 
 class UniIndTemp(Indicator):
@@ -132,3 +137,36 @@ def test_formatting(pr_series):
         "Number of wet days (precip >= 1.5 mm/day)",
         "Number of wet days (precip >= 1.5 mm/d)",
     ]
+
+
+# TODO Add a meaningful test
+def test_parse_doc():
+    parse_doc(tg_mean.__doc__)
+
+
+def test_walk_map():
+    d = {"a": -1, "b": {"c": -2}}
+    o = walk_map(d, lambda x: 0)
+    assert o["a"] == 0
+    assert o["b"]["c"] == 0
+
+
+def test_default_formatter():
+    assert default_formatter.format("{freq}", freq="YS") == "annual"
+    assert default_formatter.format("{freq:noun}", freq="MS") == "months"
+    assert default_formatter.format("{month}", month="m3") == "march"
+
+
+def test_AttrFormatter():
+    fmt = AttrFormatter(
+        mapping={"evil": ["méchant", "méchante"], "nice": ["beau", "belle"]},
+        modifiers=["m", "f"],
+    )
+    # Normal cases
+    assert fmt.format("{adj:m}", adj="evil") == "méchant"
+    assert fmt.format("{adj:f}", adj="nice") == "belle"
+    # Missing mod:
+    assert fmt.format("{adj}", adj="evil") == "méchant"
+    # Mod with unknown value
+    with pytest.raises(ValueError):
+        fmt.format("{adj:m}", adj="funny")
