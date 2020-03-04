@@ -501,6 +501,46 @@ class TestHeatWaveTotalLength:
         np.testing.assert_allclose(hwml.values, 0)
 
 
+class TestHotSpellFrequency:
+    def test_1d(self, tasmax_series):
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        # some hw
+        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="30 C")
+        np.testing.assert_allclose(hsf.values, 2)
+
+        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="30 C", window=4)
+        np.testing.assert_allclose(hsf.values, 1)
+
+        # one long hw
+        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="10 C")
+        np.testing.assert_allclose(hsf.values, 1)
+
+        # no hw
+        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="40 C")
+        np.testing.assert_allclose(hsf.values, 0)
+
+
+class TestHotSpellMaxLength:
+    def test_1d(self, tasmax_series):
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        # some hw
+        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="30 C")
+        np.testing.assert_allclose(hsml.values, 5)
+
+        # one long hw
+        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="10 C")
+        np.testing.assert_allclose(hsml.values, 10)
+
+        # no hw
+        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="40 C")
+        np.testing.assert_allclose(hsml.values, 0)
+
+        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="30 C", window=5)
+        np.testing.assert_allclose(hsml.values, 5)
+
+
 class TestTnDaysBelow:
     def test_simple(self, tasmin_series):
         a = np.zeros(365)
