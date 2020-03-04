@@ -553,6 +553,7 @@ def date_of_last_spring_frost(
 
         final_frost_day = rl.first_run(reverse_frost_days, window, "time",).fillna(-1)
 
+        # TODO: It might be better to reexamine this to ensure that indexes are returned. Hard to grapph (CF)datetimes.
         # TODO: This is not lazy, we need to revisit this with a better rolling function that finds indexes
         time = reverse_frost_days.time.reset_coords(
             set(reverse_frost_days.time.coords).difference({"time"})

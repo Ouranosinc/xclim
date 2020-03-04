@@ -174,6 +174,45 @@ class TestConsecutiveFrostDays:
         assert cfd == 365
 
 
+class TestMaximumConsecutiveFrostFreeDays:
+    @staticmethod
+    def time_series(values):
+        coords = pd.date_range(
+            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
+        )
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            attrs={
+                "standard_name": "air_temperature",
+                "cell_methods": "time: minimum within days",
+                "units": "K",
+            },
+        )
+
+    def test_one_freeze_day(self):
+        a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a)
+        assert ffd == 3
+        assert ffd.time.dt.year == 2000
+
+    def test_two_freeze_days_with_threshold(self):
+        a = self.time_series(np.array([3, 4, 5, -0.8, -2, 3]) + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a, thresh="-1 degC")
+        assert ffd == 4
+
+    def test_no_freeze(self):
+        a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a)
+        assert ffd == 5
+
+    def test_all_year_freeze(self):
+        a = self.time_series(np.zeros(365) - 10 + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a)
+        assert np.all(ffd) == 0
+
+
 class TestCoolingDegreeDays:
     @staticmethod
     def time_series(values):
@@ -256,6 +295,16 @@ class TestDailyPrIntensity:
         pr.attrs["units"] = "mm/d"
         out = xci.daily_pr_intensity(pr, thresh="1 mm/day")
         np.testing.assert_array_almost_equal(out[0], 2.5)
+
+
+class TestDateOfLastSpringFrost:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[180:270] = 30
+        tas = tas_series(a, start="2000/1/1")
+
+        lsf = xci.date_of_last_spring_frost(tas)
+        assert lsf == "2020/6/28"
 
 
 class TestDaysOverPrecipThresh:
