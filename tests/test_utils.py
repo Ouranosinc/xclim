@@ -16,7 +16,6 @@
 import os
 
 import cftime
-import dask
 import numpy as np
 import pandas as pd
 import pytest
@@ -24,15 +23,12 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from xarray.coding.cftimeindex import CFTimeIndex
 
-from xclim import __version__
-from xclim import atmos
 from xclim import indices
-from xclim import subset
 from xclim import utils
 from xclim.utils import adjust_doy_calendar
+from xclim.utils import AttrFormatter
 from xclim.utils import daily_downsampler
-from xclim.utils import format_kwargs
-from xclim.utils import Indicator
+from xclim.utils import default_formatter
 from xclim.utils import infer_doy_max
 from xclim.utils import parse_doc
 from xclim.utils import percentile_doy
@@ -131,143 +127,6 @@ class TestDailyDownsampler:
                 freq
             ]
             assert np.allclose(x2.values, target)
-
-
-class UniIndTemp(Indicator):
-    identifier = "tmin"
-    var_name = "tmin{thresh}"
-    units = "K"
-    long_name = "{freq} mean surface temperature"
-    standard_name = "{freq} mean temperature"
-    cell_methods = "time: mean within {freq}"
-
-    @staticmethod
-    def compute(da, thresh=0.0, freq="YS"):
-        """Docstring"""
-        out = da
-        out -= thresh
-        return out.resample(time=freq).mean(keep_attrs=True)
-
-
-class UniIndPr(Indicator):
-    identifier = "prmax"
-    units = "mm/s"
-    context = "hydro"
-
-    @staticmethod
-    def compute(da, freq):
-        """Docstring"""
-        return da.resample(time=freq).mean(keep_attrs=True)
-
-
-class TestIndicator:
-    def test_attrs(self, tas_series):
-        import datetime as dt
-
-        a = tas_series(np.arange(360.0))
-        ind = UniIndTemp()
-        txm = ind(a, thresh=5, freq="YS")
-        assert txm.cell_methods == "time: mean within days time: mean within years"
-        assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-        assert "tmin(da, thresh=5, freq='YS')" in txm.attrs["history"]
-        assert f"xclim version: {__version__}." in txm.attrs["history"]
-        assert txm.name == "tmin5"
-
-    def test_temp_unit_conversion(self, tas_series):
-        a = tas_series(np.arange(360.0))
-        ind = UniIndTemp()
-        txk = ind(a, freq="YS")
-
-        ind.units = "degC"
-        txc = ind(a, freq="YS")
-
-        np.testing.assert_array_almost_equal(txk, txc + 273.15)
-
-    def test_json(self, pr_series):
-        ind = UniIndPr()
-        meta = ind.json()
-
-        expected = {
-            "identifier",
-            "var_name",
-            "units",
-            "long_name",
-            "standard_name",
-            "cell_methods",
-            "keywords",
-            "abstract",
-            "parameters",
-            "description",
-            "history",
-            "references",
-            "comment",
-            "notes",
-        }
-
-        assert set(meta.keys()).issubset(expected)
-
-    def test_signature(self):
-        from inspect import signature
-
-        ind = UniIndTemp()
-        assert signature(ind.compute) == signature(ind.__call__)
-
-    def test_doc(self):
-        ind = UniIndTemp()
-        assert ind.__call__.__doc__ == ind.compute.__doc__
-
-    def test_delayed(self):
-        fn = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-
-        # Load dataset as a dask array
-        ds = xr.open_dataset(fn, chunks={"time": 10}, cache=True)
-
-        tx = UniIndTemp()
-        txk = tx(ds.tasmax)
-
-        # Check that the calculations are delayed
-        assert isinstance(txk.data, dask.array.core.Array)
-
-        # Same with unit conversion
-        tx.required_units = ("C",)
-        tx.units = "C"
-        txc = tx(ds.tasmax)
-
-        assert isinstance(txc.data, dask.array.core.Array)
-
-    def test_identifier(self):
-        with pytest.warns(UserWarning):
-            UniIndPr(identifier="t_{}")
-
-    def test_formatting(self, pr_series):
-        out = atmos.wetdays(
-            pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day
-        )
-        # pint 0.10 now pretty print day as d.
-        assert out.attrs["long_name"] in [
-            "Number of wet days (precip >= 1 mm/day)",
-            "Number of wet days (precip >= 1 mm/d)",
-        ]
-
-        out = atmos.wetdays(
-            pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day
-        )
-        assert out.attrs["long_name"] in [
-            "Number of wet days (precip >= 1.5 mm/day)",
-            "Number of wet days (precip >= 1.5 mm/d)",
-        ]
-
-
-class TestKwargs:
-    def test_format_kwargs(self):
-        attrs = dict(
-            standard_name="tx_min",
-            long_name="Minimum of daily maximum temperature",
-            cell_methods="time: minimum within {freq}",
-        )
-
-        format_kwargs(attrs, {"freq": "YS"})
-        assert attrs["cell_methods"] == "time: minimum within years"
 
 
 class TestParseDoc:
@@ -442,230 +301,6 @@ class TestCheckUnits:
             utils._check_units("m3", "[discharge]")
 
 
-class TestSubsetGridPoint:
-    nc_poslons = os.path.join(
-        TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-    )
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
-
-    def test_dataset(self):
-        da = xr.open_mfdataset([self.nc_file, self.nc_file.replace("tasmax", "tasmin")])
-        lon = -72.4
-        lat = 46.1
-        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out.lon, lon, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-        np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
-
-    def test_simple(self):
-        da = xr.open_dataset(self.nc_file).tasmax
-        lon = -72.4
-        lat = 46.1
-        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out.lon, lon, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-
-        da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
-        yr_st = "2050"
-        yr_ed = "2059"
-
-        out = subset.subset_gridpoint(
-            da, lon=lon, lat=lat, start_date=yr_st, end_date=yr_ed
-        )
-        np.testing.assert_almost_equal(out.lon, lon, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
-        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
-
-        # test time only
-        out = subset.subset_gridpoint(da, start_date=yr_st, end_date=yr_ed)
-        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
-        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
-
-    def test_irregular(self):
-
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax
-        lon = -72.4
-        lat = 46.1
-        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out.lon, lon, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-
-        # test_irregular transposed:
-        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
-        dims = list(da1.dims)
-        dims.reverse()
-        daT = xr.DataArray(np.transpose(da1.values), dims=dims)
-        for d in daT.dims:
-            args = dict()
-            args[d] = da1[d]
-            daT = daT.assign_coords(**args)
-        daT = daT.assign_coords(lon=(["rlon", "rlat"], np.transpose(da1.lon.values)))
-        daT = daT.assign_coords(lat=(["rlon", "rlat"], np.transpose(da1.lat.values)))
-
-        out1 = subset.subset_gridpoint(daT, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out1.lon, lon, 1)
-        np.testing.assert_almost_equal(out1.lat, lat, 1)
-        np.testing.assert_array_equal(out, out1)
-
-        # Dataset with tasmax, lon and lat as data variables (i.e. lon, lat not coords of tasmax)
-        daT1 = xr.DataArray(np.transpose(da1.values), dims=dims)
-        for d in daT1.dims:
-            args = dict()
-            args[d] = da1[d]
-            daT1 = daT1.assign_coords(**args)
-        dsT = xr.Dataset(data_vars=None, coords=daT1.coords)
-        dsT["tasmax"] = daT1
-        dsT["lon"] = xr.DataArray(np.transpose(da1.lon.values), dims=["rlon", "rlat"])
-        dsT["lat"] = xr.DataArray(np.transpose(da1.lat.values), dims=["rlon", "rlat"])
-        out2 = subset.subset_gridpoint(dsT, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out2.lon, lon, 1)
-        np.testing.assert_almost_equal(out2.lat, lat, 1)
-        np.testing.assert_array_equal(out, out2.tasmax)
-
-    def test_positive_lons(self):
-        da = xr.open_dataset(self.nc_poslons).tas
-        lon = -72.4
-        lat = 46.1
-        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
-        np.testing.assert_almost_equal(out.lon, lon + 360, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-
-        out = subset.subset_gridpoint(da, lon=lon + 360, lat=lat)
-        np.testing.assert_almost_equal(out.lon, lon + 360, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-
-    def test_type_warn_then_raise(self):
-        da = xr.open_dataset(self.nc_poslons).tas
-        with pytest.raises(ValueError):
-            with pytest.warns(Warning):
-                subset.subset_gridpoint(
-                    da, lon=-72.4, lat=46.1, start_date=2056, end_date=2055
-                )
-
-    def test_raise(self):
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
-        with pytest.raises(Exception):
-            subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
-
-
-class TestSubsetBbox:
-    nc_poslons = os.path.join(
-        TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-    )
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
-    lon = [-72.4, -60]
-    lat = [42, 46.1]
-
-    def test_dataset(self):
-        da = xr.open_mfdataset(
-            [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
-            combine="by_coords",
-        )
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
-
-    def test_simple(self):
-        da = xr.open_dataset(self.nc_file).tasmax
-
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-
-        da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
-        yr_st = "2050"
-        yr_ed = "2059"
-
-        out = subset.subset_bbox(
-            da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=yr_st, end_date=yr_ed
-        )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
-        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
-
-        with pytest.warns(Warning):
-            out = subset.subset_bbox(
-                da, lon_bnds=self.lon, lat_bnds=self.lat, start_date=yr_st
-            )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
-        np.testing.assert_array_equal(out.time.dt.year.min(), np.array(int(yr_st)))
-
-        with pytest.warns(Warning):
-            out = subset.subset_bbox(
-                da, lon_bnds=self.lon, lat_bnds=self.lat, end_date=yr_ed
-            )
-        assert np.all(out.lon >= np.min(self.lon))
-        assert np.all(out.lon <= np.max(self.lon))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-        np.testing.assert_array_equal(out.time.dt.year.max(), np.array(int(yr_ed)))
-        np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
-
-    def test_irregular(self):
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax
-
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-
-        # for irregular lat lon grids data matrix remains rectangular in native proj
-        # but with data outside bbox assigned nans.  This means it can have lon and lats outside the bbox.
-        # Check only non-nans gridcells using mask
-        mask1 = ~(np.isnan(out.sel(time=out.time[0])))
-
-        assert np.all(out.lon.values[mask1] >= np.min(self.lon))
-        assert np.all(out.lon.values[mask1] <= np.max(self.lon))
-        assert np.all(out.lat.values[mask1] >= np.min(self.lat))
-        assert np.all(out.lat.values[mask1] <= np.max(self.lat))
-
-    def test_positive_lons(self):
-        da = xr.open_dataset(self.nc_poslons).tas
-
-        out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-        assert np.all(out.lon >= np.min(np.asarray(self.lon) + 360))
-        assert np.all(out.lon <= np.max(np.asarray(self.lon) + 360))
-        assert np.all(out.lat >= np.min(self.lat))
-        assert np.all(out.lat <= np.max(self.lat))
-
-        out = subset.subset_bbox(
-            da, lon_bnds=np.array(self.lon) + 360, lat_bnds=self.lat
-        )
-        assert np.all(out.lon >= np.min(np.asarray(self.lon) + 360))
-
-    def test_raise(self):
-        da = xr.open_dataset(self.nc_poslons).tas
-        with pytest.raises(ValueError):
-            with pytest.warns(Warning):
-                subset.subset_bbox(
-                    da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2056, end_yr=2055
-                )
-
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop(["lon", "lat"])
-        with pytest.raises(Exception):
-            subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
-
-
 class TestThresholdCount:
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(365))
@@ -763,3 +398,24 @@ class TestWindConversion:
             np.around(vas.values, decimals=10)
             == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
         )
+
+
+def test_default_formatter():
+    assert default_formatter.format("{freq}", freq="YS") == "annual"
+    assert default_formatter.format("{freq:noun}", freq="MS") == "months"
+    assert default_formatter.format("{month}", month="m3") == "march"
+
+
+def test_AttrFormatter():
+    fmt = AttrFormatter(
+        mapping={"evil": ["méchant", "méchante"], "nice": ["beau", "belle"]},
+        modifiers=["m", "f"],
+    )
+    # Normal cases
+    assert fmt.format("{adj:m}", adj="evil") == "méchant"
+    assert fmt.format("{adj:f}", adj="nice") == "belle"
+    # Missing mod:
+    assert fmt.format("{adj}", adj="evil") == "méchant"
+    # Mod with unknown value
+    with pytest.raises(ValueError):
+        fmt.format("{adj:m}", adj="funny")
