@@ -398,7 +398,7 @@ def growing_season_end(
             yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
             window,
             "time",
-            coord="daofyear",
+            coord="dayofyear",
         )
         return end
 

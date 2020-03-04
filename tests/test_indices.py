@@ -333,6 +333,39 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+class TestGrowingSeasonEnd:
+    # TODO: These tests show how behaviour needs adjustments.
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", np.nan),  # No growing season
+            ("2000-01-01", "2000-12-31", np.nan),  # All year growing season
+            ("2000-07-10", "2001-01-01", np.nan),  # End happens before start
+            ("2000-06-15", "2001-01-01", np.nan),  # No end
+            ("2000-06-15", "2000-07-15", 198),  # Normal case
+        ],
+    )
+    def test_varying_mid_dates(self, tas_series, d1, d2, expected):
+        # test for different growing length
+        import datetime
+
+        start = datetime.datetime(
+            int(d1.split("-")[0]), int(d1.split("-")[1]), int(d1.split("-")[2])
+        )
+        end = datetime.datetime(
+            int(d2.split("-")[0]), int(d2.split("-")[1]), int(d2.split("-")[2])
+        )
+        mid_date = start + (end - start) / 2
+        mid_date = mid_date.strftime("%m-%d")
+
+        # generate a year of data
+        tas = tas_series(np.zeros(365), start="2000/1/1")
+        warm_period = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(warm_period.time), 280)
+        gs_end = xci.growing_season_end(tas, mid_date=mid_date)
+        np.testing.assert_array_equal(gs_end, expected)
+
+
 class TestGrowingSeasonLength:
     @pytest.mark.parametrize(
         "d1,d2,expected",
