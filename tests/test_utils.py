@@ -345,14 +345,18 @@ class TestUnits:
         with units.context("hydro"):
             fu = units.parse_units("kilogram / d / meter ** 2")
             tu = units.parse_units("mm/day")
-            np.isclose(1 * fu, 1 * tu)
+
+            assert np.isclose((1 * fu).to(tu).magnitude, 1)
 
     def test_dimensionality(self):
         with units.context("hydro"):
             fu = 1 * units.parse_units("kg / m**2 / s")
             tu = 1 * units.parse_units("mm / d")
-            fu.to("mmday")
-            tu.to("mmday")
+            f = fu.to("mmday")
+            t = tu.to("mmday")
+
+            assert np.isclose(f.magnitude, 86400)
+            assert np.isclose(t.magnitude, 1)
 
     def test_fraction(self):
         q = 5 * units.percent
