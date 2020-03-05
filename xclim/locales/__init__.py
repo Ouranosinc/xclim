@@ -323,7 +323,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
 
     attrs_mapping = attrs.setdefault("attrs_mapping", {})
     attrs_mapping.setdefault("modifiers", [""])
-    for key, value in xc.indicators.utils.default_formatter.mapping.items():
+    for key, value in xc.core.formatting.default_formatter.mapping.items():
         attrs_mapping.setdefault(key, [value[0]])
 
     eng_attr = ""
