@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.indicators import checks
+from xclim.core import checks
 from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15

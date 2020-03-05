@@ -5,7 +5,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
-from xclim.indices.calendar import percentile_doy
+from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")

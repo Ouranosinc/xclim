@@ -32,7 +32,7 @@ def _get_indicators(module):
     modules : sequence
       Sequence of modules to inspect.
     """
-    from xclim.indicators import Indicator, Indicator2D
+    from xclim.core.indicator import Indicator, Indicator2D
 
     out = {}
     for key, val in module.__dict__.items():

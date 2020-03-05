@@ -3,12 +3,12 @@ import datetime
 import numpy as np
 import xarray
 
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import pint_multiply
+from xclim.core.units import units
 from xclim.indices import run_length as rl
 from xclim.indices.generic import threshold_count
-from xclim.units import convert_units_to
-from xclim.units import declare_units
-from xclim.units import pint_multiply
-from xclim.units import units
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 

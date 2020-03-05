@@ -56,7 +56,7 @@ from typing import Union
 
 import pkg_resources
 
-from xclim.indicators.utils import AttrFormatter
+from xclim.core.formatting import AttrFormatter
 
 LOCALES = []
 TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title", "abstract"]
@@ -306,7 +306,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     for module in [xc.atmos, xc.land, xc.seaIce]:
         for indicator in module.__dict__.values():
             if not isinstance(
-                indicator, (xc.indicators.Indicator, xc.indicators.Indicator2D)
+                indicator, (xc.core.indicator.Indicator, xc.core.indicator.Indicator2D)
             ):
                 continue
             ind_name = f"{indicator.__module__.split('.')[2]}.{indicator.identifier}"

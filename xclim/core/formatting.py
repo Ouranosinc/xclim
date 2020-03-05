@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Utilities for indicators
-========================
+Formatting utilities for indicators
+===================================
 """
-# Things defined here should be restricted for use inside the `xclim.indicators`
-# submodule as much as possible.
 import re
 import string
-from collections import defaultdict
-from types import FunctionType
 from typing import Mapping
 from typing import Sequence
 
@@ -123,37 +119,4 @@ def parse_doc(doc):
             if match:
                 out["long_name"] = match.groups()[0]
 
-    return out
-
-
-def wrapped_partial(func: FunctionType, *args, **kwargs):
-    from functools import partial, update_wrapper
-
-    partial_func = partial(func, *args, **kwargs)
-    update_wrapper(partial_func, func)
-    return partial_func
-
-
-# TODO Reconsider the utility of this
-def walk_map(d: dict, func: FunctionType):
-    """Apply a function recursively to values of dictionary.
-
-    Parameters
-    ----------
-    d : dict
-      Input dictionary, possibly nested.
-    func : FunctionType
-      Function to apply to dictionary values.
-
-    Returns
-    -------
-    dict
-      Dictionary whose values are the output of the given function.
-    """
-    out = {}
-    for k, v in d.items():
-        if isinstance(v, (dict, defaultdict)):
-            out[k] = walk_map(v, func)
-        else:
-            out[k] = func(v)
     return out

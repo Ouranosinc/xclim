@@ -3,12 +3,12 @@ import pytest
 import xarray as xr
 
 from xclim import indices
-from xclim.units import convert_units_to
-from xclim.units import pint2cfunits
-from xclim.units import pint_multiply
-from xclim.units import units
-from xclim.units import units2pint
-from xclim.units.core import _check_units
+from xclim.core.units import _check_units
+from xclim.core.units import convert_units_to
+from xclim.core.units import pint2cfunits
+from xclim.core.units import pint_multiply
+from xclim.core.units import units
+from xclim.core.units import units2pint
 
 
 class TestUnits:

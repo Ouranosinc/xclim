@@ -23,9 +23,9 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim.indices.calendar import percentile_doy
-from xclim.indices.utils import sfcwind_2_uas_vas
-from xclim.indices.utils import uas_vas_2_sfcwind
+from xclim.core.calendar import percentile_doy
+from xclim.core.utils import sfcwind_2_uas_vas
+from xclim.core.utils import uas_vas_2_sfcwind
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")

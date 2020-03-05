@@ -8,8 +8,6 @@ to the function defined in `xclim.indices`, Indicators add a layer of heatlh che
 and metadata handling. Indicator objects are split into realms : atmos, land and
 seaIce. The module also defines an additionnal virtual module : ICCLIM.
 """
-from xclim.indicators.indicator import Indicator  # noqa
-from xclim.indicators.indicator import Indicator2D  # noqa
 
 
 def build_module(name, objs, doc="", source=None, mode="ignore"):

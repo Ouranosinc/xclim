@@ -15,16 +15,15 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-import xclim
-from xclim.indicators import checks
-from xclim.indicators.utils import AttrFormatter
-from xclim.indicators.utils import default_formatter
-from xclim.indicators.utils import parse_doc
+from xclim.core import checks
+from xclim.core.formatting import AttrFormatter
+from xclim.core.formatting import default_formatter
+from xclim.core.formatting import parse_doc
+from xclim.core.units import convert_units_to
+from xclim.core.units import units
 from xclim.locales import get_local_attrs
 from xclim.locales import get_local_formatter
 from xclim.locales import LOCALES
-from xclim.units import convert_units_to
-from xclim.units import units
 
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
@@ -168,6 +167,8 @@ class Indicator:
             else:
                 cp[k] = v
 
+        from xclim import __version__
+
         attrs[
             "history"
         ] += "[{:%Y-%m-%d %H:%M:%S}] {}: {}{} - xclim version: {}.".format(
@@ -175,7 +176,7 @@ class Indicator:
             vname,
             self.identifier,
             ba.signature.replace(parameters=cp.values()),
-            xclim.__version__,
+            __version__,
         )
         attrs["cell_methods"] += out_attrs.pop("cell_methods", "")
         attrs.update(out_attrs)

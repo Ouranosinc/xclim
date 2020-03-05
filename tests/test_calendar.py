@@ -7,10 +7,10 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from xarray.coding.cftimeindex import CFTimeIndex
 
-from xclim.indices.calendar import adjust_doy_calendar
-from xclim.indices.calendar import infer_doy_max
-from xclim.indices.calendar import percentile_doy
-from xclim.indices.calendar import time_bnds
+from xclim.core.calendar import adjust_doy_calendar
+from xclim.core.calendar import infer_doy_max
+from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import time_bnds
 
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))

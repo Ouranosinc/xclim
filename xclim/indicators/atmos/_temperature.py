@@ -2,9 +2,9 @@
 import abc
 
 from xclim import indices
-from xclim.indicators import checks
-from xclim.indicators import Indicator
-from xclim.indicators import Indicator2D
+from xclim.core import checks
+from xclim.core.indicator import Indicator
+from xclim.core.indicator import Indicator2D
 
 __all__ = [
     "tn_days_below",

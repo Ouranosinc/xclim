@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.indices.calendar import calendars
+from xclim.core.calendar import calendars
 
 
 @pytest.fixture

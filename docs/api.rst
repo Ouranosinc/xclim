@@ -12,10 +12,6 @@ Indices
 Indices submodules
 ------------------
 
-.. automodule:: xclim.indices.calendar
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 .. automodule:: xclim.indices.generic
    :members:
@@ -27,36 +23,40 @@ Indices submodules
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indices.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 Unit handling module
 ====================
 
-.. automodule:: xclim.units
-   :members:
-   :undoc-members:
-   :imported-members:
-   :show-inheritance:
-
-
-Indicators
-==========
-
-.. automodule:: xclim.indicators.checks
+.. automodule:: xclim.core.units
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indicators.indicator
+
+Other utilities
+===============
+
+.. automodule:: xclim.core.calendar
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indicators.utils
+.. automodule:: xclim.core.checks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.indicator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.formatting
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.utils
    :members:
    :undoc-members:
    :show-inheritance:

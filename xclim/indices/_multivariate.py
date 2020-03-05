@@ -3,14 +3,14 @@ from typing import Optional
 import numpy as np
 import xarray
 
+from xclim.core.calendar import resample_doy
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import pint_multiply
+from xclim.core.units import units
+from xclim.core.units import units2pint
 from xclim.indices import fwi
 from xclim.indices import run_length as rl
-from xclim.indices.calendar import resample_doy
-from xclim.units import convert_units_to
-from xclim.units import declare_units
-from xclim.units import pint_multiply
-from xclim.units import units
-from xclim.units import units2pint
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 

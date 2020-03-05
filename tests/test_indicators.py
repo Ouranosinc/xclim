@@ -7,13 +7,13 @@ import pytest
 
 from xclim import __version__
 from xclim import atmos
-from xclim.indicators import Indicator
-from xclim.indicators.utils import AttrFormatter
-from xclim.indicators.utils import default_formatter
-from xclim.indicators.utils import parse_doc
-from xclim.indicators.utils import walk_map
+from xclim.core.formatting import AttrFormatter
+from xclim.core.formatting import default_formatter
+from xclim.core.formatting import parse_doc
+from xclim.core.indicator import Indicator
+from xclim.core.units import units
+from xclim.core.utils import walk_map
 from xclim.indices import tg_mean
-from xclim.units import units
 
 
 class UniIndTemp(Indicator):
