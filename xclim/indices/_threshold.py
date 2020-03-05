@@ -50,7 +50,7 @@ def cold_spell_days(tas, thresh="-10 degC", window: int = 5, freq="AS-JUL"):
 
     Parameters
     ----------
-    tas : xarrray.DataArray
+    tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
     thresh : str
       Threshold temperature below which a cold spell begins [℃] or [K]. Default: '-10 degC'
@@ -264,8 +264,9 @@ def freshet_start(
     """
     thresh = utils.convert_units_to(thresh, tas)
     over = tas > thresh
-    group = over.resample(time=freq)
-    return group.apply(rl.first_run_ufunc, window=window, index="dayofyear")
+    return over.resample(time=freq).map(
+        rl.first_run, dim="time", window=window, coord="dayofyear"
+    )
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -411,7 +412,7 @@ def heat_wave_index(
 
     Parameters
     ----------
-    tasmax : xarrray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
     thresh : str
       Threshold temperature on which to designate a heatwave [℃] or [K]. Default: '25.0 degC'.
