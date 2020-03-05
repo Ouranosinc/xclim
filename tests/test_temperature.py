@@ -1,12 +1,11 @@
 import os
-import sys
 
 import numpy as np
 import pytest
 import xarray as xr
 
-import xclim.atmos as atmos
-from xclim.utils import percentile_doy
+from xclim import atmos
+from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
