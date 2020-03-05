@@ -297,14 +297,14 @@ class TestDailyPrIntensity:
         np.testing.assert_array_almost_equal(out[0], 2.5)
 
 
-class TestDateOfLastSpringFrost:
+class TestLastSpringFrost:
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a[180:270] = 30
         tas = tas_series(a, start="2000/1/1")
 
-        lsf = xci.date_of_last_spring_frost(tas)
-        assert lsf == "2020/6/28"
+        lsf = xci.last_spring_frost(tas)
+        assert lsf == 180
 
 
 class TestDaysOverPrecipThresh:
@@ -382,33 +382,20 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
-@pytest.mark.skip(
-    reason="failing tests indicate that behaviour is not desired for this indicator."
-)
 class TestGrowingSeasonEnd:
     @pytest.mark.parametrize(
-        "d1,d2,expected",
+        "d1,d2,mid_date,expected",
         [
-            ("1950-01-01", "1951-01-01", np.nan),  # No growing season
-            ("2000-01-01", "2000-12-31", np.nan),  # All year growing season
-            ("2000-07-10", "2001-01-01", np.nan),  # End happens before start
-            ("2000-06-15", "2001-01-01", np.nan),  # No end
-            ("2000-06-15", "2000-07-15", 198),  # Normal case
+            ("1950-01-01", "1951-01-01", "07-01", np.nan),  # No growing season
+            ("2000-01-01", "2000-12-31", "07-01", 365),  # All year growing season
+            ("2000-07-10", "2001-01-01", "07-01", np.nan),  # End happens before start
+            ("2000-06-15", "2000-07-15", "07-01", 198),  # Normal case
+            ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
+            ("2000-06-15", "2000-07-15", "10-01", 274),  # Late mid_date
+            ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
         ],
     )
-    def test_varying_mid_dates(self, tas_series, d1, d2, expected):
-        # test for different growing length
-        import datetime
-
-        start = datetime.datetime(
-            int(d1.split("-")[0]), int(d1.split("-")[1]), int(d1.split("-")[2])
-        )
-        end = datetime.datetime(
-            int(d2.split("-")[0]), int(d2.split("-")[1]), int(d2.split("-")[2])
-        )
-        mid_date = start + (end - start) / 2
-        mid_date = mid_date.strftime("%m-%d")
-
+    def test_varying_mid_dates(self, tas_series, d1, d2, mid_date, expected):
         # generate a year of data
         tas = tas_series(np.zeros(365), start="2000/1/1")
         warm_period = tas.sel(time=slice(d1, d2))

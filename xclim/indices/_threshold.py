@@ -25,7 +25,7 @@ __all__ = [
     "growing_degree_days",
     "growing_season_end",
     "growing_season_length",
-    "date_of_last_spring_frost",
+    "last_spring_frost",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -354,7 +354,7 @@ def growing_season_end(
     window: int = 5,
     freq: str = "YS",
 ):
-    r"""First day of consistent inferior threshold temperature.
+    r"""First day of consistent inferior threshold temperature after a run of days superior to a threshold temperature.
 
     Returns the first day of period where a temperature is inferior to a threshold
     over a given run of days.
@@ -376,17 +376,13 @@ def growing_season_end(
     -------
     xarray.DataArray
       Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
-      If there is no such day, return np.nan.
+      If there is no such day or if a growing season is not detected, returns np.nan.
+      If the growing season does not end within the time period, returns the last day of the period.
     """
     thresh = utils.convert_units_to(thresh, tas)
     mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
 
     def compute_growing_season_end(yrdata):
-        if (
-            yrdata.chunks is not None
-            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
-        ):
-            yrdata = yrdata.chunk({"time": -1})
         mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
         if (
             mid_idx.size == 0
@@ -400,7 +396,15 @@ def growing_season_end(
             "time",
             coord="dayofyear",
         )
-        return end
+        beg = rl.first_run(
+            yrdata.where(yrdata.time < yrdata.time[mid_idx][0]) >= thresh,
+            window,
+            "time",
+        )
+        end = xarray.where(
+            end.isnull() & beg.notnull(), yrdata.time.isel(time=-1).dt.dayofyear, end
+        )
+        return end.where(beg.notnull())
 
     return tas.resample(time=freq).map(compute_growing_season_end)
 
@@ -467,11 +471,6 @@ def growing_season_length(
     mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
 
     def compute_growing_season_length(yrdata):
-        if (
-            yrdata.chunks is not None
-            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
-        ):
-            yrdata = yrdata.chunk({"time": -1})
         mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
         if (
             mid_idx.size == 0
@@ -484,7 +483,7 @@ def growing_season_length(
             window,
             "time",
         )
-        beg = rl.first_run(yrdata > thresh, window, "time")
+        beg = rl.first_run(yrdata >= thresh, window, "time")
         sl = end - beg
         sl = xarray.where(
             beg.isnull() & end.notnull(), 0, sl
@@ -499,7 +498,7 @@ def growing_season_length(
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
-def date_of_last_spring_frost(
+def last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
     mid_date: str = "07-01",
@@ -534,11 +533,6 @@ def date_of_last_spring_frost(
     mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
 
     def compute_final_frost_event(yrdata):
-        if (
-            yrdata.chunks is not None
-            and len(yrdata.chunks[yrdata.dims.index("time")]) > 1
-        ):
-            yrdata = yrdata.chunk({"time": -1})
         mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
         if (
             mid_idx.size == 0

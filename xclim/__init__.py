@@ -185,7 +185,7 @@ def __build_pcc(mode: str = "warn"):
         date_of_first_fall_frost=wrapped_partial(
             indices.growing_season_end, thresh="0 degC", mid_date="07-15", window=1
         ),
-        date_of_last_spring_frost=indices.date_of_last_spring_frost,
+        date_of_last_spring_frost=indices.last_spring_frost,
         days_above_32_celsius=wrapped_partial(
             indices.tx_days_above, thresh="32.0 degC"
         ),
