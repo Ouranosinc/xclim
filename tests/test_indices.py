@@ -300,7 +300,7 @@ class TestDailyPrIntensity:
 class TestLastSpringFrost:
     def test_simple(self, tas_series):
         a = np.zeros(365)
-        a[180:270] = 30
+        a[180:270] = 303.15
         tas = tas_series(a, start="2000/1/1")
 
         lsf = xci.last_spring_frost(tas)
