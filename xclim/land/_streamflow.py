@@ -3,8 +3,8 @@ import numpy as np
 
 from xclim import checks
 from xclim import generic
+from xclim.indicator import Indicator
 from xclim.indices import base_flow_index
-from xclim.utils import Indicator
 from xclim.utils import wrapped_partial
 
 # from boltons.funcutils import FunctionBuilder
