@@ -549,29 +549,7 @@ def date_of_last_spring_frost(
 
         spring_season = yrdata.where(yrdata.time <= yrdata.time[mid_idx][0])
         frost_days = spring_season < thresh
-        reverse_frost_days = frost_days.sortby("time", ascending=False)
-
-        final_frost_day = rl.first_run(reverse_frost_days, window, "time",).fillna(-1)
-
-        # TODO: It might be better to reexamine this to ensure that indexes are returned. Hard to grapph (CF)datetimes.
-        # TODO: This is not lazy, we need to revisit this with a better rolling function that finds indexes
-        time = reverse_frost_days.time.reset_coords(
-            set(reverse_frost_days.time.coords).difference({"time"})
-        ).time
-        time = xarray.concat(
-            (
-                time,
-                xarray.DataArray(
-                    [time[-1].values - datetime.timedelta(1, 0, 0)],
-                    dims=("time",),
-                    coords={"time": [time[-1].values - datetime.timedelta(1, 0, 0)]},
-                ),
-            ),
-            "time",
-        )
-        times = time.isel(time=final_frost_day.load().astype(int))
-
-        return times.where(times != time[-1])
+        return rl.last_run(frost_days, window=window, dim="time", coord="dayofyear")
 
     return tas.resample(time=freq).map(compute_final_frost_event)
 
