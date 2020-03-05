@@ -544,8 +544,5 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray):
     index = index.fillna(0).astype(int)
     func = partial(_index_from_1d_array, da)
 
-    if isinstance(index, dsk.Array):
-        out = dsk.map_blocks(func, index, dtype=index.dtype)
-    else:
-        out = func(index)
+    out = index.map_blocks(func)
     return out.where(~invalid)
