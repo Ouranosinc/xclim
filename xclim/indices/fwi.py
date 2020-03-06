@@ -21,8 +21,8 @@ Shut down methods:
     `'temperature'`
         Pixels where the average temperature of the last "startShutDays" is below "tempThresh" are shut down.
     `'snow_depth'`
-        In addition to the `'temperature'` condition, pixels where the average snow dept of the last "startShutDays"
-        is below "snoDThresh" are also shut down.
+        In addition to the `'temperature'` condition, pixels where the average snow depth of the last "startShutDays"
+        is greater or equal to "snoDThresh" are also shut down.
 
 Start up methods:
 
