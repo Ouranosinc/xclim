@@ -117,6 +117,8 @@ DEFAULT_PARAMS = dict(
     DMCStart=6.0,
 )
 
+
+# Values taken from GFWED code
 DAY_LENGTHS = np.array(
     [
         [11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8],
