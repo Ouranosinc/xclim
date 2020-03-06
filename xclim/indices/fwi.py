@@ -69,6 +69,9 @@ from warnings import warn
 
 import numpy as np
 import xarray as xr
+from numba import jit
+from numba import vectorize
+
 
 DEFAULT_PARAMS = dict(
     min_lat=-58,
@@ -90,6 +93,8 @@ DEFAULT_PARAMS = dict(
     DMCStart=6.0,
 )
 
+
+# Values taken from GFWED code
 DAY_LENGTHS = np.array(
     [
         [11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8],
@@ -109,45 +114,71 @@ DAY_LENGTH_FACTORS = np.array(
 )
 
 
-def day_length(lat):
-    """Return the average day length by month within latitudinal bounds."""
-    lat_bnds = (-90, -30, -15, 15, 33, 90)
-    i = np.digitize(lat, lat_bnds) - 1
-    return DAY_LENGTHS[i]
+@jit
+def day_length(lat, mth):
+    """Return the average day length for a month within latitudinal bounds."""
+    if -30 > lat >= -90:
+        dl = DAY_LENGTHS[0, :]
+    elif -15 > lat >= -30:
+        dl = DAY_LENGTHS[1, :]
+    elif 15 > lat >= -15:
+        return 9
+    elif 30 > lat >= 15:
+        dl = DAY_LENGTHS[3, :]
+    elif 90 >= lat >= 30:
+        dl = DAY_LENGTHS[4, :]
+    return dl[mth - 1]
 
 
-def day_length_factor(lat, kind="gfwed"):
-    """Return the day length factor.
+@jit
+def day_length_factor(lat, mth):
+    """Return the day length factor"""
+    if -15 > lat >= -90:
+        dlf = DAY_LENGTH_FACTORS[0, :]
+    elif 15 > lat >= -15:
+        return 1.39
+    elif 90 >= lat >= 15:
+        dlf = DAY_LENGTH_FACTORS[2, :]
+    return dlf[mth - 1]
 
-    Note
-    ----
-    Values taken from GFWED code.
+
+@vectorize
+def fine_fuel_moisture_code(t, p, w, h, ffmc0):
+    """Computation of the fine fuel moisture code.
+
+    Vectorized on spatial dimensions.
+
+    Parameters
+    ----------
+    t: array
+      Noon temperature [C].
+    p : array
+      Rain fall in open over previous 24 hours, at noon [mm].
+    w : array
+      Noon wind speed [km/h].
+    h : array
+      Noon relative humidity [%].
+    ffmc0 : array
+      Previous value of the fine fuel moisture code.
+
+    Returns
+    -------
+    array
+      Fine fuel moisture code at the current timestep.
     """
-    lat_bnds = (-90, -15, 15, 90)
-    i = np.digitize(lat, lat_bnds) - 1
-    return DAY_LENGTH_FACTORS[i]
-
-
-def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
-    """Scalar computation of the fine fuel moisture code."""
-    if np.isnan(ffmc0):
-        return np.nan
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
     if p > 0.5:
         rf = p - 0.5  # *Eq.2*#
         if mo > 150.0:
             mo = (
                 mo
-                + 42.5
-                * rf
-                * math.exp(-100.0 / (251.0 - mo))
-                * (1.0 - math.exp(-6.93 / rf))
-            ) + (0.0015 * (mo - 150.0) ** 2) * math.sqrt(
+                + 42.5 * rf * np.exp(-100.0 / (251.0 - mo)) * (1.0 - np.exp(-6.93 / rf))
+            ) + (0.0015 * (mo - 150.0) ** 2) * np.sqrt(
                 rf
             )  # *Eq.3b*#
         elif mo <= 150.0:
-            mo = mo + 42.5 * rf * math.exp(-100.0 / (251.0 - mo)) * (
-                1.0 - math.exp(-6.93 / rf)
+            mo = mo + 42.5 * rf * np.exp(-100.0 / (251.0 - mo)) * (
+                1.0 - np.exp(-6.93 / rf)
             )
             # *Eq.3a*#
         if mo > 250.0:
@@ -155,33 +186,33 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
 
     ed = (
         0.942 * (h ** 0.679)
-        + (11.0 * math.exp((h - 100.0) / 10.0))
-        + 0.18 * (21.1 - t) * (1.0 - 1.0 / math.exp(0.1150 * h))
+        + (11.0 * np.exp((h - 100.0) / 10.0))
+        + 0.18 * (21.1 - t) * (1.0 - 1.0 / np.exp(0.1150 * h))
     )  # *Eq.4*#
 
     if mo < ed:
         ew = (
             0.618 * (h ** 0.753)
-            + (10.0 * math.exp((h - 100.0) / 10.0))
-            + 0.18 * (21.1 - t) * (1.0 - 1.0 / math.exp(0.115 * h))
+            + (10.0 * np.exp((h - 100.0) / 10.0))
+            + 0.18 * (21.1 - t) * (1.0 - 1.0 / np.exp(0.115 * h))
         )  # *Eq.5*#
         if mo <= ew:
             kl = 0.424 * (1.0 - ((100.0 - h) / 100.0) ** 1.7) + (
-                0.0694 * math.sqrt(w)
+                0.0694 * np.sqrt(w)
             ) * (
                 1.0 - ((100.0 - h) / 100.0) ** 8
             )  # *Eq.7a*#
-            kw = kl * (0.581 * math.exp(0.0365 * t))  # *Eq.7b*#
+            kw = kl * (0.581 * np.exp(0.0365 * t))  # *Eq.7b*#
             m = ew - (ew - mo) / 10.0 ** kw  # *Eq.9*#
         elif mo > ew:
             m = mo
     elif mo == ed:
         m = mo
     else:
-        kl = 0.424 * (1.0 - (h / 100.0) ** 1.7) + (0.0694 * math.sqrt(w)) * (
+        kl = 0.424 * (1.0 - (h / 100.0) ** 1.7) + (0.0694 * np.sqrt(w)) * (
             1.0 - (h / 100.0) ** 8
         )  # *Eq.6a*#
-        kw = kl * (0.581 * math.exp(0.0365 * t))  # *Eq.6b*#
+        kw = kl * (0.581 * np.exp(0.0365 * t))  # *Eq.6b*#
         m = ed + (mo - ed) / 10.0 ** kw  # *Eq.8*#
 
     ffmc = (59.5 * (250.0 - m)) / (147.2 + m)  # *Eq.10*#
@@ -193,92 +224,19 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):
     return ffmc
 
 
-def fine_fuel_moisture_code(tas, pr, ws, rh, ffmc0):
-    """Fine fuel moisture code
+@vectorize
+def duff_moisture_code(t, p, h, mth, lat, dmc0):
+    """Computation of the Duff moisture code.
 
-    This function iterates over spatial dimensions only.
-
-    Parameters
-    ----------
-    tas: array
-      Noon temperature [C].
-    pr : array
-      Rain fall in open over previous 24 hours, at noon [mm].
-    ws : array
-      Noon wind speed [km/h].
-    rh : array
-      Noon relative humidity [%].
-    ffmc0 : float
-      Previous value of the fine fuel moisture code.
-
-    Returns
-    -------
-    array
-      Fine fuel moisture code at the next timestep
-    """
-
-    it = np.nditer(
-        [tas, pr, ws, rh, ffmc0, None],
-        [],
-        5 * [["readonly"]] + [["writeonly", "allocate"]],  # add no_broadcast?
-    )
-
-    with it:
-        for (t, p, w, h, ffmc, out) in it:
-            it[5] = _fine_fuel_moisture_code(t, p, w, h, ffmc)
-
-        return it.operands[5]
-
-
-def _duff_moisture_code(t, p, h, mth, lat, dmc0):
-    """Scalar computation of the Duff moisture code."""
-    if np.isnan(dmc0):
-        return np.nan
-    dl = day_length(lat)[mth - 1]
-
-    if t < -1.1:
-        rk = 0
-    else:
-        rk = 1.894 * (t + 1.1) * (100.0 - h) * dl * 0.0001  # *Eqs.16 and 17*#
-
-    if p > 1.5:
-        ra = p
-        rw = 0.92 * ra - 1.27  # *Eq.11*#
-        # wmi = 20.0 + 280.0 / math.exp(0.023 * dmc0)  # *Eq.12*#
-        wmi = 20.0 + math.exp(5.6348 - dmc0 / 43.43)  # *Eq.12*#
-        if dmc0 <= 33.0:
-            b = 100.0 / (0.5 + 0.3 * dmc0)  # *Eq.13a*#
-        else:
-            if dmc0 <= 65.0:
-                b = 14.0 - 1.3 * math.log(dmc0)  # *Eq.13b*#
-            else:
-                b = 6.2 * math.log(dmc0) - 17.2  # *Eq.13c*#
-        wmr = wmi + (1000 * rw) / (48.77 + b * rw)  # *Eq.14*#
-        # pr = 43.43 * (5.6348 - math.log(wmr - 20.0))  # *Eq.15*#
-        pr = 244.72 - 43.43 * math.log(wmr - 20.0)  # *Eq.15*#
-    else:  # p <= 1.5
-        pr = dmc0
-
-    if pr < 0.0:
-        pr = 0.0
-    dmc = pr + rk
-    # if dmc <= 1.0:
-    #    dmc = 1.0
-    return dmc
-
-
-def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
-    """Duff moisture code
-
-    This function iterates over spatial dimensions only.
+    Vectorized on spatial dimensions.
 
     Parameters
     ----------
-    tas: array
+    t: array
       Noon temperature [C].
-    pr : array
+    p : array
       Rain fall in open over previous 24 hours, at noon [mm].
-    rh : array
+    h : array
       Noon relative humidity [%].
     mth : integer array
       Month of the year [1-12].
@@ -290,58 +248,52 @@ def duff_moisture_code(tas, pr, rh, mth, lat, dmc0):
     Returns
     -------
     array
-      Duff moisture code at the next timestep
+      Duff moisture code at the current timestep
     """
-    it = np.nditer(
-        [tas, pr, rh, mth, lat, dmc0, None],
-        [],
-        6 * [["readonly"]] + [["writeonly", "allocate"]],
-    )
+    dl = day_length(lat, mth)
 
-    with it:
-        for (t, p, h, m, l, dmc, out) in it:
-            it[6] = _duff_moisture_code(t, p, h, m, l, dmc)
+    if t < -1.1:
+        rk = 0
+    else:
+        rk = 1.894 * (t + 1.1) * (100.0 - h) * dl * 0.0001  # *Eqs.16 and 17*#
 
-        return it.operands[6]
-
-
-def _drought_code(t, p, mth, lat, dc0):
-    """Scalar computation of the drought code."""
-    if np.isnan(dc0):
-        return np.nan
-
-    fl = day_length_factor(lat)
-
-    if t < -2.8:
-        t = -2.8
-    pe = (0.36 * (t + 2.8) + fl[mth - 1]) / 2  # *Eq.22*#
-    if pe < 0.0:
-        pe = 0.0
-
-    if p > 2.8:
+    if p > 1.5:
         ra = p
-        rw = 0.83 * ra - 1.27  # *Eq.18*#  Rd
-        smi = 800.0 * math.exp(-dc0 / 400.0)  # *Eq.19*# Qo
-        dr = dc0 - 400.0 * math.log(1.0 + ((3.937 * rw) / smi))  # *Eqs. 20 and 21*#
-        if dr > 0.0:
-            dc = dr + pe
+        rw = 0.92 * ra - 1.27  # *Eq.11*#
+        # wmi = 20.0 + 280.0 / math.exp(0.023 * dmc0)  # *Eq.12*#
+        wmi = 20.0 + np.exp(5.6348 - dmc0 / 43.43)  # *Eq.12*#
+        if dmc0 <= 33.0:
+            b = 100.0 / (0.5 + 0.3 * dmc0)  # *Eq.13a*#
         else:
-            dc = pe
-    else:  # f p <= 2.8:
-        dc = dc0 + pe
-    return dc
+            if dmc0 <= 65.0:
+                b = 14.0 - 1.3 * np.log(dmc0)  # *Eq.13b*#
+            else:
+                b = 6.2 * np.log(dmc0) - 17.2  # *Eq.13c*#
+        wmr = wmi + (1000 * rw) / (48.77 + b * rw)  # *Eq.14*#
+        # pr = 43.43 * (5.6348 - math.log(wmr - 20.0))  # *Eq.15*#
+        pr = 244.72 - 43.43 * np.log(wmr - 20.0)  # *Eq.15*#
+    else:  # p <= 1.5
+        pr = dmc0
+
+    if pr < 0.0:
+        pr = 0.0
+    dmc = pr + rk
+    # if dmc <= 1.0:
+    #    dmc = 1.0
+    return dmc
 
 
-def drought_code(tas, pr, mth, lat, dc0):
-    """Drought code
+@vectorize
+def drought_code(t, p, mth, lat, dc0):
+    """Computation of the drought code.
 
-    This function iterates over spatial dimensions only.
+    Vectorized over spatial dimensions.
 
     Parameters
     ----------
-    tas: array
+    t: array
       Noon temperature [C].
-    pr : array
+    p : array
       Rain fall in open over previous 24 hours, at noon [mm].
     mth : integer array
       Month of the year [1-12].
@@ -353,19 +305,28 @@ def drought_code(tas, pr, mth, lat, dc0):
     Returns
     -------
     array
-      Drought code at the next timestep
+      Drought code at the current timestep
     """
-    it = np.nditer(
-        [tas, pr, mth, lat, dc0, None],
-        [],
-        5 * [["readonly"]] + [["writeonly", "allocate"]],
-    )
+    fl = day_length_factor(lat, mth)
 
-    with it:
-        for (t, p, m, l, dc, out) in it:
-            it[5] = _drought_code(t, p, m, l, dc)
+    if t < -2.8:
+        t = -2.8
+    pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
+    if pe < 0.0:
+        pe = 0.0
 
-        return it.operands[5]
+    if p > 2.8:
+        ra = p
+        rw = 0.83 * ra - 1.27  # *Eq.18*#  Rd
+        smi = 800.0 * np.exp(-dc0 / 400.0)  # *Eq.19*# Qo
+        dr = dc0 - 400.0 * np.log(1.0 + ((3.937 * rw) / smi))  # *Eqs. 20 and 21*#
+        if dr > 0.0:
+            dc = dr + pe
+        else:
+            dc = pe
+    else:  # f p <= 2.8:
+        dc = dc0 + pe
+    return dc
 
 
 def initial_spread_index(ws, ffmc):
