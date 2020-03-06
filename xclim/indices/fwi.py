@@ -697,7 +697,7 @@ def _fwi_arg_compressor(
             raise TypeError(
                 f"Missing input argument #{i} for index combination {indexes}"
             )
-        elif hasattr(args[i], "data") and isinstance(args[i].data, dskarray):
+        if hasattr(args[i], "data") and isinstance(args[i].data, dskarray):
             # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
             warn(
                 f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
@@ -781,8 +781,7 @@ def fire_weather_ufunc(
     if "ISI" in indexes:
         indexes.update({"FFMC"})
     indexes = sorted(
-        list(indexes),
-        key=lambda ele: ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index(ele),
+        list(indexes), key=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index,
     )
 
     # args is a list of only the needed arrays
