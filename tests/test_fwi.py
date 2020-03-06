@@ -95,10 +95,10 @@ class TestFireWeatherIndex:
         np.testing.assert_allclose(fwi, d["fwi"], rtol=0.4)
 
     def test_day_length(self):
-        assert day_length(44)[0] == 6.5
+        assert day_length(44, 1) == 6.5
 
     def test_day_lengh_factor(self):
-        assert day_length_factor(44)[0] == -1.6
+        assert day_length_factor(44, 1) == -1.6
 
     def test_fire_weather_ufunc_errors(
         self, tas_series, pr_series, rh_series, ws_series
