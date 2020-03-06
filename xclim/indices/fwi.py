@@ -8,11 +8,36 @@ Methods defined here are used by :func:`xclim.indices.drought_code` and :func:`x
 Adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using
 MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system.
 
+Shut down and start up
+----------------------
+Fire weather indexes are iteratively computed, each day's value depending on the previous day indexes.
+Additionally, the codes are "shut down" (set to NaN) in winter. There are a few ways of computing this
+shut down and the subsequent spring start up. The principal method uses the snow depth, a variable which
+is not always available. xclim offers less restrictive options usable with model climate data. In the list
+below, parameters between "" refer to those listed below.
 
-Default values for the following parameters are stored in the DEFAULT_PARAMS dict. The current implementation doesn't use all those parameters, so it might be useless to modify them.
+Shut down methods:
+
+    `'temperature'`
+        Pixels where the average temperature of the last "startShutDays" is below "tempThresh" are shut down.
+    `'snow_depth'`
+        In addition to the `'temperature'` condition, pixels where the average snow dept of the last "startShutDays"
+        is below "snoDThresh" are also shut down.
+
+Start up methods:
+
+    `None`
+        Pixels that were shut down in the previous timestep but not in the current are set to the *wet* start values. ("DCStart", "DMCStart" and "FFMCStart")
+    `snow_depth`
+        Same as above, but the *wet* start is only used on pixels where: 1) the average snow depth of the last "snowCoverDaysCalc" is above "minWinterSnoD" and
+        2) at least "minSnowDayFrac" % of the last "snowCoverDaysCalc" had a snow depth above "snoDThresh". For all other pixels, the *dry* start is used,
+        where DC and DMC are started with their "DryStartFactor" multiplied by the smallest number between "snowCoverDaysCalc" and the number of days since
+        the last rain event of at least "precThresh" mm.
+
 
 Parameters
 ----------
+Default values for the following parameters are stored in the DEFAULT_PARAMS dict. The current implementation doesn't use all those parameters, so it might be useless to modify them.
 
     min_lat : float
         Min latitude for analysis
@@ -58,17 +83,16 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 .. todo::
 
     Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25,
-    Vectorization over spatial chunks: replace math.expression by np.expression AND/OR Use numba to vectorize said functions,
     Add references,
     Allow computation of DC/DMC/FFMC independently,
 """
-import math
 from collections import OrderedDict
 from typing import Sequence
 from warnings import warn
 
 import numpy as np
 import xarray as xr
+from dask.array import Array as dskarray
 from numba import jit
 from numba import vectorize
 
@@ -93,8 +117,6 @@ DEFAULT_PARAMS = dict(
     DMCStart=6.0,
 )
 
-
-# Values taken from GFWED code
 DAY_LENGTHS = np.array(
     [
         [11.5, 10.5, 9.2, 7.9, 6.8, 6.2, 6.5, 7.4, 8.7, 10, 11.2, 11.8],
@@ -418,47 +440,77 @@ def daily_severity_rating(fwi):
 
 
 def _shut_down_and_start_ups(
-    it, dcprev=None, tas=None, snd=None, start_up_mode=None, **params
+    it,
+    dcprev=None,
+    tas=None,
+    pr=None,
+    snd=None,
+    shut_down_mode="temperature",
+    start_up_mode=None,
+    **params,
 ):
-    # Shut down
-    temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
-    shut_down = temp_recent < params["tempThresh"]
-    if start_up_mode == "snow_depth":
-        snow_cover_recent = snd[..., it - params["startShutDays"] : it + 1].mean(
-            axis=-1
-        )
-        snow_cover_history = snd[..., it - params["snowCoverDaysCalc"] + 1 : it + 1]
-        snow_days = np.count_nonzero(snow_cover_history > params["snoDThresh"], axis=-1)
+    """Computation of the shut_down and start_up masks.
 
-        shut_down = shut_down | (snow_cover_recent >= params["snoDThresh"])
-    elif start_up_mode is not None:
+    Only dcprev is used: itt is assumed that dcprev, dmcprev and ffmcprev have the same shut down (NaN) pixels.
+
+    Returns
+    -------
+    shut_down, start_up_wet, start_up_dry : ndarray
+        Boolean masks, `start_up_dry` is non-zero only for "snow_depth" start_up_mode
+    days_since_last_prec : ndarray or np.nan
+        Computed only with start_up_mode == "snow_depth"
+    """
+    # When implementing another mode, put the description in the module-level docstring.
+    # Shut down
+    if shut_down_mode in ["temperature", "snow_depth"]:
+        temp_recent = tas[..., it - params["startShutDays"] : it + 1].mean(axis=-1)
+        shut_down = temp_recent < params["tempThresh"]
+
+        if shut_down_mode == "snow_depth":
+            snow_cover_recent = snd[..., it - params["startShutDays"] : it + 1].mean(
+                axis=-1
+            )
+            shut_down = shut_down | (snow_cover_recent >= params["snoDThresh"])
+
+    else:
         raise NotImplementedError(
-            "Only start_up_mode snow_depth is currently implemented."
+            "shut_down_mode must be one of 'snow_depth' or 'temperature'"
         )
 
     # Startup
     start_up = np.isnan(dcprev) & ~shut_down
     if start_up_mode == "snow_depth":
+        snow_cover_history = snd[..., it - params["snowCoverDaysCalc"] + 1 : it + 1]
+        snow_days = np.count_nonzero(snow_cover_history > params["snoDThresh"], axis=-1)
+
         start_up_wet = (
             start_up
             & (snow_days / params["snowCoverDaysCalc"] >= params["minSnowDayFrac"])
             & (snow_cover_history.mean(axis=-1) >= params["minWinterSnoD"])
         )
         start_up_dry = start_up & ~start_up_wet
-    elif start_up_mode is not None:
-        raise NotImplementedError(
-            "Only start_up_mode snow_depth is currently implemented."
+
+        prec_history = np.flip(pr[..., : it + 1], axis=-1)
+        days_with_prec = prec_history >= params["precThresh"]
+        days_since_last_prec = days_with_prec.argmax(axis=-1)
+        days_since_last_prec = np.where(
+            np.any(days_with_prec, axis=-1),
+            days_since_last_prec,
+            params["snowCoverDaysCalc"],
         )
+    elif start_up_mode is not None:
+        raise NotImplementedError("start_up_mode must be 'snow_depth' or None.")
     else:
         start_up_wet = start_up
         start_up_dry = 0 * start_up_wet
+        days_since_last_prec = np.nan
 
-    return shut_down, start_up_wet, start_up_dry
+    return shut_down, start_up_wet, start_up_dry, days_since_last_prec
 
 
-def _fwi_arg_decompressor(*args, indexes=None, start_up_mode=None):
+def _fwi_arg_decompressor(*args, indexes=None, start_up_mode=None, shut_down_mode=None):
     tas = pr = rh = ws = mth = lat = dcprev = dmcprev = ffmcprev = snd = None
-    if start_up_mode == "snow_depth":
+    if start_up_mode == "snow_depth" or shut_down_mode == "snow_depth":
         *args, snd = args
     if indexes == ["DC"] and len(args) == 5:
         tas, pr, mth, lat, dcprev = args
@@ -483,7 +535,8 @@ def _fire_weather_calc(*args, **params):
     The number of input arguments depends on which indexes are needed, given by param `indexes`.
     """
     indexes = params["indexes"]
-    start_up_mode = params.pop("start_up_mode", "snow_depth")
+    start_up_mode = params.pop("start_up_mode")
+    shut_down_mode = params.pop("shut_down_mode", "temperature")
     ind_prevs = OrderedDict()
 
     (
@@ -497,7 +550,12 @@ def _fire_weather_calc(*args, **params):
         ind_prevs["DMC"],
         ind_prevs["FFMC"],
         snd,
-    ) = _fwi_arg_decompressor(*args, indexes=indexes, start_up_mode=start_up_mode)
+    ) = _fwi_arg_decompressor(
+        *args,
+        indexes=indexes,
+        start_up_mode=start_up_mode,
+        shut_down_mode=shut_down_mode,
+    )
 
     for name, ind_prev in ind_prevs.copy().items():
         if ind_prev is None:
@@ -509,22 +567,25 @@ def _fire_weather_calc(*args, **params):
     for indice in indexes:
         ind_data[indice] = np.zeros_like(tas) * np.nan
 
-    for it in range(params.get("start", params["snowCoverDaysCalc"]), tas.shape[-1]):
-        prec_history = np.flip(pr[..., : it + 1], axis=-1)
-        days_with_prec = prec_history >= params["precThresh"]
-        days_since_last_prec = days_with_prec.argmax(axis=-1)
-        days_since_last_prec = np.where(
-            np.any(days_with_prec, axis=-1),
+    # We have to start further is snow_depth is used for shut_down and/or start_up
+    start_idx = params.get(
+        "start",
+        params["snowCoverDaysCalc"] if snd is not None else params["startShutDays"],
+    )
+    for it in range(start_idx, tas.shape[-1]):
+        (
+            shut_down,
+            start_up_wet,
+            start_up_dry,
             days_since_last_prec,
-            params["snowCoverDaysCalc"],
-        )
-
-        shut_down, start_up_wet, start_up_dry = _shut_down_and_start_ups(
+        ) = _shut_down_and_start_ups(
             it,
             dcprev=list(ind_prevs.values())[0],
             tas=tas,
+            pr=pr,
             snd=snd,
             start_up_mode=start_up_mode,
+            shut_down_mode=shut_down_mode,
             **params,
         )
 
@@ -575,6 +636,8 @@ def _fire_weather_calc(*args, **params):
                 ind_data["ISI"][..., it], ind_data["BUI"][..., it]
             )
 
+        if "DSR" in indexes:
+            ind_data["DSR"][..., it] = daily_severity_rating(ind_data["FWI"][..., it])
         # Set the previous values
         for ind, ind_prev in ind_prevs.items():
             ind_prev[...] = ind_data[ind][..., it]
@@ -595,8 +658,10 @@ def _fwi_arg_compressor(
     dmc0: xr.DataArray = None,
     ffmc0: xr.DataArray = None,
     start_up_mode: str = None,
+    shut_down_mode: str = None,
     indexes: Sequence[str] = None,
 ):
+    """Parse the list of requested indexes and return the corresponding list of input arrays"""
     if indexes == ["DC"]:
         args = [tas, pr, tas.time.dt.month, lat, dc0]
         nargs = (3, 2)
@@ -615,13 +680,14 @@ def _fwi_arg_compressor(
         or indexes == ["DC", "DMC", "FFMC", "BUI"]
         or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI"]
         or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+        or indexes == ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"]
     ):
         args = [tas, pr, rh, ws, tas.time.dt.month, lat, dc0, dmc0, ffmc0]
         nargs = (5, 4)
     else:
         raise TypeError("Invalid index combination.")
 
-    if start_up_mode == "snow_depth":
+    if start_up_mode == "snow_depth" or shut_down_mode == "snow_depth":
         args = args + [snd]
 
     for i in range(len(args)):
@@ -629,9 +695,7 @@ def _fwi_arg_compressor(
             raise TypeError(
                 f"Missing input argument #{i} for index combination {indexes}"
             )
-        elif hasattr(args[i], "data") and isinstance(
-            args[i].data, xr.core.duck_array_ops.dask_array_type
-        ):
+        elif hasattr(args[i], "data") and isinstance(args[i].data, dskarray):
             # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
             warn(
                 f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
@@ -653,7 +717,8 @@ def fire_weather_ufunc(
     ffmc0: xr.DataArray = None,
     indexes: Sequence[str] = None,
     start_date: str = None,
-    start_up_mode: str = "snow_depth",
+    start_up_mode: str = None,
+    shut_down_mode: str = "temperature",
     **params,
 ):
     """Fire Weather Indexes computation using xarray's apply_ufunc.
@@ -683,9 +748,10 @@ def fire_weather_ufunc(
     start_date : str, optional
         Date at which to start the computation.
         Defaults to `snowCoverDaysCalc` after the beginning of tas.
-    start_up_mode : str, optional
-        How to compute start up and shut down.
-        Defaults to 'snow_depth', which needs additional input `snd`.
+    start_up_mode : {None, "snow_depth"}
+        How to compute start up. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
+    shut_down_mode : {"temperature", "snow_depth"}
+        How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
     **params :
         Other keyword arguments for the Fire Weather Indexes computation.
         Default values of those are stored in `xclim.indices.fwi.DEFAULT_PARAMS`
@@ -701,9 +767,11 @@ def fire_weather_ufunc(
 
     indexes = set(
         params.setdefault(
-            "indexes", indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]
+            "indexes", indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"]
         )
     )
+    if "DSR" in indexes:
+        indexes.update({"FWI"})
     if "FWI" in indexes:
         indexes.update({"ISI", "BUI"})
     if "BUI" in indexes:
@@ -712,9 +780,12 @@ def fire_weather_ufunc(
         indexes.update({"FFMC"})
     indexes = sorted(
         list(indexes),
-        key=lambda ele: ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"].index(ele),
+        key=lambda ele: ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index(ele),
     )
 
+    # args is a list of only the needed arrays
+    # nargs is a tuple (A, B) where A is the number of arrays with a time dimensions, B, those without.
+    # dask arrays are loaded to memory here.
     args, nargs = _fwi_arg_compressor(
         tas=tas,
         pr=pr,
@@ -726,25 +797,26 @@ def fire_weather_ufunc(
         dmc0=dmc0,
         ffmc0=ffmc0,
         start_up_mode=start_up_mode,
+        shut_down_mode=shut_down_mode,
         indexes=indexes,
     )
 
     if start_date is not None:
         params["start"] = int(abs(tas.time - np.datetime64(start_date)).argmin("time"))
-        if (
-            start_up_mode == "snow_depth"
-            and params["start"] < params["snowCoverDaysCalc"]
-        ):
+        if (start_up_mode == "snow_depth" or shut_down_mode == "snow_depth") and params[
+            "start"
+        ] < params["snowCoverDaysCalc"]:
             raise ValueError(
                 f"Input data must start at least {params['snowCoverDaysCalc']} days before the specified start date if using start up mode 'snow_depth'"
             )
 
-    if start_up_mode == "snow_depth":
+    if start_up_mode == "snow_depth" or shut_down_mode == "snow_depth":
         snowdims = (("time",),)
     else:
         snowdims = ()
 
     params["start_up_mode"] = start_up_mode
+    params["shut_down_mode"] = shut_down_mode
     params["indexes"] = indexes
 
     das = xr.apply_ufunc(
