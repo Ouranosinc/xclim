@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Run length algorithms module"""
+"""
+Run length algorithms submodule
+===============================
+
+Computation of statistics on runs of True values in boolean arrays.
+"""
 import logging
+from functools import partial
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
 from warnings import warn
 
+import dask.array as dsk
 import numpy as np
 import xarray as xr
 
@@ -186,47 +193,103 @@ def first_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
+    coord: Optional[Union[str, bool]] = False,
     ufunc_1dim: Union[str, bool] = "auto",
 ):
-    """Return the index of the first item of a run of at least a given length.
+    """Return the index of the first item of the first run of at least a given length.
 
-        Parameters
-        ----------
-        da : xr.DataArray
-          Input N-dimensional DataArray (boolean)
-        window : int
-          Minimum duration of consecutive run to accumulate values.
-        dim : str
-          Dimension along which to calculate consecutive run (default: 'time').
-        ufunc_1dim : Union[str, bool]
-          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-          for dataarray with a small number of gridpoints.
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+      for dataarray with a small number of gridpoints.
 
-        Returns
-        -------
-        out : N-dimensional xarray data array (int)
-          Index of first item in first valid run. Returns np.nan if there are no valid run.
-        """
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of first item in first valid run. Returns np.nan if there are no valid run.
+    """
     if ufunc_1dim == "auto":
-        npts = get_npts(da)
-        ufunc_1dim = npts <= npts_opt
+        if isinstance(da.data, dsk.Array) and len(da.chunks[da.dims.index(dim)]) > 1:
+            ufunc_1dim = False
+        else:
+            npts = get_npts(da)
+            ufunc_1dim = npts <= npts_opt
+
+    da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
 
     if ufunc_1dim:
-        out = first_run_ufunc(da, window)
+        out = first_run_ufunc(x=da, window=window, dim=dim)
 
     else:
-        dims = list(da.dims)
-        if "time" not in dims:
-            da["time"] = da[dim]
-            da.swap_dims({dim: "time"})
         da = da.astype("int")
-        i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": 1})
-        ind = xr.broadcast(i, da)[0].chunk(da.chunks)
+        i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+        ind = xr.broadcast(i, da)[0].transpose(*da.dims)
+        if isinstance(da.data, dsk.Array):
+            ind = ind.chunk(da.chunks)
         wind_sum = da.rolling(time=window).sum(allow_lazy=True, skipna=False)
         out = ind.where(wind_sum >= window).min(dim=dim) - (
             window - 1
         )  # remove window -1 as rolling result index is last element of the moving window
+
+    if coord:
+        crd = da[dim]
+        if isinstance(coord, str):
+            crd = getattr(crd.dt, coord)
+
+        return lazy_indexing(crd, out)
+
+    return out
+
+
+def last_run(
+    da: xr.DataArray,
+    window: int,
+    dim: str = "time",
+    coord: Optional[Union[str, bool]] = False,
+    ufunc_1dim: Union[str, bool] = "auto",
+):
+    """Return the index of the last item of the last run of at least a given length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+      for dataarray with a small number of gridpoints.
+
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+    """
+    reversed_da = da.sortby(dim, ascending=False)
+    out = first_run(
+        reversed_da, window=window, dim=dim, coord=coord, ufunc_1dim=ufunc_1dim
+    )
+    if not coord:
+        return reversed_da[dim].size - out - 1
     return out
 
 
@@ -431,9 +494,7 @@ def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
     )
 
 
-def first_run_ufunc(
-    x: xr.DataArray, window, index: Optional[str] = None
-) -> xr.apply_ufunc:
+def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.apply_ufunc:
     """Dask-parallel version of first_run_1d, ie the first entry in array of consecutive true values.
 
     Parameters
@@ -452,7 +513,7 @@ def first_run_ufunc(
     ind = xr.apply_ufunc(
         first_run_1d,
         x,
-        input_core_dims=[["time"]],
+        input_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
@@ -460,9 +521,36 @@ def first_run_ufunc(
         kwargs={"window": window},
     )
 
-    if index is not None and ind.notnull().all():
-        val = getattr(x.indexes["time"], index)
-        i = ind.data.astype(int)
-        ind.data = val[i]
-
     return ind
+
+
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray):
+    """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      1D Input array
+    index : xr.DataArray
+      N-d integer indices
+
+    Returns
+    -------
+    xr.DataArray
+      Values of `da` at indices `index`
+    """
+
+    def _index_from_1d_array(array, indices):
+        return array[
+            indices,
+        ]
+
+    invalid = index.isnull()
+    index = index.fillna(0).astype(int)
+    func = partial(_index_from_1d_array, da)
+
+    if isinstance(index, dsk.Array):
+        out = dsk.map_blocks(func, index, dtype=index.dtype)
+    else:
+        out = func(index)
+    return out.where(~invalid)
