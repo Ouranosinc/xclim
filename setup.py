@@ -25,6 +25,7 @@ requirements = [
     "numpy>=1.16",
     "xarray>=0.14.1",
     "scipy>=1.2",
+    "numba",
     "pandas>=0.23",
     "cftime>=1.0.4",
     "netCDF4>=1.4",
