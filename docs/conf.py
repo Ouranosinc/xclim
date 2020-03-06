@@ -27,16 +27,16 @@ sys.path.insert(0, os.path.abspath("."))
 
 
 def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
+    """For all modules or classes listed, return the children that are instances of xclim.indicators.Indicator.
 
     modules : sequence
       Sequence of modules to inspect.
     """
-    import xclim.indicator as xcu
+    from xclim.core.indicator import Indicator, Indicator2D
 
     out = {}
     for key, val in module.__dict__.items():
-        if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
+        if isinstance(val, (Indicator, Indicator2D)):
             out[key] = val
 
     return out

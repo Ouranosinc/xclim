@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Health checks submodule
+=======================
+
+Functions performing basic health checks on xarray.DataArrays.
+"""
 import datetime as dt
 import logging
 from functools import wraps
@@ -6,6 +13,8 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from xclim.indices import generic
 
 logging.captureWarnings(True)
 
@@ -171,8 +180,6 @@ def missing_any(da, freq, **indexer):
     out : DataArray
       A boolean array set to True if any month or year has missing values.
     """
-    from xclim import generic
-
     if "-" in freq:
         pfreq, anchor = freq.split("-")
     else:
