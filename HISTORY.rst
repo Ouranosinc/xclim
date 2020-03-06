@@ -4,6 +4,7 @@ History
 
 0.15.x
 ------
+* Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
 * Complete internal reorganization of xclim
 * Internationalization of xclim : add `locales` submodule for localized metadata.
 * Add feature to retrieve coordinate values instead of index in `run_length.first_run`. Add `run_length.last_run`.
