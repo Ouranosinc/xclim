@@ -382,33 +382,15 @@ def growing_season_end(
       If the growing season does not end within the time period, returns the last day of the period.
     """
     thresh = convert_units_to(thresh, tas)
-    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
+    cond = tas >= thresh
 
-    def compute_growing_season_end(yrdata):
-        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
-        if (
-            mid_idx.size == 0
-        ):  # The mid date is not in the group. Happens at boundaries.
-            all_nans = xarray.full_like(yrdata.isel(time=0), np.nan)
-            all_nans.attrs = {}
-            return all_nans
-        end = rl.first_run(
-            yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
-            window,
-            "time",
-            coord="dayofyear",
-        )
-        beg = rl.first_run(
-            yrdata.where(yrdata.time < yrdata.time[mid_idx][0]) >= thresh,
-            window,
-            "time",
-        )
-        end = xarray.where(
-            end.isnull() & beg.notnull(), yrdata.time.isel(time=-1).dt.dayofyear, end
-        )
-        return end.where(beg.notnull())
-
-    return tas.resample(time=freq).map(compute_growing_season_end)
+    return cond.resample(time=freq).map(
+        rl.run_end_after_date,
+        window=window,
+        date=mid_date,
+        dim="time",
+        coord="dayofyear",
+    )
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
@@ -469,41 +451,18 @@ def growing_season_length(
     >>> gsl = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')
     """
     thresh = convert_units_to(thresh, tas)
+    cond = tas >= thresh
 
-    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
-
-    def compute_growing_season_length(yrdata):
-        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
-        if (
-            mid_idx.size == 0
-        ):  # The mid date is not in the group. Happens at boundaries.
-            all_Nans = xarray.full_like(yrdata.isel(time=0), np.nan)
-            all_Nans.attrs = {}
-            return all_Nans
-        end = rl.first_run(
-            yrdata.where(yrdata.time >= yrdata.time[mid_idx][0]) < thresh,
-            window,
-            "time",
-        )
-        beg = rl.first_run(yrdata >= thresh, window, "time")
-        sl = end - beg
-        sl = xarray.where(
-            beg.isnull() & end.notnull(), 0, sl
-        )  # If everything is under thresh
-        sl = xarray.where(
-            beg.notnull() & end.isnull(), yrdata.time.size - beg, sl
-        )  # If gs is not ended at end of year
-        return sl.where(sl >= 0)  # When end happens before beg.
-
-    gsl = tas.resample(time=freq).map(compute_growing_season_length)
-    return gsl
+    return cond.resample(time=freq).map(
+        rl.run_length_with_date, window=window, date=mid_date, dim="time",
+    )
 
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
-    mid_date: str = "07-01",
+    before_date: str = "07-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -518,7 +477,7 @@ def last_spring_frost(
       Mean daily temperature [℃] or [K].
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
-    mid_date : str
+    before_date : str
       Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
@@ -532,22 +491,15 @@ def last_spring_frost(
       If there is no such day, return np.nan.
     """
     thresh = convert_units_to(thresh, tas)
-    mid_doy = datetime.datetime.strptime(mid_date, "%m-%d").timetuple().tm_yday
+    cond = tas < thresh
 
-    def compute_final_frost_event(yrdata):
-        mid_idx = np.where(yrdata.time.dt.dayofyear == mid_doy)[0]
-        if (
-            mid_idx.size == 0
-        ):  # The mid date is not in the group. Happens at boundaries.
-            all_nans = xarray.full_like(yrdata.isel(time=0), np.nan)
-            all_nans.attrs = {}
-            return all_nans
-
-        spring_season = yrdata.where(yrdata.time <= yrdata.time[mid_idx][0])
-        frost_days = spring_season < thresh
-        return rl.last_run(frost_days, window=window, dim="time", coord="dayofyear")
-
-    return tas.resample(time=freq).map(compute_final_frost_event)
+    return cond.resample(time=freq).map(
+        rl.last_run_before_date,
+        window=window,
+        date=before_date,
+        dim="time",
+        coord="dayofyear",
+    )
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
