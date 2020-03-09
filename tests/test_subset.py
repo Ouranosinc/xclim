@@ -582,7 +582,8 @@ class TestSubsetShape:
     small_geojson = os.path.join(TESTS_DATA, "cmip5", "small_geojson.json")
     multi_regions_geojson = os.path.join(TESTS_DATA, "cmip5", "multi_regions.json")
 
-    def compare_vals(self, ds, sub, vari, flag_2d=False):
+    @staticmethod
+    def compare_vals(ds, sub, vari, flag_2d=False):
         # check subsetted values against original
         imask = np.where(~np.isnan(sub[vari].isel(time=0)))
         if len(imask[0]) > 70:
