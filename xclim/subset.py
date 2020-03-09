@@ -7,12 +7,12 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import fiona.crs as fiocrs
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray
 from pyproj import Geod
+from pyproj.crs import CRS
 from shapely.geometry import LineString
 from shapely.geometry import MultiPolygon
 from shapely.geometry import Point
@@ -244,7 +244,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     stacklevel=4,
                 )
             split_flag = False
-            for (index, feature) in poly.iterrows():
+            for index, feature in poly.iterrows():
                 if (feature.geometry.bounds[0] < 0) and (
                     feature.geometry.bounds[2] > 0
                 ):
@@ -272,15 +272,16 @@ def wrap_lons_and_split_at_greenwich(func):
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs="epsg:4326",
+                        crs=CRS("epsg:4326"),
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
 
             # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
-            wrapped_lons = (
+            wrapped_lons = CRS(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
             )
-            poly = poly.to_crs(wrapped_lons)
+
+            poly = poly.to_crs(crs=wrapped_lons)
             if split_flag:
                 warnings.warn(
                     "Rebuffering split polygons to ensure edge inclusion in selection",
@@ -340,6 +341,9 @@ def create_mask(
     >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
+    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    # poly.crs = wgs84
+
     # Check for intersections
     for i, (inda, pola) in enumerate(poly.iterrows()):
         for (indb, polb) in poly.iloc[i + 1 :].iterrows():
@@ -373,9 +377,10 @@ def create_mask(
     df["Coordinates"] = df["Coordinates"].apply(Point)
 
     # create geodataframe (spatially referenced with shifted longitude values if needed).
-    wgs84 = fiocrs.from_string("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     if wrap_lons:
-        wgs84.update(fiocrs.from_string("+lon_wrap=180"))
+        wgs84 = CRS.from_string(
+            "+proj=longlat +datum=WGS84 +no_defs +type=crs +lon_wrap=180"
+        )
     gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=wgs84)
 
     # spatial join geodata points with region polygons and remove duplicates
@@ -451,6 +456,8 @@ def subset_shape(
     >>> prSub = \
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
+    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
     # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
     if isinstance(ds, xarray.DataArray):
         ds_copy = copy.deepcopy(ds._to_temp_dataset())
@@ -487,50 +494,43 @@ def subset_shape(
         ds_copy = subset_time(ds_copy, start_date=start_date, end_date=end_date)
 
     # Determine whether CRS types are the same between shape and raster
-    wgs84 = fiocrs.from_string("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     if shape_crs is not None:
         try:
-            shape_crs = fiocrs.from_epsg(shape_crs)
+            shape_crs = CRS.from_string(shape_crs)
         except ValueError:
-            try:
-                shape_crs = fiocrs.from_string(shape_crs)
-            except ValueError:
-                raise
+            raise
     else:
-        if poly.crs == {"init": "epsg:4326"}:
-            shape_crs = wgs84.copy()
-        else:
-            shape_crs = poly.crs
+        shape_crs = CRS(poly.crs)
 
     if raster_crs is not None:
         try:
-            raster_crs = fiocrs.from_epsg(raster_crs)
+            raster_crs = CRS(raster_crs)
         except ValueError:
-            try:
-                raster_crs = fiocrs.from_string(raster_crs)
-            except ValueError:
-                raise
+            raise
     else:
         if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
-            # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
-            wgs84.update(fiocrs.from_string("+lon_wrap=180"))
+            # PROJ4 definition for  with Prime Meridian at -180 deg lon.
+            wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180")
             wrap_lons = True
         else:
             wrap_lons = False
         raster_crs = wgs84
 
     if shape_crs != raster_crs:
-        if "lon_wrap" in raster_crs.keys() and "lon_wrap" not in shape_crs.keys():
+        if (
+            "lon_wrap" in raster_crs.to_proj4()
+            and "lon_wrap" not in shape_crs.to_proj4()
+        ):
             warnings.warn(
                 "CRS definitions are similar but raster lon values must be wrapped.",
                 UserWarning,
                 stacklevel=3,
             )
-        elif (fiocrs.from_epsg(4326).values() not in shape_crs.values()) and (
-            fiocrs.from_epsg(4326).values() not in raster_crs.values()
+        elif (CRS.from_epsg(4326) != shape_crs) and (
+            CRS(4326).to_proj4() != raster_crs
         ):
             warnings.warn(
-                "CRS definitions are not similar or both not using WGS84. Caveat emptor.",
+                "CRS definitions are not similar or both not using . Caveat emptor.",
                 UserWarning,
                 stacklevel=3,
             )
