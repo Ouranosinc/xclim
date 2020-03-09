@@ -12,14 +12,14 @@ Shut down and start up
 ----------------------
 Fire weather indexes are iteratively computed, each day's value depending on the previous day indexes.
 Additionally, the codes are "shut down" (set to NaN) in winter. There are a few ways of computing this
-shut down and the subsequent spring start up. The principal method uses the snow depth, a variable which
-is not always available. xclim offers less restrictive options usable with model climate data. In the list
-below, parameters between "" refer to those listed below.
+shut down and the subsequent spring start up. The principal method (`'snow_depth'`) uses temperature, precipitation
+and snow depth, a variable which is not always available. xclim implements less restrictive options usable with model
+climate data using only temperature. In the list below, parameters between "" refer to those listed in the next section.
 
 Shut down methods:
 
     `'temperature'`
-        Pixels where the average temperature of the last "startShutDays" is below "tempThresh" are shut down.
+        Grid points where the average temperature of the last "startShutDays" is below "tempThresh" are shut down.
     `'snow_depth'`
         In addition to the `'temperature'` condition, pixels where the average snow depth of the last "startShutDays"
         is greater or equal to "snoDThresh" are also shut down.
@@ -27,10 +27,10 @@ Shut down methods:
 Start up methods:
 
     `None`
-        Pixels that were shut down in the previous timestep but not in the current are set to the *wet* start values. ("DCStart", "DMCStart" and "FFMCStart")
+        Grid points that were shut down in the previous timestep but not in the current are set to the *wet* start values. ("DCStart", "DMCStart" and "FFMCStart")
     `snow_depth`
-        Same as above, but the *wet* start is only used on pixels where: 1) the average snow depth of the last "snowCoverDaysCalc" is above "minWinterSnoD" and
-        2) at least "minSnowDayFrac" % of the last "snowCoverDaysCalc" had a snow depth above "snoDThresh". For all other pixels, the *dry* start is used,
+        Same as above, but the *wet* start is only used on grid points where: 1) the average snow depth of the last "snowCoverDaysCalc" is above "minWinterSnoD" and
+        2) at least "minSnowDayFrac" % of the last "snowCoverDaysCalc" had a snow depth above "snoDThresh". For all other grid points, the *dry* start is used,
         where DC and DMC are started with their "DryStartFactor" multiplied by the smallest number between "snowCoverDaysCalc" and the number of days since
         the last rain event of at least "precThresh" mm.
 
@@ -39,16 +39,16 @@ Parameters
 ----------
 Default values for the following parameters are stored in the DEFAULT_PARAMS dict. The current implementation doesn't use all those parameters, so it might be useless to modify them.
 
-    min_lat : float
-        Min latitude for analysis
-    max_lat : float
-        Max latitude for analysis
-    minLandFrac : float
-        Minimum grid cell land fraction for analysis
-    minT : float
-        Mask out anything with mean annual Tsurf less than this
-    minPrec : float
-        Mask out anything with mean annual prec less than this
+    # min_lat : float
+    #     Min latitude for analysis
+    # max_lat : float
+    #     Max latitude for analysis
+    # minLandFrac : float
+    #     Minimum grid cell land fraction for analysis
+    # minT : float
+    #     Mask out anything with mean annual Tsurf less than this
+    # minPrec : float
+    #     Mask out anything with mean annual prec less than this
     snowCoverDaysCalc : int
         Number of days prior to spring over which to determine if winter had substantial snow cover
     minWinterSnoD : float
@@ -98,11 +98,11 @@ from numba import vectorize
 
 
 DEFAULT_PARAMS = dict(
-    min_lat=-58,
-    max_lat=75,
-    minLandFrac=0.1,
-    minT=-10,
-    minPrec=0.25,
+    # min_lat=-58,
+    # max_lat=75,
+    # minLandFrac=0.1,
+    # minT=-10,
+    # minPrec=0.25,
     snowCoverDaysCalc=60,
     minWinterSnoD=0.1,
     snoDThresh=0.01,
@@ -168,9 +168,7 @@ def day_length_factor(lat, mth):
 
 @vectorize
 def fine_fuel_moisture_code(t, p, w, h, ffmc0):
-    """Computation of the fine fuel moisture code.
-
-    Vectorized on spatial dimensions.
+    """Computation of the fine fuel moisture code over one time step.
 
     Parameters
     ----------
@@ -250,9 +248,7 @@ def fine_fuel_moisture_code(t, p, w, h, ffmc0):
 
 @vectorize
 def duff_moisture_code(t, p, h, mth, lat, dmc0):
-    """Computation of the Duff moisture code.
-
-    Vectorized on spatial dimensions.
+    """Computation of the Duff moisture code over one time step.
 
     Parameters
     ----------
@@ -309,9 +305,7 @@ def duff_moisture_code(t, p, h, mth, lat, dmc0):
 
 @vectorize
 def drought_code(t, p, mth, lat, dc0):
-    """Computation of the drought code.
-
-    Vectorized over spatial dimensions.
+    """Computation of the drought code over one time step.
 
     Parameters
     ----------
