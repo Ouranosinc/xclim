@@ -530,7 +530,7 @@ def subset_shape(
             CRS(4326).to_proj4() != raster_crs
         ):
             warnings.warn(
-                "CRS definitions are not similar or both not using . Caveat emptor.",
+                "CRS definitions are not similar or both not using WGS84 datum. Caveat emptor.",
                 UserWarning,
                 stacklevel=3,
             )
