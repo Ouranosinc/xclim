@@ -460,7 +460,7 @@ maximum_consecutive_frost_free_days = Tasmin(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum number of consecutive days with Tmin > {thresh}",
     description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature below {thresh",
+    "minimum daily temperature above {thresh}.",
     cell_methods="time: min within days time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
