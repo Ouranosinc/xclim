@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Run length algorithms module"""
+"""
+Run length algorithms submodule
+===============================
+
+Computation of statistics on runs of True values in boolean arrays.
+"""
 import logging
 from functools import partial
 from typing import Optional

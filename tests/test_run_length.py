@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import run_length as rl
+from xclim.indices import run_length as rl
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
