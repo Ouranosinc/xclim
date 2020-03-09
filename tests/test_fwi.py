@@ -211,13 +211,13 @@ def test_start_up_shut_down(
     snd[1, :] = 0.2
     snd[3, 60] = 1000
     snd[4, :60] = 0.2
-    dcprev = np.array([1, np.nan, 1, np.nan, np.nan])
+    prev = np.array([1, np.nan, 1, np.nan, np.nan])
     pr = np.zeros((5, 70))
     pr[:, 60] = 2
 
     shut_down, start_wet, start_dry, last_prec = _shut_down_and_start_ups(
         70,
-        dcprev=dcprev,
+        prev=prev,
         tas=tas,
         pr=pr,
         snd=snd,
