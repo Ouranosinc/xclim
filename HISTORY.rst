@@ -4,7 +4,8 @@ History
 
 0.15.x
 ------
-* Complete internal reorganization of xclim
+* Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
+* Complete internal reorganization of xclim.
 * Internationalization of xclim : add `locales` submodule for localized metadata.
 * Add feature to retrieve coordinate values instead of index in `run_length.first_run`. Add `run_length.last_run`.
 * Fix bug in subset_gridpoint to work on lat/lon coords of any dimension when they are not a dimension of the data.
