@@ -453,7 +453,7 @@ def _shut_down_and_start_ups(
 ):
     """Computation of the shut_down and start_up masks.
 
-    Only dcprev is used: itt is assumed that dcprev, dmcprev and ffmcprev have the same shut down (NaN) pixels.
+    Only dcprev is used: it is assumed that dcprev, dmcprev and ffmcprev have the same shut down (NaN) pixels.
 
     Returns
     -------
