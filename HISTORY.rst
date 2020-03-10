@@ -4,8 +4,8 @@ History
 
 0.15.x
 ------
-* Added example notebook for creating mapped indices and added `growing_season_end`, `last_spring_frost`, `dry_days`,
-  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
+* Added example notebook for creating a catalog of selected indices
+* Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
 * Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
 * Complete internal reorganization of xclim.
 * Internationalization of xclim : add `locales` submodule for localized metadata.
