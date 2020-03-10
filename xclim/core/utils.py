@@ -165,10 +165,11 @@ def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = Non
     return uas, vas
 
 
-@declare_units("%", tas="[temperature]", tds="[temperature]")
+@declare_units("%", tas="[temperature]", dtas="[temperature]")
 def tas_dtas_2_rh(
     tas: xr.DataArray,
     dtas: xr.DataArray,
+    method: str = "august-roche-magnus",
     L: str = "2.501e6 J kg^-1",
     Rw: str = "461.5 J K^-1 kg^-1",
 ):
@@ -193,14 +194,15 @@ def tas_dtas_2_rh(
     tas = convert_units_to(tas, "degK")
     dtas = convert_units_to(dtas, "degK")
     L = convert_units_to(L, "J kg^-1")
-    Rw = convert_units_to(L, "J K^-1 kg^-1")
+    Rw = convert_units_to(Rw, "J K^-1 kg^-1")
+    rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
 
-    rh = np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
     rh.name = "rh"
     rh.attrs["standard_name"] = "relative_humidity"
     rh.attrs["long_name"] = "Relative Humidity"
-    rh.attrs[
-        "description"
-    ] = f"Relative humidity computed from temperature and dew point temperature with L = {L} and Rw = {Rw}"
+    rh.attrs["description"] = (
+        "Relative humidity computed from temperature and "
+        f"dew point temperature with L = {L} and Rw = {Rw}"
+    )
     rh.attrs["units"] = "%"
     return rh
