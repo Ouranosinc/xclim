@@ -477,11 +477,11 @@
     "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
   },
   "atmos.dry_days": {
-    "long_name": "Number of dry days (precip < {thresh})",
-    "description": "{freq} number of days with daily precipitation under {thresh}.",
+    "long_name": "Nombre de jours secs (precip < {thresh})",
+    "description": "Nombre {freq} de jours où la précipitation journalière est sous {thresh}.",
     "comment": "",
-    "title": "Dry days",
-    "abstract": "The number of days with daily precipitation below threshold."
+    "title": "Jours secs",
+    "abstract": "Nombre de jours où la précipitation journalière est sous un seuil."
   },
   "atmos.hot_spell_frequency": {
     "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
