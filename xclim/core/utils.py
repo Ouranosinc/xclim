@@ -7,20 +7,84 @@ Helper functions for the indices computation, things that do not belong in neith
 `xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
 """
 from collections import defaultdict
+from functools import partial
+from inspect import _empty
+from inspect import signature
 from types import FunctionType
 
 import numpy as np
 import xarray as xr
+from boltons.funcutils import FunctionBuilder
+from boltons.funcutils import NO_DEFAULT
 
 from xclim.core.units import convert_units_to
 
 
-def wrapped_partial(func: FunctionType, *args, **kwargs):
-    from functools import partial, update_wrapper
+def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
+    """Wrap a function, updating its signature but keeping its docstring.
 
-    partial_func = partial(func, *args, **kwargs)
-    update_wrapper(partial_func, func)
-    return partial_func
+    Parameters
+    ----------
+    func : FunctionType
+        The function to be wrapped
+    suggested : dict
+        Keyword arguments that should have new default values
+        but still appear in the signature.
+    fixed : dict
+        Keyword arguments that should be fixed by the wrapped
+        and removed from the signature.
+
+    Examples
+    --------
+
+    >>> from inspect import signature
+    >>> def func(a, b=1, c=1):
+            print(a, b, c)
+    >>> newf = wrapped_partial(func, b=2)
+    >>> signature(newf)
+    (a, *, c=1)
+    >>> newf(1)
+    1, 2, 1
+    >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
+    >>> signature(newf)
+    (a, *, c=2)
+    >>> newf(1)
+    1, 2, 2
+    """
+    # Adapted from the code of boltons.funcutils.wraps
+    suggested = suggested or {}
+
+    sig = signature(func)
+
+    partial_func = partial(func, **suggested, **fixed)
+
+    fb = FunctionBuilder.from_func(func)
+    # To be sure the signature is correct,
+    # remove everyting and put back only what we want
+    for arg in sig.parameters.keys():
+        fb.remove_arg(arg)
+
+    kwonly = False  # To preserve order, once a kwonly arg or a fixed arg is found, everything after is kwonly.
+    for arg, param in sig.parameters.items():
+        if arg in fixed:  # Don't put argument back
+            kwonly = True
+            continue
+        if arg in suggested:
+            default = suggested[arg]  # Change default
+            kwonly = True  # partial moves keyword args to keyword only.
+        else:
+            default = param.default
+            if param.kind > 1:  # 0 and 1 are positional args.
+                kwonly = True
+        fb.add_arg(arg, default if default is not _empty else NO_DEFAULT, kwonly=kwonly)
+
+    fb.body = f"return _call({fb.get_invocation_str()})"
+
+    execdict = dict(_call=partial_func, _func=func)
+    fully_wrapped = fb.get_func(execdict, with_dict=True)
+    # fully_wrapped.__wrapped__ = func  # If this line is uncommented "help" and common IDE will show func's signature, not the updated one.
+
+    return fully_wrapped
 
 
 # TODO Reconsider the utility of this
