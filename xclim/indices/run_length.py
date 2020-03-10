@@ -277,8 +277,8 @@ def last_run(
       DateTimeAccessor object to use (ex: 'dayofyear').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
+      for a DataArray with a small number of grid points.
 
     Returns
     -------
@@ -297,7 +297,8 @@ def last_run(
 def run_length_with_date(
     da: xr.DataArray, window: int, date: str = "07-01", dim: str = "time",
 ):
-    """Return the index of the last item of the last run of at least a given length.
+    """Return the length of the longest consecutive run of True values found
+    to be continuous before and after a given date.
 
     Parameters
     ----------
@@ -313,8 +314,7 @@ def run_length_with_date(
     Returns
     -------
     out : xr.DataArray
-      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
-
+      Length of longest run of True values along a given dimension inclusive of a given date.
     """
     include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
 
@@ -351,7 +351,7 @@ def run_end_after_date(
     dim: str = "time",
     coord: str = "dayofyear",
 ):
-    """Return the index of the last item of the last run after a given date.
+    """Return the index of the first item after the end of a run after a given date.
 
     Parameters
     ----------

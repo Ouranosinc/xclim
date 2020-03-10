@@ -13,8 +13,6 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
-# import cftime
-# import sys
 import calendar
 import os
 
@@ -143,103 +141,55 @@ class TestColdSpellDays:
 
 
 class TestConsecutiveFrostDays:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: minimum within days",
-                "units": "K",
-            },
-        )
-
-    def test_one_freeze_day(self):
-        a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
+    def test_one_freeze_day(self, tasmin_series):
+        a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
         cfd = xci.consecutive_frost_days(a)
         assert cfd == 1
         assert cfd.time.dt.year == 2000
 
-    def test_no_freeze(self):
-        a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
+    def test_no_freeze(self, tasmin_series):
+        a = tasmin_series(np.array([3, 4, 5, 1, 3]) + K2C)
         cfd = xci.consecutive_frost_days(a)
         assert cfd == 0
 
-    def test_all_year_freeze(self):
-        a = self.time_series(np.zeros(365) - 10 + K2C)
+    def test_all_year_freeze(self, tasmin_series):
+        a = tasmin_series(np.zeros(365) - 10 + K2C)
         cfd = xci.consecutive_frost_days(a)
         assert cfd == 365
 
 
 class TestMaximumConsecutiveFrostFreeDays:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: minimum within days",
-                "units": "K",
-            },
-        )
-
-    def test_one_freeze_day(self):
-        a = self.time_series(np.array([3, 4, 5, -1, 3]) + K2C)
+    def test_one_freeze_day(self, tasmin_series):
+        a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
         ffd = xci.maximum_consecutive_frost_free_days(a)
         assert ffd == 3
         assert ffd.time.dt.year == 2000
 
-    def test_two_freeze_days_with_threshold(self):
-        a = self.time_series(np.array([3, 4, 5, -0.8, -2, 3]) + K2C)
+    def test_two_freeze_days_with_threshold(self, tasmin_series):
+        a = tasmin_series(np.array([3, 4, 5, -0.8, -2, 3]) + K2C)
         ffd = xci.maximum_consecutive_frost_free_days(a, thresh="-1 degC")
         assert ffd == 4
 
-    def test_no_freeze(self):
-        a = self.time_series(np.array([3, 4, 5, 1, 3]) + K2C)
+    def test_no_freeze(self, tasmin_series):
+        a = tasmin_series(np.array([3, 4, 5, 1, 3]) + K2C)
         ffd = xci.maximum_consecutive_frost_free_days(a)
         assert ffd == 5
 
-    def test_all_year_freeze(self):
-        a = self.time_series(np.zeros(365) - 10 + K2C)
+    def test_all_year_freeze(self, tasmin_series):
+        a = tasmin_series(np.zeros(365) - 10 + K2C)
         ffd = xci.maximum_consecutive_frost_free_days(a)
         assert np.all(ffd) == 0
 
 
 class TestCoolingDegreeDays:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: mean within days",
-                "units": "K",
-            },
-        )
-
-    def test_no_cdd(self):
-        a = self.time_series(np.array([10, 15, -5, 18]) + K2C)
+    def test_no_cdd(self, tas_series):
+        a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
         assert cdd.units == "C days"
 
-    def test_cdd(self):
-        a = self.time_series(np.array([20, 25, -15, 19]) + K2C)
+    def test_cdd(self, tas_series):
+        a = tas_series(np.array([20, 25, -15, 19]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
@@ -458,127 +408,134 @@ class TestHeatWaveIndex:
 
 
 class TestHeatWaveFrequency:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,expected",
+        [
+            ("22 C", "30 C", 3, 2),  # Some HW
+            ("22 C", "30 C", 4, 1),  # No HW
+            ("10 C", "10 C", 3, 1),  # One long HW
+            ("40 C", "40 C", 3, 0),  # Windowed
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        # some hw
         hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            window=window,
         )
-        np.testing.assert_allclose(hwf.values, 2)
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=4
-        )
-        np.testing.assert_allclose(hwf.values, 1)
-        # one long hw
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwf.values, 1)
-        # no hw
-        hwf = xci.heat_wave_frequency(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwf.values, 0)
+        np.testing.assert_allclose(hwf.values, expected)
 
 
 class TestHeatWaveMaxLength:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,expected",
+        [
+            ("22 C", "30 C", 3, 4),  # Some HW
+            ("10 C", "10 C", 3, 10),  # One long HW
+            ("40 C", "40 C", 3, 0),  # No HW
+            ("22 C", "30 C", 5, 0),  # Windowed
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        # some hw
         hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            window=window,
         )
-        np.testing.assert_allclose(hwml.values, 4)
-
-        # one long hw
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwml.values, 10)
-
-        # no hw
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwml.values, 0)
-
-        hwml = xci.heat_wave_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
-        )
-        np.testing.assert_allclose(hwml.values, 0)
+        np.testing.assert_allclose(hwml.values, expected)
 
 
 class TestHeatWaveTotalLength:
-    def test_1d(self, tasmax_series, tasmin_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmin,thresh_tasmax,window,expected",
+        [
+            ("22 C", "30 C", 3, 7),  # Some HW
+            ("10 C", "10 C", 3, 10),  # One long HW
+            ("40 C", "40 C", 3, 0),  # No HW
+            ("22 C", "30 C", 5, 0),  # Windowed
+        ],
+    )
+    def test_1d(
+        self,
+        tasmax_series,
+        tasmin_series,
+        thresh_tasmin,
+        thresh_tasmax,
+        window,
+        expected,
+    ):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
         # some hw
         hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C"
+            tn,
+            tx,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            window=window,
         )
-        np.testing.assert_allclose(hwml.values, 7)
-
-        # one long hw
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C"
-        )
-        np.testing.assert_allclose(hwml.values, 10)
-
-        # no hw
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C"
-        )
-        np.testing.assert_allclose(hwml.values, 0)
-
-        hwml = xci.heat_wave_total_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5
-        )
-        np.testing.assert_allclose(hwml.values, 0)
+        np.testing.assert_allclose(hwml.values, expected)
 
 
 class TestHotSpellFrequency:
-    def test_1d(self, tasmax_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmax,window,expected",
+        [
+            ("30 C", 3, 2),  # Some HS
+            ("30 C", 4, 1),  # One long HS
+            ("10 C", 3, 1),  # No HS
+            ("40 C", 5, 0),  # Windowed
+        ],
+    )
+    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        # some hw
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="30 C")
-        np.testing.assert_allclose(hsf.values, 2)
-
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="30 C", window=4)
-        np.testing.assert_allclose(hsf.values, 1)
-
-        # one long hw
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="10 C")
-        np.testing.assert_allclose(hsf.values, 1)
-
-        # no hw
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax="40 C")
-        np.testing.assert_allclose(hsf.values, 0)
+        hsf = xci.hot_spell_frequency(tx, thresh_tasmax=thresh_tasmax, window=window)
+        np.testing.assert_allclose(hsf.values, expected)
 
 
 class TestHotSpellMaxLength:
-    def test_1d(self, tasmax_series):
+    @pytest.mark.parametrize(
+        "thresh_tasmax,window,expected",
+        [
+            ("30 C", 3, 5),  # Some HS
+            ("10 C", 3, 10),  # One long HS
+            ("40 C", 3, 0),  # No HS
+            ("30 C", 5, 5),  # Windowed
+        ],
+    )
+    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        # some hw
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="30 C")
-        np.testing.assert_allclose(hsml.values, 5)
-
-        # one long hw
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="10 C")
-        np.testing.assert_allclose(hsml.values, 10)
-
-        # no hw
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="40 C")
-        np.testing.assert_allclose(hsml.values, 0)
-
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax="30 C", window=5)
-        np.testing.assert_allclose(hsml.values, 5)
+        hsml = xci.hot_spell_max_length(tx, thresh_tasmax=thresh_tasmax, window=window)
+        np.testing.assert_allclose(hsml.values, expected)
 
 
 class TestTnDaysBelow:
@@ -864,47 +821,20 @@ class TestTas:
 
 
 class TestTxMin:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: maximum within days",
-                "units": "K",
-            },
-        )
+    def test_simple(self, tasmax_series):
+        a = tasmax_series(np.array([20, 25, -15, 19]))
+        txm = xci.tx_min(a, freq="YS")
+        assert txm == -15
 
 
 class TestTxMean:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: maximum within days",
-                "units": "K",
-            },
-        )
-
-    def test_attrs(self):
-        a = self.time_series(np.array([320, 321, 322, 323, 324]))
+    def test_attrs(self, tasmax_series):
+        a = tasmax_series(np.array([320, 321, 322, 323, 324]))
         txm = xci.tx_mean(a, freq="YS")
         assert txm == 322
         assert txm.units == "K"
 
-        a = self.time_series(np.array([20, 21, 22, 23, 24]))
+        a = tasmax_series(np.array([20, 21, 22, 23, 24]))
         a.attrs["units"] = "C"
         txm = xci.tx_mean(a, freq="YS")
 
@@ -913,24 +843,8 @@ class TestTxMean:
 
 
 class TestTxMax:
-    @staticmethod
-    def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            attrs={
-                "standard_name": "air_temperature",
-                "cell_methods": "time: maximum within days",
-                "units": "K",
-            },
-        )
-
-    def test_simple(self):
-        a = self.time_series(np.array([20, 25, -15, 19]))
+    def test_simple(self, tasmax_series):
+        a = tasmax_series(np.array([20, 25, -15, 19]))
         txm = xci.tx_max(a, freq="YS")
         assert txm == 25
 
@@ -1098,6 +1012,18 @@ class TestWinterRainRatio:
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
+    @staticmethod
+    @pytest.fixture(scope="session")
+    def cmip3_day_tas():
+        # xr.set_options(enable_cftimeindex=False)
+        ds = xr.open_dataset(
+            os.path.join(
+                TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
+            )
+        )
+        yield ds.tas
+        ds.close()
+
     def test_cmip3_tgmean(self, cmip3_day_tas):
         pytest.importorskip("xarray", "0.11.4")
         xci.tg_mean(cmip3_day_tas)
@@ -1164,16 +1090,6 @@ class TestFireWeatherIndex:
             dc.sel(time=slice("2017-03-03", None)),
             ds.DC.sel(time=slice("2017-03-03", None)),
         )
-
-
-@pytest.fixture(scope="session")
-def cmip3_day_tas():
-    # xr.set_options(enable_cftimeindex=False)
-    ds = xr.open_dataset(
-        os.path.join(TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
-    )
-    yield ds.tas
-    ds.close()
 
 
 class TestWindConversion:
