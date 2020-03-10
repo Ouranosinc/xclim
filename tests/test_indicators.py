@@ -12,7 +12,6 @@ from xclim.core.formatting import default_formatter
 from xclim.core.formatting import parse_doc
 from xclim.core.indicator import Indicator
 from xclim.core.units import units
-from xclim.core.utils import walk_map
 from xclim.indices import tg_mean
 
 
@@ -142,13 +141,6 @@ def test_formatting(pr_series):
 # TODO Add a meaningful test
 def test_parse_doc():
     parse_doc(tg_mean.__doc__)
-
-
-def test_walk_map():
-    d = {"a": -1, "b": {"c": -2}}
-    o = walk_map(d, lambda x: 0)
-    assert o["a"] == 0
-    assert o["b"]["c"] == 0
 
 
 def test_default_formatter():

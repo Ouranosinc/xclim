@@ -18,6 +18,7 @@ from boltons.funcutils import FunctionBuilder
 from boltons.funcutils import NO_DEFAULT
 
 from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
 
 
 def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
@@ -226,3 +227,56 @@ def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = Non
     wind.attrs["units"] = "m s-1"
 
     return uas, vas
+
+
+@declare_units("%", tas="[temperature]", dtas="[temperature]")
+def tas_dtas_2_rh(
+    tas: xr.DataArray,
+    dtas: xr.DataArray,
+    method: str = "august-roche-magnus",
+    L: str = "2.501e6 J kg^-1",
+    Rw: str = "461.5 J K^-1 kg^-1",
+):
+    """Compute relative humidity from temperature and dewpoint temperature.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Temperature array
+    dtas : xr.DataArray
+        Dewpoint temperature
+    L : str
+        Enthalpy of vaporization
+    Rw : str
+        Gas constant for water vapor
+
+    Notes
+    -----
+    Let :math:`T` and :math:`T_d` be the temperature and the dew point temperature. With :math:`L` the Enthalpy of vaporization of water
+    and :math:`R_w` the gas constant for water vapor, the relative humidity is computed as:
+
+    .. math::
+
+        RH = e^{\\frac{-L (T - T_d)}{R_wTT_d}}
+
+    Formula taken from [Lawrence_2005]_.
+
+    References
+    ----------
+    .. [Lawrence_2005] Lawrence, M.G., 2005: The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    """
+    tas = convert_units_to(tas, "degK")
+    dtas = convert_units_to(dtas, "degK")
+    L = convert_units_to(L, "J kg^-1")
+    Rw = convert_units_to(Rw, "J K^-1 kg^-1")
+    rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+
+    rh.name = "rh"
+    rh.attrs["standard_name"] = "relative_humidity"
+    rh.attrs["long_name"] = "Relative Humidity"
+    rh.attrs["description"] = (
+        "Relative humidity computed from temperature and "
+        f"dew point temperature with L = {L} and Rw = {Rw}"
+    )
+    rh.attrs["units"] = "%"
+    return rh
