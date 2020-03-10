@@ -1,26 +1,95 @@
 {
   "attrs_mapping": {
-    "modifiers": ["m", "f", "mpl", "fpl"],
-    "YS": ["annuel", "annuelle", "annuels", "annuelles"],
-    "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
-    "QS-DEC": ["saisonnier", "saisonnière", "saisonniers", "saisonnières"],
-    "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
-    "MAM": ["printanier", "printanière", "printaniers", "printanières"],
-    "JJA": ["estival", "estivale", "estivaux", "estivales"],
-    "SON": ["automnal", "automnale", "automnaux", "automnales"],
-    "norm": ["normal", "normale", "normaux", "normales"],
-    "m1": ["janvier"],
-    "m2": ["février"],
-    "m3": ["mars"],
-    "m4": ["avril"],
-    "m5": ["mai"],
-    "m6": ["juin"],
-    "m7": ["juillet"],
-    "m8": ["août"],
-    "m9": ["septembre"],
-    "m10": ["octobre"],
-    "m11": ["novembre"],
-    "m12": ["decembre"]
+    "modifiers": [
+      "m",
+      "f",
+      "mpl",
+      "fpl"
+    ],
+    "YS": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles"
+    ],
+    "MS": [
+      "mensuel",
+      "mensuelle",
+      "mensuels",
+      "mensuelles"
+    ],
+    "QS-DEC": [
+      "saisonnier",
+      "saisonnière",
+      "saisonniers",
+      "saisonnières"
+    ],
+    "DJF": [
+      "hivernal",
+      "hivernale",
+      "hivernaux",
+      "hivernales"
+    ],
+    "MAM": [
+      "printanier",
+      "printanière",
+      "printaniers",
+      "printanières"
+    ],
+    "JJA": [
+      "estival",
+      "estivale",
+      "estivaux",
+      "estivales"
+    ],
+    "SON": [
+      "automnal",
+      "automnale",
+      "automnaux",
+      "automnales"
+    ],
+    "norm": [
+      "normal",
+      "normale",
+      "normaux",
+      "normales"
+    ],
+    "m1": [
+      "janvier"
+    ],
+    "m2": [
+      "février"
+    ],
+    "m3": [
+      "mars"
+    ],
+    "m4": [
+      "avril"
+    ],
+    "m5": [
+      "mai"
+    ],
+    "m6": [
+      "juin"
+    ],
+    "m7": [
+      "juillet"
+    ],
+    "m8": [
+      "août"
+    ],
+    "m9": [
+      "septembre"
+    ],
+    "m10": [
+      "octobre"
+    ],
+    "m11": [
+      "novembre"
+    ],
+    "m12": [
+      "decembre"
+    ]
   },
   "atmos.rain_frzgr": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
@@ -406,5 +475,40 @@
     "comment": "",
     "title": "Étendue de la banquise",
     "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
+  },
+  "atmos.dry_days": {
+    "long_name": "Number of dry days (precip < {thresh})",
+    "description": "{freq} number of days with daily precipitation under {thresh}.",
+    "comment": "",
+    "title": "Dry days",
+    "abstract": "The number of days with daily precipitation below threshold."
+  },
+  "atmos.hot_spell_frequency": {
+    "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maxmale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Fréquences des périodes chaudes",
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maxmale excède un seuil spécifique durant un minimum de jours."
+  },
+  "atmos.last_spring_frost": {
+    "long_name": "Jour de l'année du dernier gel printanier",
+    "description": "Jour de l'année du dernier gel printanier, defini comme le dernier jour où la température journalière moyenne reste sous {thresh} durant au moins {window} jours avant une certaine date.",
+    "comment": "",
+    "title": "Jour de l'année du dernier gel printanier",
+    "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
+  },
+  "atmos.consecutive_frost_free_days": {
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale est sous {thresh}.",
+    "comment": "",
+    "title": "Nombre maximal de jours de gel consécutifs (Tn > 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs où la température journalière minimale est sous un certain seuil."
+  },
+  "atmos.growing_season_end": {
+    "long_name": "Jour de l'année de la fin de la saison de végétation",
+    "description": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "comment": "",
+    "title": "Fin de la saison de végétation",
+    "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
   }
 }
