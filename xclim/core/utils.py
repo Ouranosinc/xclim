@@ -186,10 +186,20 @@ def tas_dtas_2_rh(
     Rw : str
         Gas constant for water vapor
 
+    Notes
+    -----
+    Let :math:`T` and :math:`T_d` be the temperature and the dew point temperature. With :math:`L` the Enthalpy of vaporization of water
+    and :math:`R_w` the gas constant for water vapor, the relative humidity is computed as:
+
+    .. math::
+
+        RH = e^{\\frac{-L (T - T_d)}{R_wTT_d}}
+
+    Formula taken from [Lawrence_2005]_.
+
     References
     ----------
-    Lawrence, M.G., 2005: The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications.
-        Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [Lawrence_2005] Lawrence, M.G., 2005: The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
     """
     tas = convert_units_to(tas, "degK")
     dtas = convert_units_to(dtas, "degK")
