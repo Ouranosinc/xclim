@@ -356,7 +356,7 @@ def growing_season_end(
     window: int = 5,
     freq: str = "YS",
 ):
-    r"""First day of consistent inferior threshold temperature after a run of days superior to a threshold temperature.
+    r"""Day of the year of the start of a sequence of days with a temperature consistently below a threshold, after a period with temperatures consistently above the same threshold.
 
     Returns the first day of period where a temperature is inferior to a threshold
     over a given run of days.
