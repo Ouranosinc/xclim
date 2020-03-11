@@ -24,6 +24,8 @@ from xclim.core.units import declare_units
 def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     """Wrap a function, updating its signature but keeping its docstring.
 
+    Can only act on keyword arguments.
+
     Parameters
     ----------
     func : FunctionType
@@ -63,11 +65,12 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     # To be sure the signature is correct,
     # remove everyting and put back only what we want
     for arg in sig.parameters.keys():
-        fb.remove_arg(arg)
+        if arg not in [fb.varkw, fb.varargs]:
+            fb.remove_arg(arg)
 
     kwonly = False  # To preserve order, once a kwonly arg or a fixed arg is found, everything after is kwonly.
     for arg, param in sig.parameters.items():
-        if arg in fixed:  # Don't put argument back
+        if arg in fixed or arg in [fb.varkw, fb.varargs]:  # Don't put argument back
             kwonly = True
             continue
         if arg in suggested:
