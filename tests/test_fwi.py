@@ -141,29 +141,23 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
             indexes=["DC"],
             start_up_mode="snow_depth",
         )
+
     # Test starting too early
     with pytest.raises(ValueError):
         fire_weather_ufunc(
             tas=tas,
             pr=pr,
             lat=lat,
-            snd=snd,
             dc0=DC0,
+            snd=snd,
             indexes=["DC"],
-            start_up_mode="snow_depth",
             start_date="2017-01-01",
+            start_up_mode="snow_depth",
         )
 
     # Test output is complete
     out = fire_weather_ufunc(
-        tas=tas,
-        pr=pr,
-        lat=lat,
-        snd=snd,
-        dc0=DC0,
-        indexes=["DC"],
-        start_up_mode="snow_depth",
-        start_date="2017-03-03",
+        tas=tas, pr=pr, lat=lat, dc0=DC0, indexes=["DC"], start_date="2017-03-03",
     )
 
     assert len(out.keys()) == 1
@@ -178,12 +172,11 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
         dc0=DC0,
         dmc0=DMC0,
         ffmc0=FFMC0,
-        indexes=["DC", "DMC", "FFMC"],
-        start_up_mode="snow_depth",
-        start_date="2017-03-03",
+        indexes=["DSR"],
+        start_date="2017-01-01",
     )
 
-    assert len(out.keys()) == 3
+    assert len(out.keys()) == 7
 
 
 @pytest.mark.parametrize(

@@ -139,7 +139,7 @@ DAY_LENGTH_FACTORS = np.array(
 
 
 @jit
-def day_length(lat, mth):
+def day_length(lat, mth):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
         dl = DAY_LENGTHS[0, :]
@@ -155,7 +155,7 @@ def day_length(lat, mth):
 
 
 @jit
-def day_length_factor(lat, mth):
+def day_length_factor(lat, mth):  # pragma: no cover
     """Return the day length factor"""
     if -15 > lat >= -90:
         dlf = DAY_LENGTH_FACTORS[0, :]
@@ -167,7 +167,7 @@ def day_length_factor(lat, mth):
 
 
 @vectorize
-def fine_fuel_moisture_code(t, p, w, h, ffmc0):
+def fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
     """Computation of the fine fuel moisture code over one time step.
 
     Parameters
@@ -247,7 +247,7 @@ def fine_fuel_moisture_code(t, p, w, h, ffmc0):
 
 
 @vectorize
-def duff_moisture_code(t, p, h, mth, lat, dmc0):
+def duff_moisture_code(t, p, h, mth, lat, dmc0):  # pragma: no cover
     """Computation of the Duff moisture code over one time step.
 
     Parameters
@@ -304,7 +304,7 @@ def duff_moisture_code(t, p, h, mth, lat, dmc0):
 
 
 @vectorize
-def drought_code(t, p, mth, lat, dc0):
+def drought_code(t, p, mth, lat, dc0):  # pragma: no cover
     """Computation of the drought code over one time step.
 
     Parameters
@@ -453,8 +453,8 @@ def _shut_down_and_start_ups(
     -------
     shut_down, start_up_wet, start_up_dry : ndarray
         Boolean masks, `start_up_dry` is non-zero only for "snow_depth" start_up_mode
-    days_since_last_prec : ndarray or np.nan
-        Computed only with start_up_mode == "snow_depth"
+    days_since_last_prec : ndarray
+        Computed only with start_up_mode == "snow_depth", 0 otherwise.
     """
     # When implementing another mode, put the description in the module-level docstring.
     # Shut down
@@ -498,8 +498,8 @@ def _shut_down_and_start_ups(
         raise NotImplementedError("start_up_mode must be 'snow_depth' or None.")
     else:
         start_up_wet = start_up
-        start_up_dry = 0 * start_up_wet
-        days_since_last_prec = np.nan
+        start_up_dry = False & start_up_wet
+        days_since_last_prec = 0 * start_up_wet
 
     return shut_down, start_up_wet, start_up_dry, days_since_last_prec
 
@@ -714,7 +714,6 @@ def fire_weather_ufunc(
     input_core_dims = []
     # Verification of all arguments
     for i, (arg, name, usedby, has_time_dim) in enumerate(needed_args):
-        args.append(arg)
         if any([ind in indexes + [start_up_mode, shut_down_mode] for ind in usedby]):
             if arg is None:
                 raise TypeError(
@@ -725,9 +724,12 @@ def fire_weather_ufunc(
                 warn(
                     f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
                 )
-                args[i] = arg.load()
+                args.append(arg.load())
+            else:
+                args.append(arg)
             input_core_dims.append(["time"] if has_time_dim else [])
         else:
+            args.append(None)
             input_core_dims.append([])
 
     params["start_up_mode"] = start_up_mode
