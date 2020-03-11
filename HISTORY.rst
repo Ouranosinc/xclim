@@ -4,6 +4,7 @@ History
 
 0.15.x
 ------
+* Better `wrapped_partial` for more meaningful inspection.
 * Add `xclim.core.utils.tas_dtas_2_rh` to compute relative humidity.
 * Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
 * Complete internal reorganization of xclim.
