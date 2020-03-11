@@ -445,7 +445,8 @@ def drought_code(
 ):
     r"""The daily drought code (FWI component)
 
-    The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
+    The drought code is part of the Canadian Forest Fire Weather Index System.
+    It is a numeric rating of the average moisture content of organic layers.
 
     Parameters
     ----------
@@ -461,6 +462,8 @@ def drought_code(
       Initial values of the drought code.
     start_date : str, datetime.datetime
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
+    start_up_mode : str
+      #TODO: Add a docstring for this signature.
     params :
       Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
@@ -1346,7 +1349,7 @@ def warm_spell_duration_index(
     tx90 : float
       90th percentile of daily maximum temperature [℃] or [K]
     window : int
-      Minimum number of days with temperature below threshold to qualify as a warm spell.
+      Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency; Defaults to "YS".
 
