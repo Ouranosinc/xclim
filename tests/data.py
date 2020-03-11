@@ -51,8 +51,9 @@ tas,100,90,80,70,60,50,40,30,20
 """
 )
 _rh_test_table = pd.read_table(_rh_test_data, sep=",", decimal=",").set_index("tas")
-_rh_test_table.stack().reset_index().rename(columns={"level_1": "rh", 0: "dtas"})
-RH_testdata = _rh_test_table.to_xarray()
+_rh_test_table = _rh_test_table.set_axis(_rh_test_table.columns.astype(float), axis=1)
+_rh_test_table = _rh_test_table.stack().reset_index()
+RH_testdata = _rh_test_table.rename(columns={"level_1": "rh", 0: "dtas"}).to_xarray()
 RH_testdata.tas.attrs["units"] = "degC"
 RH_testdata.dtas.attrs["units"] = "degC"
 RH_testdata.rh.attrs["units"] = "%"

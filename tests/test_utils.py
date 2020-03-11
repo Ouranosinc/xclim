@@ -7,8 +7,8 @@ from inspect import signature
 import numpy as np
 import pytest
 import xarray as xr
+from data import RH_testdata
 
-from .data import RH_testdata
 from xclim.core.utils import sfcwind_2_uas_vas
 from xclim.core.utils import tas_dtas_2_rh
 from xclim.core.utils import uas_vas_2_sfcwind
