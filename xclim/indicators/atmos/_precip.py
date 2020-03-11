@@ -115,7 +115,6 @@ precip_accumulation = Pr(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase=None),
 )
 
@@ -126,7 +125,6 @@ liquid_precip_accumulation = Pr(
     long_name="Total liquid precipitation",
     description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="liquid"),
 )
 
@@ -137,7 +135,6 @@ solid_precip_accumulation = Pr(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
 )
 

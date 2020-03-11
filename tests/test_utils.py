@@ -94,3 +94,18 @@ def test_wrapped_partial():
     assert list(signature(newf).parameters.keys()) == ["a", "c"]
     assert newf(1) == (1, 2, 2)
     assert newf.__doc__ == func.__doc__
+
+    def func(a, b=1, c=1, **kws):
+        """Docstring"""
+        return (a, b, c)
+
+    newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
+    assert list(signature(newf).parameters.keys()) == ["c", "kws"]
+    assert newf() == (2, 2, 2)
+
+    def func(a, *args, b=1, c=1, **kws):
+        """Docstring"""
+        return (a, b, c)
+
+    with pytest.raises(ValueError):
+        newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)

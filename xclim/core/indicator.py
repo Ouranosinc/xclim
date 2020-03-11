@@ -76,9 +76,6 @@ class Indicator:
     # metadata fields that are formatted as free text.
     _text_fields = ["long_name", "description", "comment"]
 
-    # Whether or not the compute function is a partial.
-    _partial = False
-
     # Can be used to override the compute docstring.
     doc_template = None
 
@@ -122,14 +119,8 @@ class Indicator:
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
-        if self._partial:
-            ba = self._sig.bind_partial(*args, **kwds)
-            for key, val in self.compute.keywords.items():
-                if key not in ba.arguments:
-                    ba.arguments[key] = val
-        else:
-            ba = self._sig.bind(*args, **kwds)
-            ba.apply_defaults()
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)

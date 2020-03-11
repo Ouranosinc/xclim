@@ -24,7 +24,7 @@ from xclim.core.units import declare_units
 def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     """Wrap a function, updating its signature but keeping its docstring.
 
-    Can only act on keyword arguments.
+    Can only act on keyword arguments. Will fail with a `*args` argument in func.
 
     Parameters
     ----------
@@ -62,15 +62,17 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     partial_func = partial(func, **suggested, **fixed)
 
     fb = FunctionBuilder.from_func(func)
+    if fb.varargs:
+        raise ValueError("wrapped_partial cannot handle starred arguments `*args`.")
     # To be sure the signature is correct,
     # remove everyting and put back only what we want
     for arg in sig.parameters.keys():
-        if arg not in [fb.varkw, fb.varargs]:
+        if arg not in [fb.varkw]:
             fb.remove_arg(arg)
 
     kwonly = False  # To preserve order, once a kwonly arg or a fixed arg is found, everything after is kwonly.
     for arg, param in sig.parameters.items():
-        if arg in fixed or arg in [fb.varkw, fb.varargs]:  # Don't put argument back
+        if arg in fixed or arg in [fb.varkw]:  # Don't put argument back
             kwonly = True
             continue
         if arg in suggested:
@@ -86,7 +88,12 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
 
     execdict = dict(_call=partial_func, _func=func)
     fully_wrapped = fb.get_func(execdict, with_dict=True)
-    # fully_wrapped.__wrapped__ = func  # If this line is uncommented "help" and common IDE will show func's signature, not the updated one.
+
+    # fully_wrapped.__wrapped__ = func
+    # if __wrapped__ is set, inspect.signature, help and common IDE helpers will follow it down
+    # The returned  function acts
+    if "__wrapped__" in fully_wrapped.__dict__:
+        del fully_wrapped.__dict__["__wrapped__"]
 
     return fully_wrapped
 
