@@ -8,3 +8,4 @@ Examples
    example
    subset
    ensembles
+   mappings

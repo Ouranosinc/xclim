@@ -39,6 +39,7 @@ requirements = [
     "bottleneck~=1.3.1",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
+    "packaging>=20.0",
 ]
 
 if not os.getenv("READTHEDOCS"):
