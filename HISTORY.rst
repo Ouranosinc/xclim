@@ -7,7 +7,7 @@ History
 * Add `xclim.core.utils.relative_humidity` with a few choices of method.
 * Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
 * Added example notebook for creating a catalog of selected indices
-* Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.r
+* Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
 * Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
 * Complete internal reorganization of xclim.
 * Internationalization of xclim : add `locales` submodule for localized metadata.
