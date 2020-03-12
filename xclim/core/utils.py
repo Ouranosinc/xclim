@@ -232,7 +232,7 @@ def relative_humidity(
 
     The methods differ by how :math:`e_{sat}` is computed. In all cases, :math:`log(e_{sat})`
     is an empirically fitted function (usually a polynomial) where coefficients can be different
-    when ice is taken as refernce instead of water. Available methods are:
+    when ice is taken as reference instead of water. Available methods are:
 
     - "goffgratch46" or "GG46", based on [GoffGratch_1946]_, values taken from [Voemel]_.
     - "sonntag90" or "SO90", taken from [Sonntag_1990]_.
