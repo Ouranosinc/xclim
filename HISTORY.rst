@@ -2,8 +2,8 @@
 History
 =======
 
-0.15.x
-------
+0.15.x (2020-03-12)
+-------------------
 * Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
 * Added example notebook for creating a catalog of selected indices
 * Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
