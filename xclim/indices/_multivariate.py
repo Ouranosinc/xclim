@@ -408,11 +408,11 @@ def fire_weather_indexes(
         snd = convert_units_to(snd, "m")
 
     if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if dmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dmc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if ffmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        ffmc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
 
@@ -440,7 +440,8 @@ def drought_code(
     snd: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
     start_date: str = None,
-    start_up_mode: str = "snow_depth",
+    start_up_mode: str = None,
+    shut_down_mode: str = "snow_depth",
     **params,
 ):
     r"""The daily drought code (FWI component)
@@ -462,8 +463,10 @@ def drought_code(
       Initial values of the drought code.
     start_date : str, datetime.datetime
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
-    start_up_mode : str
-      #TODO: Add a docstring for this signature.
+    start_up_mode : {None, "snow_depth"}
+      How to compute start up. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
+    shut_down_mode : {"temperature", "snow_depth"}
+      How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
     params :
       Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
