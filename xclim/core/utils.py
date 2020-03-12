@@ -6,6 +6,7 @@ Miscellaneous indices utilities
 Helper functions for the indices computation, things that do not belong in neither
 `xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
 """
+import datetime as dt
 from collections import defaultdict
 from types import FunctionType
 
@@ -165,13 +166,22 @@ def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = Non
     return uas, vas
 
 
-@declare_units("%", tas="[temperature]", dtas="[temperature]")
-def tas_dtas_2_rh(
+@declare_units(
+    "%",
+    tas="[temperature]",
+    dtas="[temperature]",
+    huss="[]",
+    ps="[pressure]",
+    ice_thresh="[temperature]",
+)
+def relative_humidity(
     tas: xr.DataArray,
-    dtas: xr.DataArray,
-    method: str = "august-roche-magnus",
-    L: str = "2.501e6 J kg^-1",
-    Rw: str = "461.5 J K^-1 kg^-1",
+    dtas: xr.DataArray = None,
+    huss: xr.DataArray = None,
+    ps: xr.DataArray = None,
+    ice_thresh: str = None,
+    method: str = "sonntag90",
+    invalid_values: str = "clip",
 ):
     """Compute relative humidity from temperature and dewpoint temperature.
 
@@ -180,15 +190,29 @@ def tas_dtas_2_rh(
     tas : xr.DataArray
         Temperature array
     dtas : xr.DataArray
-        Dewpoint temperature
-    L : str
-        Enthalpy of vaporization
-    Rw : str
-        Gas constant for water vapor
+        Dewpoint temperature, if specified, "method" is set to "dewpoint".
+    huss : xr.DataArray
+        Specific Humidity
+    ps : xr.DataArray
+        Air Pressure
+    ice_thresh : str
+        Threshold temperature under which to switch to equations in reference to ice instead of water.
+        If None (default) everything is computed with reference to water.
+    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+        Which method to use, see notes.
+    invalid_values : {"clip", "fill", None}
+        What to do with values outside the 0-100 range.
+        If "clip" (default), clips everything to 0 - 100,
+        if "fill", replaces values outside the range by np.nan
+        if None, does nothing.
 
     Notes
     -----
-    Let :math:`T` and :math:`T_d` be the temperature and the dew point temperature. With :math:`L` the Enthalpy of vaporization of water
+
+    In the followig, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
+    the dew point temperature, the specific humidity and the air pressure.
+
+    **For the "dewpoint" method** : With :math:`L` the Enthalpy of vaporization of water
     and :math:`R_w` the gas constant for water vapor, the relative humidity is computed as:
 
     .. math::
@@ -197,22 +221,151 @@ def tas_dtas_2_rh(
 
     Formula taken from [Lawrence_2005]_.
 
+    **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
+    the saturation mixing ratio and the saturation partial pressure of water vapor, relative humidity is computed as:
+
+        ... math::
+
+            RH = 100\\frac{w}{w_{sat}}
+            w = \\frac{q}{1-q}
+            w_{sat} = 0.622\\frac{e_{sat}}{P - e_{sat}}
+
+    The methods differ by how :math:`e_{sat}` is computed. In all cases, :math:`log(e_{sat})`
+    is an empirically fitted function (usually a polynomial) where coefficients can be different
+    when ice is taken as refernce instead of water. Available methods are:
+
+    - "goffgratch46" or "GG46", based on [GoffGratch_1946]_, values taken from [Voemel]_.
+    - "sonntag90" or "SO90", taken from [Sonntag_1990]_.
+    - "tetens30" or "TE30", based on [Tetens_1930], values taken from [Voemel]_.
+    - "wmo08" or "WMO08", taken from [WMO_2008]_.
+
+
     References
     ----------
-    .. [Lawrence_2005] Lawrence, M.G., 2005: The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [GoffGratch_1946] Goff, J. A., and S. Gratch (1946) Low-pressure properties of water from -160 to 212 °F, in Transactions of the American Society of Heating and Ventilating Engineers, pp 95-122, presented at the 52nd annual meeting of the American Society of Heating and Ventilating Engineers, New York, 1946.
+    .. [Lawrence_2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [Sonntag_1990] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
+    .. [Tetens_1930] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
+    .. [Voemel] http://cires1.colorado.edu/~voemel/vp.html
+    .. [WMO_2008] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
-    tas = convert_units_to(tas, "degK")
-    dtas = convert_units_to(dtas, "degK")
-    L = convert_units_to(L, "J kg^-1")
-    Rw = convert_units_to(Rw, "J K^-1 kg^-1")
-    rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+    if dtas is not None:
+        dtas = convert_units_to(dtas, "degK")
+        tas = convert_units_to(tas, "degK")
+        L = 2.501e6
+        Rw = (461.5,)
+        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+        desc = (
+            "Relative humidity computed from temperature and "
+            f"dew point temperature with L = {L} and Rw = {Rw}"
+        )
+        method = "dewpoint"
+        source = "Lawrence (2005)"
+    else:
+        if ice_thresh is not None:
+            thresh = convert_units_to(ice_thresh, "degK")
+        else:
+            thresh = convert_units_to("0 K", "degK")
+        ref_is_water = tas > thresh
+
+        ps = convert_units_to(ps, "Pa")
+        huss = convert_units_to(huss, "")
+        tas = convert_units_to(tas, "degK")
+
+        if method in ["sonntag90", "SO90"]:
+            e_sat = xr.where(
+                ref_is_water,
+                100
+                * np.exp(  # Where ref_is_water is True, x100 is to convert hPa to Pa
+                    -6096.9385 / tas
+                    + 16.635794
+                    + -2.711193e-2 * tas
+                    + 1.673952e-5 * tas ** 2
+                    + 2.433502 * np.log(tas)  # numpy's log is ln
+                ),
+                100
+                * np.exp(  # Where ref_is_water is False (thus ref is ice)
+                    -6024.5282 / tas
+                    + 24.7219
+                    + 1.0613868e-2 * tas
+                    + -1.3198825e-5 * tas ** 2
+                    + -0.49382577 * np.log(tas)
+                ),
+            )
+            source = "Sonntag (1990)"
+        elif method in ["tetens30", "TE30"]:
+            e_sat = xr.where(
+                ref_is_water,
+                610.78 * np.exp(17.269388 * (tas - 273.16) / (tas - 35.86)),
+                610.78 * np.exp(21.8745584 * (tas - 273.16) / (tas - 7.66)),
+            )
+            source = "Tetens (1930)"
+        elif method in ["goffgratch46", "GG46"]:
+            Tb = 373.16  # Water boiling temp [K]
+            eb = 101325  # e_sat at Tb [Pa]
+            Tp = 273.16  # Triple-point temperature [K]
+            ep = 611.73  # e_sat at Tp [Pa]
+            e_sat = xr.where(
+                ref_is_water,
+                eb
+                * 10
+                ** (
+                    -7.90298 * ((Tb / tas) - 1)
+                    + 5.02808 * np.log10(Tb / tas)
+                    + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
+                    + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)
+                ),
+                ep
+                * 10
+                ** (
+                    -9.09718 * ((Tp / tas) - 1)
+                    + -3.56654 * np.log10(Tp / tas)
+                    + 0.876793 * (1 - tas / Tp)
+                ),
+            )
+            source = "Goff and Gratch (1946)"
+        elif method in ["wmo08", "WMO08"]:
+            e_sat = xr.where(
+                ref_is_water,
+                611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04)),
+                611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54)),
+            )
+            source = "WMO (2008)"
+        else:
+            raise NotImplementedError(f"Method {method} is not (yet) implemented.")
+
+        w = huss / (1 - huss)
+        w_sat = 0.62198 * e_sat / (ps - e_sat)
+        rh = 100 * w / w_sat
+
+        desc = f"Relative humidity computed from temperature, specific humidity and pressure. The saturation vapor pressure was calculated according to {source}."
+        if ice_thresh is not None:
+            desc += f" The computation was done in reference to ice for temperatures below {ice_thresh}."
+
+    from xclim import __version__
+
+    if invalid_values == "clip":
+        rh = rh.clip(0, 100)
+    elif invalid_values == "fill":
+        rh = rh.where((rh <= 100) & (rh >= 0))
 
     rh.name = "rh"
     rh.attrs["standard_name"] = "relative_humidity"
     rh.attrs["long_name"] = "Relative Humidity"
-    rh.attrs["description"] = (
-        "Relative humidity computed from temperature and "
-        f"dew point temperature with L = {L} and Rw = {Rw}"
-    )
+    rh.attrs["description"] = desc
     rh.attrs["units"] = "%"
+    rh.attrs[
+        "history"
+    ] = "[{:%Y-%m-%d %H:%M:%S}] Computed with method {} from tas{}, invalid values were {} - xclim version: {}.".format(
+        dt.datetime.now(),
+        method,
+        " and dtas" if method == "dewpoint" else ", huss and ps",
+        {
+            "clip": "clipped back to the 0 - 100 range.",
+            "fill": "replaced by replaced by NaNs.",
+            None: "not flagged.",
+        }[invalid_values],
+        __version__,
+    )
+
     return rh
