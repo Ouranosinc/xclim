@@ -209,7 +209,7 @@ def relative_humidity(
     Notes
     -----
 
-    In the followig, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
+    In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
     **For the "dewpoint" method** : With :math:`L` the Enthalpy of vaporization of water
