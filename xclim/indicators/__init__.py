@@ -79,7 +79,7 @@ def build_module(name, objs, doc="", source=None, mode="ignore"):
 
 def __build_icclim(mode="warn"):
     from xclim import indices
-    from functools import partial
+    from xclim.core.utils import wrapped_partial
 
     #  ['SD', 'SD1', 'SD5cm', 'SD50cm',
 
@@ -104,31 +104,37 @@ def __build_icclim(mode="warn"):
         "SU": indices.tx_days_above,
         "CSU": indices.maximum_consecutive_tx_days,
         "TR": indices.tropical_nights,
-        "GD4": partial(indices.growing_degree_days, thresh="4 degC"),
+        "GD4": wrapped_partial(indices.growing_degree_days, thresh="4 degC"),
         "FD": indices.frost_days,
         "CFD": indices.consecutive_frost_days,
         "GSL": indices.growing_season_length,
         "ID": indices.ice_days,
-        "HD17": partial(indices.heating_degree_days, thresh="17 degC"),
+        "HD17": wrapped_partial(indices.heating_degree_days, thresh="17 degC"),
         "CDD": indices.maximum_consecutive_dry_days,
         "CWD": indices.maximum_consecutive_wet_days,
         "PRCPTOT": indices.precip_accumulation,
         "RR1": indices.wetdays,
-        "SDII": partial(indices.daily_pr_intensity, thresh="1 mm/day"),
+        "SDII": wrapped_partial(indices.daily_pr_intensity, thresh="1 mm/day"),
         "ETR": indices.extreme_temperature_range,
         "DTR": indices.daily_temperature_range,
         "vDTR": indices.daily_temperature_range_variability,
-        "R10mm": partial(indices.wetdays, thresh="10 mm/day"),
-        "R20mm": partial(indices.wetdays, thresh="20 mm/day"),
+        "R10mm": wrapped_partial(indices.wetdays, thresh="10 mm/day"),
+        "R20mm": wrapped_partial(indices.wetdays, thresh="20 mm/day"),
         "RX1day": indices.max_1day_precipitation_amount,
-        "RX5day": partial(indices.max_n_day_precipitation_amount, window=5),
+        "RX5day": wrapped_partial(indices.max_n_day_precipitation_amount, window=5),
         "WSDI": indices.warm_spell_duration_index,
-        "R75p": partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
-        "R95p": partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
-        "R99p": partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
-        "R75pTOT": partial(indices.fraction_over_precip_thresh, thresh="1 mm/day"),
-        "R95pTOT": partial(indices.fraction_over_precip_thresh, thresh="1 mm/day"),
-        "R99pTOT": partial(indices.fraction_over_precip_thresh, thresh="1 mm/day"),
+        "R75p": wrapped_partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
+        "R95p": wrapped_partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
+        "R99p": wrapped_partial(indices.days_over_precip_thresh, thresh="1 mm/day"),
+        "R75pTOT": wrapped_partial(
+            indices.fraction_over_precip_thresh, thresh="1 mm/day"
+        ),
+        "R95pTOT": wrapped_partial(
+            indices.fraction_over_precip_thresh, thresh="1 mm/day"
+        ),
+        "R99pTOT": wrapped_partial(
+            indices.fraction_over_precip_thresh, thresh="1 mm/day"
+        ),
         # 'SD': None,
         # 'SD1': None,
         # 'SD5cm': None,
