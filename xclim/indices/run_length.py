@@ -6,6 +6,7 @@ Run length algorithms submodule
 Computation of statistics on runs of True values in boolean arrays.
 """
 import logging
+from datetime import datetime
 from functools import partial
 from typing import Optional
 from typing import Sequence
@@ -25,17 +26,16 @@ npts_opt = 9000
 def get_npts(da: xr.DataArray) -> int:
     """Return the number of gridpoints in a DataArray.
 
-        Parameters
-        ----------
-        da : xarray.DataArray
-          N-dimensional input array
+    Parameters
+    ----------
+    da : xarray.DataArray
+      N-dimensional input array
 
-        Returns
-        -------
-        int
-          Product of input DataArray coordinate sizes excluding the dimension 'time'
-        """
-
+    Returns
+    -------
+    int
+      Product of input DataArray coordinate sizes excluding the dimension 'time'
+    """
     coords = list(da.coords)
     coords.remove("time")
     npts = 1
@@ -86,21 +86,21 @@ def longest_run(
 ):
     """Return the length of the longest consecutive run of True values.
 
-        Parameters
-        ----------
-        da : xr.DataArray
-          N-dimensional array (boolean)
-        dim : str
-          Dimension along which to calculate consecutive run; Default: 'time'.
-        ufunc_1dim : Union[str, bool]
-          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-          for dataarray with a small number of gridpoints.
-        Returns
-        -------
-        N-dimensional array (int)
-          Length of longest run of True values along dimension
-        """
+    Parameters
+    ----------
+    da : xr.DataArray
+      N-dimensional array (boolean)
+    dim : str
+      Dimension along which to calculate consecutive run; Default: 'time'.
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+      for dataarray with a small number of gridpoints.
+    Returns
+    -------
+    N-dimensional array (int)
+      Length of longest run of True values along dimension
+    """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
@@ -122,23 +122,23 @@ def windowed_run_events(
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
-        Parameters
-        ----------
-        da: xr.DataArray
-          Input N-dimensional DataArray (boolean)
-        window : int
-          Minimum run length.
-        dim : str
-          Dimension along which to calculate consecutive run (default: 'time').
-        ufunc_1dim : Union[str, bool]
-          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-          for dataarray with a small number of gridpoints.
-        Returns
-        -------
-        xr.DataArray
-          Number of distinct runs of a minimum length (int).
-        """
+    Parameters
+    ----------
+    da: xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum run length.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+      for dataarray with a small number of gridpoints.
+    Returns
+    -------
+    xr.DataArray
+      Number of distinct runs of a minimum length (int).
+    """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
@@ -159,24 +159,24 @@ def windowed_run_count(
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
-        Parameters
-        ----------
-        da: xr.DataArray
-          Input N-dimensional DataArray (boolean).
-        window : int
-          Minimum run length.
-        dim : str
-          Dimension along which to calculate consecutive run (default: 'time').
-        ufunc_1dim : Union[str, bool]
-          Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-          usage based on number of data points. Using 1D_ufunc=True is typically more efficient
-          for dataarray with a small number of gridpoints.
+    Parameters
+    ----------
+    da: xr.DataArray
+      Input N-dimensional DataArray (boolean).
+    window : int
+      Minimum run length.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points. Using 1D_ufunc=True is typically more efficient
+      for dataarray with a small number of gridpoints.
 
-        Returns
-        -------
-        xr.DataArray
-          Total number of true values part of a consecutive runs of at least `window` long.
-        """
+    Returns
+    -------
+    xr.DataArray
+      Total number of true values part of a consecutive runs of at least `window` long.
+    """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
         ufunc_1dim = npts <= npts_opt
@@ -276,8 +276,8 @@ def last_run(
       DateTimeAccessor object to use (ex: 'dayofyear').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
+      for a DataArray with a small number of grid points.
 
     Returns
     -------
@@ -291,6 +291,163 @@ def last_run(
     if not coord:
         return reversed_da[dim].size - out - 1
     return out
+
+
+def run_length_with_date(
+    da: xr.DataArray, window: int, date: str = "07-01", dim: str = "time",
+):
+    """Return the length of the longest consecutive run of True values found
+    to be semi-continuous before and after a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    date:
+      The date that a run must include to be considered valid.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+
+    Returns
+    -------
+    out : xr.DataArray
+      Length of longest run of True values along a given dimension inclusive of a given date.
+
+    Notes
+    -----
+    The run can include holes of False or NaN values, so long as they do not exceed the window size.
+    """
+    include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+    def _crld(rlda, rlwindow, rldoy, rldim):
+        mid_index = np.where(rlda.time.dt.dayofyear == rldoy)[0]
+        if (
+            mid_index.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
+            all_nans.attrs = {}
+            return all_nans
+        end = first_run(
+            (~rlda).where(rlda.time >= rlda.time[mid_index][0]),
+            window=rlwindow,
+            dim=rldim,
+        )
+        beg = first_run(rlda, window=rlwindow, dim=rldim)
+        sl = end - beg
+        sl = xr.where(
+            beg.isnull() & end.notnull(), 0, sl
+        )  # If series is never triggered
+        sl = xr.where(
+            beg.notnull() & end.isnull(), rlda.time.size - beg, sl
+        )  # If series is not ended by end of resample time frequency
+        return sl.where(sl >= 0)
+
+    return _crld(rlda=da, rlwindow=window, rldoy=include_date, rldim=dim)
+
+
+def run_end_after_date(
+    da: xr.DataArray,
+    window: int,
+    date: str = "07-01",
+    dim: str = "time",
+    coord: str = "dayofyear",
+):
+    """Return the index of the first item after the end of a run after a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    date : str
+      The date after which to look for the end of a run.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+    """
+    after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+    def _cred(rlda, rlwindow, rldoy, rldim, rlcoord):
+        mid_idx = np.where(rlda.time.dt.dayofyear == rldoy)[0]
+        if (
+            mid_idx.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
+            all_nans.attrs = {}
+            return all_nans
+        end = first_run(
+            (~rlda).where(rlda.time >= rlda.time[mid_idx][0]),
+            window=rlwindow,
+            dim=rldim,
+            coord=rlcoord,
+        )
+        beg = first_run(
+            rlda.where(rlda.time < rlda.time[mid_idx][0]), window=rlwindow, dim=rldim,
+        )
+        end = xr.where(
+            end.isnull() & beg.notnull(), rlda.time.isel(time=-1).dt.dayofyear, end
+        )
+        return end.where(beg.notnull())
+
+    return _cred(rlda=da, rlwindow=window, rldoy=after_date, rldim=dim, rlcoord=coord)
+
+
+def last_run_before_date(
+    da: xr.DataArray,
+    window: int,
+    date: str = "07-01",
+    dim: str = "time",
+    coord: str = "dayofyear",
+):
+    """Return the index of the last item of the last run before a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    date : str
+      The date before which to look for the last event.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+    """
+    before_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+    def _clrbd(rlda, rlwindow, rlbefore_date, rldim, rlcoord):
+        mid_idx = np.where(rlda.time.dt.dayofyear == rlbefore_date)[0]
+        if (
+            mid_idx.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
+            all_nans.attrs = dict()
+            return all_nans
+        run = rlda.where(rlda.time <= rlda.time[mid_idx][0])
+        return last_run(run, window=rlwindow, dim=rldim, coord=rlcoord)
+
+    return _clrbd(
+        rlda=da, rlwindow=window, rlbefore_date=before_date, rldim=dim, rlcoord=coord
+    )
 
 
 def rle_1d(
@@ -317,7 +474,6 @@ def rle_1d(
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     >>> rle_1d(a)
     (array([1, 2, 3]), array([2, 4, 6]), array([0, 2, 6]))
-
     """
     ia = np.asarray(arr)
     n = len(ia)
@@ -394,14 +550,13 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def windowed_run_events_1d(arr, window: int):
+def windowed_run_events_1d(arr: Sequence[bool], window: int):
     """Return the number of runs of a minimum length.
 
     Parameters
     ----------
-    arr : bool array
-      Input array
-
+    arr : Sequence[bool]
+      Input array (bool)
     window : int
       Minimum run length.
 
@@ -414,14 +569,14 @@ def windowed_run_events_1d(arr, window: int):
     return (v * rl >= window).sum()
 
 
-def windowed_run_count_ufunc(x, window) -> xr.apply_ufunc:
+def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
     """Dask-parallel version of windowed_run_count_1d, ie the number of consecutive true values in
     array for runs at least as long as given duration.
 
     Parameters
     ----------
-    x : bool array
-      Input array
+    x : Sequence[bool]
+      Input array (bool)
     window : int
       Minimum duration of consecutive run to accumulate values.
 
@@ -502,7 +657,7 @@ def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.appl
     x : xr.DataArray
       Input array (bool)
     window : int
-    index: Optional[str]
+    dim: Optional[str]
 
     Returns
     -------
@@ -549,8 +704,5 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray):
     index = index.fillna(0).astype(int)
     func = partial(_index_from_1d_array, da)
 
-    if isinstance(index, dsk.Array):
-        out = dsk.map_blocks(func, index, dtype=index.dtype)
-    else:
-        out = func(index)
+    out = index.map_blocks(func)
     return out.where(~invalid)
