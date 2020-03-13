@@ -209,7 +209,7 @@ hot_spell_frequency = Tasmax(
 )
 
 hot_spell_max_length = Tasmax(
-    identifier="heat_wave_max_length",
+    identifier="hot_spell_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum length of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)",
