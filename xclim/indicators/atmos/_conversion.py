@@ -18,7 +18,6 @@ class Converter(Indicator):
 
     def validate(self, da):
         """Input validation."""
-        pass
 
 
 tg = Converter(
@@ -43,6 +42,7 @@ wind_speed_from_vector = Converter(
     cell_methods="",
     compute=wrapped_partial(indices.uas_vas_2_sfcwind, return_direction=False),
 )
+
 
 saturation_vapor_pressure = Converter(
     identifier="e_sat",
@@ -77,6 +77,7 @@ relative_humidity_from_dewpoint = Converter(
         invalid_values="mask",
     ),
 )
+
 
 relative_humidity = Converter(
     identifier="rh",

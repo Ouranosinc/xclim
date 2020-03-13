@@ -64,8 +64,6 @@ def uas_vas_2_sfcwind(
     Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
     while stronger winds are set to 360°.
     """
-    # TODO: Add an attribute check to switch between sfcwind and wind
-
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
     vas = convert_units_to(vas, "m/s")
@@ -74,7 +72,7 @@ def uas_vas_2_sfcwind(
     wind = np.hypot(uas, vas)
 
     if return_direction:
-        # TODO Attributes should be set by the indicator, but there are not multi-output indicators, so we set them anyway if return_direction is True,
+        # TODO Attributes should be set by the indicator, but there are no multi-output indicators, so we set them anyway if return_direction is True,
         # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
         wind.attrs = uas.attrs
         wind.name = "sfcWind"
@@ -82,7 +80,6 @@ def uas_vas_2_sfcwind(
         wind.attrs["long_name"] = "Near-Surface Wind Speed"
         wind.attrs["units"] = "m s-1"
         # Calculate the angle
-        # TODO: This creates decimal numbers such as 89.99992. Do we want to round?
         windfromdir_math = np.degrees(np.arctan2(vas, uas))
 
         # Convert the angle from the mathematical standard to the meteorological standard
@@ -126,8 +123,6 @@ def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = Non
       Northward wind velocity (m s-1)
 
     """
-    # TODO: Add an attribute check to switch between sfcwind and wind
-
     # Converts the wind speed to m s-1
     wind = convert_units_to(wind, "m/s")
 

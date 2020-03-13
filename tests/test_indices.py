@@ -30,7 +30,7 @@ TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
-# TODO: Obey this:
+# TODO: Obey the line below:
 # PLEASE MAINTAIN ALPHABETICAL ORDER
 
 
