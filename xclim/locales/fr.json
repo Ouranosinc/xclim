@@ -198,7 +198,7 @@
   },
   "atmos.heat_wave_total_length": {
     "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
-    "description": "Durée totale {freq:f} des vagues de chaleur. UnAn event occurs when the minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "comment": "",
     "title": "Durée totale des vagues de chaleur",
     "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
@@ -207,7 +207,7 @@
     "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
     "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "comment": "",
-    "title": "",
+    "title": "Longueur maximale des vagues de chaleur",
     "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
   },
   "atmos.heat_wave_index": {
@@ -394,17 +394,17 @@
   },
   "atmos.ice_days": {
     "long_name": "Nombre de jours de givre (Tmax < 0°C)",
-    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C.",
     "title": "Nombre de jours de givre",
     "comment": "",
     "abstract": "Nombre de jours où la température journalière maximale est sous 0°C."
   },
   "atmos.consecutive_frost_days": {
     "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
-    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C",
+    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C.",
     "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
     "comment": "",
-    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C"
+    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C."
   },
   "atmos.growing_season_length": {
     "long_name": "Durée de la saison de végétation",
@@ -485,10 +485,10 @@
   },
   "atmos.hot_spell_frequency": {
     "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
-    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maxmale excède {thresh_tasmax} durant au moins {window} jours.",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
     "comment": "",
     "title": "Fréquences des périodes chaudes",
-    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maxmale excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
   },
   "atmos.last_spring_frost": {
     "long_name": "Jour de l'année du dernier gel printanier",
@@ -499,10 +499,10 @@
   },
   "atmos.consecutive_frost_free_days": {
     "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
-    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale est sous {thresh}.",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
     "comment": "",
-    "title": "Nombre maximal de jours de gel consécutifs (Tn > 0℃)",
-    "abstract": "La nombre maximal de jours consécutifs où la température journalière minimale est sous un certain seuil."
+    "title": "Nombre maximal de jours consécutifs sans gel (Tmin > 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus d'un seuil."
   },
   "atmos.growing_season_end": {
     "long_name": "Jour de l'année de la fin de la saison de végétation",
