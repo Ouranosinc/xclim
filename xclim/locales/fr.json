@@ -497,6 +497,13 @@
     "title": "Jour de l'année du dernier gel printanier",
     "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
   },
+  "atmos.hot_spell_max_length": {
+    "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des périodes chaudes",
+    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
   "atmos.consecutive_frost_free_days": {
     "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
     "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
