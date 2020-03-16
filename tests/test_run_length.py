@@ -174,25 +174,6 @@ class TestFirstRun:
         out = rl.first_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=use_1dim)
         np.testing.assert_array_equal(out.load(), expected)
 
-    @pytest.mark.parametrize(
-        "coord,expected",
-        [(False, 39), (True, np.datetime64("2000-02-09")), ("dayofyear", 40)],
-    )
-    @pytest.mark.parametrize(
-        "use_dask,use_1dim", [(True, False), (False, False), (False, True)]
-    )
-    def test_last_run(self, tas_series, coord, expected, use_dask, use_1dim):
-        t = np.zeros(60)
-        t[30:40] = 2
-        tas = tas_series(t, start="2000-01-01")
-        runs = xr.concat((tas, tas), dim="dim0")
-
-        if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
-
-        out = rl.last_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=use_1dim)
-        np.testing.assert_array_equal(out.load(), expected)
-
 
 class TestWindowedRunEvents:
     nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
@@ -228,3 +209,99 @@ class TestWindowedRunCount:
             rl.windowed_run_count, window=4, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
+
+
+class TestLastRun:
+    @pytest.mark.parametrize(
+        "coord,expected",
+        [(False, 39), (True, np.datetime64("2000-02-09")), ("dayofyear", 40)],
+    )
+    @pytest.mark.parametrize(
+        "use_dask,use_1dim", [(True, False), (False, False), (False, True)]
+    )
+    def test_simple(self, tas_series, coord, expected, use_dask, use_1dim):
+        t = np.zeros(60)
+        t[30:40] = 2
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.last_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=use_1dim)
+        np.testing.assert_array_equal(out.load(), expected)
+
+
+class TestRunsWithDates:
+    @pytest.mark.parametrize(
+        "date,end,expected",
+        [
+            ("07-01", 210, 70),
+            ("07-01", 190, 50),
+            ("04-01", 150, np.NaN),  # date falls early
+            ("11-01", 150, 164),  # date ends late
+        ],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_run_length_with_date(self, tas_series, date, end, expected, use_dask):
+        t = np.zeros(360)
+        t[140:end] = 1
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.run_length_with_date(runs, window=1, dim="time", date=date,)
+        np.testing.assert_array_equal(np.mean(out.load()), expected)
+
+    @pytest.mark.parametrize(
+        "coord,date,end,expected",
+        [
+            ("dayofyear", "07-01", 210, 211),
+            (False, "07-01", 190, 190),
+            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "11-01", 150, 305),  # date ends late
+        ],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_run_end_after_date(self, tas_series, coord, date, end, expected, use_dask):
+        t = np.zeros(360)
+        t[140:end] = 1
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.run_end_after_date(runs, window=1, date=date, dim="time", coord=coord)
+        np.testing.assert_array_equal(np.mean(out.load()), expected)
+
+    @pytest.mark.parametrize(
+        "coord,date,end,expected",
+        [
+            ("dayofyear", "07-01", 210, 182),
+            (False, "07-01", 190, 181),
+            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "11-01", 150, 150),  # date ends late
+        ],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_last_run_before_date(
+        self, tas_series, coord, date, end, expected, use_dask
+    ):
+        t = np.zeros(360)
+        t[140:end] = 1
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.last_run_before_date(
+            runs, window=1, date=date, dim="time", coord=coord
+        )
+        np.testing.assert_array_equal(np.mean(out.load()), expected)

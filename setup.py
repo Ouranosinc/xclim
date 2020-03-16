@@ -12,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.14.3-beta"
+VERSION = "0.15.0"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -25,6 +25,7 @@ requirements = [
     "numpy>=1.16",
     "xarray>=0.14.1",
     "scipy>=1.2",
+    "numba",
     "pandas>=0.23",
     "cftime>=1.0.4",
     "netCDF4>=1.4",
@@ -38,6 +39,7 @@ requirements = [
     "bottleneck~=1.3.1",
     "boltons>=19.0",
     "scikit-learn>=0.21.3",
+    "packaging>=20.0",
 ]
 
 if not os.getenv("READTHEDOCS"):

@@ -1,26 +1,95 @@
 {
   "attrs_mapping": {
-    "modifiers": ["m", "f", "mpl", "fpl"],
-    "YS": ["annuel", "annuelle", "annuels", "annuelles"],
-    "MS": ["mensuel", "mensuelle", "mensuels", "mensuelles"],
-    "QS-DEC": ["saisonnier", "saisonnière", "saisonniers", "saisonnières"],
-    "DJF": ["hivernal", "hivernale", "hivernaux", "hivernales"],
-    "MAM": ["printanier", "printanière", "printaniers", "printanières"],
-    "JJA": ["estival", "estivale", "estivaux", "estivales"],
-    "SON": ["automnal", "automnale", "automnaux", "automnales"],
-    "norm": ["normal", "normale", "normaux", "normales"],
-    "m1": ["janvier"],
-    "m2": ["février"],
-    "m3": ["mars"],
-    "m4": ["avril"],
-    "m5": ["mai"],
-    "m6": ["juin"],
-    "m7": ["juillet"],
-    "m8": ["août"],
-    "m9": ["septembre"],
-    "m10": ["octobre"],
-    "m11": ["novembre"],
-    "m12": ["decembre"]
+    "modifiers": [
+      "m",
+      "f",
+      "mpl",
+      "fpl"
+    ],
+    "YS": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles"
+    ],
+    "MS": [
+      "mensuel",
+      "mensuelle",
+      "mensuels",
+      "mensuelles"
+    ],
+    "QS-DEC": [
+      "saisonnier",
+      "saisonnière",
+      "saisonniers",
+      "saisonnières"
+    ],
+    "DJF": [
+      "hivernal",
+      "hivernale",
+      "hivernaux",
+      "hivernales"
+    ],
+    "MAM": [
+      "printanier",
+      "printanière",
+      "printaniers",
+      "printanières"
+    ],
+    "JJA": [
+      "estival",
+      "estivale",
+      "estivaux",
+      "estivales"
+    ],
+    "SON": [
+      "automnal",
+      "automnale",
+      "automnaux",
+      "automnales"
+    ],
+    "norm": [
+      "normal",
+      "normale",
+      "normaux",
+      "normales"
+    ],
+    "m1": [
+      "janvier"
+    ],
+    "m2": [
+      "février"
+    ],
+    "m3": [
+      "mars"
+    ],
+    "m4": [
+      "avril"
+    ],
+    "m5": [
+      "mai"
+    ],
+    "m6": [
+      "juin"
+    ],
+    "m7": [
+      "juillet"
+    ],
+    "m8": [
+      "août"
+    ],
+    "m9": [
+      "septembre"
+    ],
+    "m10": [
+      "octobre"
+    ],
+    "m11": [
+      "novembre"
+    ],
+    "m12": [
+      "decembre"
+    ]
   },
   "atmos.rain_frzgr": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
@@ -129,7 +198,7 @@
   },
   "atmos.heat_wave_total_length": {
     "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
-    "description": "Durée totale {freq:f} des vagues de chaleur. UnAn event occurs when the minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "comment": "",
     "title": "Durée totale des vagues de chaleur",
     "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
@@ -138,7 +207,7 @@
     "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
     "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "comment": "",
-    "title": "",
+    "title": "Longueur maximale des vagues de chaleur",
     "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
   },
   "atmos.heat_wave_index": {
@@ -325,17 +394,17 @@
   },
   "atmos.ice_days": {
     "long_name": "Nombre de jours de givre (Tmax < 0°C)",
-    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C.",
     "title": "Nombre de jours de givre",
     "comment": "",
     "abstract": "Nombre de jours où la température journalière maximale est sous 0°C."
   },
   "atmos.consecutive_frost_days": {
     "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
-    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C",
+    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C.",
     "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
     "comment": "",
-    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C"
+    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C."
   },
   "atmos.growing_season_length": {
     "long_name": "Durée de la saison de végétation",
@@ -406,5 +475,47 @@
     "comment": "",
     "title": "Étendue de la banquise",
     "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
+  },
+  "atmos.dry_days": {
+    "long_name": "Nombre de jours secs (precip < {thresh})",
+    "description": "Nombre {freq} de jours où la précipitation journalière est sous {thresh}.",
+    "comment": "",
+    "title": "Jours secs",
+    "abstract": "Nombre de jours où la précipitation journalière est sous un seuil."
+  },
+  "atmos.hot_spell_frequency": {
+    "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Fréquences des périodes chaudes",
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "atmos.last_spring_frost": {
+    "long_name": "Jour de l'année du dernier gel printanier",
+    "description": "Jour de l'année du dernier gel printanier, defini comme le dernier jour où la température journalière moyenne reste sous {thresh} durant au moins {window} jours avant une certaine date.",
+    "comment": "",
+    "title": "Jour de l'année du dernier gel printanier",
+    "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
+  },
+  "atmos.hot_spell_max_length": {
+    "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des périodes chaudes",
+    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "atmos.consecutive_frost_free_days": {
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
+    "comment": "",
+    "title": "Nombre maximal de jours consécutifs sans gel (Tmin > 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus d'un seuil."
+  },
+  "atmos.growing_season_end": {
+    "long_name": "Jour de l'année de la fin de la saison de végétation",
+    "description": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "comment": "",
+    "title": "Fin de la saison de végétation",
+    "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
   }
 }

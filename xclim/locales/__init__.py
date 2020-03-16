@@ -316,7 +316,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     if best_locale is not None:
         locname, attrs = get_local_dict(best_locale)
         for ind_name in attrs.copy().keys():
-            if ind_name not in indicators:
+            if ind_name != "attrs_mapping" and ind_name not in indicators:
                 attrs.pop(ind_name)
     else:
         attrs = {}

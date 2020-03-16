@@ -9,6 +9,7 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "wetdays",
+    "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
@@ -71,6 +72,16 @@ wetdays = Pr(
     description="{freq} number of days with daily precipitation over {thresh}.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.wetdays,
+)
+
+dry_days = Pr(
+    identifier="dry_days",
+    units="days",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
+    long_name="Number of dry days (precip < {thresh})",
+    description="{freq} number of days with daily precipitation under {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
+    compute=indices.dry_days,
 )
 
 maximum_consecutive_wet_days = Pr(
