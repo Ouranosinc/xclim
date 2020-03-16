@@ -1,3 +1,4 @@
+import dask.array as dsk
 import numpy as np
 import pytest
 import xarray as xr
@@ -69,6 +70,11 @@ class TestConvertUnitsTo:
     def test_fraction(self):
         out = convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
         assert out == 0.1
+
+    def test_lazy(self, pr_series):
+        pr = pr_series(np.arange(365), start="1/1/2001").chunk({"time": 100})
+        out = convert_units_to(pr, "mm/day")
+        assert isinstance(out.data, dsk.Array)
 
 
 class TestUnitConversion:
