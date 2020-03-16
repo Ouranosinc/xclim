@@ -2,6 +2,10 @@
 History
 =======
 
+0.16.x
+------
+* Allow lazy units conversion
+
 0.15.x (2020-03-12)
 -------------------
 * Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.

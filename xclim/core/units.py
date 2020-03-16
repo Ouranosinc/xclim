@@ -251,7 +251,7 @@ def convert_units_to(
 
         with units.context(context or "none"):
             out = xr.DataArray(
-                data=units.convert(source.values, fu, tu),
+                data=units.convert(source.data, fu, tu),
                 coords=source.coords,
                 attrs=source.attrs,
                 name=source.name,
