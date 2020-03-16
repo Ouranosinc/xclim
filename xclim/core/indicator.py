@@ -173,15 +173,17 @@ class Indicator:
         attrs.update(out_attrs)
 
         # Assume the first arguments are always the DataArray.
-        das = tuple(ba.arguments.pop(self._parameters[i]) for i in range(self._nvar))
+        das = OrderedDict()
+        for i in range(self._nvar):
+            das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
 
         # Pre-computation validation checks
-        for da in das:
+        for da in das.values():
             self.validate(da)
-        self.cfprobe(*das)
+        self.cfprobe(*das.values())
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(*das, **ba.kwargs)
+        out = self.compute(**das, **ba.kwargs)
 
         # Convert to output units
         out = convert_units_to(out, self.units, self.context)
@@ -190,7 +192,7 @@ class Indicator:
         out.attrs.update(attrs)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
-        mba = signature(self.missing).bind(*das, **ba.arguments)
+        mba = signature(self.missing).bind(*das.values(), **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
         mask = self.missing(*mba.args, **mba.kwargs)

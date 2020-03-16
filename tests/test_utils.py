@@ -7,13 +7,15 @@ from inspect import signature
 import numpy as np
 import pytest
 import xarray as xr
-from data import RH_testdata
 
+from xclim.core.indicator import Indicator
 from xclim.core.utils import sfcwind_2_uas_vas
 from xclim.core.utils import tas_dtas_2_rh
 from xclim.core.utils import uas_vas_2_sfcwind
 from xclim.core.utils import walk_map
 from xclim.core.utils import wrapped_partial
+
+# from data import RH_testdata
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
@@ -74,11 +76,11 @@ def test_walk_map():
     assert o["b"]["c"] == 0
 
 
-# TODO: Find a better data source to put more reasonable rtol and atol
-def test_tas_dtas_2_rh():
-    xr.testing.assert_allclose(
-        tas_dtas_2_rh(RH_testdata.tas, RH_testdata.dtas), RH_testdata.rh, 0.1, 2
-    )
+# # TODO: Find a better data source to put more reasonable rtol and atol
+# def test_tas_dtas_2_rh():
+#     xr.testing.assert_allclose(
+#         tas_dtas_2_rh(RH_testdata.tas, RH_testdata.dtas), RH_testdata.rh, 0.1, 2
+#     )
 
 
 def test_wrapped_partial():
@@ -109,3 +111,25 @@ def test_wrapped_partial():
 
     with pytest.raises(ValueError):
         newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
+
+
+def test_wrapped_indicator(tas_series):
+    def indice(tas, tas2=None, thresh=0, freq="YS"):
+        if tas2 is None:
+            out = tas < thresh
+        else:
+            out = tas < tas2
+        out = out.resample(time="YS").sum()
+        out.attrs["units"] = "days"
+        return out
+
+    ind1 = Indicator(_nvar=1, units="days", compute=wrapped_partial(indice, tas2=None))
+    ind2 = Indicator(
+        _nvar=2, units="days", compute=wrapped_partial(indice, thresh=None)
+    )
+
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    tas2 = tas_series(1 + np.arange(366), start="2000-01-01")
+
+    assert ind2(tas, tas2) == 366
+    assert ind1(tas, thresh=1111) == 366
