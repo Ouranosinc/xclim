@@ -1101,7 +1101,7 @@ def cmip3_day_tas():
     yield ds.tas
     ds.close()
 
-    
+
 class TestWindConversion:
     da_uas = xr.DataArray(
         np.array([[3.6, -3.6], [-1, 0]]),
