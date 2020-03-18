@@ -629,6 +629,9 @@ class TestSubsetShape:
             float(np.mean(subtas.isel(time=0))), 281.091553
         )
 
+        assert sub.crs.prime_meridian_name == "Greenwich"
+        assert sub.crs.grid_mapping_name == "latitude_longitude"
+
     def test_no_wraps(self):
         ds = xr.open_dataset(self.nc_file)
 
@@ -708,6 +711,9 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
         assert len(sub.lon.values) == 3
         assert len(sub.lat.values) == 3
+
+        assert sub.crs.prime_meridian_name == "Greenwich"
+        assert sub.crs.grid_mapping_name == "latitude_longitude"
 
     def test_mask_multiregions(self):
         ds = xr.open_dataset(self.nc_file)
