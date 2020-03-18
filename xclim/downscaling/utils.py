@@ -211,4 +211,16 @@ def extrapolate_qm(qm, xq, method="constant"):
     else:
         raise ValueError
 
-    return x, q
+
+def interp_quantiles(xq, yq, x):
+    return xr.apply_ufunc(
+        np.interp,
+        x,
+        xq,
+        yq,
+        input_core_dims=[["time"], ["quantile"], ["quantile"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.float],
+    )
