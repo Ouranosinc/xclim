@@ -7,9 +7,9 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 from xarray.core.groupby import DataArrayGroupBy
 
-from .utils import ADDITIVE
-from .utils import MULTIPLICATIVE
-from .utils import ParametrizableClass
+from .base import ADDITIVE
+from .base import MULTIPLICATIVE
+from .base import ParametrizableClass
 
 
 class BaseMapping(ParametrizableClass):

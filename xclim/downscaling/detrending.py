@@ -3,7 +3,7 @@ from warnings import warn
 
 import xarray as xr
 
-from .utils import ParametrizableClass
+from .base import ParametrizableClass
 
 
 class NoDetrend(ParametrizableClass):

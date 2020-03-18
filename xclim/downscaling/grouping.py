@@ -1,7 +1,7 @@
 """Grouping classes"""
 import xarray as xr
 
-from .utils import ParametrizableClass
+from .base import ParametrizableClass
 
 
 class BaseGrouping(ParametrizableClass):
