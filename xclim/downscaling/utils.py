@@ -1,4 +1,7 @@
 """Utilities for the downscaling module"""
+import numpy as np
+import xarray as xr
+
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
@@ -19,3 +22,17 @@ class ParametrizableClass(object):
         return {
             key: val for key, val in self.__dict__.items() if not key.startswith("_")
         }
+
+
+def interp_quantiles(xq, yq, x):
+    return xr.apply_ufunc(
+        np.interp,
+        x,
+        xq,
+        yq,
+        input_core_dims=[["time"], ["quantile"], ["quantile"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[np.float],
+    )
