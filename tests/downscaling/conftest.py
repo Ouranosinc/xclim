@@ -62,3 +62,27 @@ def qds_month():
         coords={"quantile": [0, 0.3, 5.0, 7, 1], "month": range(1, 13)},
         attrs={"group": "time.month", "window": 1},
     )
+
+
+@pytest.fixture
+def obs_sim_fut_tuto():
+    def _obs_sim_fut_tuto(fut_offset=3, delta=0.1, smth_win=3, trend=True):
+        ds = xr.tutorial.open_dataset("air_temperature")
+        obs = ds.air.resample(time="D").mean()
+        sim = obs.rolling(time=smth_win, min_periods=1).mean() + delta
+        fut_time = sim.time + np.timedelta64(730 + fut_offset * 365, "D").astype(
+            "<m8[ns]"
+        )
+        fut = sim + (
+            0
+            if not trend
+            else xr.DataArray(
+                np.linspace(0, 2, num=sim.time.size),
+                dims=("time",),
+                coords={"time": sim.time},
+            )
+        )
+        fut["time"] = fut_time
+        return obs, sim, fut
+
+    return _obs_sim_fut_tuto
