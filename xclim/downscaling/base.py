@@ -1,6 +1,4 @@
-"""Utilities for the downscaling module"""
-MULTIPLICATIVE = "*"
-ADDITIVE = "+"
+"""Base classes for the downscaling module"""
 
 
 class ParametrizableClass(object):

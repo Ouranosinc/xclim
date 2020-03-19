@@ -3,7 +3,6 @@ import numpy as np
 from xclim.downscaling import eqm
 
 
-# TODO: Just a smoke test, check that it actually does the right thing
 class TestEQM:
     def test_mon(self, mon_tas, tas_series, mon_triangular):
         r = 1 + np.random.rand(10000)

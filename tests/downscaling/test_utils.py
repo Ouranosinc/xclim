@@ -12,3 +12,10 @@ def test_jitter_under_thresh():
     assert da[0] < 1
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
+
+
+def test_nodes():
+    x = u.nodes(5)
+    assert len(x) == 7
+    d = np.diff(x)
+    np.testing.assert_almost_equal(d[0], d[1] / 2, 3)
