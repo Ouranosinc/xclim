@@ -2,6 +2,46 @@ import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
 
+from xclim.indices.generic import threshold_count
+
+MULTIPLICATIVE = "*"
+ADDITIVE = "+"
+
+
+# Should we have a train/predict API for this as well ?
+def adjust_freq(obs, pred, thresh, group):
+    """
+    Adjust frequency of
+
+    Parameters
+    ----------
+    obs : da.DataArray
+      Observed data.
+    pred : da.DataArray
+      Simulated data.
+    thresh : float
+      Threshold below which values are considered null.
+
+    Returns
+    -------
+
+    References
+    ----------
+    Themeßl et al. (2012)
+
+    """
+    dim, prop = parse_group(group)
+
+    # Frequency of values below threshold in obs
+    below = obs < thresh
+    f = group_apply("sum", below, group) / group_apply("count", below, group)
+
+    # Predict
+    # Target number of values below threshold in pred to match obs frequency
+    n = group_apply("count", pred, group) * f
+    return n
+    # TODO: complete
+
 
 def parse_group(group):
     """Return dimension and property."""
@@ -103,14 +143,28 @@ def apply_correction(x, factor, kind):
     return out
 
 
-def nodes(n):
+def nodes(n, eps=1e-4):
     """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
 
-    E.g. for nq=4 :  0---x------x------x------x---1
+    Parameters
+    ----------
+    n : int
+      Number of equally spaced nodes.
+    eps : float
+      Distance from 0 and 1 of end nodes.
+
+    Returns
+    -------
+    array
+      Nodes between 0 and 1.
+
+    Notes
+    -----
+    For nq=4, eps=0 :  0---x------x------x------x---1
     """
     dq = 1 / n / 2
     q = np.linspace(dq, 1 - dq, n)
-    return sorted(np.append([0.0001, 0.9999], q))
+    return sorted(np.append([eps, 1 - eps], q))
 
 
 # TODO: use xr.pad once it's implemented.
@@ -129,6 +183,7 @@ def add_cyclic(da, att):
 
 # TODO: use xr.pad once it's implemented.
 # Rename to extrapolate_q ?
+# TODO: improve consistency with extrapolate_qm
 def add_q_bounds(qmf, method="constant"):
     """Reindex the scaling factors to set the quantile at 0 and 1 to the first and last quantile respectively.
 
