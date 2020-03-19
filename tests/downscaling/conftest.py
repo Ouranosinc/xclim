@@ -104,6 +104,8 @@ def qds_month():
 
 @pytest.fixture
 def obs_sim_fut_tuto():
+    """Return obs, sim, fut time series of air temperature."""
+
     def _obs_sim_fut_tuto(fut_offset=3, delta=0.1, smth_win=3, trend=True):
         ds = xr.tutorial.open_dataset("air_temperature")
         obs = ds.air.resample(time="D").mean()

@@ -259,13 +259,17 @@ def reindex(qm, xq, extrapolation="constant"):
     gr = ds.groupby(prop)
 
     # X coordinates common to all groupings
-    xs = list(map(lambda x: extrapolate_qm(x[1].qm, x[1].xq, extrapolation)[1], gr))
+    xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
     newx = np.unique(np.concatenate(xs))
 
     # Interpolation from quantile to values.
     def func(d):
         q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
-        return xr.DataArray(dims="x", data=np.interp(newx, x, q), coords={"x": newx})
+        return xr.DataArray(
+            dims="x",
+            data=np.interp(newx, x, q, left=np.nan, right=np.nan),
+            coords={"x": newx},
+        )
 
     out = gr.map(func, shortcut=True)
     out.attrs = qm.attrs
@@ -291,13 +295,17 @@ def extrapolate_qm(qm, xq, method="constant"):
 
     Notes
     -----
+    nan
+      Estimating values above or below the computed values will return a NaN.
     constant
       The correction factor above and below the computed values are equal to the last and first values
       respectively.
     constant_iqr
       Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     """
-    if method == "constant":
+    if method == "nan":
+        return qm, xq
+    elif method == "constant":
         x = np.concatenate(([-np.inf,], xq, [np.inf,]))
         q = np.concatenate((qm[:1], qm, qm[-1:]))
     elif method == "constant_iqr":
