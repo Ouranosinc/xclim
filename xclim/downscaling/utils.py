@@ -10,7 +10,7 @@ def parse_group(group):
         return group, None
 
 
-def group_apply(func, x, group, window=1, **kwargs):
+def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     """Group values by time, then compute function.
 
     Parameters
@@ -24,6 +24,10 @@ def group_apply(func, x, group, window=1, **kwargs):
     window : int
       Length of the rolling window centered around the time of interest used to estimate the quantiles. This is mostly
       useful for time.dayofyear grouping.
+    grouped_args : Sequence of DataArray
+      Args passed here are results from a previous groupby that contain the "prop" dim, but not "dim" (ex: "month", but not "time")
+      Before func is called on a group, the corresponding slice of each grouped_args will be extracted and passed as args to func.
+      Useful for using precomputed results.
     **kwargs : dict
       Arguments passed to function.
 
@@ -45,7 +49,25 @@ def group_apply(func, x, group, window=1, **kwargs):
     else:
         sub = x
 
-    out = getattr(sub, func)(dim=dims, **kwargs)
+    def wrap_func_with_grouped_args(func):
+        def call_func_with_grouped_element(dsgr, *grouped, **kwargs):
+            # For each element in grouped, we extract the correspong slice for the current group
+            # TODO: Is there any better way to get the label of the current group??
+            if prop is not None:
+                label = getattr(dsgr[dim][0].dt, prop)
+            else:
+                label = dsgr[group][0]
+            elements = [arg.sel({prop or group: label}) for arg in grouped]
+            return func(dsgr, *elements, **kwargs)
+
+        return call_func_with_grouped_element
+
+    if isinstance(func, str):
+        out = getattr(sub, func)(dim=dims, **kwargs)
+    else:
+        if grouped_args is not None:
+            func = wrap_func_with_grouped_args(func)
+        out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
 
     # Save input parameters as attributes of output DataArray.
     out.attrs["group"] = group
@@ -216,14 +238,14 @@ def extrapolate_qm(qm, xq, method="constant"):
 
 
 # TODO: Would need to set right and left values.
-def interp_quantiles(xq, yq, x):
+def interp_quantiles(x, xq, yq, dim="time"):
     return xr.apply_ufunc(
         np.interp,
         x,
         xq,
         yq,
-        input_core_dims=[["time"], ["quantile"], ["quantile"]],
-        output_core_dims=[["time"]],
+        input_core_dims=[[dim], ["quantile"], ["quantile"]],
+        output_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
