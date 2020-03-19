@@ -8,11 +8,15 @@ from .utils import interp_quantiles
 from .utils import MULTIPLICATIVE
 
 
+# TODO: Split into train / predict
+
+
 def delta_quantile_mapping(
     obs, sim, fut, kind=ADDITIVE, mult_thresh=None, nquantiles=40, detrend=True
 ):
     """The DQM from Cannon et al. (2015). Code based on the implementation in Santander's downscaleR"""
 
+    # TODO: use utils.jitter_under_thresh
     if kind == MULTIPLICATIVE:
         # Replace every thing under mult_thresh by a non-zero random number under mult_thresh
         epsilon = np.nextafter(obs.dtype.type(0.0), 1)
@@ -45,6 +49,8 @@ def delta_quantile_mapping(
 
     tau = np.append(np.insert(np.arange(1, nquantiles) / (nquantiles + 1), 0, 0), 1)
 
+    # Je pense qu'on peut encapsuler cette logique dans un array qui contient les facteurs de correction et qu'on
+    # utilise pour réindexer.
     if kind == MULTIPLICATIVE:
         x = (sim / sim_mean).quantile(tau, dim="time")
         y = (obs / obs_mean).quantile(tau, dim="time")

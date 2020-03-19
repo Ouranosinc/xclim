@@ -211,6 +211,8 @@ def extrapolate_qm(qm, xq, method="constant"):
     else:
         raise ValueError
 
+    return q, x
+
 
 def interp_quantiles(xq, yq, x):
     return xr.apply_ufunc(
@@ -224,3 +226,10 @@ def interp_quantiles(xq, yq, x):
         dask="parallelized",
         output_dtypes=[np.float],
     )
+
+
+def jitter_under_thresh(x, thresh):
+    """Add a small noise to values smaller than threshold."""
+    epsilon = np.finfo(x.dtype).eps
+    jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
+    return x.where(~(x < thresh & x.notnull()), jitter)
