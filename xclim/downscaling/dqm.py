@@ -96,9 +96,8 @@ def predict(
         futn = fut - fut_mean
 
     # xq and yq form a mapping function, use interpolation to get new values of fut
-    yout = group_apply(
-        interp_quantiles, futn, group, window=window, grouped_args=(qmf.xq, qmf.yq)
-    )
+    gidx = fut.time.dt.month
+    yout = interp_quantiles(futn, gidx, qmf.xq, qmf.yq, group="month")
 
     # Extrapolation for values outside range
     def extrapolate(dsgr, obsn_min, obsn_max, simn_min, simn_max, dim="time"):

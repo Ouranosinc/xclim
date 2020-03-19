@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+from scipy.interpolate import griddata
 
 from xclim.indices.generic import threshold_count
 
@@ -310,15 +311,38 @@ def extrapolate_qm(qm, xq, method="constant"):
 
 
 # TODO: Would need to set right and left values.
-def interp_quantiles(x, xq, yq, dim="time"):
+def interp_quantiles(x, g, xq, yq, dim="time", group=None, method="linear"):
+    def _interp_quantiles_2D(newx, newg, oldx, oldg, oldy):
+        if newx.ndim > 1:
+            out = np.empty_like(newx)
+            for idx in np.ndindex(*newx.shape[:-1]):
+                out[idx] = _interp_quantiles_2D(
+                    newx[idx], newg, oldx[idx], oldg, oldy[idx]
+                )
+            return out
+
+        return griddata(
+            (oldx.flatten(), oldg.flatten()),
+            oldy.flatten(),
+            (newx, newg),
+            method=method,
+        )
+
     return xr.apply_ufunc(
-        np.interp,
+        _interp_quantiles_2D,
         x,
+        g,
         xq,
+        xq[group].expand_dims(quantile=xq.coords["quantile"]),
         yq,
-        input_core_dims=[[dim], ["quantile"], ["quantile"]],
+        input_core_dims=[
+            [dim],
+            [dim],
+            [group, "quantile"],
+            [group, "quantile"],
+            [group, "quantile"],
+        ],
         output_core_dims=[[dim]],
-        vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
     )
