@@ -27,15 +27,20 @@ def polyfit(da, deg=1, dim="time"):
         Polynomial coefficients with a new dimension to sort the polynomial
         coefficients by degree
     """
-    # Remove NaNs
-    y = da.dropna(dim=dim, how="any")
-
     # Compute the x value.
     x = get_clean_interp_index(da, dim)
+    x = np.vander(x, deg + 1)
+
+    def _nanpolyfit_1d(arr, x, rcond=None):
+        out = np.full((x.shape[1],), np.nan)
+        mask = np.isnan(arr)
+        if not np.all(mask):
+            out[:], _, _, _ = np.linalg.lstsq(x[~mask, :], arr[~mask], rcond=rcond)
+        return out
 
     # Fit the parameters (lazy computation)
     coefs = dask.array.apply_along_axis(
-        np.polyfit, da.get_axis_num(dim), x, y, deg=deg, shape=(deg + 1,), dtype=float
+        _nanpolyfit_1d, da.get_axis_num(dim), da, x, shape=(deg + 1,), dtype=float
     )
 
     coords = dict(da.coords.items())
@@ -46,26 +51,35 @@ def polyfit(da, deg=1, dim="time"):
     dims.remove(dim)
     dims.insert(0, "degree")
 
-    out = xr.DataArray(data=coefs, coords=coords, dims=dims)
+    out = xr.DataArray(
+        data=coefs, coords=coords, dims=dims, name="polyfit_coefficients"
+    )
     return out
 
 
 # TODO: use xr.polyval once it's implemented.
-def polyval(coefs, coord):
-    """
-    Evaluate polynomial function.
-
+def polyval(coord, coeffs, degree_dim="degree"):
+    """Evaluate a polynomial at specific values
     Parameters
     ----------
-    coord : xr.Coordinate
-      Coordinate (e.g. time) used as the independent variable to compute polynomial.
-    coefs : xr.DataArray
-      Polynomial coefficients as returned by polyfit.
+    coord : DataArray
+        The 1D coordinate along which to evaluate the polynomial.
+    coeffs : DataArray
+        Coefficients of the polynomials.
+    degree_dim : str, default "degree"
+        Name of the polynomial degree dimension in `coeffs`.
+    See also
+    --------
+    xarray.DataArray.polyfit
+    numpy.polyval
     """
-    x = xr.Variable(data=get_clean_interp_index(coord, coord.name), dims=(coord.name,))
+    x = get_clean_interp_index(coord, coord.name)
 
-    y = xr.apply_ufunc(
-        np.polyval, coefs, x, input_core_dims=[["degree"], []], dask="allowed"
+    deg_coord = coeffs[degree_dim]
+
+    lhs = xr.DataArray(
+        np.vander(x, int(deg_coord.max()) + 1),
+        dims=(coord.name, degree_dim),
+        coords={coord.name: coord, degree_dim: np.arange(deg_coord.max() + 1)[::-1]},
     )
-
-    return y
+    return (lhs * coeffs).sum(degree_dim)
