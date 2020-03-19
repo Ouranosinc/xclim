@@ -149,8 +149,8 @@ def nodes(n, eps=1e-4):
     ----------
     n : int
       Number of equally spaced nodes.
-    eps : float
-      Distance from 0 and 1 of end nodes.
+    eps : float, None
+      Distance from 0 and 1 of end nodes. If None, do not add endpoints.
 
     Returns
     -------
@@ -163,6 +163,8 @@ def nodes(n, eps=1e-4):
     """
     dq = 1 / n / 2
     q = np.linspace(dq, 1 - dq, n)
+    if eps is None:
+        return q
     return sorted(np.append([eps, 1 - eps], q))
 
 
@@ -229,6 +231,21 @@ def get_index(da, dim, prop, interp):
 
 def reindex(qm, xq, extrapolation="constant"):
     """Create a mapping between x values and y values based on their respective quantiles.
+
+    Parameters
+    ----------
+    qm : xr.DataArray
+      Quantile correction factors.
+    xq : xr.DataArray
+      Quantiles for source array (historical simulation).
+    extrapolation : {"constant"}
+      Method to extrapolate outside the estimated quantiles.
+
+    Returns
+    -------
+    xr.DataArray
+      Quantile correction factors whose quantile coordinates have been replaced by corresponding x values.
+
 
     Notes
     -----

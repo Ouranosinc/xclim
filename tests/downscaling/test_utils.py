@@ -19,3 +19,6 @@ def test_nodes():
     assert len(x) == 7
     d = np.diff(x)
     np.testing.assert_almost_equal(d[0], d[1] / 2, 3)
+
+    x = u.nodes(1, eps=None)
+    np.testing.assert_almost_equal(x[0], 0.5)

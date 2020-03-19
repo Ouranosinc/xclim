@@ -5,6 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.downscaling.utils import nodes
+
 
 @pytest.fixture
 def mon_triangular():
@@ -49,6 +51,42 @@ def tas_series():
         )
 
     return _tas_series
+
+
+@pytest.fixture
+def qm_month():
+    return xr.DataArray(
+        np.arange(5 * 12).reshape(5, 12),
+        dims=("quantile", "month"),
+        coords={"quantile": [0, 0.3, 0.5, 0.7, 1], "month": range(1, 13)},
+        attrs={"group": "time.month", "window": 1},
+    )
+
+
+@pytest.fixture
+def qm_small():
+    return xr.DataArray(
+        np.arange(2 * 3).reshape(2, 3),
+        dims=("quantile", "month"),
+        coords={"quantile": [0.3, 0.7], "month": range(1, 4)},
+        attrs={"group": "time.month", "window": 1},
+    )
+
+
+@pytest.fixture
+def make_qm():
+    def _make_qm(a):
+        a = np.atleast_2d(a)
+        nq, nm = a.shape
+
+        return xr.DataArray(
+            a,
+            dims=("quantile", "month"),
+            coords={"quantile": nodes(nq, None), "month": range(1, nm + 1)},
+            attrs={"group": "time.month", "window": 1},
+        )
+
+    return _make_qm
 
 
 @pytest.fixture
