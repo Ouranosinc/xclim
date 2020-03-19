@@ -2,13 +2,13 @@
 import numpy as np
 import xarray as xr
 
-from .base import ADDITIVE
-from .base import MULTIPLICATIVE
 from .temp import polyfit
 from .temp import polyval
+from .utils import ADDITIVE
 from .utils import group_apply
 from .utils import interp_quantiles
 from .utils import jitter_under_thresh
+from .utils import MULTIPLICATIVE
 
 
 def train(
