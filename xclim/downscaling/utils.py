@@ -164,15 +164,16 @@ def reindex(qm, xq, extrapolation="constant"):
     gr = ds.groupby(prop)
 
     # X coordinates common to all groupings
-    xs = list(map(lambda x: extrapolate_qm(x[1].qm, x[1].xq, extrapolation)[0], gr))
+    xs = list(map(lambda x: extrapolate_qm(x[1].qm, x[1].xq, extrapolation)[1], gr))
     newx = np.unique(np.concatenate(xs))
 
     # Interpolation from quantile to values.
     def func(d):
-        x, y = extrapolate_qm(d.qm, d.xq, extrapolation)
-        return xr.DataArray(dims="x", data=np.interp(newx, x, y), coords={"x": newx})
+        q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
+        return xr.DataArray(dims="x", data=np.interp(newx, x, q), coords={"x": newx})
 
     out = gr.map(func, shortcut=True)
+    out.attrs = qm.attrs
     return out
 
 
@@ -214,6 +215,7 @@ def extrapolate_qm(qm, xq, method="constant"):
     return q, x
 
 
+# TODO: Would need to set right and left values.
 def interp_quantiles(xq, yq, x):
     return xr.apply_ufunc(
         np.interp,

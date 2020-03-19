@@ -3,7 +3,7 @@ import numpy as np
 from xclim.downscaling import scaling
 
 
-class TestDelta:
+class TestScaling:
     def test_mon(self, mon_tas, tas_series, mon_triangular):
         r = np.random.rand(10000)
         x = tas_series(r)
