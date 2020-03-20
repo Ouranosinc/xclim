@@ -561,6 +561,10 @@ def subset_shape(
         ds_copy["crs"] = 1
         ds_copy["crs"].attrs.update(wgs84.to_cf())
 
+        for v in ds_copy.variables:
+            if len(ds_copy[v].dims) >= 3:
+                ds_copy[v].attrs["grid_mapping"] = "crs"
+
     if isinstance(ds, xarray.DataArray):
         return ds._from_temp_dataset(ds_copy)
     return ds_copy
