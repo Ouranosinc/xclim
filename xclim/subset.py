@@ -559,8 +559,7 @@ def subset_shape(
     if wrap_lons:
         ds_copy.attrs["crs"] = wgs84.to_string()
         ds_copy["crs"] = 1
-        for key, val in wgs84.to_cf().items():
-            ds_copy["crs"].attrs[key] = val
+        ds_copy["crs"].attrs.update(wgs84.to_cf())
 
     if isinstance(ds, xarray.DataArray):
         return ds._from_temp_dataset(ds_copy)
