@@ -49,35 +49,39 @@ def train(
     xr.Dataset
       Quantiles for the source and target series.
     """
-    q = nodes(nq)
+    q = nodes(nq, eps=1e-6)
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
     qqm = get_correction(xq, yq, kind)
 
     # Reindex the correction factor so they can be interpolated from quantiles instead of CDF.
-    # TODO David: This is broken
     xqm = reindex(qqm, xq, extrapolation)
     return xqm
 
 
 def predict(x, qm, interp=False):
+    sel = {"x": x}
+
     dim, prop = parse_group(qm.group)
 
     # Add cyclical values to the scaling factors for interpolation
-    if interp:
+    if interp and prop is not None:
         qm = add_cyclic(qm, prop)
 
-    xt = get_index(x, dim, prop, interp)
+    if prop:
+        sel.update({prop: get_index(x, dim, prop, interp)})
 
     # Extract the correct quantile for each time step.
     if interp:  # Interpolate both the time group and the quantile.
-        factor = qm.interp({prop: xt, "x": x})
+        factor = qm.interp(sel)
     else:  # Find quantile for nearest time group and quantile.
-        factor = qm.sel({prop: xt, "x": x}, method="nearest")
+        factor = qm.sel(sel, method="nearest")
 
     # Apply the correction factors
     out = apply_correction(x, factor, qm.kind)
 
     # Remove time grouping and quantile coordinates
-    return out.drop([prop])
+    if prop:
+        return out.drop([prop])
+    return out

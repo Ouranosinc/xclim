@@ -6,6 +6,7 @@ import pytest
 import xarray as xr
 
 from xclim.downscaling.utils import nodes
+from xclim.downscaling.utils import parse_group
 
 
 @pytest.fixture
@@ -75,15 +76,24 @@ def qm_small():
 
 @pytest.fixture
 def make_qm():
-    def _make_qm(a):
+    def _make_qm(a, group="time.month"):
+        dim, prop = parse_group(group)
         a = np.atleast_2d(a)
-        nq, nm = a.shape
+        n, m = a.shape
+        mo = range(1, m + 1)
+
+        if prop:
+            q = nodes(n, None)
+            dims = ("quantile", prop)
+            coords = {"quantile": q, "month": mo}
+        else:
+            q = nodes(m, None)
+            dims = ("quantile",)
+            coords = {"quantile": q}
+            a = a[0]
 
         return xr.DataArray(
-            a,
-            dims=("quantile", "month"),
-            coords={"quantile": nodes(nq, None), "month": range(1, nm + 1)},
-            attrs={"group": "time.month", "window": 1},
+            a, dims=dims, coords=coords, attrs={"group": group, "window": 1},
         )
 
     return _make_qm

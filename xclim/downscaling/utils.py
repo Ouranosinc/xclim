@@ -255,24 +255,30 @@ def reindex(qm, xq, extrapolation="constant"):
     group to group, the index can get fairly large.
     """
     dim, prop = parse_group(xq.group)
-    ds = xr.Dataset({"xq": xq, "qm": qm})
-    gr = ds.groupby(prop)
+    if prop is None:
+        q, x = extrapolate_qm(qm, xq, extrapolation)
+        out = q.rename({"quantile": "x"}).assign_coords(x=x.values)
 
-    # X coordinates common to all groupings
-    xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
-    newx = np.unique(np.concatenate(xs))
+    else:
+        # Interpolation from quantile to values.
+        def func(d):
+            q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
+            return xr.DataArray(
+                dims="x",
+                data=np.interp(newx, x, q, left=np.nan, right=np.nan),
+                coords={"x": newx},
+            )
 
-    # Interpolation from quantile to values.
-    def func(d):
-        q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
-        return xr.DataArray(
-            dims="x",
-            data=np.interp(newx, x, q, left=np.nan, right=np.nan),
-            coords={"x": newx},
-        )
+        ds = xr.Dataset({"xq": xq, "qm": qm})
+        gr = ds.groupby(prop)
 
-    out = gr.map(func, shortcut=True)
+        # X coordinates common to all groupings
+        xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
+        newx = np.unique(np.concatenate(xs))
+        out = gr.map(func, shortcut=True)
+
     out.attrs = qm.attrs
+    out.attrs["quantile"] = qm.coords["quantile"].values
     return out
 
 
@@ -290,7 +296,7 @@ def extrapolate_qm(qm, xq, method="constant"):
 
     Returns
     -------
-    array, array
+    DataArray, DataArray
         Extrapolated correction factors and x-values.
 
     Notes
@@ -305,17 +311,54 @@ def extrapolate_qm(qm, xq, method="constant"):
     """
     if method == "nan":
         return qm, xq
+
     elif method == "constant":
-        x = np.concatenate(([-np.inf,], xq, [np.inf,]))
-        q = np.concatenate((qm[:1], qm, qm[-1:]))
-    elif method == "constant_iqr":
-        iqr = np.diff(xq.interp(quantile=[0.25, 0.75]))[0]
-        x = np.concatenate(([-np.inf, xq[0] - iqr], xq, [xq[-1] + iqr, np.inf]))
-        q = np.concatenate(([np.nan, qm[0]], qm, [qm[-1], np.nan]))
+        q_l, q_r = [0,], [1,]
+        x_l, x_r = [-np.inf,], [np.inf,]
+        qm_l, qm_r = qm.isel(quantile=0), qm.isel(quantile=-1)
+
+    elif (
+        method == "constant_iqr"
+    ):  # This won't work because add_endpoints does not support mixed y (float and DA)
+        raise NotImplementedError
+        # iqr = np.diff(xq.interp(quantile=[0.25, 0.75]))[0]
+        # ql, qr = [0, 0], [1, 1]
+        # xl, xr = [-np.inf, xq.isel(quantile=0) - iqr], [xq.isel(quantile=-1) + iqr, np.inf]
+        # qml, qmr = [np.nan, qm.isel(quantile=0)], [qm.isel(quantile=-1), np.nan]
     else:
         raise ValueError
 
-    return q, x
+    qm = add_endpoints(qm, left=[x_l, qm_l], right=[x_r, qm_r])
+    xq = add_endpoints(xq, left=[q_l, x_l], right=[q_r, x_r])
+
+    return qm, xq
+
+
+def add_endpoints(da, left, right, dim="quantile"):
+    """Add left and right endpoints to a DataArray.
+
+    Parameters
+    ----------
+    da : DataArray
+      Source array.
+    left : [x, y]
+      Values to prepend
+    right : [x, y]
+      Values to append.
+    dim : str
+      Dimension along which to add endpoints.
+    """
+    elems = []
+    for (x, y) in (left, right):
+        if isinstance(y, xr.DataArray):
+            if "quantile" not in y.dims:
+                y = y.expand_dims("quantile")
+            y.assign_coords(quantile=x)
+        else:
+            y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
+        elems.append(y)
+    l, r = elems
+    return xr.concat((l, da, r), dim=dim)
 
 
 # TODO: Would need to set right and left values.
