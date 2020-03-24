@@ -206,14 +206,15 @@ def broadcast(grouped, x, interp=False, sel=None):
 
     if prop is not None:
         sel.update({prop: get_index(x, dim, prop, interp)})
-
         # Extract the correct mean factor for each time step.
-        if interp:  # Interpolate both the time group and the quantile.
-            return grouped.interp(sel)
-        else:  # Find quantile for nearest time group and quantile.
-            return grouped.sel(sel, method="nearest")
-    else:
-        return grouped
+    if interp:  # Interpolate both the time group and the quantile.
+        grouped = grouped.interp(sel)
+    else:  # Find quantile for nearest time group and quantile.
+        grouped = grouped.sel(sel, method="nearest")
+    for var in sel.keys():
+        if var in grouped.coords and var not in grouped.dims:
+            grouped = grouped.drop_vars(var)
+    return grouped
 
 
 def apply_correction(x, factor, kind=None):

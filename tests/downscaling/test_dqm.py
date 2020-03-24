@@ -40,7 +40,7 @@ class TestDQM:
 
     def test_mon(self, mon_tas, tas_series, mon_triangular):
         """Monthly grouping"""
-        n = 10000
+        n = 100
         r = 10 + np.random.rand(n)
         x = tas_series(r)  # sim
 

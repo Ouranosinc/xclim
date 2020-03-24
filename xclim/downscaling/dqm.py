@@ -4,20 +4,21 @@ import xarray as xr
 
 from .temp import polyfit
 from .temp import polyval
-from .utils import add_cyclic
+from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import broadcast
-from .utils import equally_spaces_nodes
+from .utils import equally_spaced_nodes
 from .utils import get_correction
-from .utils import get_index
 from .utils import group_apply
-from .utils import interp_quantiles
 from .utils import invert
 from .utils import jitter_under_thresh
 from .utils import MULTIPLICATIVE
 from .utils import parse_group
 from .utils import reindex
+
+# from .utils import get_index
+# from .utils import interp_quantiles
 
 
 def train(
@@ -46,7 +47,7 @@ def train(
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
     # equally_spaces_nodes
-    q = equally_spaces_nodes(nq, eps=1e-6)
+    q = equally_spaced_nodes(nq, eps=1e-6)
 
     # Add random noise to small values
     if kind == MULTIPLICATIVE and mult_thresh is not None:
@@ -99,13 +100,13 @@ def predict(
     mf = get_correction(mu_x, mu_r, kind)
 
     # Add random noise to small values
-    if qm.kind == MULTIPLICATIVE and mult_thresh is not None:
+    if kind == MULTIPLICATIVE and mult_thresh is not None:
         x = jitter_under_thresh(x, mult_thresh)
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic(qm, prop)
-        mf = add_cyclic(mf, prop)
+        qm = add_cyclic_bounds(qm, prop)
+        mf = add_cyclic_bounds(mf, prop)
 
     # Apply mean correction factor nx = x / <x> * <h>
     nx = apply_correction(x, broadcast(mf, x, interp), kind)
@@ -125,6 +126,5 @@ def predict(
 
     if detrend:
         out = apply_correction(out, x_trend, qm.kind)
-
     out.attrs["bias_corrected"] = True
     return out

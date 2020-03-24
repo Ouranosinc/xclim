@@ -17,7 +17,7 @@ import xarray as xr
 
 from .utils import add_cyclic_bounds
 from .utils import apply_correction
-from .utils import equally_spaces_nodes
+from .utils import equally_spaced_nodes
 from .utils import get_correction
 from .utils import get_index
 from .utils import group_apply
@@ -49,7 +49,7 @@ def train(
     xr.Dataset
       Quantiles for the source and target series.
     """
-    q = equally_spaces_nodes(nq, eps=1e-6)
+    q = equally_spaced_nodes(nq, eps=1e-6)
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
