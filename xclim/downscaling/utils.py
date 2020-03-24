@@ -198,7 +198,26 @@ def get_correction(x, y, kind):
     return out
 
 
-def apply_correction(x, factor, kind):
+def broadcast(grouped, x, interp=False, sel=None):
+    dim, prop = parse_group(grouped.group)
+
+    if sel is None:
+        sel = {}
+
+    if prop is not None:
+        sel.update({prop: get_index(x, dim, prop, interp)})
+
+        # Extract the correct mean factor for each time step.
+        if interp:  # Interpolate both the time group and the quantile.
+            return grouped.interp(sel)
+        else:  # Find quantile for nearest time group and quantile.
+            return grouped.sel(sel, method="nearest")
+    else:
+        return grouped
+
+
+def apply_correction(x, factor, kind=None):
+    kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
             out = x + factor
@@ -210,6 +229,17 @@ def apply_correction(x, factor, kind):
     # PB: I believe the next line should be done by the correcter itself, there might be more steps before its really bias corrected
     # out.attrs["bias_corrected"] = True
     return out
+
+
+def invert(x, kind):
+    kind = kind or x.get("kind", None)
+    with xr.set_options(keep_attrs=True):
+        if kind == ADDITIVE:
+            return -x
+        elif kind == MULTIPLICATIVE:
+            return 1 / x
+        else:
+            raise ValueError
 
 
 def equally_spaced_nodes(n, eps=1e-4):
@@ -393,8 +423,8 @@ def extrapolate_qm(qm, xq, method="constant"):
         return qm, xq
 
     elif method == "constant":
-        q_l, q_r = [0,], [1,]
-        x_l, x_r = [-np.inf,], [np.inf,]
+        q_l, q_r = [0], [1]
+        x_l, x_r = [-np.inf], [np.inf]
         qm_l, qm_r = qm.isel(quantile=0), qm.isel(quantile=-1)
 
     elif (

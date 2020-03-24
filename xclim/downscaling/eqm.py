@@ -17,16 +17,16 @@ import xarray as xr
 
 from .utils import add_cyclic_bounds
 from .utils import apply_correction
+from .utils import equally_spaces_nodes
 from .utils import get_correction
 from .utils import get_index
 from .utils import group_apply
-from .utils import nodes
 from .utils import parse_group
 from .utils import reindex
 
 
 def train(
-    x, y, nq, group="time.dayofyear", kind="+", window=1, extrapolation="constant"
+    x, y, group="time.dayofyear", kind="+", nq=40, window=1, extrapolation="constant"
 ):
     """Compute quantile bias-adjustment factors.
 
@@ -49,7 +49,7 @@ def train(
     xr.Dataset
       Quantiles for the source and target series.
     """
-    q = nodes(nq, eps=1e-6)
+    q = equally_spaces_nodes(nq, eps=1e-6)
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
@@ -61,14 +61,13 @@ def train(
 
 
 def predict(x, qm, interp=False):
-    sel = {"x": x}
-
     dim, prop = parse_group(qm.group)
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
         qm = add_cyclic_bounds(qm, prop)
 
+    sel = {"x": x}
     if prop:
         sel.update({prop: get_index(x, dim, prop, interp)})
 

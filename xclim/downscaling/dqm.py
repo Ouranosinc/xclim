@@ -4,136 +4,127 @@ import xarray as xr
 
 from .temp import polyfit
 from .temp import polyval
+from .utils import add_cyclic
 from .utils import ADDITIVE
+from .utils import apply_correction
+from .utils import broadcast
+from .utils import equally_spaces_nodes
+from .utils import get_correction
+from .utils import get_index
 from .utils import group_apply
 from .utils import interp_quantiles
+from .utils import invert
 from .utils import jitter_under_thresh
 from .utils import MULTIPLICATIVE
+from .utils import parse_group
+from .utils import reindex
 
 
 def train(
-    obs,
-    sim,
+    x,
+    y,
     group="time.month",
     kind=ADDITIVE,
     window=1,
     mult_thresh=None,
-    nquantiles=40,
+    nq=40,
+    extrapolation="constant",
 ):
-    """The Detrended Quantile Mapping from Cannon et al. (2015). Code based on the implementation in Santander's downscaleR"""
-    if kind == MULTIPLICATIVE:
+    """
+    Return the quantile mapping factors and the change in mean using the detrended quantile mapping method.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    References
+    ----------
+    Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping:
+    How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
+    https://doi.org/10.1175/JCLI-D-14-00754.1
+    """
+    # equally_spaces_nodes
+    q = equally_spaces_nodes(nq, eps=1e-6)
+
+    # Add random noise to small values
+    if kind == MULTIPLICATIVE and mult_thresh is not None:
         # Replace every thing under mult_thresh by a non-zero random number under mult_thresh
-        obs = jitter_under_thresh(obs, mult_thresh)
-        sim = jitter_under_thresh(sim, mult_thresh)
+        x = jitter_under_thresh(x, mult_thresh)
+        y = jitter_under_thresh(y, mult_thresh)
 
-    # Normalize : remove mean (op depends on kind)
-    obsn = group_apply(normalize, obs, group, window=window, kind=kind)
-    simn = group_apply(normalize, sim, group, window=window, kind=kind)
+    # Compute mean per period
+    mu_x = group_apply("mean", x, group, window)
+    # mu_y = group_apply("mean", y, group, window)
 
-    qmf = xr.Dataset()
-    qmf = qmf.assign(
-        obs_mean=group_apply("mean", obs, group, window),
-        sim_mean=group_apply("mean", sim, group, window),
-    )
+    # Compute quantile per period
+    xq = group_apply("quantile", x, group, window=window, q=q)
+    yq = group_apply("quantile", y, group, window=window, q=q)
 
-    tau = np.append(np.insert(np.arange(1, nquantiles) / (nquantiles + 1), 0, 0), 1)
+    # Remove mean from quantiles
+    nxq = apply_correction(xq, invert(mu_x, kind), kind)
+    # nyq = apply_correction(yq, invert(mu_y, kind), kind)
 
-    # Get quantiles for each group
-    x = group_apply("quantile", simn, group, window=window, q=tau)
-    y = group_apply("quantile", obsn, group, window=window, q=tau)
+    # Compute quantile correction from scaled x quantiles
+    qm = get_correction(nxq, yq, kind)  # qy / qx or qy - qx
 
-    return qmf.assign(
-        yq=y,
-        xq=x,
-        simn_min=group_apply("min", simn, group, window=window),
-        simn_max=group_apply("max", simn, group, window=window),
-        obsn_min=group_apply("min", obsn, group, window=window),
-        obsn_max=group_apply("max", obsn, group, window=window),
-    )
+    # Reindex the quantile correction factors according to scaled x values instead of CDF.
+    xqm = reindex(qm, nxq, extrapolation)
+
+    # Compute mean correction
+    # mf = get_correction(mu_y, mu_x, kind)  # mx / my or mx - my
+
+    return xqm, mu_x
 
 
 def predict(
-    qmf,
-    fut,
-    group="time.month",
-    kind=ADDITIVE,
+    x,
+    qm,
+    mu_r,
     window=1,
     mult_thresh=None,
-    detrend=True,
+    detrend=True,  # Should this be non-optional ?
+    interp=False,
 ):
+    """
+    # TODO
 
-    if kind == MULTIPLICATIVE:
-        fut = jitter_under_thresh(fut, mult_thresh)
+    """
+    dim, prop = parse_group(qm.group)
+    kind = qm.kind
 
-    def prescale(gr, sim_mean, obs_mean, dim="time"):
-        if kind == MULTIPLICATIVE:
-            return fut * obs_mean / sim_mean
-        return fut - sim_mean + obs_mean
+    # Compute mean correction
+    mu_x = group_apply("mean", x, qm.group, window)
+    mf = get_correction(mu_x, mu_r, kind)
 
-    fut = (
-        group_apply(
-            prescale,
-            fut,
-            group,
-            window=window,
-            grouped_args=(qmf.sim_mean, qmf.obs_mean),
-        )
-        .sortby("time")
-        .drop_vars("month")
-    )
+    # Add random noise to small values
+    if qm.kind == MULTIPLICATIVE and mult_thresh is not None:
+        x = jitter_under_thresh(x, mult_thresh)
+
+    # Add cyclical values to the scaling factors for interpolation
+    if interp and prop is not None:
+        qm = add_cyclic(qm, prop)
+        mf = add_cyclic(mf, prop)
+
+    # Apply mean correction factor nx = x / <x> * <h>
+    nx = apply_correction(x, broadcast(mf, x, interp), kind)
+
+    # Detrend series
+    if detrend:
+        coeffs = polyfit(nx, deg=1, dim="time")
+        x_trend = polyval(x.time, coeffs)
+
+        # Normalize with trend instead
+        nx = apply_correction(nx, invert(x_trend, qm.kind), qm.kind)
+
+    # Quantile mapping
+
+    sel = {"x": nx}
+    out = apply_correction(nx, broadcast(qm, nx, interp, sel), qm.kind)
 
     if detrend:
-        coeffs = polyfit(fut, deg=1, dim="time")
-        fut_mean = polyval(fut.time, coeffs)
-    else:
+        out = apply_correction(out, x_trend, qm.kind)
 
-        fut_mean = qmf.obs_mean.sel(month=fut.time.dt.month)
-
-    # Normalize with trend instead of own mean
-    if kind == MULTIPLICATIVE:
-        futn = fut / fut_mean
-    else:
-        futn = fut - fut_mean
-
-    # xq and yq form a mapping function, use interpolation to get new values of fut
-    gidx = fut.time.dt.month
-    yout = interp_quantiles(futn, gidx, qmf.xq, qmf.yq, group="month")
-
-    # Extrapolation for values outside range
-    def extrapolate(dsgr, obsn_min, obsn_max, simn_min, simn_max, dim="time"):
-        yout = dsgr.yout.where(dsgr.futn > simn_min, dsgr.futn * obsn_min / simn_min)
-        return yout.where(dsgr.futn < simn_max, dsgr.futn * obsn_max / simn_max)
-
-    ds = xr.Dataset({"yout": yout, "futn": futn})
-    yout = group_apply(
-        extrapolate,
-        ds,
-        group,
-        window=window,
-        grouped_args=(qmf.obsn_min, qmf.obsn_max, qmf.simn_min, qmf.simn_max),
-    )
-
-    if kind == MULTIPLICATIVE:
-        out = yout * fut_mean
-    else:
-        out = yout + fut_mean
-    out["bias_corrected"] = True
+    out.attrs["bias_corrected"] = True
     return out
-
-
-def normalize(gr, dim="time", kind=ADDITIVE):
-    if kind == MULTIPLICATIVE:
-        return gr / gr.mean(dim)
-    return gr - gr.mean(dim)
-
-
-def min_factor(gr, dim="time", kind=ADDITIVE):
-    if kind == MULTIPLICATIVE:
-        return gr.obsn.min(dim) / gr.simn.min(dim)
-    return gr.obsn.min(dim) / gr.simn.min(dim)
-
-
-def max_factor(gr, dim="time", kind=ADDITIVE):
-    if kind == MULTIPLICATIVE:
-        return gr.obsn.max(dim) / gr.simn.max(dim)
-    return gr.obsn.max(dim) / gr.simn.max(dim)
