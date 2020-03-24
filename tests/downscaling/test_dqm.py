@@ -16,15 +16,16 @@ class TestDQM:
         y = tas_series(norm.ppf(r))
 
         # Test train
+        # qm = y - (x - <x>)
         qm = dqm.train(x, y, group="time", nq=50)
         q = qm.attrs["quantile"]
         q = np.concatenate([q[:1], q, q[-1:]])
 
         rn = norm.ppf(q)
-        expected = rn
+        expected = rn - q + np.mean(q)
 
         # Results are not so good at the endpoints
-        # np.testing.assert_array_almost_equal(qm[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(qm[2:-2], expected[2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
