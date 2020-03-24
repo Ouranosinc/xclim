@@ -93,6 +93,8 @@ def predict(
     """
     dim, prop = parse_group(qm.group)
     kind = qm.kind
+
+    # Compute mean correction
     mu_x = group_apply("mean", x, qm.group, window)
     mf = get_correction(mu_x, mu_r, kind)
 
@@ -106,37 +108,22 @@ def predict(
         mf = add_cyclic(mf, prop)
 
     # Apply mean correction factor nx = x / <x> * <h>
-    nx = apply_correction(x, broadcast(qm, x, interp))
+    nx = apply_correction(x, broadcast(mf, x, interp), kind)
 
     # Detrend series
     if detrend:
-        coeffs = polyfit(x_scaled, deg=1, dim="time")
+        coeffs = polyfit(nx, deg=1, dim="time")
         x_trend = polyval(x.time, coeffs)
 
         # Normalize with trend instead
-        x_scaled = apply_correction(x_scaled, invert(x_trend, qm.kind), qm.kind)
+        nx = apply_correction(nx, invert(x_trend, qm.kind), qm.kind)
 
-    # Extract the correct mean factor for each time step.
-    mu_x = group_apply("mean", x_scaled, qm.group, window)
+    # Quantile mapping
 
-    if prop:
-        # Extract the correct mean factor for each time step.
-        if interp:  # Interpolate both the time group and the quantile.
-            mu_x_factor = mu_x.interp(sel)
-        else:  # Find quantile for nearest time group and quantile.
-            mu_x_factor = mu_x.sel(sel, method="nearest")
-    else:
-        mu_x_factor = mu_x
-
-    sel["x"] = apply_correction(x_scaled, invert(mu_x_factor, qm.kind), qm.kind)
-    if interp:  # Interpolate both the time group and the quantile.
-        q_factor = qm.interp(sel)
-    else:  # Find quantile for nearest time group and quantile.
-        q_factor = qm.sel(sel, method="nearest")
-
-    out_scaled = apply_correction(x_scaled, q_factor, qm.kind)
+    sel = {"x": nx}
+    out = apply_correction(nx, broadcast(qm, nx, interp, sel), qm.kind)
 
     if detrend:
-        return apply_correction(out_scaled, x_trend, qm.kind)
+        return apply_correction(out, x_trend, qm.kind)
 
-    return out_scaled
+    return out

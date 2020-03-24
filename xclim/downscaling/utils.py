@@ -215,7 +215,7 @@ def broadcast(grouped, x, interp=False, sel=None):
         return grouped
 
 
-def apply_correction(x, factor, kind=None, interp=False):
+def apply_correction(x, factor, kind=None):
 
     kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
