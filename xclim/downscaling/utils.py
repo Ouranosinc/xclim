@@ -114,6 +114,7 @@ def parse_group(group):
         return group, None
 
 
+# TODO: When ready this should be a method of a Grouping object
 def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     """Group values by time, then compute function.
 
@@ -186,9 +187,9 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 def get_correction(x, y, kind):
     """Return the additive or multiplicative correction factor."""
     with xr.set_options(keep_attrs=True):
-        if kind == "+":
+        if kind == ADDITIVE:
             out = y - x
-        elif kind == "*":
+        elif kind == MULTIPLICATIVE:
             out = y / x
         else:
             raise ValueError("kind must be + or *.")
@@ -199,18 +200,19 @@ def get_correction(x, y, kind):
 
 def apply_correction(x, factor, kind):
     with xr.set_options(keep_attrs=True):
-        if kind == "+":
+        if kind == ADDITIVE:
             out = x + factor
-        elif kind == "*":
+        elif kind == MULTIPLICATIVE:
             out = x * factor
         else:
             raise ValueError
 
-    out.attrs["bias_corrected"] = True
+    # PB: I believe the next line should be done by the correcter itself, there might be more steps before its really bias corrected
+    # out.attrs["bias_corrected"] = True
     return out
 
 
-def nodes(n, eps=1e-4):
+def equally_spaced_nodes(n, eps=1e-4):
     """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
 
     Parameters
@@ -227,7 +229,7 @@ def nodes(n, eps=1e-4):
 
     Notes
     -----
-    For nq=4, eps=0 :  0---x------x------x------x---1
+    For n=4, eps=0 :  0---x------x------x------x---1
     """
     dq = 1 / n / 2
     q = np.linspace(dq, 1 - dq, n)
@@ -237,16 +239,27 @@ def nodes(n, eps=1e-4):
 
 
 # TODO: use xr.pad once it's implemented.
-def add_cyclic(da, att):
-    """Reindex the scaling factors to include the last time grouping
-    at the beginning and the first at the end.
+def add_cyclic_bounds(da, att):
+    """Reindex an array to include the last slice at the beginning
+    and the first at the end.
 
     This is done to allow interpolation near the end-points.
+
+    Parameters
+    ----------
+    da : Union[xr.DataArray, xr.Dataset]
+        An array or a dataset
+    att : str
+        The name of the coordinate to make cyclic
+
+    Returns
+    -------
+    Union[xr.DataArray, xr.Dataset]
+        da but with the last element along att prepended and the last one appended.
     """
     gc = da.coords[att]
     i = np.concatenate(([-1], range(len(gc)), [0]))
     qmf = da.reindex({att: gc[i]})
-    qmf.coords[att] = range(len(i))
     return qmf
 
 

@@ -114,8 +114,11 @@ def predict(
     )
 
     if kind == MULTIPLICATIVE:
-        return yout * fut_mean
-    return yout + fut_mean
+        out = yout * fut_mean
+    else:
+        out = yout + fut_mean
+    out["bias_corrected"] = True
+    return out
 
 
 def normalize(gr, dim="time", kind=ADDITIVE):

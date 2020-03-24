@@ -15,7 +15,7 @@ References
 import numpy as np
 import xarray as xr
 
-from .utils import add_cyclic
+from .utils import add_cyclic_bounds
 from .utils import apply_correction
 from .utils import get_correction
 from .utils import get_index
@@ -67,7 +67,7 @@ def predict(x, qm, interp=False):
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic(qm, prop)
+        qm = add_cyclic_bounds(qm, prop)
 
     if prop:
         sel.update({prop: get_index(x, dim, prop, interp)})
@@ -80,8 +80,8 @@ def predict(x, qm, interp=False):
 
     # Apply the correction factors
     out = apply_correction(x, factor, qm.kind)
-
+    out["bias_corrected"] = True
     # Remove time grouping and quantile coordinates
     if prop:
-        return out.drop([prop])
+        return out.drop_vars(prop)
     return out
