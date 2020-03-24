@@ -35,10 +35,12 @@ class TestDQM:
         np.testing.assert_array_almost_equal(p[middle], y[middle], 1)
 
         # With trend
-        trend = np.linspace(-0.2, 0.2, n)
+        trend = np.linspace(-0.4, 0.4, n)
         xt = tas_series(r + trend)
+        yt = tas_series(norm.ppf(r) + trend)
         pt = dqm.predict(xt, qm, interp=True)
-        np.testing.assert_array_almost_equal(pt[middle], y[middle] + trend[middle], 1)
+        # yt.plot(label="Expected", alpha=.5); pt.plot(label="Corrected", alpha=.5); plt.legend(); plt.show()
+        np.testing.assert_array_almost_equal(pt[middle], yt[middle], 1)
 
     def test_mon(self, mon_tas, tas_series, mon_triangular):
         """Monthly grouping"""

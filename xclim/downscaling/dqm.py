@@ -3,8 +3,6 @@ import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt
 
-from .temp import polyfit
-from .temp import polyval
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
 from .utils import apply_correction
@@ -17,9 +15,6 @@ from .utils import jitter_under_thresh
 from .utils import MULTIPLICATIVE
 from .utils import parse_group
 from .utils import reindex
-
-# from .utils import get_index
-# from .utils import interp_quantiles
 
 
 def train(
@@ -47,7 +42,7 @@ def train(
     How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
-    # equally_spaces_nodes
+    # nq nodes + limit nodes at 1E-6 and 1 - 1E-6
     q = equally_spaced_nodes(nq, eps=1e-6)
 
     # Add random noise to small values
