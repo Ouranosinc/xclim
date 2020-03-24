@@ -84,7 +84,7 @@ class TestReindex:
         np.testing.assert_array_equal(out.x, xq)
 
 
-def test_adjust_freq_1D_simple(self):
+def test_adjust_freq_1D_simple():
     a = np.array([0, 0, 1, 2, 3, 4])
     b = np.array([0, 0, 0, 1, 2, 3])
 
@@ -95,7 +95,7 @@ def test_adjust_freq_1D_simple(self):
     np.testing.assert_equal(out, [0, 0, 1, 1, 2, 3])
 
 
-def test_adjust_freq_1D_dist(self):
+def test_adjust_freq_1D_dist():
     v = np.random.randint(1, 100, 1000).astype(float)
     b = np.where(v < 30, v / 30, v)
     a = np.where(v < 10, v / 30, v)
@@ -104,7 +104,7 @@ def test_adjust_freq_1D_dist(self):
     np.testing.assert_array_less(0, out[(a >= 10) & (a < 30)])
 
 
-def test_adjust_freq(self):
+def test_adjust_freq():
     time = pd.date_range("1993-01-01", "2000-12-31", freq="D")
     prvals = np.random.randint(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
@@ -114,7 +114,7 @@ def test_adjust_freq(self):
     probs = xr.where(pr < 10, pr / 20, pr)
     prsim_ad = u.adjust_freq(probs, prsim, 1, "time.month")
 
-    xr.testing.assert_array_equal(
+    xr.testing.assert_equal(
         (probs < 1).groupby("time.month").sum().T,
         (prsim_ad < 1).groupby("time.month").sum(),
     )
