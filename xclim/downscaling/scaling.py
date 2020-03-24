@@ -8,7 +8,7 @@ References
 ----------
 
 """
-from .utils import add_cyclic
+from .utils import add_cyclic_bounds
 from .utils import apply_correction
 from .utils import get_correction
 from .utils import get_index
@@ -31,7 +31,7 @@ def predict(x, obj, interp=False):
 
     # Add cyclical values to the scaling factors for interpolation
     if interp:
-        obj = add_cyclic(obj, prop)
+        obj = add_cyclic_bounds(obj, prop)
 
     index = get_index(x, dim, prop, interp)
 
@@ -41,5 +41,5 @@ def predict(x, obj, interp=False):
         factor = obj.sel({prop: index}, method="nearest")
 
     out = apply_correction(x, factor, obj.kind)
-
-    return out.drop([prop,])
+    out["bias_corrected"] = True
+    return out.drop_vars(prop)

@@ -114,6 +114,7 @@ def parse_group(group):
         return group, None
 
 
+# TODO: When ready this should be a method of a Grouping object
 def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     """Group values by time, then compute function.
 
@@ -209,15 +210,18 @@ def broadcast(grouped, x, interp=False, sel=None):
     if sel:
         # Extract the correct mean factor for each time step.
         if interp:  # Interpolate both the time group and the quantile.
-            return grouped.interp(sel)
+            grouped = grouped.interp(sel)
         else:  # Find quantile for nearest time group and quantile.
-            return grouped.sel(sel, method="nearest")
-    else:
-        return grouped
+            grouped = grouped.sel(sel, method="nearest")
+
+        for var in sel.keys():
+            if var in grouped.coords and var not in grouped.dims:
+                grouped = grouped.drop_vars(var)
+
+    return grouped
 
 
 def apply_correction(x, factor, kind=None):
-
     kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
@@ -227,7 +231,8 @@ def apply_correction(x, factor, kind=None):
         else:
             raise ValueError
 
-    out.attrs["bias_corrected"] = True
+    # PB: I believe the next line should be done by the correcter itself, there might be more steps before its really bias corrected
+    # out.attrs["bias_corrected"] = True
     return out
 
 
@@ -242,7 +247,7 @@ def invert(x, kind):
             raise ValueError
 
 
-def nodes(n, eps=1e-4):
+def equally_spaced_nodes(n, eps=1e-4):
     """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
 
     Parameters
@@ -259,7 +264,7 @@ def nodes(n, eps=1e-4):
 
     Notes
     -----
-    For nq=4, eps=0 :  0---x------x------x------x---1
+    For n=4, eps=0 :  0---x------x------x------x---1
     """
     dq = 1 / n / 2
     q = np.linspace(dq, 1 - dq, n)
@@ -269,16 +274,27 @@ def nodes(n, eps=1e-4):
 
 
 # TODO: use xr.pad once it's implemented.
-def add_cyclic(da, att):
-    """Reindex the scaling factors to include the last time grouping
-    at the beginning and the first at the end.
+def add_cyclic_bounds(da, att):
+    """Reindex an array to include the last slice at the beginning
+    and the first at the end.
 
     This is done to allow interpolation near the end-points.
+
+    Parameters
+    ----------
+    da : Union[xr.DataArray, xr.Dataset]
+        An array or a dataset
+    att : str
+        The name of the coordinate to make cyclic
+
+    Returns
+    -------
+    Union[xr.DataArray, xr.Dataset]
+        da but with the last element along att prepended and the last one appended.
     """
     gc = da.coords[att]
     i = np.concatenate(([-1], range(len(gc)), [0]))
     qmf = da.reindex({att: gc[i]})
-    qmf.coords[att] = range(len(i))
     return qmf
 
 
@@ -412,8 +428,8 @@ def extrapolate_qm(qm, xq, method="constant"):
         return qm, xq
 
     elif method == "constant":
-        q_l, q_r = [0,], [1,]
-        x_l, x_r = [-np.inf,], [np.inf,]
+        q_l, q_r = [0], [1]
+        x_l, x_r = [-np.inf], [np.inf]
         qm_l, qm_r = qm.isel(quantile=0), qm.isel(quantile=-1)
 
     elif (

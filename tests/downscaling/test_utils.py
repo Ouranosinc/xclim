@@ -16,13 +16,13 @@ def test_jitter_under_thresh():
     np.testing.assert_allclose(da[1:], out[1:])
 
 
-def test_nodes():
-    x = u.nodes(5)
+def test_equally_spaced_nodes():
+    x = u.equally_spaced_nodes(5)
     assert len(x) == 7
     d = np.diff(x)
     np.testing.assert_almost_equal(d[0], d[1] / 2, 3)
 
-    x = u.nodes(1, eps=None)
+    x = u.equally_spaced_nodes(1, eps=None)
     np.testing.assert_almost_equal(x[0], 0.5)
 
 

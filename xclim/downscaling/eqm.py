@@ -15,12 +15,12 @@ References
 import numpy as np
 import xarray as xr
 
-from .utils import add_cyclic
+from .utils import add_cyclic_bounds
 from .utils import apply_correction
+from .utils import equally_spaced_nodes
 from .utils import get_correction
 from .utils import get_index
 from .utils import group_apply
-from .utils import nodes
 from .utils import parse_group
 from .utils import reindex
 
@@ -49,7 +49,7 @@ def train(
     xr.Dataset
       Quantiles for the source and target series.
     """
-    q = nodes(nq, eps=1e-6)
+    q = equally_spaced_nodes(nq, eps=1e-6)
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
@@ -65,7 +65,7 @@ def predict(x, qm, interp=False):
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic(qm, prop)
+        qm = add_cyclic_bounds(qm, prop)
 
     sel = {"x": x}
     if prop:
@@ -79,8 +79,8 @@ def predict(x, qm, interp=False):
 
     # Apply the correction factors
     out = apply_correction(x, factor, qm.kind)
-
+    out["bias_corrected"] = True
     # Remove time grouping and quantile coordinates
     if prop:
-        return out.drop([prop])
+        return out.drop_vars(prop)
     return out

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.downscaling.utils import nodes
+from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import parse_group
 
 
@@ -83,11 +83,11 @@ def make_qm():
         mo = range(1, m + 1)
 
         if prop:
-            q = nodes(n, None)
+            q = equally_spaced_nodes(n, None)
             dims = ("quantile", prop)
             coords = {"quantile": q, "month": mo}
         else:
-            q = nodes(m, None)
+            q = equally_spaced_nodes(m, None)
             dims = ("quantile",)
             coords = {"quantile": q}
             a = a[0]
