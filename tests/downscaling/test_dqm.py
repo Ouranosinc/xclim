@@ -11,7 +11,7 @@ class TestDQM:
         """No temporal grouping"""
         n = 10000
         r = np.random.rand(n)
-        x = tas_series(r)
+        x = tas_series(r + 10)
 
         y = tas_series(norm.ppf(r))
 
@@ -36,7 +36,7 @@ class TestDQM:
 
         # With trend
         trend = np.linspace(-0.4, 0.4, n)
-        xt = tas_series(r + trend)
+        xt = tas_series(r + 1 + trend)
         yt = tas_series(norm.ppf(r) + trend)
         pt = dqm.predict(xt, qm, interp=True)
         # yt.plot(label="Expected", alpha=.5); pt.plot(label="Corrected", alpha=.5); plt.legend(); plt.show()
