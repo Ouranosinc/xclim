@@ -608,7 +608,7 @@ class TestSubsetShape:
                     sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
                 )
 
-    def test_wraps(self):
+    def test_wraps(self, tmp_netcdf_filename):
         ds = xr.open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
@@ -631,6 +631,11 @@ class TestSubsetShape:
 
         assert sub.crs.prime_meridian_name == "Greenwich"
         assert sub.crs.grid_mapping_name == "latitude_longitude"
+
+        sub.to_netcdf(tmp_netcdf_filename)
+        assert tmp_netcdf_filename.exists()
+        with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
+            assert {"tas", "crs"}.issubset(set(f.data_vars))
 
     def test_no_wraps(self):
         ds = xr.open_dataset(self.nc_file)
@@ -698,7 +703,7 @@ class TestSubsetShape:
             not in [q.message for q in record]
         )
 
-    def test_small_poly_buffer(self):
+    def test_small_poly_buffer(self, tmp_netcdf_filename):
         ds = xr.open_dataset(self.nc_file)
 
         with pytest.raises(ValueError):
@@ -714,6 +719,11 @@ class TestSubsetShape:
 
         assert sub.crs.prime_meridian_name == "Greenwich"
         assert sub.crs.grid_mapping_name == "latitude_longitude"
+
+        sub.to_netcdf(tmp_netcdf_filename)
+        assert tmp_netcdf_filename.exists()
+        with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
+            assert {"tas", "crs"}.issubset(set(f.data_vars))
 
     def test_mask_multiregions(self):
         ds = xr.open_dataset(self.nc_file)
