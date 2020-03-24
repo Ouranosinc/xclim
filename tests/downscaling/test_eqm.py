@@ -22,7 +22,7 @@ class TestEQM:
         y = mon_tas(r + noise)  # obs
 
         # Test train
-        d = self.qm.train(x, y, 5, "time.month")
+        d = self.qm.train(x, y, "time.month", nq=5)
         md = d.mean(dim="x")
         np.testing.assert_array_almost_equal(md, mon_triangular, 1)
         # TODO: Test individual quantiles
@@ -39,12 +39,12 @@ class TestEQM:
         Predict on sim to get obs
         """
         r = np.random.rand(10000)
-        sim = tas_series(r)
+        x = tas_series(r)
 
-        obs = tas_series(norm.ppf(r))
+        y = tas_series(norm.ppf(r))
 
         # Test train
-        d = eqm.train(sim, obs, 50, "time")
+        d = eqm.train(x, y, "time", nq=50)
         q = d.attrs["quantile"]
         q = np.concatenate([q[:1], q, q[-1:]])
         expected = norm.ppf(q) - q
@@ -54,6 +54,6 @@ class TestEQM:
 
         # Test predict
         # Accept discrepancies near extremes
-        middle = (sim > 1e-2) * (sim < 0.99)
-        p = eqm.predict(sim[middle], d, interp=True)
-        np.testing.assert_array_almost_equal(p, obs[middle], 1)
+        middle = (x > 1e-2) * (x < 0.99)
+        p = eqm.predict(x[middle], d, interp=True)
+        np.testing.assert_array_almost_equal(p, y[middle], 1)

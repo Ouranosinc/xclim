@@ -26,7 +26,7 @@ from .utils import reindex
 
 
 def train(
-    x, y, nq, group="time.dayofyear", kind="+", window=1, extrapolation="constant"
+    x, y, group="time.dayofyear", kind="+", nq=40, window=1, extrapolation="constant"
 ):
     """Compute quantile bias-adjustment factors.
 
@@ -61,14 +61,13 @@ def train(
 
 
 def predict(x, qm, interp=False):
-    sel = {"x": x}
-
     dim, prop = parse_group(qm.group)
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
         qm = add_cyclic(qm, prop)
 
+    sel = {"x": x}
     if prop:
         sel.update({prop: get_index(x, dim, prop, interp)})
 

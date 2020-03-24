@@ -119,9 +119,9 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 def get_correction(x, y, kind):
     """Return the additive or multiplicative correction factor."""
     with xr.set_options(keep_attrs=True):
-        if kind == "+":
+        if kind == ADDITIVE:
             out = y - x
-        elif kind == "*":
+        elif kind == MULTIPLICATIVE:
             out = y / x
         else:
             raise ValueError("kind must be + or *.")
@@ -130,17 +130,48 @@ def get_correction(x, y, kind):
     return out
 
 
-def apply_correction(x, factor, kind):
+def broadcast(grouped, x, interp=False, sel=None):
+    dim, prop = parse_group(grouped.group)
+
+    if sel is None:
+        sel = {}
+
+    if prop is not None:
+        sel.update({prop: get_index(x, dim, prop, interp)})
+
+        # Extract the correct mean factor for each time step.
+        if interp:  # Interpolate both the time group and the quantile.
+            return grouped.interp(sel)
+        else:  # Find quantile for nearest time group and quantile.
+            return grouped.sel(sel, method="nearest")
+    else:
+        return grouped
+
+
+def apply_correction(x, factor, kind=None, interp=False):
+
+    kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
-        if kind == "+":
+        if kind == ADDITIVE:
             out = x + factor
-        elif kind == "*":
+        elif kind == MULTIPLICATIVE:
             out = x * factor
         else:
             raise ValueError
 
     out.attrs["bias_corrected"] = True
     return out
+
+
+def invert(x, kind):
+    kind = kind or x.get("kind", None)
+    with xr.set_options(keep_attrs=True):
+        if kind == ADDITIVE:
+            return -x
+        elif kind == MULTIPLICATIVE:
+            return 1 / x
+        else:
+            raise ValueError
 
 
 def nodes(n, eps=1e-4):
