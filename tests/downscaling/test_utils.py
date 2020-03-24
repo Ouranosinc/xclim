@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -81,3 +82,39 @@ class TestReindex:
         assert isinstance(out.attrs["quantile"], np.ndarray)
 
         np.testing.assert_array_equal(out.x, xq)
+
+
+def test_adjust_freq_1D_simple(self):
+    a = np.array([0, 0, 1, 2, 3, 4])
+    b = np.array([0, 0, 0, 1, 2, 3])
+
+    out = u._adjust_freq_1d(a, b, 1)
+    np.testing.assert_equal(out, [0, 0, 0, 2, 3, 4])
+
+    out = u._adjust_freq_1d(b, a, 1)
+    np.testing.assert_equal(out, [0, 0, 1, 1, 2, 3])
+
+
+def test_adjust_freq_1D_dist(self):
+    v = np.random.randint(1, 100, 1000).astype(float)
+    b = np.where(v < 30, v / 30, v)
+    a = np.where(v < 10, v / 30, v)
+
+    out = u._adjust_freq_1d(b, a, 1)
+    np.testing.assert_array_less(0, out[(a >= 10) & (a < 30)])
+
+
+def test_adjust_freq(self):
+    time = pd.date_range("1993-01-01", "2000-12-31", freq="D")
+    prvals = np.random.randint(0, 100, size=(time.size, 3))
+    pr = xr.DataArray(
+        prvals, coords={"time": time, "lat": [0, 1, 2]}, dims=("time", "lat")
+    )
+    prsim = xr.where(pr < 20, pr / 20, pr)
+    probs = xr.where(pr < 10, pr / 20, pr)
+    prsim_ad = u.adjust_freq(probs, prsim, 1, "time.month")
+
+    xr.testing.assert_array_equal(
+        (probs < 1).groupby("time.month").sum().T,
+        (prsim_ad < 1).groupby("time.month").sum(),
+    )

@@ -1,46 +1,109 @@
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
+from scipy.stats import gamma
 
-from xclim.indices.generic import threshold_count
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
-# Should we have a train/predict API for this as well ?
-def adjust_freq(obs, pred, thresh, group):
+def _adjust_freq_1d(sm, ob, thresh=0):
+    """Adjust freq on 1D timeseries"""
+    # Frequency of values below threshold in obs
+    o = ob[~np.isnan(ob)]
+    s = sm[~np.isnan(sm)]
+
+    below = o < thresh
+    ndO = below.sum().astype(int)  # Number of dry days in obs
+
+    # Target number of values below threshold in sim to match obs frequency
+    ndSo = np.ceil(s.size * ndO / o.size).astype(int)
+
+    # Sort sim values
+    ind_sort = np.argsort(s)
+    Ss = s[ind_sort]
+
+    # Last precip value in sim that should be 0
+    # if ndSo > 0:
+    #     Sth = Ss[min(ndSo, s.size) - 1]
+    # else:
+    #     Sth = np.nan
+
+    # Where precip values are under thresh but shouldn't (Indices Wrong)
+    iw = np.where(Ss[ndSo:] < thresh)[0] + ndSo
+
+    if iw.size > 0:
+        Os = np.sort(o)
+        # Linear mapping between Os and Ss if size don't match
+        iwO = np.ceil(o.size * iw.max() / s.size).astype(int)
+        # Values in obs corresponding to small precips
+        auxo = Os[ndO : iwO + 1]
+        if np.unique(auxo).size > 6:
+            gamA, gamLoc, gamShape = gamma.fit(auxo)
+            Ss[ndSo : iw.max() + 1] = gamma.rvs(
+                gamA, loc=gamLoc, scale=gamShape, size=iw.size
+            )
+        else:
+            Ss[ndSo : iw.max() + 1] = auxo.mean()
+        Ss = np.sort(Ss)
+
+    if ndO > 0:
+        Ss[:ndSo] = 0
+
+    ind_unsort = np.empty_like(ind_sort)
+    ind_unsort[ind_sort] = np.arange(ind_sort.size)
+
+    out = np.full_like(sm, np.nan)
+    out[~np.isnan(sm)] = Ss[ind_unsort]
+    return out
+
+
+def _adjust_freq_group(gr, thresh=0, dim="time"):
+    """Adjust freq on group"""
+    return xr.apply_ufunc(
+        _adjust_freq_1d,
+        gr.sim,
+        gr.obs,
+        input_core_dims=[[dim]] * 2,
+        output_core_dims=[[dim]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"thresh": thresh},
+        dask="parallelized",
+        output_dtypes=[gr.sim.dtype],
+    )
+
+
+def adjust_freq(obs, sim, thresh, group):
     """
-    Adjust frequency of
+    Adjust frequency of values under thresh of sim, based on obs
 
     Parameters
     ----------
-    obs : da.DataArray
+    obs : xr.DataArray
       Observed data.
-    pred : da.DataArray
+    sim : xr.DataArray
       Simulated data.
     thresh : float
       Threshold below which values are considered null.
 
     Returns
     -------
+    adjusted_sim : xr.DataArray
+        Simulated data with the same frequency of values under threshold than obs.
+        Adjustement is made group-wise.
 
     References
     ----------
     Themeßl et al. (2012)
-
     """
-    dim, prop = parse_group(group)
-
-    # Frequency of values below threshold in obs
-    below = obs < thresh
-    f = group_apply("sum", below, group) / group_apply("count", below, group)
-
-    # Predict
-    # Target number of values below threshold in pred to match obs frequency
-    n = group_apply("count", pred, group) * f
-    return n
-    # TODO: complete
+    return group_apply(
+        _adjust_freq_group,
+        xr.Dataset(data_vars={"sim": sim, "obs": obs}),
+        group,
+        thresh=thresh,
+    )
 
 
 def parse_group(group):
@@ -113,6 +176,10 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     # Save input parameters as attributes of output DataArray.
     out.attrs["group"] = group
     out.attrs["window"] = window
+
+    # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
+    if dim in out.dims:
+        out = out.sortby(dim)
     return out
 
 
