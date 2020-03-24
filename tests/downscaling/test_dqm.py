@@ -15,27 +15,27 @@ class TestDQM:
         y = tas_series(norm.ppf(r))
 
         # Test train
-        qf, mf = dqm.train(x, y, group="time", nq=50)
-        q = qf.attrs["quantile"]
+        qm = dqm.train(x, y, group="time", nq=50)
+        q = qm.attrs["quantile"]
         q = np.concatenate([q[:1], q, q[-1:]])
 
         rn = norm.ppf(q)
-        expected = rn - q + 0.5
+        expected = rn - q
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(qf[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(qm[2:-2], expected[2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
         # No trend
         middle = (x > 1e-2) * (x < 0.99)
-        # p = dqm.predict(x, qf, mf, interp=True)
-        # np.testing.assert_array_almost_equal(p[middle], y[middle], 1)
+        p = dqm.predict(x, qm, interp=True, detrend=False)
+        np.testing.assert_array_almost_equal(p[middle], y[middle], 1)
 
         # With trend
         trend = np.linspace(-0.2, 0.2, n)
         xt = tas_series(r + trend)
-        pt = dqm.predict(xt, qf, mf, interp=True)
+        pt = dqm.predict(xt, qm, interp=True)
         np.testing.assert_array_almost_equal(pt[middle], y[middle] + trend[middle], 1)
 
     def test_mon(self, mon_tas, tas_series, mon_triangular):

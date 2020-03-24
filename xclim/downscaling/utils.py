@@ -203,9 +203,10 @@ def broadcast(grouped, x, interp=False, sel=None):
     if sel is None:
         sel = {}
 
-    if prop is not None:
+    if prop is not None and prop not in sel:
         sel.update({prop: get_index(x, dim, prop, interp)})
 
+    if sel:
         # Extract the correct mean factor for each time step.
         if interp:  # Interpolate both the time group and the quantile.
             return grouped.interp(sel)

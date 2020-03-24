@@ -1,6 +1,7 @@
 """Detrended Quantile Matching (Cannon et al. 2015), code inspired from Santander's downscaleR"""
 import numpy as np
 import xarray as xr
+from matplotlib import pyplot as plt
 
 from .temp import polyfit
 from .temp import polyval
@@ -56,7 +57,6 @@ def train(
 
     # Compute mean per period
     mu_x = group_apply("mean", x, group, window)
-    # mu_y = group_apply("mean", y, group, window)
 
     # Compute quantile per period
     xq = group_apply("quantile", x, group, window=window, q=q)
@@ -64,24 +64,20 @@ def train(
 
     # Remove mean from quantiles
     nxq = apply_correction(xq, invert(mu_x, kind), kind)
-    # nyq = apply_correction(yq, invert(mu_y, kind), kind)
 
-    # Compute quantile correction from scaled x quantiles
-    qm = get_correction(nxq, yq, kind)  # qy / qx or qy - qx
+    # Compute quantile correction
+    qm = get_correction(xq, yq, kind)  # qy / qx or qy - qx
 
     # Reindex the quantile correction factors according to scaled x values instead of CDF.
     xqm = reindex(qm, nxq, extrapolation)
 
-    # Compute mean correction
-    # mf = get_correction(mu_y, mu_x, kind)  # mx / my or mx - my
-
-    return xqm, mu_x
+    # Note that xqm is indexed with respect x / <x> or x - <x>
+    return xqm
 
 
 def predict(
     x,
     qm,
-    mu_r,
     window=1,
     mult_thresh=None,
     detrend=True,  # Should this be non-optional ?
@@ -96,7 +92,6 @@ def predict(
 
     # Compute mean correction
     mu_x = group_apply("mean", x, qm.group, window)
-    mf = get_correction(mu_x, mu_r, kind)
 
     # Add random noise to small values
     if qm.kind == MULTIPLICATIVE and mult_thresh is not None:
@@ -105,25 +100,40 @@ def predict(
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
         qm = add_cyclic(qm, prop)
-        mf = add_cyclic(mf, prop)
+        mu_x = add_cyclic(mu_x, prop)
 
-    # Apply mean correction factor nx = x / <x> * <h>
-    nx = apply_correction(x, broadcast(mf, x, interp), kind)
+    # Apply mean correction factor nx = x / <x>
+    mfx = broadcast(mu_x, x, interp)
+    nx = apply_correction(x, invert(mfx, kind), kind)
 
     # Detrend series
     if detrend:
-        coeffs = polyfit(nx, deg=1, dim="time")
-        x_trend = polyval(x.time, coeffs)
+        np.testing.assert_allclose(nx.mean(dim="time"), 0, atol=1e-6)
 
-        # Normalize with trend instead
-        nx = apply_correction(nx, invert(x_trend, qm.kind), qm.kind)
+        ax = nx.resample(time="Y").mean()
+        fit_ds = ax.polyfit(deg=1, dim="time")
+        x_trend = xr.polyval(coord=nx.time, coeffs=fit_ds.polyfit_coefficients)
+        x_trend -= x_trend.mean(dim="time")
+
+        # Detrended
+        nxt = apply_correction(nx, invert(x_trend, kind), kind)
+
+        np.testing.assert_allclose(nxt.mean(dim="time"), 0, atol=1e-6)
+
+    else:
+        nxt = nx
 
     # Quantile mapping
+    sel = {"x": nxt}
+    qf = broadcast(qm, nxt, interp, sel)
+    corrected = apply_correction(nxt, qf, qm.kind)
 
-    sel = {"x": nx}
-    out = apply_correction(nx, broadcast(qm, nx, interp, sel), qm.kind)
-
+    # Reapply trend
     if detrend:
-        return apply_correction(out, x_trend, qm.kind)
+        trended = apply_correction(corrected, x_trend, kind)
+    else:
+        trended = corrected
 
+    # Reapply mean
+    out = apply_correction(trended, mfx, kind)
     return out
