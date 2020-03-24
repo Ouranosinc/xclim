@@ -62,16 +62,16 @@ def train(
     xq = group_apply("quantile", x, group, window=window, q=q)
     yq = group_apply("quantile", y, group, window=window, q=q)
 
-    # Remove mean from quantiles
-    nxq = apply_correction(xq, invert(mu_x, kind), kind)
+    # Note that the order of these two operations is critical.
+    # We're computing the correction factor based on x' = x - <x>.
+    xqp = apply_correction(xq, invert(mu_x, kind), kind)
 
-    # Compute quantile correction
-    qm = get_correction(xq, yq, kind)  # qy / qx or qy - qx
+    # Compute quantile correction factors
+    qm = get_correction(xqp, yq, kind)  # qy / qx or qy - qx
 
-    # Reindex the quantile correction factors according to scaled x values instead of CDF.
-    xqm = reindex(qm, nxq, extrapolation)
+    # Reindex the quantile correction factors with x'
+    xqm = reindex(qm, xqp, extrapolation)
 
-    # Note that xqm is indexed with respect x / <x> or x - <x>
     return xqm
 
 
@@ -130,10 +130,8 @@ def predict(
 
     # Reapply trend
     if detrend:
-        trended = apply_correction(corrected, x_trend, kind)
+        out = apply_correction(corrected, x_trend, kind)
     else:
-        trended = corrected
+        out = corrected
 
-    # Reapply mean
-    out = apply_correction(trended, mfx, kind)
     return out
