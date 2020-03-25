@@ -2,6 +2,7 @@
 Empirical quantile mapping
 ==========================
 
+Quantiles from `x` are mapped onto quantiles from `y`.
 
 """
 import numpy as np

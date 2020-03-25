@@ -51,7 +51,24 @@ def train(x, y, group="time.month", kind="+", window=1):
 
 
 def predict(x, cf, interp=False):
-    """Apply correction to data.
+    """
+    Return a bias-corrected timeseries using the scaling method.
+
+    This method acts on a single point (timeseries) only.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Time series to be bias-corrected, usually a model output.
+    qm : xr.DataArray
+      Correction factors indexed by group properties, as given by the `scaling.train` function.
+    interp : bool
+      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+
+    Returns
+    -------
+    xr.DataArray
+      The bias-corrected time series.
     """
     dim, prop = parse_group(cf.group)
 

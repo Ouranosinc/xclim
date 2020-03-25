@@ -1,4 +1,9 @@
-"""Detrended Quantile Matching (Cannon et al. 2015), code inspired from Santander's downscaleR."""
+"""
+Detrended quantile mapping
+==========================
+
+Quantiles from detrended `x` are mapped onto quantiles from `y`.
+"""
 import numpy as np
 import xarray as xr
 
