@@ -36,26 +36,32 @@ def train(
     x : xr.DataArray
       Training data, usually a model output whose biases are to be corrected.
     y : xr.DataArray
-      Training target, usually an observed at-site time-series.
-    kind : {ADDITIVE, MULTIPLICATIVE, '+', '*'}
-      Whether the correction are computed and applied in a multiplicative (ex. precip) or additive (ex: temp) manner.
+      Training target, usually a reference time series drawn from observations.
+    kind : {"+", "*"}
+      The type of correction, either additive (+) or multiplicative (*). Multiplicative correction factors are
+      typically used with lower bounded variables, such as precipitation, while additive factors are used for
+      unbounded variables, such as temperature.
     group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
-      Grouping criterion. If only coordinate is given (e.g. 'time') no grouping will be done.
+      Grouping dimension and property. If only the dimension is given (e.g. 'time'), the correction is computed over
+      the entire series.
     window : int
       Length of the rolling window centered around the time of interest used to estimate the quantiles. This is mostly
-      useful for time.dayofyear grouping.
-    mult_thresh : float
-      If kind is MULTIPLICATIVE, all values under this threshold are replaced by a non-zero random number smaller then the threshold.
-      This is done to remove values that are exactly 0.
+      used with group `time.dayofyear` to increase the number of samples.
+    mult_thresh : float, None
+      In the multiplicative case, all values under this threshold are replaced by a non-zero random number smaller
+      then the threshold. This is done to remove values that are exactly or close to 0 and create numerical
+      instabilities.
     nq : int
-      Number of quantiles.
+      Number of equally spaced quantile nodes. Limit nodes are added at both ends for extrapolation.
     extrapolation : {'constant', 'nan'}
-      What type of extrapolation should be done when predicting on values outside the range of 'x'. See `utils.extrapolate_qm`.
+      The type of extrapolation method used when predicting on values outside the range of 'x'. See
+      `utils.extrapolate_qm`.
 
     Returns
     -------
     xr.DataArray
-      The correction factors along the group and value coordinates.
+      The correction factors indexed by group properties and value residuals (x/<x> or x-<x>). The type of correction
+      used is stored in the "kind" attribute, and the original quantiles in the "quantiles" attribute.
 
     References
     ----------

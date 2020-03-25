@@ -363,7 +363,6 @@ def reindex(qm, xq, extrapolation="constant"):
     xr.DataArray
       Quantile correction factors whose quantile coordinates have been replaced by corresponding x values.
 
-
     Notes
     -----
     The original qm object has `quantile` coordinates and some grouping coordinate (e.g. month). This function
@@ -394,7 +393,7 @@ def reindex(qm, xq, extrapolation="constant"):
         out = gr.map(func, shortcut=True)
 
     out.attrs = qm.attrs
-    out.attrs["quantile"] = qm.coords["quantile"].values
+    out.attrs["quantiles"] = qm.coords["quantile"].values
     return out
 
 

@@ -34,7 +34,7 @@ class TestEQM:
         sx, sy = series(x, name), series(y, name)
         qm = eqm.train(sx, sy, "time", nq=50, kind=kind)
 
-        q = qm.attrs["quantile"]
+        q = qm.attrs["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
         # Results are not so good at the endpoints

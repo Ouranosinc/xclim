@@ -38,7 +38,7 @@ class TestDQM:
         sx, sy = series(x, name), series(y, name)
         qm = dqm.train(sx, sy, kind=kind, group="time", nq=50)
 
-        q = qm.attrs["quantile"]
+        q = qm.attrs["quantiles"]
         ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
         ey = yd.ppf(q)
         expected = get_correction(ex, ey, kind)

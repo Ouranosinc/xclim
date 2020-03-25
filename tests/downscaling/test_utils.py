@@ -71,7 +71,7 @@ class TestReindex:
         )
 
         assert out.dims == ("month", "x")
-        assert isinstance(out.attrs["quantile"], np.ndarray)
+        assert isinstance(out.attrs["quantiles"], np.ndarray)
 
     def test_time(self, make_qm):
         qm = make_qm(np.arange(4), "time")
@@ -79,7 +79,7 @@ class TestReindex:
 
         out = u.reindex(qm, xq, extrapolation="nan")
         assert out.dims == ("x",)
-        assert isinstance(out.attrs["quantile"], np.ndarray)
+        assert isinstance(out.attrs["quantiles"], np.ndarray)
 
         np.testing.assert_array_equal(out.x, xq)
 
