@@ -1,4 +1,4 @@
-"""Detrended Quantile Matching (Cannon et al. 2015), code inspired from Santander's downscaleR"""
+"""Detrended Quantile Matching (Cannon et al. 2015), code inspired from Santander's downscaleR."""
 import numpy as np
 import xarray as xr
 
@@ -113,7 +113,7 @@ def predict(
       Time series to be bias-corrected, usually a model output.
     qm : xr.DataArray
       Correction factors indexed by group properties and residuals of `x` over the training period, as given by the
-      `dqm.train` method.
+      `dqm.train` function.
     mult_thresh : float, None
       In the multiplicative case, all values under this threshold are replaced by a non-zero random number smaller
       then the threshold. This is done to remove values that are exactly or close to 0 and create numerical

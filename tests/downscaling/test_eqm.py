@@ -32,7 +32,7 @@ class TestEQM:
 
         # Test train
         sx, sy = series(x, name), series(y, name)
-        qm = eqm.train(sx, sy, "time", nq=50, kind=kind)
+        qm = eqm.train(sx, sy, kind=kind, group="time", nq=50)
 
         q = qm.attrs["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -68,7 +68,7 @@ class TestEQM:
 
         # Test train
         sx, sy = series(x, name), mon_series(y, name)
-        qm = eqm.train(sx, sy, "time.month", nq=5, kind=kind)
+        qm = eqm.train(sx, sy, kind=kind, group="time.month", nq=5)
         mqm = qm.mean(dim="x")
         expected = apply_correction(mon_triangular, 2, kind)
         np.testing.assert_array_almost_equal(mqm, expected, 1)

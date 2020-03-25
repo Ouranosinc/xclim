@@ -62,5 +62,5 @@ def predict(x, cf, interp=False):
     factor = broadcast(cf, x, interp)
 
     out = apply_correction(x, factor, cf.kind)
-    out["bias_corrected"] = True
+    out.attrs["bias_corrected"] = True
     return out

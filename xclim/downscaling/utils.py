@@ -231,9 +231,6 @@ def apply_correction(x, factor, kind=None):
             out = x * factor
         else:
             raise ValueError
-
-    # PB: I believe the next line should be done by the correcter itself, there might be more steps before its really bias corrected
-    # out.attrs["bias_corrected"] = True
     return out
 
 
