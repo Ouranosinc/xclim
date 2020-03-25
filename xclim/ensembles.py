@@ -12,6 +12,8 @@ import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
+from xclim.core.formatting import update_history
+
 # Avoid having to include matplotlib in xclim requirements
 try:
     import matplotlib.pyplot as plt
@@ -116,7 +118,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     >>> ens_mean_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    ds_out = ens.drop_vars(names=set(ens.data_vars))
+    ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
 
         ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
@@ -133,7 +135,9 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
                     + vv.split("_")[-1]
                     + " of ensemble"
                 )
-
+    ds_out.attrs["history"] = update_history(
+        f"Computation of statistics on {ens.realization.size} ensemble members.", ds_out
+    )
     return ds_out
 
 
@@ -181,7 +185,7 @@ def ensemble_percentiles(
     >>> print(ens_percs['tas_p25'])
     """
 
-    ds_out = ens.drop_vars(names=set(ens.data_vars))
+    ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
         # Percentile calculation forbids any chunks along realization
         if len(ens.chunks.get("realization", [])) > 1:
@@ -199,7 +203,7 @@ def ensemble_percentiles(
                     key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
                 )
                 var = ens[v].chunk(
-                    {"realization": -1, chkDim: len(chks) * ens.realization.size,}
+                    {"realization": -1, chkDim: len(chks) * ens.realization.size}
                 )
             else:
                 var = ens[v].chunk({"realization": -1})
@@ -228,6 +232,10 @@ def ensemble_percentiles(
             else:
                 ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
 
+    ds_out.attrs["history"] = update_history(
+        f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+        ds_out,
+    )
     return ds_out
 
 
