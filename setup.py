@@ -23,7 +23,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.14.1,<=0.15.0",
+    "xarray>=0.14.1",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
