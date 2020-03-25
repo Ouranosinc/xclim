@@ -5,6 +5,8 @@ History
 0.16.x
 ------
 * Allow lazy units conversion
+* Add utilities to merge attributes and update history in xclim.core.formatting
+* Ensembles : Allow alignment of datasets with same frequency but different offsets
 
 0.15.x (2020-03-12)
 -------------------
