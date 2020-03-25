@@ -36,7 +36,7 @@ class TestDQM:
 
         # With trend
         trend = np.linspace(-0.4, 0.4, n)
-        xt = tas_series(r + 1 + trend)
+        xt = tas_series(r + 9 + trend)
         yt = tas_series(norm.ppf(r) + trend)
         pt = dqm.predict(xt, qm, interp=True)
         # yt.plot(label="Expected", alpha=.5); pt.plot(label="Corrected", alpha=.5); plt.legend(); plt.show()
@@ -44,7 +44,7 @@ class TestDQM:
 
     def test_mon(self, mon_tas, tas_series, mon_triangular):
         """Monthly grouping"""
-        n = 100
+        n = 10000
         r = 10 + np.random.rand(n)
         x = tas_series(r)  # sim
 
@@ -53,7 +53,7 @@ class TestDQM:
         y = mon_tas(r + noise)  # obs
 
         # Train
-        qf, mf = dqm.train(x, y, group="time.month", nq=5)
+        qm = dqm.train(x, y, group="time.month", nq=5)
 
         trend = np.linspace(-0.2, 0.2, n)
         f = tas_series(r + trend)  # fut
@@ -61,5 +61,5 @@ class TestDQM:
         expected = mon_tas(r + noise + trend)
 
         # Predict on series with trend
-        p = dqm.predict(f, qf, mf)
+        p = dqm.predict(f, qm)
         np.testing.assert_array_almost_equal(p, expected, 1)
