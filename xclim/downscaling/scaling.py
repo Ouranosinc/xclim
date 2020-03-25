@@ -10,8 +10,8 @@ References
 """
 from .utils import add_cyclic_bounds
 from .utils import apply_correction
+from .utils import broadcast
 from .utils import get_correction
-from .utils import get_index
 from .utils import group_apply
 from .utils import parse_group
 
@@ -33,13 +33,8 @@ def predict(x, obj, interp=False):
     if interp:
         obj = add_cyclic_bounds(obj, prop)
 
-    index = get_index(x, dim, prop, interp)
-
-    if interp:  # Interpolate the time group correction
-        factor = obj.interp({prop: index})
-    else:  # Find quantile for nearest time group
-        factor = obj.sel({prop: index}, method="nearest")
+    factor = broadcast(obj, x, interp)
 
     out = apply_correction(x, factor, obj.kind)
     out["bias_corrected"] = True
-    return out.drop_vars(prop)
+    return out
