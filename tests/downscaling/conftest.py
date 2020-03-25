@@ -5,31 +5,33 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.downscaling.utils import apply_correction
 from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import parse_group
 
 
 @pytest.fixture
 def mon_triangular():
-    return np.array(list(range(0, 6)) + list(range(6, 0, -1)))
+    return np.array(list(range(1, 7)) + list(range(7, 1, -1))) / 7
 
 
 @pytest.fixture
-def mon_tas(tas_series, mon_triangular):
-    def _mon_tas(values):
+def mon_series(series, mon_triangular):
+    def _mon_series(values, name):
         """Random time series whose mean varies over a monthly cycle."""
-        tas = tas_series(values)
+        x = series(values, name)
         m = mon_triangular
-        factor = tas_series(m[tas.time.dt.month - 1])
-        with xr.set_options(keep_attrs=True):
-            return tas + factor
+        factor = series(m[x.time.dt.month - 1], name)
 
-    return _mon_tas
+        with xr.set_options(keep_attrs=True):
+            return apply_correction(x, factor, x.kind)
+
+    return _mon_series
 
 
 @pytest.fixture
-def tas_series():
-    def _tas_series(values, start="2000-01-01"):
+def series():
+    def _series(values, name, start="2000-01-01"):
         coords = collections.OrderedDict()
         for dim, n in zip(("time", "lon", "lat"), values.shape):
             if dim == "time":
@@ -39,19 +41,26 @@ def tas_series():
             else:
                 coords[dim] = xr.IndexVariable(dim, np.arange(n))
 
-        return xr.DataArray(
-            values,
-            coords=coords,
-            dims=list(coords.keys()),
-            name="tas",
-            attrs={
+        if name == "tas":
+            attrs = {
                 "standard_name": "air_temperature",
                 "cell_methods": "time: mean within days",
                 "units": "K",
-            },
+                "kind": "+",
+            }
+        elif name == "pr":
+            attrs = {
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+                "kind": "*",
+            }
+
+        return xr.DataArray(
+            values, coords=coords, dims=list(coords.keys()), name=name, attrs=attrs,
         )
 
-    return _tas_series
+    return _series
 
 
 @pytest.fixture

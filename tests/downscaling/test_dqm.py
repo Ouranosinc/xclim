@@ -1,64 +1,111 @@
 # Tests for detrended quantile mapping
 import numpy as np
+import pytest
 from matplotlib import pyplot as plt
 from scipy.stats import norm
+from scipy.stats import uniform
 
 from xclim.downscaling import dqm
+from xclim.downscaling.utils import ADDITIVE
+from xclim.downscaling.utils import apply_correction
+from xclim.downscaling.utils import equally_spaced_nodes
+from xclim.downscaling.utils import get_correction
+from xclim.downscaling.utils import invert
+from xclim.downscaling.utils import MULTIPLICATIVE
 
 
 class TestDQM:
-    def test_time_add(self, tas_series):
-        """No temporal grouping"""
-        n = 10000
-        r = np.random.rand(n)
-        x = tas_series(r + 10)
+    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
+    def test_quantiles(self, series, kind, name):
+        """Train on
+        sim: U
+        obs: Normal
 
-        y = tas_series(norm.ppf(r))
+        Predict on sim to get obs
+        """
+        ns = 10000
+        u = np.random.rand(ns)
+
+        # Define distributions
+        xd = uniform(loc=10, scale=1)
+        yd = norm(loc=12, scale=1)
+
+        # Generate random numbers with u so we get exact results for comparison
+        x = xd.ppf(u)
+        y = yd.ppf(u)
 
         # Test train
-        # qm = y - (x - <x>)
-        qm = dqm.train(x, y, group="time", nq=50)
-        q = qm.attrs["quantile"]
-        q = np.concatenate([q[:1], q, q[-1:]])
+        sx, sy = series(x, name), series(y, name)
+        qm = dqm.train(sx, sy, "time", nq=50, kind=kind)
 
-        rn = norm.ppf(q)
-        expected = rn - q + np.mean(q)
+        q = qm.attrs["quantile"]
+        ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
+        ey = yd.ppf(q)
+        expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(qm[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(qm[2:-2], expected[1:-1], 1)
 
         # Test predict
         # Accept discrepancies near extremes
-        # No trend
         middle = (x > 1e-2) * (x < 0.99)
-        p = dqm.predict(x, qm, interp=True, detrend=False)
-        np.testing.assert_array_almost_equal(p[middle], y[middle], 1)
+        p = dqm.predict(sx, qm, interp=True)
+        np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
-        # With trend
-        trend = np.linspace(-0.4, 0.4, n)
-        xt = tas_series(r + 9 + trend)
-        yt = tas_series(norm.ppf(r) + trend)
-        pt = dqm.predict(xt, qm, interp=True)
-        # yt.plot(label="Expected", alpha=.5); pt.plot(label="Corrected", alpha=.5); plt.legend(); plt.show()
-        np.testing.assert_array_almost_equal(pt[middle], yt[middle], 1)
+    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
+    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+        """
+        Train on
+        sim: U
+        obs: U + monthly cycle
 
-    def test_mon_add(self, mon_tas, tas_series, mon_triangular):
+        Predict on sim to get obs
+        """
+        n = 10000
+        u = np.random.rand(n)
+
+        # Define distributions
+        xd = uniform(loc=2, scale=0.1)
+        yd = uniform(loc=4, scale=0.1)
+        noise = uniform(loc=0, scale=1e-7)
+
+        # Generate random numbers
+        x = xd.ppf(u)
+        y = yd.ppf(u) + noise.ppf(u)
+
+        # Test train
+        sx, sy = series(x, name), mon_series(y, name)
+        qm = dqm.train(sx, sy, "time.month", nq=5, kind=kind)
+        mqm = qm.mean(dim="x")
+
+        expected = apply_correction(mon_triangular, 4, kind)
+        np.testing.assert_array_almost_equal(mqm, expected, 1)
+
+        # Test predict
+        trend = np.linspace(-0.2, 0.2, n) + (1 if kind == MULTIPLICATIVE else 0)
+        ss = series(apply_correction(x, trend, kind), name)
+        sy = mon_series(apply_correction(y, trend, kind), name)
+
+        p = dqm.predict(ss, qm)
+        np.testing.assert_array_almost_equal(p, sy, 1)
+
+    def no_test_mon_add(self, mon_series, series, mon_triangular):
         """Monthly grouping"""
         n = 10000
         r = 10 + np.random.rand(n)
-        x = tas_series(r)  # sim
+        x = series(r)  # sim
 
         # Delta varying with month
         noise = np.random.rand(n) * 1e-6
-        y = mon_tas(r + noise)  # obs
+        y = mon_series(r + noise)  # obs
 
         # Train
         qm = dqm.train(x, y, group="time.month", nq=5)
 
         trend = np.linspace(-0.2, 0.2, n)
-        f = tas_series(r + trend)  # fut
+        f = series(r + trend)  # fut
 
-        expected = mon_tas(r + noise + trend)
+        expected = mon_series(r + noise + trend)
 
         # Predict on series with trend
         p = dqm.predict(f, qm)

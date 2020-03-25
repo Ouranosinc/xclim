@@ -104,17 +104,20 @@ def predict(
 
     # Detrend series
     if detrend:
-        np.testing.assert_allclose(nx.mean(dim="time"), 0, atol=1e-6)
+        null = 0 if kind == ADDITIVE else 1
+        np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
 
         ax = nx.resample(time="Y").mean()
         fit_ds = ax.polyfit(deg=1, dim="time")
         x_trend = xr.polyval(coord=nx.time, coeffs=fit_ds.polyfit_coefficients)
-        x_trend -= x_trend.mean(dim="time")
+        x_trend = apply_correction(
+            x_trend, invert(x_trend.mean(dim="time"), kind), kind
+        )
 
         # Detrended
         nxt = apply_correction(nx, invert(x_trend, kind), kind)
 
-        np.testing.assert_allclose(nxt.mean(dim="time"), 0, atol=1e-6)
+        # np.testing.assert_allclose(nxt.mean(dim="time"), null, atol=1e-5)
 
     else:
         nxt = nx

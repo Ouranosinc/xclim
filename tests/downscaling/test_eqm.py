@@ -6,50 +6,20 @@ from scipy.stats import uniform
 
 from xclim.downscaling import eqm
 from xclim.downscaling.utils import ADDITIVE
+from xclim.downscaling.utils import apply_correction
 from xclim.downscaling.utils import get_correction
 from xclim.downscaling.utils import MULTIPLICATIVE
 
 
 class TestEQM:
-    qm = eqm
-
-    def test_mon_U(self, mon_tas, tas_series, mon_triangular):
-        """
-        Train on
-        sim: U
-        obs: U + monthly cycle
-
-        Predict on sim to get obs
-        """
-        r = 1 + np.random.rand(10000)
-        x = tas_series(r)  # sim
-
-        noise = np.random.rand(10000) * 1e-6
-        y = mon_tas(r + noise)  # obs
-
-        # Test train
-        d = self.qm.train(x, y, "time.month", nq=5)
-        md = d.mean(dim="x")
-        np.testing.assert_array_almost_equal(md, mon_triangular, 1)
-        # TODO: Test individual quantiles
-
-        # Test predict
-        p = self.qm.predict(x, d)
-        np.testing.assert_array_almost_equal(p, y, 3)
-
-    @pytest.mark.parametrize("kind", [ADDITIVE, MULTIPLICATIVE])
-    def test_quantiles(self, tas_series, pr_series, kind):
+    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
+    def test_quantiles(self, series, kind, name):
         """Train on
         sim: U
         obs: Normal
 
         Predict on sim to get obs
         """
-        if kind == ADDITIVE:
-            ts = tas_series
-        elif kind == MULTIPLICATIVE:
-            ts = pr_series
-
         u = np.random.rand(10000)
 
         # Define distributions
@@ -61,7 +31,8 @@ class TestEQM:
         y = yd.ppf(u)
 
         # Test train
-        qm = eqm.train(ts(x), ts(y), "time", nq=50, kind=kind)
+        sx, sy = series(x, name), series(y, name)
+        qm = eqm.train(sx, sy, "time", nq=50, kind=kind)
 
         q = qm.attrs["quantile"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -72,5 +43,36 @@ class TestEQM:
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        p = eqm.predict(x, qm, interp=True)
-        np.testing.assert_array_almost_equal(p[middle], y[middle], 1)
+        p = eqm.predict(sx, qm, interp=True)
+        np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
+
+    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
+    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+        """
+        Train on
+        sim: U
+        obs: U + monthly cycle
+
+        Predict on sim to get obs
+        """
+        u = np.random.rand(10000)
+
+        # Define distributions
+        xd = uniform(loc=2, scale=0.1)
+        yd = uniform(loc=4, scale=0.1)
+        noise = uniform(loc=0, scale=1e-7)
+
+        # Generate random numbers
+        x = xd.ppf(u)
+        y = yd.ppf(u) + noise.ppf(u)
+
+        # Test train
+        sx, sy = series(x, name), mon_series(y, name)
+        qm = eqm.train(sx, sy, "time.month", nq=5, kind=kind)
+        mqm = qm.mean(dim="x")
+        expected = apply_correction(mon_triangular, 2, kind)
+        np.testing.assert_array_almost_equal(mqm, expected, 1)
+
+        # Test predict
+        p = eqm.predict(sx, qm)
+        np.testing.assert_array_almost_equal(p, sy, 2)
