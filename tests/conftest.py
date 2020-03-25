@@ -1,9 +1,16 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 
 from xclim.core.calendar import calendars
+
+
+@pytest.fixture
+def tmp_netcdf_filename(tmpdir):
+    return Path(tmpdir).joinpath("testfile.nc")
 
 
 @pytest.fixture

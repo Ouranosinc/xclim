@@ -5,6 +5,7 @@ History
 0.16.x
 ------
 * Allow lazy units conversion
+* CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
 
 0.15.x (2020-03-12)
 -------------------
