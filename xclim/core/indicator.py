@@ -170,7 +170,8 @@ class Indicator:
         attrs["cell_methods"] = merge_attributes(
             "cell_methods", new_line=" ", missing_str=None, **das
         )
-        attrs["cell_methods"] += out_attrs.pop("cell_methods", "")
+        if "cell_methods" in out_attrs:
+            attrs["cell_methods"] += " " + out_attrs.pop("cell_methods")
         attrs["history"] = update_history(
             f"{self.identifier}{ba.signature.replace(parameters=cp.values())}",
             new_name=vname,

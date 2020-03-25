@@ -160,9 +160,10 @@ def merge_attributes(
     str
         The new attribute made from the combination of the ones from all the inputs.
     """
-    inputs = list(inputs_kws.items())
+    inputs = []
     for in_ds in inputs_list:
         inputs.append((getattr(in_ds, "name", None), in_ds))
+    inputs += list(inputs_kws.items())
 
     merged_attr = ""
     for in_name, in_ds in inputs:

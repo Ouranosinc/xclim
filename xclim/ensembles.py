@@ -299,7 +299,7 @@ def _ens_align_datasets(
                 time = counts.time
 
             ds["time"] = pd.to_datetime(
-                {"year": time.dt.year, "month": time.dt.month, "day": time.dt.day,}
+                {"year": time.dt.year, "month": time.dt.month, "day": time.dt.day}
             ).values
 
         ds_all.append(ds)
