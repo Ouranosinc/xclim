@@ -36,7 +36,7 @@ class TestDQM:
 
         # Test train
         sx, sy = series(x, name), series(y, name)
-        qm = dqm.train(sx, sy, "time", nq=50, kind=kind)
+        qm = dqm.train(sx, sy, kind=kind, group="time", nq=50)
 
         q = qm.attrs["quantile"]
         ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
@@ -75,7 +75,7 @@ class TestDQM:
 
         # Test train
         sx, sy = series(x, name), mon_series(y, name)
-        qm = dqm.train(sx, sy, "time.month", nq=5, kind=kind)
+        qm = dqm.train(sx, sy, kind=kind, group="time.month", nq=5)
         mqm = qm.mean(dim="x")
 
         expected = apply_correction(mon_triangular, 4, kind)
