@@ -1,7 +1,6 @@
 """Detrended Quantile Matching (Cannon et al. 2015), code inspired from Santander's downscaleR"""
 import numpy as np
 import xarray as xr
-from matplotlib import pyplot as plt
 
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
@@ -20,21 +19,43 @@ from .utils import reindex
 def train(
     x,
     y,
-    group="time.month",
     kind=ADDITIVE,
+    group="time.month",
     window=1,
     mult_thresh=None,
     nq=40,
     extrapolation="constant",
 ):
     """
-    Return the quantile mapping factors and the change in mean using the detrended quantile mapping method.
+    Return the quantile mapping factors using the detrended quantile mapping method.
+
+    This method acts on a single point (timeseries) only.
 
     Parameters
     ----------
+    x : xr.DataArray
+      Training data, usually a model output whose biases are to be corrected.
+    y : xr.DataArray
+      Training target, usually an observed at-site time-series.
+    kind : {ADDITIVE, MULTIPLICATIVE, '+', '*'}
+      Whether the correction are computed and applied in a multiplicative (ex. precip) or additive (ex: temp) manner.
+    group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
+      Grouping criterion. If only coordinate is given (e.g. 'time') no grouping will be done.
+    window : int
+      Length of the rolling window centered around the time of interest used to estimate the quantiles. This is mostly
+      useful for time.dayofyear grouping.
+    mult_thresh : float
+      If kind is MULTIPLICATIVE, all values under this threshold are replaced by a non-zero random number smaller then the threshold.
+      This is done to remove values that are exactly 0.
+    nq : int
+      Number of quantiles.
+    extrapolation : {'constant', 'nan'}
+      What type of extrapolation should be done when predicting on values outside the range of 'x'. See `utils.extrapolate_qm`.
 
     Returns
     -------
+    xr.DataArray
+      The correction factors along the group and value coordinates.
 
     References
     ----------
@@ -74,16 +95,42 @@ def train(
 def predict(
     x,
     qm,
-    window=1,
     mult_thresh=None,
     detrend=True,  # Should this be non-optional ?
     interp=False,
 ):
     """
-    # TODO
+    Return a bias-corrected timeseries using the detrended quantile mapping method.
 
+    This method acts on a single point (timeseries) only.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Uncorrected data, usually a model output for a time period subsequent to the training period.
+    qm : xr.DataArray
+      The array of correction factors along the value and group dimensions, as given by the train() method.
+    mult_thresh : float
+      If qm.kind is MULTIPLICATIVE, all values under this threshold are replaced by a non-zero random number smaller then the threshold.
+      This is done to remove values that are exactly 0.
+    detrend : bool
+      Whether to detrend the input uncorrected data.
+    interp : bool
+      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+
+    Returns
+    -------
+    xr.DataArray
+      The bias-corrected timeseries.
+
+    References
+    ----------
+    Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping:
+    How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
+    https://doi.org/10.1175/JCLI-D-14-00754.1
     """
     dim, prop = parse_group(qm.group)
+    window = qm.group_window
     kind = qm.kind
 
     # Compute mean correction
