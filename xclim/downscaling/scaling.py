@@ -50,17 +50,17 @@ def train(x, y, group="time.month", kind="+", window=1):
     return get_correction(sx, sy, kind)
 
 
-def predict(x, obj, interp=False):
+def predict(x, cf, interp=False):
     """Apply correction to data.
     """
-    dim, prop = parse_group(obj.group)
+    dim, prop = parse_group(cf.group)
 
     # Add cyclical values to the scaling factors for interpolation
     if interp:
-        obj = add_cyclic_bounds(obj, prop)
+        cf = add_cyclic_bounds(cf, prop)
 
-    factor = broadcast(obj, x, interp)
+    factor = broadcast(cf, x, interp)
 
-    out = apply_correction(x, factor, obj.kind)
+    out = apply_correction(x, factor, cf.kind)
     out["bias_corrected"] = True
     return out

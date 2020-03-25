@@ -98,12 +98,9 @@ def train(
     return xqm
 
 
+# TODO: Add `deg` parameter and associated tests.
 def predict(
-    x,
-    qm,
-    mult_thresh=None,
-    detrend=True,  # Should this be non-optional ?
-    interp=False,
+    x, qm, mult_thresh=None, interp=False,
 ):
     """
     Return a bias-corrected timeseries using the detrended quantile mapping method.
@@ -113,21 +110,21 @@ def predict(
     Parameters
     ----------
     x : xr.DataArray
-      Uncorrected data, usually a model output for a time period subsequent to the training period.
+      Time series to be bias-corrected, usually a model output.
     qm : xr.DataArray
-      The array of correction factors along the value and group dimensions, as given by the train() method.
-    mult_thresh : float
-      If qm.kind is MULTIPLICATIVE, all values under this threshold are replaced by a non-zero random number smaller then the threshold.
-      This is done to remove values that are exactly 0.
-    detrend : bool
-      Whether to detrend the input uncorrected data.
+      Correction factors indexed by group properties and residuals of `x` over the training period, as given by the
+      `dqm.train` method.
+    mult_thresh : float, None
+      In the multiplicative case, all values under this threshold are replaced by a non-zero random number smaller
+      then the threshold. This is done to remove values that are exactly or close to 0 and create numerical
+      instabilities.
     interp : bool
       Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
 
     Returns
     -------
     xr.DataArray
-      The bias-corrected timeseries.
+      The bias-corrected time series.
 
     References
     ----------
@@ -156,24 +153,16 @@ def predict(
     nx = apply_correction(x, invert(mfx, kind), kind)
 
     # Detrend series
-    if detrend:
-        null = 0 if kind == ADDITIVE else 1
-        np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
+    null = 0 if kind == ADDITIVE else 1
+    np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
 
-        ax = nx.resample(time="Y").mean()
-        fit_ds = ax.polyfit(deg=1, dim="time")
-        x_trend = xr.polyval(coord=nx.time, coeffs=fit_ds.polyfit_coefficients)
-        x_trend = apply_correction(
-            x_trend, invert(x_trend.mean(dim="time"), kind), kind
-        )
+    ax = nx.resample(time="Y").mean()
+    fit_ds = ax.polyfit(deg=1, dim="time")
+    x_trend = xr.polyval(coord=nx.time, coeffs=fit_ds.polyfit_coefficients)
+    x_trend = apply_correction(x_trend, invert(x_trend.mean(dim="time"), kind), kind)
 
-        # Detrended
-        nxt = apply_correction(nx, invert(x_trend, kind), kind)
-
-        # np.testing.assert_allclose(nxt.mean(dim="time"), null, atol=1e-5)
-
-    else:
-        nxt = nx
+    # Detrended
+    nxt = apply_correction(nx, invert(x_trend, kind), kind)
 
     # Quantile mapping
     sel = {"x": nxt}
@@ -181,11 +170,7 @@ def predict(
     corrected = apply_correction(nxt, qf, qm.kind)
 
     # Reapply trend
-    if detrend:
-        out = apply_correction(corrected, x_trend, kind)
-    else:
-        out = corrected
-
+    out = apply_correction(corrected, x_trend, kind)
     out.attrs["bias_corrected"] = True
 
     return out
