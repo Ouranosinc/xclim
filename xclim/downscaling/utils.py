@@ -172,7 +172,10 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     else:
         if grouped_args is not None:
             func = wrap_func_with_grouped_args(func)
-        out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
+        if isinstance(sub, xr.core.groupby.DataArrayGroupBy):
+            out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
+        else:
+            out = func(sub, dim=dims, **kwargs)
 
     # Save input parameters as attributes of output DataArray.
     out.attrs["group"] = group
