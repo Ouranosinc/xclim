@@ -41,7 +41,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = 2050
         yr_ed = 2059
 
@@ -66,7 +66,7 @@ class TestSubsetGridPoint:
         lat = 46.1
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -95,7 +95,7 @@ class TestSubsetGridPoint:
 
     def test_time_dates_outofbounds(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "1950"
         yr_ed = "2099"
 
@@ -108,7 +108,7 @@ class TestSubsetGridPoint:
 
     def test_time_start_only(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
 
         # start date only
@@ -135,7 +135,7 @@ class TestSubsetGridPoint:
     def test_time_end_only(self):
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         yr_ed = "2059"
 
@@ -156,7 +156,7 @@ class TestSubsetGridPoint:
 
     def test_time_incomplete_years(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -314,7 +314,7 @@ class TestSubsetBbox:
         assert np.all(out.lat <= np.max(self.lat))
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = 2050
         yr_ed = 2059
 
@@ -486,7 +486,7 @@ class TestSubsetBbox:
 
     def test_time(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         out = subset.subset_bbox(
             da,
@@ -545,7 +545,7 @@ class TestSubsetBbox:
 
     def test_warnings(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         with pytest.warns(FutureWarning):
             subset.subset_bbox(
