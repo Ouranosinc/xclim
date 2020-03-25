@@ -176,7 +176,7 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 
     # Save input parameters as attributes of output DataArray.
     out.attrs["group"] = group
-    out.attrs["window"] = window
+    out.attrs["group_window"] = window
 
     # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
     if dim in out.dims:
