@@ -7,7 +7,7 @@ from xclim.downscaling import dqm
 
 
 class TestDQM:
-    def test_time(self, tas_series):
+    def test_time_add(self, tas_series):
         """No temporal grouping"""
         n = 10000
         r = np.random.rand(n)
@@ -42,7 +42,7 @@ class TestDQM:
         # yt.plot(label="Expected", alpha=.5); pt.plot(label="Corrected", alpha=.5); plt.legend(); plt.show()
         np.testing.assert_array_almost_equal(pt[middle], yt[middle], 1)
 
-    def test_mon(self, mon_tas, tas_series, mon_triangular):
+    def test_mon_add(self, mon_tas, tas_series, mon_triangular):
         """Monthly grouping"""
         n = 10000
         r = 10 + np.random.rand(n)

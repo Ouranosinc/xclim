@@ -194,7 +194,8 @@ def get_correction(x, y, kind):
         else:
             raise ValueError("kind must be + or *.")
 
-    out.attrs["kind"] = kind
+    if isinstance(out, xr.DataArray):
+        out.attrs["kind"] = kind
     return out
 
 
