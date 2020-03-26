@@ -249,15 +249,13 @@ def _ens_align_datasets(
     resample_freq: str = None,
     **xr_kwargs,
 ) -> List[xr.Dataset]:
-    """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
-    are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
-    padded with NaN values
+    """Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray Dataset objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset.
+    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]]
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
+      each sublist contains input .nc files of an xarray multifile Dataset. DataArrays should have a name so they can be converted to datasets.
     mf_flag : bool
       If True climate simulations are treated as xarray multifile datasets before concatenation.
       Only applicable when datasets is a sequence of file paths.
