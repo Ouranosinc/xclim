@@ -8,54 +8,68 @@ MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
+# TODO: This function should also return sth
 def _adjust_freq_1d(sm, ob, thresh=0):
-    """Adjust freq on 1D timeseries"""
-    # Frequency of values below threshold in obs
-    o = ob[~np.isnan(ob)]
-    s = sm[~np.isnan(sm)]
+    """Adjust frequency of null values, where values are considered null if below a threshold.
 
-    below = o < thresh
-    ndO = below.sum().astype(int)  # Number of dry days in obs
+    Assuming we want to map sm to ob, but that there are proportionally more null values in sm than in obs. Null
+    values in sm cannot be converted into non-null values by multiplying by a factor.
+
+    Parameters
+    ----------
+    sm : np.array
+    """
+    o = ob
+    s = sm
+
+    # Frequency of values below threshold in obs
+    n_dry_o = (o < thresh).sum()  # Number of dry days in obs
 
     # Target number of values below threshold in sim to match obs frequency
-    ndSo = np.ceil(s.size * ndO / o.size).astype(int)
+    n_dry_sp = np.ceil(s.size * n_dry_o / o.size).astype(int)
 
-    # Sort sim values
+    # Sort sim values, storing the index to reorder the values later.
     ind_sort = np.argsort(s)
-    Ss = s[ind_sort]
+    ss = s[ind_sort]  # sorted s
 
     # Last precip value in sim that should be 0
-    # if ndSo > 0:
-    #     Sth = Ss[min(ndSo, s.size) - 1]
-    # else:
-    #     Sth = np.nan
+    if n_dry_sp > 0:
+        sth = ss[min(n_dry_sp, s.size) - 1]
+    else:
+        sth = np.nan
 
-    # Where precip values are under thresh but shouldn't (Indices Wrong)
-    iw = np.where(Ss[ndSo:] < thresh)[0] + ndSo
+    # Where precip values are under thresh but shouldn't. iw: indices wrong
+    iw = np.where(ss[n_dry_sp:] < thresh)[0] + n_dry_sp
 
+    # More zeros in sim than in obs: need to create non-zero sims
     if iw.size > 0:
-        Os = np.sort(o)
-        # Linear mapping between Os and Ss if size don't match
-        iwO = np.ceil(o.size * iw.max() / s.size).astype(int)
+        so = np.sort(o)  # sorted o
+
+        # Linear mapping between sorted o and sorted s if size don't match
+        iw_max = np.ceil(o.size * iw.max() / s.size).astype(int)
+
         # Values in obs corresponding to small precips
-        auxo = Os[ndO : iwO + 1]
+        auxo = so[n_dry_o : iw_max + 1]
+
+        # Generate new values matching those small obs
         if np.unique(auxo).size > 6:
-            gamA, gamLoc, gamShape = gamma.fit(auxo)
-            Ss[ndSo : iw.max() + 1] = gamma.rvs(
-                gamA, loc=gamLoc, scale=gamShape, size=iw.size
-            )
+            params = gamma.fit(auxo)
+            ss[n_dry_sp : iw.max() + 1] = gamma.rvs(*params, size=iw.size)
         else:
-            Ss[ndSo : iw.max() + 1] = auxo.mean()
-        Ss = np.sort(Ss)
+            ss[
+                n_dry_sp : iw.max() + 1
+            ] = (
+                auxo.mean()
+            )  # Could fit a uniform distribution to avoid identical values.
+        ss = np.sort(ss)
 
-    if ndO > 0:
-        Ss[:ndSo] = 0
+    # Less zeros in sim than obs: simply set sim values to 0
+    if n_dry_o > 0:
+        ss[:n_dry_sp] = 0
 
-    ind_unsort = np.empty_like(ind_sort)
-    ind_unsort[ind_sort] = np.arange(ind_sort.size)
-
-    out = np.full_like(sm, np.nan)
-    out[~np.isnan(sm)] = Ss[ind_unsort]
+    # Reorder sim
+    out = np.empty_like(sm)
+    out[ind_sort] = ss
     return out
 
 
@@ -77,7 +91,8 @@ def _adjust_freq_group(gr, thresh=0, dim="time"):
 
 def adjust_freq(obs, sim, thresh, group):
     """
-    Adjust frequency of values under thresh of sim, based on obs
+    Adjust frequency of values under thresh of sim, based on obs.
+
 
     Parameters
     ----------
@@ -96,7 +111,8 @@ def adjust_freq(obs, sim, thresh, group):
 
     References
     ----------
-    Themeßl et al. (2012)
+    Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its
+    impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
     """
     return group_apply(
         _adjust_freq_group,

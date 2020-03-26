@@ -10,6 +10,7 @@ import xarray as xr
 
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
+from .utils import adjust_freq
 from .utils import apply_correction
 from .utils import broadcast
 from .utils import equally_spaced_nodes
@@ -28,6 +29,7 @@ def train(
     group="time.dayofyear",
     window=1,
     nq=40,
+    thresh=None,
     extrapolation="constant",
 ):
     """
@@ -54,6 +56,8 @@ def train(
       used with group `time.dayofyear` to increase the number of samples.
     nq : int
       Number of equally spaced quantile nodes. Limit nodes are added at both ends for extrapolation.
+    thresh : float, None
+      Value below which data for `y` is considered null (only used for multiplicative correction).
     extrapolation : {'constant', 'nan'}
       The type of extrapolation method used when predicting on values outside the range of 'x'. See
       `utils.extrapolate_qm`.
@@ -71,6 +75,10 @@ def train(
     https://doi.org/10.1175/JCLI-D-14-00754.1
    """
     q = equally_spaced_nodes(nq, eps=1e-6)
+
+    if kind == MULTIPLICATIVE and thresh is not None:
+        y = adjust_freq(y, x, thresh, group)
+
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
@@ -78,6 +86,8 @@ def train(
 
     # Reindex the correction factor so they can be interpolated from quantiles instead of CDF.
     xqm = reindex(qqm, xq, extrapolation)
+
+    # TODO: return the threshold for null values in x (and y I suppose)
     return xqm
 
 

@@ -46,6 +46,23 @@ class TestEQM:
         p = eqm.predict(sx, qm, interp=True)
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
+    def test_zeroes(self, series):
+        """Test method on datasets including zeros and identical values."""
+        u = np.random.rand(10000)
+        name = "pr"
+        kind = MULTIPLICATIVE
+
+        # Define distributions
+        xd = uniform(loc=0, scale=2)
+        yd = uniform(loc=0, scale=4)
+
+        # Generate random numbers with u so we get exact results for comparison
+        x = np.around(xd.ppf(u), 1)
+        y = np.around(yd.ppf(u), 1)
+
+        sx, sy = series(x, name), series(y, name)
+        eqm.train(sx, sy, kind=kind, group="time", nq=20, thresh=0.1)
+
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
         """

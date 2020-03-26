@@ -84,24 +84,33 @@ class TestReindex:
         np.testing.assert_array_equal(out.x, xq)
 
 
-def test_adjust_freq_1D_simple():
-    a = np.array([0, 0, 1, 2, 3, 4])
-    b = np.array([0, 0, 0, 1, 2, 3])
+def test_adjust_freq_1d_simple_nan():
+    a = np.array([0, 0, 1, np.nan, 3, 4])
+    b = np.array([0, 0, 0, 1, np.nan, 3])
 
     out = u._adjust_freq_1d(a, b, 1)
-    np.testing.assert_equal(out, [0, 0, 0, 2, 3, 4])
+    np.testing.assert_equal(out, [0, 0, 0, np.nan, 3, 4])
 
     out = u._adjust_freq_1d(b, a, 1)
-    np.testing.assert_equal(out, [0, 0, 1, 1, 2, 3])
+    np.testing.assert_equal(out, [0, 0, 1, 1, np.nan, 3])
 
 
-def test_adjust_freq_1D_dist():
+def test_adjust_freq_1d_dist():
     v = np.random.randint(1, 100, 1000).astype(float)
-    b = np.where(v < 30, v / 30, v)
-    a = np.where(v < 10, v / 30, v)
+    b = np.where(v < 30, v / 30, v)  # sim
+    a = np.where(v < 10, v / 30, v)  # obs
 
     out = u._adjust_freq_1d(b, a, 1)
-    np.testing.assert_array_less(0, out[(a >= 10) & (a < 30)])
+    np.testing.assert_array_less(1, out[(v >= 10) & (v < 30)])
+
+
+def test_adjust_freq_1d_dist_nan():
+    v = np.random.randint(1, 100, 1000).astype(float)
+    b = np.where(v < 40, v / 40, v)  # sim
+    a = np.where(v < 10, v / 30, np.where(v > 40, np.nan, v))  # obs
+
+    out = u._adjust_freq_1d(b, a, 1)
+    np.testing.assert_array_less(1, out[(v >= 10) & (v < 40)])
 
 
 def test_adjust_freq():
@@ -118,3 +127,5 @@ def test_adjust_freq():
         (probs < 1).groupby("time.month").sum().T,
         (prsim_ad < 1).groupby("time.month").sum(),
     )
+
+    u.adjust_freq(probs, prsim, 1, "time")
