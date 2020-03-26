@@ -6,6 +6,8 @@ History
 ------
 * Allow lazy units conversion
 * CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
+* Add utilities to merge attributes and update history in xclim.core.formatting
+* Ensembles : Allow alignment of datasets with same frequency but different offsets
 
 0.15.x (2020-03-12)
 -------------------

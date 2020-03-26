@@ -18,7 +18,9 @@ from boltons.funcutils import wraps
 from xclim.core import checks
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
+from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
+from xclim.core.formatting import update_history
 from xclim.core.units import convert_units_to
 from xclim.core.units import units
 from xclim.locales import get_local_attrs
@@ -131,16 +133,6 @@ class Indicator:
             ba = self._sig.bind(*args, **kwds)
             ba.apply_defaults()
 
-        # Get history and cell method attributes from source data
-        attrs = defaultdict(str)
-        for i in range(self._nvar):
-            p = self._parameters[i]
-            for attr in ["history", "cell_methods"]:
-                attrs[attr] += f"{p}: " if self._nvar > 1 else ""
-                attrs[attr] += getattr(ba.arguments[p], attr, "")
-                if attrs[attr]:
-                    attrs[attr] += "\n" if attr == "history" else " "
-
         # Update attributes
         out_attrs = self.format(self.cf_attrs, ba.arguments)
         for locale in LOCALES:
@@ -167,30 +159,33 @@ class Indicator:
             else:
                 cp[k] = v
 
-        from xclim import __version__
+        # Assume the first arguments are always the DataArray.
+        das = {
+            self._parameters[i]: ba.arguments.pop(self._parameters[i])
+            for i in range(self._nvar)
+        }
 
-        attrs[
-            "history"
-        ] += "[{:%Y-%m-%d %H:%M:%S}] {}: {}{} - xclim version: {}.".format(
-            dt.datetime.now(),
-            vname,
-            self.identifier,
-            ba.signature.replace(parameters=cp.values()),
-            __version__,
+        # Get history and cell method attributes from source data
+        attrs = defaultdict(str)
+        attrs["cell_methods"] = merge_attributes(
+            "cell_methods", new_line=" ", missing_str=None, **das
         )
-        attrs["cell_methods"] += out_attrs.pop("cell_methods", "")
+        if "cell_methods" in out_attrs:
+            attrs["cell_methods"] += " " + out_attrs.pop("cell_methods")
+        attrs["history"] = update_history(
+            f"{self.identifier}{ba.signature.replace(parameters=cp.values())}",
+            new_name=vname,
+            **das,
+        )
         attrs.update(out_attrs)
 
-        # Assume the first arguments are always the DataArray.
-        das = tuple(ba.arguments.pop(self._parameters[i]) for i in range(self._nvar))
-
         # Pre-computation validation checks
-        for da in das:
+        for da in das.values():
             self.validate(da)
-        self.cfprobe(*das)
+        self.cfprobe(*das.values())
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(*das, **ba.kwargs)
+        out = self.compute(**das, **ba.kwargs)
 
         # Convert to output units
         out = convert_units_to(out, self.units, self.context)
@@ -199,7 +194,7 @@ class Indicator:
         out.attrs.update(attrs)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
-        mba = signature(self.missing).bind(*das, **ba.arguments)
+        mba = signature(self.missing).bind(*das.values(), **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
         mask = self.missing(*mba.args, **mba.kwargs)
