@@ -19,8 +19,8 @@ def _adjust_freq_1d(sm, ob, thresh=0):
     ----------
     sm : np.array
     """
-    o = ob
-    s = sm
+    o = ob[~np.isnan(ob)]
+    s = sm[~np.isnan(sm)]
 
     # Frequency of values below threshold in obs
     n_dry_o = (o < thresh).sum()  # Number of dry days in obs
@@ -55,12 +55,13 @@ def _adjust_freq_1d(sm, ob, thresh=0):
         if np.unique(auxo).size > 6:
             params = gamma.fit(auxo)
             ss[n_dry_sp : iw.max() + 1] = gamma.rvs(*params, size=iw.size)
+            # Sometimes we generate values lower than sth... problematic ?
+            # if np.any(ss[n_dry_sp : iw.max() + 1] < sth):
+            #    raise ValueError
         else:
-            ss[
-                n_dry_sp : iw.max() + 1
-            ] = (
-                auxo.mean()
-            )  # Could fit a uniform distribution to avoid identical values.
+            ss[n_dry_sp : iw.max() + 1] = auxo.mean()
+
+        # TODO: This additional sort wrecks the original sorting order.
         ss = np.sort(ss)
 
     # Less zeros in sim than obs: simply set sim values to 0
@@ -68,8 +69,10 @@ def _adjust_freq_1d(sm, ob, thresh=0):
         ss[:n_dry_sp] = 0
 
     # Reorder sim
-    out = np.empty_like(sm)
-    out[ind_sort] = ss
+    out = np.full_like(sm, np.nan)
+    ind_unsort = np.empty_like(ind_sort)
+    ind_unsort[ind_sort] = np.arange(ind_sort.size)
+    out[~np.isnan(sm)] = ss[ind_unsort]
     return out
 
 

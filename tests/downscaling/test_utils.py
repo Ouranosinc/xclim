@@ -101,16 +101,25 @@ def test_adjust_freq_1d_dist():
     a = np.where(v < 10, v / 30, v)  # obs
 
     out = u._adjust_freq_1d(b, a, 1)
+
+    # The threshold we should check against is the corresponding threshold for b, not 1.
     np.testing.assert_array_less(1, out[(v >= 10) & (v < 30)])
+    np.testing.assert_array_equal(out[v >= 30], a[v >= 30])
 
 
 def test_adjust_freq_1d_dist_nan():
     v = np.random.randint(1, 100, 1000).astype(float)
-    b = np.where(v < 40, v / 40, v)  # sim
-    a = np.where(v < 10, v / 30, np.where(v > 40, np.nan, v))  # obs
+    b = np.where(v < 40, v / 40, v)  # sim 40% under thresh
+    a = np.where(v < 10, v / 30, v)  # obs 10% under thresh
+    # a[-1:] = np.nan  # 20 % under thresh when discounting nans
 
     out = u._adjust_freq_1d(b, a, 1)
-    np.testing.assert_array_less(1, out[(v >= 10) & (v < 40)])
+
+    # Some of these could be lower than tresh because they are randomly generated.
+    np.testing.assert_array_less(1, out[(a >= 10) & (a < 40)])
+
+    # Some of these could have been set to 0 due to the nans
+    np.testing.assert_array_equal(out[a >= 40], a[a >= 40])
 
 
 def test_adjust_freq():
