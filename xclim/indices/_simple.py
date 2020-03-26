@@ -414,7 +414,7 @@ def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     group = (tasmin < frz).resample(time=freq)
-    return group.apply(rl.longest_run, dim="time")
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("days", tasmin="[temperature]")

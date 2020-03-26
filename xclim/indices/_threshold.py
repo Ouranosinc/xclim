@@ -89,7 +89,7 @@ def cold_spell_days(
     over = tas < t
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count, window=window, dim="time")
+    return group.map(rl.windowed_run_count, window=window, dim="time")
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
@@ -223,7 +223,7 @@ def maximum_consecutive_wet_days(
     thresh = convert_units_to(thresh, pr, "hydro")
 
     group = (pr > thresh).resample(time=freq)
-    return group.apply(rl.longest_run, dim="time")
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -458,7 +458,7 @@ def growing_season_length(
     )
 
 
-@declare_units("days", tas="[temperature]", thresh="[temperature]")
+@declare_units("", tas="[temperature]", thresh="[temperature]")
 def last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
@@ -533,7 +533,7 @@ def heat_wave_index(
     over = tasmax > thresh
     group = over.resample(time=freq)
 
-    return group.apply(rl.windowed_run_count, window=window, dim="time")
+    return group.map(rl.windowed_run_count, window=window, dim="time")
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -628,7 +628,7 @@ def hot_spell_max_length(
 
     cond = tasmax > thresh_tasmax
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run, dim="time")
+    max_l = group.map(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
 
 
@@ -686,7 +686,7 @@ def hot_spell_frequency(
 
     cond = tasmax > thresh_tasmax
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim="time")
+    return group.map(rl.windowed_run_events, window=window, dim="time")
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -901,7 +901,7 @@ def maximum_consecutive_dry_days(
     t = convert_units_to(thresh, pr, "hydro")
     group = (pr < t).resample(time=freq)
 
-    return group.apply(rl.longest_run, dim="time")
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -944,7 +944,7 @@ def maximum_consecutive_frost_free_days(
     t = convert_units_to(thresh, tasmin)
     group = (tasmin > t).resample(time=freq)
 
-    return group.apply(rl.longest_run, dim="time")
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
@@ -987,7 +987,7 @@ def maximum_consecutive_tx_days(
     t = convert_units_to(thresh, tasmax)
     group = (tasmax > t).resample(time=freq)
 
-    return group.apply(rl.longest_run, dim="time")
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
