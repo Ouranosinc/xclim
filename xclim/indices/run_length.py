@@ -248,7 +248,10 @@ def first_run(
         if isinstance(coord, str):
             crd = getattr(crd.dt, coord)
 
-        return lazy_indexing(crd, out)
+        out = lazy_indexing(crd, out)
+
+    if dim in out:
+        out = out.drop_vars(dim)
 
     return out
 
@@ -321,30 +324,20 @@ def run_length_with_date(
     """
     include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
 
-    def _crld(rlda, rlwindow, rldoy, rldim):
-        mid_index = np.where(rlda.time.dt.dayofyear == rldoy)[0]
-        if (
-            mid_index.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
-            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
-            all_nans.attrs = {}
-            return all_nans
-        end = first_run(
-            (~rlda).where(rlda.time >= rlda.time[mid_index][0]),
-            window=rlwindow,
-            dim=rldim,
-        )
-        beg = first_run(rlda, window=rlwindow, dim=rldim)
-        sl = end - beg
-        sl = xr.where(
-            beg.isnull() & end.notnull(), 0, sl
-        )  # If series is never triggered
-        sl = xr.where(
-            beg.notnull() & end.isnull(), rlda.time.size - beg, sl
-        )  # If series is not ended by end of resample time frequency
-        return sl.where(sl >= 0)
+    mid_index = np.where(da.time.dt.dayofyear == include_date)[0]
+    if mid_index.size == 0:  # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
-    return _crld(rlda=da, rlwindow=window, rldoy=include_date, rldim=dim)
+    end = first_run(
+        (~da).where(da.time >= da.time[mid_index][0]), window=window, dim=dim,
+    )
+    beg = first_run(da, window=window, dim=dim)
+    sl = end - beg
+    sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
+    sl = xr.where(
+        beg.notnull() & end.isnull(), da.time.size - beg, sl
+    )  # If series is not ended by end of resample time frequency
+    return sl.where(sl >= 0)
 
 
 def run_end_after_date(
@@ -378,29 +371,21 @@ def run_end_after_date(
     """
     after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
 
-    def _cred(rlda, rlwindow, rldoy, rldim, rlcoord):
-        mid_idx = np.where(rlda.time.dt.dayofyear == rldoy)[0]
-        if (
-            mid_idx.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
-            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
-            all_nans.attrs = {}
-            return all_nans
-        end = first_run(
-            (~rlda).where(rlda.time >= rlda.time[mid_idx][0]),
-            window=rlwindow,
-            dim=rldim,
-            coord=rlcoord,
-        )
-        beg = first_run(
-            rlda.where(rlda.time < rlda.time[mid_idx][0]), window=rlwindow, dim=rldim,
-        )
-        end = xr.where(
-            end.isnull() & beg.notnull(), rlda.time.isel(time=-1).dt.dayofyear, end
-        )
-        return end.where(beg.notnull())
+    mid_idx = np.where(da.time.dt.dayofyear == after_date)[0]
+    if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
-    return _cred(rlda=da, rlwindow=window, rldoy=after_date, rldim=dim, rlcoord=coord)
+    end = first_run(
+        (~da).where(da.time >= da.time[mid_idx][0]),
+        window=window,
+        dim=dim,
+        coord=coord,
+    )
+    beg = first_run(da.where(da.time < da.time[mid_idx][0]), window=window, dim=dim)
+    end = xr.where(
+        end.isnull() & beg.notnull(), da.time.isel(time=-1).dt.dayofyear, end
+    )
+    return end.where(beg.notnull())
 
 
 def last_run_before_date(
@@ -434,20 +419,12 @@ def last_run_before_date(
     """
     before_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
 
-    def _clrbd(rlda, rlwindow, rlbefore_date, rldim, rlcoord):
-        mid_idx = np.where(rlda.time.dt.dayofyear == rlbefore_date)[0]
-        if (
-            mid_idx.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
-            all_nans = xr.full_like(rlda.isel(time=0), np.nan)
-            all_nans.attrs = dict()
-            return all_nans
-        run = rlda.where(rlda.time <= rlda.time[mid_idx][0])
-        return last_run(run, window=rlwindow, dim=rldim, coord=rlcoord)
+    mid_idx = np.where(da.time.dt.dayofyear == before_date)[0]
+    if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
-    return _clrbd(
-        rlda=da, rlwindow=window, rlbefore_date=before_date, rldim=dim, rlcoord=coord
-    )
+    run = da.where(da.time <= da.time[mid_idx][0])
+    return last_run(run, window=window, dim=dim, coord=coord)
 
 
 def rle_1d(

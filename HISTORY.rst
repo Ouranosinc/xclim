@@ -8,6 +8,8 @@ History
 * CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
 * Add utilities to merge attributes and update history in xclim.core.formatting
 * Ensembles : Allow alignment of datasets with same frequency but different offsets
+* Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
+* Remove deepcopy from subset.subset_shape to improve memory usage.
 
 0.15.x (2020-03-12)
 -------------------

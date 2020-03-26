@@ -1,4 +1,3 @@
-import copy
 import logging
 import warnings
 from functools import wraps
@@ -458,11 +457,10 @@ def subset_shape(
     """
     wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
-    # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
     if isinstance(ds, xarray.DataArray):
-        ds_copy = copy.deepcopy(ds._to_temp_dataset())
+        ds_copy = ds._to_temp_dataset()
     else:
-        ds_copy = copy.deepcopy(ds)
+        ds_copy = ds.copy()
 
     if isinstance(shape, gpd.GeoDataFrame):
         poly = shape.copy()
