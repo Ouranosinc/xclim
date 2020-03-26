@@ -12,6 +12,8 @@ import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
+from xclim.core.formatting import update_history
+
 # Avoid having to include matplotlib in xclim requirements
 try:
     import matplotlib.pyplot as plt
@@ -25,8 +27,9 @@ except ImportError:
 
 
 def create_ensemble(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
+    resample_freq: Optional[str] = None,
     **xr_kwargs,
 ) -> xr.Dataset:
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
@@ -41,12 +44,17 @@ def create_ensemble(
     Parameters
     ----------
     datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray DataSet objects . If mf_flag is True, ncfiles should be a list of lists where
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
       each sublist contains input .nc files of an xarray multifile Dataset.
+      If DataArray object are passed, they should have a name in order to be transformed into Datasets.
 
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
       Only applicable when "datasets" is a sequence of file paths.
+
+    resample_freq : Optional[str]
+      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
 
     xr_kwargs :
       Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
@@ -75,9 +83,7 @@ def create_ensemble(
     >>> datasets.append(glob.glob('/dir2/*.nc'))
     >>> ens = ensembles.create_ensemble(datasets, mf_flag=True)
     """
-    time_flag, time_all = _ens_checktimes(datasets, mf_flag, **xr_kwargs)
-
-    ds = _ens_align_datasets(datasets, mf_flag, time_flag, time_all, **xr_kwargs)
+    ds = _ens_align_datasets(datasets, mf_flag, resample_freq, **xr_kwargs)
 
     dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
 
@@ -116,7 +122,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     >>> ens_mean_std = ensembles.ensemble_mean_std_max_min(ens)
     >>> print(ens_mean_std['tas_mean'])
     """
-    ds_out = ens.drop_vars(names=set(ens.data_vars))
+    ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
 
         ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
@@ -133,7 +139,9 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
                     + vv.split("_")[-1]
                     + " of ensemble"
                 )
-
+    ds_out.attrs["history"] = update_history(
+        f"Computation of statistics on {ens.realization.size} ensemble members.", ds_out
+    )
     return ds_out
 
 
@@ -181,7 +189,7 @@ def ensemble_percentiles(
     >>> print(ens_percs['tas_p25'])
     """
 
-    ds_out = ens.drop_vars(names=set(ens.data_vars))
+    ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
         # Percentile calculation forbids any chunks along realization
         if len(ens.chunks.get("realization", [])) > 1:
@@ -199,7 +207,7 @@ def ensemble_percentiles(
                     key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
                 )
                 var = ens[v].chunk(
-                    {"realization": -1, chkDim: len(chks) * ens.realization.size,}
+                    {"realization": -1, chkDim: len(chks) * ens.realization.size}
                 )
             else:
                 var = ens[v].chunk({"realization": -1})
@@ -228,93 +236,32 @@ def ensemble_percentiles(
             else:
                 ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
 
+    ds_out.attrs["history"] = update_history(
+        f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+        ds_out,
+    )
     return ds_out
-
-
-def _ens_checktimes(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
-    mf_flag: bool = False,
-    **xr_kwargs,
-) -> Tuple[bool, np.ndarray]:
-    """Check list of xarray Datasets and determine if they hava a time dimension. If present, returns the
-    maximum time-step interval of all input files.
-
-    Parameters
-    ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
-      List of netcdf file paths or xr.DataSet objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset.
-    mf_flag : bool
-      If True climate simulations are treated as xarray multifile Datasets before concatenation.
-      Only applicable when :datasets: is a sequence of file paths.
-    xr_kwargs :
-      Any keyword arguments to be given to xarray when opening the files.
-
-    Returns
-    -------
-    bool
-      True if time dimension is present in the dataset list; Otherwise False.
-    array of datetime64
-      Series of unique time-steps covering all input datasets.
-    """
-    xr_kwargs.setdefault("decode_times", False)
-    time_flag = False
-    time_all = []
-    for n in datasets:
-        if mf_flag:
-            xr_kwargs.setdefault("chunks", {"time": 10})
-            ds = xr.open_mfdataset(n, **xr_kwargs)
-        else:
-            if isinstance(n, xr.Dataset):
-                ds = n
-            else:
-                ds = xr.open_dataset(n, **xr_kwargs)
-
-        if hasattr(ds, "time"):
-            ds["time"] = xr.decode_cf(ds).time
-            time_flag = True
-
-            # get times - use common
-            time1 = pd.to_datetime(
-                {
-                    "year": ds.time.dt.year,
-                    "month": ds.time.dt.month,
-                    "day": ds.time.dt.day,
-                }
-            )
-
-            time_all.extend(time1.values)
-    if time_flag:
-        time_all = pd.unique(time_all)
-        time_all.sort()
-    else:
-        time_all = None
-    return time_flag, time_all
 
 
 def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
-    time_flag: bool = False,
-    time_all: np.array = None,
+    resample_freq: str = None,
     **xr_kwargs,
 ) -> List[xr.Dataset]:
-    """Create a list of aligned xarray Datasets for ensemble Dataset creation. If (time_flag == True), input Datasets
-    are given a common time dimension defined by "time_all". Datasets not covering the entire time span have their data
-    padded with NaN values
+    """Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray Dataset objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset.
+    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]]
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
+      each sublist contains input .nc files of an xarray multifile Dataset. DataArrays should have a name so they can be converted to datasets.
     mf_flag : bool
       If True climate simulations are treated as xarray multifile datasets before concatenation.
       Only applicable when datasets is a sequence of file paths.
-    time_flag : bool
-      True if time dimension is present among the "datasets"; Otherwise false.
-    time_all : np.array
-      Series of unique time-steps covering all input Datasets.
+    resample_freq : Optional[str]
+      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
@@ -326,39 +273,33 @@ def _ens_align_datasets(
     xr_kwargs.setdefault("decode_times", False)
 
     ds_all = []
-    for n in datasets:
+    for i, n in enumerate(datasets):
         logging.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
                 ds = n
+            elif isinstance(n, xr.DataArray):
+                ds = n.to_dataset()
             else:
                 ds = xr.open_dataset(n, **xr_kwargs)
 
-        if time_flag:
+        if "time" in ds.coords:
+            time = xr.decode_cf(ds).time
 
-            cal1 = xr.decode_cf(ds).time
-            ds.drop_vars("time")
+            if resample_freq is not None:
+                counts = time.resample(time=resample_freq).count()
+                if any(counts > 1):
+                    raise ValueError(
+                        f"Alignment of dataset #{i:02d} failed : its time axis cannot be resampled to freq {resample_freq}."
+                    )
+                time = counts.time
+
             ds["time"] = pd.to_datetime(
-                {
-                    "year": cal1.time.dt.year,
-                    "month": cal1.time.dt.month,
-                    "day": cal1.time.dt.day,
-                }
+                {"year": time.dt.year, "month": time.dt.month, "day": time.dt.day}
             ).values
 
-            # if dataset does not have the same time steps pad with nans
-            if ds.time.min() > time_all.min() or ds.time.max() < time_all.max():
-                coords = {}
-                for c in [c for c in ds.coords if "time" not in c]:
-                    coords[c] = ds.coords[c]
-                coords["time"] = time_all
-                ds_tmp = xr.Dataset(data_vars=None, coords=coords, attrs=ds.attrs)
-                for v in ds.data_vars:
-                    ds_tmp[v] = ds[v]
-                ds = ds_tmp
-            # ds = ds.where((ds.time >= start1) & (ds.time <= end1), drop=True)
         ds_all.append(ds)
 
     return ds_all
