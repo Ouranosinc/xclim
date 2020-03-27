@@ -38,13 +38,13 @@ class TestDQM:
         sx, sy = series(x, name), series(y, name)
         qm = dqm.train(sx, sy, kind=kind, group="time", nq=50)
 
-        q = qm.attrs["quantiles"]
+        q = qm.quantiles
         ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
         ey = yd.ppf(q)
         expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(qm[2:-2], expected[1:-1], 1)
+        np.testing.assert_array_almost_equal(qm.qf[1:-1], expected[1:-1], 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -53,7 +53,10 @@ class TestDQM:
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+    @pytest.mark.parametrize(
+        "spatial_dims", [None, {"lat": np.arange(20), "lon": np.arange(20)}]
+    )
+    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, spatial_dims):
         """
         Train on
         sim: U
@@ -75,16 +78,28 @@ class TestDQM:
 
         # Test train
         sx, sy = series(x, name), mon_series(y, name)
+
+        if spatial_dims:
+            sx = sx.expand_dims(**spatial_dims)
+            sy = sy.expand_dims(**spatial_dims)
+
         qm = dqm.train(sx, sy, kind=kind, group="time.month", nq=5)
-        mqm = qm.mean(dim="x")
+        mqm = qm.qf.mean(dim="quantiles")
 
         expected = apply_correction(mon_triangular, 4, kind)
+
+        if spatial_dims:
+            mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
         np.testing.assert_array_almost_equal(mqm, expected, 1)
 
         # Test predict
         trend = np.linspace(-0.2, 0.2, n) + (1 if kind == MULTIPLICATIVE else 0)
         ss = series(apply_correction(x, trend, kind), name)
         sy = mon_series(apply_correction(y, trend, kind), name)
+
+        if spatial_dims:
+            ss = ss.expand_dims(**spatial_dims)
+            sy = sy.expand_dims(**spatial_dims)
 
         p = dqm.predict(ss, qm)
         np.testing.assert_array_almost_equal(p, sy, 1)

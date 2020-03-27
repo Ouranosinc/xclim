@@ -11,7 +11,7 @@ from xclim.downscaling.utils import get_correction
 from xclim.downscaling.utils import MULTIPLICATIVE
 
 
-class TestDQM:
+class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
         """Train on
@@ -33,11 +33,11 @@ class TestDQM:
         sx, sy = series(x, name), series(y, name)
         qm = qdm.train(sx, sy, kind=kind, group="time", nq=10)
 
-        q = qm.coords["quantile"]
+        q = qm.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(qm, expected, 1)
+        np.testing.assert_array_almost_equal(qm.qf.T, expected, 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -69,13 +69,13 @@ class TestDQM:
         sx, sy = series(x, name), mon_series(y, name)
         qm = qdm.train(sx, sy, kind=kind, group="time.month", nq=40)
 
-        q = qm.coords["quantile"]
+        q = qm.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
         expected = apply_correction(
             mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
         )
-        np.testing.assert_array_almost_equal(qm.sel(quantile=q), expected, 1)
+        np.testing.assert_array_almost_equal(qm.qf.sel(quantiles=q).T, expected, 1)
 
         # Test predict
         p = qdm.predict(sx, qm)

@@ -14,6 +14,7 @@ from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import broadcast
 from .utils import equally_spaced_nodes
+from .utils import extrapolate_qm
 from .utils import get_correction
 from .utils import group_apply
 from .utils import jitter_under_thresh
@@ -88,8 +89,16 @@ def train(
     yq = group_apply("quantile", y, group, window=window, q=q)
 
     # Compute quantile correction factors
-    qm = get_correction(xq, yq, kind)  # qy / qx or qy - qx
+    qf = get_correction(xq, yq, kind)  # qy / qx or qy - qx
 
+    qm = xr.Dataset(
+        data_vars={"xq": xq, "qf": qf},
+        attrs={"group": group, "group_window": window, "kind": kind},
+    )
+    qm = qm.rename(quantile="quantiles")
+
+    # Add bounds for extrapolation
+    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
     return qm
 
 
@@ -135,14 +144,14 @@ def predict(
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic_bounds(qm, prop)
+        qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
 
     # Compute quantile of x
     xq = group_apply(xr.DataArray.rank, x, qm.group, window=window, pct=True)
 
     # Quantile mapping
-    sel = {"quantile": xq}
-    qf = broadcast(qm, x, interp, sel)
+    sel = {"quantiles": xq}
+    qf = broadcast(qm.qf, x, interp, sel)
     out = apply_correction(x, qf, qm.kind)
 
     out.attrs["bias_corrected"] = True
