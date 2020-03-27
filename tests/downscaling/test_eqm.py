@@ -43,7 +43,7 @@ class TestEQM:
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        p = eqm.predict(sx, qm, interp=True)
+        p = eqm.predict(sx, qm, interp="linear")
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
     def test_zeroes(self, series):

@@ -42,7 +42,7 @@ class TestQDM:
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        p = qdm.predict(sx, qm, interp=True)
+        p = qdm.predict(sx, qm, interp="linear")
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])

@@ -6,6 +6,8 @@ Array `x` is scaled by an additive or multiplicative factor so that the mean of 
 factors can be computed independently per season, month or day of the year.
 
 """
+import xarray as xr
+
 from .utils import add_cyclic_bounds
 from .utils import apply_correction
 from .utils import broadcast
@@ -36,8 +38,10 @@ def train(x, y, group="time.month", kind="+", window=1):
 
     Returns
     -------
-    xr.DataArray
-      The correction factors indexed by group properties.
+    xr.Dataset with variables:
+        - qf : The correction factors indexed by group properties and quantiles.
+        The type of correction used is stored in the "kind" attribute and grouping informations are in the
+        "group" and "group_window" attributes.
 
     References
     ----------
@@ -47,10 +51,13 @@ def train(x, y, group="time.month", kind="+", window=1):
     sx = group_apply("mean", x, group, window)
     sy = group_apply("mean", y, group, window)
 
-    return get_correction(sx, sy, kind)
+    return xr.Dataset(
+        data_vars={"qf": get_correction(sx, sy, kind)},
+        attrs={"group": group, "group_window": window, "kind": kind},
+    )
 
 
-def predict(x, cf, interp=False):
+def predict(x, cf, interp: str = "nearest"):
     """
     Return a bias-corrected timeseries using the scaling method.
 
@@ -62,8 +69,8 @@ def predict(x, cf, interp=False):
       Time series to be bias-corrected, usually a model output.
     qm : xr.DataArray
       Correction factors indexed by group properties, as given by the `scaling.train` function.
-    interp : bool
-      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method used to find the correction factors from the quantile map. See utils.broadcast.
 
     Returns
     -------
@@ -73,10 +80,10 @@ def predict(x, cf, interp=False):
     dim, prop = parse_group(cf.group)
 
     # Add cyclical values to the scaling factors for interpolation
-    if interp:
-        cf = add_cyclic_bounds(cf, prop)
+    if interp != "nearest" and prop is not None:
+        cf["qf"] = add_cyclic_bounds(cf.qf, prop, cyclic_coords=False)
 
-    factor = broadcast(cf, x, interp)
+    factor = broadcast(cf.qf, x, group=cf.group, interp=interp)
 
     out = apply_correction(x, factor, cf.kind)
     out.attrs["bias_corrected"] = True

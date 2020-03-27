@@ -1,14 +1,12 @@
 # Tests for detrended quantile mapping
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 from scipy.stats import norm
 from scipy.stats import uniform
 
 from xclim.downscaling import dqm
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
-from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import get_correction
 from xclim.downscaling.utils import invert
 from xclim.downscaling.utils import MULTIPLICATIVE
@@ -49,7 +47,7 @@ class TestDQM:
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        p = dqm.predict(sx, qm, interp=True)
+        p = dqm.predict(sx, qm, interp="linear")
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
