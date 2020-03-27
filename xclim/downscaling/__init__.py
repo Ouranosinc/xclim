@@ -7,6 +7,13 @@ This submodule provides tools for bias-correction and downscaling process on
 climate data using xarray. Once complete and usable, chances are that this
 submodule will move into its own package, so don't get attached too much.
 
+Available methods:
+- Scaling
+- Local intensity scaling (LOCI)
+- Empirical quantile mapping
+- Quantile delta mapping
+
+
 
 Logic:
 
@@ -32,3 +39,8 @@ The Mapping objects perform a fit from obs and sim, the reference observation an
 Then, the predict() method takes in fut, the simulated climate for the projection period, that must have a "time" and a "group" coord, as given by the add_group_axis() grouping method.
 It returns the corrected fut timeseries,
 """
+import xarray
+from xarray.tests import LooseVersion
+
+if LooseVersion(xarray.__version__) <= "0.15.1":
+    raise ImportError("Update xarray to master to use the downscaling package.")
