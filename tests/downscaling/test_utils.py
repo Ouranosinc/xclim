@@ -34,54 +34,54 @@ def test_extrapolate_qm(make_qm, method):
     q, x = u.extrapolate_qm(qm, xq, method=method)
 
     assert isinstance(q, xr.DataArray)
-    assert isinstance(q, xr.DataArray)
+    assert isinstance(x, xr.DataArray)
 
 
-class TestReindex:
-    def test_month(self, make_qm):
-        qm = make_qm(np.arange(6).reshape(2, 3))
-        xq = make_qm(np.arange(6).reshape(2, 3))
+# class TestReindex:
+#     def test_month(self, make_qm):
+#         qm = make_qm(np.arange(6).reshape(2, 3))
+#         xq = make_qm(np.arange(6).reshape(2, 3))
 
-        out = u.reindex(qm, xq, extrapolation="nan")
-        np.testing.assert_array_equal(
-            out.T,
-            [
-                [0, np.nan, np.nan],
-                [1, 1, np.nan],
-                [2, 2, 2],
-                [3, 3, 3],
-                [np.nan, 4, 4],
-                [np.nan, np.nan, 5],
-            ],
-        )
+#         out = u.reindex(qm, xq, extrapolation="nan")
+#         np.testing.assert_array_equal(
+#             out.T,
+#             [
+#                 [0, np.nan, np.nan],
+#                 [1, 1, np.nan],
+#                 [2, 2, 2],
+#                 [3, 3, 3],
+#                 [np.nan, 4, 4],
+#                 [np.nan, np.nan, 5],
+#             ],
+#         )
 
-        out = u.reindex(qm, xq, extrapolation="constant")
-        np.testing.assert_array_equal(
-            out.T,
-            [
-                [0, 1, 2],
-                [0, 1, 2],
-                [1, 1, 2],
-                [2, 2, 2],
-                [3, 3, 3],
-                [3, 4, 4],
-                [3, 4, 5],
-                [3, 4, 5],
-            ],
-        )
+#         out = u.reindex(qm, xq, extrapolation="constant")
+#         np.testing.assert_array_equal(
+#             out.T,
+#             [
+#                 [0, 1, 2],
+#                 [0, 1, 2],
+#                 [1, 1, 2],
+#                 [2, 2, 2],
+#                 [3, 3, 3],
+#                 [3, 4, 4],
+#                 [3, 4, 5],
+#                 [3, 4, 5],
+#             ],
+#         )
 
-        assert out.dims == ("month", "x")
-        assert isinstance(out.attrs["quantiles"], np.ndarray)
+#         assert out.dims == ("month", "x")
+#         assert isinstance(out.attrs["quantiles"], np.ndarray)
 
-    def test_time(self, make_qm):
-        qm = make_qm(np.arange(4), "time")
-        xq = make_qm(np.arange(4), "time")
+#     def test_time(self, make_qm):
+#         qm = make_qm(np.arange(4), "time")
+#         xq = make_qm(np.arange(4), "time")
 
-        out = u.reindex(qm, xq, extrapolation="nan")
-        assert out.dims == ("x",)
-        assert isinstance(out.attrs["quantiles"], np.ndarray)
+#         out = u.reindex(qm, xq, extrapolation="nan")
+#         assert out.dims == ("x",)
+#         assert isinstance(out.attrs["quantiles"], np.ndarray)
 
-        np.testing.assert_array_equal(out.x, xq)
+#         np.testing.assert_array_equal(out.x, xq)
 
 
 def test_adjust_freq_1D_simple():
@@ -101,7 +101,7 @@ def test_adjust_freq_1D_dist():
     a = np.where(v < 10, v / 30, v)
 
     out = u._adjust_freq_1d(b, a, 1)
-    np.testing.assert_array_less(0, out[(a >= 10) & (a < 30)])
+    np.testing.assert_array_less(1, out[(a >= 10) & (a < 30)])
 
 
 def test_adjust_freq():

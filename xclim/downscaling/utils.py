@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
+from scipy.interpolate import LinearNDInterpolator
 from scipy.stats import gamma
 
 
@@ -274,8 +275,7 @@ def equally_spaced_nodes(n, eps=1e-4):
     return sorted(np.append([eps, 1 - eps], q))
 
 
-# TODO: use xr.pad once it's implemented.
-def add_cyclic_bounds(da, att):
+def add_cyclic_bounds(da, att, cyclic_coords=True):
     """Reindex an array to include the last slice at the beginning
     and the first at the end.
 
@@ -287,15 +287,24 @@ def add_cyclic_bounds(da, att):
         An array or a dataset
     att : str
         The name of the coordinate to make cyclic
+    cyclic_coords : bool
+        If True, the coordinates are made cyclic as well,
+        if False, the new values are guessed using the same step as their neighbour.
 
     Returns
     -------
     Union[xr.DataArray, xr.Dataset]
         da but with the last element along att prepended and the last one appended.
     """
-    gc = da.coords[att]
-    i = np.concatenate(([-1], range(len(gc)), [0]))
-    qmf = da.reindex({att: gc[i]})
+    qmf = da.pad({att: (1, 1)}, mode="wrap")
+
+    if not cyclic_coords:
+        vals = qmf.coords[att].values
+        diff = da.coods[att].diff(att)
+        vals[0] = vals[1] - diff[0]
+        vals[-1] = vals[-2] + diff[-1]
+        qmf = qmf.assign_coords({att: vals})
+        qmf[att].attrs.update(da.coords[att].attrs)
     return qmf
 
 
@@ -346,63 +355,63 @@ def get_index(da, dim, prop, interp):
     return xi.expand_dims(**{k: v for (k, v) in da.coords.items() if k != dim})
 
 
-def reindex(qm, xq, extrapolation="constant"):
-    """Create a mapping between x values and y values based on their respective quantiles.
+# def reindex(qm, xq, extrapolation="constant"):
+#     """Create a mapping between x values and y values based on their respective quantiles.
 
-    Parameters
-    ----------
-    qm : xr.DataArray
-      Quantile correction factors.
-    xq : xr.DataArray
-      Quantiles for source array (historical simulation).
-    extrapolation : {"constant"}
-      Method to extrapolate outside the estimated quantiles.
+#     Parameters
+#     ----------
+#     qm : xr.DataArray
+#       Quantile correction factors.
+#     xq : xr.DataArray
+#       Quantiles for source array (historical simulation).
+#     extrapolation : {"constant"}
+#       Method to extrapolate outside the estimated quantiles.
 
-    Returns
-    -------
-    xr.DataArray
-      Quantile correction factors whose quantile coordinates have been replaced by corresponding x values.
+#     Returns
+#     -------
+#     xr.DataArray
+#       Quantile correction factors whose quantile coordinates have been replaced by corresponding x values.
 
-    Notes
-    -----
-    The original qm object has `quantile` coordinates and some grouping coordinate (e.g. month). This function
-    reindexes the array based on the values of x, instead of the quantiles. Since the x values are different from
-    group to group, the index can get fairly large.
-    """
-    dim, prop = parse_group(xq.group)
-    if prop is None:
-        q, x = extrapolate_qm(qm, xq, extrapolation)
-        out = q.rename({"quantile": "x"}).assign_coords(x=x.values)
+#     Notes
+#     -----
+#     The original qm object has `quantile` coordinates and some grouping coordinate (e.g. month). This function
+#     reindexes the array based on the values of x, instead of the quantiles. Since the x values are different from
+#     group to group, the index can get fairly large.
+#     """
+#     dim, prop = parse_group(xq.group)
+#     if prop is None:
+#         q, x = extrapolate_qm(qm, xq, extrapolation)
+#         out = q.rename({"quantile": "x"}).assign_coords(x=x.values)
 
-    else:
-        # Interpolation from quantile to values.
-        def func(d):
-            q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
-            return xr.DataArray(
-                dims="x",
-                data=np.interp(newx, x, q, left=np.nan, right=np.nan),
-                coords={"x": newx},
-            )
+#     else:
+#         # Interpolation from quantile to values.
+#         def func(d):
+#             q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
+#             return xr.DataArray(
+#                 dims="x",
+#                 data=np.interp(newx, x, q, left=np.nan, right=np.nan),
+#                 coords={"x": newx},
+#             )
 
-        ds = xr.Dataset({"xq": xq, "qm": qm})
-        gr = ds.groupby(prop)
+#         ds = xr.Dataset({"xq": xq, "qm": qm})
+#         gr = ds.groupby(prop)
 
-        # X coordinates common to all groupings
-        xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
-        newx = np.unique(np.concatenate(xs))
-        out = gr.map(func, shortcut=True)
+#         # X coordinates common to all groupings
+#         xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
+#         newx = np.unique(np.concatenate(xs))
+#         out = gr.map(func, shortcut=True)
 
-    out.attrs = qm.attrs
-    out.attrs["quantiles"] = qm.coords["quantile"].values
-    return out
+#     out.attrs = qm.attrs
+#     out.attrs["quantiles"] = qm.coords["quantile"].values
+#     return out
 
 
-def extrapolate_qm(qm, xq, method="constant"):
+def extrapolate_qm(qf, xq, method="constant"):
     """Extrapolate quantile correction factors beyond the computed quantiles.
 
     Parameters
     ----------
-    qm : xr.DataArray
+    qf : xr.DataArray
       Correction factors over `quantile` coordinates.
     xq : xr.DataArray
       Values at each `quantile`.
@@ -411,7 +420,7 @@ def extrapolate_qm(qm, xq, method="constant"):
 
     Returns
     -------
-    DataArray, DataArray
+    xr.Dataset
         Extrapolated correction factors and x-values.
 
     Notes
@@ -425,12 +434,12 @@ def extrapolate_qm(qm, xq, method="constant"):
       Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     """
     if method == "nan":
-        return qm, xq
+        return qf, xq
 
     elif method == "constant":
         q_l, q_r = [0], [1]
         x_l, x_r = [-np.inf], [np.inf]
-        qm_l, qm_r = qm.isel(quantile=0), qm.isel(quantile=-1)
+        qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
 
     elif (
         method == "constant_iqr"
@@ -443,13 +452,12 @@ def extrapolate_qm(qm, xq, method="constant"):
     else:
         raise ValueError
 
-    qm = add_endpoints(qm, left=[x_l, qm_l], right=[x_r, qm_r])
+    qf = add_endpoints(qf, left=[q_l, qf_l], right=[q_r, qf_r])
     xq = add_endpoints(xq, left=[q_l, x_l], right=[q_r, x_r])
+    return qf, xq
 
-    return qm, xq
 
-
-def add_endpoints(da, left, right, dim="quantile"):
+def add_endpoints(da, left, right, dim="quantiles"):
     """Add left and right endpoints to a DataArray.
 
     Parameters
@@ -466,9 +474,9 @@ def add_endpoints(da, left, right, dim="quantile"):
     elems = []
     for (x, y) in (left, right):
         if isinstance(y, xr.DataArray):
-            if "quantile" not in y.dims:
-                y = y.expand_dims("quantile")
-            y.assign_coords(quantile=x)
+            if "quantiles" not in y.dims:
+                y = y.expand_dims("quantiles")
+            y = y.assign_coords(quantiles=x)
         else:
             y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
         elems.append(y)
@@ -476,17 +484,42 @@ def add_endpoints(da, left, right, dim="quantile"):
     return xr.concat((l, da, r), dim=dim)
 
 
-# TODO: Would need to set right and left values.
-def interp_quantiles(x, g, xq, yq, dim="time", group=None, method="linear"):
-    def _interp_quantiles_2D(newx, newg, oldx, oldg, oldy):
-        if newx.ndim > 1:
-            out = np.empty_like(newx)
-            for idx in np.ndindex(*newx.shape[:-1]):
-                out[idx] = _interp_quantiles_2D(
-                    newx[idx], newg, oldx[idx], oldg, oldy[idx]
-                )
-            return out
+def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
+    """Interpolate values of yq on new values of x.
 
+    Interpolate in 2D if grouping is used, in 1D otherwise.
+
+    Parameters
+    ----------
+    newx : xr.DataArray
+        The values at wich to evalute `yq`. If `group` has group information,
+        `new` should have a coordinate with the same name as the group name
+         In that case, 2D interpolation is used.
+    xq, yq : xr.DataArray
+        coordinates and values on which to interpolate. The interpolation is done
+        along the "quantiles" dimension if `group` has no group information.
+        If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
+    group : str
+        The dimension and grouping information. (ex: "time" or "time.month").
+        Defaults to the "group" attribute of xq, or "time" if there is none.
+    method : str
+        The interpolation method.
+    """
+    dim, prop = parse_group(group or xq.attrs.get("group", "time"))
+    if prop is None:
+        return xr.apply_ufunc(
+            np.interp,
+            newx,
+            xq,
+            yq,
+            input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
+            output_core_dims=[[dim]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[np.float],
+        )
+
+    def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
         return griddata(
             (oldx.flatten(), oldg.flatten()),
             oldy.flatten(),
@@ -494,21 +527,25 @@ def interp_quantiles(x, g, xq, yq, dim="time", group=None, method="linear"):
             method=method,
         )
 
+    newg = newx[prop]
+    oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
+
     return xr.apply_ufunc(
         _interp_quantiles_2D,
-        x,
-        g,
+        newx,
+        newg,
         xq,
-        xq[group].expand_dims(quantile=xq.coords["quantile"]),
         yq,
+        oldg,
         input_core_dims=[
             [dim],
             [dim],
-            [group, "quantile"],
-            [group, "quantile"],
-            [group, "quantile"],
+            [prop, "quantiles"],
+            [prop, "quantiles"],
+            [prop, "quantiles"],
         ],
         output_core_dims=[[dim]],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
     )

@@ -12,13 +12,15 @@ from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import broadcast
 from .utils import equally_spaced_nodes
+from .utils import extrapolate_qm
 from .utils import get_correction
+from .utils import get_index
 from .utils import group_apply
+from .utils import interp_on_quantiles
 from .utils import invert
 from .utils import jitter_under_thresh
 from .utils import MULTIPLICATIVE
 from .utils import parse_group
-from .utils import reindex
 
 
 def train(
@@ -64,9 +66,11 @@ def train(
 
     Returns
     -------
-    xr.DataArray
-      The correction factors indexed by group properties and value residuals (x/<x> or x-<x>). The type of correction
-      used is stored in the "kind" attribute, and the original quantiles in the "quantiles" attribute.
+    xr.Dataset with variables:
+        - qf : The correction factors indexed by group properties and quantiles.
+        - xqp : The quantile values residuals (x/<x> or x-<x>)
+        The type of correction used is stored in the "kind" attribute and grouping informations are in the
+        "group" and "group_window" attributes.
 
     References
     ----------
@@ -95,12 +99,17 @@ def train(
     xqp = apply_correction(xq, invert(mu_x, kind), kind)
 
     # Compute quantile correction factors
-    qm = get_correction(xqp, yq, kind)  # qy / qx or qy - qx
+    qf = get_correction(xqp, yq, kind)  # qy / qx or qy - qx
 
-    # Reindex the quantile correction factors with x'
-    xqm = reindex(qm, xqp, extrapolation)
+    qm = xr.Dataset(
+        data_vars={"xq": xqp, "qf": qf},
+        attrs={"group": group, "group_window": window, "kind": kind},
+    )
+    qm = qm.rename(quantile="quantiles")
 
-    return xqm
+    # Add bounds for extrapolation
+    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
+    return qm
 
 
 # TODO: Add `deg` parameter and associated tests.
@@ -116,7 +125,7 @@ def predict(
     ----------
     x : xr.DataArray
       Time series to be bias-corrected, usually a model output.
-    qm : xr.DataArray
+    qm : xr.Dataset
       Correction factors indexed by group properties and residuals of `x` over the training period, as given by the
       `dqm.train` function.
     mult_thresh : float, None
@@ -150,8 +159,9 @@ def predict(
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic_bounds(qm, prop)
-        mu_x = add_cyclic_bounds(mu_x, prop)
+        qm["xq"] = add_cyclic_bounds(qm.xq, prop, cyclic_coords=False)
+        qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
+        mu_x = add_cyclic_bounds(mu_x, prop, cyclic_coords=False)
 
     # Apply mean correction factor nx = x / <x>
     mfx = broadcast(mu_x, x, interp)
@@ -169,10 +179,18 @@ def predict(
     # Detrended
     nxt = apply_correction(nx, invert(x_trend, kind), kind)
 
+    if prop is not None:
+        nxt = nxt.assign_coords({prop: get_index(nxt, dim, prop, interp)})
+
     # Quantile mapping
-    sel = {"x": nxt}
-    qf = broadcast(qm, nxt, interp, sel)
-    corrected = apply_correction(nxt, qf, qm.kind)
+    qf = interp_on_quantiles(
+        nxt,
+        qm.xq,
+        qm.qf,
+        group=qm.attrs["group"],
+        method="linear" if interp else "nearest",
+    )
+    corrected = apply_correction(nxt, qf, kind)
 
     # Reapply trend
     out = apply_correction(corrected, x_trend, kind)

@@ -67,8 +67,8 @@ def series():
 def qm_month():
     return xr.DataArray(
         np.arange(5 * 12).reshape(5, 12),
-        dims=("quantile", "month"),
-        coords={"quantile": [0, 0.3, 0.5, 0.7, 1], "month": range(1, 13)},
+        dims=("quantiles", "month"),
+        coords={"quantiles": [0, 0.3, 0.5, 0.7, 1], "month": range(1, 13)},
         attrs={"group": "time.month", "window": 1},
     )
 
@@ -77,8 +77,8 @@ def qm_month():
 def qm_small():
     return xr.DataArray(
         np.arange(2 * 3).reshape(2, 3),
-        dims=("quantile", "month"),
-        coords={"quantile": [0.3, 0.7], "month": range(1, 4)},
+        dims=("quantiles", "month"),
+        coords={"quantiles": [0.3, 0.7], "month": range(1, 4)},
         attrs={"group": "time.month", "window": 1},
     )
 
@@ -93,12 +93,12 @@ def make_qm():
 
         if prop:
             q = equally_spaced_nodes(n, None)
-            dims = ("quantile", prop)
-            coords = {"quantile": q, "month": mo}
+            dims = ("quantiles", prop)
+            coords = {"quantiles": q, "month": mo}
         else:
             q = equally_spaced_nodes(m, None)
-            dims = ("quantile",)
-            coords = {"quantile": q}
+            dims = ("quantiles",)
+            coords = {"quantiles": q}
             a = a[0]
 
         return xr.DataArray(
@@ -110,13 +110,13 @@ def make_qm():
 
 @pytest.fixture
 def qds_month():
-    dims = ("quantile", "month")
+    dims = ("quantiles", "month")
     source = xr.Variable(dims=dims, data=np.zeros((5, 12)))
     target = xr.Variable(dims=dims, data=np.ones((5, 12)) * 2)
 
     return xr.Dataset(
         data_vars={"source": source, "target": target},
-        coords={"quantile": [0, 0.3, 5.0, 7, 1], "month": range(1, 13)},
+        coords={"quantiles": [0, 0.3, 5.0, 7, 1], "month": range(1, 13)},
         attrs={"group": "time.month", "window": 1},
     )
 

@@ -5,20 +5,18 @@ Empirical quantile mapping
 Quantiles from `x` are mapped onto quantiles from `y`.
 
 """
-import numpy as np
 import xarray as xr
 
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
 from .utils import apply_correction
-from .utils import broadcast
 from .utils import equally_spaced_nodes
+from .utils import extrapolate_qm
 from .utils import get_correction
 from .utils import get_index
 from .utils import group_apply
-from .utils import MULTIPLICATIVE
+from .utils import interp_on_quantiles
 from .utils import parse_group
-from .utils import reindex
 
 
 def train(
@@ -74,11 +72,17 @@ def train(
     xq = group_apply("quantile", x, group, window, q=q)
     yq = group_apply("quantile", y, group, window, q=q)
 
-    qqm = get_correction(xq, yq, kind)
+    qf = get_correction(xq, yq, kind)
 
-    # Reindex the correction factor so they can be interpolated from quantiles instead of CDF.
-    xqm = reindex(qqm, xq, extrapolation)
-    return xqm
+    qm = xr.Dataset(
+        data_vars={"xq": xq, "qf": qf},
+        attrs={"group": group, "group_window": window, "kind": kind},
+    )
+    qm = qm.rename(quantile="quantiles")
+
+    # Add bounds for extrapolation
+    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
+    return qm
 
 
 def predict(x, qm, interp=False):
@@ -112,13 +116,18 @@ def predict(x, qm, interp=False):
 
     # Add cyclical values to the scaling factors for interpolation
     if interp and prop is not None:
-        qm = add_cyclic_bounds(qm, prop)
+        qm["qf"] = add_cyclic_bounds(qm.qf, prop)
+
+    if prop is not None:
+        x = x.assign_coords({prop: get_index(x, dim, prop, interp)})
 
     # Broadcast correction factors onto x
-    factor = broadcast(qm, x, interp, {"x": x})
+    qf = interp_on_quantiles(
+        x, qm.xq, qm.qf, group=qm.group, method="linear" if interp else "nearest"
+    )
 
     # Apply the correction factors
-    out = apply_correction(x, factor, qm.kind)
+    out = apply_correction(x, qf, qm.kind)
 
     out.attrs["bias_corrected"] = True
     return out
