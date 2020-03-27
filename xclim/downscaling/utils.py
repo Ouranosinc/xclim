@@ -1,9 +1,10 @@
+from warnings import warn
+
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 from scipy.stats import gamma
-
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -237,8 +238,8 @@ def get_correction(x, y, kind):
     return out
 
 
-def broadcast(grouped, x, interp=False, sel=None):
-    dim, prop = parse_group(grouped.group)
+def broadcast(grouped, x, group=None, interp="nearest", sel=None):
+    dim, prop = parse_group(group or grouped.group)
 
     if sel is None:
         sel = {}
@@ -248,10 +249,15 @@ def broadcast(grouped, x, interp=False, sel=None):
 
     if sel:
         # Extract the correct mean factor for each time step.
-        if interp:  # Interpolate both the time group and the quantile.
-            grouped = grouped.interp(sel)
-        else:  # Find quantile for nearest time group and quantile.
+        if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
+        else:  # Find quantile for nearest time group and quantile.
+            if interp == "cubic" and len(sel.keys) > 1:
+                interp = "linear"
+                warn(
+                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
+                )
+            grouped = grouped.interp(sel, method=interp)
 
         for var in sel.keys():
             if var in grouped.coords and var not in grouped.dims:
@@ -371,7 +377,7 @@ def get_index(da, dim, prop, interp):
     ind = da.indexes[dim]
     i = getattr(ind, prop)
 
-    if interp:
+    if interp != "nearest":
         if dim == "time":
             if prop == "month":
                 i = ind.month - 0.5 + ind.day / ind.daysinmonth
@@ -536,8 +542,9 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
     group : str
         The dimension and grouping information. (ex: "time" or "time.month").
         Defaults to the "group" attribute of xq, or "time" if there is none.
-    method : str
+    method : {'nearest', 'linear', 'cubic'}
         The interpolation method.
+    }
     """
     dim, prop = parse_group(group or xq.attrs.get("group", "time"))
     if prop is None:

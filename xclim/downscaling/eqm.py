@@ -63,9 +63,11 @@ def train(
 
     Returns
     -------
-    xr.DataArray
-     The correction factors indexed by group properties and `x` values. The type of correction
-     used is stored in the "kind" attribute, and the original quantiles in the "quantiles" attribute.
+    xr.Dataset with variables:
+        - qf : The correction factors indexed by group properties and quantiles.
+        - xq : The quantile values
+        The type of correction used is stored in the "kind" attribute and grouping informations are in the
+        "group" and "group_window" attributes.
 
     References
     ----------
@@ -94,7 +96,7 @@ def train(
     return qm
 
 
-def predict(x, qm, interp=False):
+def predict(x: xr.DataArray, qm: xr.Dataset, interp: str = "nearest"):
     """
     Return a bias-corrected timeseries using the detrended quantile mapping method.
 
@@ -104,11 +106,11 @@ def predict(x, qm, interp=False):
     ----------
     x : xr.DataArray
       Time series to be bias-corrected, usually a model output.
-    qm : xr.DataArray
+    qm : xr.Dataset
       Correction factors indexed by group properties and residuals of `x` over the training period, as given by the
       `eqm.train` function.
-    interp : bool
-      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method used to find the correction factors from the quantile map. See utils.interp_on_quantiles.
 
     Returns
     -------
@@ -124,16 +126,14 @@ def predict(x, qm, interp=False):
     dim, prop = parse_group(qm.group)
 
     # Add cyclical values to the scaling factors for interpolation
-    if interp and prop is not None:
+    if interp != "nearest" and prop is not None:
         qm["qf"] = add_cyclic_bounds(qm.qf, prop)
 
     if prop is not None:
         x = x.assign_coords({prop: get_index(x, dim, prop, interp)})
 
     # Broadcast correction factors onto x
-    qf = interp_on_quantiles(
-        x, qm.xq, qm.qf, group=qm.group, method="linear" if interp else "nearest"
-    )
+    qf = interp_on_quantiles(x, qm.xq, qm.qf, group=qm.group, method=interp)
 
     # Apply the correction factors
     out = apply_correction(x, qf, qm.kind)

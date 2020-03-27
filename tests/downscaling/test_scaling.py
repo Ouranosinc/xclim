@@ -21,7 +21,7 @@ class TestScaling:
         sy = series(apply_correction(x, 2, kind), name)
 
         d = scaling.train(sx, sy, "time", kind)
-        np.testing.assert_array_almost_equal(d, 2)
+        np.testing.assert_array_almost_equal(d.qf, 2)
 
         p = scaling.predict(sx, d)
         np.testing.assert_array_almost_equal(p, sy)
@@ -40,7 +40,7 @@ class TestScaling:
         # Test train
         d = scaling.train(sx, sy, "time.month", kind)
         expected = apply_correction(mon_triangular, 2, kind)
-        np.testing.assert_array_almost_equal(d, expected)
+        np.testing.assert_array_almost_equal(d.qf, expected)
 
         # Test predict
         p = scaling.predict(sx, d)

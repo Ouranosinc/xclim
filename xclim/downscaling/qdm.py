@@ -65,9 +65,11 @@ def train(
 
     Returns
     -------
-    xr.DataArray
-      The correction factors indexed by group properties and CDF. The type of correction used is stored in the "kind"
-      attribute.
+    xr.Dataset with variables:
+        - qf : The correction factors indexed by group properties and quantiles.
+        - xq : The quantile values.
+        The type of correction used is stored in the "kind" attribute and grouping informations are in the
+        "group" and "group_window" attributes.
 
     References
     ----------
@@ -103,7 +105,7 @@ def train(
 
 
 def predict(
-    x, qm, mult_thresh=None, interp=False,
+    x: xr.DataArray, qm: xr.Dataset, mult_thresh: float = None, interp: str = "nearest",
 ):
     """
     Apply quantile delta to series.
@@ -114,14 +116,14 @@ def predict(
     ----------
     x : xr.DataArray
       Time series delta is applied to.
-    qm : xr.DataArray
+    qm : xr.Dataset
       Delta factors indexed by group properties and quantiles, as given by the `qdm.train` function.
     mult_thresh : float, None
       In the multiplicative case, all values under this threshold are replaced by a non-zero random number smaller
       then the threshold. This is done to remove values that are exactly or close to 0 and create numerical
       instabilities.
-    interp : bool
-      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+    interp : {'nearest', 'linear'}
+      The interpolation method used to find the correction factors from the quantile map. See utils.broadcast.
 
     Returns
     -------
@@ -143,7 +145,7 @@ def predict(
         x = jitter_under_thresh(x, mult_thresh)
 
     # Add cyclical values to the scaling factors for interpolation
-    if interp and prop is not None:
+    if interp != "nearest" and prop is not None:
         qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
 
     # Compute quantile of x

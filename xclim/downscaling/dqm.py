@@ -68,7 +68,7 @@ def train(
     -------
     xr.Dataset with variables:
         - qf : The correction factors indexed by group properties and quantiles.
-        - xqp : The quantile values residuals (x/<x> or x-<x>)
+        - xq : The quantile values residuals (x/<x> or x-<x>).
         The type of correction used is stored in the "kind" attribute and grouping informations are in the
         "group" and "group_window" attributes.
 
@@ -114,12 +114,10 @@ def train(
 
 # TODO: Add `deg` parameter and associated tests.
 def predict(
-    x, qm, mult_thresh=None, interp=False,
+    x: xr.DataArray, qm: xr.Dataset, mult_thresh: float = None, interp: str = "nearest",
 ):
     """
     Return a bias-corrected timeseries using the detrended quantile mapping method.
-
-    This method acts on a single point (timeseries) only.
 
     Parameters
     ----------
@@ -132,8 +130,8 @@ def predict(
       In the multiplicative case, all values under this threshold are replaced by a non-zero random number smaller
       then the threshold. This is done to remove values that are exactly or close to 0 and create numerical
       instabilities.
-    interp : bool
-      Whether to linearly interpolate the correction factors (True) or to find the closest factor (False).
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method used to find the correction factors from the quantile map. See utils.interp_on_quantiles.
 
     Returns
     -------
@@ -158,7 +156,7 @@ def predict(
         x = jitter_under_thresh(x, mult_thresh)
 
     # Add cyclical values to the scaling factors for interpolation
-    if interp and prop is not None:
+    if interp != "nearest" and prop is not None:
         qm["xq"] = add_cyclic_bounds(qm.xq, prop, cyclic_coords=False)
         qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
         mu_x = add_cyclic_bounds(mu_x, prop, cyclic_coords=False)
@@ -183,13 +181,7 @@ def predict(
         nxt = nxt.assign_coords({prop: get_index(nxt, dim, prop, interp)})
 
     # Quantile mapping
-    qf = interp_on_quantiles(
-        nxt,
-        qm.xq,
-        qm.qf,
-        group=qm.attrs["group"],
-        method="linear" if interp else "nearest",
-    )
+    qf = interp_on_quantiles(nxt, qm.xq, qm.qf, group=qm.attrs["group"], method=interp,)
     corrected = apply_correction(nxt, qf, kind)
 
     # Reapply trend
