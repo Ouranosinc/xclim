@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import interp1d
 from scipy.stats import gamma
 
 
@@ -319,7 +319,7 @@ def add_cyclic_bounds(da, att, cyclic_coords=True):
 
     if not cyclic_coords:
         vals = qmf.coords[att].values
-        diff = da.coods[att].diff(att)
+        diff = da.coords[att].diff(att)
         vals[0] = vals[1] - diff[0]
         vals[-1] = vals[-2] + diff[-1]
         qmf = qmf.assign_coords({att: vals})
@@ -526,8 +526,15 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
     """
     dim, prop = parse_group(group or xq.attrs.get("group", "time"))
     if prop is None:
+        fill_value = "extrapolate" if method == "nearest" else np.nan
+
+        def _interp_quantiles_1D(newx, oldx, oldy):
+            return interp1d(
+                oldx, oldy, bounds_error=False, kind=method, fill_value=fill_value
+            )(newx)
+
         return xr.apply_ufunc(
-            np.interp,
+            _interp_quantiles_1D,
             newx,
             xq,
             yq,

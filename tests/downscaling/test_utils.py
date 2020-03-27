@@ -26,8 +26,8 @@ def test_equally_spaced_nodes():
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
-@pytest.mark.parametrize("method", ["nan", "constant"])
-def test_extrapolate_qm(make_qm, method):
+@pytest.mark.parametrize("method,exp", [("nan", [0, 0]), ("constant", [0, -np.inf])])
+def test_extrapolate_qm(make_qm, method, exp):
     qm = make_qm(np.arange(6).reshape(2, 3))
     xq = make_qm(np.arange(6).reshape(2, 3))
 
@@ -35,6 +35,8 @@ def test_extrapolate_qm(make_qm, method):
 
     assert isinstance(q, xr.DataArray)
     assert isinstance(x, xr.DataArray)
+    assert q[0, 0] == exp[0]
+    assert x[0, 0] == exp[1]
 
 
 # class TestReindex:
@@ -138,3 +140,54 @@ def test_adjust_freq():
     )
 
     u.adjust_freq(probs, prsim, 1, "time")
+
+
+@pytest.mark.parametrize("shape", [(2920,), (2920, 5, 5)])
+@pytest.mark.parametrize("group", ["time", "time.month"])
+@pytest.mark.parametrize("method", ["nearest", "linear", "cubic"])
+def test_interp_on_quantiles(shape, group, method):
+    raw = np.random.random_sample(shape)  # [0, 1]
+    t = pd.date_range("2000-01-01", periods=shape[0], freq="D")
+    # obs : [9, 11]
+    obs = xr.DataArray(
+        raw * 2 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
+    )
+    # sim [9, 11.4] (x1.2 + 0.2)
+    sim = xr.DataArray(
+        raw * 2.4 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
+    )
+    # fut [9.02, 11.38] (x1.18 + 0.2) In order to have every point of fut inside the range of sim
+    fut_raw = raw * 2.36 + 9.02
+    fut_raw[
+        np.array([100, 300, 500, 700])
+    ] = 1000  # Points outside the sim range will be NaN
+    fut = xr.DataArray(
+        fut_raw, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
+    )
+
+    dim, prop = u.parse_group(group)
+    if prop is not None:
+        fut = fut.assign_coords(month=u.get_index(fut, dim, prop, True))
+
+    q = np.linspace(0, 1, 11)
+    xq = u.group_apply("quantile", sim, group, q=q).rename(quantile="quantiles")
+    yq = u.group_apply("quantile", obs, group, q=q).rename(quantile="quantiles")
+
+    if prop is not None:
+        xq = u.add_cyclic_bounds(xq, prop, cyclic_coords=False)
+        yq = u.add_cyclic_bounds(yq, prop, cyclic_coords=False)
+
+    fut_corr = u.interp_on_quantiles(fut, xq, yq, group=group, method=method).transpose(
+        *("time", "lat", "lon")[: len(shape)]
+    )
+
+    if method == "nearest":
+        np.testing.assert_allclose(fut_corr.values, obs.values, rtol=0.3)
+        assert fut_corr.isnull().sum() == 0
+    else:
+        np.testing.assert_allclose(
+            fut_corr.values, obs.where(fut != 1000).values, rtol=2e-3
+        )
+        if prop is not None:
+            fut = fut.drop_vars(prop)
+        xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
