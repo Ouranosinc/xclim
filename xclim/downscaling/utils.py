@@ -8,6 +8,21 @@ MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
+def map_threshold(x, y, y_thresh):
+    """Given threshold on y, find corresponding threshold on x.
+
+    TODO
+    """
+    q = ecdf(y, y_thresh)
+    return x.quantile(q=q)
+
+
+def ecdf(x, value):
+    """Return the empirical CDF of a sample at a given value."""
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / len(sx)
+
+
 # TODO: This function should also return sth
 def _adjust_freq_1d(sm, ob, thresh=0):
     """Adjust frequency of null values, where values are considered null if below a threshold.
