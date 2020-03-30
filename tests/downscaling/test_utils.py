@@ -2,8 +2,27 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from scipy.stats import norm
 
 from xclim.downscaling import utils as u
+
+
+def test_ecdf():
+    dist = norm(5, 2)
+    r = dist.rvs(10000)
+    q = [0.01, 0.5, 0.99]
+    x = dist.ppf(q)
+    np.testing.assert_allclose(u.ecdf(r, x), q, 3)
+
+
+def test_map_cdf():
+    n = 10000
+    xd = norm(5, 2)
+    yd = norm(7, 3)
+
+    q = [0.1, 0.5, 0.99]
+    x_value = u.map_cdf(x=xd.rvs(n), y=yd.rvs(n), y_value=yd.ppf(q))
+    np.testing.assert_allclose(x_value, xd.ppf(q), 3)
 
 
 def test_jitter_under_thresh():

@@ -14,6 +14,9 @@ Available methods:
 - Quantile delta mapping
 
 
+TODO: ISIMIP ? Used for precip freq ajdustment in biasCorrection.R
+Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash; The ISI-MIP approach. Earth System Dynamics, 4(2), 219–236. https://doi.org/10.5194/esd-4-219-2013
+
 
 Logic:
 

@@ -14,7 +14,7 @@ from .utils import add_cyclic_bounds
 from .utils import broadcast
 from .utils import get_correction
 from .utils import group_apply
-from .utils import map_threshold
+from .utils import map_cdf
 from .utils import MULTIPLICATIVE
 from .utils import parse_group
 
@@ -25,11 +25,10 @@ def train(
     """
 
     """
-    dim, prop = parse_group(group)
 
     # Determine model (x) wet-day threshold.
     x_thresh = group_apply(
-        lambda x, dim: map_threshold(x.x, x.y, thresh),
+        lambda x, dim: map_cdf(x.x, x.y, thresh),
         xr.Dataset({"x": x, "y": y}),
         group=group,
     )

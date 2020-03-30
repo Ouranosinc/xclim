@@ -10,17 +10,44 @@ MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
-def map_threshold(x, y, y_thresh):
-    """Given threshold on y, find corresponding threshold on x.
+def map_cdf(x, y, y_value):
+    """Return the value in `x` with the same CDF as `y_value` in `y`.
 
-    TODO
+    Parameters
+    ----------
+    x : xr.DataArray
+      Training target.
+    y : xr.DataArray
+      Training data.
+    y_value : float, array
+      Value within the support of `y`.
+
+    Returns
+    -------
+    array
+      Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-    q = ecdf(y, y_thresh)
+    if not isinstance(x, xr.DataArray):
+        x = xr.DataArray(data=x)
+    q = ecdf(y, y_value)
     return x.quantile(q=q)
 
 
 def ecdf(x, value):
-    """Return the empirical CDF of a sample at a given value."""
+    """Return the empirical CDF of a sample at a given value.
+
+    Parameters
+    ----------
+    x : array
+      Sample.
+    value : array
+      The values within the support of `x` for which to compute the CDF value.
+
+    Returns
+    -------
+    array
+      Empirical CDF.
+    """
     sx = np.r_[-np.inf, np.sort(x)]
     return np.searchsorted(sx, value, side="right") / len(sx)
 
