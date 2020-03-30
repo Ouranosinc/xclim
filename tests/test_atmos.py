@@ -1,4 +1,5 @@
 # This File is for testing atmos indicators that fit neither in test_precip or test_temperature
+# Expected values might be the same as for the indices tests, see test_indices comments.
 import numpy as np
 import xarray as xr
 
@@ -35,7 +36,6 @@ def test_relative_humidity_dewpoint(tas_series, rh_series):
 def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]
-
     e_sat = atmos.saturation_vapor_pressure(
         tas=tas, method="sonntag90", ice_thresh="0 degC",
     )

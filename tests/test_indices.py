@@ -1161,6 +1161,7 @@ def test_relative_humidity_dewpoint(tas_series, rh_series, invalid_values, exp0)
             method="dewpoint",
             invalid_values=invalid_values,
         ),
+        # Expected values obtained by hand calculation
         rh_series([exp0, 100, 93, 71, 52, 73, 94, 31, 20]),
         rtol=0.01,
         atol=1,
@@ -1173,6 +1174,7 @@ def test_relative_humidity_dewpoint(tas_series, rh_series, invalid_values, exp0)
 )
 def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+    # Expected values obtained with the Sonntag90 method
     e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
 
     e_sat = xci.saturation_vapor_pressure(
@@ -1189,6 +1191,7 @@ def test_relative_humidity(
     tas_series, rh_series, huss_series, ps_series, method, invalid_values, exp0
 ):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
+    # Expected values obtained with the Sonntag90 method
     rh_exp = rh_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
     ps = ps_series([101325] * 8)
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
@@ -1214,6 +1217,7 @@ def test_specific_humidity(
     tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
     rh = rh_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
     ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
+    # Expected values obtained with the Sonntag90 method
     huss_exp = huss_series(
         [exp0, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1]
     )
