@@ -105,13 +105,6 @@ def test_wrapped_partial():
     assert list(signature(newf).parameters.keys()) == ["c", "kws"]
     assert newf() == (2, 2, 2)
 
-    def func(a, *args, b=1, c=1, **kws):
-        """Docstring"""
-        return (a, b, c)
-
-    with pytest.raises(ValueError):
-        newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
-
 
 def test_wrapped_indicator(tas_series):
     def indice(tas, tas2=None, thresh=0, freq="YS"):
