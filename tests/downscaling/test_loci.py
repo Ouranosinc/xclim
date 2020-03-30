@@ -3,45 +3,26 @@ import pytest
 from scipy.stats import uniform
 
 from xclim.downscaling import loci
-from xclim.downscaling.utils import ADDITIVE
-from xclim.downscaling.utils import apply_correction
-from xclim.downscaling.utils import MULTIPLICATIVE
 
 
-class TestScaling:
-    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_time(self, kind, name, series):
+@pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
+class TestLoci:
+    def test_time(self, series, group, dec):
         n = 10000
         u = np.random.rand(n)
 
-        xd = uniform(loc=2, scale=1)
+        xd = uniform(loc=0, scale=3)
         x = xd.ppf(u)
 
-        sx = series(x, name)
-        sy = series(apply_correction(x, 2, kind), name)
+        sx = series(x, "pr")
+        y = x * 2
+        thresh = 2
+        sy_fit = series(y, "pr").where(y > thresh, 0.1)
+        sy = series(y, "pr")
 
-        d = loci.train(sx, sy, "time", kind)
-        np.testing.assert_array_almost_equal(d.qf, 2)
+        ds = loci.train(sx, sy_fit, group, thresh=thresh)
+        np.testing.assert_array_almost_equal(ds.x_thresh, 1, dec)
+        np.testing.assert_array_almost_equal(ds.cf, 2, dec)
 
-        p = loci.predict(sx, d)
-        np.testing.assert_array_almost_equal(p, sy)
-
-    @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
-        n = 10000
-        u = np.random.rand(n)
-
-        xd = uniform(loc=2, scale=1)
-        x = xd.ppf(u)
-
-        sx = series(x, name)
-        sy = mon_series(apply_correction(x, 2, kind), name)
-
-        # Test train
-        d = loci.train(sx, sy, "time.month", kind)
-        expected = apply_correction(mon_triangular, 2, kind)
-        np.testing.assert_array_almost_equal(d.qf, expected)
-
-        # Test predict
-        p = loci.predict(sx, d)
-        np.testing.assert_array_almost_equal(p, sy)
+        p = loci.predict(sx, ds)
+        np.testing.assert_array_almost_equal(p, sy, dec)

@@ -7,21 +7,40 @@ from scipy.stats import norm
 from xclim.downscaling import utils as u
 
 
-def test_ecdf():
+def test_ecdf(series):
     dist = norm(5, 2)
     r = dist.rvs(10000)
     q = [0.01, 0.5, 0.99]
     x = dist.ppf(q)
+    np.testing.assert_allclose(u.ecdf(series(r, "tas"), x), q, 3)
+
+    # With NaNs
+    r[:2000] = np.nan
     np.testing.assert_allclose(u.ecdf(r, x), q, 3)
 
 
-def test_map_cdf():
+def test_map_cdf(series):
     n = 10000
     xd = norm(5, 2)
     yd = norm(7, 3)
 
     q = [0.1, 0.5, 0.99]
-    x_value = u.map_cdf(x=xd.rvs(n), y=yd.rvs(n), y_value=yd.ppf(q))
+    x_value = u.map_cdf(
+        x=series(xd.rvs(n), "pr"),
+        y=series(yd.rvs(n), "pr"),
+        y_value=yd.ppf(q),
+        group="time",
+    )
+    np.testing.assert_allclose(x_value, xd.ppf(q), 3)
+
+    # Scalar
+    q = 0.5
+    x_value = u.map_cdf(
+        x=series(xd.rvs(n), "pr"),
+        y=series(yd.rvs(n), "pr"),
+        y_value=yd.ppf(q),
+        group="time",
+    )
     np.testing.assert_allclose(x_value, xd.ppf(q), 3)
 
 

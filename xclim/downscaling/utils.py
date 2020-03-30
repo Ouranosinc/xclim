@@ -10,7 +10,7 @@ MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
-def map_cdf(x, y, y_value):
+def map_cdf(x, y, y_value, group, skipna=False):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
     Parameters
@@ -21,19 +21,49 @@ def map_cdf(x, y, y_value):
       Training data.
     y_value : float, array
       Value within the support of `y`.
+    dim : str
+      Dimension along which to compute quantile.
 
     Returns
     -------
     array
       Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-    if not isinstance(x, xr.DataArray):
-        x = xr.DataArray(data=x)
-    q = ecdf(y, y_value)
-    return x.quantile(q=q)
+
+    def _map_cdf_1d(x, y, y_value, skipna=False):
+        q = _ecdf_1d(y, y_value)
+        _func = np.nanquantile if skipna else np.quantile
+        return _func(x, q=q)
+
+    def _map_cdf_group(gr, y_value, dim="time", skipna=False):
+        return xr.apply_ufunc(
+            _map_cdf_1d,
+            gr.x,
+            gr.y,
+            input_core_dims=[[dim]] * 2,
+            output_core_dims=[["x"]],
+            vectorize=True,
+            keep_attrs=True,
+            kwargs={"y_value": y_value, "skipna": skipna},
+            dask="parallelized",
+            output_dtypes=[gr.x.dtype],
+        )
+
+    return group_apply(
+        _map_cdf_group,
+        xr.Dataset(data_vars={"x": x, "y": y}),
+        group,
+        y_value=np.atleast_1d(y_value),
+        skipna=skipna,
+    )
 
 
-def ecdf(x, value):
+def _ecdf_1d(x, value):
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
+
+
+def ecdf(x, value, dim="time"):
     """Return the empirical CDF of a sample at a given value.
 
     Parameters
@@ -48,8 +78,18 @@ def ecdf(x, value):
     array
       Empirical CDF.
     """
-    sx = np.r_[-np.inf, np.sort(x)]
-    return np.searchsorted(sx, value, side="right") / len(sx)
+
+    return xr.apply_ufunc(
+        _ecdf_1d,
+        x,
+        input_core_dims=[[dim]],
+        output_core_dims=[["x"]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"value": value},
+        dask="parallelized",
+        output_dtypes=[np.float],
+    )
 
 
 # TODO: This function should also return sth
@@ -185,7 +225,7 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     ----------
     func : str
       DataArray method applied to each group.
-    x : DataArray
+    x : DataArray, tuple of DataArray for functions with multiple arguments.
       Data.
     group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
       Grouping criterion. If only coordinate is given (e.g. 'time') no grouping will be done.
@@ -204,6 +244,9 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 
     """
     dim, prop = parse_group(group)
+
+    if isinstance(x, (tuple, list)):
+        x = xr.Dataset({f"v{i}": da for i, da in enumerate(x)})
 
     dims = dim
     if "." in group:
@@ -235,7 +278,7 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     else:
         if grouped_args is not None:
             func = wrap_func_with_grouped_args(func)
-        if hasattr(sub, "map"):
+        if isinstance(sub, xr.core.groupby.GroupBy):
             out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
         else:
             out = func(sub, dim=dims, **kwargs)
