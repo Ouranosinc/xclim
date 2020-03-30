@@ -6,7 +6,6 @@ Units handling submodule
 `Pint` is used to define the `units` `UnitRegistry` and `xclim.units.core` defines
 most unit handling methods.
 """
-import functools
 import re
 import warnings
 from inspect import signature
@@ -17,6 +16,7 @@ from typing import Union
 import pint.converters
 import pint.unit
 import xarray as xr
+from boltons.funcutils import wraps
 from packaging import version
 
 
@@ -344,7 +344,7 @@ def declare_units(out_units, check_output=True, **units_by_name):
         sig = signature(func)
         bound_units = sig.bind_partial(**units_by_name)
 
-        @functools.wraps(func)
+        @wraps(func)
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments so we can check units
             bound_args = sig.bind(*args, **kwargs)

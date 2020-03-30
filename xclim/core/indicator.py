@@ -76,9 +76,6 @@ class Indicator:
     # metadata fields that are formatted as free text.
     _text_fields = ["long_name", "description", "comment"]
 
-    # Whether or not the compute function is a partial.
-    _partial = False
-
     # Can be used to override the compute docstring.
     doc_template = None
 
@@ -122,14 +119,8 @@ class Indicator:
     def __call__(self, *args, **kwds):
         # Bind call arguments. We need to use the class signature, not the instance, otherwise it removes the first
         # argument.
-        if self._partial:
-            ba = self._sig.bind_partial(*args, **kwds)
-            for key, val in self.compute.keywords.items():
-                if key not in ba.arguments:
-                    ba.arguments[key] = val
-        else:
-            ba = self._sig.bind(*args, **kwds)
-            ba.apply_defaults()
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
@@ -182,15 +173,17 @@ class Indicator:
         attrs.update(out_attrs)
 
         # Assume the first arguments are always the DataArray.
-        das = tuple(ba.arguments.pop(self._parameters[i]) for i in range(self._nvar))
+        das = OrderedDict()
+        for i in range(self._nvar):
+            das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
 
         # Pre-computation validation checks
-        for da in das:
+        for da in das.values():
             self.validate(da)
-        self.cfprobe(*das)
+        self.cfprobe(*das.values())
 
         # Compute the indicator values, ignoring NaNs.
-        out = self.compute(*das, **ba.kwargs)
+        out = self.compute(**das, **ba.kwargs)
 
         # Convert to output units
         out = convert_units_to(out, self.units, self.context)
@@ -199,7 +192,7 @@ class Indicator:
         out.attrs.update(attrs)
 
         # Bind call arguments to the `missing` function, whose signature might be different from `compute`.
-        mba = signature(self.missing).bind(*das, **ba.arguments)
+        mba = signature(self.missing).bind(*das.values(), **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
         mask = self.missing(*mba.args, **mba.kwargs)

@@ -7,15 +7,49 @@ Helper functions for the indices computation, things that do not belong in neith
 `xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
 """
 from collections import defaultdict
+from functools import partial
 from types import FunctionType
+from boltons.funcutils import update_wrapper
 
 
-def wrapped_partial(func: FunctionType, *args, **kwargs):
-    from functools import partial, update_wrapper
+def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
+    """Wrap a function, updating its signature but keeping its docstring.
 
-    partial_func = partial(func, *args, **kwargs)
-    update_wrapper(partial_func, func)
-    return partial_func
+    Parameters
+    ----------
+    func : FunctionType
+        The function to be wrapped
+    suggested : dict
+        Keyword arguments that should have new default values
+        but still appear in the signature.
+    fixed : dict
+        Keyword arguments that should be fixed by the wrapped
+        and removed from the signature.
+
+    Examples
+    --------
+
+    >>> from inspect import signature
+    >>> def func(a, b=1, c=1):
+            print(a, b, c)
+    >>> newf = wrapped_partial(func, b=2)
+    >>> signature(newf)
+    (a, *, c=1)
+    >>> newf(1)
+    1, 2, 1
+    >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
+    >>> signature(newf)
+    (a, *, c=2)
+    >>> newf(1)
+    1, 2, 2
+    """
+    suggested = suggested or {}
+    partial_func = partial(func, **suggested, **fixed)
+
+    fully_wrapped = update_wrapper(
+        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True
+    )
+    return fully_wrapped
 
 
 # TODO Reconsider the utility of this
