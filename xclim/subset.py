@@ -1,4 +1,3 @@
-import copy
 import logging
 import warnings
 from functools import wraps
@@ -458,11 +457,10 @@ def subset_shape(
     """
     wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
-    # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
     if isinstance(ds, xarray.DataArray):
-        ds_copy = copy.deepcopy(ds._to_temp_dataset())
+        ds_copy = ds._to_temp_dataset()
     else:
-        ds_copy = copy.deepcopy(ds)
+        ds_copy = ds.copy()
 
     if isinstance(shape, gpd.GeoDataFrame):
         poly = shape.copy()
@@ -486,7 +484,7 @@ def subset_shape(
 
     if ds_copy.lon.size == 0 or ds_copy.lat.size == 0:
         raise ValueError(
-            "No gridcell centroids found within provided polygon bounding box. "
+            "No grid cell centroids found within provided polygon bounding box. "
             'Try using the "buffer" option to create an expanded area'
         )
 
@@ -530,7 +528,7 @@ def subset_shape(
             CRS(4326).to_proj4() != raster_crs
         ):
             warnings.warn(
-                "CRS definitions are not similar or both not using WGS84 datum. Caveat emptor.",
+                "CRS definitions are not similar or both not using WGS84 datum. Tread with caution.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -541,8 +539,8 @@ def subset_shape(
 
     if np.all(mask_2d.isnull()):
         raise ValueError(
-            "No gridcell centroids found within provided polygon. "
-            'Try using the "buffer" option to create an expanded areas or verify polygon '
+            f"No grid cell centroids found within provided polygon bounds ({poly.bounds}). "
+            'Try using the "buffer" option to create an expanded areas or verify polygon.'
         )
 
     # loop through variables
@@ -555,10 +553,15 @@ def subset_shape(
         mask_2d = mask_2d.dropna(dim, how="all")
     ds_copy = ds_copy.sel({dim: mask_2d[dim] for dim in mask_2d.dims})
 
-    # Add a CRS definition as a coordinate for reference purposes
+    # Add a CRS definition using CF conventions and as a global attribute WKT for reference purposes
     if wrap_lons:
-        ds_copy.coords["crs"] = 0
-        ds_copy.coords["crs"].attrs = dict(spatial_ref=wgs84)
+        ds_copy.attrs["crs"] = wgs84.to_string()
+        ds_copy["crs"] = 1
+        ds_copy["crs"].attrs.update(wgs84.to_cf())
+
+        for v in ds_copy.variables:
+            if {"lat", "lon"}.issubset(set(ds_copy[v].dims)):
+                ds_copy[v].attrs["grid_mapping"] = "crs"
 
     if isinstance(ds, xarray.DataArray):
         return ds._from_temp_dataset(ds_copy)

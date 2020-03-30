@@ -41,7 +41,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = 2050
         yr_ed = 2059
 
@@ -66,7 +66,7 @@ class TestSubsetGridPoint:
         lat = 46.1
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -95,7 +95,7 @@ class TestSubsetGridPoint:
 
     def test_time_dates_outofbounds(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "1950"
         yr_ed = "2099"
 
@@ -108,7 +108,7 @@ class TestSubsetGridPoint:
 
     def test_time_start_only(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
 
         # start date only
@@ -135,7 +135,7 @@ class TestSubsetGridPoint:
     def test_time_end_only(self):
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         yr_ed = "2059"
 
@@ -156,7 +156,7 @@ class TestSubsetGridPoint:
 
     def test_time_incomplete_years(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -314,7 +314,7 @@ class TestSubsetBbox:
         assert np.all(out.lat <= np.max(self.lat))
 
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
         yr_st = 2050
         yr_ed = 2059
 
@@ -486,7 +486,7 @@ class TestSubsetBbox:
 
     def test_time(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         out = subset.subset_bbox(
             da,
@@ -545,7 +545,7 @@ class TestSubsetBbox:
 
     def test_warnings(self):
         da = xr.open_dataset(self.nc_poslons).tas
-        da["lon"] -= 360
+        da = da.assign_coords(lon=(da.lon - 360))
 
         with pytest.warns(FutureWarning):
             subset.subset_bbox(
@@ -608,7 +608,7 @@ class TestSubsetShape:
                     sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
                 )
 
-    def test_wraps(self):
+    def test_wraps(self, tmp_netcdf_filename):
         ds = xr.open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
@@ -628,6 +628,14 @@ class TestSubsetShape:
         np.testing.assert_array_almost_equal(
             float(np.mean(subtas.isel(time=0))), 281.091553
         )
+
+        assert sub.crs.prime_meridian_name == "Greenwich"
+        assert sub.crs.grid_mapping_name == "latitude_longitude"
+
+        sub.to_netcdf(tmp_netcdf_filename)
+        assert tmp_netcdf_filename.exists()
+        with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
+            assert {"tas", "crs"}.issubset(set(f.data_vars))
 
     def test_no_wraps(self):
         ds = xr.open_dataset(self.nc_file)
@@ -695,7 +703,7 @@ class TestSubsetShape:
             not in [q.message for q in record]
         )
 
-    def test_small_poly_buffer(self):
+    def test_small_poly_buffer(self, tmp_netcdf_filename):
         ds = xr.open_dataset(self.nc_file)
 
         with pytest.raises(ValueError):
@@ -708,6 +716,14 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
         assert len(sub.lon.values) == 3
         assert len(sub.lat.values) == 3
+
+        assert sub.crs.prime_meridian_name == "Greenwich"
+        assert sub.crs.grid_mapping_name == "latitude_longitude"
+
+        sub.to_netcdf(tmp_netcdf_filename)
+        assert tmp_netcdf_filename.exists()
+        with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
+            assert {"tas", "crs"}.issubset(set(f.data_vars))
 
     def test_mask_multiregions(self):
         ds = xr.open_dataset(self.nc_file)

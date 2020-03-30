@@ -4,12 +4,15 @@
 import dask
 import numpy as np
 import pytest
+import xarray as xr
 
 from xclim import __version__
 from xclim import atmos
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
+from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
+from xclim.core.formatting import update_history
 from xclim.core.indicator import Indicator
 from xclim.core.units import units
 from xclim.indices import tg_mean
@@ -162,3 +165,35 @@ def test_AttrFormatter():
     # Mod with unknown value
     with pytest.raises(ValueError):
         fmt.format("{adj:m}", adj="funny")
+
+
+@pytest.mark.parametrize("new_line", ["<>", "\n"])
+@pytest.mark.parametrize("missing_str", ["<Missing>", None])
+def test_merge_attributes(missing_str, new_line):
+    a = xr.DataArray([0], attrs={"text": "Text1"}, name="a")
+    b = xr.DataArray([0], attrs={})
+    c = xr.Dataset(attrs={"text": "Text3"})
+
+    merged = merge_attributes(
+        "text", a, missing_str=missing_str, new_line=new_line, b=b, c=c
+    )
+
+    assert merged.startswith("a: Text1")
+
+    if missing_str is not None:
+        assert merged.count(new_line) == 2
+        assert f"b: {missing_str}" in merged
+    else:
+        assert merged.count(new_line) == 1
+        assert "b:" not in merged
+
+
+def test_update_history():
+    a = xr.DataArray([0], attrs={"history": "Text1"}, name="a")
+    b = xr.DataArray([0], attrs={"history": "Text2"})
+    c = xr.Dataset(attrs={"history": "Text3"})
+
+    merged = update_history("text", a, new_name="d", b=b, c=c)
+
+    assert "d: text" in merged.split("\n")[-1]
+    assert merged.startswith("a: Text1")

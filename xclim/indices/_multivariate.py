@@ -106,7 +106,7 @@ def cold_spell_duration_index(
 
     below = tasmin < thresh
 
-    return below.resample(time=freq).apply(
+    return below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 
@@ -564,7 +564,7 @@ def heat_wave_frequency(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim="time")
+    return group.map(rl.windowed_run_events, window=window, dim="time")
 
 
 @declare_units(
@@ -635,7 +635,7 @@ def heat_wave_max_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run, dim="time")
+    max_l = group.map(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
 
 
@@ -690,7 +690,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
+    return group.map(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
@@ -1349,7 +1349,7 @@ def warm_spell_duration_index(
 
     above = tasmax > thresh
 
-    return above.resample(time=freq).apply(
+    return above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 
