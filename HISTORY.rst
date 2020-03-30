@@ -5,7 +5,7 @@ History
 0.16.x
 ------
 * Better `wrapped_partial` for more meaningful inspection.
-* Add `xclim.core.utils.tas_dtas_2_rh` to compute relative humidity.
+* Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
 * Allow lazy units conversion
 
 0.15.x (2020-03-12)

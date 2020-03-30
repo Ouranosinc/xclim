@@ -23,14 +23,14 @@ import xarray as xr
 
 import xclim.indices as xci
 from xclim.core.calendar import percentile_doy
-from xclim.core.utils import sfcwind_2_uas_vas
-from xclim.core.utils import uas_vas_2_sfcwind
+
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
+# TODO: Obey the line below:
 # PLEASE MAINTAIN ALPHABETICAL ORDER
 
 
@@ -1126,9 +1126,10 @@ class TestWindConversion:
         coords={"lon": [-72, -72], "lat": [55, 55]},
         dims=["lon", "lat"],
     )
+    da_windfromdir.attrs["units"] = "degree"
 
     def test_uas_vas_2_sfcwind(self):
-        wind, windfromdir = uas_vas_2_sfcwind(self.da_uas, self.da_vas)
+        wind, windfromdir = xci.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
 
         assert np.all(
             np.around(wind.values, decimals=10)
@@ -1140,10 +1141,89 @@ class TestWindConversion:
         )
 
     def test_sfcwind_2_uas_vas(self):
-        uas, vas = sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
+        uas, vas = xci.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
 
         assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
         assert np.all(
             np.around(vas.values, decimals=10)
             == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
         )
+
+
+@pytest.mark.parametrize(
+    "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 151)]
+)
+def test_relative_humidity_dewpoint(tas_series, rh_series, invalid_values, exp0):
+    np.testing.assert_allclose(
+        xci.relative_humidity(
+            tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
+            dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
+            method="dewpoint",
+            invalid_values=invalid_values,
+        ),
+        rh_series([exp0, 100, 93, 71, 52, 73, 94, 31, 20]),
+        rtol=0.01,
+        atol=1,
+    )
+
+
+@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize(
+    "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
+)
+def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0):
+    tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+    e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
+
+    e_sat = xci.saturation_vapor_pressure(
+        tas=tas, method=method, ice_thresh=ice_thresh,
+    )
+    np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
+
+
+@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize(
+    "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)]
+)
+def test_relative_humidity(
+    tas_series, rh_series, huss_series, ps_series, method, invalid_values, exp0
+):
+    tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
+    rh_exp = rh_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
+    ps = ps_series([101325] * 8)
+    huss = huss_series([0.003, 0.001] + [0.005] * 7)
+
+    rh = xci.relative_humidity(
+        tas=tas,
+        huss=huss,
+        ps=ps,
+        method=method,
+        invalid_values=invalid_values,
+        ice_thresh="0 degC",
+    )
+    np.testing.assert_allclose(rh, rh_exp, atol=0.5, rtol=0.005)
+
+
+@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize(
+    "invalid_values,exp0", [("clip", 1.4e-2), ("mask", np.nan), (None, 2.2e-2)]
+)
+def test_specific_humidity(
+    tas_series, rh_series, huss_series, ps_series, method, invalid_values, exp0
+):
+    tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
+    rh = rh_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
+    ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
+    huss_exp = huss_series(
+        [exp0, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1]
+    )
+
+    huss = xci.specific_humidity(
+        tas=tas,
+        rh=rh,
+        ps=ps,
+        method=method,
+        invalid_values=invalid_values,
+        ice_thresh="0 degC",
+    )
+    np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)

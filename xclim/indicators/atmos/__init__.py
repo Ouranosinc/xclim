@@ -10,5 +10,6 @@ The concept followed here is to define Indicator subclasses for each input varia
 for each indicator.
 
 """
+from ._conversion import *
 from ._precip import *
 from ._temperature import *

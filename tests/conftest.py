@@ -210,3 +210,33 @@ def ws_series():
         )
 
     return _ws_series
+
+
+@pytest.fixture
+def huss_series():
+    def _huss_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="huss",
+            attrs={"standard_name": "specific_humidity", "units": "",},
+        )
+
+    return _huss_series
+
+
+@pytest.fixture
+def ps_series():
+    def _ps_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="ps",
+            attrs={"standard_name": "air_pressure", "units": "Pa",},
+        )
+
+    return _ps_series
