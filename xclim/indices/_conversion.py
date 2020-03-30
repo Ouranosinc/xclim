@@ -71,37 +71,37 @@ def uas_vas_2_sfcwind(
     # Wind speed is the hypotenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
 
-    if return_direction:
-        # TODO Attributes should be set by the indicator, but there are no multi-output indicators, so we set them anyway if return_direction is True,
-        # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
-        wind.attrs = uas.attrs
-        wind.name = "sfcWind"
-        wind.attrs["standard_name"] = "wind_speed"
-        wind.attrs["long_name"] = "Near-Surface Wind Speed"
+    if not return_direction:
         wind.attrs["units"] = "m s-1"
-        # Calculate the angle
-        windfromdir_math = np.degrees(np.arctan2(vas, uas))
+        return wind
 
-        # Convert the angle from the mathematical standard to the meteorological standard
-        windfromdir = (270 - windfromdir_math) % 360.0
+    # TODO Attributes should be set by the indicator, but there are no multi-output indicators, so we set them anyway if return_direction is True,
+    # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
+    wind.attrs = uas.attrs
+    wind.name = "sfcWind"
+    wind.attrs["units"] = "m s-1"
+    wind.attrs["standard_name"] = "wind_speed"
+    wind.attrs["long_name"] = "Near-Surface Wind Speed"
+    # Calculate the angle
+    windfromdir_math = np.degrees(np.arctan2(vas, uas))
 
-        # According to the meteorological standard, calm winds must have a direction of 0°
-        # while northerly winds have a direction of 360°
-        # On the Beaufort scale, calm winds are defined as < 0.5 m/s
-        windfromdir = xr.where(
-            (windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir
-        )
-        windfromdir = xr.where(wind < 0.5, 0, windfromdir)
+    # Convert the angle from the mathematical standard to the meteorological standard
+    windfromdir = (270 - windfromdir_math) % 360.0
 
-        # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
-        windfromdir.attrs = uas.attrs
-        windfromdir.name = "sfcWindfromdir"
-        windfromdir.attrs["standard_name"] = "wind_from_direction"
-        windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
-        windfromdir.attrs["units"] = "degree"
+    # According to the meteorological standard, calm winds must have a direction of 0°
+    # while northerly winds have a direction of 360°
+    # On the Beaufort scale, calm winds are defined as < 0.5 m/s
+    windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
+    windfromdir = xr.where(wind < 0.5, 0, windfromdir)
 
-        return wind, windfromdir
-    return wind
+    # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
+    windfromdir.attrs = uas.attrs
+    windfromdir.name = "sfcWindfromdir"
+    windfromdir.attrs["standard_name"] = "wind_from_direction"
+    windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
+    windfromdir.attrs["units"] = "degree"
+
+    return wind, windfromdir
 
 
 @declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")

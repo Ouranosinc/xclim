@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Test for utils
-import os
 from inspect import signature
+
 import numpy as np
-import pytest
-import xarray as xr
 
-from xclim.core.utils import wrapped_partial
+from xclim.core.indicator import Indicator
 from xclim.core.utils import walk_map
-
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
-K2C = 273.15
+from xclim.core.utils import wrapped_partial
 
 
 def test_walk_map():

@@ -1,6 +1,5 @@
 # This File is for testing atmos indicators that fit neither in test_precip or test_temperature
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim import atmos
@@ -9,7 +8,7 @@ from xclim import atmos
 K2C = 273.16
 
 
-def test_wind_speed_from_vectors(self):
+def test_wind_speed_from_vectors():
     uas = xr.DataArray(np.array([3, -3]), dims=["x"])
     uas.attrs["units"] = "m s-1"
     vas = xr.DataArray(np.array([4, -4]), dims=["x"])
@@ -23,10 +22,9 @@ def test_wind_speed_from_vectors(self):
 
 def test_relative_humidity_dewpoint(tas_series, rh_series):
     np.testing.assert_allclose(
-        atmos.relative_humidity(
+        atmos.relative_humidity_from_dewpoint(
             tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
             dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
-            method="dewpoint",
         ),
         rh_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
         rtol=0.01,
