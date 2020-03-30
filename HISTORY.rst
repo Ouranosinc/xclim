@@ -4,6 +4,8 @@ History
 
 0.16.x
 ------
+* Better `wrapped_partial` for more meaningful inspection.
+* Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
 * Allow lazy units conversion
 * CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
 * Add utilities to merge attributes and update history in xclim.core.formatting

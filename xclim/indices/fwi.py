@@ -39,16 +39,6 @@ Parameters
 ----------
 Default values for the following parameters are stored in the DEFAULT_PARAMS dict. The current implementation doesn't use all those parameters, so it might be useless to modify them.
 
-    # min_lat : float
-    #     Min latitude for analysis
-    # max_lat : float
-    #     Max latitude for analysis
-    # minLandFrac : float
-    #     Minimum grid cell land fraction for analysis
-    # minT : float
-    #     Mask out anything with mean annual Tsurf less than this
-    # minPrec : float
-    #     Mask out anything with mean annual prec less than this
     snowCoverDaysCalc : int
         Number of days prior to spring over which to determine if winter had substantial snow cover
     minWinterSnoD : float

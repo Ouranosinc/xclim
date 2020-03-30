@@ -21,6 +21,7 @@ the implementation of the indices.
     :mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
+from ._conversion import *
 from ._multivariate import *
 from ._simple import *
 from ._threshold import *

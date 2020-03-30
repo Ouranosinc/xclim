@@ -39,7 +39,6 @@ __all__ = [
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
-    "tas",
     "tg90p",
     "tg10p",
     "tn90p",
@@ -975,30 +974,6 @@ def fraction_over_precip_thresh(
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
     return over / total
-
-
-@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
-def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
-    """Average temperature from minimum and maximum temperatures.
-
-    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-        Minimum (daily) temperature [℃] or [K]
-    tasmax : xarray.DataArray
-        Maximum (daily) temperature [℃] or [K]
-
-    Returns
-    -------
-    xarray.DataArray
-        Mean (daily) temperature [same units as tasmin]
-    """
-    tasmax = convert_units_to(tasmax, tasmin)
-    tas = (tasmax + tasmin) / 2
-    tas.attrs["units"] = tasmin.attrs["units"]
-    return tas
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
