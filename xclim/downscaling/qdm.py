@@ -153,7 +153,7 @@ def predict(
 
     # Quantile mapping
     sel = {"quantiles": xq}
-    qf = broadcast(qm.qf, x, interp, sel)
+    qf = broadcast(qm.qf, x, interp=interp, sel=sel)
     out = apply_correction(x, qf, qm.kind)
 
     out.attrs["bias_corrected"] = True

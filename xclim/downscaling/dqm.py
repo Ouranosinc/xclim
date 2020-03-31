@@ -162,7 +162,7 @@ def predict(
         mu_x = add_cyclic_bounds(mu_x, prop, cyclic_coords=False)
 
     # Apply mean correction factor nx = x / <x>
-    mfx = broadcast(mu_x, x, interp)
+    mfx = broadcast(mu_x, x, interp=interp)
     nx = apply_correction(x, invert(mfx, kind), kind)
 
     # Detrend series
