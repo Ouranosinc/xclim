@@ -121,11 +121,6 @@ def adapt_freq(
     """
     Adapt frequency of values under thresh of sim, in order to match obs.
 
-    With :math:`P_0^o` the frequency of values under threshold :math`T_0` in the reference (obs) and
-    :math:`P_0^s` the same for the simulated values, :math:`dP_0 = P_0^s - P_0^o`, when poitive, represents
-    the proportion of values in sim that are below :math:`T_0` but shouldn't.
-
-
     Parameters
     ----------
     obs : xr.DataArray
@@ -140,15 +135,24 @@ def adapt_freq(
     Returns
     -------
     xr.Dataset wth the following variables:
-      - sim_adj
+      - sim_ad
         Simulated data with the same frequency of values under threshold than obs.
-        Adjustement is made group-wise.
+        Adaptation is made group-wise.
       - pth
         For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
         either left as zero values or given a random value between non_zero_thresh and pth.
         NaN where frequency adaptation wasn't needed.
       - dP0
-        For each group, the percentage of values that were corrected.
+        For each group, the percentage of values under threshold that were corrected in sim.
+
+    Notes
+    -----
+    With :math:`P_0^o` the frequency of values under threshold :math:`T_0` in the reference (obs) and
+    :math:`P_0^s` the same for the simulated values, :math:`\\Delta P_0 = \\frac{P_0^s - P_0^o}{P_0^s}`, when poitive, represents
+    the proportion of values under :math:`T_0` that need to be corrected.
+
+    The correction replaces a proportion :math:`\\Delta P_0` of the values under :math:`T_0` in sim by a random number between :math:`T_0` and
+    :math:`P_{th}`, where :math:`P_{th} = ecdf_{obs}^{-1}( ecdf_{sim}( T_0 ) )` and `ecdf(x)` is the empirical cumulative distribution function.
 
     References
     ----------
@@ -159,37 +163,47 @@ def adapt_freq(
     def _adapt_freq_group(ds, dim="time"):
         if not isinstance(dim, (tuple, list)):
             dim = [dim]
-            icenter = None
-        else:
-            icenter = (window - 1) // 2
 
         if isinstance(ds.sim.data, dsk.Array):
+            # In order to be efficient and lazy, some classical numpy ops will be replaced by dask's version
             mod = dsk
             kws = {"chunks": ds.sim.chunks}
         else:
             mod = np
             kws = {}
 
+        # Compute the probability of finding a value <= non_zero_thresh
+        # This is the "dry-day frequency" in the precipitation case
         P0_sim = ecdf_lazy(ds.sim, non_zero_thresh, dim=dim)
         P0_obs = ecdf_lazy(ds.obs, non_zero_thresh, dim=dim)
-        dP0 = P0_sim - P0_obs
 
+        # The proportion of values <= non_zero_thresh in sim that need to be corrected, compared to obs
+        dP0 = (P0_sim - P0_obs) / P0_sim
+
+        # Compute : ecdf_obs^-1( ecdf_sim( non_zero_thresh ) )
+        # The value in obs with the same rank as the first non zero value in sim.
         pth = xr.apply_ufunc(
             np.percentile,
             ds.obs,
-            P0_sim,
+            P0_sim
+            * 100,  # np.percentile takes values in [0, 100], ecdf outputs in [0, 1]
             input_core_dims=[dim, []],
             dask="parallelized",
             vectorize=True,
             output_dtypes=[ds.obs.dtype],
-        ).where(dP0 > 0)
+        ).where(
+            dP0 > 0
+        )  # pth is meaningless when freq. adaptation is not needed
 
-        if icenter is not None:
-            sim = ds.sim.isel(window=icenter)
-            dim = [dim[1]]
+        if window > 1:
+            # P0_sim was computed unsing the window, but only the orignal timeseries is corrected.
+            sim = ds.sim.isel(window=(window - 1) // 2)
+            dim = [list(set(dim) - {"window"})]
         else:
             sim = ds.sim
 
+        # Get the percentile rank of each value in sim.
+        # da.rank() doesn't work with dask arrays.
         rank = xr.apply_ufunc(
             lambda da: np.argsort(np.argsort(da, axis=-1), axis=-1),
             sim,
@@ -199,18 +213,34 @@ def adapt_freq(
             output_dtypes=[sim.dtype],
         ) / sim.notnull().sum(dim=dim)
 
-        sim_adj = sim.where(
-            dP0 < 0,
-            sim.where(
-                (rank < P0_obs) | (rank > P0_sim),
-                (pth.broadcast_like(sim) - non_zero_thresh)
+        # Frequency-adapted sim
+        sim_ad = sim.where(
+            dP0 < 0,  # dP0 < 0 means no-adaptation.
+            sim.where(  # Adaption needed.
+                (rank < P0_obs)
+                | (rank > P0_sim),  # Only correct values in the exceeding ranks with:
+                (
+                    pth.broadcast_like(sim) - non_zero_thresh
+                )  # Continuous-uniform random distribution of values between non_zero_thresh and Pth
                 * mod.random.random_sample(sim.shape, **kws)
                 + non_zero_thresh,
             ),
         )
+
+        # Set some metadata
+        sim_ad.attrs.update(ds.sim.attrs)
+        pth.attrs[
+            "long_name"
+        ] = "Smallest value of the timeseries not corrected by frequency adaptation."
+        dP0.attrs[
+            "long_name"
+        ] = "Proportion of values smaller than {non_zero_thresh} in the timeseries corrected by frequency adaptation"
+
+        # Tell group_apply that these will need reshaping (regrouping)
+        # This is needed since if any variable comes out a groupby with the original group axis, the whole output is broadcasted back to the original dims.
         pth.attrs["_group_apply_reshape"] = True
         dP0.attrs["_group_apply_reshape"] = True
-        return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_adj": sim_adj})
+        return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
 
     return group_apply(
         _adapt_freq_group,
@@ -369,7 +399,8 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 
     Returns
     -------
-
+    Union[xr.DataArray, xr.Dataset]
+        Which ever is returned by func. With added attributes `group` and `group_window`.
     """
     dim, prop = parse_group(group)
 
@@ -411,6 +442,9 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
         else:
             out = func(sub, dim=dims, **kwargs)
 
+    # Case where the function wants to return more than one variables
+    # and that some have grouped dims and other have the same dimensions as the input.
+    # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
     if isinstance(out, xr.Dataset):
         for name, da in out.data_vars.items():
             if "_group_apply_reshape" in da.attrs:
