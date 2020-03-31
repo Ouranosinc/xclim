@@ -8,6 +8,8 @@ from xarray.core.dataarray import DataArray
 from xarray.core.groupby import DataArrayGroupBy
 
 from .utils import ADDITIVE
+from .utils import apply_correction
+from .utils import invert
 from .utils import MULTIPLICATIVE
 
 
@@ -96,8 +98,8 @@ class PolyDetrend(NoDetrend):
     If freq is used to resample at a lower frequency, make sure the series includes full periods.
     """
 
-    def __init__(self, degree=4, freq=None):
-        super().__init__(degree=degree, freq=freq)
+    def __init__(self, degree=4, freq=None, kind=ADDITIVE):
+        super().__init__(degree=degree, freq=freq, kind=kind)
 
     def _fit(self, da):
         if self.freq is not None:
@@ -107,12 +109,18 @@ class PolyDetrend(NoDetrend):
         self._fitds = da.polyfit(dim="time", deg=self.degree, full=True)
 
     def _detrend(self, da):
+        # Estimate trend over da
         trend = xr.polyval(coord=da["time"], coeffs=self._fitds.polyfit_coefficients)
-        return da - trend
+
+        # Remove trend from series
+        return apply_correction(da, invert(trend, self.kind), self.kind)
 
     def _retrend(self, da):
+        # Estimate trend over da
         trend = xr.polyval(coord=da["time"], coeffs=self._fitds.polyfit_coefficients)
-        return da + trend
+
+        # Add trend to series
+        return apply_correction(da, trend, self.kind)
 
 
 # ## Grouping objects
