@@ -7,6 +7,7 @@ Quantiles from detrended `x` are mapped onto quantiles from `y`.
 import numpy as np
 import xarray as xr
 
+from .base import PolyDetrend
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
 from .utils import apply_correction
@@ -166,17 +167,13 @@ def predict(
     mfx = broadcast(mu_x, x, interp=interp)
     nx = apply_correction(x, invert(mfx, kind), kind)
 
+    # Testing :
+    # null = 0 if kind == ADDITIVE else 1
+    # np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
+
     # Detrend series
-    null = 0 if kind == ADDITIVE else 1
-    np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
-
-    ax = nx.resample(time="Y").mean()
-    fit_ds = ax.polyfit(deg=1, dim="time")
-    x_trend = xr.polyval(coord=nx.time, coeffs=fit_ds.polyfit_coefficients)
-    x_trend = apply_correction(x_trend, invert(x_trend.mean(dim="time"), kind), kind)
-
-    # Detrended
-    nxt = apply_correction(nx, invert(x_trend, kind), kind)
+    pfit = PolyDetrend(degree=1, kind=kind).fit(nx)
+    nxt = pfit.detrend(nx)
 
     if prop is not None:
         nxt = nxt.assign_coords({prop: get_index(nxt, dim, prop, interp)})
@@ -186,7 +183,8 @@ def predict(
     corrected = apply_correction(nxt, qf, kind)
 
     # Reapply trend
-    out = apply_correction(corrected, x_trend, kind)
+    out = pfit.retrend(corrected)
+
     out.attrs["bias_corrected"] = True
 
     return out
