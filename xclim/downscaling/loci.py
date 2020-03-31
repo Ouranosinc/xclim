@@ -2,6 +2,7 @@
 Local Intensity Scaling (LOCI)
 ==============================
 
+
 References
 ----------
 Schmidli, J., Frei, C., & Vidale, P. L. (2006). Downscaling from GCM precipitation: A benchmark for dynamical and
@@ -23,7 +24,42 @@ from .utils import parse_group
 def train(
     x, y, group="time.dayofyear", window=1, thresh=None,
 ):
-    """
+    r"""
+    Return multiplicative correction factors such that the mean of `x` matches the mean of `y` for values above a
+    threshold.
+
+    The threshold on the training target `y` is first mapped to `x` by finding the quantile in `x` having the same
+    exceedance probability as thresh in `y`. The correction factor is then given by
+
+    .. math::
+
+       s = \frac{\left \langle y: y \geq t_y \right\rangle - t_y}{\left \langle x : x \geq t_x \right\rangle - t_x}
+
+    In the case of precipitations, the correction factor is the ratio of wet-days intensity.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Training data, usually a model output whose biases are to be corrected.
+    y : xr.DataArray
+      Training target, usually a reference time series drawn from observations.
+    group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
+      Grouping dimension and property. If only the dimension is given (e.g. 'time'), the correction is computed over
+      the entire series.
+    window : int
+      Length of the rolling window centered around the time of interest used to estimate the quantiles. This is mostly
+      used with group `time.dayofyear` to increase the number of samples.
+    thresh : float
+      Threshold under which values are assumed null for `y`. For precipitations, this is the wet-day threshold.
+
+    Returns
+    -------
+    xr.Dataset with variables:
+        - cf : The correction factors indexed by group properties
+        - x_thresh : The threshold over `x` indexed by group properties
+        - y_thresh : The threshold over `y`.
+
+        The grouping informations are in the "group" and "group_window" attributes.
 
     """
 
@@ -31,8 +67,8 @@ def train(
 
     # Compute scaling factor on wet-day intensity
     xth = broadcast(x_thresh, x)
-    wx = xr.where(x > xth, x, np.nan)
-    wy = xr.where(y > thresh, y, np.nan)
+    wx = xr.where(x >= xth, x, np.nan)
+    wy = xr.where(y >= thresh, y, np.nan)
 
     mx = group_apply("mean", wx, group, window, skipna=True)
     my = group_apply("mean", wy, group, window, skipna=True)
@@ -47,6 +83,30 @@ def train(
 
 
 def predict(x, c, interp="linear"):
+    r"""
+    Return a multiplicative bias-corrected time series for values above a threshold.
+
+    Given a correction factor `s`, return the series
+
+    .. math::
+
+      p(t) = \max\left(t_y + s \cdot (x(t) - t_x), 0\right)
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Time series to be bias-corrected, usually a model output.
+    c : xr.Dataset
+      Dataset returned by `loci.train`.
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method used to find the correction factors from the quantile map. See utils.broadcast.
+
+    Returns
+    -------
+    xr.DataArray
+      The bias-corrected time series.
+
+    """
     dim, prop = parse_group(c.group)
     cf = c.cf
 

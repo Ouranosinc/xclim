@@ -66,6 +66,7 @@ def train(
     xr.Dataset with variables:
         - qf : The correction factors indexed by group properties and quantiles.
         - xq : The quantile values
+
         The type of correction used is stored in the "kind" attribute and grouping informations are in the
         "group" and "group_window" attributes.
 

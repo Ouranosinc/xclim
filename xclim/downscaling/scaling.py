@@ -1,6 +1,6 @@
 """
 Scaling method
-==============
+--------------
 
 Array `x` is scaled by an additive or multiplicative factor so that the mean of x matches the mean of y. These
 factors can be computed independently per season, month or day of the year.
@@ -38,8 +38,9 @@ def train(x, y, group="time.month", kind="+", window=1):
 
     Returns
     -------
-    xr.Dataset with variables:
+    xr.Dataset with variable:
         - qf : The correction factors indexed by group properties and quantiles.
+
         The type of correction used is stored in the "kind" attribute and grouping informations are in the
         "group" and "group_window" attributes.
 
