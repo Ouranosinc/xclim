@@ -68,6 +68,7 @@ def train(
     xr.Dataset with variables:
         - qf : The correction factors indexed by group properties and quantiles.
         - xq : The quantile values.
+
         The type of correction used is stored in the "kind" attribute and grouping informations are in the
         "group" and "group_window" attributes.
 
@@ -153,7 +154,7 @@ def predict(
 
     # Quantile mapping
     sel = {"quantiles": xq}
-    qf = broadcast(qm.qf, x, interp, sel)
+    qf = broadcast(qm.qf, x, interp=interp, sel=sel)
     out = apply_correction(x, qf, qm.kind)
 
     out.attrs["bias_corrected"] = True

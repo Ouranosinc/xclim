@@ -7,11 +7,15 @@ from scipy.stats import norm
 from xclim.downscaling import utils as u
 
 
-def test_ecdf():
+def test_ecdf(series):
     dist = norm(5, 2)
     r = dist.rvs(10000)
     q = [0.01, 0.5, 0.99]
     x = dist.ppf(q)
+    np.testing.assert_allclose(u.ecdf(series(r, "tas"), x), q, 3)
+
+    # With NaNs
+    r[:2000] = np.nan
     np.testing.assert_allclose(u.ecdf(r, x), q, 3)
 
 
@@ -23,13 +27,28 @@ def test_ecdf_lazy(x):
     np.testing.assert_allclose(u.ecdf_lazy(r, x), q, 3)
 
 
-def test_map_cdf():
+def test_map_cdf(series):
     n = 10000
     xd = norm(5, 2)
     yd = norm(7, 3)
 
     q = [0.1, 0.5, 0.99]
-    x_value = u.map_cdf(x=xd.rvs(n), y=yd.rvs(n), y_value=yd.ppf(q))
+    x_value = u.map_cdf(
+        x=series(xd.rvs(n), "pr"),
+        y=series(yd.rvs(n), "pr"),
+        y_value=yd.ppf(q),
+        group="time",
+    )
+    np.testing.assert_allclose(x_value, xd.ppf(q), 3)
+
+    # Scalar
+    q = 0.5
+    x_value = u.map_cdf(
+        x=series(xd.rvs(n), "pr"),
+        y=series(yd.rvs(n), "pr"),
+        y_value=yd.ppf(q),
+        group="time",
+    )
     np.testing.assert_allclose(x_value, xd.ppf(q), 3)
 
 
@@ -152,7 +171,7 @@ def test_adjust_freq_1d_dist_nan():
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_adjust_freq_2(use_dask):
+def test_adapt_freq(use_dask):
     time = pd.date_range("1993-01-01", "2000-12-31", freq="D")
     prvals = np.random.randint(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
@@ -164,7 +183,7 @@ def test_adjust_freq_2(use_dask):
 
     prsim = xr.where(pr < 20, pr / 20, pr)
     probs = xr.where(pr < 10, pr / 20, pr)
-    ds_adj = u.adjust_freq_2(probs, prsim, 1, "time.month")
+    ds_adj = u.adapt_freq(probs, prsim, 1, "time.month")
 
     corrected = ds_adj.sim_adj.where((probs > 1) & (prsim < 1))
     assert ((corrected > 1) & (corrected < 20)).sum() == (

@@ -1,24 +1,57 @@
 # -*- coding: utf-8 -*-
 """
-Downscaling and bias-correction
-===============================
+This submodule provides bias-correction and downscaling algorithms. Each method has a `train` and `predict` method.
+Given time series of observations (obs), historical simulations (hist) and future simulations (fut),
+any bias-correction method would be applied by first estimating the correction factors from the historical and
+observations series, and then applying these factors to the future series::
 
-This submodule provides tools for bias-correction and downscaling process on
-climate data using xarray. Once complete and usable, chances are that this
-submodule will move into its own package, so don't get attached too much.
+  cf = train(hist, obs, group="time.month")
+  fut_bc = predict(fut, cf, interp="linear")
 
-Available methods:
-- Scaling
-- Local intensity scaling (LOCI)
-- Empirical quantile mapping
-- Quantile delta mapping
+The `group` argument allows correction factors to be estimated independently for different periods, either months,
+seasons or day of the year. The `interp` argument then allows for interpolation between these correction factors to
+avoid discontinuities in the bias-corrected series.
+
+The same interpolation principle is also used for quantiles. Indeed, for methods extracting correction factors by
+quantile, interpolation is also done between quantiles. This can help reduce discontinuities in the corrected time
+series, and possibly reduce the number of quantile bins used.
+
+"""
+import xarray
+from xarray.tests import LooseVersion
 
 
+"""
 TODO: ISIMIP ? Used for precip freq ajdustment in biasCorrection.R
+
 Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash; The ISI-MIP approach. Earth System Dynamics, 4(2), 219–236. https://doi.org/10.5194/esd-4-219-2013
 
 
-Logic:
+Pipeline logic
+==============
+
+A pipeline is made out of these building blocks
+
+- preprocessing on x_train
+- preprocessing on y_train
+- training `train(x_train, y_train) -> t_out`
+- preprocessing on x_predict
+- prediction `predict(x_predict, t_out) -> y_predict`
+- post-processing on y_predict
+
+Preprocessing methods include:
+
+- detrending
+- adding jitter to null values
+
+Post-processing methods include
+
+- retrending
+
+Could the pre/post processing could be done with the `with` statement ?
+
+---
+
 
 What the use calls is a "Pipeline".
 Given a detrending, a grouping and a mapping object, a typical pipeline would call:
@@ -42,8 +75,5 @@ The Mapping objects perform a fit from obs and sim, the reference observation an
 Then, the predict() method takes in fut, the simulated climate for the projection period, that must have a "time" and a "group" coord, as given by the add_group_axis() grouping method.
 It returns the corrected fut timeseries,
 """
-import xarray
-from xarray.tests import LooseVersion
-
 if LooseVersion(xarray.__version__) <= "0.15.1":
     raise ImportError("Update xarray to master to use the downscaling package.")

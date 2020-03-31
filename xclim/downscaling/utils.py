@@ -11,7 +11,7 @@ MULTIPLICATIVE = "*"
 ADDITIVE = "+"
 
 
-def map_cdf(x, y, y_value):
+def map_cdf(x, y, y_value, group, skipna=False):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
     Parameters
@@ -22,19 +22,49 @@ def map_cdf(x, y, y_value):
       Training data.
     y_value : float, array
       Value within the support of `y`.
+    dim : str
+      Dimension along which to compute quantile.
 
     Returns
     -------
     array
       Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-    if not isinstance(x, xr.DataArray):
-        x = xr.DataArray(data=x)
-    q = ecdf(y, y_value)
-    return x.quantile(q=q)
+
+    def _map_cdf_1d(x, y, y_value, skipna=False):
+        q = _ecdf_1d(y, y_value)
+        _func = np.nanquantile if skipna else np.quantile
+        return _func(x, q=q)
+
+    def _map_cdf_group(gr, y_value, dim="time", skipna=False):
+        return xr.apply_ufunc(
+            _map_cdf_1d,
+            gr.x,
+            gr.y,
+            input_core_dims=[[dim]] * 2,
+            output_core_dims=[["x"]],
+            vectorize=True,
+            keep_attrs=True,
+            kwargs={"y_value": y_value, "skipna": skipna},
+            dask="parallelized",
+            output_dtypes=[gr.x.dtype],
+        )
+
+    return group_apply(
+        _map_cdf_group,
+        xr.Dataset(data_vars={"x": x, "y": y}),
+        group,
+        y_value=np.atleast_1d(y_value),
+        skipna=skipna,
+    )
 
 
-def ecdf(x, value):
+def _ecdf_1d(x, value):
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
+
+
+def ecdf(x, value, dim="time"):
     """Return the empirical CDF of a sample at a given value.
 
     Parameters
@@ -49,8 +79,18 @@ def ecdf(x, value):
     array
       Empirical CDF.
     """
-    sx = np.r_[-np.inf, np.sort(x)]
-    return np.searchsorted(sx, value, side="right") / len(sx)
+
+    return xr.apply_ufunc(
+        _ecdf_1d,
+        x,
+        input_core_dims=[[dim]],
+        output_core_dims=[["x"]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"value": value},
+        dask="parallelized",
+        output_dtypes=[np.float],
+    )
 
 
 def ecdf_lazy(x, value, dim="time"):
@@ -71,10 +111,52 @@ def ecdf_lazy(x, value, dim="time"):
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
 
-def adjust_freq_2(
-    sim, obs, non_zero_thresh=0, nq=None, first_quantile=None, group="time", window=1
+def adapt_freq(
+    sim: xr.DataArray,
+    obs: xr.DataArray,
+    non_zero_thresh: float = 0,
+    group: str = "time",
+    window: int = 1,
 ):
-    def _adjust_freq_group_2(ds, dim="time"):
+    """
+    Adapt frequency of values under thresh of sim, in order to match obs.
+
+    With :math:`P_0^o` the frequency of values under threshold :math`T_0` in the reference (obs) and
+    :math:`P_0^s` the same for the simulated values, :math:`dP_0 = P_0^s - P_0^o`, when poitive, represents
+    the proportion of values in sim that are below :math:`T_0` but shouldn't.
+
+
+    Parameters
+    ----------
+    obs : xr.DataArray
+      Observed data.
+    sim : xr.DataArray
+      Simulated data.
+    non_zero_thresh : float
+      Threshold below which values are considered zero.
+    group, window
+      Grouping information, see group_apply()
+
+    Returns
+    -------
+    xr.Dataset wth the following variables:
+      - sim_adj
+        Simulated data with the same frequency of values under threshold than obs.
+        Adjustement is made group-wise.
+      - pth
+        For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
+        either left as zero values or given a random value between non_zero_thresh and pth.
+        NaN where frequency adaptation wasn't needed.
+      - dP0
+        For each group, the percentage of values that were corrected.
+
+    References
+    ----------
+    Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its
+    impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
+    """
+
+    def _adapt_freq_group(ds, dim="time"):
         if not isinstance(dim, (tuple, list)):
             dim = [dim]
             icenter = None
@@ -131,7 +213,7 @@ def adjust_freq_2(
         return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_adj": sim_adj})
 
     return group_apply(
-        _adjust_freq_group_2,
+        _adapt_freq_group,
         xr.Dataset(data_vars={"sim": sim, "obs": obs}),
         group,
         window,
@@ -271,7 +353,7 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     ----------
     func : str
       DataArray method applied to each group.
-    x : DataArray
+    x : DataArray, tuple of DataArray for functions with multiple arguments.
       Data.
     group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
       Grouping criterion. If only coordinate is given (e.g. 'time') no grouping will be done.
@@ -290,6 +372,9 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
 
     """
     dim, prop = parse_group(group)
+
+    if isinstance(x, (tuple, list)):
+        x = xr.Dataset({f"v{i}": da for i, da in enumerate(x)})
 
     dims = dim
     if "." in group:
@@ -321,9 +406,7 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     else:
         if grouped_args is not None:
             func = wrap_func_with_grouped_args(func)
-        if isinstance(
-            sub, (xr.core.groupby.DataArrayGroupBy, xr.core.groupby.DatasetGroupBy)
-        ):
+        if isinstance(sub, xr.core.groupby.GroupBy):
             out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
         else:
             out = func(sub, dim=dims, **kwargs)

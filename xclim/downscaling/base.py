@@ -13,6 +13,9 @@ from .utils import MULTIPLICATIVE
 
 # ## Base classes for the downscaling module
 
+# Time offsets to find the middle of the period
+loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
+
 
 class ParametrizableClass(object):
     """Helper base class that sets as attribute every kwarg it receives in __init__.
@@ -85,10 +88,22 @@ class MeanDetrend(NoDetrend):
 
 
 class PolyDetrend(NoDetrend):
-    def __init__(self, degree=4):
-        super().__init__(self, degree=degree)
+    """
+    Detrend time series using a polynomial.
+
+    Notes
+    -----
+    If freq is used to resample at a lower frequency, make sure the series includes full periods.
+    """
+
+    def __init__(self, degree=4, freq=None):
+        super().__init__(degree=degree, freq=freq)
 
     def _fit(self, da):
+        if self.freq is not None:
+            da = da.resample(
+                time=self.freq, label="left", loffset=loffsets[self.freq]
+            ).mean()
         self._fitds = da.polyfit(dim="time", deg=self.degree, full=True)
 
     def _detrend(self, da):
@@ -97,7 +112,7 @@ class PolyDetrend(NoDetrend):
 
     def _retrend(self, da):
         trend = xr.polyval(coord=da["time"], coeffs=self._fitds.polyfit_coefficients)
-        return da - trend
+        return da + trend
 
 
 # ## Grouping objects

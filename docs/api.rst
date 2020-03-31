@@ -33,6 +33,19 @@ Unit handling module
    :show-inheritance:
 
 
+Downscaling
+===========
+
+.. automodule:: xclim.downscaling
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Available methods:
+  .. toctree::
+
+     downscaling_api
+
 Other utilities
 ===============
 
