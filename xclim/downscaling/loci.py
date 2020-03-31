@@ -2,6 +2,9 @@
 Local Intensity Scaling (LOCI)
 ==============================
 
+This bias correction method is designed to correct daily precipitation time series by considering wet and dry days
+separately.
+
 
 References
 ----------

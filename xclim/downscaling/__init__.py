@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
+"""
+This submodule provides bias-correction and downscaling algorithms. Each method has a `train` and `predict` method.
+Given time series of observations (obs), historical simulations (hist) and future simulations (fut),
+any bias-correction method would be applied by first estimating the correction factors from the historical and
+observations series, and then applying these factors to the future series::
+
+  cf = train(hist, obs, group="time.month")
+  fut_bc = predict(fut, cf, interp="linear")
+
+The `group` argument allows correction factors to be estimated independently for different periods, either months,
+seasons or day of the year. The `interp` argument then allows for interpolation between these correction factors to
+avoid discontinuities in the bias-corrected series.
+
+"""
 import xarray
 from xarray.tests import LooseVersion
 
-"""
-This submodule provides tools for bias-correction and downscaling process on
-climate data using xarray. Once complete and usable, chances are that this
-submodule will move into its own package, so don't get attached too much.
 
-Available methods:
- - Scaling
- - Local intensity scaling (LOCI)
- - Empirical quantile mapping
- - Quantile delta mapping
-
-"""
 """
 TODO: ISIMIP ? Used for precip freq ajdustment in biasCorrection.R
 Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash; The ISI-MIP approach. Earth System Dynamics, 4(2), 219–236. https://doi.org/10.5194/esd-4-219-2013

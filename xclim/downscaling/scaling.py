@@ -2,8 +2,8 @@
 Scaling method
 --------------
 
-Array `x` is scaled by an additive or multiplicative factor so that the mean of x matches the mean of y. These
-factors can be computed independently per season, month or day of the year.
+This bias-correction method scales variables by an additive or multiplicative factor so that the mean of x matches
+the mean of y.
 
 """
 import xarray as xr
