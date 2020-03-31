@@ -1,5 +1,6 @@
 from warnings import warn
 
+import dask.array as dsk
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
@@ -50,6 +51,91 @@ def ecdf(x, value):
     """
     sx = np.r_[-np.inf, np.sort(x)]
     return np.searchsorted(sx, value, side="right") / len(sx)
+
+
+def ecdf_lazy(x, value, dim="time"):
+    """Return the empirical CDF of a sample at a given value.
+
+    Parameters
+    ----------
+    x : array
+      Sample.
+    value : array
+      The values within the support of `x` for which to compute the CDF value.
+
+    Returns
+    -------
+    array
+      Empirical CDF.
+    """
+    return (x <= value).sum(dim) / x.notnull().sum(dim)
+
+
+def adjust_freq_2(
+    sim, obs, non_zero_thresh=0, nq=None, first_quantile=None, group="time", window=1
+):
+    def _adjust_freq_group_2(ds, dim="time"):
+        if not isinstance(dim, (tuple, list)):
+            dim = [dim]
+            icenter = None
+        else:
+            icenter = (window - 1) // 2
+
+        if isinstance(ds.sim.data, dsk.Array):
+            mod = dsk
+            kws = {"chunks": ds.sim.chunks}
+        else:
+            mod = np
+            kws = {}
+
+        P0_sim = ecdf_lazy(ds.sim, non_zero_thresh, dim=dim)
+        P0_obs = ecdf_lazy(ds.obs, non_zero_thresh, dim=dim)
+        dP0 = P0_sim - P0_obs
+
+        pth = xr.apply_ufunc(
+            np.percentile,
+            ds.obs,
+            P0_sim,
+            input_core_dims=[dim, []],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=[ds.obs.dtype],
+        ).where(dP0 > 0)
+
+        if icenter is not None:
+            sim = ds.sim.isel(window=icenter)
+            dim = [dim[1]]
+        else:
+            sim = ds.sim
+
+        rank = xr.apply_ufunc(
+            lambda da: np.argsort(np.argsort(da, axis=-1), axis=-1),
+            sim,
+            input_core_dims=[dim],
+            output_core_dims=[dim],
+            dask="parallelized",
+            output_dtypes=[sim.dtype],
+        ) / sim.notnull().sum(dim=dim)
+
+        sim_adj = sim.where(
+            dP0 < 0,
+            sim.where(
+                (rank < P0_obs) | (rank > P0_sim),
+                (pth.broadcast_like(sim) - non_zero_thresh)
+                * mod.random.random_sample(sim.shape, **kws)
+                + non_zero_thresh,
+            ),
+        )
+        pth.attrs["_group_apply_reshape"] = True
+        dP0.attrs["_group_apply_reshape"] = True
+        return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_adj": sim_adj})
+
+    return group_apply(
+        _adjust_freq_group_2,
+        xr.Dataset(data_vars={"sim": sim, "obs": obs}),
+        group,
+        window,
+    )
 
 
 # TODO: This function should also return sth
@@ -235,10 +321,19 @@ def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
     else:
         if grouped_args is not None:
             func = wrap_func_with_grouped_args(func)
-        if hasattr(sub, "map"):
+        if isinstance(
+            sub, (xr.core.groupby.DataArrayGroupBy, xr.core.groupby.DatasetGroupBy)
+        ):
             out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
         else:
             out = func(sub, dim=dims, **kwargs)
+
+    if isinstance(out, xr.Dataset):
+        for name, da in out.data_vars.items():
+            if "_group_apply_reshape" in da.attrs:
+                if da.attrs["_group_apply_reshape"] and prop is not None:
+                    out[name] = da.groupby(group).first(skipna=False, keep_attrs=True)
+                del out[name].attrs["_group_apply_reshape"]
 
     # Save input parameters as attributes of output DataArray.
     out.attrs["group"] = group

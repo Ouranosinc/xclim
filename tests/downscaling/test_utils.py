@@ -15,6 +15,14 @@ def test_ecdf():
     np.testing.assert_allclose(u.ecdf(r, x), q, 3)
 
 
+@pytest.mark.parametrize("x", [0.01, 0.5, 0.99])
+def test_ecdf_lazy(x):
+    dist = norm(5, 2)
+    r = xr.DataArray(dist.rvs(10000), dims=("time",))
+    q = dist.ppf(x)
+    np.testing.assert_allclose(u.ecdf_lazy(r, x), q, 3)
+
+
 def test_map_cdf():
     n = 10000
     xd = norm(5, 2)
@@ -143,22 +151,28 @@ def test_adjust_freq_1d_dist_nan():
     np.testing.assert_array_equal(out[a >= 40], a[a >= 40])
 
 
-def test_adjust_freq():
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_adjust_freq_2(use_dask):
     time = pd.date_range("1993-01-01", "2000-12-31", freq="D")
     prvals = np.random.randint(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
         prvals, coords={"time": time, "lat": [0, 1, 2]}, dims=("time", "lat")
     )
+
+    if use_dask:
+        pr = pr.chunk({"lat": 1})
+
     prsim = xr.where(pr < 20, pr / 20, pr)
     probs = xr.where(pr < 10, pr / 20, pr)
-    prsim_ad = u.adjust_freq(probs, prsim, 1, "time.month")
+    ds_adj = u.adjust_freq_2(probs, prsim, 1, "time.month")
 
+    corrected = ds_adj.sim_adj.where((probs > 1) & (prsim < 1))
+    assert ((corrected > 1) & (corrected < 20)).sum() == (
+        (probs > 1) & (prsim < 1)
+    ).sum()
     xr.testing.assert_equal(
-        (probs < 1).groupby("time.month").sum().T,
-        (prsim_ad < 1).groupby("time.month").sum(),
+        ds_adj.sim_adj.where(corrected.isnull()), prsim.where(corrected.isnull())
     )
-
-    u.adjust_freq(probs, prsim, 1, "time")
 
 
 @pytest.mark.parametrize("shape", [(2920,), (2920, 5, 5)])
