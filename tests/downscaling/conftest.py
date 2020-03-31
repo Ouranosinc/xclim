@@ -29,37 +29,36 @@ def mon_series(series, mon_triangular):
     return _mon_series
 
 
+def _series(values, name, start="2000-01-01"):
+    coords = collections.OrderedDict()
+    for dim, n in zip(("time", "lon", "lat"), values.shape):
+        if dim == "time":
+            coords[dim] = pd.date_range(start, periods=n, freq=pd.DateOffset(days=1))
+        else:
+            coords[dim] = xr.IndexVariable(dim, np.arange(n))
+
+    if name == "tas":
+        attrs = {
+            "standard_name": "air_temperature",
+            "cell_methods": "time: mean within days",
+            "units": "K",
+            "kind": "+",
+        }
+    elif name == "pr":
+        attrs = {
+            "standard_name": "precipitation_flux",
+            "cell_methods": "time: sum over day",
+            "units": "kg m-2 s-1",
+            "kind": "*",
+        }
+
+    return xr.DataArray(
+        values, coords=coords, dims=list(coords.keys()), name=name, attrs=attrs,
+    )
+
+
 @pytest.fixture
 def series():
-    def _series(values, name, start="2000-01-01"):
-        coords = collections.OrderedDict()
-        for dim, n in zip(("time", "lon", "lat"), values.shape):
-            if dim == "time":
-                coords[dim] = pd.date_range(
-                    start, periods=n, freq=pd.DateOffset(days=1)
-                )
-            else:
-                coords[dim] = xr.IndexVariable(dim, np.arange(n))
-
-        if name == "tas":
-            attrs = {
-                "standard_name": "air_temperature",
-                "cell_methods": "time: mean within days",
-                "units": "K",
-                "kind": "+",
-            }
-        elif name == "pr":
-            attrs = {
-                "standard_name": "precipitation_flux",
-                "cell_methods": "time: sum over day",
-                "units": "kg m-2 s-1",
-                "kind": "*",
-            }
-
-        return xr.DataArray(
-            values, coords=coords, dims=list(coords.keys()), name=name, attrs=attrs,
-        )
-
     return _series
 
 
