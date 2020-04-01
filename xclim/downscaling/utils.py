@@ -118,12 +118,13 @@ def adapt_freq(
     group: str = "time",
     window: int = 1,
 ):
-    """
+    r"""
     Adapt frequency of values under thresh of sim, in order to match obs.
 
-    With :math:`P_0^o` the frequency of values under threshold :math`T_0` in the reference (obs) and
-    :math:`P_0^s` the same for the simulated values, :math:`dP_0 = P_0^s - P_0^o`, when poitive, represents
-    the proportion of values in sim that are below :math:`T_0` but shouldn't.
+    With :math:`P_0^o` the frequency of values under threshold :math:`T_0` in the reference (obs) and
+    :math:`P_0^s` the same for the simulated values, :math:`dP_0 = P_0^s - P_0^o`, when positive, represents
+    the proportion of values in sim that are below :math:`T_0` but shouldn't. These *null* values are converted into
+    non-null values by generating uniform random number over :math:`[0, F_o^{-1}(F_s(0))]`.
 
 
     Parameters
@@ -140,15 +141,12 @@ def adapt_freq(
     Returns
     -------
     xr.Dataset wth the following variables:
-      - sim_adj
-        Simulated data with the same frequency of values under threshold than obs.
+      - `sim_adj`: Simulated data with the same frequency of values under threshold than obs.
         Adjustement is made group-wise.
-      - pth
-        For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
+      - `pth` : For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
         either left as zero values or given a random value between non_zero_thresh and pth.
         NaN where frequency adaptation wasn't needed.
-      - dP0
-        For each group, the percentage of values that were corrected.
+      - `dP0` : For each group, the percentage of values that were corrected.
 
     References
     ----------
