@@ -4,6 +4,7 @@ behavior of downscaling methods and utilities.
 """
 import numpy as np
 import xarray as xr
+from conftest import _series as series
 from matplotlib import pyplot as plt
 
 from xclim.downscaling.qdm import train
@@ -17,7 +18,7 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
     return np.where(is_wet, wet_intensity, 0)
 
 
-def adapt_freq_graph(series):
+def adapt_freq_graph():
     """
     Create a graphic with the additive correction factors estimated after applying the adapt_freq method.
     """
