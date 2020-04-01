@@ -172,7 +172,7 @@ def test_adjust_freq_1d_dist_nan():
 
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_adapt_freq(use_dask):
-    time = pd.date_range("1993-01-01", "2000-12-31", freq="D")
+    time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
     prvals = np.random.randint(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
         prvals, coords={"time": time, "lat": [0, 1, 2]}, dims=("time", "lat")
@@ -183,15 +183,30 @@ def test_adapt_freq(use_dask):
 
     prsim = xr.where(pr < 20, pr / 20, pr)
     probs = xr.where(pr < 10, pr / 20, pr)
-    ds_adj = u.adapt_freq(probs, prsim, 1, "time.month")
+    ds_ad = u.adapt_freq(prsim, probs, 1, "time.month")
 
-    corrected = ds_adj.sim_adj.where((probs > 1) & (prsim < 1))
-    assert ((corrected > 1) & (corrected < 20)).sum() == (
-        (probs > 1) & (prsim < 1)
-    ).sum()
-    xr.testing.assert_equal(
-        ds_adj.sim_adj.where(corrected.isnull()), prsim.where(corrected.isnull())
+    # Where the input is considered zero
+    input_zeros = ds_ad.sim_ad.where(prsim <= 1)
+
+    # The proportion of corrected values (time.size * 3 * 0.2 is the theoritical number of values under 1 in prsim)
+    dP0_out = (input_zeros > 1).sum() / (time.size * 3 * 0.2)
+    np.testing.assert_allclose(dP0_out, 0.5, atol=0.1)
+
+    # Assert that corrected values were generated in the range ]1, 20 + tol[
+    corrected = (
+        input_zeros.where(input_zeros > 1)
+        .stack(flat=["lat", "time"])
+        .reset_index("flat")
+        .dropna("flat")
     )
+    assert ((corrected < 20.1) & (corrected > 1)).all()
+
+    # Assert that non-corrected values are untouched
+    # Again we add a 0.5 tol because of randomness.
+    xr.testing.assert_equal(ds_ad.sim_ad.where(prsim > 20.1), prsim.where(prsim > 20.5))
+    # Assert that Pth and dP0 are approx the good values
+    np.testing.assert_allclose(ds_ad.pth, 20, rtol=0.05)
+    np.testing.assert_allclose(ds_ad.dP0, 0.5, atol=0.12)
 
 
 @pytest.mark.parametrize("shape", [(2920,), (2920, 5, 5)])
