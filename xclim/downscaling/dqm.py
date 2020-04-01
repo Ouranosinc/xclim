@@ -93,8 +93,12 @@ def train(
     mu_x = group_apply("mean", x, group, window)
 
     # Compute quantile per period
-    xq = group_apply("quantile", x, group, window=window, q=q)
-    yq = group_apply("quantile", y, group, window=window, q=q)
+    xq = group_apply("quantile", x, group, window=window, q=q).rename(
+        quantile="quantiles"
+    )
+    yq = group_apply("quantile", y, group, window=window, q=q).rename(
+        quantile="quantiles"
+    )
 
     # Note that the order of these two operations is critical.
     # We're computing the correction factor based on x' = x - <x>.
@@ -103,14 +107,13 @@ def train(
     # Compute quantile correction factors
     qf = get_correction(xqp, yq, kind)  # qy / qx or qy - qx
 
+    # Add bounds for extrapolation
+    qf, xq = extrapolate_qm(qf, xq, method=extrapolation)
+
     qm = xr.Dataset(
         data_vars={"xq": xqp, "qf": qf},
         attrs={"group": group, "group_window": window, "kind": kind},
     )
-    qm = qm.rename(quantile="quantiles")
-
-    # Add bounds for extrapolation
-    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
     return qm
 
 

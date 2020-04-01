@@ -88,20 +88,23 @@ def train(
         y = jitter_under_thresh(y, mult_thresh)
 
     # Compute quantile per period
-    xq = group_apply("quantile", x, group, window=window, q=q)
-    yq = group_apply("quantile", y, group, window=window, q=q)
+    xq = group_apply("quantile", x, group, window=window, q=q).rename(
+        quantile="quantiles"
+    )
+    yq = group_apply("quantile", y, group, window=window, q=q).rename(
+        quantile="quantiles"
+    )
 
     # Compute quantile correction factors
     qf = get_correction(xq, yq, kind)  # qy / qx or qy - qx
+
+    # Add bounds for extrapolation
+    qf, xq = extrapolate_qm(qf, xq, method=extrapolation)
 
     qm = xr.Dataset(
         data_vars={"xq": xq, "qf": qf},
         attrs={"group": group, "group_window": window, "kind": kind},
     )
-    qm = qm.rename(quantile="quantiles")
-
-    # Add bounds for extrapolation
-    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
     return qm
 
 

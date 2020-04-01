@@ -81,19 +81,18 @@ def train(
     if kind == MULTIPLICATIVE and thresh is not None:
         y = adjust_freq(y, x, thresh, group)
 
-    xq = group_apply("quantile", x, group, window, q=q)
-    yq = group_apply("quantile", y, group, window, q=q)
+    xq = group_apply("quantile", x, group, window, q=q).rename(quantile="quantiles")
+    yq = group_apply("quantile", y, group, window, q=q).rename(quantile="quantiles")
 
     qf = get_correction(xq, yq, kind)
+
+    # Add bounds for extrapolation
+    qf, xq = extrapolate_qm(qf, xq, method=extrapolation)
 
     qm = xr.Dataset(
         data_vars={"xq": xq, "qf": qf},
         attrs={"group": group, "group_window": window, "kind": kind},
     )
-    qm = qm.rename(quantile="quantiles")
-
-    # Add bounds for extrapolation
-    qm["qf"], qm["xq"] = extrapolate_qm(qm.qf, qm.xq, method=extrapolation)
     return qm
 
 

@@ -7,10 +7,20 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 from xarray.core.groupby import DataArrayGroupBy
 
+from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
+from .utils import adjust_freq
 from .utils import apply_correction
+from .utils import broadcast
+from .utils import equally_spaced_nodes
+from .utils import extrapolate_qm
+from .utils import get_correction
+from .utils import get_index
+from .utils import group_apply
+from .utils import interp_on_quantiles
 from .utils import invert
 from .utils import MULTIPLICATIVE
+from .utils import parse_group
 
 
 # ## Base classes for the downscaling module
@@ -35,6 +45,20 @@ class ParametrizableClass(object):
         return {
             key: val for key, val in self.__dict__.items() if not key.startswith("_")
         }
+
+    def parameters_to_json(self):
+        return {
+            key: val
+            if isinstance(val, (str, float, int, bool, type(None)))
+            else str(val)
+            for key, val in self.parameters.items()
+        }
+
+    def __str__(self):
+        params_str = ", ".join(
+            [f"{key}: {val}" for key, val in self.parameters_to_json().items()]
+        )
+        return f"<{self.__class__.__name__}: {params_str}>"
 
 
 class NoDetrend(ParametrizableClass):
@@ -193,82 +217,119 @@ class DOYGrouping(BaseGrouping):
 
 class BaseMapping(ParametrizableClass):
 
-    __fitted = False
+    __trained = False
 
-    def fit(
+    def train(
         self,
         obs: Union[DataArray, DataArrayGroupBy],
         sim: Union[DataArray, DataArrayGroupBy],
     ):
-        if self.__fitted:
-            warn("fit() was already called, overwriting old results.")
-        self._fit(obs, sim)
-        self.__fitted = True
+        if self.__trained:
+            warn("train() was already called, overwriting old results.")
+        self._train(obs, sim)
+        self.__trained = True
 
     def predict(self, fut: xr.DataArray):
-        if not self.__fitted:
-            raise ValueError("fit() must be called before predicting.")
+        if not self.__trained:
+            raise ValueError("train() must be called before predicting.")
         return self._predict(fut)
 
-    def _fit(self):
+    def _train(self):
         raise NotImplementedError
 
     def _predict(self, fut):
         raise NotImplementedError
 
-
-class DeltaMapping(BaseMapping):
-    def _fit(self, obs, sim):
-        self._delta = obs.mean("time") - sim.mean("time")
-
-    def _predict(self, fut):
-        return fut + self._delta
-
-
-class ScaleMapping(BaseMapping):
-    def _fit(self, obs, sim):
-        self._scale = obs.mean("time") / sim.mean("time")
-
-    def _predict(self, fut):
-        return fut * self._scale
+    def _qm_dataset(self, qf, xq):
+        qm = xr.Dataset(data_vars={"qf": qf, "xq": xq})
+        qm.qf.attrs.update(
+            standard_name="Correction factors",
+            long_name="Quantile mapping correction factors",
+        )
+        qm.xq.attrs.update(
+            standard_name="Model quantiles",
+            long_name="Quantiles of model on the reference period",
+        )
+        qm.attrs["QM_parameters"] = self.parameters_to_json()
+        return qm
 
 
 class QuantileMapping(BaseMapping):
-    def __init__(self, nquantiles=20, kind=ADDITIVE, interp=False):
-        super().__init__(nquantiles=nquantiles, kind=kind, interp=interp)
-
-    def _fit(self, obs, sim):
-        self._dq = (1 / self.nquantiles) / 2
-        self._quantiles = np.append(
-            np.insert(np.linspace(self._dq, 1 - self._dq, self.nquantiles), 0, 0.0001),
-            0.9999,
+    def __init__(
+        self,
+        nquantiles=20,
+        kind=ADDITIVE,
+        interp="nearest",
+        extrapolation="constant",
+        detrender=NoDetrend(),
+        group="time",
+        normalize=False,
+        rank_from_fut=False,
+    ):
+        super().__init__(
+            nquantiles=nquantiles,
+            kind=kind,
+            interp=interp,
+            extrapolation=extrapolation,
+            detrender=detrender,
+            group=group,
+            normalize=normalize,
+            rank_from_fut=rank_from_fut,
         )
 
-        obsq = obs.quantile(self._quantiles, dim="time")
-        simq = sim.quantile(self._quantiles, dim="time")
+    def _train(self, sim, obs):
+        quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
+        obsq = group_apply("quantile", obs, self.group, 1, q=quantiles).rename(
+            quantile="quantiles"
+        )
+        simq = group_apply("quantile", sim, self.group, 1, q=quantiles).rename(
+            quantile="quantiles"
+        )
 
-        if self.kind == MULTIPLICATIVE:
-            self._qmfit = simq / obsq
-        elif self.kind == ADDITIVE:
-            self._qmfit = simq - obsq
+        if self.normalize:
+            mu_sim = group_apply("mean", sim, self.group, 1)
+            simq = apply_correction(simq, invert(mu_sim, self.kind), self.kind)
+
+        qf = get_correction(simq, obsq, self.kind)
+
+        qf, simq = extrapolate_qm(qf, simq, method=self.extrapolation)
+        self.qm = self._qm_dataset(qf, simq)
+        return self.qm
 
     def _predict(self, fut):
-        if self.interp:
-            raise NotImplementedError
+        if self.normalize:
+            mu_fut = group_apply("mean", fut, self.group, 1)
+            fut = apply_correction(
+                fut,
+                broadcast(
+                    invert(mu_fut, self.kind), fut, group=self.group, interp=self.interp
+                ),
+                self.kind,
+            )
 
-        futq = fut.rank(dim="time", pct=True)
+        fut_fit = self.detrender.fit(fut)
+        fut_det = fut_fit.detrend(fut)
 
-        if self.interp:
-            factor = self._qmfit.interp(quantile=futq, group=futq.group)
+        dim, prop = parse_group(self.group)
+
+        if self.rank_from_fut:
+            xq = group_apply(xr.DataArray.rank, fut_det, self.group, window=1, pct=True)
+            sel = {"quantiles": xq}
+            qf = broadcast(self.qm.qf, fut_det, interp=self.interp, sel=sel)
         else:
-            factor = self._qmfit.sel(quantile=futq, group=futq.group, method="nearest")
+            if prop is not None:
+                fut_det = fut_det.assign_coords(
+                    {prop: get_index(fut_det, dim, prop, self.interp)}
+                )
+            qf = interp_on_quantiles(
+                fut_det, self.qm.xq, self.qm.qf, group=self.group, method=self.interp
+            )
 
-        if self.kind == MULTIPLICATIVE:
-            out = fut * factor
-        elif self.kind == ADDITIVE:
-            out = fut + factor
+        corrected = apply_correction(fut_det, qf, self.kind)
 
-        return out.drop("quantile")
+        out = fut_fit.retrend(corrected)
+        out.attrs["bias_corrected"] = True
+        return out
 
 
 # ## Pipeline draft
@@ -280,7 +341,7 @@ def basicpipeline(
     fut: DataArray,
     detrender=NoDetrend(),
     grouper=EmptyGrouping(),
-    mapper=DeltaMapping(),
+    mapper=QuantileMapping(),
 ):
     obs_trend = detrender.fit(obs)
     sim_trend = detrender.fit(sim)

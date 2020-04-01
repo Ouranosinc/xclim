@@ -4,6 +4,7 @@ import pytest
 from scipy.stats import norm
 from scipy.stats import uniform
 
+from xclim.downscaling import base
 from xclim.downscaling import dqm
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
@@ -42,7 +43,7 @@ class TestDQM:
         expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(qm.qf[1:-1], expected[1:-1], 1)
+        np.testing.assert_array_almost_equal(qm.qf[2:-2], expected[2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -123,3 +124,34 @@ class TestDQM:
         # Predict on series with trend
         p = dqm.predict(f, qm)
         np.testing.assert_array_almost_equal(p, expected, 1)
+
+    def test_base(self, mon_series, series, mon_triangular):
+        """Monthly grouping"""
+        n = 10000
+        r = 10 + np.random.rand(n)
+        x = series(r, "tas")  # sim
+
+        # Delta varying with month
+        noise = np.random.rand(n) * 1e-6
+        y = mon_series(r + noise, "tas")  # obs
+
+        DQM = base.QuantileMapping(
+            nquantiles=5,
+            group="time.month",
+            detrender=base.PolyDetrend(degree=1, kind=ADDITIVE),
+            normalize=True,
+        )
+        DQM.train(x, y)
+        # Train
+        qm = dqm.train(x, y, group="time.month", nq=5)
+
+        trend = np.linspace(-0.2, 0.2, n)
+        f = series(r + trend, "tas")  # fut
+
+        expected = mon_series(r + noise + trend, "tas")
+
+        # Predict on series with trend
+        p1 = DQM.predict(f)
+        p = dqm.predict(f, qm)
+        np.testing.assert_array_almost_equal(p, expected, 1)
+        np.testing.assert_array_almost_equal(p, p1, 1)

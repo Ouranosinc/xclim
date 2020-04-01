@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.stats import norm
 from scipy.stats import uniform
 
+from xclim.downscaling import base
 from xclim.downscaling import qdm
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
@@ -80,3 +81,46 @@ class TestQDM:
         # Test predict
         p = qdm.predict(sx, qm)
         np.testing.assert_array_almost_equal(p, sy, 1)
+
+    def test_mon_base(self, mon_series, series, mon_triangular):
+        """
+        Train on
+        sim: U
+        obs: U + monthly cycle
+
+        Predict on sim to get obs
+        """
+        kind = ADDITIVE
+        name = "tas"
+        u = np.random.rand(10000)
+
+        # Define distributions
+        xd = uniform(loc=1, scale=1)
+        yd = uniform(loc=2, scale=2)
+        noise = uniform(loc=0, scale=1e-7)
+
+        # Generate random numbers
+        x = xd.ppf(u)
+        y = yd.ppf(u) + noise.ppf(u)
+
+        # Test train
+        sx, sy = series(x, name), mon_series(y, name)
+        QDM = base.QuantileMapping(
+            nquantiles=40, kind=kind, group="time.month", rank_from_fut=True
+        )
+        QDM.train(sx, sy)
+        qm = qdm.train(sx, sy, kind=kind, group="time.month", nq=40)
+
+        q = qm.coords["quantiles"]
+        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
+
+        expected = apply_correction(
+            mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
+        )
+        np.testing.assert_array_almost_equal(qm.qf.sel(quantiles=q).T, expected, 1)
+
+        # Test predict
+        p1 = QDM.predict(sx)
+        p = qdm.predict(sx, qm)
+        np.testing.assert_array_almost_equal(p, sy, 1)
+        np.testing.assert_array_almost_equal(p, p1, 1)
