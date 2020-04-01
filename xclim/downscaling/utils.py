@@ -114,12 +114,15 @@ def ecdf_lazy(x, value, dim="time"):
 def adapt_freq(
     sim: xr.DataArray,
     obs: xr.DataArray,
-    non_zero_thresh: float = 0,
+    thresh: float = 0,
     group: str = "time",
     window: int = 1,
 ):
     r"""
     Adapt frequency of values under thresh of sim, in order to match obs.
+
+    This is useful when the dry-day frequency in the simulations is higher than in the observations. This function
+    will create new non-null values for sim, so that correction factors
 
     Parameters
     ----------
@@ -127,7 +130,7 @@ def adapt_freq(
       Observed data.
     sim : xr.DataArray
       Simulated data.
-    non_zero_thresh : float
+    thresh : float
       Threshold below which values are considered zero.
     group, window
       Grouping information, see group_apply()
@@ -139,7 +142,7 @@ def adapt_freq(
       - `sim_adj`: Simulated data with the same frequency of values under threshold than obs.
         Adjustement is made group-wise.
       - `pth` : For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
-        either left as zero values or given a random value between non_zero_thresh and pth.
+        either left as zero values or given a random value between thresh and pth.
         NaN where frequency adaptation wasn't needed.
       - `dP0` : For each group, the percentage of values that were corrected in sim.
 
@@ -172,15 +175,15 @@ def adapt_freq(
             mod = np
             kws = {}
 
-        # Compute the probability of finding a value <= non_zero_thresh
+        # Compute the probability of finding a value <= thresh
         # This is the "dry-day frequency" in the precipitation case
-        P0_sim = ecdf_lazy(ds.sim, non_zero_thresh, dim=dim)
-        P0_obs = ecdf_lazy(ds.obs, non_zero_thresh, dim=dim)
+        P0_sim = ecdf_lazy(ds.sim, thresh, dim=dim)
+        P0_obs = ecdf_lazy(ds.obs, thresh, dim=dim)
 
-        # The proportion of values <= non_zero_thresh in sim that need to be corrected, compared to obs
+        # The proportion of values <= thresh in sim that need to be corrected, compared to obs
         dP0 = (P0_sim - P0_obs) / P0_sim
 
-        # Compute : ecdf_obs^-1( ecdf_sim( non_zero_thresh ) )
+        # Compute : ecdf_obs^-1( ecdf_sim( thresh ) )
         # The value in obs with the same rank as the first non zero value in sim.
         pth = xr.apply_ufunc(
             np.percentile,
@@ -196,7 +199,7 @@ def adapt_freq(
         )  # pth is meaningless when freq. adaptation is not needed
 
         if window > 1:
-            # P0_sim was computed unsing the window, but only the orignal timeseries is corrected.
+            # P0_sim was computed using the window, but only the original timeseries is corrected.
             sim = ds.sim.isel(window=(window - 1) // 2)
             dim = [list(set(dim) - {"window"})]
         else:
@@ -216,14 +219,12 @@ def adapt_freq(
         # Frequency-adapted sim
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
-            sim.where(  # Adaption needed.
-                (rank < P0_obs)
-                | (rank > P0_sim),  # Only correct values in the exceeding ranks with:
-                (
-                    pth.broadcast_like(sim) - non_zero_thresh
-                )  # Continuous-uniform random distribution of values between non_zero_thresh and Pth
+            sim.where(
+                (rank < P0_obs) | (rank > P0_sim),  # Preserve current values
+                # Generate random numbers ~ U[T0, Pth]
+                (pth.broadcast_like(sim) - thresh)
                 * mod.random.random_sample(sim.shape, **kws)
-                + non_zero_thresh,
+                + thresh,
             ),
         )
 
@@ -234,7 +235,7 @@ def adapt_freq(
         ] = "Smallest value of the timeseries not corrected by frequency adaptation."
         dP0.attrs[
             "long_name"
-        ] = "Proportion of values smaller than {non_zero_thresh} in the timeseries corrected by frequency adaptation"
+        ] = "Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation"
 
         # Tell group_apply that these will need reshaping (regrouping)
         # This is needed since if any variable comes out a groupby with the original group axis, the whole output is broadcasted back to the original dims.
@@ -838,8 +839,25 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
     )
 
 
+# Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
 def jitter_under_thresh(x, thresh):
-    """Add a small noise to values smaller than threshold."""
+    """Replace values smaller than threshold by a uniform random noise.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Values.
+    thresh : float
+      Threshold under which to add uniform random noise to values.
+
+    Returns
+    -------
+    array
+
+    Notes
+    -----
+    If thresh is high, this will change the mean value of x.
+    """
     epsilon = np.finfo(x.dtype).eps
     jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    return x.where(~(x < thresh & x.notnull()), jitter)
+    return x.where(~((x < thresh) & (x.notnull())), jitter)
