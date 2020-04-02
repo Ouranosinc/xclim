@@ -479,7 +479,10 @@ def get_correction(x, y, kind):
 
 
 def broadcast(grouped, x, group=None, interp="nearest", sel=None):
-    dim, prop = parse_group(group or grouped.group)
+    if hasattr(group, "dim"):
+        dim, prop = group.dim, group.prop
+    else:
+        dim, prop = parse_group(group or grouped.group)
 
     if sel is None:
         sel = {}
@@ -786,7 +789,11 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
         The interpolation method.
     }
     """
-    dim, prop = parse_group(group or xq.attrs.get("group", "time"))
+    if hasattr(group, "dim"):
+        dim = group.dim
+        prop = group.prop
+    else:
+        dim, prop = parse_group(group or xq.attrs.get("group", "time"))
     if prop is None:
         fill_value = "extrapolate" if method == "nearest" else np.nan
 

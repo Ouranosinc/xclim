@@ -1,4 +1,6 @@
 """Detrending classes"""
+from types import FunctionType
+from typing import Optional
 from typing import Union
 from warnings import warn
 
@@ -150,66 +152,99 @@ class PolyDetrend(NoDetrend):
 # ## Grouping objects
 
 
-class BaseGrouping(ParametrizableClass):
-    def group(self, da: xr.DataArray):
-        return self._group(da)
-
-    def add_group_axis(self, da: xr.DataArray):
-        return self._add_group_axis(da)
-
-    def _group(self, da):
-        raise NotImplementedError
-
-    def _add_group_axis(self, da):
-        raise NotImplementedError
-
-
-class EmptyGrouping(BaseGrouping):
-    def _group(self, da):
-        return da.expand_dims(group=xr.DataArray([1], dims=("group",), name="group"))
-
-    def _add_group_axis(self, da):
-        return da.assign_coords(
-            group=xr.DataArray([1.0] * da["time"].size, dims=("time",), name="group")
+class Grouper(ParametrizableClass):
+    def __init__(self, group: str, window: int = 1, interp: Union[bool, str] = False):
+        if "." in group:
+            dim, prop = group.split(".")
+        else:
+            dim, prop = group, None
+        if isinstance(interp, str):
+            interp = interp != "nearest"
+        if window > 1:
+            dims = ("window", dim)
+        else:
+            dims = dim
+        super().__init__(
+            dim=dim, dims=dims, prop=prop, name=group, window=window, interp=interp
         )
 
+    def group(self, *das: xr.DataArray):
+        if len(das) > 1:
+            da = xr.Dataset(data_vars={da.name: da for da in das})
+        else:
+            da = das[0]
 
-class MonthGrouping(BaseGrouping):
-    def _group(self, da):
-        group = da.time.dt.month
-        group.name = "group"
-        group.attrs.update(group_name="month")
-        return da.groupby(group)
-
-    def _add_group_axis(self, da):
-        group = da.time.dt.month - 0.5 + da.time.dt.day / da.time.dt.daysinmonth
-        group.name = "group"
-        group.attrs.update(group_name="month")
-        return da.assign_coords(group=group)
-
-
-class DOYGrouping(BaseGrouping):
-    def __init__(self, window=None):
-        super().__init__(self, window=window)
-
-    def _group(self, da):
-        group = da.time.dt.dayofyear
-        group.name = "group"
-        group.attrs.update(group_name="dayofyear")
-        if self.window is not None:
-            da = da.rolling(time=self.window, center=True).construct(
+        if self.window > 1:
+            da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
-            group = xr.concat([group] * self.window, da.window)
-            da.rename(time="old_time").stack(time=("old_time", "window"))
-            group.rename(time="old_time").stack(time=("old_time", "window"))
-        return da.groupby(group)
+        return da.groupby(self.name)
 
-    def _add_group_axis(self, da):
-        group = da.time.dt.dayofyear
-        group.name = "group"
-        group.attrs.update(group_name="dayofyear")
-        return da.assign_coords(group=group)
+    def add_index(self, da: xr.DataArray):
+        if self.prop is None:
+            return da
+
+        ind = da.indexes[self.dim]
+        i = getattr(ind, self.prop)
+
+        if self.interp:
+            if self.dim == "time":
+                if self.prop == "month":
+                    i = ind.month - 0.5 + ind.day / ind.daysinmonth
+                elif self.prop == "dayofyear":
+                    i = ind.dayofyear
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+
+        xi = xr.DataArray(
+            i,
+            dims=self.dim,
+            coords={self.dim: da.coords[self.dim]},
+            name=self.dim + " group index",
+        )
+
+        # Expand dimensions of index to match the dimensions of da
+        # We want vectorized indexing with no broadcasting
+        return da.assign_coords(
+            {
+                self.prop: xi.expand_dims(
+                    **{k: v for (k, v) in da.coords.items() if k != self.dim}
+                )
+            }
+        )
+
+    def apply(self, func: Union[FunctionType, str], *das: xr.DataArray, **kwargs):
+        grpd = self.group(*das)
+        if isinstance(func, str):
+            out = getattr(grpd, func)(dim=self.dims, **kwargs)
+        else:
+            if isinstance(grpd, xr.core.groupby.GroupBy):
+                out = grpd.map(func, dim=self.dims, **kwargs)
+            else:
+                out = func(grpd, dim=self.dims, **kwargs)
+
+        # Case where the function wants to return more than one variables
+        # and that some have grouped dims and other have the same dimensions as the input.
+        # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
+        if isinstance(out, xr.Dataset):
+            for name, da in out.data_vars.items():
+                if "_group_apply_reshape" in da.attrs:
+                    if da.attrs["_group_apply_reshape"] and self.prop is not None:
+                        out[name] = da.groupby(self.name).first(
+                            skipna=False, keep_attrs=True
+                        )
+                    del out[name].attrs["_group_apply_reshape"]
+
+        # Save input parameters as attributes of output DataArray.
+        out.attrs["group"] = self.name
+        out.attrs["group_window"] = self.window
+
+        # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
+        if self.dim in out.dims:
+            out = out.sortby(self.dim)
+        return out
 
 
 # ## Mapping objects
@@ -218,6 +253,11 @@ class DOYGrouping(BaseGrouping):
 class BaseMapping(ParametrizableClass):
 
     __trained = False
+
+    def __init__(self, group="time", **kwargs):
+        if not isinstance(group, Grouper):
+            group = Grouper(group, interp=kwargs.get("interp", False))
+        super().__init__(group=group, **kwargs)
 
     def train(
         self,
@@ -240,32 +280,30 @@ class BaseMapping(ParametrizableClass):
     def _predict(self, fut):
         raise NotImplementedError
 
-    def _qm_dataset(self, qf, xq):
-        qm = xr.Dataset(data_vars={"qf": qf, "xq": xq})
-        qm.qf.attrs.update(
-            standard_name="Correction factors",
-            long_name="Quantile mapping correction factors",
-        )
-        qm.xq.attrs.update(
-            standard_name="Model quantiles",
-            long_name="Quantiles of model on the reference period",
-        )
-        qm.attrs["QM_parameters"] = self.parameters_to_json()
-        return qm
-
 
 class QuantileMapping(BaseMapping):
     def __init__(
         self,
-        nquantiles=20,
-        kind=ADDITIVE,
-        interp="nearest",
-        extrapolation="constant",
-        detrender=NoDetrend(),
-        group="time",
-        normalize=False,
-        rank_from_fut=False,
+        nquantiles: int = 20,
+        kind: str = ADDITIVE,
+        interp: str = "nearest",
+        mode: Optional[str] = None,
+        extrapolation: str = "constant",
+        detrender: NoDetrend = NoDetrend(),
+        group: Union[str, Grouper] = "time",
+        normalize: bool = False,
+        rank_from_fut: bool = False,
     ):
+        if mode == "qdm":
+            rank_from_fut = True
+        elif mode == "dqm":
+            normalize = True
+            if detrender.__class__ == NoDetrend:
+                detrender = PolyDetrend()
+        elif mode == "eqm":
+            pass
+        elif mode is not None:
+            raise NotImplementedError
         super().__init__(
             nquantiles=nquantiles,
             kind=kind,
@@ -279,15 +317,15 @@ class QuantileMapping(BaseMapping):
 
     def _train(self, sim, obs):
         quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
-        obsq = group_apply("quantile", obs, self.group, 1, q=quantiles).rename(
+        obsq = self.group.apply("quantile", obs, q=quantiles).rename(
             quantile="quantiles"
         )
-        simq = group_apply("quantile", sim, self.group, 1, q=quantiles).rename(
+        simq = self.group.apply("quantile", sim, q=quantiles).rename(
             quantile="quantiles"
         )
 
         if self.normalize:
-            mu_sim = group_apply("mean", sim, self.group, 1)
+            mu_sim = self.group.apply("mean", sim)
             simq = apply_correction(simq, invert(mu_sim, self.kind), self.kind)
 
         qf = get_correction(simq, obsq, self.kind)
@@ -298,7 +336,7 @@ class QuantileMapping(BaseMapping):
 
     def _predict(self, fut):
         if self.normalize:
-            mu_fut = group_apply("mean", fut, self.group, 1)
+            mu_fut = self.group.apply("mean", fut)
             fut = apply_correction(
                 fut,
                 broadcast(
@@ -310,17 +348,12 @@ class QuantileMapping(BaseMapping):
         fut_fit = self.detrender.fit(fut)
         fut_det = fut_fit.detrend(fut)
 
-        dim, prop = parse_group(self.group)
-
         if self.rank_from_fut:
-            xq = group_apply(xr.DataArray.rank, fut_det, self.group, window=1, pct=True)
+            xq = self.group.apply(xr.DataArray.rank, fut_det, pct=True)
             sel = {"quantiles": xq}
             qf = broadcast(self.qm.qf, fut_det, interp=self.interp, sel=sel)
         else:
-            if prop is not None:
-                fut_det = fut_det.assign_coords(
-                    {prop: get_index(fut_det, dim, prop, self.interp)}
-                )
+            fut_det = self.group.add_index(fut_det)
             qf = interp_on_quantiles(
                 fut_det, self.qm.xq, self.qm.qf, group=self.group, method=self.interp
             )
@@ -331,29 +364,15 @@ class QuantileMapping(BaseMapping):
         out.attrs["bias_corrected"] = True
         return out
 
-
-# ## Pipeline draft
-
-
-def basicpipeline(
-    obs: DataArray,
-    sim: DataArray,
-    fut: DataArray,
-    detrender=NoDetrend(),
-    grouper=EmptyGrouping(),
-    mapper=QuantileMapping(),
-):
-    obs_trend = detrender.fit(obs)
-    sim_trend = detrender.fit(sim)
-    fut_trend = detrender.fit(fut)
-
-    obs = obs_trend.detrend(obs)
-    sim = sim_trend.detrend(sim)
-    fut = fut_trend.detrend(fut)
-
-    mapper.fit(grouper.group(obs), grouper.group(sim))
-    fut_corr = mapper.predict(grouper.add_group_axis(fut))
-
-    fut_corr = fut_trend.retrend(fut_corr)
-
-    return fut_corr.drop_vars("group")
+    def _qm_dataset(self, qf, xq):
+        qm = xr.Dataset(data_vars={"qf": qf, "xq": xq})
+        qm.qf.attrs.update(
+            standard_name="Correction factors",
+            long_name="Quantile mapping correction factors",
+        )
+        qm.xq.attrs.update(
+            standard_name="Model quantiles",
+            long_name="Quantiles of model on the reference period",
+        )
+        qm.attrs["QM_parameters"] = self.parameters_to_json()
+        return qm

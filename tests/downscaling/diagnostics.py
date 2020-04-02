@@ -4,9 +4,9 @@ behavior of downscaling methods and utilities.
 """
 import numpy as np
 import xarray as xr
-from conftest import _series as series
 from matplotlib import pyplot as plt
 
+from .conftest import _series as series
 from xclim.downscaling.qdm import train
 from xclim.downscaling.utils import adapt_freq
 
