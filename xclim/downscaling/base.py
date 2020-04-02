@@ -63,7 +63,7 @@ class ParametrizableClass(object):
         return f"<{self.__class__.__name__}: {params_str}>"
 
 
-class Detrend(ParametrizableClass):
+class BaseDetrend(ParametrizableClass):
     """Base class for detrending objects
 
     Defines three methods:
@@ -104,7 +104,7 @@ class Detrend(ParametrizableClass):
         return da
 
 
-class MeanDetrend(Detrend):
+class MeanDetrend(BaseDetrend):
     def _fit(self, da):
         self._mean = da.mean(dim="time")
 
@@ -115,7 +115,7 @@ class MeanDetrend(Detrend):
         return da + self._mean
 
 
-class PolyDetrend(Detrend):
+class PolyDetrend(BaseDetrend):
     """
     Detrend time series using a polynomial.
 
@@ -300,7 +300,7 @@ class QuantileMapping(BaseMapping):
         interp: str = "nearest",
         mode: Optional[str] = None,
         extrapolation: str = "constant",
-        detrender: Detrend = Detrend(),
+        detrender: BaseDetrend = BaseDetrend(),
         group: Union[str, Grouper] = "time",
         normalize: bool = False,
         rank_from_fut: bool = False,
@@ -309,7 +309,7 @@ class QuantileMapping(BaseMapping):
             rank_from_fut = True
         elif mode == "dqm":
             normalize = True
-            if detrender.__class__ == Detrend:
+            if detrender.__class__ == BaseDetrend:
                 detrender = PolyDetrend()
         elif mode == "eqm":
             pass
