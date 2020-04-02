@@ -1,12 +1,11 @@
 import os
-import sys
 
 import numpy as np
 import pytest
 import xarray as xr
 
-import xclim.atmos as atmos
-from xclim.utils import percentile_doy
+from xclim import atmos
+from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
@@ -663,6 +662,46 @@ class TestHeatWaveMaxLength:
         np.testing.assert_allclose(hwf.values[:1], 10)
         # no hw
         hwf = atmos.heat_wave_max_length(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
+        )
+        np.testing.assert_allclose(hwf.values[:1], 0)
+
+
+class TestHeatWaveTotalLength:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn1 = np.zeros(366)
+        tx1 = np.zeros(366)
+        tn1[:10] = np.array([20, 23, 23, 23, 23, 21, 23, 23, 23, 23])
+        tx1[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn1 + K2C, start="1/1/2000")
+        tx = tasmax_series(tx1 + K2C, start="1/1/2000")
+        tnC = tasmin_series(tn1, start="1/1/2000")
+        tnC.attrs["units"] = "C"
+        txC = tasmax_series(tx1, start="1/1/2000")
+        txC.attrs["units"] = "C"
+
+        hwf = atmos.heat_wave_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+        )
+        hwfC = atmos.heat_wave_total_length(
+            tnC, txC, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS"
+        )
+        np.testing.assert_array_equal(hwf, hwfC)
+        np.testing.assert_allclose(hwf.values[:1], 7)
+
+        hwf = atmos.heat_wave_total_length(
+            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=4, freq="YS"
+        )
+        np.testing.assert_allclose(hwf.values[:1], 5)
+
+        # one long hw
+        hwf = atmos.heat_wave_total_length(
+            tn, tx, thresh_tasmin="10 C", thresh_tasmax="10 C", freq="YS"
+        )
+        np.testing.assert_allclose(hwf.values[:1], 10)
+        # no hw
+        hwf = atmos.heat_wave_total_length(
             tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
         )
         np.testing.assert_allclose(hwf.values[:1], 0)

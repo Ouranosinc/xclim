@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from xclim import indices
-from xclim.utils import Indicator
-from xclim.utils import Indicator2D
-from xclim.utils import wrapped_partial
+from xclim.core.indicator import Indicator
+from xclim.core.indicator import Indicator2D
+from xclim.core.utils import wrapped_partial
 
 __all__ = [
     "rain_on_frozen_ground_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "wetdays",
+    "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
@@ -73,6 +74,16 @@ wetdays = Pr(
     compute=indices.wetdays,
 )
 
+dry_days = Pr(
+    identifier="dry_days",
+    units="days",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
+    long_name="Number of dry days (precip < {thresh})",
+    description="{freq} number of days with daily precipitation under {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
+    compute=indices.dry_days,
+)
+
 maximum_consecutive_wet_days = Pr(
     identifier="cwd",
     units="days",
@@ -115,7 +126,6 @@ precip_accumulation = Pr(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase=None),
 )
 
@@ -126,7 +136,6 @@ liquid_precip_accumulation = Pr(
     long_name="Total liquid precipitation",
     description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="liquid"),
 )
 
@@ -137,7 +146,6 @@ solid_precip_accumulation = Pr(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
     cell_methods="time: sum within days time: sum over days",
-    _partial=True,
     compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
 )
 

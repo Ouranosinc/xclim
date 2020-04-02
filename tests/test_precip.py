@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.atmos as atmos
+from xclim import atmos
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")

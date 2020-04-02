@@ -3,11 +3,14 @@ from typing import Optional
 import numpy as np
 import xarray
 
-from . import fwi
-from xclim import run_length as rl
-from xclim import utils
-from xclim.utils import declare_units
-from xclim.utils import units
+from xclim.core.calendar import resample_doy
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import pint_multiply
+from xclim.core.units import units
+from xclim.core.units import units2pint
+from xclim.indices import fwi
+from xclim.indices import run_length as rl
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -36,7 +39,6 @@ __all__ = [
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
-    "tas",
     "tg90p",
     "tg10p",
     "tn90p",
@@ -97,14 +99,14 @@ def cold_spell_duration_index(
     >>> tn10 = xcu.percentile_doy(historical_tasmin, per=.1)
     >>> cold_spell_duration_index(reference_tasmin, tn10)
     """
-    tn10 = utils.convert_units_to(tn10, tasmin)
+    tn10 = convert_units_to(tn10, tasmin)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(tn10, tasmin)
+    thresh = resample_doy(tn10, tasmin)
 
     below = tasmin < thresh
 
-    return below.resample(time=freq).apply(
+    return below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 
@@ -146,8 +148,8 @@ def cold_and_dry_days(
     raise NotImplementedError
     # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
     #
-    # c1 = tas < utils.convert_units_to(tgin25, tas)
-    # c2 = (pr > utils.convert_units_to('1 mm', pr)) * (pr < utils.convert_units_to(wet25, pr))
+    # c1 = tas < convert_units_to(tgin25, tas)
+    # c2 = (pr > convert_units_to('1 mm', pr)) * (pr < convert_units_to(wet25, pr))
 
     # c = (c1 * c2) * 1
     # return c.resample(time=freq).sum(dim='time')
@@ -207,8 +209,8 @@ def daily_freezethaw_cycles(
             thresh_tasmin.replace("UNSET ", ""),
         )
 
-    thaw_threshold = utils.convert_units_to(thresh_tasmax, tasmax)
-    freeze_threshold = utils.convert_units_to(thresh_tasmin, tasmin)
+    thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
+    freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
     out = ft.resample(time=freq).sum(dim="time")
@@ -245,10 +247,10 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
 
         DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
-    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
+    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
     dtr = tasmax - tasmin
     out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -284,10 +286,10 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
-    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
+    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -322,13 +324,13 @@ def extreme_temperature_range(
 
         ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
-    q = 1 * utils.units2pint(tasmax) - 0 * utils.units2pint(tasmin)
+    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
 
     tx_max = tasmax.resample(time=freq).max(dim="time")
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = f"{q.units:~}"
+    out.attrs["units"] = f"{q.units}"
     return out
 
 
@@ -397,19 +399,19 @@ def fire_weather_indexes(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
-    tas = utils.convert_units_to(tas, "C")
-    pr = utils.convert_units_to(pr, "mm/day")
-    ws = utils.convert_units_to(ws, "km/h")
-    rh = utils.convert_units_to(rh, "pct")
+    tas = convert_units_to(tas, "C")
+    pr = convert_units_to(pr, "mm/day")
+    ws = convert_units_to(ws, "km/h")
+    rh = convert_units_to(rh, "pct")
     if snd is not None:
-        snd = utils.convert_units_to(snd, "m")
+        snd = convert_units_to(snd, "m")
 
     if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if dmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        dmc0 = xarray.full_like(tas.isel(time=0), np.nan)
     if ffmc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0)) * np.nan
+        ffmc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
 
@@ -437,11 +439,14 @@ def drought_code(
     snd: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
     start_date: str = None,
+    start_up_mode: str = None,
+    shut_down_mode: str = "snow_depth",
     **params,
 ):
-    r"""Return the daily drought code
+    r"""The daily drought code (FWI component)
 
-    The drought code is part of the Canadian Forest Fire Weather Index System. It is a numeric rating of the average moisture content of organic layers.
+    The drought code is part of the Canadian Forest Fire Weather Index System.
+    It is a numeric rating of the average moisture content of organic layers.
 
     Parameters
     ----------
@@ -457,6 +462,10 @@ def drought_code(
       Initial values of the drought code.
     start_date : str, datetime.datetime
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
+    start_up_mode : {None, "snow_depth"}
+      How to compute start up. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
+    shut_down_mode : {"temperature", "snow_depth"}
+      How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
     params :
       Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
@@ -472,15 +481,16 @@ def drought_code(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
-    tas = utils.convert_units_to(tas, "C")
-    pr = utils.convert_units_to(pr, "mm/day")
+    tas = convert_units_to(tas, "C")
+    pr = convert_units_to(pr, "mm/day")
     if snd is not None:
-        snd = utils.convert_units_to(snd, "m")
+        snd = convert_units_to(snd, "m")
 
     if dc0 is None:
         dc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
     params["start_date"] = start_date
+    params["start_up_mode"] = start_up_mode
 
     out = fwi.fire_weather_ufunc(
         tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indexes=["DC"], **params
@@ -549,12 +559,12 @@ def heat_wave_frequency(
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
-    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim="time")
+    return group.map(rl.windowed_run_events, window=window, dim="time")
 
 
 @declare_units(
@@ -620,12 +630,12 @@ def heat_wave_max_length(
     Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
     https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
-    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run, dim="time")
+    max_l = group.map(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
 
 
@@ -675,12 +685,12 @@ def heat_wave_total_length(
     -----
     See notes and references of `heat_wave_max_length`
     """
-    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
+    return group.map(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
@@ -786,13 +796,14 @@ def precip_accumulation(
     --------
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr
     >>> pr_day = xr.open_dataset('pr_day.nc').pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
 
     if phase in ["liquid", "solid"]:
-        frz = utils.convert_units_to("0 degC", tas)
+        frz = convert_units_to("0 degC", tas)
 
         if phase == "liquid":
             pr = pr.where(tas >= frz, 0)
@@ -800,7 +811,7 @@ def precip_accumulation(
             pr = pr.where(tas < frz, 0)
 
     out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
-    return utils.pint_multiply(out, 1 * units.day, "mm")
+    return pint_multiply(out, 1 * units.day, "mm")
 
 
 @declare_units(
@@ -851,8 +862,8 @@ def rain_on_frozen_ground_days(
     is true for continuous periods where :math:`i ≥ 7`
 
     """
-    t = utils.convert_units_to(thresh, pr)
-    frz = utils.convert_units_to("0 C", tas)
+    t = convert_units_to(thresh, pr)
+    frz = convert_units_to("0 C", tas)
 
     def func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
@@ -903,13 +914,13 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
     >>> r75p = xclim.indices.days_over_precip_thresh(pr, p75)
     """
-    per = utils.convert_units_to(per, pr)
-    thresh = utils.convert_units_to(thresh, pr)
+    per = convert_units_to(per, pr)
+    thresh = convert_units_to(thresh, pr)
 
     tp = np.maximum(per, thresh)
     if "dayofyear" in per.coords:
         # Create time series out of doy values.
-        tp = utils.resample_doy(tp, pr)
+        tp = resample_doy(tp, pr)
 
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr > tp
@@ -948,13 +959,13 @@ def fraction_over_precip_thresh(
       Fraction of precipitation over threshold during wet days days.
 
     """
-    per = utils.convert_units_to(per, pr)
-    thresh = utils.convert_units_to(thresh, pr)
+    per = convert_units_to(per, pr)
+    thresh = convert_units_to(thresh, pr)
 
     tp = np.maximum(per, thresh)
     if "dayofyear" in per.coords:
         # Create time series out of doy values.
-        tp = utils.resample_doy(tp, pr)
+        tp = resample_doy(tp, pr)
 
     # Total precip during wet days over period
     total = pr.where(pr > thresh).resample(time=freq).sum(dim="time")
@@ -963,30 +974,6 @@ def fraction_over_precip_thresh(
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
     return over / total
-
-
-@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
-def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
-    """Average temperature from minimum and maximum temperatures.
-
-    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-        Minimum (daily) temperature [℃] or [K]
-    tasmax : xarray.DataArray
-        Maximum (daily) temperature [℃] or [K]
-
-    Returns
-    -------
-    xarray.DataArray
-        Mean (daily) temperature [same units as tasmin]
-    """
-    tasmax = utils.convert_units_to(tasmax, tasmin)
-    tas = (tasmax + tasmin) / 2
-    tas.attrs["units"] = tasmin.attrs["units"]
-    return tas
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
@@ -1023,10 +1010,10 @@ def tg90p(
     >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    t90 = utils.convert_units_to(t90, tas)
+    t90 = convert_units_to(t90, tas)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t90, tas)
+    thresh = resample_doy(t90, tas)
 
     # Identify the days over the 90th percentile
     over = tas > thresh
@@ -1068,10 +1055,10 @@ def tg10p(
     >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    t10 = utils.convert_units_to(t10, tas)
+    t10 = convert_units_to(t10, tas)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t10, tas)
+    thresh = resample_doy(t10, tas)
 
     # Identify the days below the 10th percentile
     below = tas < thresh
@@ -1113,10 +1100,10 @@ def tn90p(
     >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
     >>> hot_days = tn90p(tas, t90)
     """
-    t90 = utils.convert_units_to(t90, tasmin)
+    t90 = convert_units_to(t90, tasmin)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t90, tasmin)
+    thresh = resample_doy(t90, tasmin)
 
     # Identify the days with min temp above 90th percentile.
     over = tasmin > thresh
@@ -1159,10 +1146,10 @@ def tn10p(
     >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    t10 = utils.convert_units_to(t10, tasmin)
+    t10 = convert_units_to(t10, tasmin)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t10, tasmin)
+    thresh = resample_doy(t10, tasmin)
 
     # Identify the days below the 10th percentile
     below = tasmin < thresh
@@ -1204,10 +1191,10 @@ def tx90p(
     >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
     >>> hot_days = tg90p(tas, t90)
     """
-    t90 = utils.convert_units_to(t90, tasmax)
+    t90 = convert_units_to(t90, tasmax)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t90, tasmax)
+    thresh = resample_doy(t90, tasmax)
 
     # Identify the days with max temp above 90th percentile.
     over = tasmax > thresh
@@ -1249,10 +1236,10 @@ def tx10p(
     >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
     >>> cold_days = tg10p(tas, t10)
     """
-    t10 = utils.convert_units_to(t10, tasmax)
+    t10 = convert_units_to(t10, tasmax)
 
     # Create time series out of doy values.
-    thresh = utils.resample_doy(t10, tasmax)
+    thresh = resample_doy(t10, tasmax)
 
     # Identify the days below the 10th percentile
     below = tasmax < thresh
@@ -1317,8 +1304,8 @@ def tx_tn_days_above(
 
     """
 
-    thresh_tasmax = utils.convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = utils.convert_units_to(thresh_tasmin, tasmin)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
     return events.resample(time=freq).sum(dim="time")
 
@@ -1340,7 +1327,7 @@ def warm_spell_duration_index(
     tx90 : float
       90th percentile of daily maximum temperature [℃] or [K]
     window : int
-      Minimum number of days with temperature below threshold to qualify as a warm spell.
+      Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -1358,11 +1345,11 @@ def warm_spell_duration_index(
 
     """
     # Create time series out of doy values.
-    thresh = utils.resample_doy(tx90, tasmax)
+    thresh = resample_doy(tx90, tasmax)
 
     above = tasmax > thresh
 
-    return above.resample(time=freq).apply(
+    return above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 
@@ -1398,4 +1385,4 @@ def winter_rain_ratio(
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
-    return ratio[winter]
+    return ratio.sel(time=winter)

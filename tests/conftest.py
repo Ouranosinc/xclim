@@ -1,9 +1,16 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.utils as utils
+from xclim.core.calendar import calendars
+
+
+@pytest.fixture
+def tmp_netcdf_filename(tmpdir):
+    return Path(tmpdir).joinpath("testfile.nc")
 
 
 @pytest.fixture
@@ -144,7 +151,7 @@ def ndq_series():
 @pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
-        n = utils.calendars[calendar]
+        n = calendars[calendar]
         if len(values) != n:
             raise ValueError(
                 "Values must be same length as number of days in calendar."
@@ -210,3 +217,33 @@ def ws_series():
         )
 
     return _ws_series
+
+
+@pytest.fixture
+def huss_series():
+    def _huss_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="huss",
+            attrs={"standard_name": "specific_humidity", "units": "",},
+        )
+
+    return _huss_series
+
+
+@pytest.fixture
+def ps_series():
+    def _ps_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="ps",
+            attrs={"standard_name": "air_pressure", "units": "Pa",},
+        )
+
+    return _ps_series

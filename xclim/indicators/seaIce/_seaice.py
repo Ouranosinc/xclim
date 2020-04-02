@@ -4,9 +4,9 @@ Sea ice indicators
 """
 import abc
 
-from xclim import checks
 from xclim import indices
-from xclim.utils import Indicator2D
+from xclim.core import checks
+from xclim.core.indicator import Indicator2D
 
 __all__ = ["sea_ice_area", "sea_ice_extent"]
 

@@ -5,19 +5,23 @@ Indices library
 ===============
 
 This module contains climate indices functions operating on `xarray.DataArray`. Most of these
-functions operate on daily time series, but some might accept monthly time series as well. All
+functions operate on daily time series, but some might accept other sampling frequencies as well. All
 functions perform units checks to make sure that inputs have the expected dimensions (for example
 have units of temperature, whether it is celsius, kelvin or fahrenheit), and the the `units`
 attribute of the output DataArray.
+
+The `calendar`, `fwi`, `generic`, `run_length` and `utils` submodule provide helpers to simplify
+the implementation of the indices.
 
 .. note::
 
     Indices functions do not perform missing value checks, and do not set CF-Convention attributes
     (long_name, standard_name, description, cell_methods, etc). These functionalities are provided by
-    :class:`xclim.utils.Indicator` instances found in the :mod:`xclim.atmos`, :mod:`xclim.land` and
-    :mod:`xclim.seaIce` modules.
+    :class:`xclim.indicators.Indicator` instances found in the :mod:`xclim.indicators.atmos`,
+    :mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
+from ._conversion import *
 from ._multivariate import *
 from ._simple import *
 from ._threshold import *

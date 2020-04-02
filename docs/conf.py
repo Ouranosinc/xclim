@@ -27,17 +27,17 @@ sys.path.insert(0, os.path.abspath("."))
 
 
 def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
+    """For all modules or classes listed, return the children that are instances of xclim.indicators.Indicator.
 
     modules : sequence
       Sequence of modules to inspect.
     """
-    import xclim.utils as xcu
+    from xclim.core.indicator import Indicator, Indicator2D
 
-    out = []
+    out = {}
     for key, val in module.__dict__.items():
-        if isinstance(val, (xcu.Indicator, xcu.Indicator2D)):
-            out.append(val)
+        if isinstance(val, (Indicator, Indicator2D)):
+            out[key] = val
 
     return out
 
@@ -45,20 +45,21 @@ def _get_indicators(module):
 def _indicator_table(realm):
     """Return a sequence of dicts storing metadata about all available indices."""
     import inspect
-    import warnings
 
     inds = _get_indicators(getattr(xclim, realm))
-    table = []
-    for ind in inds:
+    table = {}
+    for indname, ind in inds.items():
         # Apply default values
         args = {
             name: p.default if p.default != inspect._empty else f"<{name}>"
             for (name, p) in ind._sig.parameters.items()
         }
         try:
-            table.append(ind.json(args))
-        except KeyError:
-            print(f"{ind.identifier} could not be documented.")
+            table[indname] = ind.json(args)
+        except KeyError as err:
+            print(f"{ind.identifier} could not be documented.({err})")
+        else:
+            table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
@@ -80,6 +81,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.coverage",
     "sphinx.ext.todo",
+    "sphinx.ext.autosectionlabel",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -89,6 +91,16 @@ napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
+
+nbsphinx_execute = "always"
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
+
+.. only:: html
+
+    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
+"""
+nbsphinx_timeout = 300
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

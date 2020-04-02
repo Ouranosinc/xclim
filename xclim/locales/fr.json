@@ -1,0 +1,521 @@
+{
+  "attrs_mapping": {
+    "modifiers": [
+      "m",
+      "f",
+      "mpl",
+      "fpl"
+    ],
+    "YS": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles"
+    ],
+    "MS": [
+      "mensuel",
+      "mensuelle",
+      "mensuels",
+      "mensuelles"
+    ],
+    "QS-DEC": [
+      "saisonnier",
+      "saisonnière",
+      "saisonniers",
+      "saisonnières"
+    ],
+    "DJF": [
+      "hivernal",
+      "hivernale",
+      "hivernaux",
+      "hivernales"
+    ],
+    "MAM": [
+      "printanier",
+      "printanière",
+      "printaniers",
+      "printanières"
+    ],
+    "JJA": [
+      "estival",
+      "estivale",
+      "estivaux",
+      "estivales"
+    ],
+    "SON": [
+      "automnal",
+      "automnale",
+      "automnaux",
+      "automnales"
+    ],
+    "norm": [
+      "normal",
+      "normale",
+      "normaux",
+      "normales"
+    ],
+    "m1": [
+      "janvier"
+    ],
+    "m2": [
+      "février"
+    ],
+    "m3": [
+      "mars"
+    ],
+    "m4": [
+      "avril"
+    ],
+    "m5": [
+      "mai"
+    ],
+    "m6": [
+      "juin"
+    ],
+    "m7": [
+      "juillet"
+    ],
+    "m8": [
+      "août"
+    ],
+    "m9": [
+      "septembre"
+    ],
+    "m10": [
+      "octobre"
+    ],
+    "m11": [
+      "novembre"
+    ],
+    "m12": [
+      "decembre"
+    ]
+  },
+  "atmos.rain_frzgr": {
+    "long_name": "Nombre de jours de pluie sur sol gelé",
+    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
+    "title": "Nombre de jours de pluie sur sol gelé",
+    "comment": "",
+    "abstract": "Nombre de jours avec des précipitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
+  },
+  "atmos.rx1day": {
+    "long_name": "Précipitation maximale en 1 jour",
+    "description": "Précipitation maximale en 1 jour {freq:f}",
+    "title": "Précipitation maximale en 1 jour dans une période donnée.",
+    "comment": "",
+    "abstract": "Maximum des précipitations totales quotidiennes pour une période donnée."
+  },
+  "atmos.max_n_day_precipitation_amount": {
+    "long_name": "Précipitation maximale sur {window} jours",
+    "description": "Précipitation maximale sur {window} jours {freq:f}",
+    "title": "Précipitation maximale cumulée sur un nombre de jours donné.",
+    "comment": "",
+    "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
+  },
+  "atmos.wetdays": {
+    "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
+    "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Jours mouillés",
+    "comment": "",
+    "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
+  },
+  "atmos.cdd": {
+    "long_name": "Durée maximale d'une période sèche",
+    "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont sous {thresh}.",
+    "title": "Nombre maximal de jours secs consécutifs",
+    "comment": "",
+    "abstract": "Période la plus longue où la précipitation est sous un seuil."
+  },
+  "atmos.cwd": {
+    "long_name": "Durée maximale d'une période pluvieuse",
+    "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
+    "title": "Durée de période pluvieuse",
+    "comment": "",
+    "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil."
+  },
+  "atmos.sdii": {
+    "long_name": "Indice simple de l'intensité des précipitations",
+    "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précipitation journalière pour les jours où la précipitation est au-dessus de {thresh}.",
+    "title": "Indice simple de l'intensité des précipitations",
+    "comment": "",
+    "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil."
+  },
+  "atmos.prcptot": {
+    "long_name": "Précipitation totale",
+    "description": "Précipitation totale {freq:f}",
+    "title": "Précipitation accumulée totale (liquide ou solide)",
+    "comment": "",
+    "abstract": "Précipitation accumulée totale. Si la température journalière moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température journalière moyenne est sous 0°C (et vice-versa)."
+  },
+  "atmos.liquidprcptot": {
+    "long_name": "Précipitation liquide totale",
+    "description": "Précipitation liquide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est >= 0°C",
+    "title": "Précipitation liquide accumulée totale",
+    "comment": "",
+    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est au-dessus de 0°C."
+  },
+  "atmos.solidprcptot": {
+    "long_name": "Précipitation solide totale",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est < 0°C",
+    "title": "Précipitation solide accumulée totale",
+    "comment": "",
+    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est sous 0°C."
+  },
+  "atmos.DC": {
+    "long_name": "Indice de sécheresse",
+    "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'",
+    "title": "Indice de sécheresse quotidien",
+    "comment": "",
+    "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
+  },
+  "atmos.tn_days_below": {
+    "long_name": "Nombre de jours avec Tmin < {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous {thresh}",
+    "title": "Nombre de jours avec tmin sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est sous un seuil."
+  },
+  "atmos.tx_days_above": {
+    "long_name": "Nombre de jours avec Tmax > {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmax au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est au-dessus d'un seuil."
+  },
+  "atmos.tx_tn_days_above": {
+    "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale excède {thresh_tasmax} et la température journalière minimale excède {thresh_tasmin}",
+    "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes",
+    "comment": "",
+    "abstract": "Nombre de jours où les températures journalières maximales et minimales sont au-dessus de seuils donnés."
+  },
+  "atmos.heat_wave_frequency": {
+    "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours)",
+    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "title": "Fréquence des vagues de chaleur",
+    "comment": "",
+    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "atmos.heat_wave_total_length": {
+    "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "comment": "",
+    "title": "Durée totale des vagues de chaleur",
+    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "atmos.heat_wave_max_length": {
+    "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
+    "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des vagues de chaleur",
+    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "atmos.heat_wave_index": {
+    "long_name": "Nombre de jours de vague de chaleur",
+    "description": "Nombre {freq:m} de jours de vague de chaleur, définie comme cinq jours consécutifs ou plus où la température est au-dessus de {thresh}.",
+    "title": "Indice de vague de chaleur",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température journalière maximale excède un seuil durant au moins 5 jours."
+  },
+  "atmos.tg": {
+    "long_name": "température journalière moyenne",
+    "description": "température journalière moyenne estimée par la médiane des températures maximales et minimales.",
+    "title": "Moyenne des températures maximales et minimales",
+    "comment": "",
+    "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
+  },
+  "atmos.tg_mean": {
+    "long_name": "Moyenne de la température journalière moyenne",
+    "description": "Moyenne {freq:f} de la température journalière moyenne",
+    "title": "Moyenne de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière moyenne."
+  },
+  "atmos.tg10p": {
+    "long_name": "Nombre de jours où la température est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température est au-dessus du 10e percentile"
+  },
+  "atmos.tg90p": {
+    "long_name": "Nombre de jours où la température est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Number of days with daily mean temperature over the 90th percentile."
+  },
+  "atmos.tn_min": {
+    "long_name": "Minimum de la température journalière minimale",
+    "description": "Minimum {freq:m} de la température journalière minimale",
+    "title": "Minimum de la température minimale",
+    "comment": "",
+    "abstract": "Minimum de la température journalière minimale."
+  },
+  "atmos.tn_max": {
+    "long_name": "Maximum de la température journalière minimale",
+    "description": "Maximum {freq:m} de la température journalière minimale",
+    "title": "Maximum de la température minimale",
+    "comment": "",
+    "abstract": "Maximum de la température journalière minimale."
+  },
+  "atmos.tn_mean": {
+    "long_name": "Moyenne de la température journalière minimale",
+    "description": "Moyenne {freq:f} de la température journalière minimale",
+    "title": "Moyenne de la température minimale",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière minimale."
+  },
+  "atmos.tn10p": {
+    "long_name": "Nombre de jours où la température minimale est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du 10e percentile."
+  },
+  "atmos.tn90p": {
+    "long_name": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du 90e percentile."
+  },
+  "atmos.tx_min": {
+    "long_name": "Minimum de la température journalière maximale",
+    "description": "Minimum {freq:m} de la température journalière maximale",
+    "title": "Minimum de la température maximale",
+    "comment": "",
+    "abstract": "Minimum de la température journalière maximale."
+  },
+  "atmos.tx_max": {
+    "long_name": "Maximum de la température journalière maximale",
+    "description": "Maximum {freq:m} de la température journalière maximale",
+    "title": "Maximum de la température maximale",
+    "comment": "",
+    "abstract": "Maximum de la température journalière maximale."
+  },
+  "atmos.tx_mean": {
+    "long_name": "Moyenne de la température journalière maximale",
+    "description": "Moyenne {freq:f} de la température journalière maximale",
+    "title": "Moyenne de la température maximale",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière maximale."
+  },
+  "atmos.tx10p": {
+    "long_name": "Nombre de jours où la température maximale est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du 10e percentile."
+  },
+  "atmos.tx90p": {
+    "long_name": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
+  },
+  "atmos.dtr": {
+    "long_name": "Amplitude de la température diurne",
+    "description": "Moyenne {freq:f} de l'amplitude diurne de température",
+    "comment": "",
+    "title": "Amplitude de la température diurne",
+    "abstract": "La différence moyenne entre la température journalière maximale et la température journalière minimale."
+  },
+  "atmos.dtrvar": {
+    "long_name": "Variabilité de l'amplitude de la température diurne",
+    "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
+    "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
+    "comment": "",
+    "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
+  },
+  "atmos.etr": {
+    "long_name": "Amplitude des températures extrêmes",
+    "description": "Calcul {freq:m} de l'intervalle entre le maximum de la température journalière maximale et le minimum de la température journalière minimale",
+    "title": "Intervalle des températures extrêmes",
+    "comment": "",
+    "abstract": "Le maximum de la température maximale moins le minimum de la température minimale."
+  },
+  "atmos.cold_spell_duration_index": {
+    "long_name": "Indice de durée des vagues de froid",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins {window} jours consécutifs. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Indice de durée des vagues de froid",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
+  },
+  "atmos.cold_spell_days": {
+    "long_name": "Jours de vagues de froid",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Jours de vague de froid",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+  },
+  "atmos.dlyfrzthw": {
+    "long_name": "Cycles de gel-dégel quotidien",
+    "description": "Nombre {freq:m} de jours avec un gel-dégel : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
+    "title": "Nombre de jours avec un cycle de gel-dégel",
+    "comment": "",
+    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin sous un seuil, habituellement 0°C pour les deux."
+  },
+  "atmos.cooling_degree_days": {
+    "long_name": "Degré-jour de réfrigération (Tmoy > {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de réfrigération (Température au-dessus de {thresh})",
+    "title": "Degré-jour de réfrigération",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil et que les immeubles doivent être réfrigérés."
+  },
+  "atmos.heating_degree_days": {
+    "long_name": "Degré-jour de chauffe (Tmoy < {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de chauffe (Température au-dessus de {thresh}).",
+    "title": "Degré-jour de chauffe",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil et que les immeubles doivent être chauffés."
+  },
+  "atmos.growing_degree_days": {
+    "long_name": "Degré-jour de croissance (Tmoy > {thresh})",
+    "description": "Cumul {freq} des degrés-jours de croissance (Température au-dessus de {thresh})",
+    "title": "Degré-jour de croissance",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
+  },
+  "atmos.freshet_start": {
+    "long_name": "Jour de l'année du début de la crue nivale",
+    "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
+    "title": "Nième jour consécutif où la température excède un seuil",
+    "comment": "",
+    "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
+  },
+  "atmos.frost_days": {
+    "long_name": "Nombre de jours de gel (Tmin < 0C)",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous 0°C.",
+    "title": "Jours de gel",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est sous 0°C."
+  },
+  "atmos.ice_days": {
+    "long_name": "Nombre de jours de givre (Tmax < 0°C)",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C.",
+    "title": "Nombre de jours de givre",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est sous 0°C."
+  },
+  "atmos.consecutive_frost_days": {
+    "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
+    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C.",
+    "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
+    "comment": "",
+    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C."
+  },
+  "atmos.growing_season_length": {
+    "long_name": "Durée de la saison de végétation",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température journalière moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
+    "comment": "",
+    "title": "Durée de la saison de croissance",
+    "abstract": "Nombre de jours entre la première série de N jours avec des températures journalières moyennes au-dessus d'un seuil et la première série de N jours avec des températures journalières moyennes sous ce même seuil."
+  },
+  "atmos.tropical_nights": {
+    "long_name": "Nombre de nuits tropicales (Tmin > {thresh})",
+    "description": "Nombre {freq:m} de nuits tropicales : définies comme des jours avec une température minimale au-dessus de {thresh}",
+    "title": "Nombre de nuits tropicales",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus d'un seuil."
+  },
+  "land.base_flow_index": {
+    "long_name": "Flux de base",
+    "description": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen",
+    "title": "Flux de base",
+    "comment": "",
+    "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
+  },
+  "land.freq_analysis": {
+    "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
+    "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}",
+    "title": "Période de retour",
+    "comment": "",
+    "abstract": "Analyse de fréquence selon un mode et une distribution."
+  },
+  "land.stats": {
+    "long_name": "{op} du {indexer} {freq:m} du flux journalier",
+    "description": "{op} du {indexer} {freq:m} du flux journalier",
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "comment": "",
+    "abstract": ""
+  },
+  "land.fit": {
+    "long_name": "Paramètres d'une distribution {dist:f}",
+    "description": "Paramètres d'une distribution {dist:f}",
+    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données.",
+    "comment": "",
+    "abstract": ""
+  },
+  "land.doy_qmax": {
+    "long_name": "Jour de l'année du maximum le long de {indexer}",
+    "description": "Jour de l'année du maximum le long de {indexer}",
+    "comment": "",
+    "title": "Jour de l'année du maximum.",
+    "abstract": ""
+  },
+  "land.doy_qmin": {
+    "long_name": "Jour de l'année du minimum le long de {indexer}",
+    "description": "Jour de l'année du minimum le long de {indexer}",
+    "comment": "",
+    "title": "Jour de l'année du minimum.",
+    "abstract": ""
+  },
+  "seaIce.sea_ice_area": {
+    "long_name": "Surface de la banquise",
+    "description": "La somme des surfaces recouvertes de glace de mer là où sa concentration est d'au moins {thresh}.",
+    "comment": "",
+    "title": "Surface de la banquise",
+    "abstract": "Mesure de surface totale des océans couverte de glace de mer."
+  },
+  "seaIce.sea_ice_extent": {
+    "long_name": "Étendue de banquise",
+    "description": "L'aire totale de toutes les régions où la concentration de glace de mer est d'au moins {thresh}.",
+    "comment": "",
+    "title": "Étendue de la banquise",
+    "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
+  },
+  "atmos.dry_days": {
+    "long_name": "Nombre de jours secs (precip < {thresh})",
+    "description": "Nombre {freq} de jours où la précipitation journalière est sous {thresh}.",
+    "comment": "",
+    "title": "Jours secs",
+    "abstract": "Nombre de jours où la précipitation journalière est sous un seuil."
+  },
+  "atmos.hot_spell_frequency": {
+    "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Fréquences des périodes chaudes",
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "atmos.last_spring_frost": {
+    "long_name": "Jour de l'année du dernier gel printanier",
+    "description": "Jour de l'année du dernier gel printanier, defini comme le dernier jour où la température journalière moyenne reste sous {thresh} durant au moins {window} jours avant une certaine date.",
+    "comment": "",
+    "title": "Jour de l'année du dernier gel printanier",
+    "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
+  },
+  "atmos.hot_spell_max_length": {
+    "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des périodes chaudes",
+    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "atmos.consecutive_frost_free_days": {
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
+    "comment": "",
+    "title": "Nombre maximal de jours consécutifs sans gel (Tmin > 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus d'un seuil."
+  },
+  "atmos.growing_season_end": {
+    "long_name": "Jour de l'année de la fin de la saison de végétation",
+    "description": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "comment": "",
+    "title": "Fin de la saison de végétation",
+    "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
+  }
+}

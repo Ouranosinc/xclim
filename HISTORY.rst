@@ -2,14 +2,42 @@
 History
 =======
 
-0.14.x
+0.16.x
 ------
+* Better `wrapped_partial` for more meaningful inspection.
+* Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
+* Allow lazy units conversion
+* CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
+* Add utilities to merge attributes and update history in xclim.core.formatting
+* Ensembles : Allow alignment of datasets with same frequency but different offsets
+* Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
+* Remove deepcopy from subset.subset_shape to improve memory usage.
+
+0.15.x (2020-03-12)
+-------------------
+* Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
+* Added example notebook for creating a catalog of selected indices
+* Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
+* Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
+* Complete internal reorganization of xclim.
+* Internationalization of xclim : add `locales` submodule for localized metadata.
+* Add feature to retrieve coordinate values instead of index in `run_length.first_run`. Add `run_length.last_run`.
+* Fix bug in subset_gridpoint to work on lat/lon coords of any dimension when they are not a dimension of the data.
+
+0.14.x (2020-02-21)
+-------------------
+* Refactoring of the documentation.
+* Added support for pint 0.10
+* Add `atmos.heat_wave_total_length` (fixing a namespace issue)
+* Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
+* Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.
+* Added utility functions to compute `time_bnds` when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.
 * Modified `subset_shape` to support subsetting with GeoPandas datatypes directly.
 * Fix in `subset.wrap_lons_and_split_at_greenwich` to preserve multi-region dataframes.
 * Improve the memory use of `indices.growing_season_length`.
 * Better handling of data with atypically named `lat` and `lon` dimensions.
-* Added 6 Fire Weather Indexes.
+* Added six Fire Weather indices.
 
 0.13.x (2020-01-10)
 -------------------

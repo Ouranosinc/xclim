@@ -1,4 +1,3 @@
-import copy
 import logging
 import warnings
 from functools import wraps
@@ -7,13 +6,14 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import fiona.crs as fiocrs
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray
 from pyproj import Geod
+from pyproj.crs import CRS
 from shapely.geometry import LineString
+from shapely.geometry import MultiPolygon
 from shapely.geometry import Point
 from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
@@ -218,7 +218,7 @@ def wrap_lons_and_split_at_greenwich(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator to split and reproject polygon vectors in a GeoDataFram whose values cross the Greenwich Meridian.
+        A decorator to split and reproject polygon vectors in a GeoDataFrame whose values cross the Greenwich Meridian.
          Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
          the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
          transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
@@ -243,7 +243,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     stacklevel=4,
                 )
             split_flag = False
-            for (index, feature) in poly.iterrows():
+            for index, feature in poly.iterrows():
                 if (feature.geometry.bounds[0] < 0) and (
                     feature.geometry.bounds[2] > 0
                 ):
@@ -256,31 +256,31 @@ def wrap_lons_and_split_at_greenwich(func):
                     )
 
                     # Create a meridian line at Greenwich, split polygons at this line and erase a buffer line
-                    union = Polygon(cascaded_union(feature.geometry))
+                    if isinstance(feature.geometry, MultiPolygon):
+                        union = MultiPolygon(cascaded_union(feature.geometry))
+                    else:
+                        union = Polygon(cascaded_union(feature.geometry))
                     meridian = LineString([Point(0, 90), Point(0, -90)])
                     buffered = meridian.buffer(0.000000001)
                     split_polygons = split(union, meridian)
-                    # TODO: This doesn't seem to be thread safe in Travis CI on macOS. Merits testing with a local machine.
                     buffered_split_polygons = [
-                        feat for feat in split_polygons.difference(buffered)
+                        feat.difference(buffered) for feat in split_polygons
                     ]
 
                     # Cannot assign iterable with `at` (pydata/pandas#26333) so a small hack:
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs={"epsg:4326"},
+                        crs=CRS("epsg:4326"),
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
-                    # split_gdf.columns = ["index", "geometry"]
-
-                    # feature = split_gdf
 
             # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
-            poly = poly.to_crs(
+            wrapped_lons = CRS(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
             )
-            crs1 = poly.crs
+
+            poly = poly.to_crs(crs=wrapped_lons)
             if split_flag:
                 warnings.warn(
                     "Rebuffering split polygons to ensure edge inclusion in selection",
@@ -288,7 +288,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     stacklevel=4,
                 )
                 poly = gpd.GeoDataFrame(poly.buffer(0.000000001), columns=["geometry"])
-                poly.crs = crs1
+                poly.crs = wrapped_lons
 
             kwargs["poly"] = poly
 
@@ -340,6 +340,9 @@ def create_mask(
     >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
+    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    # poly.crs = wgs84
+
     # Check for intersections
     for i, (inda, pola) in enumerate(poly.iterrows()):
         for (indb, polb) in poly.iloc[i + 1 :].iterrows():
@@ -374,14 +377,10 @@ def create_mask(
 
     # create geodataframe (spatially referenced with shifted longitude values if needed).
     if wrap_lons:
-        shifted = fiocrs.from_string(
-            "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
+        wgs84 = CRS.from_string(
+            "+proj=longlat +datum=WGS84 +no_defs +type=crs +lon_wrap=180"
         )
-        gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=shifted)
-    else:
-        gdf_points = gpd.GeoDataFrame(
-            df, geometry="Coordinates", crs=fiocrs.from_epsg(4326)
-        )
+    gdf_points = gpd.GeoDataFrame(df, geometry="Coordinates", crs=wgs84)
 
     # spatial join geodata points with region polygons and remove duplicates
     point_in_poly = gpd.tools.sjoin(gdf_points, poly, how="left", op="intersects")
@@ -435,7 +434,8 @@ def subset_shape(
 
     Returns
     -------
-    Tuple[Union[xarray.DataArray, xarray.Dataset], xarray.DataArray]
+    Union[xarray.DataArray, xarray.Dataset]
+        A subsetted copy of  `ds`
 
     Examples
     --------
@@ -455,10 +455,15 @@ def subset_shape(
     >>> prSub = \
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
-    # TODO : edge case using polygon splitting decorator touches original ds when subsetting?
-    ds_copy = copy.deepcopy(ds)
+    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+    if isinstance(ds, xarray.DataArray):
+        ds_copy = ds._to_temp_dataset()
+    else:
+        ds_copy = ds.copy()
+
     if isinstance(shape, gpd.GeoDataFrame):
-        poly = shape
+        poly = shape.copy()
     else:
         poly = gpd.GeoDataFrame.from_file(shape)
 
@@ -479,7 +484,7 @@ def subset_shape(
 
     if ds_copy.lon.size == 0 or ds_copy.lat.size == 0:
         raise ValueError(
-            "No gridcell centroids found within provided polygon bounding box. "
+            "No grid cell centroids found within provided polygon bounding box. "
             'Try using the "buffer" option to create an expanded area'
         )
 
@@ -489,73 +494,77 @@ def subset_shape(
     # Determine whether CRS types are the same between shape and raster
     if shape_crs is not None:
         try:
-            shape_crs = fiocrs.from_epsg(shape_crs)
+            shape_crs = CRS.from_string(shape_crs)
         except ValueError:
-            try:
-                shape_crs = fiocrs.from_string(shape_crs)
-            except ValueError:
-                raise
+            raise
     else:
-        shape_crs = poly.crs
+        shape_crs = CRS(poly.crs)
 
     if raster_crs is not None:
         try:
-            raster_crs = fiocrs.from_epsg(raster_crs)
+            raster_crs = CRS(raster_crs)
         except ValueError:
-            try:
-                raster_crs = fiocrs.from_string(raster_crs)
-            except ValueError:
-                raise
+            raise
     else:
         if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
-            # PROJ4 definition for WGS84 with Prime Meridian at -180 deg lon.
-            raster_crs = fiocrs.from_string(
-                "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
-            )
+            # PROJ4 definition for  with Prime Meridian at -180 deg lon.
+            wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180")
             wrap_lons = True
         else:
-            raster_crs = fiocrs.from_epsg(4326)
             wrap_lons = False
+        raster_crs = wgs84
 
-    if (shape_crs != raster_crs) or (
-        fiocrs.from_epsg(4326) not in [shape_crs, raster_crs]
-    ):
-        warnings.warn(
-            "CRS definitions are not similar or both not using WGS84. Caveat emptor.",
-            UserWarning,
-            stacklevel=3,
-        )
+    if shape_crs != raster_crs:
+        if (
+            "lon_wrap" in raster_crs.to_proj4()
+            and "lon_wrap" not in shape_crs.to_proj4()
+        ):
+            warnings.warn(
+                "CRS definitions are similar but raster lon values must be wrapped.",
+                UserWarning,
+                stacklevel=3,
+            )
+        elif (CRS.from_epsg(4326) != shape_crs) and (
+            CRS(4326).to_proj4() != raster_crs
+        ):
+            warnings.warn(
+                "CRS definitions are not similar or both not using WGS84 datum. Tread with caution.",
+                UserWarning,
+                stacklevel=3,
+            )
 
     mask_2d = create_mask(
         x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
     )
 
-    if np.all(np.isnan(mask_2d)):
+    if np.all(mask_2d.isnull()):
         raise ValueError(
-            "No gridcell centroids found within provided polygon. "
-            'Try using the "buffer" option to create an expanded areas or verify polygon '
+            f"No grid cell centroids found within provided polygon bounds ({poly.bounds}). "
+            'Try using the "buffer" option to create an expanded areas or verify polygon.'
         )
 
     # loop through variables
     for v in ds_copy.data_vars:
         if set.issubset(set(mask_2d.dims), set(ds_copy[v].dims)):
-            ds_copy[v] = ds_copy[v].where((~np.isnan(mask_2d)), drop=True)
+            ds_copy[v] = ds_copy[v].where(mask_2d.notnull())
 
     # Remove coordinates where all values are outside of region mask
-    if "lon" in ds_copy.dims:
-        ds_copy = ds_copy.dropna(dim="lon", how="all")
-        ds_copy = ds_copy.dropna(dim="lat", how="all")
-    else:  # curvilinear case
-        for d in ds_copy.lon.dims:
-            ds_copy = ds_copy.dropna(dim=d, how="all")
+    for dim in mask_2d.dims:
+        mask_2d = mask_2d.dropna(dim, how="all")
+    ds_copy = ds_copy.sel({dim: mask_2d[dim] for dim in mask_2d.dims})
 
-    # Add a CRS definition as a coordinate for reference purposes
+    # Add a CRS definition using CF conventions and as a global attribute WKT for reference purposes
     if wrap_lons:
-        ds_copy.coords["crs"] = 0
-        ds_copy.coords["crs"].attrs = dict(
-            spatial_ref="+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
-        )
+        ds_copy.attrs["crs"] = wgs84.to_string()
+        ds_copy["crs"] = 1
+        ds_copy["crs"].attrs.update(wgs84.to_cf())
 
+        for v in ds_copy.variables:
+            if {"lat", "lon"}.issubset(set(ds_copy[v].dims)):
+                ds_copy[v].attrs["grid_mapping"] = "crs"
+
+    if isinstance(ds, xarray.DataArray):
+        return ds._from_temp_dataset(ds_copy)
     return ds_copy
 
 
@@ -824,13 +833,10 @@ def subset_gridpoint(
                 dist = distance(da, lon, lat)
 
                 # Find the indices for the closest point
-                iy, ix = np.unravel_index(dist.argmin(), dist.shape)
+                inds = np.unravel_index(dist.argmin(), dist.shape)
 
                 # Select data from closest point
-                xydims = [x for x in dist.dims]
-                args = dict()
-                args[xydims[0]] = iy
-                args[xydims[1]] = ix
+                args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
                 da = da.isel(**args)
         else:
             raise (
