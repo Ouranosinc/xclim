@@ -9,6 +9,7 @@ factor, and these factors are indexed by CDF instead of values.
 """
 import xarray as xr
 
+from .base import Grouper
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
 from .utils import apply_correction
@@ -88,12 +89,9 @@ def train(
         y = jitter_under_thresh(y, mult_thresh)
 
     # Compute quantile per period
-    xq = group_apply("quantile", x, group, window=window, q=q).rename(
-        quantile="quantiles"
-    )
-    yq = group_apply("quantile", y, group, window=window, q=q).rename(
-        quantile="quantiles"
-    )
+    gr = Grouper(group, window)
+    xq = gr.apply("quantile", x, q=q).rename(quantile="quantiles")
+    yq = gr.apply("quantile", y, q=q).rename(quantile="quantiles")
 
     # Compute quantile correction factors
     qf = get_correction(xq, yq, kind)  # qy / qx or qy - qx
@@ -141,7 +139,6 @@ def predict(
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
     dim, prop = parse_group(qm.group)
-    window = qm.group_window
     kind = qm.kind
 
     # Add random noise to small values
@@ -153,11 +150,11 @@ def predict(
         qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
 
     # Compute quantile of x
-    xq = group_apply(xr.DataArray.rank, x, qm.group, window=window, pct=True)
+    gr = Grouper(qm.group, qm.group_window)
+    xq = gr.apply(xr.DataArray.rank, x, pct=True)
 
     # Quantile mapping
-    sel = {"quantiles": xq}
-    qf = broadcast(qm.qf, x, interp=interp, sel=sel)
+    qf = broadcast(qm.qf, x, interp=interp, sel={"quantiles": xq})
     out = apply_correction(x, qf, qm.kind)
 
     out.attrs["bias_corrected"] = True

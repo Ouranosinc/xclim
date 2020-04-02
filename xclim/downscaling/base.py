@@ -63,7 +63,7 @@ class ParametrizableClass(object):
         return f"<{self.__class__.__name__}: {params_str}>"
 
 
-class NoDetrend(ParametrizableClass):
+class Detrend(ParametrizableClass):
     """Base class for detrending objects
 
     Defines three methods:
@@ -104,7 +104,7 @@ class NoDetrend(ParametrizableClass):
         return da
 
 
-class MeanDetrend(NoDetrend):
+class MeanDetrend(Detrend):
     def _fit(self, da):
         self._mean = da.mean(dim="time")
 
@@ -115,7 +115,7 @@ class MeanDetrend(NoDetrend):
         return da + self._mean
 
 
-class PolyDetrend(NoDetrend):
+class PolyDetrend(Detrend):
     """
     Detrend time series using a polynomial.
 
@@ -153,11 +153,18 @@ class PolyDetrend(NoDetrend):
 
 
 class Grouper(ParametrizableClass):
+    """Applies `groupby` method to one or more data arrays.
+
+    Parameters
+    ----------
+    """
+
     def __init__(self, group: str, window: int = 1, interp: Union[bool, str] = False):
         if "." in group:
             dim, prop = group.split(".")
         else:
             dim, prop = group, None
+
         if isinstance(interp, str):
             interp = interp != "nearest"
         if window > 1:
@@ -256,7 +263,11 @@ class BaseMapping(ParametrizableClass):
 
     def __init__(self, group="time", **kwargs):
         if not isinstance(group, Grouper):
-            group = Grouper(group, interp=kwargs.get("interp", False))
+            group = Grouper(
+                group,
+                interp=kwargs.get("interp", False),
+                window=kwargs.get("window", 1),
+            )
         super().__init__(group=group, **kwargs)
 
     def train(
@@ -289,7 +300,7 @@ class QuantileMapping(BaseMapping):
         interp: str = "nearest",
         mode: Optional[str] = None,
         extrapolation: str = "constant",
-        detrender: NoDetrend = NoDetrend(),
+        detrender: Detrend = Detrend(),
         group: Union[str, Grouper] = "time",
         normalize: bool = False,
         rank_from_fut: bool = False,
@@ -298,7 +309,7 @@ class QuantileMapping(BaseMapping):
             rank_from_fut = True
         elif mode == "dqm":
             normalize = True
-            if detrender.__class__ == NoDetrend:
+            if detrender.__class__ == Detrend:
                 detrender = PolyDetrend()
         elif mode == "eqm":
             pass
