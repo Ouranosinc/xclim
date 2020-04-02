@@ -229,6 +229,7 @@ def convert_units_to(
     elif isinstance(target, (str, xr.DataArray)):
         tu = units2pint(target)
     else:
+        print(target)
         raise NotImplementedError
 
     if isinstance(source, str):

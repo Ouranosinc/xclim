@@ -10,11 +10,15 @@ from dask.diagnostics import ProgressBar
 
 import xclim as xc
 
-xcmodules = {"atmos": xc.atmos, "land": xc.land, "seaIce": xc.seaIce}
+xcmodules = {
+    "atmos": xc.indicators.atmos,
+    "land": xc.indicators.land,
+    "seaIce": xc.indicators.seaIce,
+}
 
 
 def _isusable(indicator):
-    return isinstance(indicator, xc.utils.Indicator) and all(
+    return isinstance(indicator, xc.core.indicator.Indicator) and all(
         [
             param.annotation is not inspect._empty
             for param in indicator._sig.parameters.values()
@@ -174,7 +178,7 @@ def indices(module, info):
         module = "all"
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    for xcmod in [xc.atmos, xc.land]:
+    for xcmod in [xc.atmos, xc.land, xc.seaIce]:
         modname = xcmod.__name__.split(".")[-1]
         if module == "all" or modname in module:
             with formatter.section(
@@ -191,6 +195,7 @@ def indices(module, info):
                         if info:
                             right += "\n" + ind.abstract
                         rows.append((left, right))
+                print(rows)
                 formatter.write_dl(rows)
     click.echo(formatter.getvalue())
 

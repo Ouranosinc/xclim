@@ -61,17 +61,17 @@ def test_indicator_help(indicator, indname):
 @pytest.mark.parametrize(
     "indicator,expected",
     [
-        ("atmos.tg_mean", 274.15),
+        ("atmos.tg_mean", 272.15),
         ("atmos.daily_temperature_range_variability", 0.0),
-        ("atmos.heating_degree_days", 5856.0),
+        ("atmos.heating_degree_days", 6588.0),
         ("atmos.solid_precip_accumulation", 31622400.0),
     ],
 )
 def test_normal_computation(
     tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected
 ):
-    tasmin = tasmin_series(np.ones(366,) + 273.15, start="1/1/2000")
-    tasmax = tasmax_series(np.ones(366,) + 273.15, start="1/1/2000")
+    tasmin = tasmin_series(np.ones(366,) + 270.15, start="1/1/2000")
+    tasmax = tasmax_series(np.ones(366,) + 272.15, start="1/1/2000")
     pr = pr_series(np.ones(366,), start="1/1/2000")
     ds = xr.Dataset(data_vars={"tasmin": tasmin, "tasmax": tasmax, "pr": pr})
     input_file = tmp_path / "in.nc"
@@ -79,11 +79,11 @@ def test_normal_computation(
 
     ds.to_netcdf(input_file)
 
+    args = ["-i", str(input_file), "-o", str(output_file), indicator]
+    if indicator == "atmos.solid_precip_accumulation":
+        args.extend(["--tas", "tas"])
     runner = CliRunner()
-    results = runner.invoke(
-        cli, ["-i", str(input_file), "-o", str(output_file), indicator]
-    )
-
+    results = runner.invoke(cli, args)
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
@@ -169,7 +169,7 @@ def test_indicator_chain(tas_series, tmp_path):
     )
 
     assert "Processing : Mean daily mean temperature" in results.output
-    assert "Processing : growing degree days" in results.output
+    assert "Processing : Growing degree days" in results.output
     assert "100% Completed" in results.output
 
     out = xr.open_dataset(output_file)
@@ -196,7 +196,6 @@ def test_missing_variable(tas_series, tmp_path):
     "options,output",
     [
         (["--dask-nthreads", "2"], "Error: '--dask-maxmem' must be given"),
-        (["--dask-nthreads", "2", "--dask-maxmem", "1GB"], "Dask client started"),
         (["--chunks", "time:90"], "Writing everything to file"),
         (["--chunks", "time:90,lat:5"], "Writing everything to file"),
         (["--version"], xc.__version__),
@@ -217,10 +216,3 @@ def test_global_options(tas_series, tmp_path, options, output):
     )
 
     assert output in results.output
-
-
-def test_unusable_indicator():
-    runner = CliRunner()
-    results = runner.invoke(cli, ["seaIce.sea_ice_extent", "--help"],)
-
-    assert "exists but is not yet usable through the command line." in results.output

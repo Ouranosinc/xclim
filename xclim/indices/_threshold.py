@@ -991,7 +991,7 @@ def maximum_consecutive_tx_days(
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_area(sic, area, thresh: str = "15 pct"):
+def sea_ice_area(sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"):
     """Return the total sea ice area.
 
     Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
@@ -1028,7 +1028,9 @@ def sea_ice_area(sic, area, thresh: str = "15 pct"):
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_extent(sic, area, thresh: str = "15 pct"):
+def sea_ice_extent(
+    sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"
+):
     """Return the total sea ice extent.
 
     Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice
