@@ -1,7 +1,114 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+
+from xclim.core.calendar import calendars
+
+
+@pytest.fixture
+def tmp_netcdf_filename(tmpdir):
+    return Path(tmpdir).joinpath("testfile.nc")
+
+
+@pytest.fixture
+def tas_series():
+    def _tas_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="tas",
+            attrs={
+                "standard_name": "air_temperature",
+                "cell_methods": "time: mean within days",
+                "units": "K",
+            },
+        )
+
+    return _tas_series
+
+
+@pytest.fixture
+def tasmax_series():
+    def _tasmax_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="tasmax",
+            attrs={
+                "standard_name": "air_temperature",
+                "cell_methods": "time: maximum within days",
+                "units": "K",
+            },
+        )
+
+    return _tasmax_series
+
+
+@pytest.fixture
+def tasmin_series():
+    def _tasmin_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="tasmin",
+            attrs={
+                "standard_name": "air_temperature",
+                "cell_methods": "time: minimum within days",
+                "units": "K",
+            },
+        )
+
+    return _tasmin_series
+
+
+@pytest.fixture
+def pr_series():
+    def _pr_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="pr",
+            attrs={
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+            },
+        )
+
+    return _pr_series
+
+
+@pytest.fixture
+def pr_ndseries():
+    def _pr_series(values, start="1/1/2000"):
+        nt, nx, ny = np.atleast_3d(values).shape
+        time = pd.date_range(start, periods=nt, freq=pd.DateOffset(days=1))
+        x = np.arange(nx)
+        y = np.arange(ny)
+        return xr.DataArray(
+            values,
+            coords=[time, x, y],
+            dims=("time", "x", "y"),
+            name="pr",
+            attrs={
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+            },
+        )
+
+    return _pr_series
 
 
 @pytest.fixture
@@ -39,3 +146,104 @@ def ndq_series():
         coords={"time": time, "x": cx, "y": cy},
         attrs={"units": "m^3 s-1", "standard_name": "streamflow"},
     )
+
+
+@pytest.fixture
+def per_doy():
+    def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
+        n = calendars[calendar]
+        if len(values) != n:
+            raise ValueError(
+                "Values must be same length as number of days in calendar."
+            )
+        coords = xr.IndexVariable("dayofyear", np.arange(1, n + 1))
+        return xr.DataArray(
+            values, coords=[coords], attrs={"calendar": calendar, "units": units}
+        )
+
+    return _per_doy
+
+
+@pytest.fixture
+def areacella():
+    """Return a rectangular grid of grid cell area. """
+    r = 6100000
+    lon_bnds = np.arange(-180, 181, 1)
+    lat_bnds = np.arange(-90, 91, 1)
+    dlon = np.diff(lon_bnds)
+    dlat = np.diff(lat_bnds)
+    lon = np.convolve(lon_bnds, [0.5, 0.5], "valid")
+    lat = np.convolve(lat_bnds, [0.5, 0.5], "valid")
+    area = (
+        r
+        * np.radians(dlat)[:, np.newaxis]
+        * r
+        * np.cos(np.radians(lat)[:, np.newaxis])
+        * np.radians(dlon)
+    )
+    return xr.DataArray(
+        data=area,
+        dims=("lat", "lon"),
+        coords={"lon": lon, "lat": lat},
+        attrs={"r": r, "units": "m^2"},
+    )
+
+
+@pytest.fixture
+def rh_series():
+    def _rh_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rh",
+            attrs={"standard_name": "relative humidity", "units": "%",},
+        )
+
+    return _rh_series
+
+
+@pytest.fixture
+def ws_series():
+    def _ws_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="ws",
+            attrs={"standard_name": "wind speed", "units": "km h-1",},
+        )
+
+    return _ws_series
+
+
+@pytest.fixture
+def huss_series():
+    def _huss_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="huss",
+            attrs={"standard_name": "specific_humidity", "units": "",},
+        )
+
+    return _huss_series
+
+
+@pytest.fixture
+def ps_series():
+    def _ps_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="ps",
+            attrs={"standard_name": "air_pressure", "units": "Pa",},
+        )
+
+    return _ps_series

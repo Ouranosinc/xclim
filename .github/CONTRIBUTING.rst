@@ -1,5 +1,3 @@
-.. highlight:: shell
-
 ============
 Contributing
 ============
@@ -125,7 +123,8 @@ Before you submit a pull request, please follow these guidelines:
 1. Open an *issue* on our `GitHub repository`_ with your issue that you'd like to fix or feature that you'd like to implement.
 2. Perform the changes, commit and push them either to new a branch within Ouranosinc/xclim or to your personal fork of xclim.
 
-.. warning:: Try to keep your contributions within the scope of the issue that you are addressing.
+.. warning::
+     Try to keep your contributions within the scope of the issue that you are addressing.
      While it might be tempting to fix other aspects of the library as it comes up, it's better to
      simply to flag the problems in case others are already working on it.
 
@@ -140,16 +139,16 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 3.5, 3.6, 3.7 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
     https://travis-ci.org/Ouranosinc/xclim/pull_requests
 
-.. warning:: PEP8 is strongly enforced. Ensure that your changes pass **flake8** tests
-    prior to pushing your final commits to your branch. PEP8 errors are treated as build errors
-    and will block your pull request from being pushed to *master*
-
+.. warning::
+    PEP8 and Black is strongly enforced. Ensure that your changes pass **Flake8** and **Black**
+    tests prior to pushing your final commits to your branch. Code formatting errors are treated
+    as build errors and will block your pull request from being accepted.
 
 Tips
 ----
@@ -173,9 +172,9 @@ The method we use is as follows::
 
 **Patch** should be used for bug fixes and optimizations;
 
-**Release** is a keyword used to specify the degree of production readiness (`alpha`, `beta` [, and optionally, `gamma`])
+**Release** is a keyword used to specify the degree of production readiness (`beta` [, and optionally, `gamma`])
 
-  An increment to the Major or Minor will reset the Release to `alpha`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
+  An increment to the Major or Minor will reset the Release to `beta`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
 
 Deploying
 ---------

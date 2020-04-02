@@ -5,13 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import checks
-from xclim.atmos import tg_mean
-from xclim.testing.common import tas_series
-from xclim.testing.common import tasmin_series
-
-TAS_SERIES = tas_series
-TASMIN_SERIES = tasmin_series
+from xclim.core import checks
+from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15
 
@@ -106,7 +101,7 @@ class TestMissingAnyFills:
         np.testing.assert_equal(miss, [True])
 
         with pytest.raises(ValueError, match=r"No data for selected period."):
-            miss = checks.missing_any(ts, freq="YS", month=1)
+            checks.missing_any(ts, freq="YS", month=1)
 
         miss = checks.missing_any(ts, freq="YS", month=[7, 8])
         np.testing.assert_equal(miss, [True])

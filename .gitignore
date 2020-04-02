@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Doc-generated files
+docs/notebooks/dask-worker-space/
+docs/notebooks/*.nc
+
 # C extensions
 *.so
 

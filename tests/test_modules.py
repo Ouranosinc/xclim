@@ -1,6 +1,6 @@
 import pytest
 
-from xclim import build_module
+from xclim.indicators import build_module
 
 
 class TestBuildModules:

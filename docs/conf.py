@@ -15,7 +15,7 @@
 import os
 import sys
 
-import guzzle_sphinx_theme
+import xclim
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -25,44 +25,46 @@ import guzzle_sphinx_theme
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
-import xclim
-import xclim.utils as xcu
 
-
-def _get_indicators(modules):
-    """For all modules or classes listed, return the children that are instances of xclim.utils.Indicator.
+def _get_indicators(module):
+    """For all modules or classes listed, return the children that are instances of xclim.indicators.Indicator.
 
     modules : sequence
       Sequence of modules to inspect.
     """
-    out = []
-    for obj in modules:
-        for key, val in obj.__dict__.items():
-            if isinstance(val, xcu.Indicator):
-                out.append(val)
+    from xclim.core.indicator import Indicator, Indicator2D
+
+    out = {}
+    for key, val in module.__dict__.items():
+        if isinstance(val, (Indicator, Indicator2D)):
+            out[key] = val
 
     return out
 
 
-def _indicator_table():
+def _indicator_table(realm):
     """Return a sequence of dicts storing metadata about all available indices."""
-    import xclim.atmos as atmos
     import inspect
 
-    inds = _get_indicators([atmos])
-    table = []
-    for ind in inds:
+    inds = _get_indicators(getattr(xclim, realm))
+    table = {}
+    for indname, ind in inds.items():
         # Apply default values
         args = {
-            name: p.default
+            name: p.default if p.default != inspect._empty else f"<{name}>"
             for (name, p) in ind._sig.parameters.items()
-            if p.default != inspect._empty
         }
-        table.append(ind.json(args))
+        try:
+            table[indname] = ind.json(args)
+        except KeyError as err:
+            print(f"{ind.identifier} could not be documented.({err})")
+        else:
+            table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
-indicators = _indicator_table()
+realms = ("atmos", "land", "seaIce")
+indicators = {realm: _indicator_table(realm) for realm in realms}
 
 # -- General configuration ---------------------------------------------
 
@@ -79,9 +81,9 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.coverage",
     "sphinx.ext.todo",
+    "sphinx.ext.autosectionlabel",
     "rstjinja",
     "nbsphinx",
-    "guzzle_sphinx_theme",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
@@ -89,6 +91,16 @@ napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
+
+nbsphinx_execute = "always"
+nbsphinx_prolog = r"""
+{% set docname = env.doc2path(env.docname, base=None) %}
+
+.. only:: html
+
+    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
+"""
+nbsphinx_timeout = 300
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -103,9 +115,9 @@ source_suffix = [".rst", ".ipynb"]
 master_doc = "index"
 
 # General information about the project.
-project = u"xclim"
-copyright = u"2018, Ouranos Inc., Travis Logan, and contributors"
-author = u"Travis Logan"
+project = "xclim"
+copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -148,8 +160,7 @@ todo_include_todos = True
 html_title = "XClim Official Documentation"
 html_short_title = "XClim"
 
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
-html_theme = "guzzle_sphinx_theme"  # 'alabaster
+html_theme = "sphinx_rtd_theme"
 
 html_context = {"indicators": indicators}
 
@@ -157,14 +168,15 @@ html_context = {"indicators": indicators}
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {
-    "project_nav_name": "XClim {}".format(xclim.__version__),
-    "homepage": "index",
-}
+html_theme_options = {"logo_only": True}
 
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
 }
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/_images/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -199,14 +211,14 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", u"xclim Documentation", u"Travis Logan", "manual")
+    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
 ]
 
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "xclim", u"xclim Documentation", [author], 1)]
+man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -217,7 +229,7 @@ texinfo_documents = [
     (
         master_doc,
         "xclim",
-        u"xclim Documentation",
+        "xclim Documentation",
         author,
         "xclim",
         "One line description of project.",

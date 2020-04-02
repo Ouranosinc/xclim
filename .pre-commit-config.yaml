@@ -1,9 +1,9 @@
 default_language_version:
     python: python3.6
-#exclude: '^$'
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.2.3
+    rev: v2.5.0
     hooks:
     -   id: trailing-whitespace
         language_version: python3
@@ -14,17 +14,29 @@ repos:
     -   id: debug-statements
         language_version: python3
 -   repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 19.10b0
     hooks:
     -   id: black
         language_version: python3
+        args: ["--target-version", "py36"]
+-   repo: https://github.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+    -   id: flake8
+        language_version: python3
+        args: ['--config=setup.cfg']
+#-   repo: https://github.com/pre-commit/mirrors-autopep8
+#    rev: v1.4.4
+#    hooks:
+#    -   id: autopep8
+#        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.5.0
+    rev: v1.9.0
     hooks:
     -   id: reorder-python-imports
         language_version: python3
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.19.0
+    rev: v1.26.2
     hooks:
     -   id: pyupgrade
         language_version: python3
@@ -32,3 +44,9 @@ repos:
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.3.7
+    hooks:
+    -   id: nbstripout
+        language_version: python3
+        files: ".ipynb"
