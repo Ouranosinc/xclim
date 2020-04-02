@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from inspect import _empty
+
 from xclim import indices
 from xclim.core.indicator import Indicator
 from xclim.core.indicator import Indicator2D
@@ -126,7 +128,7 @@ precip_accumulation = Pr(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase=None),
+    compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
 )
 
 liquid_precip_accumulation = Pr(
@@ -136,7 +138,9 @@ liquid_precip_accumulation = Pr(
     long_name="Total liquid precipitation",
     description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase="liquid"),
+    compute=wrapped_partial(
+        indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
+    ),  # _empty is added to un-optionalize the argument.
 )
 
 solid_precip_accumulation = Pr(
@@ -146,7 +150,9 @@ solid_precip_accumulation = Pr(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
+    compute=wrapped_partial(
+        indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"
+    ),
 )
 
 drought_code = PrTas(

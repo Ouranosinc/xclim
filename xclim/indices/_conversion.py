@@ -181,7 +181,7 @@ def saturation_vapor_pressure(
 
     - "goffgratch46" or "GG46", based on [goffgratch46]_, values and equation taken from [voemel]_.
     - "sonntag90" or "SO90", taken from [sonntag90]_.
-    - "tetens30" or "TE30", based on [tetens30], values and equation taken from [voemel]_.
+    - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
 
 
@@ -191,7 +191,7 @@ def saturation_vapor_pressure(
     .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
     .. [voemel] http://cires1.colorado.edu/~voemel/vp.html
-    .. [wmo2008] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")

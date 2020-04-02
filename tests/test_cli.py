@@ -80,8 +80,8 @@ def test_normal_computation(
     ds.to_netcdf(input_file)
 
     args = ["-i", str(input_file), "-o", str(output_file), indicator]
-    if indicator == "atmos.solid_precip_accumulation":
-        args.extend(["--tas", "tas"])
+    # if indicator == "atmos.solid_precip_accumulation":
+    #     args.extend(["--tas", "tas"])
     runner = CliRunner()
     results = runner.invoke(cli, args)
     assert "Processing :" in results.output
