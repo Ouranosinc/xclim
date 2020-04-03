@@ -22,6 +22,7 @@ def _isusable(indicator):
         [
             param.annotation is not inspect._empty
             for param in indicator._sig.parameters.values()
+            if param.kind != param.VAR_KEYWORD
         ]
     )
 
@@ -139,17 +140,18 @@ def _create_command(indname):
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator._sig.parameters.items():
-        params.append(
-            click.Option(
-                param_decls=[f"--{name}"],
-                default=name
-                if param.default is inspect._empty
-                else (param.default or "None"),
-                show_default=True,
-                help=indicator._parameters_doc.get(name),
-                metavar="VAR_NAME" if param.annotation is xr.DataArray else "TEXT",
+        if param.kind != param.VAR_KEYWORD:
+            params.append(
+                click.Option(
+                    param_decls=[f"--{name}"],
+                    default=name
+                    if param.default is inspect._empty
+                    else (param.default or "None"),
+                    show_default=True,
+                    help=indicator._parameters_doc.get(name),
+                    metavar="VAR_NAME" if param.annotation is xr.DataArray else "TEXT",
+                )
             )
-        )
 
     @click.pass_context
     def _process(ctx, **kwargs):

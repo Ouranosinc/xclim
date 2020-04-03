@@ -42,7 +42,7 @@ def select_time(da: xr.DataArray, **indexer):
     return selected
 
 
-def select_resample_op(da: xr.DataArray, op, freq: str = "YS", **indexer):
+def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     """Apply operation over each period that is part of the index selection.
 
     Parameters
@@ -240,7 +240,15 @@ def fa(
     return out
 
 
-def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
+def frequency_analysis(
+    da: xr.DataArray,
+    mode: str,
+    t: Union[int, Sequence[int]],
+    dist: str,
+    window=1,
+    freq=None,
+    **indexer,
+):
     """Return the value corresponding to a return period.
 
     Parameters
@@ -259,7 +267,7 @@ def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):
       Averaging window length (days).
     freq : str
       Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
-      in which case `freq` would be set to `YS-DEC`.
+      in which case `freq` would be set to `AS-DEC`.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are

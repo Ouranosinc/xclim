@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Union
 
 import numpy as np
 import xarray
@@ -219,7 +220,9 @@ def daily_freezethaw_cycles(
 
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
-def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArray:
+def daily_temperature_range(
+    tasmax: xarray.DataArray, tasmin: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Mean of daily temperature range.
 
     The mean difference between the daily maximum temperature and the daily minimum temperature.
@@ -441,7 +444,7 @@ def drought_code(
     start_date: str = None,
     start_up_mode: str = None,
     shut_down_mode: str = "snow_depth",
-    **params,
+    **params: Union[int, float],
 ):
     r"""The daily drought code (FWI component)
 

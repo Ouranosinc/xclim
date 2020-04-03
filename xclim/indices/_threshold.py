@@ -50,7 +50,10 @@ __all__ = [
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
-    tas, thresh: str = "-10 degC", window: int = 5, freq: str = "AS-JUL"
+    tas: xarray.DataArray,
+    thresh: str = "-10 degC",
+    window: int = 5,
+    freq: str = "AS-JUL",
 ):
     r"""Cold spell days
 
@@ -93,7 +96,9 @@ def cold_spell_days(
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
-def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
+def daily_pr_intensity(
+    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+):
     r"""Average daily precipitation intensity
 
     Return the average precipitation over wet days.
