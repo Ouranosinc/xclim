@@ -755,7 +755,7 @@ class TestDistance:
             np.random.rand(lon.size, lat.size), dims=["lon", "lat"]
         )
 
-        d = subset.distance(da, -34, 56)
+        d = subset.distance(da, lon=-34, lat=56).squeeze("site")
         assert d.dims == da.data.dims
         assert d.shape == da.data.shape
         assert d.units == "m"
