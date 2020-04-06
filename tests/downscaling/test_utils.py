@@ -143,6 +143,7 @@ def test_adjust_freq_1d_simple_nan():
     np.testing.assert_equal(out, [0, 0, 1, 1, np.nan, 3])
 
 
+@pytest.mark.xfail
 def test_adjust_freq_1d_dist():
     v = np.random.randint(1, 100, 1000).astype(float)
     b = np.where(v < 30, v / 30, v)  # sim
@@ -155,6 +156,7 @@ def test_adjust_freq_1d_dist():
     np.testing.assert_array_equal(out[v >= 30], a[v >= 30])
 
 
+@pytest.mark.xfail
 def test_adjust_freq_1d_dist_nan():
     v = np.random.randint(1, 100, 1000).astype(float)
     b = np.where(v < 40, v / 40, v)  # sim 40% under thresh

@@ -164,11 +164,18 @@ class PolyDetrend(BaseDetrend):
 
 
 class Grouper(ParametrizableClass):
+    """Applies `groupby` method to one or more data arrays.
+
+    Parameters
+    ----------
+    """
+
     def __init__(self, group: str, window: int = 1, interp: Union[bool, str] = False):
         if "." in group:
             dim, prop = group.split(".")
         else:
             dim, prop = group, None
+
         if isinstance(interp, str):
             interp = interp != "nearest"
         if window > 1:
@@ -272,7 +279,11 @@ class BaseMapping(ParametrizableClass):
 
     def __init__(self, group="time", **kwargs):
         if not isinstance(group, Grouper):
-            group = Grouper(group, interp=kwargs.get("interp", False))
+            group = Grouper(
+                group,
+                interp=kwargs.get("interp", False),
+                window=kwargs.get("window", 1),
+            )
         super().__init__(group=group, **kwargs)
 
     def train(
@@ -305,7 +316,7 @@ class QuantileMapping(BaseMapping):
         interp: str = "nearest",
         mode: Optional[str] = None,
         extrapolation: str = "constant",
-        detrender: NoDetrend = NoDetrend(),
+        detrender: BaseDetrend = BaseDetrend(),
         group: Union[str, Grouper] = "time",
         normalize: bool = False,
         rank_from_fut: bool = False,
@@ -314,7 +325,7 @@ class QuantileMapping(BaseMapping):
             rank_from_fut = True
         elif mode == "dqm":
             normalize = True
-            if detrender.__class__ == NoDetrend:
+            if detrender.__class__ == BaseDetrend:
                 detrender = PolyDetrend()
         elif mode == "eqm":
             pass

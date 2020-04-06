@@ -100,8 +100,8 @@ def ecdf_lazy(x, value, dim="time"):
     ----------
     x : array
       Sample.
-    value : array
-      The values within the support of `x` for which to compute the CDF value.
+    value : float
+      The value within the support of `x` for which to compute the CDF value.
 
     Returns
     -------
