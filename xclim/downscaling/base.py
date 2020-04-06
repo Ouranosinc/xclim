@@ -63,7 +63,7 @@ class ParametrizableClass(object):
         return f"<{self.__class__.__name__}: {params_str}>"
 
 
-class NoDetrend(ParametrizableClass):
+class BaseDetrend(ParametrizableClass):
     """Base class for detrending objects
 
     Defines three methods:
@@ -95,6 +95,17 @@ class NoDetrend(ParametrizableClass):
         return self._retrend(da)
 
     def _fit(self, da):
+        raise NotImplementedError
+
+    def _detrend(self, da):
+        raise NotImplementedError
+
+    def _retrend(self, da):
+        raise NotImplementedError
+
+
+class NoDetrend(BaseDetrend):
+    def _fit(self, da):
         pass
 
     def _detrend(self, da):
@@ -104,7 +115,7 @@ class NoDetrend(ParametrizableClass):
         return da
 
 
-class MeanDetrend(NoDetrend):
+class MeanDetrend(BaseDetrend):
     def _fit(self, da):
         self._mean = da.mean(dim="time")
 
@@ -115,7 +126,7 @@ class MeanDetrend(NoDetrend):
         return da + self._mean
 
 
-class PolyDetrend(NoDetrend):
+class PolyDetrend(BaseDetrend):
     """
     Detrend time series using a polynomial.
 
@@ -174,6 +185,11 @@ class Grouper(ParametrizableClass):
         else:
             da = das[0]
 
+        if self.prop is None:
+            group = xr.full_like(da[self.dim], True, dtype=bool)
+            group.name = self.dim
+            return da.groupby(group)
+
         if self.window > 1:
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
@@ -220,10 +236,7 @@ class Grouper(ParametrizableClass):
         if isinstance(func, str):
             out = getattr(grpd, func)(dim=self.dims, **kwargs)
         else:
-            if isinstance(grpd, xr.core.groupby.GroupBy):
-                out = grpd.map(func, dim=self.dims, **kwargs)
-            else:
-                out = func(grpd, dim=self.dims, **kwargs)
+            out = grpd.map(func, dim=self.dims, **kwargs)
 
         # Case where the function wants to return more than one variables
         # and that some have grouped dims and other have the same dimensions as the input.
@@ -243,7 +256,10 @@ class Grouper(ParametrizableClass):
 
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
-            out = out.sortby(self.dim)
+            if self.prop is None and out[self.dim].size == 1:
+                out = out.squeeze(self.dim)
+            else:
+                out = out.sortby(self.dim)
         return out
 
 
@@ -330,11 +346,11 @@ class QuantileMapping(BaseMapping):
 
         qf = get_correction(simq, obsq, self.kind)
 
-        qf, simq = extrapolate_qm(qf, simq, method=self.extrapolation)
         self.qm = self._qm_dataset(qf, simq)
         return self.qm
 
     def _predict(self, fut):
+        qf, xq = extrapolate_qm(self.qm.qf, self.qm.xq, method=self.extrapolation)
         if self.normalize:
             mu_fut = self.group.apply("mean", fut)
             fut = apply_correction(
@@ -351,11 +367,11 @@ class QuantileMapping(BaseMapping):
         if self.rank_from_fut:
             xq = self.group.apply(xr.DataArray.rank, fut_det, pct=True)
             sel = {"quantiles": xq}
-            qf = broadcast(self.qm.qf, fut_det, interp=self.interp, sel=sel)
+            qf = broadcast(qf, fut_det, interp=self.interp, sel=sel)
         else:
             fut_det = self.group.add_index(fut_det)
             qf = interp_on_quantiles(
-                fut_det, self.qm.xq, self.qm.qf, group=self.group, method=self.interp
+                fut_det, xq, qf, group=self.group, method=self.interp
             )
 
         corrected = apply_correction(fut_det, qf, self.kind)
