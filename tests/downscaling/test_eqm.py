@@ -120,7 +120,7 @@ class TestEQM:
         sx, sy = series(x, name), mon_series(y, name)
         EQM = base.QuantileMapping(nquantiles=5, group="time.month", kind=kind)
         EQM.train(sx, sy)
-        qm = eqm.train(sx, sy, kind=kind, group="time.month", nq=5)
+        p, qm = eqm.train(sx, sy, kind=kind, group="time.month", nq=5)
         mqm = qm.qf.mean(dim="quantiles")
         expected = apply_correction(mon_triangular, 2, kind)
         np.testing.assert_array_almost_equal(mqm, expected, 1)
