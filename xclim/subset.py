@@ -28,42 +28,6 @@ __all__ = [
 ]
 
 
-def check_date_signature(func):
-    @wraps(func)
-    def func_checker(*args, **kwargs):
-        """
-        A decorator to reformat the deprecated `start_yr` and `end_yr` calls to subset functions and return
-         `start_date` and `end_date` to kwargs. Deprecation warnings are raised for deprecated usage.
-        """
-
-        _DEPRECATION_MESSAGE = (
-            '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets will soon exclusively'
-            ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
-        )
-
-        if "start_yr" in kwargs:
-            warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
-            if kwargs["start_yr"] is not None:
-                kwargs["start_date"] = str(kwargs.pop("start_yr"))
-            elif kwargs["start_yr"] is None:
-                kwargs["start_date"] = None
-        elif "start_date" not in kwargs:
-            kwargs["start_date"] = None
-
-        if "end_yr" in kwargs:
-            if kwargs["end_yr"] is not None:
-                warnings.warn(_DEPRECATION_MESSAGE, FutureWarning, stacklevel=3)
-                kwargs["end_date"] = str(kwargs.pop("end_yr"))
-            elif kwargs["end_yr"] is None:
-                kwargs["end_date"] = None
-        elif "end_date" not in kwargs:
-            kwargs["end_date"] = None
-
-        return func(*args, **kwargs)
-
-    return func_checker
-
-
 def check_start_end_dates(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
@@ -127,7 +91,7 @@ def check_lons(func):
     def func_checker(*args, **kwargs):
         """
         A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
-         xarray DataSet or DataArray. Examines an xarray object longitude dimensions and depending on extent
+         Dataset or DataArray. Examines an xarray object longitude dimensions and depending on extent
          (either -180 to +180 or 0 to +360), will reformat user-specified lon values to be synonymous with
          xarray object boundaries.
          Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
@@ -237,7 +201,7 @@ def wrap_lons_and_split_at_greenwich(func):
                 np.min(x_dim) < -180 and np.max >= 180
             ):
                 warnings.warn(
-                    "Dataset doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
+                    "DataArray doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
                     " Tread with caution.",
                     UserWarning,
                     stacklevel=4,
@@ -375,7 +339,7 @@ def create_mask(
     df["Coordinates"] = list(zip(df.lon, df.lat))
     df["Coordinates"] = df["Coordinates"].apply(Point)
 
-    # create geodataframe (spatially referenced with shifted longitude values if needed).
+    # create GeoDataFrame (spatially referenced with shifted longitude values if needed).
     if wrap_lons:
         wgs84 = CRS.from_string(
             "+proj=longlat +datum=WGS84 +no_defs +type=crs +lon_wrap=180"
@@ -406,7 +370,7 @@ def subset_shape(
 ) -> Union[xarray.DataArray, xarray.Dataset]:
     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
 
-    Return a subsetted data array for grid points falling within the area of a Polygon and/or MultiPolygon shape,
+    Return a subset of a DataArray or Dataset for grid points falling within the area of a Polygon and/or MultiPolygon shape,
       or grid points along the path of a LineString and/or MultiLineString.
 
     Parameters
@@ -570,7 +534,6 @@ def subset_shape(
 
 @check_latlon_dimnames
 @check_lons
-@check_date_signature
 def subset_bbox(
     da: Union[xarray.DataArray, xarray.Dataset],
     lon_bnds: Union[np.array, Tuple[Optional[float], Optional[float]]] = None,
@@ -578,9 +541,9 @@ def subset_bbox(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """Subset a datarray or dataset spatially (and temporally) using a lat lon bounding box and date selection.
+    """Subset a DataArray or Dataset spatially (and temporally) using a lat lon bounding box and date selection.
 
-    Return a subsetted data array for grid points falling within a spatial bounding box
+    Return a subset of a DataArray or Dataset for grid points falling within a spatial bounding box
     defined by longitude and latitudinal bounds and for dates falling within provided bounds.
 
     TODO: returns the what?
@@ -602,12 +565,6 @@ def subset_bbox(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
-    start_yr : int
-      Deprecated
-        First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated
-        Last year of the subset. Defaults to last year of input data-array.
 
     Returns
     -------
@@ -701,7 +658,7 @@ def subset_bbox(
     else:
         raise (
             Exception(
-                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates or variables'
+                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates, or variables.'
             )
         )
 
@@ -744,7 +701,7 @@ def in_bounds(bounds: Tuple[float, float], coord: xarray.Coordinate) -> bool:
 
 
 def _check_desc_coords(coord, bounds, dim):
-    """If dataset coordinates are descending reverse bounds"""
+    """If Dataset coordinates are descending reverse bounds"""
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
@@ -752,7 +709,6 @@ def _check_desc_coords(coord, bounds, dim):
 
 @check_latlon_dimnames
 @check_lons
-@check_date_signature
 def subset_gridpoint(
     da: Union[xarray.DataArray, xarray.Dataset],
     lon: Optional[float] = None,
@@ -761,9 +717,9 @@ def subset_gridpoint(
     end_date: Optional[str] = None,
     tolerance: Optional[float] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """Extract a nearest gridpoint from datarray based on lat lon coordinate.
+    """Extract a nearest grid point from DataArray or Dataset based on lat lon coordinate.
 
-    Return a subsetted data array (or Dataset) for the grid point falling nearest the input longitude and latitude
+    Return a subset of a DataArray or Dataset for the grid point falling nearest the input longitude and latitude
     coordinates. Optionally subset the data array for years falling within provided date bounds.
     Time series can optionally be subsetted by dates.
 
@@ -783,12 +739,6 @@ def subset_gridpoint(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
-    start_yr : int
-      Deprecated
-        First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated
-        Last year of the subset. Defaults to last year of input data-array.
     tolerance : Optional[float]
       Raise error if the distance to the nearest gridpoint is larger than tolerance in meters.
 
@@ -813,7 +763,7 @@ def subset_gridpoint(
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
     """
-
+    dist = None
     # check if trying to subset lon and lat
     if lat is not None and lon is not None:
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
@@ -845,7 +795,7 @@ def subset_gridpoint(
                 )
             )
 
-    if tolerance is not None:
+    if dist is not None:
         if dist.min() > tolerance:
             raise ValueError(
                 f"Distance to closest point ({dist}) is larger than tolerance ({tolerance})"
@@ -863,9 +813,9 @@ def subset_time(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """Subset input data based on start and end years.
+    """Subset input DataArray or Dataset based on start and end years.
 
-    Return a subsetted data array (or dataset) for dates falling within the provided bounds.
+    Return a subset of a DataArray or Dataset for dates falling within the provided bounds.
 
     Parameters
     ----------
@@ -909,7 +859,11 @@ def subset_time(
     return da.sel(time=slice(start_date, end_date))
 
 
-def distance(da, lon, lat):
+def distance(
+    da: Union[xarray.DataArray, xarray.Dataset],
+    lon: Optional[float],
+    lat: Optional[float],
+):
     """Return distance to point in meters.
 
     Parameters
@@ -928,7 +882,7 @@ def distance(da, lon, lat):
 
     Note
     ----
-    To get the indices from closest point, use
+    To get the indices from closest point, use:
     >>> import numpy as np
     >>> import xarray as xr
     >>> import xclim.subset
@@ -938,7 +892,7 @@ def distance(da, lon, lat):
     >>> i, j = np.unravel_index(k, d.shape)
 
     """
-    g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
+    g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globally
 
     def func(lons, lats):
         return g.inv(*np.broadcast_arrays(lons, lats, lon, lat))[2]
