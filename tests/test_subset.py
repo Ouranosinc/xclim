@@ -32,33 +32,20 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
         np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
 
-    def test_simple(self):
+    @pytest.mark.parametrize(
+        "lon,lat", [([-72.4], [46.1]), ([-67.4, -67.3], [43.1, 46.1])]
+    )
+    @pytest.mark.parametrize("add_distance", [True, False])
+    def test_simple(self, lat, lon, add_distance):
         da = xr.open_dataset(self.nc_file).tasmax
-        lon = -72.4
-        lat = 46.1
-        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
+
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat, add_distance=add_distance)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
-        da = xr.open_dataset(self.nc_poslons).tas
-        da = da.assign_coords(lon=(da.lon - 360))
-        yr_st = 2050
-        yr_ed = 2059
+        assert ("site" in out.dims) ^ (len(lat) == 1)
 
-        out = subset.subset_gridpoint(
-            da, lon=lon, lat=lat, start_date=str(yr_st), end_date=str(yr_ed)
-        )
-        np.testing.assert_almost_equal(out.lon, lon, 1)
-        np.testing.assert_almost_equal(out.lat, lat, 1)
-        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
-
-        # test time only
-        out = subset.subset_gridpoint(da, start_date=str(yr_st), end_date=str(yr_ed))
-        np.testing.assert_array_equal(len(np.unique(out.time.dt.year)), 10)
-        np.testing.assert_array_equal(out.time.dt.year.max(), yr_ed)
-        np.testing.assert_array_equal(out.time.dt.year.min(), yr_st)
+        assert ("distance" in out.coords) ^ (not add_distance)
 
     def test_time_simple(self):
         da = xr.open_dataset(self.nc_file).tasmax
@@ -182,6 +169,14 @@ class TestSubsetGridPoint:
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
         np.testing.assert_almost_equal(out.lon, lon, 1)
         np.testing.assert_almost_equal(out.lat, lat, 1)
+        assert "site" not in out.dims
+
+        lon = [-72.4, -67.1]
+        lat = [46.1, 48.2]
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat)
+        np.testing.assert_almost_equal(out.lon, lon, 1)
+        np.testing.assert_almost_equal(out.lat, lat, 1)
+        assert "site" in out.dims
 
         # dask for lon lat
         da.lon.chunk({"rlon": 10})
@@ -271,8 +266,8 @@ class TestSubsetGridPoint:
         da = xr.open_dataset(self.nc_poslons).tas
         lon = -72.5
         lat = 46.2
-        with pytest.raises(ValueError):
-            subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1)
+        out = subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1)
+        assert out.isnull().all()
 
         subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1e5)
 
