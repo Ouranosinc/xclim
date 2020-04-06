@@ -32,6 +32,7 @@ Unit handling module
    :undoc-members:
    :show-inheritance:
 
+.. _downscaling-api:
 
 Downscaling
 ===========
