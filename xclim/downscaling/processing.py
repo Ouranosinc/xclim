@@ -1,17 +1,24 @@
 """Pre and post processing for bias correction"""
+from typing import Union
+
 import dask.array as dsk
 import numpy as np
 import xarray as xr
 
 from .base import Grouper
+from .base import parse_group
 from .utils import apply_correction
-from .utils import broadcast
 from .utils import ecdf
 from .utils import invert
 
 
+@parse_group
 def adapt_freq(
-    sim: xr.DataArray, obs: xr.DataArray, thresh: float = 0, group: Grouper = None,
+    sim: xr.DataArray,
+    obs: xr.DataArray,
+    thresh: float = 0,
+    *,
+    group: Union[str, Grouper] = "time",
 ):
     r"""
     Adapt frequency of values under thresh of sim, in order to match obs.
@@ -27,7 +34,7 @@ def adapt_freq(
       Simulated data.
     thresh : float
       Threshold below which values are considered zero.
-    group : Grouper
+    group : Union[str, Grouper]
       Grouping information, see base.Grouper
 
     Returns
@@ -162,6 +169,9 @@ def jitter_under_thresh(x, thresh):
     return x.where(~((x < thresh) & (x.notnull())), jitter)
 
 
-def normalize(x, group, kind):
-    mean_x = group.apply("mean", x)
-    return apply_correction(x, broadcast(invert(mean_x, kind), x, group=group), kind)
+@parse_group
+def normalize(x: xr.DataArray, *, group: Union[str, Grouper], kind: str):
+    def _normalize_group(grp, dim=["time"]):
+        return apply_correction(grp, invert(grp.mean(dim=dim), kind), kind)
+
+    return group.apply(_normalize_group, x)

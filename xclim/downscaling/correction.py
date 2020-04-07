@@ -10,6 +10,7 @@ from xarray.core.groupby import DataArrayGroupBy
 
 from .base import Grouper
 from .base import ParametrizableClass
+from .base import parse_group
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import broadcast
@@ -24,15 +25,6 @@ from .utils import MULTIPLICATIVE
 class BaseCorrection(ParametrizableClass):
 
     __trained = False
-
-    def __init__(self, group="time", **kwargs):
-        if not isinstance(group, Grouper):
-            group = Grouper(
-                group,
-                interp=kwargs.get("interp", False),
-                window=kwargs.get("window", 1),
-            )
-        super().__init__(group=group, **kwargs)
 
     def train(
         self,
@@ -63,8 +55,10 @@ class BaseCorrection(ParametrizableClass):
 
 
 class QuantileMapping(BaseCorrection):
+    @parse_group
     def __init__(
         self,
+        *,
         nquantiles: int = 20,
         kind: str = ADDITIVE,
         interp: str = "nearest",
@@ -89,9 +83,9 @@ class QuantileMapping(BaseCorrection):
             quantile="quantiles"
         )
 
-        qf = get_correction(sim_q, obs_q, self.kind)
+        cf = get_correction(sim_q, obs_q, self.kind)
 
-        qf.attrs.update(
+        cf.attrs.update(
             standard_name="Correction factors",
             long_name="Quantile mapping correction factors",
         )
@@ -99,38 +93,37 @@ class QuantileMapping(BaseCorrection):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        self.make_dataset(qf=qf, sim_q=sim_q)
+        self.make_dataset(cf=cf, sim_q=sim_q)
 
     def _predict(self, fut):
-        qf, xq = extrapolate_qm(self.ds.qf, self.ds.xq, method=self.extrapolation)
+        cf, sim_q = extrapolate_qm(self.ds.cf, self.ds.sim_q, method=self.extrapolation)
+        cf = interp_on_quantiles(fut, sim_q, cf, group=self.group, method=self.interp)
 
-        qf = interp_on_quantiles(fut, xq, qf, group=self.group, method=self.interp)
-
-        return apply_correction(fut, qf, self.kind)
+        return apply_correction(fut, cf, self.kind)
 
 
 class QuantileDeltaMapping(QuantileMapping):
     def _predict(self, fut):
-        qf, xq = extrapolate_qm(self.qm.qf, self.qm.xq, method=self.extrapolation)
+        cf, _ = extrapolate_qm(self.ds.cf, self.ds.sim_q, method=self.extrapolation)
 
-        xq = self.group.apply(xr.DataArray.rank, fut, pct=True)
-        sel = {"quantiles": xq}
-        qf = broadcast(qf, fut, interp=self.interp, sel=sel)
+        fut_q = self.group.apply(xr.DataArray.rank, fut, main_only=True, pct=True)
+        sel = {"quantiles": fut_q}
+        cf = broadcast(cf, fut, group=self.group, interp=self.interp, sel=sel)
 
-        return apply_correction(fut, qf, self.kind)
+        return apply_correction(fut, cf, self.kind)
 
 
 class LOCI(BaseCorrection):
-    def __init__(self, group="time", thresh=None, interp="linear"):
+    @parse_group
+    def __init__(self, *, group="time", thresh=None, interp="linear"):
         super().__init__(group=group, thresh=thresh, interp=interp)
 
     def _train(self, obs, sim):
-        s_thresh = map_cdf(sim, obs, self.thresh, self.group).isel(
+        s_thresh = map_cdf(sim, obs, self.thresh, group=self.group).isel(
             x=0
         )  # Selecting the first threshold.
-
         # Compute scaling factor on wet-day intensity
-        sth = broadcast(s_thresh, sim)
+        sth = broadcast(s_thresh, sim, group=self.group)
         ws = xr.where(sim >= sth, sim, np.nan)
         wo = xr.where(obs >= self.thresh, obs, np.nan)
 
@@ -144,7 +137,7 @@ class LOCI(BaseCorrection):
         self.make_dataset(sim_thresh=s_thresh, obs_thresh=self.thresh, cf=cf)
 
     def _predict(self, fut):
-        sth = broadcast(self.ds.sim_thresh, fut)
+        sth = broadcast(self.ds.sim_thresh, fut, group=self.group, interp=self.interp)
         factor = broadcast(self.ds.cf, fut, group=self.group, interp=self.interp)
         with xr.set_options(keep_attrs=True):
             out = (factor * (fut - sth) + self.ds.obs_thresh).clip(min=0)
@@ -152,8 +145,9 @@ class LOCI(BaseCorrection):
 
 
 class Scaling(BaseCorrection):
-    def __init__(self, group="time", kind=ADDITIVE, interp="nearest"):
-        super().__init__(self, group=group, kind=kind, interp=interp)
+    @parse_group
+    def __init__(self, *, group="time", kind=ADDITIVE, interp="nearest"):
+        super().__init__(group=group, kind=kind, interp=interp)
 
     def _train(self, obs, sim):
         mean_sim = self.group.apply("mean", sim)

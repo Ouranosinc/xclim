@@ -23,9 +23,10 @@ class BaseDetrend(ParametrizableClass):
 
     __fitted = False
 
-    def fit(self, da: xr.DataArray):
+    def fit(self, da: xr.DataArray, dim="time"):
         new = self.__class__(**self.parameters)
-        new._fit(da)
+        new._fit(da, dim=dim)
+        new._fitted_dim = dim
         new.__fitted = True
         return new
 
@@ -50,7 +51,7 @@ class BaseDetrend(ParametrizableClass):
 
 
 class NoDetrend(BaseDetrend):
-    def _fit(self, da):
+    def _fit(self, da, dim=None):
         pass
 
     def _detrend(self, da):
@@ -61,8 +62,8 @@ class NoDetrend(BaseDetrend):
 
 
 class MeanDetrend(BaseDetrend):
-    def _fit(self, da):
-        self._mean = da.mean(dim="time")
+    def _fit(self, da, dim="time"):
+        self._mean = da.mean(dim=dim)
 
     def _detrend(self, da):
         return da - self._mean
@@ -83,23 +84,27 @@ class PolyDetrend(BaseDetrend):
     def __init__(self, degree=4, freq=None, kind=ADDITIVE):
         super().__init__(degree=degree, freq=freq, kind=kind)
 
-    def _fit(self, da):
+    def _fit(self, da, dim="time"):
         if self.freq is not None:
             da = da.resample(
                 time=self.freq, label="left", loffset=loffsets[self.freq]
             ).mean()
-        self._fitds = da.polyfit(dim="time", deg=self.degree, full=True)
+        self._fitds = da.polyfit(dim=dim, deg=self.degree, full=True)
 
     def _detrend(self, da):
         # Estimate trend over da
-        trend = xr.polyval(coord=da["time"], coeffs=self._fitds.polyfit_coefficients)
+        trend = xr.polyval(
+            coord=da[self._fitted_dim], coeffs=self._fitds.polyfit_coefficients
+        )
 
         # Remove trend from series
         return apply_correction(da, invert(trend, self.kind), self.kind)
 
     def _retrend(self, da):
         # Estimate trend over da
-        trend = xr.polyval(coord=da["time"], coeffs=self._fitds.polyfit_coefficients)
+        trend = xr.polyval(
+            coord=da[self._fitted_dim], coeffs=self._fitds.polyfit_coefficients
+        )
 
         # Add trend to series
         return apply_correction(da, trend, self.kind)

@@ -1,9 +1,11 @@
 """Detrending classes"""
+from inspect import signature
 from types import FunctionType
 from typing import Mapping
 from typing import Union
 
 import xarray as xr
+from boltons.funcutils import wraps
 
 
 # ## Base class for the downscaling module
@@ -73,7 +75,7 @@ class Grouper(ParametrizableClass):
         if das:
             if da is not None:
                 das[da.name] = da
-            da = xr.Dataset(data_vars={da.name: da for da in das})
+            da = xr.Dataset(data_vars=das)
 
         if self.window > 1:
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
@@ -115,7 +117,7 @@ class Grouper(ParametrizableClass):
 
         # Expand dimensions of index to match the dimensions of da
         # We want vectorized indexing with no broadcasting
-        xi = xi.expand_dims(**{k: v for (k, v) in da.coords.items() if k != self.dim})
+        # xi = xi.broadcast_like(da)
         xi.name = self.prop
         return xi
 
@@ -123,6 +125,7 @@ class Grouper(ParametrizableClass):
         self,
         func: Union[FunctionType, str],
         da: Union[xr.DataArray, Mapping[str, xr.DataArray]],
+        main_only: bool = False,
         **kwargs,
     ):
         if isinstance(da, dict):
@@ -130,10 +133,11 @@ class Grouper(ParametrizableClass):
         else:
             grpd = self.group(da)
 
+        dims = self.dim if main_only else self.dims
         if isinstance(func, str):
-            out = getattr(grpd, func)(dim=self.dims, **kwargs)
+            out = getattr(grpd, func)(dim=dims, **kwargs)
         else:
-            out = grpd.map(func, dim=self.dims, **kwargs)
+            out = grpd.map(func, dim=dims, **kwargs)
 
         # Case where the function wants to return more than one variables
         # and that some have grouped dims and other have the same dimensions as the input.
@@ -149,7 +153,7 @@ class Grouper(ParametrizableClass):
 
         # Save input parameters as attributes of output DataArray.
         out.attrs["group"] = self.name
-        out.attrs["group_compute_dims"] = self.dims
+        out.attrs["group_compute_dims"] = dims
         out.attrs["group_window"] = self.window
 
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
@@ -159,3 +163,26 @@ class Grouper(ParametrizableClass):
             else:
                 out = out.sortby(self.dim)
         return out
+
+
+def parse_group(func):
+    default_group = signature(func).parameters["group"].default
+
+    @wraps(func)
+    def _parse_group(*args, **kwargs):
+        group = kwargs.get("group", default_group)
+        if not isinstance(group, Grouper):
+            if not isinstance(group, str):
+                dim, *add_dims = group
+            else:
+                dim = group
+                add_dims = []
+            kwargs["group"] = Grouper(
+                group=dim,
+                window=kwargs.pop("window", 1),
+                add_dims=add_dims,
+                interp=kwargs.get("interp", False),
+            )
+        return func(*args, **kwargs)
+
+    return _parse_group

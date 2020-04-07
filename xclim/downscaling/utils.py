@@ -6,6 +6,7 @@ from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 
 from .base import Grouper
+from .base import parse_group
 
 
 MULTIPLICATIVE = "*"
@@ -13,7 +14,8 @@ ADDITIVE = "+"
 loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
-def map_cdf(x, y, y_value, group, skipna=False):
+@parse_group
+def map_cdf(x, y, y_value, *, group="time", skipna=False):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
     Parameters
@@ -38,12 +40,12 @@ def map_cdf(x, y, y_value, group, skipna=False):
         _func = np.nanquantile if skipna else np.quantile
         return _func(x, q=q)
 
-    def _map_cdf_group(gr, y_value, dim="time", skipna=False):
+    def _map_cdf_group(gr, y_value, dim=["time"], skipna=False):
         return xr.apply_ufunc(
             _map_cdf_1d,
             gr.x,
             gr.y,
-            input_core_dims=[[dim]] * 2,
+            input_core_dims=[dim] * 2,
             output_core_dims=[["x"]],
             vectorize=True,
             keep_attrs=True,
@@ -52,12 +54,8 @@ def map_cdf(x, y, y_value, group, skipna=False):
             output_dtypes=[gr.x.dtype],
         )
 
-    return group_apply(
-        _map_cdf_group,
-        xr.Dataset(data_vars={"x": x, "y": y}),
-        group,
-        y_value=np.atleast_1d(y_value),
-        skipna=skipna,
+    return group.apply(
+        _map_cdf_group, {"x": x, "y": y}, y_value=np.atleast_1d(y_value), skipna=skipna,
     )
 
 
@@ -82,14 +80,6 @@ def ecdf(x, value, dim="time"):
       Empirical CDF.
     """
     return (x <= value).sum(dim) / x.notnull().sum(dim)
-
-
-def parse_group(group):
-    """Return dimension and property."""
-    if "." in group:
-        return group.split(".")
-    else:
-        return group, None
 
 
 # TODO: When ready this should be a method of a Grouping object
@@ -194,10 +184,8 @@ def get_correction(x, y, kind):
     return out
 
 
-def broadcast(grouped, x, group=None, interp="nearest", sel=None):
-    if not hasattr(group, "dim"):
-        group = Grouper(group or grouped.group)
-
+@parse_group
+def broadcast(grouped, x, *, group="time", interp="nearest", sel=None):
     if sel is None:
         sel = {}
 
@@ -433,7 +421,8 @@ def add_endpoints(da, left, right, dim="quantiles"):
     return xr.concat((l, da, r), dim=dim)
 
 
-def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
+@parse_group
+def interp_on_quantiles(newx, xq, yq, *, group="time", method="linear"):
     """Interpolate values of yq on new values of x.
 
     Interpolate in 2D if grouping is used, in 1D otherwise.
@@ -455,8 +444,6 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
         The interpolation method.
     }
     """
-    if not hasattr(group, "dim"):
-        group = Grouper(group or xq.attrs.get("group", "time"))
     dim = group.dim
     prop = group.prop
 

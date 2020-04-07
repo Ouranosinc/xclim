@@ -6,9 +6,10 @@ Examples of use
 Methods defined here try to be as close as possible to the published reference, providing examples of how to use the downscaling module.
 """
 from .base import Grouper
+from .base import parse_group
+from .correction import QuantileDeltaMapping
+from .correction import QuantileMapping
 from .detrending import PolyDetrend
-from .mapping import QuantileDeltaMapping
-from .mapping import QuantileMapping
 from .processing import normalize
 from .utils import ADDITIVE
 
@@ -58,7 +59,6 @@ def dqm(
     How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
-    group = Grouper(group, interp=interp)
     detrend = PolyDetrend(degree=4, kind=kind)
     DQM = QuantileMapping(
         nquantiles=nquantiles,
@@ -68,8 +68,8 @@ def dqm(
         interp=interp,
     )
 
-    sim = normalize(sim, group, kind)
-    fut = normalize(fut, group, kind)
+    sim = normalize(sim, group=group, kind=kind)
+    fut = normalize(fut, group=group, kind=kind)
 
     DQM.train(obs, sim)
 
@@ -79,7 +79,7 @@ def dqm(
     fut_corr_detrended = DQM.predict(fut_detrended)
 
     fut_corr = fut_fit.retrend(fut_corr_detrended)
-    return fut_corr, DQM.qm
+    return fut_corr, DQM.ds
 
 
 def qdm(
@@ -127,7 +127,6 @@ def qdm(
     How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
-    group = Grouper(group, interp=interp)
     QDM = QuantileDeltaMapping(
         nquantiles=nquantiles,
         group=group,
@@ -137,7 +136,7 @@ def qdm(
     )
     QDM.train(obs, sim)
     fut_corr = QDM.predict(fut)
-    return fut_corr, QDM.qm
+    return fut_corr, QDM.ds
 
 
 def eqm(
@@ -185,7 +184,6 @@ def eqm(
     How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959.
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
-    group = Grouper(group, interp=interp)
     EQM = QuantileMapping(
         nquantiles=nquantiles,
         group=group,
@@ -195,4 +193,4 @@ def eqm(
     )
     EQM.train(obs, sim)
     fut_corr = EQM.predict(fut)
-    return fut_corr, EQM.qm
+    return fut_corr, EQM.ds

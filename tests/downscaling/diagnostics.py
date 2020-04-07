@@ -3,12 +3,11 @@ This module is meant to compare results with those expected from papers, or crea
 behavior of downscaling methods and utilities.
 """
 import numpy as np
-import xarray as xr
 from matplotlib import pyplot as plt
 
 from .conftest import _series as series
-from xclim.downscaling.qdm import train
-from xclim.downscaling.utils import adapt_freq
+from xclim.downscaling.correction import QuantileDeltaMapping
+from xclim.downscaling.processing import adapt_freq
 
 
 def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
@@ -40,17 +39,17 @@ def adapt_freq_graph():
     ax1.legend()
 
     # Compute qm factors
-    qm_add = train(x, y, kind="+", group="time")
-    qm_mul = train(x, y, kind="*", group="time")
+    qm_add = QuantileDeltaMapping(kind="+", group="time").train(y, x).ds
+    qm_mul = QuantileDeltaMapping(kind="*", group="time").train(y, x).ds
 
-    qm_add_p = train(xp, y, kind="+", group="time")
-    qm_mul_p = train(xp, y, kind="*", group="time")
+    qm_add_p = QuantileDeltaMapping(kind="+", group="time").train(y, xp).ds
+    qm_mul_p = QuantileDeltaMapping(kind="*", group="time").train(y, xp).ds
 
-    qm_add.qf.plot(ax=ax2, color="cyan", ls="--", label="+: y-x")
-    qm_add_p.qf.plot(ax=ax2, color="cyan", label="+: y-xp")
+    qm_add.cf.plot(ax=ax2, color="cyan", ls="--", label="+: y-x")
+    qm_add_p.cf.plot(ax=ax2, color="cyan", label="+: y-xp")
 
-    qm_mul.qf.plot(ax=ax2, color="brown", ls="--", label="*: y/x")
-    qm_mul_p.qf.plot(ax=ax2, color="brown", label="*: y/xp")
+    qm_mul.cf.plot(ax=ax2, color="brown", ls="--", label="*: y/x")
+    qm_mul_p.cf.plot(ax=ax2, color="brown", label="*: y/xp")
 
     ax2.legend()
     return fig
