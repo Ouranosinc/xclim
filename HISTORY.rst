@@ -4,6 +4,7 @@ History
 
 0.16.x
 ------
+* Add multi gridpoints support in `subset.subset_gridpoint`.
 * Better `wrapped_partial` for more meaningful inspection.
 * Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
 * Allow lazy units conversion

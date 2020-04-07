@@ -3,6 +3,7 @@ import warnings
 from functools import wraps
 from pathlib import Path
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -210,6 +211,42 @@ def check_latlon_dimnames(func):
             final = final.rename({v: k})
 
         return final
+
+    return func_checker
+
+
+def convert_lat_lon_to_da(func):
+    @wraps(func)
+    def func_checker(*args, **kwargs):
+        """
+        A decorator to transform input lat, lon to DataArrays.
+
+        Input can be int, float or any iterable.
+        Expects a DataArray as first argument and checks is dim "site" already exists,
+        uses "_site" in that case.
+
+        If the input are not already DataArrays, the new lon and lat objects are 1D DataArrays
+        with dimension "site".
+        """
+        lat = kwargs.pop("lat", None)
+        lon = kwargs.pop("lon", None)
+        if not isinstance(lat, (type(None), xarray.DataArray)) or not isinstance(
+            lon, (type(None), xarray.DataArray)
+        ):
+            try:
+                if len(lat) != len(lon):
+                    raise ValueError("'lat' and 'lon' must have the same length")
+            except TypeError:  # They have no len : not iterables
+                lat = [lat]
+                lon = [lon]
+            ptdim = xarray.core.utils.get_temp_dimname(args[0].dims, "site")
+            if ptdim != "site" and len(lat) > 1:
+                warnings.warn(
+                    f"Dimension 'site' already on input, output will use {ptdim} instead."
+                )
+            lon = xarray.DataArray(lon, dims=(ptdim,))
+            lat = xarray.DataArray(lat, dims=(ptdim,))
+        return func(*args, lat=lat, lon=lon, **kwargs)
 
     return func_checker
 
@@ -752,29 +789,32 @@ def _check_desc_coords(coord, bounds, dim):
 
 @check_latlon_dimnames
 @check_lons
+@convert_lat_lon_to_da
 @check_date_signature
 def subset_gridpoint(
     da: Union[xarray.DataArray, xarray.Dataset],
-    lon: Optional[float] = None,
-    lat: Optional[float] = None,
+    lon: Optional[Union[float, Sequence[float], xarray.DataArray]] = None,
+    lat: Optional[Union[float, Sequence[float], xarray.DataArray]] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     tolerance: Optional[float] = None,
+    add_distance: bool = False,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """Extract a nearest gridpoint from datarray based on lat lon coordinate.
+    """Extract one or more nearest gridpoint(s) from datarray based on lat lon coordinate(s).
 
-    Return a subsetted data array (or Dataset) for the grid point falling nearest the input longitude and latitude
+    Return a subsetted data array (or Dataset) for the grid point(s) falling nearest the input longitude and latitude
     coordinates. Optionally subset the data array for years falling within provided date bounds.
     Time series can optionally be subsetted by dates.
+    If 1D sequences of coordinates are given, the gridpoints will be concatenated along the new dimension "site".
 
     Parameters
     ----------
     da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon : Optional[float]
-      Longitude coordinate.
-    lat : Optional[float]
-      Latitude coordinate.
+    lon : Optional[Union[float, Sequence[float], xarray.DataArray]]
+      Longitude coordinate(s). Must be of the same length as lat.
+    lat : Optional[Union[float, Sequence[float], xarray.DataArray]]
+      Latitude coordinate(s). Must be of the same length as lon.
     start_date : Optional[str]
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
@@ -783,14 +823,9 @@ def subset_gridpoint(
       End date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
       Defaults to last day of input data-array.
-    start_yr : int
-      Deprecated
-        First year of the subset. Defaults to first year of input data-array.
-    end_yr : int
-      Deprecated
-        Last year of the subset. Defaults to last year of input data-array.
     tolerance : Optional[float]
-      Raise error if the distance to the nearest gridpoint is larger than tolerance in meters.
+      Masks values if the distance to the nearest gridpoint is larger than tolerance in meters.
+
 
     Returns
     -------
@@ -816,6 +851,8 @@ def subset_gridpoint(
 
     # check if trying to subset lon and lat
     if lat is not None and lon is not None:
+        ptdim = lat.dims[0]
+
         # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
         if hasattr(da, "lon") and hasattr(da, "lat"):
             dims = list(da.dims)
@@ -824,20 +861,27 @@ def subset_gridpoint(
             if "lat" in dims and "lon" in dims:
                 da = da.sel(lat=lat, lon=lon, method="nearest")
 
-                if tolerance is not None:
+                if tolerance is not None or add_distance:
                     # Calculate the geodesic distance between grid points and the point of interest.
-                    dist = distance(da, lon, lat)
+                    dist = distance(da, lon=lon, lat=lat)
 
             else:
                 # Calculate the geodesic distance between grid points and the point of interest.
-                dist = distance(da, lon, lat)
+                dist = distance(da, lon=lon, lat=lat)
+                pts = []
+                dists = []
+                for site in dist[ptdim]:
+                    # Find the indices for the closest point
+                    inds = np.unravel_index(
+                        dist.sel({ptdim: site}).argmin(), dist.sel({ptdim: site}).shape
+                    )
 
-                # Find the indices for the closest point
-                inds = np.unravel_index(dist.argmin(), dist.shape)
-
-                # Select data from closest point
-                args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
-                da = da.isel(**args)
+                    # Select data from closest point
+                    args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
+                    pts.append(da.isel(**args))
+                    dists.append(dist.isel(**args))
+                da = xarray.concat(pts, dim=ptdim)
+                dist = xarray.concat(dists, dim=ptdim)
         else:
             raise (
                 Exception(
@@ -845,11 +889,14 @@ def subset_gridpoint(
                 )
             )
 
-    if tolerance is not None:
-        if dist.min() > tolerance:
-            raise ValueError(
-                f"Distance to closest point ({dist}) is larger than tolerance ({tolerance})"
-            )
+        if tolerance is not None:
+            da = da.where(dist < tolerance)
+
+        if add_distance:
+            da = da.assign_coords(distance=dist)
+
+        if len(lat) == 1:
+            da = da.squeeze(ptdim)
 
     if start_date or end_date:
         da = subset_time(da, start_date=start_date, end_date=end_date)
@@ -909,16 +956,17 @@ def subset_time(
     return da.sel(time=slice(start_date, end_date))
 
 
-def distance(da, lon, lat):
+@convert_lat_lon_to_da
+def distance(da, *, lon, lat):
     """Return distance to point in meters.
 
     Parameters
     ----------
     da : Union[xarray.DataArray, xarray.Dataset]
       Input data.
-    lon : Optional[float]
+    lon : Union[float, Sequence[float], xarray.DataArray]
       Longitude coordinate.
-    lat : Optional[float]
+    lat : Union[float, Sequence[float], xarray.DataArray]
       Latitude coordinate.
 
     Returns
@@ -933,16 +981,22 @@ def distance(da, lon, lat):
     >>> import xarray as xr
     >>> import xclim.subset
     >>> da = xr.open_dataset("/path/to/file.nc").variable
-    >>> d = xclim.subset.distance(da)
+    >>> d = xclim.subset.distance(da, lon=lon, lat=lat)
     >>> k = d.argmin()
     >>> i, j = np.unravel_index(k, d.shape)
-
     """
+    ptdim = lat.dims[0]
+
     g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globaly
 
-    def func(lons, lats):
-        return g.inv(*np.broadcast_arrays(lons, lats, lon, lat))[2]
+    def func(lons, lats, lon, lat):
+        return g.inv(lons, lats, lon, lat)[2]
 
-    out = xarray.apply_ufunc(func, da.lon.load(), da.lat.load())
+    out = xarray.apply_ufunc(
+        func,
+        *xarray.broadcast(da.lon.load(), da.lat.load(), lon, lat),
+        input_core_dims=[[ptdim]] * 4,
+        output_core_dims=[[ptdim]],
+    )
     out.attrs["units"] = "m"
     return out
