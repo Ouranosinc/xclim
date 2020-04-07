@@ -1,5 +1,6 @@
 """Detrending classes"""
 from types import FunctionType
+from typing import Mapping
 from typing import Union
 
 import xarray as xr
@@ -46,7 +47,13 @@ class Grouper(ParametrizableClass):
     ----------
     """
 
-    def __init__(self, group: str, window: int = 1, interp: Union[bool, str] = False):
+    def __init__(
+        self,
+        group: str,
+        window: int = 1,
+        add_dims=None,
+        interp: Union[bool, str] = False,
+    ):
         if "." in group:
             dim, prop = group.split(".")
         else:
@@ -54,30 +61,32 @@ class Grouper(ParametrizableClass):
 
         if isinstance(interp, str):
             interp = interp != "nearest"
+        dims = [dim] + (add_dims or [])
+
         if window > 1:
-            dims = ("window", dim)
-        else:
-            dims = dim
+            dims.insert(1, "window")
         super().__init__(
             dim=dim, dims=dims, prop=prop, name=group, window=window, interp=interp
         )
 
-    def group(self, *das: xr.DataArray):
-        if len(das) > 1:
+    def group(self, da: xr.DataArray = None, **das: xr.DataArray):
+        if das:
+            if da is not None:
+                das[da.name] = da
             da = xr.Dataset(data_vars={da.name: da for da in das})
-        else:
-            da = das[0]
-
-        if self.prop is None:
-            group = xr.full_like(da[self.dim], True, dtype=bool)
-            group.name = self.dim
-            return da.groupby(group)
 
         if self.window > 1:
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
-        return da.groupby(self.name)
+
+        if self.prop is None:
+            group = xr.full_like(da[self.dim], True, dtype=bool)
+            group.name = self.dim
+        else:
+            group = self.name
+
+        return da.groupby(group)
 
     def get_index(self, da: xr.DataArray):
         if self.prop is None:
@@ -110,8 +119,17 @@ class Grouper(ParametrizableClass):
         xi.name = self.prop
         return xi
 
-    def apply(self, func: Union[FunctionType, str], *das: xr.DataArray, **kwargs):
-        grpd = self.group(*das)
+    def apply(
+        self,
+        func: Union[FunctionType, str],
+        da: Union[xr.DataArray, Mapping[str, xr.DataArray]],
+        **kwargs,
+    ):
+        if isinstance(da, dict):
+            grpd = self.group(**da)
+        else:
+            grpd = self.group(da)
+
         if isinstance(func, str):
             out = getattr(grpd, func)(dim=self.dims, **kwargs)
         else:
@@ -131,6 +149,7 @@ class Grouper(ParametrizableClass):
 
         # Save input parameters as attributes of output DataArray.
         out.attrs["group"] = self.name
+        out.attrs["group_compute_dims"] = self.dims
         out.attrs["group_window"] = self.window
 
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
