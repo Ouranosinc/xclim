@@ -547,7 +547,7 @@ class TestSubsetBbox:
         da = xr.open_dataset(self.nc_poslons).tas
         da = da.assign_coords(lon=(da.lon - 360))
 
-        with pytest.warns(FutureWarning):
+        with pytest.raises(TypeError):
             subset.subset_bbox(
                 da, lon_bnds=self.lon, lat_bnds=self.lat, start_yr=2050, end_yr=2059
             )
@@ -617,6 +617,7 @@ class TestSubsetShape:
 
         # No time subsetting should occur.
         assert len(sub.tas) == 12
+
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
             float(np.mean(sub.tas.isel(time=0))), 285.064453
@@ -637,7 +638,7 @@ class TestSubsetShape:
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
 
-    def test_no_wraps(self):
+    def test_no_wraps(self, tmp_netcdf_filename):
         ds = xr.open_dataset(self.nc_file)
 
         with pytest.warns(None) as record:
@@ -647,6 +648,7 @@ class TestSubsetShape:
 
         # No time subsetting should occur.
         assert len(sub.tas) == 12
+
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
             float(np.mean(sub.tas.isel(time=0))), 276.732483
@@ -657,6 +659,15 @@ class TestSubsetShape:
             '" This feature is experimental. Output might not be accurate."'
             not in [q.message for q in record]
         )
+
+        assert sub.crs.prime_meridian_name == "Greenwich"
+        assert sub.crs.grid_mapping_name == "latitude_longitude"
+
+        sub.to_netcdf(tmp_netcdf_filename)
+        assert tmp_netcdf_filename.exists()
+        with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
+            assert {"tas", "crs"}.issubset(set(f.data_vars))
+            subset.subset_shape(ds, self.poslons_geojson)
 
     def test_all_neglons(self):
         ds = xr.open_dataset(self.nc_file_neglons)

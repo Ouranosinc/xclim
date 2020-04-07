@@ -142,7 +142,7 @@ def check_latlon_dimnames(func):
             return func(*args, **kwargs)
 
         formatted_args = list()
-        conv = dict()
+        conversion = dict()
         for argument in args:
             if isinstance(argument, (xarray.DataArray, xarray.Dataset)):
                 dims = argument.dims
@@ -153,24 +153,24 @@ def check_latlon_dimnames(func):
 
             if not {"lon", "lat"}.issubset(dims):
                 if {"long"}.issubset(dims):
-                    conv["long"] = "lon"
+                    conversion["long"] = "lon"
                 elif {"latitude", "longitude"}.issubset(dims):
-                    conv["latitude"] = "lat"
-                    conv["longitude"] = "lon"
+                    conversion["latitude"] = "lat"
+                    conversion["longitude"] = "lon"
                 elif {"lats", "lons"}.issubset(dims):
-                    conv["lats"] = "lat"
-                    conv["lons"] = "lon"
-                if not conv and not {"rlon", "rlat"}.issubset(dims):
+                    conversion["lats"] = "lat"
+                    conversion["lons"] = "lon"
+                if not conversion and not {"rlon", "rlat"}.issubset(dims):
                     warnings.warn(
                         f"lat and lon-like dimensions are not found among arg `{argument}` dimensions: {list(dims)}."
                     )
-                argument = argument.rename(conv)
+                argument = argument.rename(conversion)
 
             formatted_args.append(argument)
 
         final = func(*formatted_args, **kwargs)
 
-        for k, v in conv.items():
+        for k, v in conversion.items():
             final = final.rename({v: k})
 
         return final
@@ -235,7 +235,7 @@ def wrap_lons_and_split_at_greenwich(func):
                     # Load split features into a new GeoDataFrame with WGS84 CRS
                     split_gdf = gpd.GeoDataFrame(
                         geometry=[cascaded_union(buffered_split_polygons)],
-                        crs=CRS("epsg:4326"),
+                        crs=CRS(4326),
                     )
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
 
@@ -399,7 +399,7 @@ def subset_shape(
     Returns
     -------
     Union[xarray.DataArray, xarray.Dataset]
-        A subsetted copy of  `ds`
+      A subset of `ds`
 
     Examples
     --------
@@ -419,7 +419,8 @@ def subset_shape(
     >>> prSub = \
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
-    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    wgs84 = CRS(4326)
+    wgs84_wrapped = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180")
 
     if isinstance(ds, xarray.DataArray):
         ds_copy = ds._to_temp_dataset()
@@ -458,7 +459,7 @@ def subset_shape(
     # Determine whether CRS types are the same between shape and raster
     if shape_crs is not None:
         try:
-            shape_crs = CRS.from_string(shape_crs)
+            shape_crs = CRS.from_user_input(shape_crs)
         except ValueError:
             raise
     else:
@@ -466,36 +467,26 @@ def subset_shape(
 
     if raster_crs is not None:
         try:
-            raster_crs = CRS(raster_crs)
+            raster_crs = CRS.from_user_input(raster_crs)
         except ValueError:
             raise
     else:
-        if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
-            # PROJ4 definition for  with Prime Meridian at -180 deg lon.
-            wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180")
-            wrap_lons = True
-        else:
-            wrap_lons = False
-        raster_crs = wgs84
+        if np.min(lat_bnds) < -90 or np.max(lat_bnds) > 90:
+            raise ValueError("Latitudes exceed domain of WGS84 coordinate system.")
+        if np.min(lon_bnds) < -180 or np.max(lon_bnds) > 180:
+            raise ValueError("Longitudes exceed domain of WGS84 coordinate system.")
 
-    if shape_crs != raster_crs:
-        if (
-            "lon_wrap" in raster_crs.to_proj4()
-            and "lon_wrap" not in shape_crs.to_proj4()
-        ):
-            warnings.warn(
-                "CRS definitions are similar but raster lon values must be wrapped.",
-                UserWarning,
-                stacklevel=3,
-            )
-        elif (CRS.from_epsg(4326) != shape_crs) and (
-            CRS(4326).to_proj4() != raster_crs
-        ):
-            warnings.warn(
-                "CRS definitions are not similar or both not using WGS84 datum. Tread with caution.",
-                UserWarning,
-                stacklevel=3,
-            )
+        try:
+            raster_crs = CRS.from_cf(ds_copy.crs.attrs)
+        except AttributeError:
+            if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
+                # PROJ4 definition for WGS84 with longitudes ranged between -180/+180.
+                wrap_lons = True
+                raster_crs = wgs84_wrapped
+            else:
+                wrap_lons = False
+                raster_crs = wgs84
+    _check_crs_compatibility(shape_crs=shape_crs, raster_crs=raster_crs)
 
     mask_2d = create_mask(
         x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
@@ -518,14 +509,13 @@ def subset_shape(
     ds_copy = ds_copy.sel({dim: mask_2d[dim] for dim in mask_2d.dims})
 
     # Add a CRS definition using CF conventions and as a global attribute WKT for reference purposes
-    if wrap_lons:
-        ds_copy.attrs["crs"] = wgs84.to_string()
-        ds_copy["crs"] = 1
-        ds_copy["crs"].attrs.update(wgs84.to_cf())
+    ds_copy.attrs["crs"] = raster_crs.to_string()
+    ds_copy["crs"] = 1
+    ds_copy["crs"].attrs.update(raster_crs.to_cf())
 
-        for v in ds_copy.variables:
-            if {"lat", "lon"}.issubset(set(ds_copy[v].dims)):
-                ds_copy[v].attrs["grid_mapping"] = "crs"
+    for v in ds_copy.variables:
+        if {"lat", "lon"}.issubset(set(ds_copy[v].dims)):
+            ds_copy[v].attrs["grid_mapping"] = "crs"
 
     if isinstance(ds, xarray.DataArray):
         return ds._from_temp_dataset(ds_copy)
@@ -591,9 +581,6 @@ def subset_bbox(
     >>> prSub = subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],\
                                     start_date='1990-03-13', end_date='1990-08-17')
     """
-    # start_date, end_date = _check_times(
-    #     start_date=start_date, end_date=end_date, start_yr=start_yr, end_yr=end_yr
-    # )
 
     # Rectilinear case (lat and lon are the 1D dimensions)
     if ("lat" in da.dims) or ("lon" in da.dims):
@@ -629,7 +616,7 @@ def subset_bbox(
 
         # Crop original array using slice, which is faster than `where`.
         ind = np.where(lon_cond & lat_cond)
-        args = {}
+        args = dict()
         for i, d in enumerate(da.lat.dims):
             coords = da[d][ind[i]]
             args[d] = slice(coords.min().values, coords.max().values)
@@ -658,7 +645,7 @@ def subset_bbox(
     else:
         raise (
             Exception(
-                'subset_bbox() requires input data with "lon" and "lat" dimensions, coordinates, or variables.'
+                f'{subset_bbox.__name__} requires input data with "lon" and "lat" dimensions, coordinates, or variables.'
             )
         )
 
@@ -705,6 +692,26 @@ def _check_desc_coords(coord, bounds, dim):
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
+
+
+def _check_crs_compatibility(shape_crs: CRS, raster_crs: CRS):
+    wgs84 = CRS(4326)
+    if not shape_crs.equals(raster_crs):
+        if (
+            "lon_wrap" in raster_crs.to_string()
+            and "lon_wrap" not in shape_crs.to_string()
+        ):
+            warnings.warn(
+                "CRS definitions are similar but raster lon values must be wrapped.",
+                UserWarning,
+                stacklevel=3,
+            )
+        elif not shape_crs.equals(wgs84) and not raster_crs.equals(wgs84):
+            warnings.warn(
+                "CRS definitions are not similar or both not using WGS84 datum. Tread with caution.",
+                UserWarning,
+                stacklevel=3,
+            )
 
 
 @check_latlon_dimnames
@@ -795,7 +802,7 @@ def subset_gridpoint(
                 )
             )
 
-    if dist is not None:
+    if isinstance(dist, xarray.DataArray) and tolerance is not None:
         if dist.min() > tolerance:
             raise ValueError(
                 f"Distance to closest point ({dist}) is larger than tolerance ({tolerance})"
@@ -864,7 +871,7 @@ def distance(
     lon: Optional[float],
     lat: Optional[float],
 ):
-    """Return distance to point in meters.
+    """Return distance to a point in meters.
 
     Parameters
     ----------
@@ -890,7 +897,6 @@ def distance(
     >>> d = xclim.subset.distance(da)
     >>> k = d.argmin()
     >>> i, j = np.unravel_index(k, d.shape)
-
     """
     g = Geod(ellps="WGS84")  # WGS84 ellipsoid - decent globally
 
