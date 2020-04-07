@@ -401,7 +401,6 @@ def subset_shape(
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
     buffer: Optional[Union[int, float]] = None,
-    wrap_lons: Optional[bool] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Union[xarray.DataArray, xarray.Dataset]:
@@ -422,8 +421,6 @@ def subset_shape(
       EPSG number or PROJ4 string.
     buffer : Optional[Union[int, float]]
       Buffer the shape in order to select a larger region stemming from it. Units are based on the shape degrees/metres.
-    wrap_lons: Optional[bool]
-      Manually set whether vector longitudes should extend from 0 to 360 degrees.
     start_date : Optional[str]
       Start date of the subset.
       Date string format -- can be year ("%Y"), year-month ("%Y-%m") or year-month-day("%Y-%m-%d").
@@ -502,6 +499,7 @@ def subset_shape(
     else:
         shape_crs = CRS(poly.crs)
 
+    wrap_lons = False
     if raster_crs is not None:
         try:
             raster_crs = CRS.from_user_input(raster_crs)
@@ -521,7 +519,6 @@ def subset_shape(
                 wrap_lons = True
                 raster_crs = wgs84_wrapped
             else:
-                wrap_lons = False
                 raster_crs = wgs84
     _check_crs_compatibility(shape_crs=shape_crs, raster_crs=raster_crs)
 
