@@ -695,6 +695,7 @@ def _check_desc_coords(coord, bounds, dim):
 
 
 def _check_crs_compatibility(shape_crs: CRS, raster_crs: CRS):
+    """If CRS definitions are not WGS84 or incompatible raise, operation warnings"""
     wgs84 = CRS(4326)
     if not shape_crs.equals(raster_crs):
         if (
