@@ -1,5 +1,4 @@
 from typing import Mapping
-from typing import Number
 from typing import Optional
 from typing import Sequence
 from typing import Union
@@ -168,7 +167,7 @@ def broadcast(
         sel = {}
 
     if group.prop is not None and group.prop not in sel:
-        sel.update({group.prop: group.get_index(x, inter=interp)})
+        sel.update({group.prop: group.get_index(x, interp=interp)})
 
     if sel:
         # Extract the correct mean factor for each time step.
@@ -323,8 +322,8 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
 
 def add_endpoints(
     da: xr.DataArray,
-    left: Sequence[Number],
-    right: Sequence[Number],
+    left: Sequence[Union[int, float]],
+    right: Sequence[Union[int, float]],
     dim: str = "quantiles",
 ):
     """Add left and right endpoints to a DataArray.

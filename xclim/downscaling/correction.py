@@ -1,5 +1,4 @@
 """Mapping objects"""
-from typing import Optional
 from typing import Union
 from warnings import warn
 
@@ -10,6 +9,8 @@ from xarray.core.dataarray import DataArray
 from .base import Grouper
 from .base import ParametrizableClass
 from .base import parse_group
+from .detrending import PolyDetrend
+from .processing import normalize
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import broadcast
@@ -145,6 +146,49 @@ class QuantileMapping(BaseCorrection):
         cf = interp_on_quantiles(fut, sim_q, cf, group=self.group, method=self.interp)
 
         return apply_correction(fut, cf, self.kind)
+
+
+class DetrendedQuantileMapping(QuantileMapping):
+    """Detrended Quantile Mapping bias-correction.
+
+    A scaling factor that would make the mean of `sim` match the mean of `obs` is computed.
+    `obs` and `sim` are normalized by removing the group-wise mean.
+    Correction factors are computed between the quantiles of the normalized `obs` and `sim`.
+    `fut` is corrected by the scaling factor then detrended using a linear fit.
+    Values of detrended `fut` are matched to the corresponding quantiles of normalized `sim` and corrected accordingly.
+    The trend is put back on the result.
+
+    Based on the DQM method of [Cannon2015]_.
+
+    References
+    ----------
+    [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    """
+
+    def _train(self, obs, sim):
+        mu_obs = self.group.apply("mean", obs)
+        mu_sim = self.group.apply("mean", sim)
+        obs = normalize(obs, group=self.group, kind=self.kind)
+        sim = normalize(sim, group=self.group, kind=self.kind)
+        super()._train(obs, sim)
+
+        self.ds["scaling"] = get_correction(mu_sim, mu_obs, kind=self.kind)
+        self.ds.scaling.attrs.update(
+            standard_name="Scaling factor",
+            description="Scaling factor making the mean of sim match the one of sim.",
+        )
+
+    def _predict(self, fut):
+        fut = apply_correction(
+            fut,
+            broadcast(self.ds.scaling, fut, group=self.group, interp=self.interp),
+            self.kind,
+        )
+        fut_fit = PolyDetrend(degree=1, kind=self.kind).fit(fut)
+        fut_detrended = fut_fit.detrend(fut)
+        fut_corr_detrended = super()._predict(fut_detrended)
+        fut_corr = fut_fit.retrend(fut_corr_detrended)
+        return fut_corr
 
 
 class QuantileDeltaMapping(QuantileMapping):

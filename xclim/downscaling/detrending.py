@@ -100,8 +100,10 @@ class PolyDetrend(BaseDetrend):
     If freq is used to resample at a lower frequency, make sure the series includes full periods.
     """
 
-    def __init__(self, degree=4, freq=None, kind=ADDITIVE):
-        super().__init__(degree=degree, freq=freq, kind=kind)
+    def __init__(self, degree=4, freq=None, kind=ADDITIVE, preserve_mean=False):
+        super().__init__(
+            degree=degree, freq=freq, kind=kind, preserve_mean=preserve_mean
+        )
 
     def _fit(self, da, dim="time"):
         if self.freq is not None:
@@ -110,20 +112,23 @@ class PolyDetrend(BaseDetrend):
             ).mean()
         self._fitds = da.polyfit(dim=dim, deg=self.degree, full=True)
 
-    def _detrend(self, da):
+    def _get_trend(self, da):
         # Estimate trend over da
         trend = xr.polyval(
             coord=da[self._fitted_dim], coeffs=self._fitds.polyfit_coefficients
         )
 
+        if self.preserve_mean:
+            trend = apply_correction(
+                trend, invert(trend.mean(dim=self._fitted_dim), self.kind), self.kind
+            )
+
+        return trend
+
+    def _detrend(self, da):
         # Remove trend from series
-        return apply_correction(da, invert(trend, self.kind), self.kind)
+        return apply_correction(da, invert(self._get_trend(da), self.kind), self.kind)
 
     def _retrend(self, da):
-        # Estimate trend over da
-        trend = xr.polyval(
-            coord=da[self._fitted_dim], coeffs=self._fitds.polyfit_coefficients
-        )
-
         # Add trend to series
-        return apply_correction(da, trend, self.kind)
+        return apply_correction(da, self._get_trend(da), self.kind)

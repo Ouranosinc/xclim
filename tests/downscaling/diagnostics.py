@@ -5,11 +5,11 @@ behavior of downscaling methods and utilities.
 from importlib import reload
 
 import numpy as np
-import utils as tu
 from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde
 
+from . import utils as tu
 from xclim.downscaling.correction import QuantileDeltaMapping
 from xclim.downscaling.examples import dqm
 from xclim.downscaling.examples import eqm
@@ -37,8 +37,8 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
 
 def cannon_2015_figure_2():
-    n = 10000
-    obs, hist, fut = tu.cannon_2015_rvs(n, False)
+    n = 50000
+    obs, hist, fut = tu.cannon_2015_rvs(n, True)
     fut_qdm, qdm_tf = qdm(obs, hist, fut, "*", "time", interp="linear")
 
     fut_eqm, eqm_tf = eqm(obs, hist, fut, "*", "time", interp="linear")

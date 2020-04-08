@@ -15,7 +15,7 @@ class ParametrizableClass(object):
     """Helper base class that sets as attribute every kwarg it receives in __init__.
 
     Only parameters passed in the init are considered as such and returned in the
-    :py:meth:`ParametrizableClass.parameters` object and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
+    :py:meth:`ParametrizableClass.parameters` dictionary and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
     """
 
     def __init__(self, **kwargs):

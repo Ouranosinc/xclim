@@ -55,4 +55,4 @@ def test_adapt_freq(use_dask):
     xr.testing.assert_equal(ds_ad.sim_ad.where(prsim > 20.1), prsim.where(prsim > 20.5))
     # Assert that Pth and dP0 are approx the good values
     np.testing.assert_allclose(ds_ad.pth, 20, rtol=0.05)
-    np.testing.assert_allclose(ds_ad.dP0, 0.5, atol=0.12)
+    np.testing.assert_allclose(ds_ad.dP0, 0.5, atol=0.14)
