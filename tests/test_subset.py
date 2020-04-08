@@ -633,6 +633,7 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
+            subset.subset_shape(ds, self.meridian_multi_geojson, vectorize=vectorize)
 
     @pytest.mark.parametrize("vectorize", [True, False])
     def test_no_wraps(self, tmp_netcdf_filename, vectorize):
@@ -664,7 +665,7 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
-            subset.subset_shape(ds, self.poslons_geojson)
+            subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
 
     def test_all_neglons(self):
         ds = xr.open_dataset(self.nc_file_neglons)
