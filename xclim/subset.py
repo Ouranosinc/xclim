@@ -342,16 +342,7 @@ def create_mask_vectorize(
     >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
-
-    # Check for intersections
-    for i, (inda, pola) in enumerate(poly.iterrows()):
-        for (indb, polb) in poly.iloc[i + 1 :].iterrows():
-            if pola.geometry.intersects(polb.geometry):
-                warnings.warn(
-                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
-                    UserWarning,
-                    stacklevel=4,
-                )
+    _check_has_overlaps(polygons=poly)
 
     if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
@@ -371,7 +362,7 @@ def create_mask_vectorize(
     # try vectorize
     mask_test = np.zeros(lat1.shape) + np.nan
     for pp in poly.index:
-        poly[poly.index == pp].geometry.values
+        # poly[poly.index == pp].geometry.values
         for vv in poly[poly.index == pp].geometry.values:
             b1 = vectorized.contains(vv, lon1.flatten(), lat1.flatten()).reshape(
                 lat1.shape
@@ -426,18 +417,8 @@ def create_mask(
     >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
-    wgs84 = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-    # poly.crs = wgs84
-
-    # Check for intersections
-    for i, (inda, pola) in enumerate(poly.iterrows()):
-        for (indb, polb) in poly.iloc[i + 1 :].iterrows():
-            if pola.geometry.intersects(polb.geometry):
-                warnings.warn(
-                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
-                    UserWarning,
-                    stacklevel=4,
-                )
+    wgs84 = CRS(4326)
+    _check_has_overlaps(polygons=poly)
 
     if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
@@ -483,6 +464,7 @@ def create_mask(
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path, gpd.GeoDataFrame],
+    vectorize: bool = False,
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
     buffer: Optional[Union[int, float]] = None,
@@ -500,6 +482,8 @@ def subset_shape(
       Input values.
     shape : Union[str, Path, gpd.GeoDataFrame]
       Path to shape file, or directly a geodataframe. Supports formats compatible with geopandas.
+    vectorize: bool
+      Whether to use the spatialjoin or vectorize backend.
     raster_crs : Optional[Union[str, int]]
       EPSG number or PROJ4 string.
     shape_crs : Optional[Union[str, int]]
@@ -607,9 +591,14 @@ def subset_shape(
                 raster_crs = wgs84
     _check_crs_compatibility(shape_crs=shape_crs, raster_crs=raster_crs)
 
-    mask_2d = create_mask(
-        x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
-    )
+    if vectorize:
+        mask_2d = create_mask_vectorize(
+            x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
+        )
+    else:
+        mask_2d = create_mask(
+            x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
+        )
 
     if np.all(mask_2d.isnull()):
         raise ValueError(
@@ -811,6 +800,27 @@ def _check_desc_coords(coord, bounds, dim):
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
+
+
+def _check_has_overlaps(polygons: gpd.GeoDataFrame):
+    non_overlapping = []
+    for n, p in enumerate(polygons["geometry"][:-1], 1):
+        if not any(p.overlaps(g) for g in polygons["geometry"][n:]):
+            non_overlapping.append(p)
+    if len(polygons) == len(non_overlapping):
+        return
+    return False
+
+
+def _check_has_overlaps_old(polygons: gpd.GeoDataFrame):
+    for i, (inda, pola) in enumerate(polygons.iterrows()):
+        for (indb, polb) in polygons.iloc[i + 1 :].iterrows():
+            if pola.geometry.intersects(polb.geometry):
+                warnings.warn(
+                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
+                    UserWarning,
+                    stacklevel=5,
+                )
 
 
 def _check_crs_compatibility(shape_crs: CRS, raster_crs: CRS):
