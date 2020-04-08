@@ -115,6 +115,7 @@ class MeanDetrend(BaseDetrend):
         return da + self._mean
 
 
+# TODO: Add an option to preserve mean in detrend / retrend operations.
 class PolyDetrend(BaseDetrend):
     """
     Detrend time series using a polynomial.
@@ -185,7 +186,10 @@ class Grouper(ParametrizableClass):
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
-        return da.groupby(self.name)
+        if self.prop:
+            return da.groupby(self.name)
+        else:  # TODO: Fix. time is hard-coded here, not so great.
+            return da.groupby(da.time.dt.time.real == da.time.dt.time)
 
     def add_index(self, da: xr.DataArray):
         if self.prop is None:
@@ -251,6 +255,13 @@ class Grouper(ParametrizableClass):
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
             out = out.sortby(self.dim)
+
+        # TODO: Fix. Again, time dimension is hard-coded.
+        # Because we are grouping on da.time.dt.time.real == da.time.dt.time, `apply` creates a time attribute that
+        # conflicts with operations later on.
+        if self.prop is None and len(out.time) == 1:
+            out = out.squeeze("time", drop=True)
+
         return out
 
 

@@ -4,9 +4,9 @@ Detrended quantile mapping
 
 Quantiles from detrended `x` are mapped onto quantiles from `y`.
 """
-import numpy as np
 import xarray as xr
 
+from .base import Grouper
 from .base import PolyDetrend
 from .utils import add_cyclic_bounds
 from .utils import ADDITIVE
@@ -15,8 +15,6 @@ from .utils import broadcast
 from .utils import equally_spaced_nodes
 from .utils import extrapolate_qm
 from .utils import get_correction
-from .utils import get_index
-from .utils import group_apply
 from .utils import interp_on_quantiles
 from .utils import invert
 from .utils import jitter_under_thresh
@@ -89,29 +87,23 @@ def train(
         x = jitter_under_thresh(x, mult_thresh)
         y = jitter_under_thresh(y, mult_thresh)
 
+    gr = Grouper(group, window)
+
     # Compute mean per period
-    mu_x = group_apply("mean", x, group, window)
+    mu_x = gr.apply("mean", x)
 
     # Compute quantile per period
-    xq = group_apply("quantile", x, group, window=window, q=q).rename(
-        quantile="quantiles"
-    )
-    yq = group_apply("quantile", y, group, window=window, q=q).rename(
-        quantile="quantiles"
-    )
-
-    # Note that the order of these two operations is critical.
-    # We're computing the correction factor based on x' = x - <x>.
-    xqp = apply_correction(xq, invert(mu_x, kind), kind)
+    xq = gr.apply("quantile", x, q=q).rename(quantile="quantiles")
+    yq = gr.apply("quantile", y, q=q).rename(quantile="quantiles")
 
     # Compute quantile correction factors
-    qf = get_correction(xqp, yq, kind)  # qy / qx or qy - qx
+    qf = get_correction(xq, yq, kind)
 
     # Add bounds for extrapolation
     qf, xq = extrapolate_qm(qf, xq, method=extrapolation)
 
     qm = xr.Dataset(
-        data_vars={"xq": xqp, "qf": qf},
+        data_vars={"mu_x": mu_x, "qf": qf, "xq": xq},
         attrs={"group": group, "group_window": window, "kind": kind},
     )
     return qm
@@ -150,43 +142,50 @@ def predict(
     https://doi.org/10.1175/JCLI-D-14-00754.1
     """
     dim, prop = parse_group(qm.group)
-    window = qm.group_window
     kind = qm.kind
 
-    # Compute mean correction
-    mu_x = group_apply("mean", x, qm.group, window)
+    gr = Grouper(qm.group, qm.group_window)
 
     # Add random noise to small values
     if kind == MULTIPLICATIVE and mult_thresh is not None:
         x = jitter_under_thresh(x, mult_thresh)
 
+    # Compute mean correction - applied to trend
+    xm = x.mean()
+
+    # Detrend series while preserving mean
+    pfit = PolyDetrend(degree=1, kind=kind).fit(x)
+    xt = apply_correction(pfit.detrend(x), xm, kind)
+
+    # Mean by period
+    mu_x = gr.apply("mean", xt)
+
     # Add cyclical values to the scaling factors for interpolation
     if interp != "nearest" and prop is not None:
+        qm["mu_x"] = add_cyclic_bounds(qm.mu_x, prop, cyclic_coords=False)
         qm["xq"] = add_cyclic_bounds(qm.xq, prop, cyclic_coords=False)
         qm["qf"] = add_cyclic_bounds(qm.qf, prop, cyclic_coords=False)
         mu_x = add_cyclic_bounds(mu_x, prop, cyclic_coords=False)
 
-    # Apply mean correction factor nx = x / <x>
-    mfx = broadcast(mu_x, x, interp=interp)
-    nx = apply_correction(x, invert(mfx, kind), kind)
+    # Adjust mean so it matches the mean of the training x.
+    mf = get_correction(qm["mu_x"], mu_x, kind)
+    mfx = broadcast(mf, xt, interp=interp)
+    nxt = apply_correction(xt, invert(mfx, kind), kind)
 
     # Testing :
     # null = 0 if kind == ADDITIVE else 1
     # np.testing.assert_allclose(nx.mean(dim="time"), null, atol=1e-6)
 
-    # Detrend series
-    pfit = PolyDetrend(degree=1, kind=kind).fit(nx)
-    nxt = pfit.detrend(nx)
-
-    if prop is not None:
-        nxt = nxt.assign_coords({prop: get_index(nxt, dim, prop, interp)})
-
     # Quantile mapping
+    nxt = gr.add_index(nxt)
     qf = interp_on_quantiles(nxt, qm.xq, qm.qf, group=qm.attrs["group"], method=interp,)
     corrected = apply_correction(nxt, qf, kind)
 
+    # Reapply mean
+    out = apply_correction(corrected, mfx, kind)
+
     # Reapply trend
-    out = pfit.retrend(corrected)
+    out = apply_correction(pfit.retrend(out), invert(xm, kind), kind)
 
     out.attrs["bias_corrected"] = True
 

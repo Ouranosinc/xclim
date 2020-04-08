@@ -8,6 +8,7 @@ from xclim.downscaling import base
 from xclim.downscaling import qdm
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
+from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import get_correction
 from xclim.downscaling.utils import MULTIPLICATIVE
 
@@ -124,3 +125,26 @@ class TestQDM:
         p = qdm.predict(sx, qm)
         np.testing.assert_array_almost_equal(p, sy, 1)
         np.testing.assert_array_almost_equal(p, p1, 1)
+
+    def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
+        obs, hist, fut = cannon_2015_rvs(15000, random=False)
+
+        # Quantile mapping
+        tf = qdm.train(hist, fut, "*", "time", nq=50)
+        bc_fut = qdm.predict(obs, tf)
+
+        # Theoretical results
+        obs, hist, fut = cannon_2015_dist
+        u1 = equally_spaced_nodes(1001, None)
+        u = np.convolve(u1, [0.5, 0.5], mode="valid")
+        pu = obs.ppf(u) * fut.ppf(u) / hist.ppf(u)
+        pu1 = obs.ppf(u1) * fut.ppf(u1) / hist.ppf(u1)
+        pdf = np.diff(u1) / np.diff(pu1)
+
+        plt.plot(pu, pdf)
+        mean = np.trapz(pdf * pu, pu)
+        mom2 = np.trapz(pdf * pu ** 2, pu)
+        std = np.sqrt(mom2 - mean ** 2)
+
+        np.testing.assert_almost_equal(bc_fut.mean(), mean, 1)
+        np.testing.assert_almost_equal(bc_fut.std(), std, 1)

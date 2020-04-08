@@ -1,4 +1,7 @@
 # Tests for detrended quantile mapping
+# import matplotlib as mpl
+# mpl.use("TkAgg")
+# from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 from scipy.stats import norm
@@ -9,7 +12,6 @@ from xclim.downscaling import dqm
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
 from xclim.downscaling.utils import get_correction
-from xclim.downscaling.utils import invert
 from xclim.downscaling.utils import MULTIPLICATIVE
 
 
@@ -35,10 +37,10 @@ class TestDQM:
 
         # Test train
         sx, sy = series(x, name), series(y, name)
-        qm = dqm.train(sx, sy, kind=kind, group="time", nq=50)
+        qm = dqm.train(sx, sy, kind=kind, group="time", nq=100)
 
         q = qm.quantiles
-        ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
+        ex = xd.ppf(q)
         ey = yd.ppf(q)
         expected = get_correction(ex, ey, kind)
 
@@ -47,9 +49,25 @@ class TestDQM:
 
         # Test predict
         # Accept discrepancies near extremes
-        middle = (x > 1e-2) * (x < 0.99)
+        middle = (u > 2e-2) * (u < 0.98)
         p = dqm.predict(sx, qm, interp="linear")
         np.testing.assert_array_almost_equal(p[middle], sy[middle], 1)
+
+        # Test with future delta
+        ff = series(np.ones(ns) * 1.1, name)
+        p = dqm.predict(apply_correction(sx, ff, kind), qm, interp="linear")
+        np.testing.assert_array_almost_equal(
+            p[middle], apply_correction(sy, ff, kind)[middle], 1
+        )
+
+        # Test with trend
+        trend = series(
+            np.linspace(-0.2, 0.2, ns) + (1 if kind == MULTIPLICATIVE else 0), name
+        )
+        p = dqm.predict(apply_correction(x, trend, kind), qm, interp="linear")
+        np.testing.assert_array_almost_equal(
+            p[middle], apply_correction(sy, trend, kind)[middle], 1
+        )
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize(
@@ -76,7 +94,8 @@ class TestDQM:
         y = yd.ppf(u) + noise.ppf(u)
 
         # Test train
-        sx, sy = series(x, name), mon_series(y, name)
+        sx = series(x, name)
+        sy = mon_series(y, name)
 
         if spatial_dims:
             sx = sx.expand_dims(**spatial_dims)
@@ -85,10 +104,11 @@ class TestDQM:
         qm = dqm.train(sx, sy, kind=kind, group="time.month", nq=5)
         mqm = qm.qf.mean(dim="quantiles")
 
-        expected = apply_correction(mon_triangular, 4, kind)
+        expected = apply_correction(mon_triangular, 2, kind)
 
         if spatial_dims:
             mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
+
         np.testing.assert_array_almost_equal(mqm, expected, 1)
 
         # Test predict
@@ -155,3 +175,11 @@ class TestDQM:
         p = dqm.predict(f, qm)
         np.testing.assert_array_almost_equal(p, expected, 1)
         np.testing.assert_array_almost_equal(p, p1, 1)
+
+    def test_cannon(self, cannon_2015_rvs):
+        obs, hist, fut = cannon_2015_rvs(15000)
+
+        dqm_tf = dqm.train(hist, obs, "*", "time")
+        fut_dqm = dqm.predict(fut, dqm_tf)
+        np.testing.assert_almost_equal(fut_dqm.mean(), 41.6, 0)
+        np.testing.assert_almost_equal(fut_dqm.std(), 15.0, 0)

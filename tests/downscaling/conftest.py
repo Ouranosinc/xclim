@@ -1,13 +1,26 @@
-import collections
-
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
+from . import utils as tu
 from xclim.downscaling.utils import apply_correction
 from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import parse_group
+
+
+# Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in
+# utils.py, and converted into fixtures here.
+cannon_2015_dist = pytest.fixture(tu.cannon_2015_dist)
+
+
+@pytest.fixture
+def cannon_2015_rvs():
+    return tu.cannon_2015_rvs
+
+
+@pytest.fixture
+def series():
+    return tu.series
 
 
 @pytest.fixture
@@ -27,39 +40,6 @@ def mon_series(series, mon_triangular):
             return apply_correction(x, factor, x.kind)
 
     return _mon_series
-
-
-def _series(values, name, start="2000-01-01"):
-    coords = collections.OrderedDict()
-    for dim, n in zip(("time", "lon", "lat"), values.shape):
-        if dim == "time":
-            coords[dim] = pd.date_range(start, periods=n, freq=pd.DateOffset(days=1))
-        else:
-            coords[dim] = xr.IndexVariable(dim, np.arange(n))
-
-    if name == "tas":
-        attrs = {
-            "standard_name": "air_temperature",
-            "cell_methods": "time: mean within days",
-            "units": "K",
-            "kind": "+",
-        }
-    elif name == "pr":
-        attrs = {
-            "standard_name": "precipitation_flux",
-            "cell_methods": "time: sum over day",
-            "units": "kg m-2 s-1",
-            "kind": "*",
-        }
-
-    return xr.DataArray(
-        values, coords=coords, dims=list(coords.keys()), name=name, attrs=attrs,
-    )
-
-
-@pytest.fixture
-def series():
-    return _series
 
 
 @pytest.fixture
