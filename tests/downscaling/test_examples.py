@@ -7,6 +7,7 @@ from scipy.stats import uniform
 from xclim.downscaling import examples
 from xclim.downscaling.utils import ADDITIVE
 from xclim.downscaling.utils import apply_correction
+from xclim.downscaling.utils import equally_spaced_nodes
 from xclim.downscaling.utils import get_correction
 from xclim.downscaling.utils import invert
 from xclim.downscaling.utils import MULTIPLICATIVE
@@ -52,6 +53,26 @@ class TestDQM:
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
         np.testing.assert_array_almost_equal(p[middle], obs[middle], 1)
+
+        # Test with future not equal to sim
+        ff = series(np.ones(ns) * 1.1, name)
+        fut2 = apply_correction(fut, ff, kind)
+        obs2 = apply_correction(obs, ff, kind)
+        p2, qm = examples.dqm(
+            obs, sim, fut2, kind=kind, group="time", nquantiles=50, interp="linear"
+        )
+        np.testing.assert_array_almost_equal(p2[middle], obs2[middle], 1)
+
+        # Test with actual trend in fut
+        trend = series(
+            np.linspace(-0.2, 0.2, ns) + (1 if kind == MULTIPLICATIVE else 0), name
+        )
+        fut3 = apply_correction(fut, trend, kind)
+        obs3 = apply_correction(obs, trend, kind)
+        p3, qm = examples.dqm(
+            obs, sim, fut3, kind=kind, group="time", nquantiles=50, interp="linear"
+        )
+        np.testing.assert_array_almost_equal(p3[middle], obs3[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize(
@@ -100,6 +121,14 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, expected, 1)
         np.testing.assert_array_almost_equal(p, obs_t, 1)
 
+    def test_cannon(self, cannon_2015_rvs):
+        obs, hist, fut = cannon_2015_rvs(15000)
+
+        p, qm = examples.dqm(obs, hist, fut, kind="*", group="time")
+
+        np.testing.assert_almost_equal(p.mean(), 41.6, 0)
+        np.testing.assert_almost_equal(p.std(), 15.0, 0)
+
 
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
@@ -134,7 +163,7 @@ class TestQDM:
 
         # Test predict
         # Accept discrepancies near extremes
-        middle = (x > 1e-2) * (x < 0.99)
+        middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], obs[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
@@ -174,6 +203,27 @@ class TestQDM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, obs, 1)
+
+    def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
+        obs, hist, fut = cannon_2015_rvs(15000, random=False)
+
+        # Quantile mapping
+        bc_fut, tf = examples.qdm(obs, hist, fut, "*", "time", nquantiles=50)
+
+        # Theoretical results
+        obs, hist, fut = cannon_2015_dist
+        u1 = equally_spaced_nodes(1001, None)
+        u = np.convolve(u1, [0.5, 0.5], mode="valid")
+        pu = obs.ppf(u) * fut.ppf(u) / hist.ppf(u)
+        pu1 = obs.ppf(u1) * fut.ppf(u1) / hist.ppf(u1)
+        pdf = np.diff(u1) / np.diff(pu1)
+
+        mean = np.trapz(pdf * pu, pu)
+        mom2 = np.trapz(pdf * pu ** 2, pu)
+        std = np.sqrt(mom2 - mean ** 2)
+
+        np.testing.assert_almost_equal(bc_fut.mean(), mean, 1)
+        np.testing.assert_almost_equal(bc_fut.std(), std, 1)
 
 
 class TestEQM:

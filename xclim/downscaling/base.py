@@ -222,9 +222,10 @@ class Grouper(ParametrizableClass):
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
             if self.prop is None and out[self.dim].size == 1:
-                out = out.squeeze(self.dim).drop_vars(self.dim)
+                out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)
+
         return out
 
 
