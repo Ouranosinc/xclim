@@ -10,10 +10,9 @@ from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde
 
 from . import utils as tu
+from xclim.downscaling.correction import DetrendedQuantileMapping
 from xclim.downscaling.correction import QuantileDeltaMapping
-from xclim.downscaling.examples import dqm
-from xclim.downscaling.examples import eqm
-from xclim.downscaling.examples import qdm
+from xclim.downscaling.correction import QuantileMapping
 from xclim.downscaling.processing import adapt_freq
 
 
@@ -39,11 +38,17 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 def cannon_2015_figure_2():
     n = 50000
     obs, hist, fut = tu.cannon_2015_rvs(n, True)
-    fut_qdm, qdm_tf = qdm(obs, hist, fut, "*", "time", interp="linear")
+    QM = QuantileMapping(kind="*", group="time", interp="linear")
+    QM.train(obs, hist)
+    fut_eqm = QM.predict(fut)
 
-    fut_eqm, eqm_tf = eqm(obs, hist, fut, "*", "time", interp="linear")
+    DQM = DetrendedQuantileMapping(kind="*", group="time", interp="linear")
+    DQM.train(obs, hist)
+    fut_dqm = DQM.predict(fut)
 
-    fut_dqm, dqm_tf = dqm(obs, hist, fut, "*", "time", interp="linear")
+    QDM = QuantileDeltaMapping(kind="*", group="time", interp="linear")
+    QDM.train(obs, hist)
+    fut_qdm = QDM.predict(fut)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
     x = np.linspace(0, 105, 50)
