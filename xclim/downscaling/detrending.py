@@ -24,6 +24,10 @@ class BaseDetrend(ParametrizableClass):
     __fitted = False
 
     def fit(self, da: xr.DataArray, dim="time"):
+        """Extract the trend of a DataArray along a specific dimension.
+
+        Returns a new object storing the fit data that can be used for detrending and retrending.
+        """
         new = self.__class__(**self.parameters)
         new._fit(da, dim=dim)
         new._fitted_dim = dim
@@ -31,11 +35,13 @@ class BaseDetrend(ParametrizableClass):
         return new
 
     def detrend(self, da: xr.DataArray):
+        """Removes the previously fitted trend from a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before detrending.")
         return self._detrend(da)
 
     def retrend(self, da: xr.DataArray):
+        """Puts back the previsouly fitted trend on a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before retrending")
         return self._retrend(da)
@@ -51,6 +57,8 @@ class BaseDetrend(ParametrizableClass):
 
 
 class NoDetrend(BaseDetrend):
+    """Convenience class for polymorphism. Does nothing."""
+
     def _fit(self, da, dim=None):
         pass
 
@@ -62,6 +70,8 @@ class NoDetrend(BaseDetrend):
 
 
 class MeanDetrend(BaseDetrend):
+    """Simple detrending removing only the mean from the data, quite similar to normalizing in additive mode."""
+
     def _fit(self, da, dim="time"):
         self._mean = da.mean(dim=dim)
 
@@ -74,7 +84,16 @@ class MeanDetrend(BaseDetrend):
 
 class PolyDetrend(BaseDetrend):
     """
-    Detrend time series using a polynomial.
+    Detrend time series using a polynomial regression.
+
+    Parameters
+    ----------
+    degree : int
+      The order of the polynomial to fit.
+    freq : Optional[str]
+      If given, resamples the data to this frequency before computing the trend.
+    kind : {'+', '*'}
+      The way the trend is removed and put back, either additively or multiplicatively.
 
     Notes
     -----

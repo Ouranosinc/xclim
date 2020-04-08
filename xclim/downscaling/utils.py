@@ -1,3 +1,8 @@
+from typing import Mapping
+from typing import Number
+from typing import Optional
+from typing import Sequence
+from typing import Union
 from warnings import warn
 
 import numpy as np
@@ -15,7 +20,14 @@ loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q"
 
 
 @parse_group
-def map_cdf(x, y, y_value, *, group="time", skipna=False):
+def map_cdf(
+    x: xr.DataArray,
+    y: xr.DataArray,
+    y_value: xr.DataArray,
+    *,
+    group: Union[str, Grouper] = "time",
+    skipna: bool = False,
+):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
     Parameters
@@ -64,7 +76,7 @@ def _ecdf_1d(x, value):
     return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
-def ecdf(x, value, dim="time"):
+def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
     """Return the empirical CDF of a sample at a given value.
 
     Parameters
@@ -82,94 +94,7 @@ def ecdf(x, value, dim="time"):
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
 
-# TODO: When ready this should be a method of a Grouping object
-def group_apply(func, x, group, window=1, grouped_args=None, **kwargs):
-    """Group values by time, then compute function.
-
-    Parameters
-    ----------
-    func : str
-      DataArray method applied to each group.
-    x : DataArray, tuple of DataArray for functions with multiple arguments.
-      Data.
-    group : {'time.season', 'time.month', 'time.dayofyear', 'time'}
-      Grouping criterion. If only coordinate is given (e.g. 'time') no grouping will be done.
-    window : int
-      Length of the rolling window centered around the time of interest used to estimate the quantiles. This is mostly
-      useful for time.dayofyear grouping.
-    grouped_args : Sequence of DataArray
-      Args passed here are results from a previous groupby that contain the "prop" dim, but not "dim" (ex: "month", but not "time")
-      Before func is called on a group, the corresponding slice of each grouped_args will be extracted and passed as args to func.
-      Useful for using precomputed results.
-    **kwargs : dict
-      Arguments passed to function.
-
-    Returns
-    -------
-    Union[xr.DataArray, xr.Dataset]
-        Which ever is returned by func. With added attributes `group` and `group_window`.
-    """
-    dim, prop = parse_group(group)
-
-    if isinstance(x, (tuple, list)):
-        x = xr.Dataset({f"v{i}": da for i, da in enumerate(x)})
-
-    dims = dim
-    if "." in group:
-        if window > 1:
-            # Construct rolling window
-            x = x.rolling(center=True, **{dim: window}).construct(window_dim="window")
-            dims = ("window", dim)
-
-        sub = x.groupby(group)
-
-    else:
-        sub = x
-
-    def wrap_func_with_grouped_args(func):
-        def call_func_with_grouped_element(dsgr, *grouped, **kwargs):
-            # For each element in grouped, we extract the correspong slice for the current group
-            # TODO: Is there any better way to get the label of the current group??
-            if prop is not None:
-                label = getattr(dsgr[dim][0].dt, prop)
-            else:
-                label = dsgr[group][0]
-            elements = [arg.sel({prop or group: label}) for arg in grouped]
-            return func(dsgr, *elements, **kwargs)
-
-        return call_func_with_grouped_element
-
-    if isinstance(func, str):
-        out = getattr(sub, func)(dim=dims, **kwargs)
-    else:
-        if grouped_args is not None:
-            func = wrap_func_with_grouped_args(func)
-        if isinstance(sub, xr.core.groupby.GroupBy):
-            out = sub.map(func, args=grouped_args or [], dim=dims, **kwargs)
-        else:
-            out = func(sub, dim=dims, **kwargs)
-
-    # Case where the function wants to return more than one variables
-    # and that some have grouped dims and other have the same dimensions as the input.
-    # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
-    if isinstance(out, xr.Dataset):
-        for name, da in out.data_vars.items():
-            if "_group_apply_reshape" in da.attrs:
-                if da.attrs["_group_apply_reshape"] and prop is not None:
-                    out[name] = da.groupby(group).first(skipna=False, keep_attrs=True)
-                del out[name].attrs["_group_apply_reshape"]
-
-    # Save input parameters as attributes of output DataArray.
-    out.attrs["group"] = group
-    out.attrs["group_window"] = window
-
-    # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
-    if dim in out.dims:
-        out = out.sortby(dim)
-    return out
-
-
-def get_correction(x, y, kind):
+def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str):
     """Return the additive or multiplicative correction factor."""
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
@@ -184,13 +109,66 @@ def get_correction(x, y, kind):
     return out
 
 
+def apply_correction(x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None):
+    """Apply the additive or multiplicative correction factor.
+
+    If kind is not given, default to the one stored in the "kind" attribute of factor.
+    """
+    kind = kind or factor.get("kind", None)
+    with xr.set_options(keep_attrs=True):
+        if kind == ADDITIVE:
+            out = x + factor
+        elif kind == MULTIPLICATIVE:
+            out = x * factor
+        else:
+            raise ValueError
+    return out
+
+
+def invert(x: xr.DataArray, kind: Optional[str] = None):
+    """Invert a DataArray either additively (-x) or multiplicatively (1/x).
+
+    If kind is not given, default to the one stored in the "kind" attribute of x.
+    """
+    kind = kind or x.get("kind", None)
+    with xr.set_options(keep_attrs=True):
+        if kind == ADDITIVE:
+            return -x
+        elif kind == MULTIPLICATIVE:
+            return 1 / x
+        else:
+            raise ValueError
+
+
 @parse_group
-def broadcast(grouped, x, *, group="time", interp="nearest", sel=None):
+def broadcast(
+    grouped: xr.DataArray,
+    x: xr.DataArray,
+    *,
+    group: Union[str, Grouper] = "time",
+    interp: str = "nearest",
+    sel: Optional[Mapping[str, xr.DataArray]] = None,
+):
+    """Broadcast a grouped array back to the same shape as a given array.
+
+    Parameters
+    ----------
+    grouped : xr.DataArray
+      The grouped array to broadcast like `x`.
+    x : xr.DataArray
+      The array to broadcast grouped to.
+    group : Union[str, Grouper]
+      Grouping information. See :py:class:`xclim.downscaling.base.Grouper` for details.
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use,
+    sel : Mapping[str, xr.DataArray]
+      Mapping of grouped coordinates to x coordinates (other than the grouping one).
+    """
     if sel is None:
         sel = {}
 
     if group.prop is not None and group.prop not in sel:
-        sel.update({group.prop: group.get_index(x)})
+        sel.update({group.prop: group.get_index(x, inter=interp)})
 
     if sel:
         # Extract the correct mean factor for each time step.
@@ -214,30 +192,7 @@ def broadcast(grouped, x, *, group="time", interp="nearest", sel=None):
     return grouped
 
 
-def apply_correction(x, factor, kind=None):
-    kind = kind or factor.get("kind", None)
-    with xr.set_options(keep_attrs=True):
-        if kind == ADDITIVE:
-            out = x + factor
-        elif kind == MULTIPLICATIVE:
-            out = x * factor
-        else:
-            raise ValueError
-    return out
-
-
-def invert(x, kind):
-    kind = kind or x.get("kind", None)
-    with xr.set_options(keep_attrs=True):
-        if kind == ADDITIVE:
-            return -x
-        elif kind == MULTIPLICATIVE:
-            return 1 / x
-        else:
-            raise ValueError
-
-
-def equally_spaced_nodes(n, eps=1e-4):
+def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
     """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
 
     Parameters
@@ -263,7 +218,7 @@ def equally_spaced_nodes(n, eps=1e-4):
     return sorted(np.append([eps, 1 - eps], q))
 
 
-def add_cyclic_bounds(da, att, cyclic_coords=True):
+def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
     """Reindex an array to include the last slice at the beginning
     and the first at the end.
 
@@ -272,7 +227,7 @@ def add_cyclic_bounds(da, att, cyclic_coords=True):
     Parameters
     ----------
     da : Union[xr.DataArray, xr.Dataset]
-        An array or a dataset
+        An array
     att : str
         The name of the coordinate to make cyclic
     cyclic_coords : bool
@@ -299,7 +254,7 @@ def add_cyclic_bounds(da, att, cyclic_coords=True):
 # TODO: use xr.pad once it's implemented.
 # Rename to extrapolate_q ?
 # TODO: improve consistency with extrapolate_qm
-def add_q_bounds(qmf, method="constant"):
+def add_q_bounds(qmf: xr.DataArray, method="constant"):
     """Reindex the scaling factors to set the quantile at 0 and 1 to the first and last quantile respectively.
 
     This is a naive approach that won't work well for extremes.
@@ -315,35 +270,7 @@ def add_q_bounds(qmf, method="constant"):
     return qmf
 
 
-def get_index(da, dim, prop, interp):
-    # Compute the `dim` value for indexing along grouping dimension.
-    # TODO: Adjust for different calendars if necessary.
-
-    if prop == "season" and interp:
-        raise NotImplementedError
-
-    ind = da.indexes[dim]
-    i = getattr(ind, prop)
-
-    if interp != "nearest":
-        if dim == "time":
-            if prop == "month":
-                i = ind.month - 0.5 + ind.day / ind.daysinmonth
-            elif prop == "dayofyear":
-                i = ind.dayofyear
-            else:
-                raise NotImplementedError
-
-    xi = xr.DataArray(
-        i, dims=dim, coords={dim: da.coords[dim]}, name=dim + " group index"
-    )
-
-    # Expand dimensions of index to match the dimensions of xq
-    # We want vectorized indexing with no broadcasting
-    return xi.expand_dims(**{k: v for (k, v) in da.coords.items() if k != dim})
-
-
-def extrapolate_qm(qf, xq, method="constant"):
+def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"):
     """Extrapolate quantile correction factors beyond the computed quantiles.
 
     Parameters
@@ -394,7 +321,12 @@ def extrapolate_qm(qf, xq, method="constant"):
     return qf, xq
 
 
-def add_endpoints(da, left, right, dim="quantiles"):
+def add_endpoints(
+    da: xr.DataArray,
+    left: Sequence[Number],
+    right: Sequence[Number],
+    dim: str = "quantiles",
+):
     """Add left and right endpoints to a DataArray.
 
     Parameters
@@ -422,7 +354,14 @@ def add_endpoints(da, left, right, dim="quantiles"):
 
 
 @parse_group
-def interp_on_quantiles(newx, xq, yq, *, group="time", method="linear"):
+def interp_on_quantiles(
+    newx: xr.DataArray,
+    xq: xr.DataArray,
+    yq: xr.DataArray,
+    *,
+    group: Union[str, Grouper] = "time",
+    method: str = "linear",
+):
     """Interpolate values of yq on new values of x.
 
     Interpolate in 2D if grouping is used, in 1D otherwise.
@@ -442,7 +381,6 @@ def interp_on_quantiles(newx, xq, yq, *, group="time", method="linear"):
         Defaults to the "group" attribute of xq, or "time" if there is none.
     method : {'nearest', 'linear', 'cubic'}
         The interpolation method.
-    }
     """
     dim = group.dim
     prop = group.prop

@@ -7,6 +7,7 @@ import xarray as xr
 
 from .base import Grouper
 from .base import parse_group
+from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import ecdf
 from .utils import invert
@@ -24,7 +25,8 @@ def adapt_freq(
     Adapt frequency of values under thresh of sim, in order to match obs.
 
     This is useful when the dry-day frequency in the simulations is higher than in the observations. This function
-    will create new non-null values for sim, so that correction factors
+    will create new non-null values for sim, so that correction factors are less wet-biased.
+    Based on [Themessl2012]_.
 
     Parameters
     ----------
@@ -61,8 +63,7 @@ def adapt_freq(
 
     References
     ----------
-    Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its
-    impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
+    [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
     """
 
     def _adapt_freq_group(ds, dim=["time"]):
@@ -145,9 +146,10 @@ def adapt_freq(
     return group.apply(_adapt_freq_group, {"sim": sim, "obs": obs})
 
 
-# Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
-def jitter_under_thresh(x, thresh):
+def jitter_under_thresh(x: xr.DataArray, thresh: float):
     """Replace values smaller than threshold by a uniform random noise.
+
+    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
 
     Parameters
     ----------
@@ -170,7 +172,23 @@ def jitter_under_thresh(x, thresh):
 
 
 @parse_group
-def normalize(x: xr.DataArray, *, group: Union[str, Grouper], kind: str):
+def normalize(
+    x: xr.DataArray, *, group: Union[str, Grouper] = "time", kind: str = ADDITIVE
+):
+    """Normalize an array by remove its mean.
+
+    Normalization if performed group-wise.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Array to be normalized.
+    group : Union[str, Grouper]
+      Grouping information. See :py:class:`xclim.downscaling.base.Grouper` for details.
+    kind : {'+', '*'}
+      How to apply the correction, either additively or multiplicatively.
+    """
+
     def _normalize_group(grp, dim=["time"]):
         return apply_correction(grp, invert(grp.mean(dim=dim), kind), kind)
 
