@@ -13,6 +13,7 @@ import pandas as pd
 import xarray
 from pyproj import Geod
 from pyproj.crs import CRS
+from shapely import vectorized
 from shapely.geometry import LineString
 from shapely.geometry import MultiPolygon
 from shapely.geometry import Point
@@ -296,6 +297,90 @@ def wrap_lons_and_split_at_greenwich(func):
         return func(*args, **kwargs)
 
     return func_checker
+
+
+@wrap_lons_and_split_at_greenwich
+def create_mask_vectorize(
+    *,
+    x_dim: xarray.DataArray = None,
+    y_dim: xarray.DataArray = None,
+    poly: gpd.GeoDataFrame = None,
+    wrap_lons: bool = False,
+):
+    """Creates a mask with values corresponding to the features in a GeoDataFrame.
+
+    The returned mask's points have the value of the first geometry of `poly` they fall in.
+
+    Parameters
+    ----------
+    x_dim : xarray.DataArray
+      X or longitudinal dimension of xarray object.
+    y_dim : xarray.DataArray
+      Y or latitudinal dimension of xarray object.
+    poly : gpd.GeoDataFrame
+      GeoDataFrame used to create the xarray.DataArray mask.
+    wrap_lons : bool
+      Shift vector longitudes by -180,180 degrees to 0,360 degrees; Default = False
+
+    Returns
+    -------
+    xarray.DataArray
+
+    Examples
+    --------
+    >>> from xclim import subset
+    >>> import xarray as xr
+    >>> import geopandas as gpd
+    >>> ds = xr.open_dataset('example.nc')
+    >>> polys = gpd.read_file('regions.json')
+    Get a mask from all polygons in 'regions.json'
+    >>> mask = subset.create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
+    >>> ds = ds.assign_coords(regions=mask)
+    Operations can be applied to each regions with  `groupby`. Ex:
+    >>> ds = ds.groupby('regions').mean()
+    Extra step to retrieve the names of those polygons stored in the "id" column
+    >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
+    >>> ds = ds.assign_coords(regions_names=region_names)
+    """
+
+    # Check for intersections
+    for i, (inda, pola) in enumerate(poly.iterrows()):
+        for (indb, polb) in poly.iloc[i + 1 :].iterrows():
+            if pola.geometry.intersects(polb.geometry):
+                warnings.warn(
+                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
+                    UserWarning,
+                    stacklevel=4,
+                )
+
+    if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
+        # create a 2d grid of lon, lat values
+        lon1, lat1 = np.meshgrid(
+            np.asarray(x_dim.values), np.asarray(y_dim.values), indexing="ij"
+        )
+        dims_out = x_dim.dims + y_dim.dims
+        coords_out = dict()
+        coords_out[dims_out[0]] = x_dim.values
+        coords_out[dims_out[1]] = y_dim.values
+    else:
+        lon1 = x_dim.values
+        lat1 = y_dim.values
+        dims_out = x_dim.dims
+        coords_out = x_dim.coords
+
+    # try vectorize
+    mask_test = np.zeros(lat1.shape) + np.nan
+    for pp in poly.index:
+        poly[poly.index == pp].geometry.values
+        for vv in poly[poly.index == pp].geometry.values:
+            b1 = vectorized.contains(vv, lon1.flatten(), lat1.flatten()).reshape(
+                lat1.shape
+            )
+            mask_test[b1] = pp
+
+    mask_test = xarray.DataArray(mask_test, dims=dims_out, coords=coords_out)
+
+    return mask_test
 
 
 @wrap_lons_and_split_at_greenwich
