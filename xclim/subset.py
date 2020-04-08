@@ -916,6 +916,7 @@ def subset_time(
     return da.sel(time=slice(start_date, end_date))
 
 
+@convert_lat_lon_to_da
 def distance(
     da: Union[xarray.DataArray, xarray.Dataset],
     *,
