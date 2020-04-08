@@ -6,15 +6,15 @@ from importlib import reload
 
 import numpy as np
 import utils as tu
-import xarray as xr
 from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde
 
-from xclim.downscaling import dqm
-from xclim.downscaling import eqm
-from xclim.downscaling import qdm
-from xclim.downscaling.utils import adapt_freq
+from xclim.downscaling.correction import QuantileDeltaMapping
+from xclim.downscaling.examples import dqm
+from xclim.downscaling.examples import eqm
+from xclim.downscaling.examples import qdm
+from xclim.downscaling.processing import adapt_freq
 
 
 def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
@@ -39,14 +39,11 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 def cannon_2015_figure_2():
     n = 10000
     obs, hist, fut = tu.cannon_2015_rvs(n, False)
-    qdm_tf = qdm.train(hist, fut, "*", "time")
-    fut_qdm = qdm.predict(obs, qdm_tf, interp="linear")
+    fut_qdm, qdm_tf = qdm(obs, hist, fut, "*", "time", interp="linear")
 
-    eqm_tf = eqm.train(hist, obs, "*", "time")
-    fut_eqm = eqm.predict(fut, eqm_tf, interp="linear")
+    fut_eqm, eqm_tf = eqm(obs, hist, fut, "*", "time", interp="linear")
 
-    dqm_tf = dqm.train(hist, obs, "*", "time")
-    fut_dqm = dqm.predict(fut, dqm_tf, interp="linear")
+    fut_dqm, dqm_tf = dqm(obs, hist, fut, "*", "time", interp="linear")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
     x = np.linspace(0, 105, 50)
@@ -130,17 +127,17 @@ def adapt_freq_graph():
     ax1.legend()
 
     # Compute qm factors
-    qm_add = qdm.train(x, y, kind="+", group="time")
-    qm_mul = qdm.train(x, y, kind="*", group="time")
+    qm_add = QuantileDeltaMapping(kind="+", group="time").train(y, x).ds
+    qm_mul = QuantileDeltaMapping(kind="*", group="time").train(y, x).ds
 
-    qm_add_p = qdm.train(xp, y, kind="+", group="time")
-    qm_mul_p = qdm.train(xp, y, kind="*", group="time")
+    qm_add_p = QuantileDeltaMapping(kind="+", group="time").train(y, xp).ds
+    qm_mul_p = QuantileDeltaMapping(kind="*", group="time").train(y, xp).ds
 
-    qm_add.qf.plot(ax=ax2, color="cyan", ls="--", label="+: y-x")
-    qm_add_p.qf.plot(ax=ax2, color="cyan", label="+: y-xp")
+    qm_add.cf.plot(ax=ax2, color="cyan", ls="--", label="+: y-x")
+    qm_add_p.cf.plot(ax=ax2, color="cyan", label="+: y-xp")
 
-    qm_mul.qf.plot(ax=ax2, color="brown", ls="--", label="*: y/x")
-    qm_mul_p.qf.plot(ax=ax2, color="brown", label="*: y/xp")
+    qm_mul.cf.plot(ax=ax2, color="brown", ls="--", label="*: y/x")
+    qm_mul_p.cf.plot(ax=ax2, color="brown", label="*: y/xp")
 
     ax2.legend(loc="upper left", frameon=False)
     return fig

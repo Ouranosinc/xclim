@@ -1,17 +1,21 @@
 from warnings import warn
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
-from scipy.stats import gamma
+
+from .base import Grouper
+from .base import parse_group
+
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
+loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
-def map_cdf(x, y, y_value, group, skipna=False):
+@parse_group
+def map_cdf(x, y, y_value, *, group="time", skipna=False):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
     Parameters
@@ -36,12 +40,12 @@ def map_cdf(x, y, y_value, group, skipna=False):
         _func = np.nanquantile if skipna else np.quantile
         return _func(x, q=q)
 
-    def _map_cdf_group(gr, y_value, dim="time", skipna=False):
+    def _map_cdf_group(gr, y_value, dim=["time"], skipna=False):
         return xr.apply_ufunc(
             _map_cdf_1d,
             gr.x,
             gr.y,
-            input_core_dims=[[dim]] * 2,
+            input_core_dims=[dim] * 2,
             output_core_dims=[["x"]],
             vectorize=True,
             keep_attrs=True,
@@ -50,12 +54,8 @@ def map_cdf(x, y, y_value, group, skipna=False):
             output_dtypes=[gr.x.dtype],
         )
 
-    return group_apply(
-        _map_cdf_group,
-        xr.Dataset(data_vars={"x": x, "y": y}),
-        group,
-        y_value=np.atleast_1d(y_value),
-        skipna=skipna,
+    return group.apply(
+        _map_cdf_group, {"x": x, "y": y}, y_value=np.atleast_1d(y_value), skipna=skipna,
     )
 
 
@@ -71,35 +71,6 @@ def ecdf(x, value, dim="time"):
     ----------
     x : array
       Sample.
-    value : array
-      The values within the support of `x` for which to compute the CDF value.
-
-    Returns
-    -------
-    array
-      Empirical CDF.
-    """
-
-    return xr.apply_ufunc(
-        _ecdf_1d,
-        x,
-        input_core_dims=[[dim]],
-        output_core_dims=[["x"]],
-        vectorize=True,
-        keep_attrs=True,
-        kwargs={"value": value},
-        dask="parallelized",
-        output_dtypes=[np.float],
-    )
-
-
-def ecdf_lazy(x, value, dim="time"):
-    """Return the empirical CDF of a sample at a given value.
-
-    Parameters
-    ----------
-    x : array
-      Sample.
     value : float
       The value within the support of `x` for which to compute the CDF value.
 
@@ -109,271 +80,6 @@ def ecdf_lazy(x, value, dim="time"):
       Empirical CDF.
     """
     return (x <= value).sum(dim) / x.notnull().sum(dim)
-
-
-def adapt_freq(
-    sim: xr.DataArray,
-    obs: xr.DataArray,
-    thresh: float = 0,
-    group: str = "time",
-    window: int = 1,
-):
-    r"""
-    Adapt frequency of values under thresh of sim, in order to match obs.
-
-    This is useful when the dry-day frequency in the simulations is higher than in the observations. This function
-    will create new non-null values for sim, so that correction factors
-
-    Parameters
-    ----------
-    obs : xr.DataArray
-      Observed data.
-    sim : xr.DataArray
-      Simulated data.
-    thresh : float
-      Threshold below which values are considered zero.
-    group, window
-      Grouping information, see group_apply()
-
-    Returns
-    -------
-    xr.Dataset wth the following variables:
-
-      - `sim_adj`: Simulated data with the same frequency of values under threshold than obs.
-        Adjustement is made group-wise.
-      - `pth` : For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
-        either left as zero values or given a random value between thresh and pth.
-        NaN where frequency adaptation wasn't needed.
-      - `dP0` : For each group, the percentage of values that were corrected in sim.
-
-    Notes
-    -----
-    With :math:`P_0^o` the frequency of values under threshold :math:`T_0` in the reference (obs) and
-    :math:`P_0^s` the same for the simulated values, :math:`\\Delta P_0 = \\frac{P_0^s - P_0^o}{P_0^s}`,
-    when positive, represents the proportion of values under :math:`T_0` that need to be corrected.
-
-    The correction replaces a proportion :math:`\\Delta P_0` of the values under :math:`T_0` in sim by a uniform random
-    number between :math:`T_0` and :math:`P_{th}`, where :math:`P_{th} = F_{obs}^{-1}( F_{sim}( T_0 ) )` and
-    `F(x)` is the empirical cumulative distribution function (CDF).
-
-
-    References
-    ----------
-    Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its
-    impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
-    """
-
-    def _adapt_freq_group(ds, dim="time"):
-        if not isinstance(dim, (tuple, list)):
-            dim = [dim]
-
-        if isinstance(ds.sim.data, dsk.Array):
-            # In order to be efficient and lazy, some classical numpy ops will be replaced by dask's version
-            mod = dsk
-            kws = {"chunks": ds.sim.chunks}
-        else:
-            mod = np
-            kws = {}
-
-        # Compute the probability of finding a value <= thresh
-        # This is the "dry-day frequency" in the precipitation case
-        P0_sim = ecdf_lazy(ds.sim, thresh, dim=dim)
-        P0_obs = ecdf_lazy(ds.obs, thresh, dim=dim)
-
-        # The proportion of values <= thresh in sim that need to be corrected, compared to obs
-        dP0 = (P0_sim - P0_obs) / P0_sim
-
-        # Compute : ecdf_obs^-1( ecdf_sim( thresh ) )
-        # The value in obs with the same rank as the first non zero value in sim.
-        pth = xr.apply_ufunc(
-            np.percentile,
-            ds.obs,
-            P0_sim
-            * 100,  # np.percentile takes values in [0, 100], ecdf outputs in [0, 1]
-            input_core_dims=[dim, []],
-            dask="parallelized",
-            vectorize=True,
-            output_dtypes=[ds.obs.dtype],
-        ).where(
-            dP0 > 0
-        )  # pth is meaningless when freq. adaptation is not needed
-
-        if window > 1:
-            # P0_sim was computed using the window, but only the original timeseries is corrected.
-            sim = ds.sim.isel(window=(window - 1) // 2)
-            dim = [list(set(dim) - {"window"})]
-        else:
-            sim = ds.sim
-
-        # Get the percentile rank of each value in sim.
-        # da.rank() doesn't work with dask arrays.
-        rank = xr.apply_ufunc(
-            lambda da: np.argsort(np.argsort(da, axis=-1), axis=-1),
-            sim,
-            input_core_dims=[dim],
-            output_core_dims=[dim],
-            dask="parallelized",
-            output_dtypes=[sim.dtype],
-        ) / sim.notnull().sum(dim=dim)
-
-        # Frequency-adapted sim
-        sim_ad = sim.where(
-            dP0 < 0,  # dP0 < 0 means no-adaptation.
-            sim.where(
-                (rank < P0_obs) | (rank > P0_sim),  # Preserve current values
-                # Generate random numbers ~ U[T0, Pth]
-                (pth.broadcast_like(sim) - thresh)
-                * mod.random.random_sample(sim.shape, **kws)
-                + thresh,
-            ),
-        )
-
-        # Set some metadata
-        sim_ad.attrs.update(ds.sim.attrs)
-        pth.attrs[
-            "long_name"
-        ] = "Smallest value of the timeseries not corrected by frequency adaptation."
-        dP0.attrs[
-            "long_name"
-        ] = "Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation"
-
-        # Tell group_apply that these will need reshaping (regrouping)
-        # This is needed since if any variable comes out a groupby with the original group axis, the whole output is broadcasted back to the original dims.
-        pth.attrs["_group_apply_reshape"] = True
-        dP0.attrs["_group_apply_reshape"] = True
-        return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
-
-    return group_apply(
-        _adapt_freq_group,
-        xr.Dataset(data_vars={"sim": sim, "obs": obs}),
-        group,
-        window,
-    )
-
-
-# TODO: This function should also return sth
-def _adjust_freq_1d(sm, ob, thresh=0):
-    """Adjust frequency of null values, where values are considered null if below a threshold.
-
-    Assuming we want to map sm to ob, but that there are proportionally more null values in sm than in obs. Null
-    values in sm cannot be converted into non-null values by multiplying by a factor.
-
-    Parameters
-    ----------
-    sm : np.array
-    """
-    o = ob[~np.isnan(ob)]
-    s = sm[~np.isnan(sm)]
-
-    # Frequency of values below threshold in obs
-    n_dry_o = (o < thresh).sum()  # Number of dry days in obs
-
-    # Target number of values below threshold in sim to match obs frequency
-    n_dry_sp = np.ceil(s.size * n_dry_o / o.size).astype(int)
-
-    # Sort sim values, storing the index to reorder the values later.
-    ind_sort = np.argsort(s)
-    ss = s[ind_sort]  # sorted s
-
-    # Last precip value in sim that should be 0
-    if n_dry_sp > 0:
-        sth = ss[min(n_dry_sp, s.size) - 1]  # noqa
-    else:
-        sth = np.nan  # noqa
-
-    # Where precip values are under thresh but shouldn't. iw: indices wrong
-    iw = np.where(ss[n_dry_sp:] < thresh)[0] + n_dry_sp
-
-    # More zeros in sim than in obs: need to create non-zero sims
-    if iw.size > 0:
-        so = np.sort(o)  # sorted o
-
-        # Linear mapping between sorted o and sorted s if size don't match
-        iw_max = np.ceil(o.size * iw.max() / s.size).astype(int)
-
-        # Values in obs corresponding to small precips
-        auxo = so[n_dry_o : iw_max + 1]
-
-        # Generate new values matching those small obs
-        if np.unique(auxo).size > 6:
-            params = gamma.fit(auxo)
-            ss[n_dry_sp : iw.max() + 1] = gamma.rvs(*params, size=iw.size)
-            # Sometimes we generate values lower than sth... problematic ?
-            # if np.any(ss[n_dry_sp : iw.max() + 1] < sth):
-            #    raise ValueError
-        else:
-            ss[n_dry_sp : iw.max() + 1] = auxo.mean()
-
-        # TODO: This additional sort wrecks the original sorting order.
-        ss = np.sort(ss)
-
-    # Less zeros in sim than obs: simply set sim values to 0
-    if n_dry_o > 0:
-        ss[:n_dry_sp] = 0
-
-    # Reorder sim
-    out = np.full_like(sm, np.nan)
-    ind_unsort = np.empty_like(ind_sort)
-    ind_unsort[ind_sort] = np.arange(ind_sort.size)
-    out[~np.isnan(sm)] = ss[ind_unsort]
-    return out
-
-
-def _adjust_freq_group(gr, thresh=0, dim="time"):
-    """Adjust freq on group"""
-    return xr.apply_ufunc(
-        _adjust_freq_1d,
-        gr.sim,
-        gr.obs,
-        input_core_dims=[[dim]] * 2,
-        output_core_dims=[[dim]],
-        vectorize=True,
-        keep_attrs=True,
-        kwargs={"thresh": thresh},
-        dask="parallelized",
-        output_dtypes=[gr.sim.dtype],
-    )
-
-
-def adjust_freq(obs, sim, thresh, group):
-    """
-    Adjust frequency of values under thresh of sim, based on obs.
-
-
-    Parameters
-    ----------
-    obs : xr.DataArray
-      Observed data.
-    sim : xr.DataArray
-      Simulated data.
-    thresh : float
-      Threshold below which values are considered null.
-
-    Returns
-    -------
-    adjusted_sim : xr.DataArray
-        Simulated data with the same frequency of values under threshold than obs.
-        Adjustement is made group-wise.
-
-    References
-    ----------
-    Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its
-    impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
-    """
-    return group_apply(
-        _adjust_freq_group,
-        xr.Dataset(data_vars={"sim": sim, "obs": obs}),
-        group,
-        thresh=thresh,
-    )
-
-
-def parse_group(group):
-    """Return dimension and property."""
-    if "." in group:
-        return group.split(".")
-    else:
-        return group, None
 
 
 # TODO: When ready this should be a method of a Grouping object
@@ -478,23 +184,22 @@ def get_correction(x, y, kind):
     return out
 
 
-def broadcast(grouped, x, group=None, interp="nearest", sel=None):
-    if hasattr(group, "dim"):
-        dim, prop = group.dim, group.prop
-    else:
-        dim, prop = parse_group(group or grouped.group)
-
+@parse_group
+def broadcast(grouped, x, *, group="time", interp="nearest", sel=None):
     if sel is None:
         sel = {}
 
-    if prop is not None and prop not in sel:
-        sel.update({prop: get_index(x, dim, prop, interp)})
+    if group.prop is not None and group.prop not in sel:
+        sel.update({group.prop: group.get_index(x)})
 
     if sel:
         # Extract the correct mean factor for each time step.
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
+            if group.prop is not None:
+                grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
+
             if interp == "cubic" and len(sel.keys) > 1:
                 interp = "linear"
                 warn(
@@ -638,57 +343,6 @@ def get_index(da, dim, prop, interp):
     return xi.expand_dims(**{k: v for (k, v) in da.coords.items() if k != dim})
 
 
-# def reindex(qm, xq, extrapolation="constant"):
-#     """Create a mapping between x values and y values based on their respective quantiles.
-
-#     Parameters
-#     ----------
-#     qm : xr.DataArray
-#       Quantile correction factors.
-#     xq : xr.DataArray
-#       Quantiles for source array (historical simulation).
-#     extrapolation : {"constant"}
-#       Method to extrapolate outside the estimated quantiles.
-
-#     Returns
-#     -------
-#     xr.DataArray
-#       Quantile correction factors whose quantile coordinates have been replaced by corresponding x values.
-
-#     Notes
-#     -----
-#     The original qm object has `quantile` coordinates and some grouping coordinate (e.g. month). This function
-#     reindexes the array based on the values of x, instead of the quantiles. Since the x values are different from
-#     group to group, the index can get fairly large.
-#     """
-#     dim, prop = parse_group(xq.group)
-#     if prop is None:
-#         q, x = extrapolate_qm(qm, xq, extrapolation)
-#         out = q.rename({"quantile": "x"}).assign_coords(x=x.values)
-
-#     else:
-#         # Interpolation from quantile to values.
-#         def func(d):
-#             q, x = extrapolate_qm(d.qm, d.xq, extrapolation)
-#             return xr.DataArray(
-#                 dims="x",
-#                 data=np.interp(newx, x, q, left=np.nan, right=np.nan),
-#                 coords={"x": newx},
-#             )
-
-#         ds = xr.Dataset({"xq": xq, "qm": qm})
-#         gr = ds.groupby(prop)
-
-#         # X coordinates common to all groupings
-#         xs = list(map(lambda g: extrapolate_qm(g[1].qm, g[1].xq, extrapolation)[1], gr))
-#         newx = np.unique(np.concatenate(xs))
-#         out = gr.map(func, shortcut=True)
-
-#     out.attrs = qm.attrs
-#     out.attrs["quantiles"] = qm.coords["quantile"].values
-#     return out
-
-
 def extrapolate_qm(qf, xq, method="constant"):
     """Extrapolate quantile correction factors beyond the computed quantiles.
 
@@ -767,7 +421,8 @@ def add_endpoints(da, left, right, dim="quantiles"):
     return xr.concat((l, da, r), dim=dim)
 
 
-def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
+@parse_group
+def interp_on_quantiles(newx, xq, yq, *, group="time", method="linear"):
     """Interpolate values of yq on new values of x.
 
     Interpolate in 2D if grouping is used, in 1D otherwise.
@@ -782,18 +437,16 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
         coordinates and values on which to interpolate. The interpolation is done
         along the "quantiles" dimension if `group` has no group information.
         If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
-    group : str
+    group : Union[str, Grouper]
         The dimension and grouping information. (ex: "time" or "time.month").
         Defaults to the "group" attribute of xq, or "time" if there is none.
     method : {'nearest', 'linear', 'cubic'}
         The interpolation method.
     }
     """
-    if hasattr(group, "dim"):
-        dim = group.dim
-        prop = group.prop
-    else:
-        dim, prop = parse_group(group or xq.attrs.get("group", "time"))
+    dim = group.dim
+    prop = group.prop
+
     if prop is None:
         fill_value = "extrapolate" if method == "nearest" else np.nan
 
@@ -813,6 +466,7 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
             dask="parallelized",
             output_dtypes=[np.float],
         )
+    # else:
 
     def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
         return griddata(
@@ -822,7 +476,9 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
             method=method,
         )
 
-    newg = newx[prop]
+    xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
+    yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
+    newg = group.get_index(newx)
     oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
 
     return xr.apply_ufunc(
@@ -844,27 +500,3 @@ def interp_on_quantiles(newx, xq, yq, group=None, method="linear"):
         dask="parallelized",
         output_dtypes=[np.float],
     )
-
-
-# Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
-def jitter_under_thresh(x, thresh):
-    """Replace values smaller than threshold by a uniform random noise.
-
-    Parameters
-    ----------
-    x : xr.DataArray
-      Values.
-    thresh : float
-      Threshold under which to add uniform random noise to values.
-
-    Returns
-    -------
-    array
-
-    Notes
-    -----
-    If thresh is high, this will change the mean value of x.
-    """
-    epsilon = np.finfo(x.dtype).eps
-    jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    return x.where(~((x < thresh) & (x.notnull())), jitter)

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from xclim.downscaling.base import PolyDetrend
+from xclim.downscaling.detrending import PolyDetrend
 
 
 @pytest.mark.parametrize("freq", (None, "MS", "YS", "QS", "M", "Y", "Q"))

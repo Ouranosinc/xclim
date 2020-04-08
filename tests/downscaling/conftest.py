@@ -3,9 +3,9 @@ import pytest
 import xarray as xr
 
 from . import utils as tu
+from xclim.downscaling.base import parse_group
 from xclim.downscaling.utils import apply_correction
 from xclim.downscaling.utils import equally_spaced_nodes
-from xclim.downscaling.utils import parse_group
 
 
 # Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in
@@ -64,15 +64,15 @@ def qm_small():
 
 @pytest.fixture
 def make_qm():
-    def _make_qm(a, group="time.month"):
-        dim, prop = parse_group(group)
+    @parse_group
+    def _make_qm(a, *, group="time.month"):
         a = np.atleast_2d(a)
         n, m = a.shape
         mo = range(1, m + 1)
 
-        if prop:
+        if group.prop:
             q = equally_spaced_nodes(n, None)
-            dims = ("quantiles", prop)
+            dims = ("quantiles", group.prop)
             coords = {"quantiles": q, "month": mo}
         else:
             q = equally_spaced_nodes(m, None)

@@ -53,7 +53,7 @@ def train(x, y, group="time.month", kind="+", window=1):
     sy = group_apply("mean", y, group, window)
 
     return xr.Dataset(
-        data_vars={"qf": get_correction(sx, sy, kind)},
+        data_vars={"qf": sx + sy},
         attrs={"group": group, "group_window": window, "kind": kind},
     )
 
