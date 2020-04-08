@@ -47,7 +47,7 @@ class BaseCorrection(ParametrizableClass):
         self._train(obs, sim)
         self.__trained = True
 
-    def predict(self, fut: DataArray):
+    def predict(self, fut: DataArray, **kwargs):
         """Return bias-corrected data. Refer to the class documentationfor the algorithm details.
 
         Parameters
@@ -57,7 +57,7 @@ class BaseCorrection(ParametrizableClass):
         """
         if not self.__trained:
             raise ValueError("train() must be called before predicting.")
-        out = self._predict(fut)
+        out = self._predict(fut, **kwargs)
         out.attrs["bias_corrected"] = True
         return out
 
@@ -178,13 +178,13 @@ class DetrendedQuantileMapping(QuantileMapping):
             description="Scaling factor making the mean of sim match the one of sim.",
         )
 
-    def _predict(self, fut):
+    def _predict(self, fut, degree=0):
         fut = apply_correction(
             fut,
             broadcast(self.ds.scaling, fut, group=self.group, interp=self.interp),
             self.kind,
         )
-        fut_fit = PolyDetrend(degree=1, kind=self.kind).fit(fut)
+        fut_fit = PolyDetrend(degree=degree, kind=self.kind).fit(fut)
         fut_detrended = fut_fit.detrend(fut)
         fut_corr_detrended = super()._predict(fut_detrended)
         fut_corr = fut_fit.retrend(fut_corr_detrended)

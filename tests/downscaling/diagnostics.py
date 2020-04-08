@@ -2,8 +2,6 @@
 This module is meant to compare results with those expected from papers, or create figures illustrating the
 behavior of downscaling methods and utilities.
 """
-from importlib import reload
-
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile
@@ -36,15 +34,15 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
 
 def cannon_2015_figure_2():
-    n = 50000
-    obs, hist, fut = tu.cannon_2015_rvs(n, True)
+    n = 10000
+    obs, hist, fut = tu.cannon_2015_rvs(n, random=False)
     QM = QuantileMapping(kind="*", group="time", interp="linear")
     QM.train(obs, hist)
     fut_eqm = QM.predict(fut)
 
     DQM = DetrendedQuantileMapping(kind="*", group="time", interp="linear")
     DQM.train(obs, hist)
-    fut_dqm = DQM.predict(fut)
+    fut_dqm = DQM.predict(fut, degree=0)
 
     QDM = QuantileDeltaMapping(kind="*", group="time", interp="linear")
     QDM.train(obs, hist)
