@@ -238,6 +238,7 @@ def wrap_lons_and_split_at_greenwich(func):
             if (np.min(x_dim) < 0 and np.max(x_dim) >= 360) or (
                 np.min(x_dim) < -180 and np.max >= 180
             ):
+                # TODO: This should raise an exception, right?
                 warnings.warn(
                     "DataArray doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
                     " Tread with caution.",
@@ -278,14 +279,14 @@ def wrap_lons_and_split_at_greenwich(func):
                     poly.at[[index], "geometry"] = split_gdf.geometry.values
 
             # Reproject features in WGS84 CSR to use 0 to 360 as longitudinal values
-            wrapped_lons = CRS(
+            wrapped_lons = CRS.from_string(
                 "+proj=longlat +ellps=WGS84 +lon_wrap=180 +datum=WGS84 +no_defs"
             )
 
             poly = poly.to_crs(crs=wrapped_lons)
             if split_flag:
                 warnings.warn(
-                    "Rebuffering split polygons to ensure edge inclusion in selection",
+                    "Rebuffering split polygons to ensure edge inclusion in selection.",
                     UserWarning,
                     stacklevel=4,
                 )
@@ -306,8 +307,9 @@ def create_mask_vectorize(
     y_dim: xarray.DataArray = None,
     poly: gpd.GeoDataFrame = None,
     wrap_lons: bool = False,
+    check_overlap: bool = False,
 ):
-    """Creates a mask with values corresponding to the features in a GeoDataFrame.
+    """Creates a mask with values corresponding to the features in a GeoDataFrame using vectorize methods.
 
     The returned mask's points have the value of the first geometry of `poly` they fall in.
 
@@ -321,6 +323,8 @@ def create_mask_vectorize(
       GeoDataFrame used to create the xarray.DataArray mask.
     wrap_lons : bool
       Shift vector longitudes by -180,180 degrees to 0,360 degrees; Default = False
+    check_overlap: bool
+      Perform a check to verify if shapes contain overlapping geometries.
 
     Returns
     -------
@@ -342,7 +346,10 @@ def create_mask_vectorize(
     >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
-    _check_has_overlaps(polygons=poly)
+    if check_overlap:
+        _check_has_overlaps(polygons=poly)
+    if wrap_lons:
+        warnings.warn("Wrapping longitudes at 180 degrees.")
 
     if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
@@ -360,18 +367,17 @@ def create_mask_vectorize(
         coords_out = x_dim.coords
 
     # try vectorize
-    mask_test = np.zeros(lat1.shape) + np.nan
+    mask = np.zeros(lat1.shape) + np.nan
     for pp in poly.index:
-        # poly[poly.index == pp].geometry.values
         for vv in poly[poly.index == pp].geometry.values:
             b1 = vectorized.contains(vv, lon1.flatten(), lat1.flatten()).reshape(
                 lat1.shape
             )
-            mask_test[b1] = pp
+            mask[b1] = pp
 
-    mask_test = xarray.DataArray(mask_test, dims=dims_out, coords=coords_out)
+    mask = xarray.DataArray(mask, dims=dims_out, coords=coords_out)
 
-    return mask_test
+    return mask
 
 
 @wrap_lons_and_split_at_greenwich
@@ -381,8 +387,9 @@ def create_mask(
     y_dim: xarray.DataArray = None,
     poly: gpd.GeoDataFrame = None,
     wrap_lons: bool = False,
+    check_overlap: bool = False,
 ):
-    """Creates a mask with values corresponding to the features in a GeoDataFrame.
+    """Creates a mask with values corresponding to the features in a GeoDataFrame using spatial join methods.
 
     The returned mask's points have the value of the first geometry of `poly` they fall in.
 
@@ -396,6 +403,8 @@ def create_mask(
       GeoDataFrame used to create the xarray.DataArray mask.
     wrap_lons : bool
       Shift vector longitudes by -180,180 degrees to 0,360 degrees; Default = False
+    check_overlap: bool
+      Perform a check to verify if shapes contain overlapping geometries.
 
     Returns
     -------
@@ -418,7 +427,11 @@ def create_mask(
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
     wgs84 = CRS(4326)
-    _check_has_overlaps(polygons=poly)
+
+    if check_overlap:
+        _check_has_overlaps(polygons=poly)
+    if wrap_lons:
+        warnings.warn("Wrapping longitudes at 180 degrees.")
 
     if len(x_dim.shape) == 1 & len(y_dim.shape) == 1:
         # create a 2d grid of lon, lat values
@@ -464,7 +477,7 @@ def create_mask(
 def subset_shape(
     ds: Union[xarray.DataArray, xarray.Dataset],
     shape: Union[str, Path, gpd.GeoDataFrame],
-    vectorize: bool = False,
+    vectorize: bool = True,
     raster_crs: Optional[Union[str, int]] = None,
     shape_crs: Optional[Union[str, int]] = None,
     buffer: Optional[Union[int, float]] = None,
@@ -473,8 +486,8 @@ def subset_shape(
 ) -> Union[xarray.DataArray, xarray.Dataset]:
     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
 
-    Return a subset of a DataArray or Dataset for grid points falling within the area of a Polygon and/or MultiPolygon shape,
-      or grid points along the path of a LineString and/or MultiLineString.
+    Return a subset of a DataArray or Dataset for grid points falling within the area of a Polygon and/or
+     MultiPolygon shape, or grid points along the path of a LineString and/or MultiLineString.
 
     Parameters
     ----------
@@ -523,7 +536,10 @@ def subset_shape(
             subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
     """
     wgs84 = CRS(4326)
-    wgs84_wrapped = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180")
+    # PROJ4 definition for WGS84 with longitudes ranged between -180/+180.
+    wgs84_wrapped = CRS.from_string(
+        "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs lon_wrap=180"
+    )
 
     if isinstance(ds, xarray.DataArray):
         ds_copy = ds._to_temp_dataset()
@@ -538,7 +554,7 @@ def subset_shape(
     if buffer is not None:
         poly.geometry = poly.buffer(buffer)
 
-    # Get the shape's bounding box
+    # Get the shape's bounding box.
     bounds = poly.bounds
     lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
     lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
@@ -553,7 +569,7 @@ def subset_shape(
     if ds_copy.lon.size == 0 or ds_copy.lat.size == 0:
         raise ValueError(
             "No grid cell centroids found within provided polygon bounding box. "
-            'Try using the "buffer" option to create an expanded area'
+            'Try using the "buffer" option to create an expanded area.'
         )
 
     if start_date or end_date:
@@ -581,16 +597,17 @@ def subset_shape(
             raise ValueError("Longitudes exceed domain of WGS84 coordinate system.")
 
         try:
+            # Extract CF-compliant CRS_WKT from crs variable.
             raster_crs = CRS.from_cf(ds_copy.crs.attrs)
         except AttributeError:
             if np.min(ds_copy.lon) >= 0 and np.max(ds_copy.lon) <= 360:
-                # PROJ4 definition for WGS84 with longitudes ranged between -180/+180.
                 wrap_lons = True
                 raster_crs = wgs84_wrapped
             else:
                 raster_crs = wgs84
     _check_crs_compatibility(shape_crs=shape_crs, raster_crs=raster_crs)
 
+    # Create mask using the vectorize or spatial join methods.
     if vectorize:
         mask_2d = create_mask_vectorize(
             x_dim=ds_copy.lon, y_dim=ds_copy.lat, poly=poly, wrap_lons=wrap_lons
@@ -616,7 +633,7 @@ def subset_shape(
         mask_2d = mask_2d.dropna(dim, how="all")
     ds_copy = ds_copy.sel({dim: mask_2d[dim] for dim in mask_2d.dims})
 
-    # Add a CRS definition using CF conventions and as a global attribute WKT for reference purposes
+    # Add a CRS definition using CF conventions and as a global attribute in CRS_WKT for reference purposes
     ds_copy.attrs["crs"] = raster_crs.to_string()
     ds_copy["crs"] = 1
     ds_copy["crs"].attrs.update(raster_crs.to_cf())
@@ -807,9 +824,12 @@ def _check_has_overlaps(polygons: gpd.GeoDataFrame):
     for n, p in enumerate(polygons["geometry"][:-1], 1):
         if not any(p.overlaps(g) for g in polygons["geometry"][n:]):
             non_overlapping.append(p)
-    if len(polygons) == len(non_overlapping):
-        return
-    return False
+    if len(polygons) != len(non_overlapping):
+        warnings.warn(
+            f"List of shapes contains overlap between features. Results will vary on feature order.",
+            UserWarning,
+            stacklevel=5,
+        )
 
 
 def _check_has_overlaps_old(polygons: gpd.GeoDataFrame):
@@ -881,6 +901,7 @@ def subset_gridpoint(
       Defaults to last day of input data-array.
     tolerance : Optional[float]
       Masks values if the distance to the nearest gridpoint is larger than tolerance in meters.
+    add_distance: bool
 
     Returns
     -------
@@ -903,7 +924,6 @@ def subset_gridpoint(
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
     """
-    dist = None
     # check if trying to subset lon and lat
     if lat is not None and lon is not None:
         ptdim = lat.dims[0]
