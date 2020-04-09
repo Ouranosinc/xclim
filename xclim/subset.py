@@ -37,10 +37,10 @@ def check_start_end_dates(func):
         A decorator to verify that start and end dates are valid in a time subsetting function.
         """
         da = args[0]
-        if "start_date" not in kwargs:
+        if "start_date" not in kwargs or kwargs["start_date"] is None:
             # use string for first year only - .sel() will include all time steps
             kwargs["start_date"] = da.time.min().dt.strftime("%Y").values
-        if "end_date" not in kwargs:
+        if "end_date" not in kwargs or kwargs["end_date"] is None:
             # use string for last year only - .sel() will include all time steps
             kwargs["end_date"] = da.time.max().dt.strftime("%Y").values
 
@@ -927,55 +927,54 @@ def subset_gridpoint(
     if lat is None or lon is None:
         raise ValueError("Insufficient coordinates provided to locate grid point(s).")
 
-    if lat is not None and lon is not None:
-        ptdim = lat.dims[0]
+    ptdim = lat.dims[0]
 
-        # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
-        if hasattr(da, "lon") and hasattr(da, "lat"):
-            dims = list(da.dims)
+    # make sure input data has 'lon' and 'lat'(dims, coordinates, or data_vars)
+    if hasattr(da, "lon") and hasattr(da, "lat"):
+        dims = list(da.dims)
 
-            # if 'lon' and 'lat' are present as data dimensions use the .sel method.
-            if "lat" in dims and "lon" in dims:
-                da = da.sel(lat=lat, lon=lon, method="nearest")
+        # if 'lon' and 'lat' are present as data dimensions use the .sel method.
+        if "lat" in dims and "lon" in dims:
+            da = da.sel(lat=lat, lon=lon, method="nearest")
 
-                if tolerance is not None or add_distance:
-                    # Calculate the geodesic distance between grid points and the point of interest.
-                    dist = distance(da, lon=lon, lat=lat)
-                else:
-                    dist = None
-
-            else:
+            if tolerance is not None or add_distance:
                 # Calculate the geodesic distance between grid points and the point of interest.
                 dist = distance(da, lon=lon, lat=lat)
-                pts = []
-                dists = []
-                for site in dist[ptdim]:
-                    # Find the indices for the closest point
-                    inds = np.unravel_index(
-                        dist.sel({ptdim: site}).argmin(), dist.sel({ptdim: site}).shape
-                    )
+            else:
+                dist = None
 
-                    # Select data from closest point
-                    args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
-                    pts.append(da.isel(**args))
-                    dists.append(dist.isel(**args))
-                da = xarray.concat(pts, dim=ptdim)
-                dist = xarray.concat(dists, dim=ptdim)
         else:
-            raise (
-                Exception(
-                    f'{subset_gridpoint.__name__} requires input data with "lon" and "lat" coordinates or data variables.'
+            # Calculate the geodesic distance between grid points and the point of interest.
+            dist = distance(da, lon=lon, lat=lat)
+            pts = []
+            dists = []
+            for site in dist[ptdim]:
+                # Find the indices for the closest point
+                inds = np.unravel_index(
+                    dist.sel({ptdim: site}).argmin(), dist.sel({ptdim: site}).shape
                 )
+
+                # Select data from closest point
+                args = {xydim: ind for xydim, ind in zip(dist.dims, inds)}
+                pts.append(da.isel(**args))
+                dists.append(dist.isel(**args))
+            da = xarray.concat(pts, dim=ptdim)
+            dist = xarray.concat(dists, dim=ptdim)
+    else:
+        raise (
+            Exception(
+                f'{subset_gridpoint.__name__} requires input data with "lon" and "lat" coordinates or data variables.'
             )
+        )
 
-        if tolerance is not None and dist is not None:
-            da = da.where(dist < tolerance)
+    if tolerance is not None and dist is not None:
+        da = da.where(dist < tolerance)
 
-        if add_distance:
-            da = da.assign_coords(distance=dist)
+    if add_distance:
+        da = da.assign_coords(distance=dist)
 
-        if len(lat) == 1:
-            da = da.squeeze(ptdim)
+    if len(lat) == 1:
+        da = da.squeeze(ptdim)
 
     if start_date or end_date:
         da = subset_time(da, start_date=start_date, end_date=end_date)
