@@ -48,7 +48,7 @@ class BaseCorrection(ParametrizableClass):
         self.__trained = True
 
     def predict(self, fut: DataArray, **kwargs):
-        """Return bias-corrected data. Refer to the class documentationfor the algorithm details.
+        """Return bias-corrected data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -77,13 +77,18 @@ class BaseCorrection(ParametrizableClass):
         raise NotImplementedError
 
 
-class QuantileMapping(BaseCorrection):
-    """Quantile Mapping bias-correction.
+class EmpiricalQuantileMapping(BaseCorrection):
+    """Empirical Quantile Mapping bias-correction.
 
     Correction factors are computed between the quantiles of `obs` and `sim`.
     Values of `fut` are matched to the corresponding quantiles of `sim` and corrected accordingly.
 
-    Algorithms here are based on [Cannon2015]_.
+    .. math::
+
+      F^{-1}_{obs} (F_{mod}(x_{mod}))
+
+    where :math:`F` is the cumulative distribution function (CDF) and `mod` stands for model data.
+
 
     Parameters
     ----------
@@ -97,9 +102,12 @@ class QuantileMapping(BaseCorrection):
       The type of extrapolation to use. See :py:func:`xclim.downscaling.utils.extrapolate_qm` for details.
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.downscaling.base.Grouper` for details.
+
     References
     ----------
-    [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    Dequé, M. (2007). Frequency of precipitation and temperature extremes over France in an anthropogenic scenario:
+    Model results and statistical correction according to observed values. Global and Planetary Change, 57(1–2),
+    16–26. https://doi.org/10.1016/j.gloplacha.2006.11.030
     """
 
     @parse_group
@@ -148,7 +156,7 @@ class QuantileMapping(BaseCorrection):
         return apply_correction(fut, cf, self.kind)
 
 
-class DetrendedQuantileMapping(QuantileMapping):
+class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     """Detrended Quantile Mapping bias-correction.
 
     A scaling factor that would make the mean of `sim` match the mean of `obs` is computed.
@@ -191,7 +199,7 @@ class DetrendedQuantileMapping(QuantileMapping):
         return fut_corr
 
 
-class QuantileDeltaMapping(QuantileMapping):
+class QuantileDeltaMapping(EmpiricalQuantileMapping):
     """Quantile Delta Mapping bias-correction.
 
     Correction factors are computed between the quantiles of `obs` and `sim`.
@@ -291,7 +299,8 @@ class LOCI(BaseCorrection):
 class Scaling(BaseCorrection):
     """Scaling bias-correction
 
-    Simple bias-correction method scaling variables by an additive or multiplicative factor so that the mean of sim matches the mean of obs.
+    Simple bias-correction method scaling variables by an additive or multiplicative factor so that the mean of sim
+    matches the mean of obs.
 
     Parameters
     ----------

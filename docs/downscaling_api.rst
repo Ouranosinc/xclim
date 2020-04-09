@@ -1,24 +1,28 @@
-.. automodule:: xclim.downscaling.scaling
+Downscaling
+===========
+
+.. automodule:: xclim.downscaling
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.downscaling.loci
-   :members: train, predict
+Available methods
+-----------------
+
+.. automodule:: xclim.downscaling.correction
+   :members: Scaling, LOCI, EmpiricalQuantileMapping, DetrendedQuantileMapping, QuantileDeltaMapping
+   :show-inheritance:
+
+
+Utilities
+---------
+
+.. automodule:: xclim.downscaling.utils
+   :members: equally_spaced_nodes
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.downscaling.eqm
-   :members: train, predict
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.downscaling.dqm
-   :members: train, predict
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.downscaling.qdm
-   :members: train, predict
+.. automodule:: xclim.downscaling.processing
+   :members: adapt_freq, jitter_under_thresh
    :undoc-members:
    :show-inheritance:

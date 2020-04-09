@@ -32,27 +32,15 @@ Unit handling module
    :undoc-members:
    :show-inheritance:
 
+
 .. _downscaling-api:
 
 Downscaling
 ===========
 
-.. automodule:: xclim.downscaling
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Available methods:
-  .. toctree::
+.. toctree::
 
      downscaling_api
-
-Utilities:
-
-.. automodule:: xclim.downscaling.utils
-   :members: adapt_freq, equally_spaced_nodes, jitter_under_thresh
-   :undoc-members:
-   :show-inheritance:
 
 
 Other utilities
