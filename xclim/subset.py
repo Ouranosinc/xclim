@@ -924,7 +924,9 @@ def subset_gridpoint(
     # Subset with specific start_dates and end_dates
     >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
     """
-    # check if trying to subset lon and lat
+    if lat is None or lon is None:
+        raise ValueError("Insufficient coordinates provided to locate grid point(s).")
+
     if lat is not None and lon is not None:
         ptdim = lat.dims[0]
 
@@ -939,6 +941,8 @@ def subset_gridpoint(
                 if tolerance is not None or add_distance:
                     # Calculate the geodesic distance between grid points and the point of interest.
                     dist = distance(da, lon=lon, lat=lat)
+                else:
+                    dist = None
 
             else:
                 # Calculate the geodesic distance between grid points and the point of interest.
@@ -964,7 +968,7 @@ def subset_gridpoint(
                 )
             )
 
-        if tolerance is not None:
+        if tolerance is not None and dist is not None:
             da = da.where(dist < tolerance)
 
         if add_distance:
