@@ -413,8 +413,8 @@ def interp_on_quantiles(
             method=method,
         )
 
-    xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
-    yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
+    xq = add_cyclic_bounds(xq, prop, cyclic_coords=True)
+    yq = add_cyclic_bounds(yq, prop, cyclic_coords=True)
     newg = group.get_index(newx)
     oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
 
