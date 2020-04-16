@@ -232,7 +232,7 @@ class MissingAny(MissingBase):
         return cond0 | cond1
 
 
-class MissingWHO(MissingAny):
+class MissingWMO(MissingAny):
     def __init__(self, da, freq, **indexer):
         # Force computation on monthly frequency
         if not freq.startswith("M"):
@@ -285,8 +285,8 @@ def missing_any(da, freq, **indexer):
     return MissingAny(da, freq, **indexer)()
 
 
-def missing_who(da, freq, nm=11, nc=5, **indexer):
-    r"""Return whether a series fails WHO criteria for missing days.
+def missing_wmo(da, freq, nm=11, nc=5, **indexer):
+    r"""Return whether a series fails WMO criteria for missing days.
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
     it should considered missing if either of these two criteria are met:
@@ -316,7 +316,7 @@ def missing_who(da, freq, nm=11, nc=5, **indexer):
     out : DataArray
       A boolean array set to True if period has missing values.
     """
-    missing = MissingWHO(da, "M", **indexer)(nm=nm, nc=nc)
+    missing = MissingWMO(da, "M", **indexer)(nm=nm, nc=nc)
     return missing.resample(time=freq).any()
 
 
