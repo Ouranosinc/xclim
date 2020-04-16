@@ -130,3 +130,34 @@ class TestMissingAnyFills:
 
         miss = checks.missing_any(ds.q_sim, freq="YS", season="JJA")
         np.testing.assert_array_equal(miss, False)
+
+
+class TestMissingWHO:
+    def test_missing_days(self, tas_series):
+        a = np.arange(360.0)
+        a[5:7] = np.nan  # Number of missing values under acceptable limit in a month
+        a[40:45] = np.nan  # Too many consecutive missing values
+        a[70:92:2] = np.nan  # Too many non-consecutive missing values
+        ts = tas_series(a)
+        out = checks.missing_who(ts, freq="MS")
+        assert not out[0]
+        assert out[1]
+        assert out[2]
+
+    def test_missing_days_in_quarter(self, tas_series):
+        a = np.arange(360.0)
+        a[5:16] = np.nan  # Number of missing values under acceptable limit in a month
+        ts = tas_series(a)
+        out = checks.missing_who(ts, freq="QS-JAN")
+        np.testing.assert_array_equal(out, [True, False, False, True])
+
+
+class TestMissingPct:
+    def test_missing_days(self, tas_series):
+        a = np.arange(360.0)
+        a[5:7] = np.nan  # Number of missing values under acceptable limit in a month
+        a[40:45] = np.nan  # Too many consecutive missing values
+        ts = tas_series(a)
+        out = checks.missing_pct(ts, freq="MS", tolerance=0.1)
+        assert not out[0]
+        assert out[1]

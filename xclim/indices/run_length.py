@@ -95,7 +95,7 @@ def longest_run(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
     Returns
     -------
     N-dimensional array (int)
