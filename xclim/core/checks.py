@@ -256,8 +256,11 @@ class MissingWHO(MissingAny):
 
 class MissingPct(MissingBase):
     def is_missing(self, null, count, tolerance=0.1):
+        if tolerance < 0 or tolerance > 1:
+            raise ValueError("tolerance should be between 0 and 1.")
+
         n = count - null.count(dim="time") + null.sum(dim="time")
-        return n / count > tolerance
+        return n / count >= tolerance
 
 
 def missing_any(da, freq, **indexer):

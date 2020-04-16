@@ -156,7 +156,7 @@ class TestMissingPct:
     def test_missing_days(self, tas_series):
         a = np.arange(360.0)
         a[5:7] = np.nan  # Number of missing values under acceptable limit in a month
-        a[40:45] = np.nan  # Too many consecutive missing values
+        a[40:45] = np.nan  # Too many missing values
         ts = tas_series(a)
         out = checks.missing_pct(ts, freq="MS", tolerance=0.1)
         assert not out[0]
