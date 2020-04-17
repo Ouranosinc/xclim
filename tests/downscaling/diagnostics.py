@@ -9,8 +9,8 @@ from scipy.stats.kde import gaussian_kde
 
 from . import utils as tu
 from xclim.downscaling.correction import DetrendedQuantileMapping
+from xclim.downscaling.correction import EmpiricalQuantileMapping
 from xclim.downscaling.correction import QuantileDeltaMapping
-from xclim.downscaling.correction import QuantileMapping
 from xclim.downscaling.processing import adapt_freq
 
 
@@ -36,7 +36,7 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 def cannon_2015_figure_2():
     n = 10000
     obs, hist, fut = tu.cannon_2015_rvs(n, random=False)
-    QM = QuantileMapping(kind="*", group="time", interp="linear")
+    QM = EmpiricalQuantileMapping(kind="*", group="time", interp="linear")
     QM.train(obs, hist)
     fut_eqm = QM.predict(fut)
 

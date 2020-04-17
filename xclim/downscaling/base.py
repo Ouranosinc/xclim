@@ -208,9 +208,9 @@ class Grouper(ParametrizableClass):
         else:
             grpd = self.group(da)
 
-        dims = [self.dim]
+        dims = self.dim
         if not main_only:
-            dims += [dim for dim in self.add_dims if dim in grpd.dims]
+            dims = [dims] + [dim for dim in self.add_dims if dim in grpd.dims]
 
         if isinstance(func, str):
             out = getattr(grpd, func)(dim=dims, **kwargs)
