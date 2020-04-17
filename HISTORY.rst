@@ -15,6 +15,8 @@ History
 * Ensembles : Allow alignment of datasets with same frequency but different offsets.
 * Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
 * Remove deepcopy from subset.subset_shape to improve memory usage.
+* Add `missing_wmo` function, identifying null calculations based on criteria from WMO.
+* Add `missing_pct` function, identifying null calculations based on percentage of missing values.
 
 0.15.x (2020-03-12)
 -------------------
