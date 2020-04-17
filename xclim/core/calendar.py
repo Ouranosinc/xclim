@@ -367,3 +367,20 @@ def time_bnds(group, freq):
     return tuple(
         zip(cfindex_start_time(cfindex, freq), cfindex_end_time(cfindex, freq))
     )
+
+
+def _time_bnds(time, freq):
+    """Return time bounds from a resampling operation.
+
+    Example
+    -------
+    ave = da.resample(time="M").mean().to_dataset(name="ave")
+    tb = time_bnds(da.time, freq="M")
+    ave["time_bnds"] = tb
+    ave["ave"]["bounds"] = "time_bnds"
+    """
+    t = xr.DataArray(time)
+    ts = t.resample(time=freq)
+    return xr.DataArray(
+        list(zip(ts.min().values, ts.max().values)), dims=("time", "nbnd")
+    )
