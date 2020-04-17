@@ -177,7 +177,7 @@ def broadcast(
             if group.prop is not None:
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
-            if interp == "cubic" and len(sel.keys) > 1:
+            if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
                     "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
@@ -413,8 +413,8 @@ def interp_on_quantiles(
             method=method,
         )
 
-    xq = add_cyclic_bounds(xq, prop, cyclic_coords=True)
-    yq = add_cyclic_bounds(yq, prop, cyclic_coords=True)
+    xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
+    yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
     newg = group.get_index(newx)
     oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
 
