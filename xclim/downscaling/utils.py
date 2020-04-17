@@ -177,7 +177,7 @@ def broadcast(
             if group.prop is not None:
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
-            if interp == "cubic" and len(sel.keys) > 1:
+            if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
                     "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."

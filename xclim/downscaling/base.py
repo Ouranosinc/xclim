@@ -71,7 +71,8 @@ class Grouper(ParametrizableClass):
           Units are the sampling frequency of the data along the main dimension.
         add_dims : Optional[Sequence[str]]
           Additionnal dimensions that should be reduced in grouping operations. This behaviour is also controlled
-          by the `main_only` parameter of the `apply` method.
+          by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
+          they will be omitted.
         interp : Union[bool, str]
           Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
           Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names are translated to True.
@@ -84,12 +85,17 @@ class Grouper(ParametrizableClass):
 
         if isinstance(interp, str):
             interp = interp != "nearest"
-        dims = [dim] + (add_dims or [])
 
+        add_dims = add_dims or []
         if window > 1:
-            dims.insert(1, "window")
+            add_dims.insert(1, "window")
         super().__init__(
-            dim=dim, dims=dims, prop=prop, name=group, window=window, interp=interp
+            dim=dim,
+            add_dims=add_dims,
+            prop=prop,
+            name=group,
+            window=window,
+            interp=interp,
         )
 
     def group(self, da: xr.DataArray = None, **das: xr.DataArray):
@@ -119,9 +125,10 @@ class Grouper(ParametrizableClass):
     def get_index(self, da: xr.DataArray, interp: Optional[Union[bool, str]] = None):
         """Return the group index of each element along the main dimension.
 
-        Argument `interp` defaults to `self.interp`. Ifs True, the returned index can be
-        used for interpolation. For month grouping, integer values represent the middle of
-        the month, all other  days are linearly interpolated in between.
+        Argument `interp` defaults to `self.interp`. If True, the returned index can be
+        used for interpolation.
+        For month grouping, integer values represent the middle of the month, all other
+        days are linearly interpolated in between.
         """
         if self.prop is None:
             da[self.dim]
@@ -136,7 +143,10 @@ class Grouper(ParametrizableClass):
         if interp:
             if self.dim == "time":
                 if self.prop == "month":
-                    i = ind.month - 0.5 + ind.day / ind.daysinmonth
+                    if hasattr(ind, "days_in_month"):  # cftime is awkwardly different
+                        i = ind.month - 0.5 + ind.day / ind.days_in_month
+                    else:
+                        i = ind.month - 0.5 + ind.day / ind.daysinmonth
                 elif self.prop == "dayofyear":
                     i = ind.dayofyear
                 else:
@@ -174,8 +184,10 @@ class Grouper(ParametrizableClass):
         da : Union[xr.DataArray, Mapping[str, xr.DataArray]]
           The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary. A dataset will be created before grouping.
         main_only : bool
-          Whether to call the function with the main dimension only (if True) or with all grouping dims (if False, default)
-          (including the window and dimensions given through `add_dims`). The dimensions used are also written in the "group_compute_dims" attribute.
+          Whether to call the function with the main dimension only (if True)
+          or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
+          The dimensions used are also written in the "group_compute_dims" attribute.
+          If all the input arrays are missing one of the 'add_dims', it is silently omitted.
         **kwargs :
           Other keyword arguments to pass to the function.
 
@@ -196,7 +208,10 @@ class Grouper(ParametrizableClass):
         else:
             grpd = self.group(da)
 
-        dims = self.dim if main_only else self.dims
+        dims = self.dim
+        if not main_only:
+            dims = [dims] + [dim for dim in self.add_dims if dim in grpd.dims]
+
         if isinstance(func, str):
             out = getattr(grpd, func)(dim=dims, **kwargs)
         else:
