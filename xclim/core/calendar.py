@@ -336,8 +336,7 @@ def time_bnds(group, freq):
 
     Examples
     --------
-    >>> index = xr.cftime_range(start='2000-01-01', periods=3,
-                                freq='2QS', calendar='360_day')
+    >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
     >>> time_bnds(index, '2Q')
     ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0, 1, 1),
       cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999, 0, 91)),
