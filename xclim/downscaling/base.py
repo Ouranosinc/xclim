@@ -143,10 +143,7 @@ class Grouper(ParametrizableClass):
         if interp:
             if self.dim == "time":
                 if self.prop == "month":
-                    if hasattr(ind, "days_in_month"):  # cftime is awkwardly different
-                        i = ind.month - 0.5 + ind.day / ind.days_in_month
-                    else:
-                        i = ind.month - 0.5 + ind.day / ind.daysinmonth
+                    i = ind.month - 0.5 + ind.day / ind.days_in_month
                 elif self.prop == "dayofyear":
                     i = ind.dayofyear
                 else:

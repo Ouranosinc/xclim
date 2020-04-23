@@ -406,6 +406,8 @@ def interp_on_quantiles(
     # else:
 
     def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
+        if method != "nearest":
+            oldx = np.clip(oldx, newx.min() - 1, newx.max() + 1)
         return griddata(
             (oldx.flatten(), oldg.flatten()),
             oldy.flatten(),
