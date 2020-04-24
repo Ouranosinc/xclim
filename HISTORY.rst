@@ -2,9 +2,21 @@
 History
 =======
 
-0.16.x
-------
-* Allow lazy units conversion
+0.16.0 (2020-04-23)
+-------------------
+* Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
+* Removed `start_yr` and `end_yr` flags from subsetting functions.
+* Add multi gridpoints support in `subset.subset_gridpoint`.
+* Better `wrapped_partial` for more meaningful inspection.
+* Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
+* Allow lazy units conversion.
+* CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards.
+* Add utilities to merge attributes and update history in xclim.core.formatting.
+* Ensembles : Allow alignment of datasets with same frequency but different offsets.
+* Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
+* Remove deepcopy from subset.subset_shape to improve memory usage.
+* Add `missing_wmo` function, identifying null calculations based on criteria from WMO.
+* Add `missing_pct` function, identifying null calculations based on percentage of missing values.
 
 0.15.x (2020-03-12)
 -------------------

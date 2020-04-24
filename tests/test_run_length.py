@@ -37,15 +37,15 @@ class TestLongestRun:
         )
         values[1:11] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").apply(rl.longest_run_ufunc)
+        lt = da.resample(time="M").map(rl.longest_run_ufunc)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
-        lt_orig = da3d.resample(time="M").apply(rl.longest_run_ufunc)
+        lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_Ndim = da3d.resample(time="M").map(
             rl.longest_run, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -57,7 +57,7 @@ class TestLongestRun:
         )
         values[0:10] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").apply(rl.longest_run_ufunc)
+        lt = da.resample(time="M").map(rl.longest_run_ufunc)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
@@ -65,9 +65,9 @@ class TestLongestRun:
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[0:10,] = da3d[0:10,] + 1
         da3d = da3d == 1
-        lt_orig = da3d.resample(time="M").apply(rl.longest_run_ufunc)
+        lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_Ndim = da3d.resample(time="M").map(
             rl.longest_run, dim="time", ufunc_1dim=False
         )  # override 'auto' for small
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -80,7 +80,7 @@ class TestLongestRun:
         values[-10:] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").apply(rl.longest_run_ufunc)
+        lt = da.resample(time="M").map(rl.longest_run_ufunc)
         assert lt[-1] == 10
         np.testing.assert_array_equal(lt[:-1], 0)
 
@@ -88,8 +88,8 @@ class TestLongestRun:
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[-10:,] = da3d[-10:,] + 1
         da3d = da3d == 1
-        lt_orig = da3d.resample(time="M").apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.longest_run, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -101,14 +101,14 @@ class TestLongestRun:
         )
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").apply(rl.longest_run_ufunc)
+        lt = da.resample(time="M").map(rl.longest_run_ufunc)
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d = da3d == 1
-        lt_orig = da3d.resample(time="M").apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.longest_run, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -121,7 +121,7 @@ class TestLongestRun:
         )
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").apply(rl.longest_run_ufunc)
+        lt = da.resample(time="M").map(rl.longest_run_ufunc)
         n = da.resample(time="M").count(dim="time")
         np.testing.assert_array_equal(lt[0], n[0])
         np.testing.assert_array_equal(lt[1], 26)
@@ -130,8 +130,8 @@ class TestLongestRun:
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d[35,] = da3d[35,] + 1
         da3d = da3d == 1
-        lt_orig = da3d.resample(time="M").apply(rl.longest_run_ufunc)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.longest_run, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -186,8 +186,8 @@ class TestWindowedRunEvents:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
-        lt_orig = da3d.resample(time="M").apply(rl.windowed_run_events_ufunc, window=4)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.windowed_run_events_ufunc, window=4)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_events, window=4, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -204,8 +204,8 @@ class TestWindowedRunCount:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
-        lt_orig = da3d.resample(time="M").apply(rl.windowed_run_count_ufunc, window=4)
-        lt_Ndim = da3d.resample(time="M").apply(
+        lt_orig = da3d.resample(time="M").map(rl.windowed_run_count_ufunc, window=4)
+        lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_count, window=4, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
@@ -305,3 +305,20 @@ class TestRunsWithDates:
             runs, window=1, date=date, dim="time", coord=coord
         )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
+
+    @pytest.mark.parametrize(
+        "func",
+        [rl.last_run_before_date, rl.run_end_after_date, rl.run_length_with_date],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_run_with_dates_no_date(self, tas_series, use_dask, func):
+        t = np.ones(90)
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = runs.resample(time="MS").map(func, window=1, date="07-01", dim="time")
+        assert out.isnull().all()

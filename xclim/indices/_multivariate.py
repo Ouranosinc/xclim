@@ -39,7 +39,6 @@ __all__ = [
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
-    "tas",
     "tg90p",
     "tg10p",
     "tn90p",
@@ -107,7 +106,7 @@ def cold_spell_duration_index(
 
     below = tasmin < thresh
 
-    return below.resample(time=freq).apply(
+    return below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 
@@ -565,7 +564,7 @@ def heat_wave_frequency(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_events, window=window, dim="time")
+    return group.map(rl.windowed_run_events, window=window, dim="time")
 
 
 @declare_units(
@@ -636,7 +635,7 @@ def heat_wave_max_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    max_l = group.apply(rl.longest_run, dim="time")
+    max_l = group.map(rl.longest_run, dim="time")
     return max_l.where(max_l >= window, 0)
 
 
@@ -691,7 +690,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.apply(rl.windowed_run_count, args=(window,), dim="time")
+    return group.map(rl.windowed_run_count, args=(window,), dim="time")
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
@@ -975,30 +974,6 @@ def fraction_over_precip_thresh(
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
     return over / total
-
-
-@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
-def tas(tasmin: xarray.DataArray, tasmax: xarray.DataArray) -> xarray.DataArray:
-    """Average temperature from minimum and maximum temperatures.
-
-    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-        Minimum (daily) temperature [℃] or [K]
-    tasmax : xarray.DataArray
-        Maximum (daily) temperature [℃] or [K]
-
-    Returns
-    -------
-    xarray.DataArray
-        Mean (daily) temperature [same units as tasmin]
-    """
-    tasmax = convert_units_to(tasmax, tasmin)
-    tas = (tasmax + tasmin) / 2
-    tas.attrs["units"] = tasmin.attrs["units"]
-    return tas
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
@@ -1374,7 +1349,7 @@ def warm_spell_duration_index(
 
     above = tasmax > thresh
 
-    return above.resample(time=freq).apply(
+    return above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
 

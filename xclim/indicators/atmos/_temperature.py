@@ -16,7 +16,6 @@ __all__ = [
     "heat_wave_index",
     "hot_spell_frequency",
     "hot_spell_max_length",
-    "tg",
     "tg_mean",
     "tg10p",
     "tg90p",
@@ -219,16 +218,6 @@ hot_spell_max_length = Tasmax(
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_max_length,
-)
-
-tg = TasminTasmax(
-    identifier="tg",
-    units="K",
-    standard_name="air_temperature",
-    long_name="Daily mean temperature",
-    description="Estimated mean temperature from maximum and minimum temperatures",
-    cell_methods="",
-    compute=indices.tas,
 )
 
 tg_mean = Tas(
