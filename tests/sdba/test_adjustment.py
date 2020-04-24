@@ -3,17 +3,16 @@ import pytest
 from scipy.stats import norm
 from scipy.stats import uniform
 
-from xclim.downscaling.correction import DetrendedQuantileMapping
-from xclim.downscaling.correction import EmpiricalQuantileMapping
-from xclim.downscaling.correction import LOCI
-from xclim.downscaling.correction import QuantileDeltaMapping
-from xclim.downscaling.correction import Scaling
-from xclim.downscaling.utils import ADDITIVE
-from xclim.downscaling.utils import apply_correction
-from xclim.downscaling.utils import equally_spaced_nodes
-from xclim.downscaling.utils import get_correction
-from xclim.downscaling.utils import invert
-from xclim.downscaling.utils import MULTIPLICATIVE
+from xclim.sdba.adjustment import DetrendedQuantileMapping
+from xclim.sdba.adjustment import EmpiricalQuantileMapping
+from xclim.sdba.adjustment import LOCI
+from xclim.sdba.adjustment import QuantileDeltaMapping
+from xclim.sdba.adjustment import Scaling
+from xclim.sdba.utils import ADDITIVE
+from xclim.sdba.utils import apply_correction
+from xclim.sdba.utils import get_correction
+from xclim.sdba.utils import invert
+from xclim.sdba.utils import MULTIPLICATIVE
 
 
 @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
@@ -25,19 +24,19 @@ class TestLoci:
         xd = uniform(loc=0, scale=3)
         x = xd.ppf(u)
 
-        sim = fut = series(x, "pr")
+        hist = sim = series(x, "pr")
         y = x * 2
         thresh = 2
-        obs_fit = series(y, "pr").where(y > thresh, 0.1)
-        obs = series(y, "pr")
+        ref_fit = series(y, "pr").where(y > thresh, 0.1)
+        ref = series(y, "pr")
 
         loci = LOCI(group=group, thresh=thresh)
-        loci.train(obs_fit, sim)
-        np.testing.assert_array_almost_equal(loci.ds.sim_thresh, 1, dec)
-        np.testing.assert_array_almost_equal(loci.ds.cf, 2, dec)
+        loci.train(ref_fit, hist)
+        np.testing.assert_array_almost_equal(loci.ds.hist_thresh, 1, dec)
+        np.testing.assert_array_almost_equal(loci.ds.af, 2, dec)
 
-        p = loci.predict(fut)
-        np.testing.assert_array_almost_equal(p, obs, dec)
+        p = loci.adjust(sim)
+        np.testing.assert_array_almost_equal(p, ref, dec)
 
 
 class TestScaling:
@@ -49,15 +48,15 @@ class TestScaling:
         xd = uniform(loc=2, scale=1)
         x = xd.ppf(u)
 
-        sim = fut = series(x, name)
-        obs = series(apply_correction(x, 2, kind), name)
+        hist = sim = series(x, name)
+        ref = series(apply_correction(x, 2, kind), name)
 
         scaling = Scaling(group="time", kind=kind)
-        scaling.train(obs, sim)
-        np.testing.assert_array_almost_equal(scaling.ds.cf, 2)
+        scaling.train(ref, hist)
+        np.testing.assert_array_almost_equal(scaling.ds.af, 2)
 
-        p = scaling.predict(fut)
-        np.testing.assert_array_almost_equal(p, obs)
+        p = scaling.adjust(sim)
+        np.testing.assert_array_almost_equal(p, ref)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
@@ -67,28 +66,28 @@ class TestScaling:
         xd = uniform(loc=2, scale=1)
         x = xd.ppf(u)
 
-        sim = fut = series(x, name)
-        obs = mon_series(apply_correction(x, 2, kind), name)
+        hist = sim = series(x, name)
+        ref = mon_series(apply_correction(x, 2, kind), name)
 
         # Test train
         scaling = Scaling(group="time.month", kind=kind)
-        scaling.train(obs, sim)
+        scaling.train(ref, hist)
         expected = apply_correction(mon_triangular, 2, kind)
-        np.testing.assert_array_almost_equal(scaling.ds.cf, expected)
+        np.testing.assert_array_almost_equal(scaling.ds.af, expected)
 
         # Test predict
-        p = scaling.predict(fut)
-        np.testing.assert_array_almost_equal(p, obs)
+        p = scaling.adjust(sim)
+        np.testing.assert_array_almost_equal(p, ref)
 
 
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
         """Train on
-        sim: U
-        obs: Normal
+        hist: U
+        ref: Normal
 
-        Predict on sim to get obs
+        Predict on hist to get ref
         """
         ns = 10000
         u = np.random.rand(ns)
@@ -102,14 +101,14 @@ class TestDQM:
         y = yd.ppf(u)
 
         # Test train
-        sim = fut = series(x, name)
-        obs = series(y, name)
+        hist = sim = series(x, name)
+        ref = series(y, name)
 
         DQM = DetrendedQuantileMapping(
             kind=kind, group="time", nquantiles=50, interp="linear"
         )
-        DQM.train(obs, sim)
-        p = DQM.predict(fut)
+        DQM.train(ref, hist)
+        p = DQM.adjust(sim)
 
         q = DQM.ds.quantiles
         ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
@@ -117,30 +116,30 @@ class TestDQM:
         expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(DQM.ds.cf[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(DQM.ds.af[2:-2], expected[2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        np.testing.assert_array_almost_equal(p[middle], obs[middle], 1)
+        np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
-        # Test with future not equal to sim
+        # Test with simure not equal to hist
         ff = series(np.ones(ns) * 1.1, name)
-        fut2 = apply_correction(fut, ff, kind)
-        obs2 = apply_correction(obs, ff, kind)
+        sim2 = apply_correction(sim, ff, kind)
+        ref2 = apply_correction(ref, ff, kind)
 
-        p2 = DQM.predict(fut2)
+        p2 = DQM.adjust(sim2)
 
-        np.testing.assert_array_almost_equal(p2[middle], obs2[middle], 1)
+        np.testing.assert_array_almost_equal(p2[middle], ref2[middle], 1)
 
-        # Test with actual trend in fut
+        # Test with actual trend in sim
         trend = series(
             np.linspace(-0.2, 0.2, ns) + (1 if kind == MULTIPLICATIVE else 0), name
         )
-        fut3 = apply_correction(fut, trend, kind)
-        obs3 = apply_correction(obs, trend, kind)
-        p3 = DQM.predict(fut3)
-        np.testing.assert_array_almost_equal(p3[middle], obs3[middle], 1)
+        sim3 = apply_correction(sim, trend, kind)
+        ref3 = apply_correction(ref, trend, kind)
+        p3 = DQM.adjust(sim3)
+        np.testing.assert_array_almost_equal(p3[middle], ref3[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize(
@@ -149,10 +148,10 @@ class TestDQM:
     def test_mon_U(self, mon_series, series, mon_triangular, kind, name, spatial_dims):
         """
         Train on
-        sim: U
-        obs: U + monthly cycle
+        hist: U
+        ref: U + monthly cycle
 
-        Predict on sim to get obs
+        Predict on hist to get ref
         """
         n = 10000
         u = np.random.rand(n)
@@ -167,34 +166,34 @@ class TestDQM:
         y = yd.ppf(u) + noise.ppf(u)
 
         # Test train
-        sim, obs = series(x, name), mon_series(y, name)
+        hist, ref = series(x, name), mon_series(y, name)
 
         trend = np.linspace(-0.2, 0.2, n) + int(kind == MULTIPLICATIVE)
-        obs_t = mon_series(apply_correction(y, trend, kind), name)
-        fut = series(apply_correction(x, trend, kind), name)
+        ref_t = mon_series(apply_correction(y, trend, kind), name)
+        sim = series(apply_correction(x, trend, kind), name)
 
         if spatial_dims:
+            hist = hist.expand_dims(**spatial_dims)
+            ref = ref.expand_dims(**spatial_dims)
             sim = sim.expand_dims(**spatial_dims)
-            obs = obs.expand_dims(**spatial_dims)
-            fut = fut.expand_dims(**spatial_dims)
-            obs_t = obs_t.expand_dims(**spatial_dims)
+            ref_t = ref_t.expand_dims(**spatial_dims)
 
         DQM = DetrendedQuantileMapping(kind=kind, group="time.month", nquantiles=5)
-        DQM.train(obs, sim)
-        mqm = DQM.ds.cf.mean(dim="quantiles")
-        p = DQM.predict(fut)
+        DQM.train(ref, hist)
+        mqm = DQM.ds.af.mean(dim="quantiles")
+        p = DQM.adjust(sim)
 
         if spatial_dims:
             mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_array_almost_equal(p, obs_t, 1)
+        np.testing.assert_array_almost_equal(p, ref_t, 1)
 
     def test_cannon(self, cannon_2015_rvs):
-        obs, hist, fut = cannon_2015_rvs(15000)
+        ref, hist, sim = cannon_2015_rvs(15000)
 
         DQM = DetrendedQuantileMapping(kind="*", group="time")
-        DQM.train(obs, hist)
-        p = DQM.predict(fut)
+        DQM.train(ref, hist)
+        p = DQM.adjust(sim)
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
@@ -219,34 +218,34 @@ class TestQDM:
         y = yd.ppf(u)
 
         # Test train
-        sim = fut = series(x, name)
-        obs = series(y, name)
+        hist = sim = series(x, name)
+        ref = series(y, name)
 
         QDM = QuantileDeltaMapping(
             kind=kind, group="time", nquantiles=10, interp="linear"
         )
-        QDM.train(obs, sim)
-        p = QDM.predict(fut)
+        QDM.train(ref, hist)
+        p = QDM.adjust(sim)
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QDM.ds.cf.T, expected, 1)
+        np.testing.assert_array_almost_equal(QDM.ds.af.T, expected, 1)
 
         # Test predict
         # Accept discrepancies near extremes
         middle = (u > 1e-2) * (u < 0.99)
-        np.testing.assert_array_almost_equal(p[middle], obs[middle], 1)
+        np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
         """
         Train on
-        sim: U
-        obs: U + monthly cycle
+        hist: U
+        ref: U + monthly cycle
 
-        Predict on sim to get obs
+        Predict on hist to get ref
         """
         u = np.random.rand(10000)
 
@@ -260,12 +259,12 @@ class TestQDM:
         y = yd.ppf(u) + noise.ppf(u)
 
         # Test train
-        sim = fut = series(x, name)
-        obs = mon_series(y, name)
+        hist = sim = series(x, name)
+        ref = mon_series(y, name)
 
         QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
-        QDM.train(obs, sim)
-        p = QDM.predict(fut)
+        QDM.train(ref, hist)
+        p = QDM.adjust(sim)
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -273,43 +272,43 @@ class TestQDM:
         expected = apply_correction(
             mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
         )
-        np.testing.assert_array_almost_equal(QDM.ds.cf.sel(quantiles=q), expected, 1)
+        np.testing.assert_array_almost_equal(QDM.ds.af.sel(quantiles=q), expected, 1)
 
         # Test predict
-        np.testing.assert_array_almost_equal(p, obs, 1)
+        np.testing.assert_array_almost_equal(p, ref, 1)
 
     def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
-        obs, hist, fut = cannon_2015_rvs(15000, random=False)
+        ref, hist, sim = cannon_2015_rvs(15000, random=False)
 
         # Quantile mapping
         QDM = QuantileDeltaMapping(kind="*", group="time", nquantiles=50)
-        QDM.train(obs, hist)
-        bc_fut = QDM.predict(fut)
+        QDM.train(ref, hist)
+        bc_sim = QDM.adjust(sim)
 
         # Theoretical results
-        # obs, hist, fut = cannon_2015_dist
+        # ref, hist, sim = cannon_2015_dist
         # u1 = equally_spaced_nodes(1001, None)
         # u = np.convolve(u1, [0.5, 0.5], mode="valid")
-        # pu = obs.ppf(u) * fut.ppf(u) / hist.ppf(u)
-        # pu1 = obs.ppf(u1) * fut.ppf(u1) / hist.ppf(u1)
+        # pu = ref.ppf(u) * sim.ppf(u) / hist.ppf(u)
+        # pu1 = ref.ppf(u1) * sim.ppf(u1) / hist.ppf(u1)
         # pdf = np.diff(u1) / np.diff(pu1)
 
         # mean = np.trapz(pdf * pu, pu)
         # mom2 = np.trapz(pdf * pu ** 2, pu)
         # std = np.sqrt(mom2 - mean ** 2)
 
-        np.testing.assert_almost_equal(bc_fut.mean(), 41.5, 1)
-        np.testing.assert_almost_equal(bc_fut.std(), 16.7, 0)
+        np.testing.assert_almost_equal(bc_sim.mean(), 41.5, 1)
+        np.testing.assert_almost_equal(bc_sim.std(), 16.7, 0)
 
 
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
         """Train on
-        sim: U
-        obs: Normal
+        hist: U
+        ref: Normal
 
-        Predict on sim to get obs
+        Predict on hist to get ref
         """
         u = np.random.rand(10000)
 
@@ -322,33 +321,33 @@ class TestQM:
         y = yd.ppf(u)
 
         # Test train
-        sim = fut = series(x, name)
-        obs = series(y, name)
+        hist = sim = series(x, name)
+        ref = series(y, name)
         QM = EmpiricalQuantileMapping(
             kind=kind, group="time", nquantiles=50, interp="linear"
         )
-        QM.train(obs, sim)
-        p = QM.predict(fut)
+        QM.train(ref, hist)
+        p = QM.adjust(sim)
 
         q = QM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QM.ds.cf[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(QM.ds.af[2:-2], expected[2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
         middle = (x > 1e-2) * (x < 0.99)
-        np.testing.assert_array_almost_equal(p[middle], obs[middle], 1)
+        np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
         """
         Train on
-        sim: U
-        obs: U + monthly cycle
+        hist: U
+        ref: U + monthly cycle
 
-        Predict on sim to get obs
+        Predict on hist to get ref
         """
         u = np.random.rand(10000)
 
@@ -362,15 +361,15 @@ class TestQM:
         y = yd.ppf(u) + noise.ppf(u)
 
         # Test train
-        sim = fut = series(x, name)
-        obs = mon_series(y, name)
+        hist = sim = series(x, name)
+        ref = mon_series(y, name)
 
         QM = EmpiricalQuantileMapping(kind=kind, group="time.month", nquantiles=5)
-        QM.train(obs, sim)
-        p = QM.predict(fut)
-        mqm = QM.ds.cf.mean(dim="quantiles")
+        QM.train(ref, hist)
+        p = QM.adjust(sim)
+        mqm = QM.ds.af.mean(dim="quantiles")
         expected = apply_correction(mon_triangular, 2, kind)
         np.testing.assert_array_almost_equal(mqm, expected, 1)
 
         # Test predict
-        np.testing.assert_array_almost_equal(p, obs, 2)
+        np.testing.assert_array_almost_equal(p, ref, 2)

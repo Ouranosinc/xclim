@@ -3,9 +3,9 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.downscaling.base import Grouper
-from xclim.downscaling.processing import adapt_freq
-from xclim.downscaling.processing import jitter_under_thresh
+from xclim.sdba.base import Grouper
+from xclim.sdba.processing import adapt_freq
+from xclim.sdba.processing import jitter_under_thresh
 
 
 def test_jitter_under_thresh():
@@ -31,8 +31,8 @@ def test_adapt_freq(use_dask):
     group = Grouper("time.month")
 
     prsim = xr.where(pr < 20, pr / 20, pr)
-    probs = xr.where(pr < 10, pr / 20, pr)
-    ds_ad = adapt_freq(prsim, probs, thresh=1, group=group)
+    prref = xr.where(pr < 10, pr / 20, pr)
+    ds_ad = adapt_freq(prsim, prref, thresh=1, group=group)
 
     # Where the input is considered zero
     input_zeros = ds_ad.sim_ad.where(prsim <= 1)

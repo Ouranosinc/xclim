@@ -6,11 +6,13 @@ from warnings import warn
 
 import numpy as np
 import xarray as xr
+from boltons.funcutils import wraps
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 
 from .base import Grouper
 from .base import parse_group
+from xclim.core.calendar import _interpolate_doy_calendar
 
 
 MULTIPLICATIVE = "*"
@@ -32,9 +34,9 @@ def map_cdf(
     Parameters
     ----------
     x : xr.DataArray
-      Training target.
+      Values from which to pick
     y : xr.DataArray
-      Training data.
+      Reference values giving the ranking
     y_value : float, array
       Value within the support of `y`.
     dim : str
@@ -93,8 +95,35 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
 
+def ensure_longest_doy(func):
+    @wraps(func)
+    def _ensure_longest_doy(x, y, *args, **kwargs):
+        if (
+            hasattr(x, "dims")
+            and hasattr(y, "dims")
+            and "dayofyear" in x.dims
+            and "dayofyear" in y.dims
+            and x.dayofyear.max() != y.dayofyear.max()
+        ):
+            warn(
+                (
+                    "get_correction received inputs defined on different dayofyear ranges. "
+                    "Interpolating to the longest range. Results could be strange."
+                ),
+                stacklevel=4,
+            )
+            if x.dayofyear.max() < y.dayofyear.max():
+                x = _interpolate_doy_calendar(x, int(y.dayofyear.max()))
+            else:
+                y = _interpolate_doy_calendar(y, int(x.dayofyear.max()))
+        return func(x, y, *args, **kwargs)
+
+    return _ensure_longest_doy
+
+
+@ensure_longest_doy
 def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str):
-    """Return the additive or multiplicative correction factor."""
+    """Return the additive or multiplicative correction/adjustment factors."""
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
             out = y - x
@@ -108,8 +137,9 @@ def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str):
     return out
 
 
+@ensure_longest_doy
 def apply_correction(x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None):
-    """Apply the additive or multiplicative correction factor.
+    """Apply the additive or multiplicative correction/adjustment factors.
 
     If kind is not given, default to the one stored in the "kind" attribute of factor.
     """
@@ -157,7 +187,7 @@ def broadcast(
     x : xr.DataArray
       The array to broadcast grouped to.
     group : Union[str, Grouper]
-      Grouping information. See :py:class:`xclim.downscaling.base.Grouper` for details.
+      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use,
     sel : Mapping[str, xr.DataArray]
@@ -250,32 +280,13 @@ def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
     return qmf
 
 
-# TODO: use xr.pad once it's implemented.
-# Rename to extrapolate_q ?
-# TODO: improve consistency with extrapolate_qm
-def add_q_bounds(qmf: xr.DataArray, method="constant"):
-    """Reindex the scaling factors to set the quantile at 0 and 1 to the first and last quantile respectively.
-
-    This is a naive approach that won't work well for extremes.
-    """
-    att = "quantile"
-    q = qmf.coords[att]
-    i = np.concatenate(([0], range(len(q)), [-1]))
-    qmf = qmf.reindex({att: q[i]})
-    if method == "constant":
-        qmf.coords[att] = np.concatenate(([0], q, [1]))
-    else:
-        raise ValueError
-    return qmf
-
-
 def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"):
-    """Extrapolate quantile correction factors beyond the computed quantiles.
+    """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
     Parameters
     ----------
     qf : xr.DataArray
-      Correction factors over `quantile` coordinates.
+      Adjustment factors over `quantile` coordinates.
     xq : xr.DataArray
       Values at each `quantile`.
     method : {"constant"}
@@ -284,18 +295,18 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
     Returns
     -------
     xr.Dataset
-        Extrapolated correction factors and x-values.
+        Extrapolated adjustment factors and x-values.
 
     Notes
     -----
     nan
       Estimating values above or below the computed values will return a NaN.
     constant
-      The correction factor above and below the computed values are equal to the last and first values
+      The adjustment factor above and below the computed values are equal to the last and first values
       respectively.
-    constant_iqr
-      Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     """
+    # constant_iqr
+    #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     if method == "nan":
         return qf, xq
 

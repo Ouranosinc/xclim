@@ -5,7 +5,7 @@ import pandas as pd
 import xarray as xr
 from scipy.stats import gamma
 
-from xclim.downscaling.utils import equally_spaced_nodes
+from xclim.sdba.utils import equally_spaced_nodes
 
 
 def series(values, name, start="2000-01-01"):
@@ -37,16 +37,16 @@ def series(values, name, start="2000-01-01"):
 
 
 def cannon_2015_dist():
-    # obs ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
-    obs = gamma(4, scale=7.5)
+    # ref ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
+    ref = gamma(4, scale=7.5)
 
     # hist ~ gamma(k=8.15, theta=3.68) mu: 30, sigma: 10.5
     hist = gamma(8.15, scale=3.68)
 
-    # fut ~ gamma(k=16, theta=2.63) mu: 42, sigma: 10.5
-    fut = gamma(16, scale=2.63)
+    # sim ~ gamma(k=16, theta=2.63) mu: 42, sigma: 10.5
+    sim = gamma(16, scale=2.63)
 
-    return obs, hist, fut
+    return ref, hist, sim
 
 
 def cannon_2015_rvs(n, random=True):

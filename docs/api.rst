@@ -33,14 +33,14 @@ Unit handling module
    :show-inheritance:
 
 
-.. _downscaling-api:
+.. _sdba-api:
 
-Downscaling
-===========
+Statistical downscaling and bias-adjustment
+===========================================
 
 .. toctree::
 
-     downscaling_api
+     sdba_api
 
 
 Other utilities

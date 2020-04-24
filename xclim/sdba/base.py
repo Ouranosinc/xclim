@@ -1,4 +1,4 @@
-"""Detrending classes"""
+"""Base classes"""
 from inspect import signature
 from types import FunctionType
 from typing import Mapping
@@ -10,7 +10,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 
 
-# ## Base class for the downscaling module
+# ## Base class for the sdba module
 class ParametrizableClass(object):
     """Helper base class that sets as attribute every kwarg it receives in __init__.
 

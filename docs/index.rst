@@ -22,7 +22,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/units
    internationalization
    icclim
-   downscaling
+   sdba
    api
    contributing
    authors

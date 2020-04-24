@@ -4,8 +4,8 @@ import pytest
 import xarray as xr
 from scipy.stats import norm
 
-from xclim.downscaling import utils as u
-from xclim.downscaling.base import Grouper
+from xclim.sdba import utils as u
+from xclim.sdba.base import Grouper
 
 
 def test_ecdf(series):

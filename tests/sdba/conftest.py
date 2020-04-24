@@ -3,9 +3,9 @@ import pytest
 import xarray as xr
 
 from . import utils as tu
-from xclim.downscaling.base import parse_group
-from xclim.downscaling.utils import apply_correction
-from xclim.downscaling.utils import equally_spaced_nodes
+from xclim.sdba.base import parse_group
+from xclim.sdba.utils import apply_correction
+from xclim.sdba.utils import equally_spaced_nodes
 
 
 # Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in
@@ -101,26 +101,26 @@ def qds_month():
 
 
 @pytest.fixture
-def obs_sim_fut_tuto():
-    """Return obs, sim, fut time series of air temperature."""
+def ref_hist_sim_tuto():
+    """Return ref, hist, sim time series of air temperature."""
 
-    def _obs_sim_fut_tuto(fut_offset=3, delta=0.1, smth_win=3, trend=True):
+    def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
         ds = xr.tutorial.open_dataset("air_temperature")
-        obs = ds.air.resample(time="D").mean()
-        sim = obs.rolling(time=smth_win, min_periods=1).mean() + delta
-        fut_time = sim.time + np.timedelta64(730 + fut_offset * 365, "D").astype(
+        ref = ds.air.resample(time="D").mean()
+        hist = ref.rolling(time=smth_win, min_periods=1).mean() + delta
+        sim_time = hist.time + np.timedelta64(730 + sim_offset * 365, "D").astype(
             "<m8[ns]"
         )
-        fut = sim + (
+        sim = hist + (
             0
             if not trend
             else xr.DataArray(
-                np.linspace(0, 2, num=sim.time.size),
+                np.linspace(0, 2, num=hist.time.size),
                 dims=("time",),
-                coords={"time": sim.time},
+                coords={"time": hist.time},
             )
         )
-        fut["time"] = fut_time
-        return obs, sim, fut
+        sim["time"] = sim_time
+        return ref, hist, sim
 
-    return _obs_sim_fut_tuto
+    return _ref_hist_sim_tuto

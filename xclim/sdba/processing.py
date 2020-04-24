@@ -1,4 +1,4 @@
-"""Pre and post processing for bias correction"""
+"""Pre and post processing for bias adjustement"""
 from typing import Union
 
 import dask.array as dsk
@@ -16,22 +16,22 @@ from .utils import invert
 @parse_group
 def adapt_freq(
     sim: xr.DataArray,
-    obs: xr.DataArray,
+    ref: xr.DataArray,
     thresh: float = 0,
     *,
     group: Union[str, Grouper] = "time",
 ):
     r"""
-    Adapt frequency of values under thresh of sim, in order to match obs.
+    Adapt frequency of values under thresh of `sim`, in order to match ref.
 
-    This is useful when the dry-day frequency in the simulations is higher than in the observations. This function
-    will create new non-null values for sim, so that correction factors are less wet-biased.
+    This is useful when the dry-day frequency in the simulations is higher than in the references. This function
+    will create new non-null values for `sim`/`hist`, so that adjustment factors are less wet-biased.
     Based on [Themessl2012]_.
 
     Parameters
     ----------
-    obs : xr.DataArray
-      Observed data.
+    ref : xr.DataArray
+      Target/reference data, usually observed data.
     sim : xr.DataArray
       Simulated data.
     thresh : float
@@ -43,7 +43,7 @@ def adapt_freq(
     -------
     xr.Dataset wth the following variables:
 
-      - `sim_adj`: Simulated data with the same frequency of values under threshold than obs.
+      - `sim_adj`: Simulated data with the same frequency of values under threshold than ref.
         Adjustement is made group-wise.
       - `pth` : For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
         either left as zero values or given a random value between thresh and pth.
@@ -52,18 +52,18 @@ def adapt_freq(
 
     Notes
     -----
-    With :math:`P_0^o` the frequency of values under threshold :math:`T_0` in the reference (obs) and
-    :math:`P_0^s` the same for the simulated values, :math:`\\Delta P_0 = \\frac{P_0^s - P_0^o}{P_0^s}`,
+    With :math:`P_0^r` the frequency of values under threshold :math:`T_0` in the reference (ref) and
+    :math:`P_0^s` the same for the simulated values, :math:`\\Delta P_0 = \\frac{P_0^s - P_0^r}{P_0^s}`,
     when positive, represents the proportion of values under :math:`T_0` that need to be corrected.
 
     The correction replaces a proportion :math:`\\Delta P_0` of the values under :math:`T_0` in sim by a uniform random
-    number between :math:`T_0` and :math:`P_{th}`, where :math:`P_{th} = F_{obs}^{-1}( F_{sim}( T_0 ) )` and
+    number between :math:`T_0` and :math:`P_{th}`, where :math:`P_{th} = F_{ref}^{-1}( F_{sim}( T_0 ) )` and
     `F(x)` is the empirical cumulative distribution function (CDF).
 
 
     References
     ----------
-    [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
+    .. [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
     """
 
     def _adapt_freq_group(ds, dim=["time"]):
@@ -78,22 +78,22 @@ def adapt_freq(
         # Compute the probability of finding a value <= thresh
         # This is the "dry-day frequency" in the precipitation case
         P0_sim = ecdf(ds.sim, thresh, dim=dim)
-        P0_obs = ecdf(ds.obs, thresh, dim=dim)
+        P0_ref = ecdf(ds.ref, thresh, dim=dim)
 
-        # The proportion of values <= thresh in sim that need to be corrected, compared to obs
-        dP0 = (P0_sim - P0_obs) / P0_sim
+        # The proportion of values <= thresh in sim that need to be corrected, compared to ref
+        dP0 = (P0_sim - P0_ref) / P0_sim
 
-        # Compute : ecdf_obs^-1( ecdf_sim( thresh ) )
-        # The value in obs with the same rank as the first non zero value in sim.
+        # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
+        # The value in ref with the same rank as the first non zero value in sim.
         pth = xr.apply_ufunc(
             np.percentile,
-            ds.obs,
+            ds.ref,
             P0_sim
             * 100,  # np.percentile takes values in [0, 100], ecdf outputs in [0, 1]
             input_core_dims=[dim, []],
             dask="parallelized",
             vectorize=True,
-            output_dtypes=[ds.obs.dtype],
+            output_dtypes=[ds.ref.dtype],
         ).where(
             dP0 > 0
         )  # pth is meaningless when freq. adaptation is not needed
@@ -120,7 +120,7 @@ def adapt_freq(
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
             sim.where(
-                (rank < P0_obs) | (rank > P0_sim),  # Preserve current values
+                (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
                 * mod.random.random_sample(sim.shape, **kws)
@@ -143,7 +143,7 @@ def adapt_freq(
         dP0.attrs["_group_apply_reshape"] = True
         return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
 
-    return group.apply(_adapt_freq_group, {"sim": sim, "obs": obs})
+    return group.apply(_adapt_freq_group, {"sim": sim, "ref": ref})
 
 
 def jitter_under_thresh(x: xr.DataArray, thresh: float):
@@ -184,9 +184,9 @@ def normalize(
     x : xr.DataArray
       Array to be normalized.
     group : Union[str, Grouper]
-      Grouping information. See :py:class:`xclim.downscaling.base.Grouper` for details.
+      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     kind : {'+', '*'}
-      How to apply the correction, either additively or multiplicatively.
+      How to apply the adjustment, either additively or multiplicatively.
     """
 
     def _normalize_group(grp, dim=["time"]):
