@@ -2,6 +2,10 @@
 History
 =======
 
+0.16.x
+------
+* New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
+
 0.16.0 (2020-04-23)
 -------------------
 * Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
