@@ -2,7 +2,7 @@
 History
 =======
 
-0.16.x
+0.17.x
 ------
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 
