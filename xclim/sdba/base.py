@@ -9,6 +9,10 @@ from typing import Union
 import xarray as xr
 from boltons.funcutils import wraps
 
+# import cftime
+# from xclim.core.calendar import ensure_cftime_array
+# from xclim.core.calendar import get_calendar
+
 
 # ## Base class for the sdba module
 class ParametrizableClass(object):
@@ -103,6 +107,7 @@ class Grouper(ParametrizableClass):
 
         More than one arrays can be combined to a dataset before grouping using the `das`  kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
+        If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
         """
         if das:
             if da is not None:
@@ -114,24 +119,44 @@ class Grouper(ParametrizableClass):
                 window_dim="window"
             )
 
-        if self.prop is None:
-            group = xr.full_like(da[self.dim], True, dtype=bool)
+        if self.prop is None and self.dim == "time":
+            group = self.get_index(da)
             group.name = self.dim
         else:
             group = self.name
 
         return da.groupby(group)
 
-    def get_index(self, da: xr.DataArray, interp: Optional[Union[bool, str]] = None):
+    def get_index(
+        self,
+        da: Union[xr.DataArray, xr.Dataset],
+        interp: Optional[Union[bool, str]] = None,
+    ):
         """Return the group index of each element along the main dimension.
 
-        Argument `interp` defaults to `self.interp`. If True, the returned index can be
-        used for interpolation.
-        For month grouping, integer values represent the middle of the month, all other
-        days are linearly interpolated in between.
+        Parameters
+        ----------
+        da : Union[xr.DataArray, xr.Dataset]
+          The input array/dataset for which the group index is returned.
+          It must have Grouper.dim as a coordinate.
+        interp : Union[bool, str]
+          Argument `interp` defaults to `self.interp`. If True, the returned index can be
+          used for interpolation. For month grouping, integer values represent the middle of the month, all other
+          days are linearly interpolated in between.
+
+        Returns
+        -------
+        xr.DataArray
+          The index of each element along `Grouper.dim`.
+          If `Grouper.dim` is `time` and `Grouper.prop` is None, an uniform array of True is returned.
+          If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
+            with a special case of `month` and `interp=True`.
+          If `Grouper.dim` is not `time`, the dim is simply returned.
         """
         if self.prop is None:
-            da[self.dim]
+            if self.dim == "time":
+                return xr.full_like(da[self.dim], True, dtype=bool)
+            return da[self.dim]
 
         ind = da.indexes[self.dim]
         i = getattr(ind, self.prop)
@@ -193,6 +218,7 @@ class Grouper(ParametrizableClass):
         DataArray or Dataset
           Attributes "group", "group_window" and "group_compute_dims" are added.
           If the function did not reduce the array, its is sorted along the main dimension.
+          If the function did reduce the array and there is only one group, it is squeezed out of the output.
 
         Notes
         -----
@@ -218,10 +244,10 @@ class Grouper(ParametrizableClass):
         # and that some have grouped dims and other have the same dimensions as the input.
         # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
         if isinstance(out, xr.Dataset):
-            for name, da in out.data_vars.items():
+            for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in da.attrs:
-                    if da.attrs["_group_apply_reshape"] and self.prop is not None:
-                        out[name] = da.groupby(self.name).first(
+                    if outvar.attrs["_group_apply_reshape"] and self.prop is not None:
+                        out[name] = outvar.groupby(self.name).first(
                             skipna=False, keep_attrs=True
                         )
                     del out[name].attrs["_group_apply_reshape"]
@@ -233,7 +259,7 @@ class Grouper(ParametrizableClass):
 
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
-            if self.prop is None and out[self.dim].size == 1:
+            if out[self.dim].size == 1:
                 out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)

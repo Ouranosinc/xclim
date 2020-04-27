@@ -163,10 +163,9 @@ def invert(x: xr.DataArray, kind: Optional[str] = None):
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
             return -x
-        elif kind == MULTIPLICATIVE:
+        if kind == MULTIPLICATIVE:
             return 1 / x
-        else:
-            raise ValueError
+        raise ValueError
 
 
 @parse_group
@@ -310,7 +309,7 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
     if method == "nan":
         return qf, xq
 
-    elif method == "constant":
+    if method == "constant":
         q_l, q_r = [0], [1]
         x_l, x_r = [-np.inf], [np.inf]
         qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
@@ -359,7 +358,7 @@ def add_endpoints(
         else:
             y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
         elems.append(y)
-    l, r = elems
+    l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
     return xr.concat((l, da, r), dim=dim)
 
 
