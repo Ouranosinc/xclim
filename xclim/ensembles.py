@@ -602,9 +602,9 @@ def plot_rsqprofile(fig_data):
 
     Examples
     --------
-    >>> crit = xr.open_dataset(path_to_ensemble_file).data
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)
-    >>> plot_rsqprofile(fig_data)
+    >>> crit = xr.open_dataset(path_to_ensemble_file).data  # doctest +SKIP
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)  # doctest +SKIP
+    >>> plot_rsqprofile(fig_data)  # doctest +SKIP
     """
 
     rsq = fig_data["rsq"]

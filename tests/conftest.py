@@ -281,10 +281,6 @@ def add_example_file_paths(doctest_namespace):
 
     ns["path_to_shape_file"] = str(TD / "cmip5" / "southern_qc_geojson.json")
 
-    ns["path_to_ensemble_file"] = str(
-        TD / "EnsembleReduce" / "TestEnsReduceCriteria.nc"
-    )
-
     ns["temperature_datasets"] = [
         str(
             TD
