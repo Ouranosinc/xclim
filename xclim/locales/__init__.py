@@ -264,9 +264,10 @@ class metadata_locale:
 
         Examples
         --------
-        >>> with metadata_locale("fr", "de"):
-        >>>     gdd = atmos.growing_degree_days(ds.tas)  # Will be created with english, french and german metadata.
-        >>> gdd = atmos.growing_degree_days(ds.tas)  # Will be created with english metadata only.
+        >>> ds = xr.open_dataset(path_to_tas_file)
+        >>> with metadata_locale("fr"):
+        ...     gdd = xclim.atmos.growing_degree_days(tas=ds.tas)  # Will be created with english and french metadata.
+        >>> gdd = xclim.atmos.growing_degree_days(tas=ds.tas)  # Will be created with english metadata only.
         """
 
         self.locales = locales
