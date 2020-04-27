@@ -26,7 +26,8 @@ from xarray.core.resample import DataArrayResample
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {
-    "standard": pydt.datetime,
+    "default": pydt.datetime,
+    "standard": cftime.DatetimeGregorian,
     "gregorian": cftime.DatetimeGregorian,
     "proleptic_gregorian": cftime.DatetimeProlepticGregorian,
     "julian": cftime.DatetimeJulian,
@@ -38,6 +39,7 @@ datetime_classes = {
 
 # Maximum day of year in each calendar.
 max_doy = {
+    "default": 366,
     "standard": 366,
     "gregorian": 366,
     "proleptic_gregorian": 366,
@@ -64,13 +66,13 @@ def get_calendar(arr: xr.DataArray) -> str:
     Returns
     -------
     str
-      The cftime calendar name
+      The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64.
     """
     if arr.time.dtype == "O":  # Assume cftime, if it fails, not our fault
         non_na_item = arr.time.where(arr.time.notnull(), drop=True)[0].item()
         cal = non_na_item.calendar
     elif "datetime64" in arr.time.dtype.name:
-        cal = "standard"
+        cal = "default"
     else:
         raise ValueError(
             f"Cannot infer calendars from timeseries of type {arr.time[0].dtype}"
@@ -84,13 +86,14 @@ def convert_calendar(
     """Convert a DataArray/Dataset to another calendar using the specified method.
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
 
-    If the source and target calendars are either no_leap, all_leap or standard, only the type of the time array is modified.
-    When converting to a leap year from a non-leap year, the 29th of February is simply removed from the array.
+    If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
+    When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
+    In the other direction and if `target` is a string, the 29th of February will be missing in the output.
 
     If one of the source or target calendars is `360_day`, the missing/surplus days are added/removed at regular intervals
     and the other days are translated according to their rank in the year (dayofyear), ignoring their original month and day information.
 
-    Between a `360_day` and a leap year, the missing days are (day of year in parenthesis:
+    Between a `360_day` and a leap year, the missing days are (day of year in parenthesis):
         February 6th (37), April 21st (111), July 2nd (183), September 14 (257) and November 25th (329).
     Between a `360_day` and a non-leap year, the missing days are:
         January 31st (31), April 2nd (93), June 1st (153), August 2nd (215), October 1st (275) and December 3rd (337).
@@ -103,7 +106,8 @@ def convert_calendar(
       Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime)
     target : Union[xr.DataArray, str]
       Either a calendar name or the 1D time coordinate to convert to.
-      If an array is provided, the output will be reindexed to this, missing days are filled by NaNs.
+      If an array is provided, the output will be reindexed using it.
+      In that case days in `target` that are missing in the converted `source` are filled by NaNs.
 
     Returns
     -------
@@ -257,7 +261,7 @@ def ensure_cftime_array(time):
         return time
     if isinstance(time[0], pydt.datetime):
         return np.array(
-            [cftime.DatetimeProlepticGregorian(*ele.timetuple()[:6]) for ele in time]
+            [cftime.DatetimeGregorian(*ele.timetuple()[:6]) for ele in time]
         )
     raise ValueError("Unable to cast array to cftime dtype")
 
@@ -288,23 +292,13 @@ def datetime_to_decimal_year(
     return times.groupby("time.year").map(_make_index)
 
 
-def days_in_year(year: int, calendar: str = "standard") -> int:
+def days_in_year(year: int, calendar: str = "default") -> int:
     """Return the number of days in the input year according to the input calendar."""
-    if calendar == "360_day":
-        return 360
-    if (
-        (
-            (calendar == "julian" or (calendar == "gregorian" and year < 1582))
-            and (year % 4 == 0)
-        )
-        or (
-            calendar in ["standard", "gregorian", "proleptic_gregorian"]
-            and ((year % 4 == 0 and year % 100 != 0) or (year % 400 == 0))
-        )
-        or (calendar == "all_leap")
-    ):
-        return 366
-    return 365
+    return (
+        (datetime_classes[calendar](year + 1, 1, 1) - pydt.timedelta(days=1))
+        .timetuple()
+        .tm_yday
+    )
 
 
 def percentile_doy(
