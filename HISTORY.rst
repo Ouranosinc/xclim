@@ -2,8 +2,8 @@
 History
 =======
 
-0.16.x
-------
+0.16.0 (2020-04-23)
+-------------------
 * Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
 * Removed `start_yr` and `end_yr` flags from subsetting functions.
 * Add multi gridpoints support in `subset.subset_gridpoint`.
