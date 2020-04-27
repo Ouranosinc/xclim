@@ -106,7 +106,7 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
     .. math::
 
-      F^{-1}_{ref} (F_{mod}(x_{mod}))
+      F^{-1}_{ref} (F_{hist}(sim))
 
     where :math:`F` is the cumulative distribution function (CDF) and `mod` stands for model data.
 
@@ -247,7 +247,7 @@ class LOCI(BaseAdjustment):
     r"""Local Intensity Scaling (LOCI) bias-adjustment.
 
     This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
-    separately. Based on [Schmidli2006]_.
+    separately ([Schmidli2006]_).
 
     Multiplicative adjustment factors are computed such that the mean of `hist` matches the mean of `ref` for values above a
     threshold.
@@ -261,7 +261,7 @@ class LOCI(BaseAdjustment):
 
     In the case of precipitations, the adjustment factor is the ratio of wet-days intensity.
 
-    For a adjustment factor `s`, the bias-adjustment of `sim` is:
+    For an adjustment factor `s`, the bias-adjustment of `sim` is:
 
     .. math::
 

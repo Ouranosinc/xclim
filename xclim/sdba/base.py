@@ -105,7 +105,7 @@ class Grouper(ParametrizableClass):
     def group(self, da: xr.DataArray = None, **das: xr.DataArray):
         """Return a xr.core.groupby.GroupBy object.
 
-        More than one arrays can be combined to a dataset before grouping using the `das`  kwargs.
+        More than one array can be combined to a dataset before grouping using the `das`  kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
         """

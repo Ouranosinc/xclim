@@ -4,7 +4,7 @@ Bias adjustment and downscaling algorithms
 
 `xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`bias-adjustment-algos`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and return a `Dataset` object storing the *transfer* information allowing to go from `x` to `y`. This dataset can then be used as an input to the `adjust` function to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
-For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjust method such a detrended quantile mapping (DQM) as::
+For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 
   from xclim.sdba.adjustment import DetrendedQuantileMapping
   dqm = DetrendedQuantileMapping()
@@ -16,15 +16,15 @@ Most method can either be applied additively or multiplicatively. Also, most met
 When transfer factors are applied in adjustment, they can be interpolated according to the time grouping. This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationaly cheaper than computing adjustment factors for each day of the year.
 
 
-Application in multi-variate settings
-=====================================
+Application in multivariate settings
+====================================
 
-There are no multivariate algorithm implemented yet, and when applying uni-variate adjustment methods to multiple variables, some strategies are recommended to avoid introducing unrealistic artifacts in adjusted outputs.
+There are no multivariate algorithm implemented yet, and when applying univariate adjustment methods to multiple variables, some strategies are recommended to avoid introducing unrealistic artifacts in adjusted outputs.
 
 Minimum and maximum temperature
 -------------------------------
 
-When adjusting both minimum and maximum temperature, adjustment factors sometimes yields minimum temperatures larger than maximum temperature on the same day, which of course, is non-sensical. One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature ([Thrasher]_, [Agbazo]_)
+When adjusting both minimum and maximum temperature, adjustment factors sometimes yield minimum temperatures larger than the maximum temperature on the same day, which of course, is non-sensical. One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature ([Thrasher]_, [Agbazo]_)
 
 Relative and specific humidity
 ------------------------------

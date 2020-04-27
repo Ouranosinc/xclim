@@ -4,23 +4,22 @@
 Statistical Downscaling and Bias Adjustment
 ===========================================
 
-The `xclim.sdba` submodule provides bias-adjustment and will eventually provide downscaling algorithms.
-Adjustment algorithms are available through Adjustment object,following the `train` - `adjust` scheme.
+The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
+Adjustment algorithms all conform to the `train` - `adjust` scheme, formalized within `Adjustment` classes.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
-any bias-adjustment method would be applied by first estimating the adjustment factors from the historical and
-observations series, and then applying these factors to the future series::
+any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and the observations series, and then applying these factors to `sim`, which could be a future simulation::
 
   Adj = Adjustment(group="time.month", interp="linear")
   Adj.train(ref, hist)
   scen = Adj.adjust(sim)
   Adj.ds.af  # adjustment factors.
 
-The `group` argument allows adjustment factors to be estimated independently for different periods, either the full
+The `group` argument allows adjustment factors to be estimated independently for different periods: the full
 time series,  months, seasons or day of the year. The `interp` argument then allows for interpolation between these
 adjustment factors to avoid discontinuities in the bias-adjusted series (only applicable for monthly grouping).
 
 .. warning::
-    If day of the year grouping is still needed, the :py:mod:`xclim.core.calendar` submodule contains useful tools to manage the
+    If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful tools to manage the
     different calendars that the input data can have. By default, if 2 differet calendars are passed, the adjustment
     factors will always be interpolated to the largest range of day of the years but this can lead to strange values
     and we recommend converting the data beforehand to a common calendar.
