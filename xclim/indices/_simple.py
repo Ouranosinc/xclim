@@ -60,7 +60,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
 
     .. math::
 
-        TNx_j = max(TN_{ij}))
+        TNx_j = max(TN_{ij})
     """
 
     return tas.resample(time=freq).max(dim="time", keep_attrs=True)
