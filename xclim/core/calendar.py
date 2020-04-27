@@ -82,17 +82,17 @@ def convert_calendar(
     source: Union[xr.DataArray, xr.Dataset], target: Union[xr.DataArray, str],
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
-    Only converts the individual timestamps, does not modify any data excpet in dropping invalid/surplus dates.
+    Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
 
     If the source and target calendars are either no_leap, all_leap or standard, only the type of the time array is modified.
-    When converting to a leap year from a non-leap year, the 29th of february is simply removed from the array.
+    When converting to a leap year from a non-leap year, the 29th of February is simply removed from the array.
 
-    If one of the source or target calendars is uniform 360 day, the missing/surplus days are added/removed at regular intervals
+    If one of the source or target calendars is `360_day`, the missing/surplus days are added/removed at regular intervals
     and the other days are translated according to their rank in the year (dayofyear), ignoring their original month and day information.
 
-    Between a 360_day and a leap year, the missing days are (day of year in parenthesis:
+    Between a `360_day` and a leap year, the missing days are (day of year in parenthesis:
         February 6th (37), April 21st (111), July 2nd (183), September 14 (257) and November 25th (329).
-    Between a 306_day and a non-leap year, the missing days are:
+    Between a `360_day` and a non-leap year, the missing days are:
         January 31st (31), April 2nd (93), June 1st (153), August 2nd (215), October 1st (275) and December 3rd (337).
 
     This method is safe to use with sub-daily data as it doesn't touch the time part of the timestamps.
@@ -109,7 +109,7 @@ def convert_calendar(
     -------
     Union[xr.DataArray, xr.Dataset]
       Copy of source with the time coordinate converted to the target calendar.
-      The number of element is the same as `target` if an array was given, otherwise it stays the same as `source`.
+      The length of the array is the same as `target` if an array was given, otherwise it stays the same as `source`.
     """
     cal_src = get_calendar(source)
 
@@ -214,7 +214,7 @@ def _convert_datetime(
     datetime: Union[datetime.datetime, cftime.datetime]
       A datetime object to convert.
     new_doy:  Optional[Union[float, int]]
-      Allows for redefening the day of year (thus ignoring month and day information from the source datetime).
+      Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
     calendar: str
       The target calendar
 
