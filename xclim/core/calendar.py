@@ -8,6 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 import datetime as pydt
 from typing import Optional
 from typing import Union
+from warnings import warn
 
 import cftime
 import numpy as np
@@ -81,7 +82,9 @@ def get_calendar(arr: xr.DataArray) -> str:
 
 
 def convert_calendar(
-    source: Union[xr.DataArray, xr.Dataset], target: Union[xr.DataArray, str],
+    source: Union[xr.DataArray, xr.Dataset],
+    target: Union[xr.DataArray, str],
+    align_on: Optional[str] = None,
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
@@ -90,13 +93,7 @@ def convert_calendar(
     When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
     In the other direction and if `target` is a string, the 29th of February will be missing in the output.
 
-    If one of the source or target calendars is `360_day`, the missing/surplus days are added/removed at regular intervals
-    and the other days are translated according to their rank in the year (dayofyear), ignoring their original month and day information.
-
-    Between a `360_day` and a leap year, the missing days are (day of year in parenthesis):
-        February 6th (37), April 21st (111), July 2nd (183), September 14 (257) and November 25th (329).
-    Between a `360_day` and a non-leap year, the missing days are:
-        January 31st (31), April 2nd (93), June 1st (153), August 2nd (215), October 1st (275) and December 3rd (337).
+    For conversions involving `360_day` calendars, see Notes.
 
     This method is safe to use with sub-daily data as it doesn't touch the time part of the timestamps.
 
@@ -106,14 +103,48 @@ def convert_calendar(
       Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime)
     target : Union[xr.DataArray, str]
       Either a calendar name or the 1D time coordinate to convert to.
-      If an array is provided, the output will be reindexed using it.
-      In that case days in `target` that are missing in the converted `source` are filled by NaNs.
+      If an array is provided, the output will be reindexed using it and in that case, days in `target`
+         that are missing in the converted `source` are filled by NaNs.
+    align_on : {None, 'date', 'year'}
+      Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
 
     Returns
     -------
     Union[xr.DataArray, xr.Dataset]
       Copy of source with the time coordinate converted to the target calendar.
       The length of the array is the same as `target` if an array was given, otherwise it stays the same as `source`.
+      Except if source is a `360_day` calendar and `align_on='date'`: then a daily source will be output with 358 dates
+      per year on a non leap year, 359 on a leap year, see Notes.
+
+    Notes
+    -----
+    If one of the source or target calendars is `360_day`, `align_on` must be specified and two options are offered.
+
+    "year"
+        The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
+        meaning that the missing/surplus days are added/removed at regular intervals.
+
+        From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
+            To a leap year:
+                January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
+            To a non-leap year:
+                February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
+
+        From standard calendar to a '360_day', the following dates in the source array will be dropped:
+            From a leap year:
+                January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
+            From a non-leap year:
+                February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
+
+        This option is best used on daily and subdaily data.
+
+    "date"
+        The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
+        a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
+        dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
+        a standard calendar.
+
+        This option is best used with data on a frequency coarser than daily.
     """
     cal_src = get_calendar(source)
 
@@ -126,16 +157,25 @@ def convert_calendar(
         return source
 
     out = source.copy()
+    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
+        raise ValueError(
+            "Argument `align_on` must be specified with either 'date'  or 'year' when converting to or from a '360_day' calendar."
+        )
+    elif (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
+        warn(
+            "Argument `align_on` was specified, but none of the source or target calendars is '360_day'. `align_on` will be ignored."
+        )
+        align_on = None
+
     # TODO Maybe the 5-6 days to remove could be given by the user?
-    if cal_src == "360_day" or cal_tgt == "360_day":
+    if align_on == "year":
 
         def _yearly_interp_doy(time):
             # This returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
             yr = int(time.dt.year[0])
             return np.round(
-                1
-                + days_in_year(yr, cal_tgt)
-                * (time.dt.dayofyear - 1)
+                days_in_year(yr, cal_tgt)
+                * time.dt.dayofyear
                 / days_in_year(yr, cal_src)
             ).astype(int)
 
@@ -207,7 +247,7 @@ def interp_calendar(
 def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
-    calendar: str = "standard",
+    calendar: str = "default",
 ):
     """Convert a datetime object to another calendar.
 
@@ -230,7 +270,9 @@ def _convert_datetime(
     """
     if new_doy is not None:
         new_date = cftime.num2date(
-            new_doy - 1, f"days since {datetime.year}-01-01", calendar=calendar
+            new_doy - 1,
+            f"days since {datetime.year}-01-01",
+            calendar=calendar if calendar != "default" else "standard",
         )
     else:
         new_date = datetime
@@ -276,6 +318,8 @@ def datetime_to_decimal_year(
     """
 
     calendar = calendar or get_calendar(times)
+    if calendar == "default":
+        calendar = "standard"
 
     def _make_index(time):
         year = int(time.dt.year[0])
