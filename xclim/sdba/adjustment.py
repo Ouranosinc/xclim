@@ -178,16 +178,23 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
 
 class DetrendedQuantileMapping(EmpiricalQuantileMapping):
-    """Detrended Quantile Mapping bias-adjustment.
+    r"""Detrended Quantile Mapping bias-adjustment.
 
-    A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
-    `ref` and `hist` are normalized by removing the group-wise mean.
-    Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    `sim` is corrected by the scaling factor then detrended using a linear fit.
-    Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
-    The trend is put back on the result.
+    The algorithm follows these steps, 1-3 being the 'train' and 4-6, the 'adjust' steps.
 
-    Based on the DQM method of [Cannon2015]_.
+    1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
+    2. `ref` and `hist` are normalized by removing the group-wise mean.
+    3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
+    4. `sim` is corrected by the scaling factor then detrended using a linear fit.
+    5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
+    6. The trend is put back on the result.
+
+    .. math::
+
+        F^{-1}_{ref}\left\{F_{hist}\left[\frac{\overline{hist}\cdot sim}{\overline{sim}}\right]\right\}\frac{\overline{sim}}{\overline{hist}}
+
+    where :math:`F` is the cumulative distribution function (CDF) and :math:`\overline{xyz}` is the linear trend of the data.
+    This equation is valid for multiplicative adjustment. Based on the DQM method of [Cannon2015]_.
 
     References
     ----------
@@ -221,11 +228,16 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
-    """Quantile Delta Mapping bias-adjustment.
+    r"""Quantile Delta Mapping bias-adjustment.
 
     Adjustment factors are computed between the quantiles of `ref` and `hist`.
     Quantiles of `sim` are matched to the corresponding quantiles of `hist` and corrected accordingly.
 
+    .. math::
+
+        sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
+
+    where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
     The algorithm is based on the "QDM" method of [Cannon2015]_.
 
     References
