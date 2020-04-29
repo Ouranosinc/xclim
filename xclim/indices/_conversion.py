@@ -287,7 +287,7 @@ def relative_humidity(
     tas : xr.DataArray
         Temperature array
     dtas : xr.DataArray
-        Dewpoint temperature, if specified, "method" must be set to "dewpoint".
+        Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
         Specific Humidity
     ps : xr.DataArray
@@ -295,7 +295,7 @@ def relative_humidity(
     ice_thresh : str
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if 'method' is "dewpoint,"
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
         What to do with values outside the 0-100 range.
@@ -309,18 +309,25 @@ def relative_humidity(
     In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
-    **For the "dewpoint" method** : With :math:`L` the Enthalpy of vaporization of water
-    and :math:`R_w` the gas constant for water vapor, the relative humidity is computed as:
+    **For the "bohren98" method** : This method does not use the saturation vapor pressure directly,
+    but rather uses an approximation of the ratio of :marh:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
+    With :math:`L` the Enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
+    the relative humidity is computed as:
 
     .. math::
 
         RH = e^{\\frac{-L (T - T_d)}{R_wTT_d}}
 
-    Formula taken from [Lawrence_2005]_.
+    Formula taken from [Lawrence_2005]_. :math:`L = 2.5e-6`, exact for :math:`T = 273,15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure, relative humidity is computed as:
+    the saturation mixing ratio and the saturation vapor pressure.
+    If the dewpoint temperature is given, relative humidity is computed as:
 
+        ... math::
+            RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
+
+    Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
         ... math::
 
             RH = 100\\frac{w}{w_{sat}}
@@ -333,17 +340,23 @@ def relative_humidity(
     ----------
     .. [Lawrence_2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
     """
-    if dtas is not None and method != "dewpoint":
-        raise ValueError(
-            "If the dewpoint temperature (dtas) is passed, method must be set to 'dewpoint'"
-        )
 
-    if method == "dewpoint":
+    if method in ("bohren98", "BA90"):
+        if dtas is None:
+            raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
         dtas = convert_units_to(dtas, "degK")
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
         rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+    elif dtas is not None:
+        e_sat_dt = saturation_vapor_pressure(
+            tas=dtas, ice_thresh=ice_thresh, method=method
+        )
+        e_sat_t = saturation_vapor_pressure(
+            tas=tas, ice_thresh=ice_thresh, method=method
+        )
+        rh = 100 * e_sat_dt / e_sat_t
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -386,7 +399,7 @@ def specific_humidity(
     ice_thresh : str
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
         What to do with values larger than the saturation specific humidity and lower than 0.
