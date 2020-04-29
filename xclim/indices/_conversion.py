@@ -181,7 +181,7 @@ def saturation_vapor_pressure(
 
     - "goffgratch46" or "GG46", based on [goffgratch46]_, values and equation taken from [voemel]_.
     - "sonntag90" or "SO90", taken from [sonntag90]_.
-    - "tetens30" or "TE30", based on [tetens30], values and equation taken from [voemel]_.
+    - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
 
 
@@ -191,7 +191,7 @@ def saturation_vapor_pressure(
     .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
     .. [voemel] http://cires1.colorado.edu/~voemel/vp.html
-    .. [wmo2008] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -279,8 +279,8 @@ def relative_humidity(
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
-    """Compute relative humidity from temperature and either dewpoint temperature
-    or from specific humidity and pressure (through the saturation vapor pressure)
+    r"""
+    Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through the saturation vapor pressure.
 
     Parameters
     ----------
@@ -294,51 +294,51 @@ def relative_humidity(
         Air Pressure
     ice_thresh : str
         Threshold temperature under which to switch to equations in reference to ice instead of water.
-        If None (default) everything is computed with reference to water. Does nothing if 'method' is "dewpoint,"
+        If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
     method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-        What to do with values outside the 0-100 range.
-        If "clip" (default), clips everything to 0 - 100,
-        if "mask", replaces values outside the range by np.nan,
-        if None, does nothing.
+        What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
+        if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
 
     Notes
     -----
-
     In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
     **For the "bohren98" method** : This method does not use the saturation vapor pressure directly,
-    but rather uses an approximation of the ratio of :marh:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
-    With :math:`L` the Enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
+    but rather uses an approximation of the ratio of :math:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
+    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
     the relative humidity is computed as:
 
     .. math::
 
-        RH = e^{\\frac{-L (T - T_d)}{R_wTT_d}}
+        RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
-    Formula taken from [Lawrence_2005]_. :math:`L = 2.5e-6`, exact for :math:`T = 273,15` K, is used.
+    From [BohrenAlbrecht1998]_, formula taken from [Lawrence2005]_. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure.
     If the dewpoint temperature is given, relative humidity is computed as:
 
-        ... math::
-            RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
+    .. math::
+
+        RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
 
     Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
-        ... math::
 
-            RH = 100\\frac{w}{w_{sat}}
-            w = \\frac{q}{1-q}
-            w_{sat} = 0.622\\frac{e_{sat}}{P - e_{sat}}
+    .. math::
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
+        RH = 100\frac{w}{w_{sat}}
+        w = \frac{q}{1-q}
+        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+
+    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:meth:`xclim.core.utils.saturation_vapor_pressure`.
 
     References
     ----------
-    .. [Lawrence_2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [Lawrence2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
     """
 
     if method in ("bohren98", "BA90"):
