@@ -28,7 +28,7 @@ def test_relative_humidity_dewpoint(tas_series, rh_series):
             dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
         ),
         rh_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
-        rtol=0.01,
+        rtol=0.02,
         atol=1,
     )
 
