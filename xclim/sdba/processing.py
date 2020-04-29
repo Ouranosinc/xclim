@@ -123,7 +123,7 @@ def adapt_freq(
                 (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
-                * mod.random.random_sample(sim.shape, **kws)
+                * mod.random.random_sample(size=sim.shape, **kws)
                 + thresh,
             ),
         )

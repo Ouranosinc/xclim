@@ -245,7 +245,7 @@ class Grouper(ParametrizableClass):
         # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
-                if "_group_apply_reshape" in da.attrs:
+                if "_group_apply_reshape" in outvar.attrs:
                     if outvar.attrs["_group_apply_reshape"] and self.prop is not None:
                         out[name] = outvar.groupby(self.name).first(
                             skipna=False, keep_attrs=True
