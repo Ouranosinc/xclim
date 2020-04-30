@@ -2,6 +2,10 @@
 History
 =======
 
+0.17.x
+------
+* Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
+
 0.16.0 (2020-04-23)
 -------------------
 * Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
