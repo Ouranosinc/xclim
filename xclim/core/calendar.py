@@ -7,6 +7,7 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 from typing import Optional
+from typing import Sequence
 from typing import Union
 from warnings import warn
 
@@ -51,7 +52,7 @@ max_doy = {
 }
 
 
-def get_calendar(arr: xr.DataArray) -> str:
+def get_calendar(arr: Union[xr.DataArray, xr.Dataset]) -> str:
     """Return the calendar of the time coord of the DataArray
 
     Parameters
@@ -290,7 +291,7 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(time):
+def ensure_cftime_array(time: Sequence):
     """Convert an input 1D array to an array of cftime objects. Python's datetime are converted to cftime.DatetimeGregorian.
 
     Raises ValueError when unable to cast the input.
