@@ -20,7 +20,7 @@ adjustment factors to avoid discontinuities in the bias-adjusted series (only ap
 
 .. warning::
     If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful tools to manage the
-    different calendars that the input data can have. By default, if 2 differet calendars are passed, the adjustment
+    different calendars that the input data can have. By default, if 2 different calendars are passed, the adjustment
     factors will always be interpolated to the largest range of day of the years but this can lead to strange values
     and we recommend converting the data beforehand to a common calendar.
 

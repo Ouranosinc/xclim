@@ -20,8 +20,7 @@ from .utils import get_correction
 from .utils import interp_on_quantiles
 from .utils import map_cdf
 from .utils import MULTIPLICATIVE
-
-# from xclim.core.calendar import get_calendar
+from xclim.core.calendar import get_calendar
 
 
 class BaseAdjustment(ParametrizableClass):
@@ -46,17 +45,22 @@ class BaseAdjustment(ParametrizableClass):
         """
         if self.__trained:
             warn("train() was already called, overwriting old results.")
-        # if (
-        #     hasattr(self, "group") and self.group.prop == "dayofyear" and
-        #     get_calendar(ref) != get_calendar(hist)
-        # ):
-        #    warn(("Input ref and hist are defined on different calendars, "
-        #           "this is not recommended when using 'dayofyear' grouping "
-        #           "and could give strange results. See `xclim.core.calendar` "
-        #           "for tools to convert your data to a common calendar."),
-        #          stacklevel=4)
+        if (
+            hasattr(self, "group")
+            and self.group.prop == "dayofyear"
+            and get_calendar(ref) != get_calendar(hist)
+        ):
+            warn(
+                (
+                    "Input ref and hist are defined on different calendars, "
+                    "this is not recommended when using 'dayofyear' grouping "
+                    "and could give strange results. See `xclim.core.calendar` "
+                    "for tools to convert your data to a common calendar."
+                ),
+                stacklevel=4,
+            )
         self._train(ref, hist)
-        # self._hist_calendar = get_calendar(hist)
+        self._hist_calendar = get_calendar(hist)
         self.__trained = True
 
     def adjust(self, sim: DataArray, **kwargs):
@@ -69,15 +73,20 @@ class BaseAdjustment(ParametrizableClass):
         """
         if not self.__trained:
             raise ValueError("train() must be called before adjusting.")
-        # if (
-        #    hasattr(self, "group") and self.group.prop == "dayofyear" and
-        #    get_calendar(sim) != self._hist_calendar
-        # ):
-        #    warn(("This adjustment was trained on a simulation with the "
-        #           f"{self._hist_calendar} calendar but the sim input uses "
-        #           f"{get_calendar(sim)}. This is not recommended with dayofyear "
-        #           "grouping and could give strange results."),
-        #          stacklevel=4)
+        if (
+            hasattr(self, "group")
+            and self.group.prop == "dayofyear"
+            and get_calendar(sim) != self._hist_calendar
+        ):
+            warn(
+                (
+                    "This adjustment was trained on a simulation with the "
+                    f"{self._hist_calendar} calendar but the sim input uses "
+                    f"{get_calendar(sim)}. This is not recommended with dayofyear "
+                    "grouping and could give strange results."
+                ),
+                stacklevel=4,
+            )
         scen = self._adjust(sim, **kwargs)
         scen.attrs["bias_adjusted"] = True
         return scen
