@@ -109,7 +109,7 @@ jobs:
           - conda install pip
           - pip install -e .
       script:
-          - py.test --cov xclim
+          - py.test --cov=xclim
   allow_failures:
     - env: TOXENV=py38-anaconda
     - env: TOXENV=py37-macOS
