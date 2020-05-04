@@ -228,8 +228,19 @@ class Grouper(ParametrizableClass):
         """
         if isinstance(da, dict):
             grpd = self.group(**da)
+            dim_is_chunked = any(map(
+                lambda d: (
+                    d.chunks is not None and
+                    len(d.chunks[d.get_axis_num(self.dim)]) > 1
+                ),
+                da.values()
+            ))
         else:
             grpd = self.group(da)
+            dim_is_chunked = (
+                da.chunks is not None and
+                len(da.chunks[da.get_axis_num(self.dim)]) > 1
+            )
 
         dims = self.dim
         if not main_only:
@@ -263,6 +274,10 @@ class Grouper(ParametrizableClass):
                 out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)
+                if out.chunks is not None and not dim_is_chunked:
+                    out = out.chunk({self.dim: -1})
+        elif self.prop in out.dims and out.chunks is not None:
+            out = out.chunk({self.prop: -1})
 
         return out
 
