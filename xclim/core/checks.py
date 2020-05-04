@@ -14,6 +14,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from xclim.core.options import CHECK_MISSING
+from xclim.core.options import MISSING_METHODS
+from xclim.core.options import OPTIONS
+from xclim.core.options import register_missing_method
 from xclim.indices import generic
 
 logging.captureWarnings(True)
@@ -263,6 +267,7 @@ class MissingPct(MissingBase):
         return n / count >= tolerance
 
 
+@register_missing_method("any")
 def missing_any(da, freq, **indexer):
     r"""Return whether there are missing days in the array.
 
@@ -285,6 +290,7 @@ def missing_any(da, freq, **indexer):
     return MissingAny(da, freq, **indexer)()
 
 
+@register_missing_method("wmo")
 def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     r"""Return whether a series fails WMO criteria for missing days.
 
@@ -320,6 +326,7 @@ def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     return missing.resample(time=freq).any()
 
 
+@register_missing_method("pct")
 def missing_pct(da, freq, tolerance, **indexer):
     r"""Return whether there are more missing days in the array than a given percentage.
 
@@ -343,3 +350,17 @@ def missing_pct(da, freq, tolerance, **indexer):
       A boolean array set to True if period has missing values.
     """
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
+
+
+def missing_default(da, freq):
+    """Return whether each element of the resampled da should be considered missing according
+    to the currently set options in `xclim.set_options`.
+
+    See `xclim.set_options` and `xclim.core.options.register_missing_method`.
+    """
+    missing_func = MISSING_METHODS[OPTIONS[CHECK_MISSING]]
+    if OPTIONS[CHECK_MISSING] == "wmo":
+        return missing_func(da, freq, **OPTIONS["missing_wmo"])
+    if OPTIONS[CHECK_MISSING] == "pct":
+        return missing_func(da, freq, tolerance=OPTIONS["missing_pct"])
+    return missing_func(da, freq)

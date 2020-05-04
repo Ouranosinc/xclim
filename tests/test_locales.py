@@ -9,6 +9,7 @@ import pytest
 import xclim.locales as xloc
 from xclim import atmos
 from xclim.core.formatting import default_formatter
+from xclim.core.options import set_options
 
 
 esperanto = (
@@ -119,13 +120,6 @@ def test_local_formatter():
     assert fmt.format("{freq:nf}", freq="YS") == "годовая"
 
 
-def test_context():
-    assert "fr" not in xloc.LOCALES
-    with xloc.metadata_locale("fr"):
-        assert "fr" in xloc.LOCALES
-    assert "fr" not in xloc.LOCALES
-
-
 @pytest.mark.parametrize("locale", ["tlh", ("tlh", "not/a/real/klingo/file.json")])
 def test_set_locales_error(locale):
     with pytest.raises(xloc.UnavailableLocaleError):
@@ -135,7 +129,7 @@ def test_set_locales_error(locale):
 def test_indicator_output(tas_series):
     tas = tas_series(np.zeros(365))
 
-    with xloc.metadata_locale("fr"):
+    with set_options(metadata_locales=["fr"]):
         tgmean = atmos.tg_mean(tas, freq="YS")
 
     assert "long_name_fr" in tgmean.attrs

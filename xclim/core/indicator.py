@@ -21,11 +21,11 @@ from xclim.core.formatting import default_formatter
 from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
+from xclim.core.options import OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.units import units
 from xclim.locales import get_local_attrs
 from xclim.locales import get_local_formatter
-from xclim.locales import LOCALES
 
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
@@ -126,7 +126,7 @@ class Indicator:
 
         # Update attributes
         out_attrs = self.format(self.cf_attrs, ba.arguments)
-        for locale in LOCALES:
+        for locale in OPTIONS["metadata_locales"]:
             out_attrs.update(
                 self.format(
                     get_local_attrs(
@@ -310,7 +310,7 @@ class Indicator:
         freq = kwds.get("freq")
         if freq is not None:
             # We flag any period with missing data
-            miss = (checks.missing_any(da, freq) for da in args)
+            miss = (checks.missing_default(da, freq) for da in args)
         else:
             # There is no resampling, we flag where one of the input is missing
             miss = (da.isnull() for da in args)
