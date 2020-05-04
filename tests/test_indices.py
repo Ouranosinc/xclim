@@ -24,7 +24,6 @@ import xarray as xr
 import xclim.indices as xci
 from xclim.core.calendar import percentile_doy
 
-
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
@@ -933,6 +932,60 @@ class TestTgMaxTgMinIndices:
     #         runs = np.append(runs, ft)
     #
     #     np.testing.assert_allclose(np.mean(runs), 120, atol=20)
+
+
+class TestTemperatureSeasonality:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a = tas_series(a + K2C, start="1971-01-01")
+
+        a[(a.time.dt.season == "DJF")] += -15
+        a[(a.time.dt.season == "MAM")] += -5
+        a[(a.time.dt.season == "JJA")] += 22
+        a[(a.time.dt.season == "SON")] += 2
+
+        out = xci.temperature_seasonality(a)
+        np.testing.assert_array_almost_equal(out, 4.940925)
+
+        t_weekly = xci.tg_mean(a, freq="7D")
+        out = xci.temperature_seasonality(t_weekly)
+        np.testing.assert_array_almost_equal(out, 4.87321337)
+
+    def test_celsius(self, tas_series):
+        a = np.zeros(365)
+        a = tas_series(a, start="1971-01-01")
+        a.attrs["units"] = "C"
+        a[(a.time.dt.season == "DJF")] += -15
+        a[(a.time.dt.season == "MAM")] += -5
+        a[(a.time.dt.season == "JJA")] += 22
+        a[(a.time.dt.season == "SON")] += 2
+
+        out = xci.temperature_seasonality(a)
+        np.testing.assert_array_almost_equal(out, 4.940925)
+
+
+class TestPrecipSeasonality:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+
+        a = pr_series(a, start="1971-01-01")
+
+        a[(a.time.dt.month == 12)] += 2 / 3600 / 24
+        a[(a.time.dt.month == 8)] += 10 / 3600 / 24
+        a[(a.time.dt.month == 1)] += 5 / 3600 / 24
+
+        out = xci.precip_seasonality(a)
+        np.testing.assert_array_almost_equal(out, 206.29127187)
+
+        p_weekly = xci.precip_accumulation(a, freq="7D")
+        p_weekly.attrs["units"] = "mm week-1"
+        out = xci.precip_seasonality(p_weekly)
+        np.testing.assert_array_almost_equal(out, 197.25293501)
+
+        p_month = xci.precip_accumulation(a, freq="MS")
+        p_month.attrs["units"] = "mm month-1"
+        out = xci.precip_seasonality(p_month)
+        np.testing.assert_array_almost_equal(out, 208.71994117)
 
 
 class TestWarmDayFrequency:
