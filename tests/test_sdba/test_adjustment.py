@@ -39,6 +39,9 @@ class TestLoci:
         p = loci.adjust(sim)
         np.testing.assert_array_almost_equal(p, ref, dec)
 
+        assert "history" in p.attrs
+        assert "Bias-adjusted with method" in p.attrs["history"]
+
 
 class TestScaling:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
@@ -174,9 +177,8 @@ class TestDQM:
         sim = series(apply_correction(x, trend, kind), name)
 
         if spatial_dims:
-            hist = hist.expand_dims(**spatial_dims)
-            ref = ref.expand_dims(**spatial_dims)
-            sim = sim.expand_dims(**spatial_dims)
+            hist = hist.expand_dims(**spatial_dims).chunk({"lat": 10})
+            sim = sim.expand_dims(**spatial_dims).chunk({"lat": 10})
             ref_t = ref_t.expand_dims(**spatial_dims)
 
         DQM = DetrendedQuantileMapping(kind=kind, group="time.month", nquantiles=5)
