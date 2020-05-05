@@ -8,12 +8,13 @@ import xarray as xr
 
 from xclim import __version__
 from xclim import atmos
+from xclim.core.base import Indicator
+from xclim.core.checks import missing_pct
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
 from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
-from xclim.core.indicator import Indicator
 from xclim.core.units import units
 from xclim.indices import tg_mean
 
@@ -61,6 +62,8 @@ def test_attrs(tas_series):
 
     class TestSub(Indicator.registry["TMIN"]):
         identifier = "test123"
+
+    Indicator.registry["TMIN"](identifier="test_again", missing_func=missing_pct)
 
 
 def test_temp_unit_conversion(tas_series):
