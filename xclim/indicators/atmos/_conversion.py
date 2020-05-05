@@ -2,7 +2,6 @@ from xclim import indices
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
 
-
 __all__ = [
     "tg",
     "wind_speed_from_vector",
@@ -21,6 +20,13 @@ class Converter(Indicator):
 
     def missing(self, *args, **kwds):
         """Return whether an output is considered missing or not."""
+        # Converters should propagate null values themselves. Otherwise, the code below would do it.
+        """
+        from functools import reduce
+        import numpy as np
+        miss = (da.isnull() for da in args)
+        return reduce(np.logical_or, miss)
+        """
         return False
 
 
