@@ -988,6 +988,41 @@ class TestPrecipSeasonality:
         np.testing.assert_array_almost_equal(out, 208.71994117)
 
 
+class TestTempWarmestColdestQuarter:
+    def test_simple(self, tas_series):
+        a = np.zeros(365 * 2)
+        a = tas_series(a + K2C, start="1971-01-01")
+        a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
+        a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+
+        a[(a.time.dt.season == "DJF") & (a.time.dt.year == 1971)] += -15
+        a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
+
+        out = xci.tg_mean_warmcold_quarter(a, op="warmest")
+        np.testing.assert_array_almost_equal(out, [22 + K2C, 25 + K2C])
+
+        out = xci.tg_mean_warmcold_quarter(a, op="coldest")
+        np.testing.assert_array_almost_equal(out, [-15 + K2C, -10 + K2C])
+
+    def test_Celsius(self, tas_series):
+        a = np.zeros(365 * 2)
+        a = tas_series(a, start="1971-01-01")
+        a.attrs["units"] = "degC"
+        a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
+        a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+
+        a[
+            (a.time.dt.month >= 1) & (a.time.dt.month <= 3) & (a.time.dt.year == 1971)
+        ] += -15
+        a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
+
+        out = xci.tg_mean_warmcold_quarter(a, op="warmest")
+        np.testing.assert_array_almost_equal(out, [22, 25])
+
+        out = xci.tg_mean_warmcold_quarter(a, op="coldest")
+        np.testing.assert_array_almost_equal(out, [-15, -10])
+
+
 class TestWarmDayFrequency:
     def test_1d(self, tasmax_series):
         a = np.zeros(35)

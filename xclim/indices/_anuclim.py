@@ -1,5 +1,6 @@
 import xarray
 
+import xclim.indices as xci
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import units
@@ -14,7 +15,7 @@ xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["temperature_seasonality", "precip_seasonality"]
+__all__ = ["temperature_seasonality", "precip_seasonality", "tg_mean_warmcold_quarter"]
 
 
 @declare_units("percent", tas="[temperature]")
@@ -124,22 +125,24 @@ def precip_seasonality(pr: xarray.DataArray,):
     return seas
 
 
-@declare_units("percent", tas="[temperature]")
-def tg_mean_warmest_quarter(tas: xarray.DataArray):
-    r""" ANUCLIM Mean Temperature of Warmest Quarter
-    The warmest quarter of the year is determined (13 week or 3 month period), and the mean
+@declare_units("[temperature]", tas="[temperature]")
+def tg_mean_warmcold_quarter(tas: xarray.DataArray, op: str = None):
+    r""" ANUCLIM Mean Temperature of Warmest/Coldest Quarter
+    The warmest (or coldest) quarter of the year is determined (3 month period), and the mean
     temperature of this period is calculated.
-
 
     Parameters
     ----------
     tas : xarray.DataArray
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency
 
+    op : str
+        Operation to perform :  'warmest' calculate warmest quarter ; 'coldest' calculate coldest quarter
+
     Returns
     -------
     xarray.DataArray
-      The Coefficient of Variation of mean temperature values expressed in percent.
+       mean temperature values of the warmest/coldest quearter of each year.
 
     Examples
     --------
@@ -150,19 +153,31 @@ def tg_mean_warmest_quarter(tas: xarray.DataArray):
     >>> import xarray as xr
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset('tas.day.nc')
-    >>> tday_seasonality = xci.temperature_seasonality(t)
-
-    >>> t_weekly = xci.tg_mean(t, freq='7D')
-    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
+    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t, op='warmest')
 
     Notes
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the C of V on input data of any frequency. As such weekly or monthly averages, if desired, should be calculated prior
-    to calling the function
+    the result with input data of any frequency.
 
     """
+    # determine input data frequency
+
+    monthly = xci.tg_mean(tas, freq="MS")
+
+    with xarray.set_options(keep_attrs=True):
+        out = monthly.rolling(time=3, center=False,).mean(allow_lazy=True, skipna=False)
+        out.attrs = monthly.attrs
+        if op == "warmest":
+            out = out.resample(time="YS").max(dim="time")
+        elif op == "coldest":
+            out = out.resample(time="YS").min(dim="time")
+        else:
+            raise NotImplementedError(
+                f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
+            )
+        return out
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray):
@@ -171,8 +186,3 @@ def _anuclim_coeff_var(arr: xarray.DataArray):
         dim="time"
     )
     return cv
-
-
-def _anuclim_max_min_quarter(arr: xarray.DataArray, op=None):
-    r"""indentify the quarter period during which we find the annuale max or min """
-    arr
