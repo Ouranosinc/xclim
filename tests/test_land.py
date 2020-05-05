@@ -1,5 +1,5 @@
 import numpy as np
-import pytest
+import xarray as xr
 
 from xclim import land
 
@@ -7,6 +7,7 @@ from xclim import land
 def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
     assert out.attrs["units"] == ""
+    assert isinstance(out, xr.DataArray)
 
 
 class Test_FA:

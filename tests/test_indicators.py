@@ -57,6 +57,11 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
+    assert "TMIN" in Indicator.registry
+
+    class TestSub(Indicator.registry["TMIN"]):
+        identifier = "test123"
+
 
 def test_temp_unit_conversion(tas_series):
     a = tas_series(np.arange(360.0))
