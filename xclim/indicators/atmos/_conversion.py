@@ -19,6 +19,10 @@ class Converter(Indicator):
     def validate(self, da):
         """Input validation."""
 
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        return False
+
 
 tg = Converter(
     identifier="tg",
