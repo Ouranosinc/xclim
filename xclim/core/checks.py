@@ -263,6 +263,13 @@ class MissingPct(MissingBase):
         return n / count >= tolerance
 
 
+class AtLeastNValid(MissingBase):
+    def is_missing(self, null, count, n=20):
+        """The result of a reduction operation is considered missing if less than `n` values are valid."""
+        nvalid = null.count(dim="time") - null.sum(dim="time")
+        return nvalid < n
+
+
 def missing_any(da, freq, **indexer):
     r"""Return whether there are missing days in the array.
 
@@ -343,3 +350,27 @@ def missing_pct(da, freq, tolerance, **indexer):
       A boolean array set to True if period has missing values.
     """
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
+
+
+def at_least_n_valid(da, freq, n, **indexer):
+    r"""Return whether there are at least a given number of valid values.
+
+        Parameters
+        ----------
+        da : DataArray
+          Input array at daily frequency.
+        freq : str
+          Resampling frequency.
+        n : int
+          Minimum of valid values required.
+        **indexer : {dim: indexer, }, optional
+          Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+          values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
+          all values are considered.
+
+        Returns
+        -------
+        out : DataArray
+          A boolean array set to True if period has missing values.
+        """
+    return AtLeastNValid(da, freq, **indexer)(n=n)
