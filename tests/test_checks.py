@@ -121,6 +121,25 @@ class TestMissingAnyFills:
         miss = checks.missing_any(ts, freq="YS", season="SON")
         np.testing.assert_equal(miss, [False])
 
+    def test_no_freq(self, tasmin_series):
+        ts = tasmin_series(np.zeros(360))
+
+        miss = checks.missing_any(ts, freq=None)
+        np.testing.assert_array_equal(miss, False)
+
+        t = list(range(31))
+        t.pop(5)
+        ts2 = ts.isel(time=t)
+        miss = checks.missing_any(ts2, freq=None)
+        np.testing.assert_array_equal(miss, True)
+
+        # With indexer
+        miss = checks.missing_any(ts, freq=None, month=[7])
+        np.testing.assert_array_equal(miss, False)
+
+        miss = checks.missing_any(ts2, freq=None, month=[7])
+        np.testing.assert_array_equal(miss, True)
+
     def test_hydro(self):
         fn = Path(TESTS_DATA, "Raven", "q_sim.nc")
         ds = xr.open_dataset(fn)
