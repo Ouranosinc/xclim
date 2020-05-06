@@ -16,7 +16,7 @@ OPTIONS = {
     MISSING_PCT: 0.05,
 }
 
-_VALIDATION_OPTIONS = frozenset(["no", "warn", "raise"])
+_VALIDATION_OPTIONS = frozenset(["log", "warn", "raise"])
 MISSING_METHODS = {None: lambda da, freq: True}
 
 

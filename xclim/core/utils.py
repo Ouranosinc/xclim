@@ -9,6 +9,7 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from functools import partial
 from types import FunctionType
+
 from boltons.funcutils import update_wrapper
 
 
@@ -75,3 +76,9 @@ def walk_map(d: dict, func: FunctionType):
         else:
             out[k] = func(v)
     return out
+
+
+def ValidationError(ValueError):
+    @property
+    def msg(self):
+        return self.args[0]
