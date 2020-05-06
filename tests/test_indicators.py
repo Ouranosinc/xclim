@@ -16,6 +16,7 @@ from xclim.core.formatting import update_history
 from xclim.core.indicator import Indicator
 from xclim.core.units import units
 from xclim.indices import tg_mean
+from xclim.indices.generic import select_time
 
 
 class UniIndTemp(Indicator):
@@ -45,6 +46,16 @@ class UniIndPr(Indicator):
         return da.resample(time=freq).mean(keep_attrs=True)
 
 
+class UniClim(Indicator):
+    identifier = "clim"
+    units = "K"
+
+    @staticmethod
+    def compute(da, **indexer):
+        select = select_time(da, **indexer)
+        return select.mean(dim="time", keep_attrs=True)
+
+
 def test_attrs(tas_series):
     import datetime as dt
 
@@ -67,6 +78,29 @@ def test_temp_unit_conversion(tas_series):
     txc = ind(a, freq="YS")
 
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
+
+
+def test_missing(tas_series):
+    a = tas_series(np.ones(360, float))
+    ind = UniIndTemp()
+    clim = UniClim()
+
+    # Null value
+    a[5] = np.nan
+
+    out = ind(a, freq="MS")
+    assert out[0].isnull()
+
+    # With freq=None
+    out = clim(a)
+    assert out.isnull()
+
+    # With indexer
+    out = clim(a, month=[1])
+    assert not out.isnull()
+
+    out = clim(a, month=[7])
+    assert out.isnull()
 
 
 def test_json(pr_series):
