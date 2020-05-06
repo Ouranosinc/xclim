@@ -308,12 +308,11 @@ class Indicator:
         from functools import reduce
 
         freq = kwds.get("freq")
-        if freq is not None:
-            # We flag any period with missing data
-            miss = (checks.missing_default(da, freq) for da in args)
-        else:
-            # There is no resampling, we flag where one of the input is missing
-            miss = (da.isnull() for da in args)
+        indexer = kwds.get("indexer") or {}
+
+        # We flag periods according to the currently set missing data method
+        miss = (checks.missing_default(da, freq, **indexer) for da in args)
+
         return reduce(np.logical_or, miss)
 
     def validate(self, da):

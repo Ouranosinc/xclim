@@ -21,6 +21,7 @@ from .utils import interp_on_quantiles
 from .utils import map_cdf
 from .utils import MULTIPLICATIVE
 from xclim.core.calendar import get_calendar
+from xclim.core.formatting import update_history
 
 
 class BaseAdjustment(ParametrizableClass):
@@ -88,7 +89,9 @@ class BaseAdjustment(ParametrizableClass):
                 stacklevel=4,
             )
         scen = self._adjust(sim, **kwargs)
-        scen.attrs["bias_adjusted"] = True
+        scen.attrs["history"] = update_history(
+            f"Bias-adjusted with method {str(self)}", sim
+        )
         return scen
 
     def _make_dataset(self, **kwargs):

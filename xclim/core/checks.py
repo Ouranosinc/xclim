@@ -85,7 +85,7 @@ def check_daily(var):
     if np.timedelta64(dt.timedelta(days=1)) != (t1 - t0).data:
         raise ValidationError("time series is not daily.")
 
-    # Check that the series has the same time step throughout
+    # Check that the series does not go backward in time
     if not var.time.to_pandas().is_monotonic_increasing:
         raise ValidationError("time index is not monotonically increasing.")
 
@@ -97,25 +97,55 @@ class MissingBase:
 
     @staticmethod
     def split_freq(freq):
-        if "-" in freq:
-            pfreq, anchor = freq.split("-")
-        else:
-            pfreq, anchor = freq, None
+        if freq is None:
+            return "", None
 
-        return pfreq, anchor
+        if "-" in freq:
+            return freq.split("-")
+
+        return freq, None
 
     @staticmethod
     def is_null(da, freq, **indexer):
-        # Compute the number of days in the time series during each period at the given frequency.
+        """Return a boolean array indicating which values are null."""
         selected = generic.select_time(da, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
-        return selected.isnull().resample(time=freq)
+        null = selected.isnull()
+        if freq:
+            return null.resample(time=freq)
+
+        return null
 
     def prepare(self, da, freq, **indexer):
-        pfreq, anchor = self.split_freq(freq)
+        """Prepare arrays to be fed to the `is_missing` function.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+          Input data.
+        freq : str
+          Resampling frequency defining the periods defined in
+          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+        **indexer : {dim: indexer, }, optional
+          Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+          values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
+          all values are considered.
+
+        Returns
+        -------
+        xr.DataArray, xr.DataArray
+          Boolean array indicating which values are null, array of expected number of valid values.
+
+        Notes
+        -----
+        If `freq=None` and an indexer is given, then missing values during period at the start or end of array won't be
+        flagged.
+        """
         null = self.is_null(da, freq, **indexer)
+
+        pfreq, anchor = self.split_freq(freq)
 
         c = null.sum(dim="time")
 
@@ -123,15 +153,19 @@ class MissingBase:
         if pfreq.endswith("S"):
             start_time = c.indexes["time"]
             end_time = start_time.shift(1, freq=freq)
-        else:
+        elif pfreq:
             end_time = c.indexes["time"]
             start_time = end_time.shift(-1, freq=freq)
+        else:
+            i = da.time.to_index()
+            start_time = i[:1]
+            end_time = i[-1:]
 
         if indexer:
             # Create a full synthetic time series and compare the number of days with the original series.
             t0 = str(start_time[0].date())
             t1 = str(end_time[-1].date())
-            if isinstance(c.indexes["time"], xr.CFTimeIndex):
+            if isinstance(da.indexes["time"], xr.CFTimeIndex):
                 cal = da.time.encoding.get("calendar")
                 t = xr.cftime_range(t0, t1, freq="D", calendar=cal)
             else:
@@ -139,11 +173,17 @@ class MissingBase:
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
             st = generic.select_time(sda, **indexer)
-            count = st.notnull().resample(time=freq).sum(dim="time")
+            if freq:
+                count = st.notnull().resample(time=freq).sum(dim="time")
+            else:
+                count = st.notnull().sum(dim="time")
 
         else:
             n = (end_time - start_time).days
-            count = xr.DataArray(n.values, coords={"time": c.time}, dims="time")
+            if freq:
+                count = xr.DataArray(n.values, coords={"time": c.time}, dims="time")
+            else:
+                count = xr.DataArray(n.values[0] + 1)
 
         return null, count
 
