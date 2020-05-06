@@ -7,7 +7,6 @@ from xclim.core.units import units
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
-
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
@@ -15,7 +14,12 @@ xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["temperature_seasonality", "precip_seasonality", "tg_mean_warmcold_quarter"]
+__all__ = [
+    "temperature_seasonality",
+    "precip_seasonality",
+    "tg_mean_warmcold_quarter",
+    "prcptot_wetdry_quarter",
+]
 
 
 @declare_units("percent", tas="[temperature]")
@@ -126,10 +130,13 @@ def precip_seasonality(pr: xarray.DataArray,):
 
 
 @declare_units("[temperature]", tas="[temperature]")
-def tg_mean_warmcold_quarter(tas: xarray.DataArray, op: str = None):
-    r""" ANUCLIM Mean Temperature of Warmest/Coldest Quarter
-    The warmest (or coldest) quarter of the year is determined (3 month period), and the mean
-    temperature of this period is calculated.
+def tg_mean_warmcold_quarter(
+    tas: xarray.DataArray, op: str = None, input_freq: str = None
+):
+    r""" ANUCLIM Mean temperature of warmest/coldest quarter
+    The warmest (or coldest) quarter of the year is determined, and the mean
+    temperature of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
+    are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
     ----------
@@ -138,6 +145,9 @@ def tg_mean_warmcold_quarter(tas: xarray.DataArray, op: str = None):
 
     op : str
         Operation to perform :  'warmest' calculate warmest quarter ; 'coldest' calculate coldest quarter
+
+    input_freq : str
+        input data time frequency - One of 'daily', 'weekly' or 'monthly'
 
     Returns
     -------
@@ -148,12 +158,87 @@ def tg_mean_warmcold_quarter(tas: xarray.DataArray, op: str = None):
     --------
 
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature
-    temperature seasonality:
+    warmest quarter mean temperature:
 
     >>> import xarray as xr
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset('tas.day.nc')
-    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t, op='warmest')
+    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t, op='warmest', input_freq='daily')
+
+    Notes
+    -----
+    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
+    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
+    the result with input data of any frequency.
+
+    """
+    # determine input data frequency
+    # determine input data frequency
+    if input_freq == "monthly":
+        data1 = tas
+        wind = 3
+    elif input_freq == "weekly":
+        data1 = tas
+        wind = 13
+    elif input_freq == "daily":
+        data1 = xci.tg_mean(tas, freq="7D")
+        wind = 13
+    else:
+        raise NotImplementedError(
+            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
+            f'one of "daily", "weekly" or "monthly"'
+        )
+
+    with xarray.set_options(keep_attrs=True):
+        out = data1.rolling(time=wind, center=False,).mean(
+            allow_lazy=True, skipna=False
+        )
+        out.attrs = data1.attrs
+        if op == "warmest":
+            out = out.resample(time="YS").max(dim="time")
+        elif op == "coldest":
+            out = out.resample(time="YS").min(dim="time")
+        else:
+            raise NotImplementedError(
+                f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
+            )
+        return out
+
+
+@declare_units("mm", pr="[precipitation]")
+def prcptot_wetdry_quarter(
+    pr: xarray.DataArray, op: str = None, input_freq: str = None
+):
+    r""" ANUCLIM Total precipitation of wettest/driest quarter
+    The wettest (or driest) quarter of the year is determined, and the total precipitation of this
+    period is calculated. If the input data frequency is "daily" or "weekly" quarters
+    are defined as 13 week periods, otherwise are 3 months.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Total precipitation rate at daily, weekly, or monthly frequency
+
+    op : str
+        Operation to perform :  'wettest' calculate wettest quarter ; 'driest' calculate driest quarter
+
+    input_freq : str
+        input data time frequency - One of 'daily', 'weekly' or 'monthly'
+
+    Returns
+    -------
+    xarray.DataArray
+       Total precipitation values of the wettest/driest quarter of each year.
+
+    Examples
+    --------
+
+    The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
+
+    >>> import xarray as xr
+    >>> import xclim.indices as xci
+    >>> t = xr.open_dataset('pr.day.nc')
+    >>> pr_warm_qrt = xci.prcptot_wetdry_quarter(tas=t, op='wettest', input_freq='daily')
 
     Notes
     -----
@@ -164,18 +249,32 @@ def tg_mean_warmcold_quarter(tas: xarray.DataArray, op: str = None):
     """
     # determine input data frequency
 
-    monthly = xci.tg_mean(tas, freq="MS")
+    if input_freq == "monthly":
+        data1 = pr
+        wind = 3
+    elif input_freq == "weekly":
+        data1 = pr
+        wind = 13
+    elif input_freq == "daily":
+        data1 = xci.precip_accumulation(pr, freq="7D")
+        wind = 13
+    else:
+        raise NotImplementedError(
+            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
+            f'one of "daily", "weekly" or "monthly"'
+        )
 
     with xarray.set_options(keep_attrs=True):
-        out = monthly.rolling(time=3, center=False,).mean(allow_lazy=True, skipna=False)
-        out.attrs = monthly.attrs
-        if op == "warmest":
+        out = data1.rolling(time=wind, center=False,).sum(allow_lazy=True, skipna=False)
+        out.attrs = data1.attrs
+        out.attrs["units"] = "mm"
+        if op == "wettest":
             out = out.resample(time="YS").max(dim="time")
-        elif op == "coldest":
+        elif op == "driest":
             out = out.resample(time="YS").min(dim="time")
         else:
             raise NotImplementedError(
-                f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
+                f'Unknown operation "{op}" : op parameter must be one of "wettest" or "driest"'
             )
         return out
 
