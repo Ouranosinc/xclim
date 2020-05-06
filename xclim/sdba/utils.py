@@ -277,6 +277,7 @@ def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
         qmf = qmf.assign_coords({att: vals})
         qmf[att].attrs.update(da.coords[att].attrs)
     if da.chunks is not None and len(da.chunks[da.get_axis_num(att)]) == 1:
+        # Downstream methos do not expect this method to change the number of chunks
         return qmf.chunk({att: -1})
     return qmf
 
@@ -363,6 +364,7 @@ def add_endpoints(
     l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
     out = xr.concat((l, da, r), dim=dim)
     if da.chunks is not None and len(da.chunks[da.get_axis_num(dim)]) == 1:
+        # Downstream methos do not expect this method to change the number of chunks
         return out.chunk({dim: -1})
     return out
 
@@ -421,12 +423,13 @@ def interp_on_quantiles(
     # else:
 
     def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
-        print('|')
         if method != "nearest":
             oldx = np.clip(oldx, newx.min() - 1, newx.max() + 1)
         if np.all(np.isnan(newx)):
-            warn('All-NaN slice encountered in interp_on_quantiles',
-                 category=RuntimeWarning)
+            warn(
+                "All-NaN slice encountered in interp_on_quantiles",
+                category=RuntimeWarning,
+            )
             return newx
         return griddata(
             (oldx.flatten(), oldg.flatten()),

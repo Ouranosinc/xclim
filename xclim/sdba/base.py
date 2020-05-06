@@ -228,18 +228,19 @@ class Grouper(ParametrizableClass):
         """
         if isinstance(da, dict):
             grpd = self.group(**da)
-            dim_is_chunked = any(map(
-                lambda d: (
-                    d.chunks is not None and
-                    len(d.chunks[d.get_axis_num(self.dim)]) > 1
-                ),
-                da.values()
-            ))
+            dim_is_chunked = any(
+                map(
+                    lambda d: (
+                        d.chunks is not None
+                        and len(d.chunks[d.get_axis_num(self.dim)]) > 1
+                    ),
+                    da.values(),
+                )
+            )
         else:
             grpd = self.group(da)
             dim_is_chunked = (
-                da.chunks is not None and
-                len(da.chunks[da.get_axis_num(self.dim)]) > 1
+                da.chunks is not None and len(da.chunks[da.get_axis_num(self.dim)]) > 1
             )
 
         dims = self.dim
@@ -275,8 +276,11 @@ class Grouper(ParametrizableClass):
             else:
                 out = out.sortby(self.dim)
                 if out.chunks is not None and not dim_is_chunked:
+                    # If the main dim consisted of only one chunk, the expected behavior of downstream
+                    # methods is to conserve this, but grouping rechunks
                     out = out.chunk({self.dim: -1})
         elif self.prop in out.dims and out.chunks is not None:
+            # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
         return out
