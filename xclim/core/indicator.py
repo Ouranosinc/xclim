@@ -15,6 +15,7 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
+from .base import Indicator
 from xclim.core import checks
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
@@ -30,7 +31,7 @@ from xclim.locales import LOCALES
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
 # missing functions. It can handle indicators with any number of forcing fields.
-class Indicator:
+class OldIndicator:
     r"""Climate indicator based on xarray
     """
     # Unique ID for function registry.

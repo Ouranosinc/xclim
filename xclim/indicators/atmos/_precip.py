@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from xclim import indices
 from xclim.core.indicator import Indicator
-from xclim.core.indicator import Indicator2D
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -24,7 +23,8 @@ class Pr(Indicator):
     context = "hydro"
 
 
-class PrTas(Indicator2D):
+class PrTas(Indicator):
+    _nvar = 2
     context = "hydro"
 
 

@@ -79,7 +79,7 @@ class Indicator:
     All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
 
     """
-    # Number of DataArray variables
+    # Number of DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
     # Allowed metadata attributes on the output
@@ -320,10 +320,6 @@ class Indicator:
                 for (key, p) in self._sig.parameters.items()
             }
         )
-
-        # if six.PY2:
-        #     out = walk_map(out, lambda x: x.decode('utf8') if isinstance(x, six.string_types) else x)
-
         return out
 
     def format(
@@ -401,7 +397,3 @@ class Indicator:
         """Validate input data requirements.
         Raise error if conditions are not met."""
         checks.assert_daily(da)
-
-
-class Indicator2D(Indicator):
-    _nvar = 2

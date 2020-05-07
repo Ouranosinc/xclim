@@ -4,7 +4,6 @@ import abc
 from xclim import indices
 from xclim.core import checks
 from xclim.core.indicator import Indicator
-from xclim.core.indicator import Indicator2D
 
 __all__ = [
     "tn_days_below",
@@ -90,7 +89,9 @@ class Tasmax(Indicator):
         """The function computing the indicator."""
 
 
-class TasminTasmax(Indicator2D):
+class TasminTasmax(Indicator):
+    _nvar = 2
+
     def cfprobe(self, dan, dax):
         for da in (dan, dax):
             checks.check_valid(da, "standard_name", "air_temperature")
