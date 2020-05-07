@@ -373,7 +373,7 @@ class Indicator:
         return out
 
     @staticmethod
-    def cfprobe(self, *das):
+    def cfprobe(*das):
         """Check input data compliance to expectations.
         Warn of potential issues."""
         return True
