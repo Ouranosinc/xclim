@@ -6,6 +6,8 @@ History
 ------
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
+* Add `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
+* Add support for `freq=None` in missing calculations.
 
 0.16.0 (2020-04-23)
 -------------------

@@ -180,3 +180,13 @@ class TestMissingPct:
         out = checks.missing_pct(ts, freq="MS", tolerance=0.1)
         assert not out[0]
         assert out[1]
+
+
+class TestAtLeastNValid:
+    def test_at_least_n_valid(self, tas_series):
+        a = np.arange(360.0)
+        a[5:10] = np.nan  # Number of missing values under acceptable limit in a month
+        a[40:55] = np.nan  # Too many missing values
+        ts = tas_series(a)
+        out = checks.at_least_n_valid(ts, freq="MS", n=20)
+        np.testing.assert_array_equal(out[:2], [False, True])

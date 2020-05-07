@@ -92,7 +92,7 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-nbsphinx_execute = "always"
+nbsphinx_execute = "never"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
