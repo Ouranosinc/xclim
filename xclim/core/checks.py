@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Health checks submodule
-=======================
+Health checks
+=============
 
 Functions performing basic health checks on xarray.DataArrays.
 """
@@ -337,6 +337,7 @@ def missing_wmo(da, freq, nm=11, nc=5, **indexer):
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
     it should considered missing if either of these two criteria are met:
+
       – observations are missing for 11 or more days during the month;
       – observations are missing for a period of 5 or more consecutive days during the month.
 
