@@ -554,9 +554,9 @@ def subset_shape(
         poly.geometry = poly.buffer(buffer)
 
     # Get the shape's bounding box.
-    bounds = poly.bounds
-    lon_bnds = (float(bounds.minx.values), float(bounds.maxx.values))
-    lat_bnds = (float(bounds.miny.values), float(bounds.maxy.values))
+    minx, miny, maxx, maxy = poly.total_bounds
+    lon_bnds = (minx, maxx)
+    lat_bnds = (miny, maxy)
 
     # If polygon doesn't cross prime meridian, subset bbox first to reduce processing time
     # Only case not implemented is when lon_bnds cross the 0 deg meridian but dataset grid has all positive lons

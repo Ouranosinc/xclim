@@ -1151,19 +1151,24 @@ class TestWindConversion:
 
 
 @pytest.mark.parametrize(
+    "method", ["bohren98", "tetens30", "sonntag90", "goffgratch46", "wmo08"]
+)
+@pytest.mark.parametrize(
     "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 151)]
 )
-def test_relative_humidity_dewpoint(tas_series, rh_series, invalid_values, exp0):
+def test_relative_humidity_dewpoint(
+    tas_series, rh_series, method, invalid_values, exp0
+):
     np.testing.assert_allclose(
         xci.relative_humidity(
             tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
             dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
-            method="dewpoint",
+            method=method,
             invalid_values=invalid_values,
         ),
         # Expected values obtained by hand calculation
         rh_series([exp0, 100, 93, 71, 52, 73, 94, 31, 20]),
-        rtol=0.01,
+        rtol=0.02,
         atol=1,
     )
 

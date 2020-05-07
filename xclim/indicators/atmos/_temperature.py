@@ -108,7 +108,7 @@ tn_days_below = Tasmin(
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
     long_name="Number of days with Tmin < {thresh}",
-    description="{freq} number of days where daily minimum temperature is below {thresh}",
+    description="{freq} number of days where daily minimum temperature is below {thresh}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_below,
 )
@@ -118,7 +118,7 @@ tx_days_above = Tasmax(
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmax > {thresh}",
-    description="{freq} number of days where daily maximum temperature exceeds {thresh}",
+    description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx_days_above,
 )
@@ -129,7 +129,7 @@ tx_tn_days_above = TasminTasmax(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmax > {thresh_tasmax} and Tmin > {thresh_tasmin}",
     description="{freq} number of days where daily maximum temperature exceeds "
-    "{thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}",
+    "{thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}.",
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
@@ -295,7 +295,7 @@ daily_temperature_range = TasminTasmax(
     units="K",
     standard_name="air_temperature",
     long_name="Mean Diurnal Temperature Range",
-    description="{freq} mean diurnal temperature range",
+    description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
     compute=indices.daily_temperature_range,
 )
@@ -496,7 +496,7 @@ tg90p = Tas(
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmean > 90th percentile",
     description="{freq} number of days with mean daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.tg90p,
@@ -508,7 +508,7 @@ tg10p = Tas(
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmean < 10th percentile",
     description="{freq} number of days with mean daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.tg10p,
@@ -520,7 +520,7 @@ tx90p = Tasmax(
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmax > 90th percentile",
     description="{freq} number of days with maximum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx90p,
@@ -532,7 +532,7 @@ tx10p = Tasmax(
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmax < 10th percentile",
     description="{freq} number of days with maximum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx10p,
@@ -544,7 +544,7 @@ tn90p = Tasmin(
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmin > 90th percentile",
     description="{freq} number of days with minimum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn90p,
@@ -556,7 +556,7 @@ tn10p = Tasmin(
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmin < 10th percentile",
     description="{freq} number of days with minimum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day window centered on each calendar day "
+    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn10p,

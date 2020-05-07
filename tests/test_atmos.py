@@ -10,15 +10,20 @@ K2C = 273.16
 
 
 def test_wind_speed_from_vectors():
-    uas = xr.DataArray(np.array([3, -3]), dims=["x"])
+    uas = xr.DataArray(np.array([3.0, -3.0]), dims=["x"])
     uas.attrs["units"] = "m s-1"
-    vas = xr.DataArray(np.array([4, -4]), dims=["x"])
+    vas = xr.DataArray(np.array([4.0, -4.0]), dims=["x"])
     vas.attrs["units"] = "m s-1"
-    exp_wind = xr.DataArray(np.array([5, 5]), dims=["x"])
+    exp_wind = xr.DataArray(np.array([5.0, 5.0]), dims=["x"])
     exp_wind.attrs["units"] = "m s-1"
 
     wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
     np.testing.assert_allclose(wind, exp_wind)
+
+    # missing values
+    uas[0] = np.nan
+    wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
+    np.testing.assert_array_equal(wind.isnull(), [True, False])
 
 
 def test_relative_humidity_dewpoint(tas_series, rh_series):
@@ -28,7 +33,7 @@ def test_relative_humidity_dewpoint(tas_series, rh_series):
             dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
         ),
         rh_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
-        rtol=0.01,
+        rtol=0.02,
         atol=1,
     )
 

@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import xclim
-from xclim.core.calendar import calendars
+from xclim.core.calendar import max_doy
 
 TD = Path(__file__).parent / "testdata"
 
@@ -154,7 +154,7 @@ def ndq_series():
 @pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
-        n = calendars[calendar]
+        n = max_doy[calendar]
         if len(values) != n:
             raise ValueError(
                 "Values must be same length as number of days in calendar."
@@ -254,6 +254,7 @@ def ps_series():
 
 @pytest.fixture(autouse=True)
 def add_imports(doctest_namespace):
+    """Add these imports into the doctests scope."""
     ns = doctest_namespace
     ns["np"] = np
     ns["xr"] = xr
@@ -262,6 +263,7 @@ def add_imports(doctest_namespace):
 
 @pytest.fixture(autouse=True)
 def add_example_file_paths(doctest_namespace):
+    """Add these datasets in the doctests scope."""
     ns = doctest_namespace
     ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
 
