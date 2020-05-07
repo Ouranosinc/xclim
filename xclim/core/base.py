@@ -123,8 +123,8 @@ class Indicator:
         identifier = kwds.get("identifier", getattr(cls, "identifier"))
 
         # Handle function objects.
-        for key in cls._funcs:
-            if key in kwds:
+        for key in cls._funcs + cls._cf_names:
+            if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
         func = kwds.get("compute", None) or cls.compute

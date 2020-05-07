@@ -53,7 +53,7 @@ saturation_vapor_pressure = Converter(
     _nvar=1,
     units="Pa",
     long_name="Saturation vapor pressure",
-    description=lambda self, **kws: (
+    description=lambda **kws: (
         "The saturation vapor pressure was calculated from a temperature "
         "according to the {method} method."
     )
@@ -72,7 +72,7 @@ relative_humidity_from_dewpoint = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
-    description=lambda self, **kws: (
+    description=lambda **kws: (
         "Computed from temperature, and dew point temperature through the "
         "saturation vapor pressures, which were calculated "
         "according to the {method} method."
@@ -94,7 +94,7 @@ relative_humidity = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
-    description=lambda self, **kws: (
+    description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the "
         "saturation vapor pressure, which was calculated from temperature "
         "according to the {method} method."
@@ -116,7 +116,7 @@ specific_humidity = Converter(
     units="",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
-    description=lambda self, **kws: (
+    description=lambda **kws: (
         "Computed from temperature, relative humidity and pressure through the "
         "saturation vapor pressure, which was calculated from temperature "
         "according to the {method} method."
