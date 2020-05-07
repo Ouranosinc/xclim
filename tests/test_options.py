@@ -11,7 +11,7 @@ from xclim.core.options import register_missing_method
 @pytest.mark.parametrize(
     "option,value",
     [
-        ("validate_inputs", "no"),
+        ("validate_inputs", "log"),
         ("validate_inputs", "raise"),
         ("check_missing", "wmo"),
         ("check_missing", "any"),

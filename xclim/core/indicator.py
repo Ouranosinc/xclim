@@ -318,7 +318,7 @@ class Indicator:
     def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        checks.assert_daily(da)
+        checks.check_daily(da)
 
 
 class Indicator2D(Indicator):

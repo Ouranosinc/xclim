@@ -6,24 +6,19 @@ Health checks submodule
 Functions performing basic health checks on xarray.DataArrays.
 """
 import datetime as dt
-import logging
-from warnings import warn
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 
+from xclim.core.options import check
 from xclim.core.options import CHECK_MISSING
 from xclim.core.options import MISSING_METHODS
 from xclim.core.options import OPTIONS
 from xclim.core.options import register_missing_method
-from xclim.core.options import VALIDATE_INPUTS
 from xclim.core.utils import ValidationError
 from xclim.indices import generic
-
-logging.captureWarnings(True)
-
 
 # Dev notes
 # ---------
@@ -39,22 +34,6 @@ logging.captureWarnings(True)
 
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
-def check(func):
-    @wraps(func)
-    def _run_check(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ValidationError as err:
-            if OPTIONS[VALIDATE_INPUTS] == "log":
-                logging.info(err.msg)
-            elif OPTIONS[VALIDATE_INPUTS] == "warn":
-                warn(err.msg, UserWarning, stacklevel=3)
-            else:
-                raise err
-
-    return _run_check
-
-
 @check
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""

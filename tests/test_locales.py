@@ -123,7 +123,7 @@ def test_local_formatter():
 @pytest.mark.parametrize("locale", ["tlh", ("tlh", "not/a/real/klingo/file.json")])
 def test_set_locales_error(locale):
     with pytest.raises(xloc.UnavailableLocaleError):
-        xloc.set_locales(locale)
+        set_options(metdata_locales=[locale])
 
 
 def test_indicator_output(tas_series):

@@ -1,5 +1,14 @@
 """Global or contextual options for xclim, similar to xarray.set_options"""
+import logging
 from pathlib import Path
+from warnings import warn
+
+from boltons.funcutils import wraps
+
+from xclim.core.utils import ValidationError
+
+logging.captureWarnings(True)
+
 
 METADATA_LOCALES = "metadata_locales"
 VALIDATE_INPUTS = "validate_inputs"
@@ -25,7 +34,7 @@ def _valid_locales(locales):
 
     return all(
         [
-            (isinstance(locale, str) and get_best_locale(locale) is None)
+            (isinstance(locale, str) and get_best_locale(locale) is not None)
             or (
                 not isinstance(locale, str)
                 and isinstance(locale[1], str)
@@ -55,6 +64,22 @@ def register_missing_method(name):
         return func
 
     return _register_missing_method
+
+
+def check(func):
+    @wraps(func)
+    def _run_check(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except ValidationError as err:
+            if OPTIONS[VALIDATE_INPUTS] == "log":
+                logging.info(err.msg)
+            elif OPTIONS[VALIDATE_INPUTS] == "warn":
+                warn(err.msg, UserWarning, stacklevel=3)
+            else:
+                raise err
+
+    return _run_check
 
 
 class set_options:

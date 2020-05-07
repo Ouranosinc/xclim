@@ -19,7 +19,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
-from xclim.core.checks import check
+from xclim.core.options import check
 from xclim.core.utils import ValidationError
 
 
