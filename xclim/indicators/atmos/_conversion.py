@@ -2,7 +2,6 @@ from xclim import indices
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
 
-
 __all__ = [
     "tg",
     "wind_speed_from_vector",
@@ -18,6 +17,11 @@ class Converter(Indicator):
 
     def validate(self, da):
         """Input validation."""
+
+    def missing(self, *args, **kwds):
+        """Return whether an output is considered missing or not."""
+        # Converters should propagate null values themselves.
+        return False
 
 
 tg = Converter(
