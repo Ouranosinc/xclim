@@ -6,6 +6,7 @@ Health checks submodule
 Functions performing basic health checks on xarray.DataArrays.
 """
 import datetime as dt
+import fnmatch
 
 import numpy as np
 import pandas as pd
@@ -41,7 +42,7 @@ def check_valid(var, key, expected):
     att = getattr(var, key, None)
     if att is None:
         raise ValidationError(f"Variable does not have a `{key}` attribute.")
-    elif att != expected:
+    if not fnmatch.fnmatch(att, expected):
         raise ValidationError(
             f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
         )
@@ -328,7 +329,7 @@ def missing_any(da, freq, **indexer):
     return MissingAny(da, freq, **indexer)()
 
 
-@register_missing_method("wmo")
+@register_missing_method("wmo", validator=lambda nm, nc: nm < 31 and nc < 31)
 def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     r"""Return whether a series fails WMO criteria for missing days.
 
@@ -364,7 +365,7 @@ def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     return missing.resample(time=freq).any()
 
 
-@register_missing_method("pct")
+@register_missing_method("pct", validator=lambda tolerance: 0 <= tolerance <= 1)
 def missing_pct(da, freq, tolerance, **indexer):
     r"""Return whether there are more missing days in the array than a given percentage.
 
@@ -390,14 +391,12 @@ def missing_pct(da, freq, tolerance, **indexer):
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
 
 
-def missing_default(da, freq, **indexer):
+def missing_from_context(da, freq, **indexer):
     """Return whether each element of the resampled da should be considered missing according
     to the currently set options in `xclim.set_options`.
 
     See `xclim.set_options` and `xclim.core.options.register_missing_method`.
     """
-    if OPTIONS[CHECK_MISSING] == "wmo":
-        return missing_wmo(da, freq, **OPTIONS["missing_wmo"], **indexer)
-    if OPTIONS[CHECK_MISSING] == "pct":
-        return missing_pct(da, freq, tolerance=OPTIONS["missing_pct"], **indexer)
-    return MISSING_METHODS[OPTIONS[CHECK_MISSING]](da, freq, **indexer)
+    meth = MISSING_METHODS[OPTIONS[CHECK_MISSING]]
+    opts = {k: v for k, v in meth.items() if k not in ["_validator", "_func"]}
+    return meth["_func"](da, freq, **opts, **indexer)

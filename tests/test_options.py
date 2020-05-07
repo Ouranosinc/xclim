@@ -11,28 +11,46 @@ from xclim.core.options import register_missing_method
 @pytest.mark.parametrize(
     "option,value",
     [
+        ("metadata_locales", ["fr"]),
         ("validate_inputs", "log"),
         ("validate_inputs", "raise"),
         ("check_missing", "wmo"),
         ("check_missing", "any"),
-        ("missing_wmo", {"nm": 10, "nc": 3}),
-        ("missing_pct", 0.1),
+        ("missing_options", {"wmo": {"nm": 10, "nc": 3}}),
+        ("missing_options", {"pct": {"tolerance": 0.1}}),
+        ("missing_options", {"wmo": {"nm": 10, "nc": 3}, "pct": {"tolerance": 0.1}}),
     ],
 )
 def test_set_options_valid(option, value):
     old = OPTIONS[option]
     with set_options(**{option: value}):
-        assert OPTIONS[option] == value
+        if option != "missing_options":
+            assert OPTIONS[option] == value
+        else:
+            for k, opts in value.items():
+                curr_opts = OPTIONS["missing_options"][k].copy()
+                curr_opts.pop("_func")
+                curr_opts.pop("_validator")
+                assert curr_opts == opts
     assert OPTIONS[option] == old
 
 
 @pytest.mark.parametrize(
     "option,value",
     [
+        ("metadata_locales", ["tlh"]),
+        ("metadata_locales", [("tlh", "not/a/real/klingo/file.json")]),
         ("validate_inputs", True),
-        ("missing_pct", 4),
-        ("missing_wmo", {"nm": 45}),
-        ("missing_wmo", {"nm": 45, "nc": 3}),
+        ("missing_options", {"pct": {"nm": 45}}),
+        ("missing_options", {"wmo": {"nm": 45, "nc": 3}}),
+        (
+            "missing_options",
+            {"wmo": {"nm": 45, "nc": 3}, "notachoice": {"tolerance": 45}},
+        ),
+        (
+            "missing_options",
+            {"wmo": {"nm": 45, "nc": 3, "_validator": lambda x: x < 1}},
+        ),
     ],
 )
 def test_set_options_invalid(option, value):

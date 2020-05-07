@@ -172,7 +172,12 @@ class Indicator:
         # Pre-computation validation checks
         for da in das.values():
             self.validate(da)
-        self.cfprobe(*das.values())
+        try:
+            cfba = signature(self.cfprobe).bind(**das)
+        except TypeError:
+            self.cfprobe(*das.values())
+        else:
+            self.cfprobe(*cfba.args, **cfba.kwargs)
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(**das, **ba.kwargs)
@@ -247,7 +252,7 @@ class Indicator:
 
         return out
 
-    def cfprobe(self, *das):
+    def cfprobe(self, **das):
         """Check input data compliance to expectations.
         Warn of potential issues."""
         return True
@@ -311,7 +316,7 @@ class Indicator:
         indexer = kwds.get("indexer") or {}
 
         # We flag periods according to the currently set missing data method
-        miss = (checks.missing_default(da, freq, **indexer) for da in args)
+        miss = (checks.missing_from_context(da, freq, **indexer) for da in args)
 
         return reduce(np.logical_or, miss)
 

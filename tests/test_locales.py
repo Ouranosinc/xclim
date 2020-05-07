@@ -72,7 +72,7 @@ def test_local_dict(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "fill,isin,notin", [(True, ["description"], []), (False, [], ["description"]),]
+    "fill,isin,notin", [(True, ["description"], []), (False, [], ["description"])]
 )
 def test_local_attrs_sing(fill, isin, notin):
     attrs = xloc.get_local_attrs(
@@ -118,12 +118,6 @@ def test_local_formatter():
     fmt = xloc.get_local_formatter(russian)
     assert fmt.format("{freq:nn}", freq="YS") == "годовое"
     assert fmt.format("{freq:nf}", freq="YS") == "годовая"
-
-
-@pytest.mark.parametrize("locale", ["tlh", ("tlh", "not/a/real/klingo/file.json")])
-def test_set_locales_error(locale):
-    with pytest.raises(xloc.UnavailableLocaleError):
-        set_options(metdata_locales=[locale])
 
 
 def test_indicator_output(tas_series):

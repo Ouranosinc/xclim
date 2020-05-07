@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,24 @@ K2C = 273.15
 TESTS_HOME = Path(__file__).absolute().parent
 TESTS_DATA = Path(TESTS_HOME, "testdata")
 set_options(validate_inputs="raise")
+TestObj = namedtuple("TestObj", ["test"])
+
+
+@pytest.mark.parametrize(
+    "value,expected", [("a string", "a string"), ("a long string", "a * string")]
+)
+def test_check_valid_ok(value, expected):
+    d = TestObj(value)
+    checks.check_valid(d, "test", expected)
+
+
+@pytest.mark.parametrize(
+    "value,expected", [(None, "a string"), ("a long string", "a * strings")]
+)
+def test_check_valid_raise(value, expected):
+    d = TestObj(value)
+    with pytest.raises(ValidationError):
+        checks.check_valid(d, "test", expected)
 
 
 class TestDateHandling:

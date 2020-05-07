@@ -31,7 +31,7 @@ tg = Converter(
     standard_name="air_temperature",
     long_name="Daily mean temperature",
     description="Estimated mean temperature from maximum and minimum temperatures",
-    cell_methods="",
+    cell_methods="time: mean within days",
     compute=indices.tas,
 )
 
