@@ -45,12 +45,12 @@ class TestSubsetTime:
         np.testing.assert_array_equal(out.time.dt.year.max(), da.time.dt.year.max())
 
         assert (
-            '"start_date" not found within input date time range. Defaulting to minimum time step in xarray object.'
-            in [str(q.message) for q in record]
+            '"start_date" not found within input date time range. Defaulting to minimum'
+            " time step in xarray object." in [str(q.message) for q in record]
         )
         assert (
-            '"end_date" not found within input date time range. Defaulting to maximum time step in xarray object.'
-            in [str(q.message) for q in record]
+            '"end_date" not found within input date time range. Defaulting to maximum'
+            " time step in xarray object." in [str(q.message) for q in record]
         )
 
     def test_warnings(self):
@@ -67,8 +67,8 @@ class TestSubsetTime:
                 da, start_date=2050, end_date=2055,
             )
         assert (
-            'start_date and end_date require dates in (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
-            in [str(q.message) for q in record]
+            "start_date and end_date require dates in (type: str) using formats of"
+            ' "%Y", "%Y-%m" or "%Y-%m-%d".' in [str(q.message) for q in record]
         )
 
     def test_time_start_only(self):
@@ -579,8 +579,9 @@ class TestSubsetBbox:
                 end_date="2055",
             )
         assert (
-            '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets will soon exclusively'
-            ' support "start_date" and "end_date" (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
+            '"start_yr" and "end_yr" (type: int) are being deprecated. Temporal subsets'
+            ' will soon exclusively support "start_date" and "end_date" (type: str)'
+            ' using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
             not in [str(q.message) for q in record]
         )
 
@@ -677,8 +678,8 @@ class TestSubsetShape:
         )
         # Check that no warnings are raised for meridian crossing
         assert (
-            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
-            '" This feature is experimental. Output might not be accurate."'
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at'
+            ' Greenwich."" This feature is experimental. Output might not be accurate."'
             not in [str(q.message) for q in record]
         )
 
@@ -705,8 +706,8 @@ class TestSubsetShape:
         )
         # Check that no warnings are raised for meridian crossing
         assert (
-            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
-            '" This feature is experimental. Output might not be accurate."'
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at'
+            ' Greenwich."" This feature is experimental. Output might not be accurate."'
             not in [q.message for q in record]
         )
 
@@ -731,8 +732,8 @@ class TestSubsetShape:
         np.testing.assert_allclose(float(np.mean(sub.tasmax.isel(time=0))), 289.634968)
         # Check that no warnings are raised for meridian crossing
         assert (
-            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."'
-            '" This feature is experimental. Output might not be accurate."'
+            '"Geometry crosses the Greenwich Meridian. Proceeding to split polygon at'
+            ' Greenwich."" This feature is experimental. Output might not be accurate."'
             not in [str(q.message) for q in record]
         )
 

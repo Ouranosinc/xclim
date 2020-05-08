@@ -150,7 +150,7 @@ def valid_missing_data_threshold(comp, threshold=0):
 
 def check_is_dataarray(comp):
     r"""Decorator to check that a computation has an instance of xarray.DataArray
-     as first argument."""
+    as first argument."""
 
     @wraps(comp)
     def func(data_array, *args, **kwds):
@@ -396,22 +396,22 @@ def missing_pct(da, freq, tolerance, **indexer):
 def at_least_n_valid(da, freq, n, **indexer):
     r"""Return whether there are at least a given number of valid values.
 
-        Parameters
-        ----------
-        da : DataArray
-          Input array at daily frequency.
-        freq : str
-          Resampling frequency.
-        n : int
-          Minimum of valid values required.
-        **indexer : {dim: indexer, }, optional
-          Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-          values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
-          all values are considered.
+    Parameters
+    ----------
+    da : DataArray
+      Input array at daily frequency.
+    freq : str
+      Resampling frequency.
+    n : int
+      Minimum of valid values required.
+    **indexer : {dim: indexer, }, optional
+      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+      values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
+      all values are considered.
 
-        Returns
-        -------
-        out : DataArray
-          A boolean array set to True if period has missing values.
-        """
+    Returns
+    -------
+    out : DataArray
+      A boolean array set to True if period has missing values.
+    """
     return AtLeastNValid(da, freq, **indexer)(n=n)

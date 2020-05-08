@@ -14,9 +14,9 @@ def test_param_class():
 
     assert obj.parameters == in_params
 
-    assert str(obj) == (
-        "<ParametrizableClass: {'anint': 4, 'abool': True,"
-        " 'astring': 'a string', 'adict': \"{'key': 'val'}\"}>"
+    assert (
+        str(obj)
+        == "<ParametrizableClass: {'anint': 4, 'abool': True, 'astring': 'a string', 'adict': \"{'key': 'val'}\"}>"
     )
 
     obj2 = ParametrizableClass(anarray=np.array([1, 2]))

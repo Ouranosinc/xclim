@@ -150,9 +150,10 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
     out.attrs["original_name"] = getattr(da, "standard_name", "")
-    out.attrs[
-        "description"
-    ] = f"Parameters of the {dist} distribution fitted over {getattr(da, 'standard_name', '')}"
+    out.attrs["description"] = (
+        f"Parameters of the {dist} distribution fitted over"
+        f" {getattr(da, 'standard_name', '')}"
+    )
     out.attrs["estimator"] = "Maximum likelihood"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
@@ -300,8 +301,7 @@ def default_freq(**indexer):
 
 
 def get_dist(dist):
-    """Return a distribution object from scipy.stats.
-    """
+    """Return a distribution object from scipy.stats."""
     from scipy import stats
 
     dc = getattr(stats, dist, None)

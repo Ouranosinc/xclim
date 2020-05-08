@@ -186,7 +186,8 @@ def get_local_attrs(
         local_attrs = loc_dict.get(ind_name)
         if local_attrs is None:
             warnings.warn(
-                f"Attributes of indicator {ind_name} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {ind_name} in language {locale} were"
+                " requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:
@@ -244,8 +245,7 @@ def set_locales(*locales: Union[str, Sequence[str], Tuple[str, dict]]):
 
 
 class metadata_locale:
-    """Set a locale for the metadata output within a context.
-    """
+    """Set a locale for the metadata output within a context."""
 
     def __init__(self, *locales: Union[str, Sequence[str], Tuple[str, dict]]):
         """Create the context object to manage locales.
@@ -280,12 +280,12 @@ class metadata_locale:
 
 
 class UnavailableLocaleError(ValueError):
-    """Error raised when a locale is requested but doesn"t exist.
-    """
+    """Error raised when a locale is requested but doesn"t exist."""
 
     def __init__(self, locale):
         super().__init__(
-            f"Locale {locale} not available. Use `xclim.locales.list_locales()` to see available languages."
+            f"Locale {locale} not available. Use `xclim.locales.list_locales()` to see"
+            " available languages."
         )
 
 

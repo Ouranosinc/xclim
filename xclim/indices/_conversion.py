@@ -256,7 +256,8 @@ def saturation_vapor_pressure(
         )
     else:
         raise ValueError(
-            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
+            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46',"
+            " 'wmo08']"
         )
 
     return e_sat

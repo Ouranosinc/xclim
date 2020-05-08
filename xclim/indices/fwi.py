@@ -682,7 +682,8 @@ def fire_weather_ufunc(
             "start"
         ] < params["snowCoverDaysCalc"]:
             raise ValueError(
-                f"Input data must start at least {params['snowCoverDaysCalc']} days before the specified start date if using start up mode 'snow_depth'"
+                f"Input data must start at least {params['snowCoverDaysCalc']} days"
+                " before the specified start date if using start up mode 'snow_depth'"
             )
 
     # Whether each argument is needed in _fire_weather_calc
@@ -707,12 +708,14 @@ def fire_weather_ufunc(
         if any([ind in indexes + [start_up_mode, shut_down_mode] for ind in usedby]):
             if arg is None:
                 raise TypeError(
-                    f"Missing input argument {name} for index combination {indexes} with start up '{start_up_mode}' and shut down '{shut_down_mode}'"
+                    f"Missing input argument {name} for index combination {indexes}"
+                    f" with start up '{start_up_mode}' and shut down '{shut_down_mode}'"
                 )
             if hasattr(arg, "data") and isinstance(arg.data, dskarray):
                 # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
                 warn(
-                    f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
+                    f"Dask arrays have been detected in the input of the Fire Weather"
+                    f" calculation but they are not supported yet. Data will be loaded."
                 )
                 args.append(arg.load())
             else:

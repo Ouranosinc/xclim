@@ -44,10 +44,12 @@ if version.parse(pint.__version__) >= version.parse("0.10"):
     units.define("@alias day = d")
     units.define("@alias hour = h")  # Not the Planck constant...
     units.define(
-        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N"
+        " = degreeN"
     )
     units.define(
-        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E ="
+        " degreeE"
     )
 
 else:
@@ -59,7 +61,8 @@ else:
         "= degreeN"
     )
     units.define(
-        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
+        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E ="
+        " degreeE"
     )
 
 units.define("[speed] = [length] / [time]")
@@ -367,7 +370,8 @@ def declare_units(out_units, check_output=True, **units_by_name):
 
                 else:
                     raise ValueError(
-                        "Output units are not propagated by computation nor specified by decorator."
+                        "Output units are not propagated by computation nor specified"
+                        " by decorator."
                     )
 
             return out

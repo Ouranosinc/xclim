@@ -108,7 +108,9 @@ tn_days_below = Tasmin(
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
     long_name="Number of days with Tmin < {thresh}",
-    description="{freq} number of days where daily minimum temperature is below {thresh}.",
+    description=(
+        "{freq} number of days where daily minimum temperature is below {thresh}."
+    ),
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_below,
 )
@@ -118,7 +120,9 @@ tx_days_above = Tasmax(
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmax > {thresh}",
-    description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
+    description=(
+        "{freq} number of days where daily maximum temperature exceeds {thresh}."
+    ),
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx_days_above,
 )
@@ -128,8 +132,10 @@ tx_tn_days_above = TasminTasmax(
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmax > {thresh_tasmax} and Tmin > {thresh_tasmin}",
-    description="{freq} number of days where daily maximum temperature exceeds "
-    "{thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}.",
+    description=(
+        "{freq} number of days where daily maximum temperature exceeds "
+        "{thresh_tasmax} and minimum temperature exceeds {thresh_tasmin}."
+    ),
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
@@ -138,13 +144,17 @@ heat_wave_frequency = TasminTasmax(
     identifier="heat_wave_frequency",
     units="",
     standard_name="heat_wave_events",
-    long_name="Number of heat wave events (Tmin > {thresh_tasmin} "
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} number of heat wave events over a given period. "
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds : "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
-    "over a minimum number of days ({window}).",
+    long_name=(
+        "Number of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    ),
+    description=(
+        "{freq} number of heat wave events over a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds : "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
+        "over a minimum number of days ({window})."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_frequency,
@@ -154,13 +164,17 @@ heat_wave_max_length = TasminTasmax(
     identifier="heat_wave_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum length of heat wave events (Tmin > {thresh_tasmin}"
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} maximum length of heat wave events occurring in a given period. "
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
-    "a minimum number of days ({window}).",
+    long_name=(
+        "Maximum length of heat wave events (Tmin > {thresh_tasmin}"
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    ),
+    description=(
+        "{freq} maximum length of heat wave events occurring in a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
+        "a minimum number of days ({window})."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_max_length,
@@ -170,13 +184,17 @@ heat_wave_total_length = TasminTasmax(
     identifier="heat_wave_total_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Total length of heat wave events (Tmin > {thresh_tasmin} "
-    "and Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} total length of heat wave events occurring in a given period. "
-    "An event occurs when the minimum and maximum daily "
-    "temperature both exceeds specific thresholds "
-    "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
-    "a minimum number of days ({window}).",
+    long_name=(
+        "Total length of heat wave events (Tmin > {thresh_tasmin} "
+        "and Tmax > {thresh_tasmax} for >= {window} days)"
+    ),
+    description=(
+        "{freq} total length of heat wave events occurring in a given period. "
+        "An event occurs when the minimum and maximum daily "
+        "temperature both exceeds specific thresholds "
+        "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over "
+        "a minimum number of days ({window})."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_total_length,
@@ -188,8 +206,10 @@ heat_wave_index = Tasmax(
     units="days",
     standard_name="heat_wave_index",
     long_name="Number of days that are part of a heatwave",
-    description="{freq} number of days that are part of a heatwave, "
-    "defined as five or more consecutive days over {thresh}.",
+    description=(
+        "{freq} number of days that are part of a heatwave, "
+        "defined as five or more consecutive days over {thresh}."
+    ),
     cell_methods="",
     compute=indices.heat_wave_index,
 )
@@ -198,10 +218,14 @@ hot_spell_frequency = Tasmax(
     identifier="hot_spell_frequency",
     units="",
     standard_name="hot_spell_events",
-    long_name="Number of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} number of hot spell events over a given period. "
-    "An event occurs when the maximum daily temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) "
-    "over a minimum number of days ({window}).",
+    long_name=(
+        "Number of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)"
+    ),
+    description=(
+        "{freq} number of hot spell events over a given period. An event occurs when"
+        " the maximum daily temperature exceeds a specific threshold: (Tmax >"
+        " {thresh_tasmax}) over a minimum number of days ({window})."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_frequency,
@@ -211,10 +235,15 @@ hot_spell_max_length = Tasmax(
     identifier="hot_spell_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum length of hot spell events (Tmax > {thresh_tasmax} for >= {window} days)",
-    description="{freq} maximum length of hot spell events occurring in a given period. "
-    "An event occurs when the maximum daily temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) "
-    "over a minimum number of days ({window}).",
+    long_name=(
+        "Maximum length of hot spell events (Tmax > {thresh_tasmax} for >= {window}"
+        " days)"
+    ),
+    description=(
+        "{freq} maximum length of hot spell events occurring in a given period. An"
+        " event occurs when the maximum daily temperature exceeds a specific threshold:"
+        " (Tmax > {thresh_tasmax}) over a minimum number of days ({window})."
+    ),
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_max_length,
@@ -305,12 +334,15 @@ daily_temperature_range_variability = TasminTasmax(
     units="K",
     standard_name="air_temperature",
     long_name="Mean Diurnal Temperature Range Variability",
-    description="{freq} mean diurnal temparature range variability "
-    "(defined as the average day-to-day variation "
-    "in daily temperature range "
-    "for the given time period)",
-    cell_methods="time range within days time: difference "
-    "over days time: mean over days",
+    description=(
+        "{freq} mean diurnal temparature range variability "
+        "(defined as the average day-to-day variation "
+        "in daily temperature range "
+        "for the given time period)"
+    ),
+    cell_methods=(
+        "time range within days time: difference over days time: mean over days"
+    ),
     compute=indices.daily_temperature_range_variability,
 )
 
@@ -319,8 +351,10 @@ extreme_temperature_range = TasminTasmax(
     units="K",
     standard_name="air_temperature",
     long_name="Intra-period Extreme Temperature Range",
-    description="{freq} range between the maximum of daily max temperature "
-    "(tx_max) and the minimum of daily min temperature (tn_min)",
+    description=(
+        "{freq} range between the maximum of daily max temperature "
+        "(tx_max) and the minimum of daily min temperature (tn_min)"
+    ),
     compute=indices.extreme_temperature_range,
 )
 
@@ -329,12 +363,16 @@ cold_spell_duration_index = Tasmin(
     var_name="csdi_{window}",
     units="days",
     standard_name="cold_spell_duration_index",
-    long_name="Cold Spell Duration Index, count of days with at "
-    "least {window} consecutive days when Tmin < 10th percentile",
-    description="{freq} number of days with at least {window} consecutive days "
-    "where the daily minimum temperature is below the 10th "
-    "percentile. The 10th percentile should be computed for "
-    "a 5-day window centred on each calendar day in the  1961-1990 period",
+    long_name=(
+        "Cold Spell Duration Index, count of days with at "
+        "least {window} consecutive days when Tmin < 10th percentile"
+    ),
+    description=(
+        "{freq} number of days with at least {window} consecutive days "
+        "where the daily minimum temperature is below the 10th "
+        "percentile. The 10th percentile should be computed for "
+        "a 5-day window centred on each calendar day in the  1961-1990 period"
+    ),
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
@@ -344,9 +382,11 @@ cold_spell_days = Tas(
     units="days",
     standard_name="cold_spell_days",
     long_name="cold spell index",
-    description="{freq} number of days that are part of a cold spell, defined as {window} "
-    "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    description=(
+        "{freq} number of days that are part of a cold spell, defined as {window} "
+        "or more consecutive days with mean daily "
+        "temperature below  {thresh}."
+    ),
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -356,8 +396,10 @@ daily_freezethaw_cycles = TasminTasmax(
     units="days",
     standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
-    description="{freq} number of days with a diurnal freeze-thaw cycle "
-    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
+    description=(
+        "{freq} number of days with a diurnal freeze-thaw cycle "
+        ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}."
+    ),
     cell_methods="",
     compute=indices.daily_freezethaw_cycles,
 )
@@ -397,8 +439,10 @@ freshet_start = Tas(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of spring freshet start",
-    description="Day of year of spring freshet start, defined as the first day a temperature "
-    "threshold of {thresh} is exceeded for at least {window} days.",
+    description=(
+        "Day of year of spring freshet start, defined as the first day a temperature "
+        "threshold of {thresh} is exceeded for at least {window} days."
+    ),
     compute=indices.freshet_start,
 )
 
@@ -417,8 +461,10 @@ last_spring_frost = Tasmin(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of last spring frost",
-    description="Day of year of last spring frost, defined as the last day a minimum temperature "
-    "threshold of {thresh} is not exceeded before a given date.",
+    description=(
+        "Day of year of last spring frost, defined as the last day a minimum"
+        " temperature threshold of {thresh} is not exceeded before a given date."
+    ),
     compute=indices.last_spring_frost,
 )
 
@@ -437,8 +483,10 @@ consecutive_frost_days = Tasmin(
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
     long_name="Maximum number of consecutive days with Tmin < 0C",
-    description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature below 0℃",
+    description=(
+        "{freq} maximum number of consecutive days with "
+        "minimum daily temperature below 0℃"
+    ),
     cell_methods="time: min within days time: maximum over days",
     compute=indices.consecutive_frost_days,
 )
@@ -448,8 +496,10 @@ maximum_consecutive_frost_free_days = Tasmin(
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum number of consecutive days with Tmin > {thresh}",
-    description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature above {thresh}.",
+    description=(
+        "{freq} maximum number of consecutive days with "
+        "minimum daily temperature above {thresh}."
+    ),
     cell_methods="time: min within days time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
@@ -459,10 +509,12 @@ growing_season_length = Tas(
     units="days",
     standard_name="growing_season_length",
     long_name="ETCCDI Growing Season Length (Tmean > {thresh})",
-    description="{freq} number of days between the first occurrence of at least "
-    "six consecutive days with mean daily temperature over {thresh} and "
-    "the first occurrence of at least {window} consecutive days with "
-    "mean daily temperature below {thresh} after {mid_date}.",
+    description=(
+        "{freq} number of days between the first occurrence of at least "
+        "six consecutive days with mean daily temperature over {thresh} and "
+        "the first occurrence of at least {window} consecutive days with "
+        "mean daily temperature below {thresh} after {mid_date}."
+    ),
     cell_methods="",
     compute=indices.growing_season_length,
 )
@@ -472,9 +524,11 @@ growing_season_end = Tas(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of growing season end",
-    description="Day of year of end of growing season, defined as the first day of "
-    "consistent inferior threshold temperature of {thresh} after a run of "
-    "{window} days superior to threshold temperature.",
+    description=(
+        "Day of year of end of growing season, defined as the first day of "
+        "consistent inferior threshold temperature of {thresh} after a run of "
+        "{window} days superior to threshold temperature."
+    ),
     cell_methods="",
     compute=indices.growing_season_end,
 )
@@ -484,8 +538,10 @@ tropical_nights = Tasmin(
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of Tropical Nights (Tmin > {thresh})",
-    description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
-    " above {thresh}",
+    description=(
+        "{freq} number of Tropical Nights : defined as days with minimum daily"
+        " temperature above {thresh}"
+    ),
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tropical_nights,
 )
@@ -495,9 +551,11 @@ tg90p = Tas(
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmean > 90th percentile",
-    description="{freq} number of days with mean daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with mean daily temperature above the 90th"
+        " percentile.The 90th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: mean within days time: sum over days",
     compute=indices.tg90p,
 )
@@ -507,9 +565,11 @@ tg10p = Tas(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmean < 10th percentile",
-    description="{freq} number of days with mean daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with mean daily temperature below the 10th"
+        " percentile.The 10th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: mean within days time: sum over days",
     compute=indices.tg10p,
 )
@@ -519,9 +579,11 @@ tx90p = Tasmax(
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmax > 90th percentile",
-    description="{freq} number of days with maximum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with maximum daily temperature above the 90th"
+        " percentile.The 90th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx90p,
 )
@@ -531,9 +593,11 @@ tx10p = Tasmax(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmax < 10th percentile",
-    description="{freq} number of days with maximum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with maximum daily temperature below the 10th"
+        " percentile.The 10th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx10p,
 )
@@ -543,9 +607,11 @@ tn90p = Tasmin(
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Number of days when Tmin > 90th percentile",
-    description="{freq} number of days with minimum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with minimum daily temperature above the 90th"
+        " percentile.The 90th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn90p,
 )
@@ -555,9 +621,11 @@ tn10p = Tasmin(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days when Tmin < 10th percentile",
-    description="{freq} number of days with minimum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    description=(
+        "{freq} number of days with minimum daily temperature below the 10th"
+        " percentile.The 10th percentile is to be computed for a 5 day moving window"
+        " centered on each calendar day for a reference period."
+    ),
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn10p,
 )

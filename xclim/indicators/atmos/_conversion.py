@@ -53,12 +53,10 @@ saturation_vapor_pressure = Converter(
     _nvar=1,
     units="Pa",
     long_name="Saturation vapor pressure",
-    description=lambda **kws: (
-        "The saturation vapor pressure was calculated from a temperature "
-        "according to the {method} method."
-    )
+    description=lambda **kws: "The saturation vapor pressure was calculated from a temperature according to the {method} method."
     + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        " The computation was done in reference to ice for temperatures below"
+        " {ice_thresh}."
         if kws["ice_thresh"] is not None
         else ""
     ),
@@ -72,13 +70,10 @@ relative_humidity_from_dewpoint = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
-    description=lambda **kws: (
-        "Computed from temperature, and dew point temperature through the "
-        "saturation vapor pressures, which were calculated "
-        "according to the {method} method."
-    )
+    description=lambda **kws: "Computed from temperature, and dew point temperature through the saturation vapor pressures, which were calculated according to the {method} method."
     + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        " The computation was done in reference to ice for temperatures below"
+        " {ice_thresh}."
         if kws["ice_thresh"] is not None
         else ""
     ),
@@ -94,13 +89,10 @@ relative_humidity = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
-    description=lambda **kws: (
-        "Computed from temperature, specific humidity and pressure through the "
-        "saturation vapor pressure, which was calculated from temperature "
-        "according to the {method} method."
-    )
+    description=lambda **kws: "Computed from temperature, specific humidity and pressure through the saturation vapor pressure, which was calculated from temperature according to the {method} method."
     + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        " The computation was done in reference to ice for temperatures below"
+        " {ice_thresh}."
         if kws["ice_thresh"] is not None
         else ""
     ),
@@ -116,13 +108,10 @@ specific_humidity = Converter(
     units="",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
-    description=lambda **kws: (
-        "Computed from temperature, relative humidity and pressure through the "
-        "saturation vapor pressure, which was calculated from temperature "
-        "according to the {method} method."
-    )
+    description=lambda **kws: "Computed from temperature, relative humidity and pressure through the saturation vapor pressure, which was calculated from temperature according to the {method} method."
     + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        " The computation was done in reference to ice for temperatures below"
+        " {ice_thresh}."
         if kws["ice_thresh"] is not None
         else ""
     ),

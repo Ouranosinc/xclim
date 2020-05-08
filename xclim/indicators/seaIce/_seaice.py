@@ -34,7 +34,9 @@ sea_ice_extent = SicArea(
     units="m^2",
     standard_name="sea_ice_extent",
     long_name="Sea ice extent",
-    description="The sum of ocean areas where sea ice concentration is at least {thresh}.",
+    description=(
+        "The sum of ocean areas where sea ice concentration is at least {thresh}."
+    ),
     cell_methods="lon: sum lat: sum",
     compute=indices.sea_ice_extent,
 )
@@ -45,7 +47,9 @@ sea_ice_area = SicArea(
     units="m^2",
     standard_name="sea_ice_area",
     long_name="Sea ice area",
-    description="The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
+    description=(
+        "The sum of ice-covered areas where sea ice concentration is at least {thresh}."
+    ),
     cell_methods="lon: sum lat: sum",
     compute=indices.sea_ice_area,
 )

@@ -106,10 +106,8 @@ def ensure_longest_doy(func):
             and x.dayofyear.max() != y.dayofyear.max()
         ):
             warn(
-                (
-                    "get_correction received inputs defined on different dayofyear ranges. "
-                    "Interpolating to the longest range. Results could be strange."
-                ),
+                "get_correction received inputs defined on different dayofyear ranges. "
+                "Interpolating to the longest range. Results could be strange.",
                 stacklevel=4,
             )
             if x.dayofyear.max() < y.dayofyear.max():
@@ -209,7 +207,9 @@ def broadcast(
             if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
-                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
+                    "Broadcasting operations in multiple dimensions can only be done"
+                    " with linear and nearest-neighbor interpolation, not cubic. Using"
+                    " linear."
                 )
             grouped = grouped.interp(sel, method=interp)
 

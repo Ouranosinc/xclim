@@ -31,8 +31,7 @@ from xclim.locales import LOCALES
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
 # missing functions. It can handle indicators with any number of forcing fields.
 class Indicator:
-    r"""Climate indicator based on xarray
-    """
+    r"""Climate indicator based on xarray"""
     # Unique ID for function registry.
     identifier = ""
 
@@ -47,20 +46,24 @@ class Indicator:
     long_name = ""  # Parsed.
     units = ""  # Representative units of the physical quantity.
     cell_methods = ""  # List of blank-separated words of the form "name: method"
-    description = ""  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+    description = (  # The description is meant to clarify the qualifiers of the fundamental quantities, such as which
+        ""
+    )
     #   surface a quantity is defined on or what the flux sign conventions are.
 
     # The `pint` unit context. Use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     context = "none"
 
     # Additional information that can be used by third party libraries or to describe the file content.
-    title = ""  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+    title = (  # A succinct description of what is in the dataset. Default parsed from compute.__doc__
+        ""
+    )
     abstract = ""  # Parsed
     keywords = ""  # Comma separated list of keywords
     # Published or web-based references that describe the data or methods used to produce it. Parsed.
     references = ""
-    comment = (
-        ""  # Miscellaneous information about the data or methods used to produce it.
+    comment = (  # Miscellaneous information about the data or methods used to produce it.
+        ""
     )
     notes = ""  # Mathematical formulation. Parsed.
 
@@ -90,8 +93,8 @@ class Indicator:
         # Verify that the identifier is a proper slug
         if not re.match(r"^[-\w]+$", self.identifier):
             warnings.warn(
-                "The identifier contains non-alphanumeric characters. It could make life "
-                "difficult for downstream software reusing this class.",
+                "The identifier contains non-alphanumeric characters. It could make"
+                " life difficult for downstream software reusing this class.",
                 UserWarning,
             )
 

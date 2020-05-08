@@ -58,8 +58,8 @@ def check_start_end_dates(func):
             da.time.sel(time=kwargs["start_date"])
         except KeyError:
             warnings.warn(
-                '"start_date" not found within input date time range. Defaulting to minimum time step in '
-                "xarray object.",
+                '"start_date" not found within input date time range. Defaulting to'
+                " minimum time step in xarray object.",
                 UserWarning,
                 stacklevel=2,
             )
@@ -68,8 +68,8 @@ def check_start_end_dates(func):
             da.time.sel(time=kwargs["end_date"])
         except KeyError:
             warnings.warn(
-                '"end_date" not found within input date time range. Defaulting to maximum time step in '
-                "xarray object.",
+                '"end_date" not found within input date time range. Defaulting to'
+                " maximum time step in xarray object.",
                 UserWarning,
                 stacklevel=2,
             )
@@ -80,7 +80,8 @@ def check_start_end_dates(func):
             > da.time.sel(time=kwargs["end_date"]).max()
         ):
             raise ValueError(
-                f'Start date ("{kwargs["start_date"]}") is after end date ("{kwargs["end_date"]}").'
+                f'Start date ("{kwargs["start_date"]}") is after end date'
+                f' ("{kwargs["end_date"]}").'
             )
 
         return func(*args, **kwargs)
@@ -117,8 +118,8 @@ def check_lons(func):
                     kwargs[lon][kwargs[lon] < 0] += 360
             elif np.all(args[0].lon >= 0) and np.any(kwargs[lon] < 0):
                 raise NotImplementedError(
-                    f"Input longitude bounds ({kwargs[lon]}) cross the 0 degree meridian but"
-                    " dataset longitudes are all positive."
+                    f"Input longitude bounds ({kwargs[lon]}) cross the 0 degree"
+                    " meridian but dataset longitudes are all positive."
                 )
             if np.all(args[0].lon <= 0) and np.any(kwargs[lon] > 0):
                 if isinstance(kwargs[lon], float):
@@ -164,7 +165,8 @@ def check_latlon_dimnames(func):
                     conversion["lons"] = "lon"
                 if not conversion and not {"rlon", "rlat"}.issubset(dims):
                     warnings.warn(
-                        f"lat and lon-like dimensions are not found among arg `{argument}` dimensions: {list(dims)}."
+                        "lat and lon-like dimensions are not found among arg"
+                        f" `{argument}` dimensions: {list(dims)}."
                     )
                 argument = argument.rename(conversion)
 
@@ -207,7 +209,8 @@ def convert_lat_lon_to_da(func):
             ptdim = xarray.core.utils.get_temp_dimname(args[0].dims, "site")
             if ptdim != "site" and len(lat) > 1:
                 warnings.warn(
-                    f"Dimension 'site' already on input, output will use {ptdim} instead."
+                    f"Dimension 'site' already on input, output will use {ptdim}"
+                    " instead."
                 )
             lon = xarray.DataArray(lon, dims=(ptdim,))
             lat = xarray.DataArray(lat, dims=(ptdim,))
@@ -240,8 +243,8 @@ def wrap_lons_and_split_at_greenwich(func):
             ):
                 # TODO: This should raise an exception, right?
                 warnings.warn(
-                    "DataArray doesn't seem to be using lons between 0 and 360 degrees or between -180 and 180 degrees."
-                    " Tread with caution.",
+                    "DataArray doesn't seem to be using lons between 0 and 360 degrees"
+                    " or between -180 and 180 degrees. Tread with caution.",
                     UserWarning,
                     stacklevel=4,
                 )
@@ -252,8 +255,9 @@ def wrap_lons_and_split_at_greenwich(func):
                 ):
                     split_flag = True
                     warnings.warn(
-                        "Geometry crosses the Greenwich Meridian. Proceeding to split polygon at Greenwich."
-                        " This feature is experimental. Output might not be accurate.",
+                        "Geometry crosses the Greenwich Meridian. Proceeding to split"
+                        " polygon at Greenwich. This feature is experimental. Output"
+                        " might not be accurate.",
                         UserWarning,
                         stacklevel=4,
                     )
@@ -619,8 +623,9 @@ def subset_shape(
 
     if np.all(mask_2d.isnull()):
         raise ValueError(
-            f"No grid cell centroids found within provided polygon bounds ({poly.bounds}). "
-            'Try using the "buffer" option to create an expanded areas or verify polygon.'
+            "No grid cell centroids found within provided polygon bounds"
+            f' ({poly.bounds}). Try using the "buffer" option to create an expanded'
+            " areas or verify polygon."
         )
 
     # loop through variables
@@ -770,7 +775,8 @@ def subset_bbox(
     else:
         raise (
             Exception(
-                f'{subset_bbox.__name__} requires input data with "lon" and "lat" dimensions, coordinates, or variables.'
+                f'{subset_bbox.__name__} requires input data with "lon" and "lat"'
+                " dimensions, coordinates, or variables."
             )
         )
 
@@ -826,7 +832,8 @@ def _check_has_overlaps(polygons: gpd.GeoDataFrame):
             non_overlapping.append(p)
     if len(polygons) != len(non_overlapping):
         warnings.warn(
-            f"List of shapes contains overlap between features. Results will vary on feature order.",
+            f"List of shapes contains overlap between features. Results will vary on"
+            f" feature order.",
             UserWarning,
             stacklevel=5,
         )
@@ -837,7 +844,8 @@ def _check_has_overlaps_old(polygons: gpd.GeoDataFrame):
         for (indb, polb) in polygons.iloc[i + 1 :].iterrows():
             if pola.geometry.intersects(polb.geometry):
                 warnings.warn(
-                    f"List of shapes contains overlap between {inda} and {indb}. Points will be assigned to {inda}.",
+                    f"List of shapes contains overlap between {inda} and {indb}. Points"
+                    f" will be assigned to {inda}.",
                     UserWarning,
                     stacklevel=5,
                 )
@@ -858,7 +866,8 @@ def _check_crs_compatibility(shape_crs: CRS, raster_crs: CRS):
             )
         elif not shape_crs.equals(wgs84) and not raster_crs.equals(wgs84):
             warnings.warn(
-                "CRS definitions are not similar or both not using WGS84 datum. Tread with caution.",
+                "CRS definitions are not similar or both not using WGS84 datum. Tread"
+                " with caution.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -963,7 +972,8 @@ def subset_gridpoint(
     else:
         raise (
             Exception(
-                f'{subset_gridpoint.__name__} requires input data with "lon" and "lat" coordinates or data variables.'
+                f'{subset_gridpoint.__name__} requires input data with "lon" and "lat"'
+                " coordinates or data variables."
             )
         )
 

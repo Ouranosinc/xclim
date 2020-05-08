@@ -133,9 +133,10 @@ def adapt_freq(
         pth.attrs[
             "long_name"
         ] = "Smallest value of the timeseries not corrected by frequency adaptation."
-        dP0.attrs[
-            "long_name"
-        ] = "Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation"
+        dP0.attrs["long_name"] = (
+            "Proportion of values smaller than {thresh} in the timeseries corrected by"
+            " frequency adaptation"
+        )
 
         # Tell group_apply that these will need reshaping (regrouping)
         # This is needed since if any variable comes out a groupby with the original group axis, the whole output is broadcasted back to the original dims.

@@ -230,9 +230,10 @@ def ensemble_percentiles(
             ds_out[perc.name] = perc
 
             if "description" in ds_out[perc.name].attrs:
-                ds_out[perc.name].attrs[
-                    "description"
-                ] = f"{ds_out[perc.name].attrs['description']} : {p}th percentile of ensemble"
+                ds_out[perc.name].attrs["description"] = (
+                    f"{ds_out[perc.name].attrs['description']} : {p}th percentile of"
+                    " ensemble"
+                )
             else:
                 ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
 
@@ -292,7 +293,8 @@ def _ens_align_datasets(
                 counts = time.resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
-                        f"Alignment of dataset #{i:02d} failed : its time axis cannot be resampled to freq {resample_freq}."
+                        f"Alignment of dataset #{i:02d} failed : its time axis cannot"
+                        f" be resampled to freq {resample_freq}."
                     )
                 time = counts.time
 
@@ -597,8 +599,9 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
         raise Exception(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
         warnings.warn(
-            f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "
-            f"to {max_clusters} as required by user provided max_clusters",
+            f"{n_clusters} clusters has been found to be the optimal number of"
+            f" clusters, but limiting to {max_clusters} as required by user provided"
+            " max_clusters",
             UserWarning,
             stacklevel=2,
         )
@@ -641,13 +644,13 @@ def plot_rsqprofile(fig_data):
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
                 label = (
-                    f"R² selection = {rsq[n_clusters - 1].round(2)} (n = {n_clusters}) :"
-                    f" Max cluster set to {fig_data['max_clusters']}"
+                    f"R² selection = {rsq[n_clusters - 1].round(2)} (n = {n_clusters})"
+                    f" : Max cluster set to {fig_data['max_clusters']}"
                 )
             else:
                 label = (
-                    f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters}) :"
-                    f" Max cluster set to {fig_data['max_clusters']}"
+                    f"R² selection > {fig_data['method']['rsq_cutoff']} (n ="
+                    f" {n_clusters}) : Max cluster set to {fig_data['max_clusters']}"
                 )
 
         plt.plot(

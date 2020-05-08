@@ -53,12 +53,10 @@ class BaseAdjustment(ParametrizableClass):
             and get_calendar(ref) != get_calendar(hist)
         ):
             warn(
-                (
-                    "Input ref and hist are defined on different calendars, "
-                    "this is not recommended when using 'dayofyear' grouping "
-                    "and could give strange results. See `xclim.core.calendar` "
-                    "for tools to convert your data to a common calendar."
-                ),
+                "Input ref and hist are defined on different calendars, "
+                "this is not recommended when using 'dayofyear' grouping "
+                "and could give strange results. See `xclim.core.calendar` "
+                "for tools to convert your data to a common calendar.",
                 stacklevel=4,
             )
         self._train(ref, hist)
@@ -81,12 +79,10 @@ class BaseAdjustment(ParametrizableClass):
             and get_calendar(sim) != self._hist_calendar
         ):
             warn(
-                (
-                    "This adjustment was trained on a simulation with the "
-                    f"{self._hist_calendar} calendar but the sim input uses "
-                    f"{get_calendar(sim)}. This is not recommended with dayofyear "
-                    "grouping and could give strange results."
-                ),
+                "This adjustment was trained on a simulation with the "
+                f"{self._hist_calendar} calendar but the sim input uses "
+                f"{get_calendar(sim)}. This is not recommended with dayofyear "
+                "grouping and could give strange results.",
                 stacklevel=4,
             )
         scen = self._adjust(sim, **kwargs)
