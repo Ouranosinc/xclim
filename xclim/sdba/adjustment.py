@@ -9,6 +9,7 @@ from xarray.core.dataarray import DataArray
 from .base import Grouper
 from .base import ParametrizableClass
 from .base import parse_group
+from .detrending import BaseDetrend
 from .detrending import PolyDetrend
 from .processing import normalize
 from .utils import ADDITIVE
@@ -98,10 +99,11 @@ class BaseAdjustment(ParametrizableClass):
         """Set the trained dataset from the passed variables.
 
         The trained dataset should at least have a `af` variable storing the adjustment factors.
-        Adds the adjustment parameters as the "adj_params" dictionary attribute.
+        Adds the adjustment parameters as the "adj_*" attributes.
         """
         self.ds = xr.Dataset(data_vars=kwargs)
-        self.ds.attrs["adj_params"] = self.parameters_to_json()
+        self.ds.attrs["adj_base_method"] = self.__class__.__name__
+        self.ds.attrs.update(self.flatten_parameters(prefix="adj"))
 
     def _train(self):
         raise NotImplementedError
@@ -197,7 +199,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
     2. `ref` and `hist` are normalized by removing the group-wise mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor then detrended using a linear fit.
+    4. `sim` is corrected by the scaling factor then detrended using some fit (linear by default).
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
     6. The trend is put back on the result.
 
@@ -213,6 +215,29 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
+    @parse_group
+    def __init__(
+        self,
+        *,
+        nquantiles: int = 20,
+        kind: str = ADDITIVE,
+        interp: str = "nearest",
+        detrending: Union[int, BaseDetrend] = 1,
+        extrapolation: str = "constant",
+        group: Union[str, Grouper] = "time",
+    ):
+
+        super().__init__(
+            nquantiles=nquantiles,
+            kind=kind,
+            interp=interp,
+            extrapolation=extrapolation,
+            group=group,
+        )
+        if isinstance(detrending, int):
+            detrending = PolyDetrend(degree=detrending, kind=self.kind)
+        self._add_parameter("detrending", detrending)
+
     def _train(self, ref, hist):
         mu_ref = self.group.apply("mean", ref)
         mu_hist = self.group.apply("mean", hist)
@@ -226,13 +251,19 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             description="Scaling factor making the mean of hist match the one of hist.",
         )
 
-    def _adjust(self, sim, degree=0):
+    def _adjust(self, sim, degree=None):
         sim = apply_correction(
             sim,
             broadcast(self.ds.scaling, sim, group=self.group, interp=self.interp),
             self.kind,
         )
-        sim_fit = PolyDetrend(degree=degree, kind=self.kind).fit(sim)
+
+        if degree is not None:
+            detrending = PolyDetrend(degree=degree, kind=self.kind)
+        else:
+            detrending = self.detrending
+
+        sim_fit = detrending.fit(sim)
         sim_detrended = sim_fit.detrend(sim)
         scen_detrended = super()._adjust(sim_detrended)
         scen = sim_fit.retrend(scen_detrended)
