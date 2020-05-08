@@ -20,7 +20,7 @@ repos:
         language_version: python3
         args: ["--target-version", "py36"]
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 3.8.0a2
     hooks:
     -   id: flake8
         language_version: python3
@@ -31,12 +31,12 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.9.0
+    rev: v2.3.0
     hooks:
     -   id: reorder-python-imports
         language_version: python3
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v1.26.2
+    rev: v2.4.1
     hooks:
     -   id: pyupgrade
         language_version: python3
