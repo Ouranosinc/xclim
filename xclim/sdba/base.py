@@ -1,4 +1,5 @@
 """Base classes"""
+import json
 from inspect import signature
 from types import FunctionType
 from typing import Mapping
@@ -6,7 +7,6 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -38,47 +38,15 @@ class ParametrizableClass(object):
         """All parameters as a dictionary."""
         return {key: getattr(self, key) for key in self._parameter_names}
 
-    def flatten_parameters(self, prefix: Optional[Union[str, bool]] = None):
-        """Generate a flat dictionary of all parameters and sub-parameters.
-
-        The returned dictionary is save to put as attributes of a netCDF file.
-
-        Parameters
-        ----------
-        prefix : {None, False, str}
-          A prefix to append to the keys in the output.
-          If None (default), the class name is used.
-          If False, no prefix is appended.
-
-        Returns
-        -------
-        dict
-          A dictionary containing all parameters of the object.
-          strings, numbers, ndarrays and lists/tuples of string and numbers are kept intact.
-          Other instances of ParametrizableClass are appended recursively
-          Any other type is casted to a string.
-        """
-        if prefix is False:
-            prefix = ""
-        else:
-            prefix = (prefix or self.__class__.__name__) + "_"
-
-        flatdict = {}
-        for k, v in self.parameters.items():
-            if isinstance(v, (int, float, str, np.ndarray)) or (
-                isinstance(v, (tuple, list))
-                and all([isinstance(ele, (int, float, str)) for ele in v])
-            ):
-                flatdict[prefix + k] = v
-            elif isinstance(v, ParametrizableClass):
-                flatdict.update(v.flatten_parameters(prefix=prefix + k))
-            else:
-                flatdict[prefix + k] = str(v)
-
-        return flatdict
-
     def __str__(self):
-        return f"<{self.__class__.__name__}: {self.flatten_parameters(prefix=False)}>"
+        return (
+            f"<{self.__class__.__name__}({json.dumps(self.parameters, default=str)})>"
+        )
+
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__}: {json.dumps(self.parameters, default=str)}>"
+        )
 
 
 class Grouper(ParametrizableClass):

@@ -102,8 +102,7 @@ class BaseAdjustment(ParametrizableClass):
         Adds the adjustment parameters as the "adj_*" attributes.
         """
         self.ds = xr.Dataset(data_vars=kwargs)
-        self.ds.attrs["adj_base_method"] = self.__class__.__name__
-        self.ds.attrs.update(self.flatten_parameters(prefix="adj"))
+        self.ds.attrs["adj_params"] = str(self)
 
     def _train(self):
         raise NotImplementedError
