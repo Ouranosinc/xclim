@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 import xarray as xr
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
-from xclim.sdba.base import Grouper
-from xclim.sdba.base import ParametrizableClass
-from xclim.sdba.processing import normalize
+sdba = pytest.importorskip("xclim.sdba")
+from xclim.sdba.base import Grouper  # noqa
+from xclim.sdba.base import ParametrizableClass  # noqa
+from xclim.sdba.processing import normalize  # noqa
 
 
 def test_param_class():
@@ -16,16 +16,8 @@ def test_param_class():
 
     assert (
         str(obj)
-        == "<ParametrizableClass: {'anint': 4, 'abool': True, 'astring': 'a string', 'adict': \"{'key': 'val'}\"}>"
+        == '<ParametrizableClass({"anint": 4, "abool": true, "astring": "a string", "adict": {"key": "val"}})>'
     )
-
-    obj2 = ParametrizableClass(anarray=np.array([1, 2]))
-    obj2._add_parameter("aprcls", obj)
-    flatdict = obj2.flatten_parameters()
-    for k, v in flatdict.items():
-        assert k.startswith("ParametrizableClass_")
-    assert flatdict["ParametrizableClass_aprcls_anint"] == 4
-    assert isinstance(flatdict["ParametrizableClass_aprcls_adict"], str)
 
 
 @pytest.mark.parametrize(

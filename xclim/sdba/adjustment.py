@@ -19,6 +19,7 @@ from .utils import equally_spaced_nodes
 from .utils import extrapolate_qm
 from .utils import get_correction
 from .utils import interp_on_quantiles
+from .utils import invert
 from .utils import map_cdf
 from .utils import MULTIPLICATIVE
 from xclim.core.calendar import get_calendar
@@ -252,16 +253,34 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             broadcast(self.ds.scaling, sim, group=self.group, interp=self.interp),
             self.kind,
         )
+        mu_sim = self.group.apply("mean", sim)
+        sim_norm = apply_correction(
+            sim,
+            broadcast(
+                invert(mu_sim, kind=self.kind),
+                sim,
+                group=self.group,
+                interp=self.interp,
+            ),
+            kind=self.kind,
+        )
 
         if degree is not None:
             detrending = PolyDetrend(degree=degree, kind=self.kind)
         else:
             detrending = self.detrending
 
-        sim_fit = detrending.fit(sim)
-        sim_detrended = sim_fit.detrend(sim)
+        sim_fit = detrending.fit(sim_norm)
+        sim_detrended = sim_fit.detrend(sim_norm)
         scen_detrended = super()._adjust(sim_detrended)
-        scen = sim_fit.retrend(scen_detrended)
+        scen_norm = sim_fit.retrend(scen_detrended)
+
+        scen = apply_correction(
+            scen_norm,
+            broadcast(mu_sim, sim, group=self.group, interp=self.interp),
+            kind=self.kind,
+        )
+
         return scen
 
 
