@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 
 sdba = pytest.importorskip("xclim.sdba")
+
 from xclim.sdba.base import Grouper
 from xclim.sdba.base import ParametrizableClass
 from xclim.sdba.processing import normalize
