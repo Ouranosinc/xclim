@@ -4,6 +4,7 @@ import xarray
 import xclim.indices as xci
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
+from xclim.core.units import pint_multiply
 from xclim.core.units import units
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
@@ -165,7 +166,7 @@ def tg_mean_warmcold_quarter(
     >>> import xarray as xr
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset('tas.day.nc')
-    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t, op='warmest', input_freq='daily')
+    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t.tas, op='warmest', input_freq='daily')
 
     Notes
     -----
@@ -314,8 +315,8 @@ def prcptot_wetdry_quarter(
 
     >>> import xarray as xr
     >>> import xclim.indices as xci
-    >>> t = xr.open_dataset('pr.day.nc')
-    >>> pr_warm_qrt = xci.prcptot_wetdry_quarter(tas=t, op='wettest', input_freq='daily')
+    >>> p = xr.open_dataset('pr.day.nc')
+    >>> pr_warm_qrt = xci.prcptot_wetdry_quarter(pr=p.pr, op='wettest', input_freq='daily')
 
     Notes
     -----
@@ -327,10 +328,10 @@ def prcptot_wetdry_quarter(
     # determine input data frequency
 
     if input_freq == "monthly":
-        data1 = pr
+        data1 = pint_multiply(pr, 1 * units.month, "mm")
         wind = 3
     elif input_freq == "weekly":
-        data1 = pr
+        data1 = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
         data1 = xci.precip_accumulation(pr, freq="7D")
@@ -344,7 +345,7 @@ def prcptot_wetdry_quarter(
     with xarray.set_options(keep_attrs=True):
         out = data1.rolling(time=wind, center=False,).sum(allow_lazy=True, skipna=False)
         out.attrs = data1.attrs
-        out.attrs["units"] = "mm"
+        # out.attrs["units"] = "mm"
         if op == "wettest":
             out = out.resample(time="YS").max(dim="time")
         elif op == "driest":

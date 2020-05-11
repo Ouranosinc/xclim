@@ -1020,6 +1020,11 @@ class TestPrecipWettestDriestQuarter:
         out = xci.prcptot_wetdry_quarter(p_month, op="driest", input_freq="monthly")
         np.testing.assert_array_almost_equal(out, [58, 59])
 
+        p_month_m = p_month / 10
+        p_month_m.attrs["units"] = "cm month-1"
+        out = xci.prcptot_wetdry_quarter(p_month_m, op="wettest", input_freq="monthly")
+        np.testing.assert_array_almost_equal(out, [242, 242])
+
 
 class TestTempWarmestColdestQuarter:
     def test_simple(self, tas_series):
