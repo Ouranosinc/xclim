@@ -101,7 +101,7 @@ class BaseAdjustment(ParametrizableClass):
         Adds the adjustment parameters as the "adj_params" dictionary attribute.
         """
         self.ds = xr.Dataset(data_vars=kwargs)
-        self.ds.attrs["adj_params"] = self.parameters_to_json()
+        self.ds.attrs["adj_params"] = str(self)
 
     def _train(self):
         raise NotImplementedError

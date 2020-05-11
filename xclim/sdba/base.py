@@ -1,5 +1,4 @@
 """Base classes"""
-import json
 from inspect import signature
 from types import FunctionType
 from typing import Mapping
@@ -16,7 +15,7 @@ from boltons.funcutils import wraps
 
 
 # ## Base class for the sdba module
-class ParametrizableClass(object):
+class ParametrizableClass(dict):
     """Helper base class that sets as attribute every kwarg it receives in __init__.
 
     Only parameters passed in the init are considered as such and returned in the
@@ -24,20 +23,29 @@ class ParametrizableClass(object):
     """
 
     def __init__(self, **kwargs):
-        self._parameter_names = []
-        for key, val in kwargs.items():
-            setattr(self, key, val)
-            self._parameter_names.append(key)
+        super().__init__(kwargs)
+
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        return super().__getattr__(name)
 
     @property
     def parameters(self):
         """All parameters as a dictionary."""
-        return {key: getattr(self, key) for key in self._parameter_names}
+        return dict(**self)
 
     def __str__(self):
-        return (
-            f"<{self.__class__.__name__}: {json.dumps(self.parameters, default=str)}>"
-        )
+        def cast(val):
+            if isinstance(val, str):
+                return f"'{val}'"
+            return str(val)
+
+        params = ", ".join([f"{k}={cast(v)}" for k, v in self.items()])
+        return f"{self.__class__.__name__}({params})"
+
+    def __repr__(self):
+        return f"<{self!s}>"
 
 
 class Grouper(ParametrizableClass):
