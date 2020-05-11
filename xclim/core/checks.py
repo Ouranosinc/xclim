@@ -268,6 +268,7 @@ class MissingBase:
         return self.is_missing(self.null, self.count, **kwargs)
 
 
+@register_missing_method("any")
 class MissingAny(MissingBase):
     def is_missing(self, null, count, **kwargs):
         cond0 = null.count(dim="time") != count  # Check total number of days
@@ -275,6 +276,7 @@ class MissingAny(MissingBase):
         return cond0 | cond1
 
 
+@register_missing_method("wmo")
 class MissingWMO(MissingAny):
     def __init__(self, da, freq, **indexer):
         # Force computation on monthly frequency
@@ -296,7 +298,12 @@ class MissingWMO(MissingAny):
 
         return cond0 | cond1 | cond2
 
+    @staticmethod
+    def validate(nm, nc):
+        return nm < 31 and nc < 31
 
+
+@register_missing_method("pct")
 class MissingPct(MissingBase):
     def is_missing(self, null, count, tolerance=0.1):
         if tolerance < 0 or tolerance > 1:
@@ -305,15 +312,23 @@ class MissingPct(MissingBase):
         n = count - null.count(dim="time") + null.sum(dim="time")
         return n / count >= tolerance
 
+    @staticmethod
+    def validate(tolerance):
+        return 0 <= tolerance <= 1
 
+
+@register_missing_method("at_least_n")
 class AtLeastNValid(MissingBase):
     def is_missing(self, null, count, n=20):
         """The result of a reduction operation is considered missing if less than `n` values are valid."""
         nvalid = null.count(dim="time") - null.sum(dim="time")
         return nvalid < n
 
+    @staticmethod
+    def validate(n):
+        return n > 0
 
-@register_missing_method("any")
+
 def missing_any(da, freq, **indexer):
     r"""Return whether there are missing days in the array.
 
@@ -336,7 +351,6 @@ def missing_any(da, freq, **indexer):
     return MissingAny(da, freq, **indexer)()
 
 
-@register_missing_method("wmo", validator=lambda nm, nc: nm < 31 and nc < 31)
 def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     r"""Return whether a series fails WMO criteria for missing days.
 
@@ -373,7 +387,6 @@ def missing_wmo(da, freq, nm=11, nc=5, **indexer):
     return missing.resample(time=freq).any()
 
 
-@register_missing_method("pct", validator=lambda tolerance: 0 <= tolerance <= 1)
 def missing_pct(da, freq, tolerance, **indexer):
     r"""Return whether there are more missing days in the array than a given percentage.
 
@@ -399,7 +412,6 @@ def missing_pct(da, freq, tolerance, **indexer):
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
 
 
-@register_missing_method("at_least_n", validator=lambda n: n > 0)
 def at_least_n_valid(da, freq, n=1, **indexer):
     r"""Return whether there are at least a given number of valid values.
 
@@ -431,5 +443,6 @@ def missing_from_context(da, freq, **indexer):
     See `xclim.set_options` and `xclim.core.options.register_missing_method`.
     """
     meth = MISSING_METHODS[OPTIONS[CHECK_MISSING]]
-    opts = {k: v for k, v in meth.items() if k not in ["_validator", "_func"]}
-    return meth["_func"](da, freq, **opts, **indexer)
+
+    opts = {k: v for k, v in meth.items() if k != "_cls"}
+    return meth["_cls"](da, freq, **indexer)(**opts)

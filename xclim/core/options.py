@@ -52,18 +52,13 @@ def _valid_missing_options(mopts):
             or any([opt not in MISSING_METHODS[meth] for opt in opts.keys()])
             # Method option validator, if it exists, must pass
             or (
-                MISSING_METHODS[meth]["_validator"] is not None
-                and not MISSING_METHODS[meth]["_validator"](
-                    **{
-                        k: v
-                        for k, v in opts.items()
-                        if k not in ["_func", "_validator"]
-                    }
+                hasattr(MISSING_METHODS[meth], "validate")
+                and not MISSING_METHODS[meth].validate(
+                    **{k: v for k, v in opts.items() if k != "_cls"}
                 )
             )
-            # Must not overwrite validator and func
-            or "_validator" in opts
-            or "_func" in opts
+            # Must not overwrite cls
+            or "_cls" in opts
         ):
             return False
     return True
@@ -86,15 +81,15 @@ _SETTERS = {MISSING_OPTIONS: _set_missing_options}
 
 
 def register_missing_method(name, validator=None):
-    def _register_missing_method(func):
-        sig = signature(func)
+    def _register_missing_method(cls):
+        sig = signature(cls.is_missing)
         opts = {
             name: param.default
             for name, param in sig.parameters.items()
-            if name not in ["da", "freq", "indexer"]
+            if name not in ["self", "null", "count"]
         }
-        MISSING_METHODS[name] = {"_func": func, "_validator": validator, **opts}
-        return func
+        MISSING_METHODS[name] = {"_cls": cls, **opts}
+        return cls
 
     return _register_missing_method
 
