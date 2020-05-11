@@ -52,8 +52,8 @@ def _valid_missing_options(mopts):
             or any([opt not in MISSING_METHODS[meth] for opt in opts.keys()])
             # Method option validator, if it exists, must pass
             or (
-                hasattr(MISSING_METHODS[meth], "validate")
-                and not MISSING_METHODS[meth].validate(
+                hasattr(MISSING_METHODS[meth]["_cls"], "validate")
+                and not MISSING_METHODS[meth]["_cls"].validate(
                     **{k: v for k, v in opts.items() if k != "_cls"}
                 )
             )

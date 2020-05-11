@@ -4,6 +4,7 @@
 import pytest
 
 from xclim import set_options
+from xclim.core.checks import MissingBase
 from xclim.core.options import OPTIONS
 from xclim.core.options import register_missing_method
 
@@ -29,8 +30,7 @@ def test_set_options_valid(option, value):
         else:
             for k, opts in value.items():
                 curr_opts = OPTIONS["missing_options"][k].copy()
-                curr_opts.pop("_func")
-                curr_opts.pop("_validator")
+                curr_opts.pop("_cls")
                 assert curr_opts == opts
     assert OPTIONS[option] == old
 
@@ -62,8 +62,16 @@ def test_set_options_invalid(option, value):
 
 def test_register_missing_method():
     @register_missing_method("test")
-    def missing_example(da, freq):
-        return True
+    class MissingTest(MissingBase):
+        def is_missing(self, null, count, a_param=2):
+            return True
+
+        @staticmethod
+        def validate(a_param):
+            return a_param < 3
+
+    with pytest.raises(ValueError):
+        set_options(missing_options={"test": {"a_param": 5}})
 
     with set_options(check_missing="test"):
         assert OPTIONS["check_missing"] == "test"
