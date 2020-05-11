@@ -9,6 +9,7 @@ from xarray.core.dataarray import DataArray
 from .base import Grouper
 from .base import ParametrizableClass
 from .base import parse_group
+from .detrending import BaseDetrend
 from .detrending import PolyDetrend
 from .processing import normalize
 from .utils import ADDITIVE
@@ -18,6 +19,7 @@ from .utils import equally_spaced_nodes
 from .utils import extrapolate_qm
 from .utils import get_correction
 from .utils import interp_on_quantiles
+from .utils import invert
 from .utils import map_cdf
 from .utils import MULTIPLICATIVE
 from xclim.core.calendar import get_calendar
@@ -213,6 +215,29 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
+    @parse_group
+    def __init__(
+        self,
+        *,
+        nquantiles: int = 20,
+        kind: str = ADDITIVE,
+        interp: str = "nearest",
+        detrending: Union[int, BaseDetrend] = 1,
+        extrapolation: str = "constant",
+        group: Union[str, Grouper] = "time",
+    ):
+
+        super().__init__(
+            nquantiles=nquantiles,
+            kind=kind,
+            interp=interp,
+            extrapolation=extrapolation,
+            group=group,
+        )
+        if isinstance(detrending, int):
+            detrending = PolyDetrend(degree=detrending, kind=self.kind)
+        self["detrending"] = detrending
+
     def _train(self, ref, hist):
         mu_ref = self.group.apply("mean", ref)
         mu_hist = self.group.apply("mean", hist)
@@ -226,16 +251,49 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             description="Scaling factor making the mean of hist match the one of hist.",
         )
 
-    def _adjust(self, sim, degree=0):
+    def _adjust(self, sim, degree=None):
+        # Apply preliminary scaling from obs to hist
         sim = apply_correction(
             sim,
             broadcast(self.ds.scaling, sim, group=self.group, interp=self.interp),
             self.kind,
         )
-        sim_fit = PolyDetrend(degree=degree, kind=self.kind).fit(sim)
-        sim_detrended = sim_fit.detrend(sim)
+
+        # Normalize sim group-wise
+        # This group-wise pre normalization + reapplication further down
+        # is to circumvent #442 (detrending is not groupwise)
+        mu_sim = self.group.apply("mean", sim)
+        sim_norm = apply_correction(
+            sim,
+            broadcast(
+                invert(mu_sim, kind=self.kind),
+                sim,
+                group=self.group,
+                interp=self.interp,
+            ),
+            kind=self.kind,
+        )
+
+        # Find trend on sim (for debugging purpose, the detrending is overridable)
+        if degree is not None:
+            detrending = PolyDetrend(degree=degree, kind=self.kind)
+        else:
+            detrending = self.detrending
+
+        sim_fit = detrending.fit(sim_norm)
+        sim_detrended = sim_fit.detrend(sim_norm)
+
+        # Adjust
         scen_detrended = super()._adjust(sim_detrended)
-        scen = sim_fit.retrend(scen_detrended)
+        # Retrend
+        scen_norm = sim_fit.retrend(scen_detrended)
+
+        # Reapply-mean
+        scen = apply_correction(
+            scen_norm,
+            broadcast(mu_sim, sim, group=self.group, interp=self.interp),
+            kind=self.kind,
+        )
         return scen
 
 
