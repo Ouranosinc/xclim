@@ -21,7 +21,9 @@ class BaseDetrend(ParametrizableClass):
     Only _fit() should store data. _detrend() and _retrend() are meant to be used on any dataarray with the trend computed in fit.
     """
 
-    __fitted = False
+    def __init__(self, **kwargs):
+        self.__fitted = False
+        super().__init__(**kwargs)
 
     def fit(self, da: xr.DataArray, dim="time"):
         """Extract the trend of a DataArray along a specific dimension.

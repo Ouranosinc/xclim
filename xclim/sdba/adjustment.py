@@ -30,7 +30,9 @@ class BaseAdjustment(ParametrizableClass):
     Subclasses should implement the `_train` and `_adjust` methods.
     """
 
-    __trained = False
+    def __init__(self, **kwargs):
+        self.__trained = False
+        super().__init__(**kwargs)
 
     def train(
         self, ref: DataArray, hist: DataArray,

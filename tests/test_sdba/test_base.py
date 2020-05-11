@@ -10,14 +10,17 @@ from xclim.sdba.processing import normalize
 
 
 def test_param_class():
-    in_params = dict(anint=4, abool=True, astring="a string", adict={"key": "val"})
+    gr = Grouper(group="time.month")
+    in_params = dict(
+        anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr
+    )
     obj = ParametrizableClass(**in_params)
 
     assert obj.parameters == in_params
 
-    assert (
-        str(obj)
-        == "ParametrizableClass(anint=4, abool=True, astring='a string', adict={'key': 'val'})"
+    repr(obj).startswith(
+        "ParametrizableClass(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
+        "group=Grouper(dim='time',"
     )
 
 

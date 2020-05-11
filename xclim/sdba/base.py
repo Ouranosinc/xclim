@@ -22,30 +22,17 @@ class ParametrizableClass(dict):
     :py:meth:`ParametrizableClass.parameters` dictionary and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
-
-    def __getattr__(self, name):
-        if name in self:
-            return self[name]
-        return super().__getattr__(name)
+    __getattr__ = dict.__getitem__
 
     @property
     def parameters(self):
         """All parameters as a dictionary."""
         return dict(**self)
 
-    def __str__(self):
-        def cast(val):
-            if isinstance(val, str):
-                return f"'{val}'"
-            return str(val)
-
-        params = ", ".join([f"{k}={cast(v)}" for k, v in self.items()])
-        return f"{self.__class__.__name__}({params})"
-
     def __repr__(self):
-        return f"<{self!s}>"
+        """Return a string representation that allows eval to recreate it."""
+        params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
+        return f"{self.__class__.__name__}({params})"
 
 
 class Grouper(ParametrizableClass):
