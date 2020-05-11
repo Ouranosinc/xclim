@@ -403,7 +403,7 @@ def prcptot_warmcold_quarter(
         wind = 3
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
-        pint_multiply(pr, 1 * units.weekly, "mm")
+        pr = pint_multiply(pr, 1 * units.weekly, "mm")
         wind = 13
     elif input_freq == "daily":
         tas = xci.tg_mean(tas, freq="7D")
