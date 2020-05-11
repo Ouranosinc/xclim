@@ -1,4 +1,5 @@
 """Base classes"""
+import json
 from inspect import signature
 from types import FunctionType
 from typing import Mapping
@@ -33,23 +34,10 @@ class ParametrizableClass(object):
         """All parameters as a dictionary."""
         return {key: getattr(self, key) for key in self._parameter_names}
 
-    def parameters_to_json(self):
-        """A json-compliant dictionary of the parameters.
-
-        Parameter values that are of another type than str, int, float, bool or None are casted as strings.
-        """
-        return {
-            key: val
-            if isinstance(val, (str, float, int, bool, type(None)))
-            else str(val)
-            for key, val in self.parameters.items()
-        }
-
     def __str__(self):
-        params_str = ", ".join(
-            [f"{key}: {val}" for key, val in self.parameters_to_json().items()]
+        return (
+            f"<{self.__class__.__name__}: {json.dumps(self.parameters, default=str)}>"
         )
-        return f"<{self.__class__.__name__}: {params_str}>"
 
 
 class Grouper(ParametrizableClass):
@@ -228,8 +216,20 @@ class Grouper(ParametrizableClass):
         """
         if isinstance(da, dict):
             grpd = self.group(**da)
+            dim_is_chunked = any(
+                map(
+                    lambda d: (
+                        d.chunks is not None
+                        and len(d.chunks[d.get_axis_num(self.dim)]) > 1
+                    ),
+                    da.values(),
+                )
+            )
         else:
             grpd = self.group(da)
+            dim_is_chunked = (
+                da.chunks is not None and len(da.chunks[da.get_axis_num(self.dim)]) > 1
+            )
 
         dims = self.dim
         if not main_only:
@@ -263,6 +263,17 @@ class Grouper(ParametrizableClass):
                 out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)
+                if out.chunks is not None and not dim_is_chunked:
+                    # If the main dim consisted of only one chunk, the expected behavior of downstream
+                    # methods is to conserve this, but grouping rechunks
+                    out = out.chunk({self.dim: -1})
+        if (
+            self.window > 1 and "window" in out.dims
+        ):  # On non reducing ops, drop the constructed window
+            out = out.isel(window=self.window // 2, drop=True)
+        if self.prop in out.dims and out.chunks is not None:
+            # Same as above : downstream methods expect only one chunk along the group
+            out = out.chunk({self.prop: -1})
 
         return out
 

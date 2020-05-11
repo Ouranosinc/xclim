@@ -186,3 +186,17 @@ class TestDailyDownsampler:
                 freq
             ]
             assert np.allclose(x2.values, target)
+
+
+def test_doyminmax(q_series):
+    a = np.ones(365)
+    a[9] = 2
+    a[19] = -2
+    a[39] = 4
+    a[49] = -4
+    q = q_series(a)
+    dmx = generic.doymax(q)
+    dmn = generic.doymin(q)
+    assert dmx.values == [40]
+    assert dmn.values == [50]
+    assert dmx.units == ""
