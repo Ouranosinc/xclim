@@ -22,6 +22,7 @@ __all__ = [
     "tg_mean_warmcold_quarter",
     "tg_mean_wetdry_quarter",
     "prcptot_wetdry_quarter",
+    "prcptot_warmcold_quarter",
 ]
 
 
