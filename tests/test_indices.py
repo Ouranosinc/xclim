@@ -989,7 +989,7 @@ class TestPrecipSeasonality:
 
 
 class TestPrecipWettestDriestQuarter:
-    def test_simple(self, pr_series):
+    def test_exceptions(self, pr_series):
         a = np.zeros(365 * 2)
         a += 1 / 3600 / 24
         a = pr_series(a, start="1971-01-01")
@@ -997,14 +997,29 @@ class TestPrecipWettestDriestQuarter:
         a[(a.time.dt.month == 3)] += -1 / 3600 / 24
 
         with pytest.raises(NotImplementedError):
-            out = xci.prcptot_wetdry_quarter(a, op="wettest", input_freq="toto")
-            out = xci.prcptot_wetdry_quarter(a, op="toto", input_freq="daily")
+            xci.prcptot_wetdry_quarter(a, op="wettest", input_freq="toto")
+        with pytest.raises(NotImplementedError):
+            xci.prcptot_wetdry_quarter(a, op="toto", input_freq="daily")
+
+    def test_simple(self, pr_series):
+        a = np.zeros(365 * 2)
+        a += 1 / 3600 / 24
+        a = pr_series(a, start="1971-01-01")
+        a[(a.time.dt.month == 9)] += 5 / 3600 / 24
+        a[(a.time.dt.month == 3)] += -1 / 3600 / 24
 
         out = xci.prcptot_wetdry_quarter(a, op="wettest", input_freq="daily")
         np.testing.assert_array_almost_equal(out, [241, 241])
 
         out = xci.prcptot_wetdry_quarter(a, op="driest", input_freq="daily")
         np.testing.assert_array_almost_equal(out, [60, 60])
+
+    def test_weekly_monthly(self, pr_series):
+        a = np.zeros(365 * 2)
+        a += 1 / 3600 / 24
+        a = pr_series(a, start="1971-01-01")
+        a[(a.time.dt.month == 9)] += 5 / 3600 / 24
+        a[(a.time.dt.month == 3)] += -1 / 3600 / 24
 
         p_weekly = xci.precip_accumulation(a, freq="7D")
         p_weekly.attrs["units"] = "mm week-1"
@@ -1020,6 +1035,13 @@ class TestPrecipWettestDriestQuarter:
         out = xci.prcptot_wetdry_quarter(p_month, op="driest", input_freq="monthly")
         np.testing.assert_array_almost_equal(out, [58, 59])
 
+    def test_convertunits_nondaily(self, pr_series):
+        a = np.zeros(365 * 2)
+        a += 1 / 3600 / 24
+        a = pr_series(a, start="1971-01-01")
+        a[(a.time.dt.month == 9)] += 5 / 3600 / 24
+        a[(a.time.dt.month == 3)] += -1 / 3600 / 24
+        p_month = xci.precip_accumulation(a, freq="MS")
         p_month_m = p_month / 10
         p_month_m.attrs["units"] = "cm month-1"
         out = xci.prcptot_wetdry_quarter(p_month_m, op="wettest", input_freq="monthly")

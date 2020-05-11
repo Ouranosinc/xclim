@@ -249,8 +249,10 @@ def tg_mean_wetdry_quarter(
     """
     # determine input data frequency
     if input_freq == "monthly":
+        pr = pint_multiply(pr, 1 * units.month, "mm")
         wind = 3
     elif input_freq == "weekly":
+        pr = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
         tas = xci.tg_mean(tas, freq="7D")
@@ -399,7 +401,9 @@ def prcptot_warmcold_quarter(
     # determine input data frequency
     if input_freq == "monthly":
         wind = 3
+        pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
+        pint_multiply(pr, 1 * units.weekly, "mm")
         wind = 13
     elif input_freq == "daily":
         tas = xci.tg_mean(tas, freq="7D")
