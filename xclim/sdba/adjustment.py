@@ -288,7 +288,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         sim_fit = detrending.fit(sim_norm)
         sim_detrended = sim_fit.detrend(sim_norm)
 
-        # Adjust
+        # Adjust using `EmpiricalQuantileMapping.adjust`
         scen_detrended = super()._adjust(sim_detrended)
         # Retrend
         scen_norm = sim_fit.retrend(scen_detrended)
