@@ -164,7 +164,6 @@ def __build_icclim(mode="warn"):
 
 
 def __build_anuclim(mode="warn"):
-
     from xclim import indices
     from xclim.core.utils import wrapped_partial
 
@@ -196,8 +195,12 @@ def __build_anuclim(mode="warn"):
             indices.tg_mean_warmcold_quarter, freq="YS", op="coldest"
         ),
         "p12_AnnualPrecipitation": wrapped_partial(indices.prcptot, freq="YS"),
-        # "p13_PrecipWettestPeriod":
-        # "p14_PrecipDriestPeriod":
+        "p13_PrecipWettestPeriod": wrapped_partial(
+            indices.prcptot_wetdry_period, freq="YS", op="wettest"
+        ),
+        "p14_PrecipDriestPeriod": wrapped_partial(
+            indices.prcptot_wetdry_period, freq="YS", op="driest"
+        ),
         "p15_PrecipSeasonality": wrapped_partial(indices.precip_seasonality, freq="YS"),
         "p16_PrecipWettestQuarter": wrapped_partial(
             indices.prcptot_wetdry_quarter, freq="YS", op="wettest"
