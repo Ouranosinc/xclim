@@ -606,7 +606,6 @@ class TestSubsetShape:
         # check subsetted values against original
         imask = np.where(~np.isnan(sub[vari].isel(time=0)))
         if len(imask[0]) > 70:
-            np.random.RandomState = 42
             ii = np.random.randint(0, len(imask[0]), 70)
         else:
             ii = np.arange(0, len(imask[0]))
