@@ -812,7 +812,7 @@ def _check_has_overlaps(polygons: gpd.GeoDataFrame):
             non_overlapping.append(p)
     if len(polygons) != len(non_overlapping):
         warnings.warn(
-            f"List of shapes contains overlap between features. Results will vary on feature order.",
+            "List of shapes contains overlap between features. Results will vary on feature order.",
             UserWarning,
             stacklevel=5,
         )

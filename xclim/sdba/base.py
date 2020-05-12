@@ -9,50 +9,33 @@ from typing import Union
 import xarray as xr
 from boltons.funcutils import wraps
 
-# import cftime
-# from xclim.core.calendar import ensure_cftime_array
-# from xclim.core.calendar import get_calendar
-
 
 # ## Base class for the sdba module
-class ParametrizableClass(object):
-    """Helper base class that sets as attribute every kwarg it receives in __init__.
+class Parametrizable(dict):
+    """Helper base class ressembling a dictionary.
 
-    Only parameters passed in the init are considered as such and returned in the
-    :py:meth:`ParametrizableClass.parameters` dictionary and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
+    Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
+    :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
-    def __init__(self, **kwargs):
-        self._parameter_names = []
-        for key, val in kwargs.items():
-            setattr(self, key, val)
-            self._parameter_names.append(key)
+    __getattr__ = dict.__getitem__
 
     @property
     def parameters(self):
         """All parameters as a dictionary."""
-        return {key: getattr(self, key) for key in self._parameter_names}
+        return dict(**self)
 
-    def parameters_to_json(self):
-        """A json-compliant dictionary of the parameters.
+    def copy(self):
+        """Return a copy of this instance."""
+        return self.__class__(**self.parameters)
 
-        Parameter values that are of another type than str, int, float, bool or None are casted as strings.
-        """
-        return {
-            key: val
-            if isinstance(val, (str, float, int, bool, type(None)))
-            else str(val)
-            for key, val in self.parameters.items()
-        }
-
-    def __str__(self):
-        params_str = ", ".join(
-            [f"{key}: {val}" for key, val in self.parameters_to_json().items()]
-        )
-        return f"<{self.__class__.__name__}: {params_str}>"
+    def __repr__(self):
+        """Return a string representation that allows eval to recreate it."""
+        params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
+        return f"{self.__class__.__name__}({params})"
 
 
-class Grouper(ParametrizableClass):
+class Grouper(Parametrizable):
     """Helper object to perform grouping actions on dataarrays and datasets."""
 
     def __init__(
@@ -279,7 +262,11 @@ class Grouper(ParametrizableClass):
                     # If the main dim consisted of only one chunk, the expected behavior of downstream
                     # methods is to conserve this, but grouping rechunks
                     out = out.chunk({self.dim: -1})
-        elif self.prop in out.dims and out.chunks is not None:
+        if (
+            self.window > 1 and "window" in out.dims
+        ):  # On non reducing ops, drop the constructed window
+            out = out.isel(window=self.window // 2, drop=True)
+        if self.prop in out.dims and out.chunks is not None:
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
