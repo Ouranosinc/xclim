@@ -1,5 +1,4 @@
 """Base classes"""
-import json
 from inspect import signature
 from types import FunctionType
 from typing import Mapping
@@ -10,37 +9,33 @@ from typing import Union
 import xarray as xr
 from boltons.funcutils import wraps
 
-# import cftime
-# from xclim.core.calendar import ensure_cftime_array
-# from xclim.core.calendar import get_calendar
-
 
 # ## Base class for the sdba module
-class ParametrizableClass(object):
-    """Helper base class that sets as attribute every kwarg it receives in __init__.
+class Parametrizable(dict):
+    """Helper base class ressembling a dictionary.
 
-    Only parameters passed in the init are considered as such and returned in the
-    :py:meth:`ParametrizableClass.parameters` dictionary and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
+    Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
+    :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
-    def __init__(self, **kwargs):
-        self._parameter_names = []
-        for key, val in kwargs.items():
-            setattr(self, key, val)
-            self._parameter_names.append(key)
+    __getattr__ = dict.__getitem__
 
     @property
     def parameters(self):
         """All parameters as a dictionary."""
-        return {key: getattr(self, key) for key in self._parameter_names}
+        return dict(**self)
 
-    def __str__(self):
-        return (
-            f"<{self.__class__.__name__}: {json.dumps(self.parameters, default=str)}>"
-        )
+    def copy(self):
+        """Return a copy of this instance."""
+        return self.__class__(**self.parameters)
+
+    def __repr__(self):
+        """Return a string representation that allows eval to recreate it."""
+        params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
+        return f"{self.__class__.__name__}({params})"
 
 
-class Grouper(ParametrizableClass):
+class Grouper(Parametrizable):
     """Helper object to perform grouping actions on dataarrays and datasets."""
 
     def __init__(
