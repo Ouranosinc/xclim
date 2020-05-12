@@ -25,7 +25,47 @@ __all__ = [
     "prcptot_warmcold_quarter",
     "prcptot",
     "prcptot_wetdry_period",
+    "isothermality",
 ]
+
+
+@declare_units("percent", tasmin="[temperature]", tasmax="[temperature]")
+def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"):
+    r""" ANUCLIM Isothermality
+    The mean diurnal range divided by the temperature range.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      average daily minimum temperature [℃] or [K] at daily, weekly, or monthly frequency
+
+    tasmax : xarray.DataArray
+      average daily maximum temperature [℃] or [K] at daily, weekly, or monthly frequency
+
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      The isothermailty value expressed as a percent.
+
+    Notes
+    -----
+    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
+    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
+    the output with input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
+    calculated prior to calling the function
+
+
+    """
+
+    dtr = xci.daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
+    etr = xci.extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
+    with xarray.set_options(keep_attrs=True):
+        iso = dtr / etr * 100
+        iso.attrs["units"] = "%"
+    return iso
 
 
 @declare_units("percent", tas="[temperature]")
@@ -66,7 +106,7 @@ def temperature_seasonality(tas: xarray.DataArray,):
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the C of V on input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
     calculated prior to calling the function
 
     """
@@ -77,7 +117,7 @@ def temperature_seasonality(tas: xarray.DataArray,):
     with xarray.set_options(keep_attrs=True):
         seas = 100 * (_anuclim_coeff_var(tas))
 
-    seas.attrs["units"] = "percent"
+    seas.attrs["units"] = "%"
     return seas
 
 
@@ -117,7 +157,7 @@ def precip_seasonality(pr: xarray.DataArray,):
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the C of V on input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
 
     If input units are in mm s-1 or equivalent values are converted to mm/day to avoid potentially small denominator values
@@ -137,7 +177,7 @@ def precip_seasonality(pr: xarray.DataArray,):
 
 @declare_units("[temperature]", tas="[temperature]")
 def tg_mean_warmcold_quarter(
-    tas: xarray.DataArray, op: str = None, input_freq: str = None, freq="YS",
+    tas: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS",
 ):
     r""" ANUCLIM Mean temperature of warmest/coldest quarter
     The warmest (or coldest) quarter of the year is determined, and the mean
@@ -461,7 +501,6 @@ def prcptot_warmcold_quarter(
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
-
     r"""ANUCLIM Accumulated total precipitation.
 
     Parameters

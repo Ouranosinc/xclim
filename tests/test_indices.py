@@ -1094,6 +1094,40 @@ class TestTempWarmestColdestQuarter:
         np.testing.assert_array_almost_equal(out, [-15, -10])
 
 
+class TestIsothermality:
+    def get_data(self, tasmin_series, tasmax_series):
+        np.random.seed(123)
+        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
+        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
+        base = 10 + 15 * annual_cycle.reshape(-1, 1)
+        values = base + 3 * np.random.randn(annual_cycle.size, 1)
+        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        values = base + 10 + 3 * np.random.randn(annual_cycle.size, 1)
+        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        return tasmax, tasmin
+
+    @pytest.mark.parametrize(
+        "freq,expected",
+        [
+            ("D", [18.8700109, 19.40941685]),
+            ("7D", [23.29006069, 23.36559839]),
+            ("MS", [25.05925319, 25.09443682]),
+        ],
+    )
+    def test_simple(self, tasmax_series, tasmin_series, freq, expected):
+        tasmax, tasmin = self.get_data(tasmin_series, tasmax_series)
+
+        # weekly
+        tmin = tasmin.resample(time=freq).mean(dim="time", keep_attrs=True)
+        tmax = tasmax.resample(time=freq).mean(dim="time", keep_attrs=True)
+        out = xci.isothermality(tasmax=tmax, tasmin=tmin, freq="YS")
+        np.testing.assert_array_almost_equal(out, expected)
+
+
 class TestWarmDayFrequency:
     def test_1d(self, tasmax_series):
         a = np.zeros(35)

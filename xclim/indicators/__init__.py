@@ -167,15 +167,12 @@ def __build_anuclim(mode="warn"):
     from xclim import indices
     from xclim.core.utils import wrapped_partial
 
-    #  ['SD', 'SD1', 'SD5cm', 'SD50cm',
-
-    # TODO : Complete mappings for ICCLIM indices
     mapping = {
         "P1_AnnMeanTemp": wrapped_partial(indices.growing_degree_days, freq="YS"),
         "P2_MeanDiurnalRange": wrapped_partial(
             indices.daily_temperature_range, freq="YS"
         ),
-        # "P3_Isothermality 2/7":  TODO implement in _anuclim.py
+        "P3_Isothermality": indices.isothermality,
         "P4_TempSeasonality": indices.temperature_seasonality,
         "P5_MaxTempWarmestPeriod": wrapped_partial(indices.tx_max, freq="YS"),
         "P6_MinTempColdestPeriod": wrapped_partial(indices.tn_min, freq="YS"),
@@ -188,30 +185,30 @@ def __build_anuclim(mode="warn"):
         "P9_MeanTempDriestQuarter": wrapped_partial(
             indices.tg_mean_wetdry_quarter, freq="YS", op="driest"
         ),
-        "p10_MeanTempWarmestQuarter": wrapped_partial(
+        "P10_MeanTempWarmestQuarter": wrapped_partial(
             indices.tg_mean_warmcold_quarter, freq="YS", op="warmest"
         ),
-        "p11_MeanTempColdestQuarter": wrapped_partial(
+        "P11_MeanTempColdestQuarter": wrapped_partial(
             indices.tg_mean_warmcold_quarter, freq="YS", op="coldest"
         ),
-        "p12_AnnualPrecipitation": wrapped_partial(indices.prcptot, freq="YS"),
-        "p13_PrecipWettestPeriod": wrapped_partial(
+        "P12_AnnualPrecip": wrapped_partial(indices.prcptot, freq="YS"),
+        "P13_PrecipWettestPeriod": wrapped_partial(
             indices.prcptot_wetdry_period, freq="YS", op="wettest"
         ),
-        "p14_PrecipDriestPeriod": wrapped_partial(
+        "P14_PrecipDriestPeriod": wrapped_partial(
             indices.prcptot_wetdry_period, freq="YS", op="driest"
         ),
-        "p15_PrecipSeasonality": wrapped_partial(indices.precip_seasonality, freq="YS"),
-        "p16_PrecipWettestQuarter": wrapped_partial(
+        "P15_PrecipSeasonality": indices.precip_seasonality,
+        "P16_PrecipWettestQuarter": wrapped_partial(
             indices.prcptot_wetdry_quarter, freq="YS", op="wettest"
         ),
-        "p17_PrecipDriestQuarter": wrapped_partial(
+        "P17_PrecipDriestQuarter": wrapped_partial(
             indices.prcptot_wetdry_quarter, freq="YS", op="driest"
         ),
-        "p18_PrecipWarmestQuarter": wrapped_partial(
+        "P18_PrecipWarmestQuarter": wrapped_partial(
             indices.prcptot_warmcold_quarter, freq="YS", op="warmest"
         ),
-        "p19_PrecipColdestQuarter": wrapped_partial(
+        "P19_PrecipColdestQuarter": wrapped_partial(
             indices.prcptot_warmcold_quarter, freq="YS", op="coldest"
         ),
     }
@@ -242,4 +239,4 @@ def __build_anuclim(mode="warn"):
 
 
 ICCLIM = __build_icclim("ignore")
-ANUCLIM = __build_anuclim()
+anuclim = __build_anuclim()
