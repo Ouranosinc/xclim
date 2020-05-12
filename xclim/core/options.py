@@ -53,8 +53,8 @@ def _valid_missing_options(mopts):
             cls is None  # Method must be registered
             # All options must exist
             or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
-            # Method option validator, if it exists, must pass
-            or (hasattr(cls, "validate") and not cls.validate(**opts))
+            # Method option validator must pass, default validator is always True.
+            or not cls.validate(**opts)
         ):
             return False
     return True
