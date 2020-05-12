@@ -9,17 +9,13 @@ from typing import Union
 import xarray as xr
 from boltons.funcutils import wraps
 
-# import cftime
-# from xclim.core.calendar import ensure_cftime_array
-# from xclim.core.calendar import get_calendar
-
 
 # ## Base class for the sdba module
 class Parametrizable(dict):
-    """Helper base class that sets as attribute every kwarg it receives in __init__.
+    """Helper base class ressembling a dictionary.
 
-    Only parameters passed in the init are considered as such and returned in the
-    :py:meth:`ParametrizableClass.parameters` dictionary and the :py:meth:`ParametrizableCalss.parameters_to_json` method.
+    Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
+    :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
     __getattr__ = dict.__getitem__
