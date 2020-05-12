@@ -201,9 +201,12 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
     2. `ref` and `hist` are normalized by removing the group-wise mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor then detrended using a linear fit.
+    4. `sim` is corrected by the scaling factor, normalized by the group-wise mean and then detrended using a linear fit.*
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
-    6. The trend is put back on the result.
+    6. The group-wise mean and trend are put back on the result.*
+
+    * Steps 4 and 6 include a group-wise normalization to overcome the fact that detrending is not made group-wise.
+    A future release of xclim will have grouped detrending and not require this extra step any more.
 
     .. math::
 
