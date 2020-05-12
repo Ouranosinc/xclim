@@ -712,7 +712,7 @@ def fire_weather_ufunc(
             if hasattr(arg, "data") and isinstance(arg.data, dskarray):
                 # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
                 warn(
-                    f"Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
+                    "Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
                 )
                 args.append(arg.load())
             else:
