@@ -57,8 +57,8 @@ from typing import Union
 import pkg_resources
 
 from xclim.core.formatting import AttrFormatter
+from xclim.core.options import OPTIONS
 
-LOCALES = []
 TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title", "abstract"]
 
 
@@ -171,7 +171,7 @@ def get_local_attrs(
         Warns and returns an empty dict if none were available.
     """
     if not locales:
-        locales = LOCALES
+        locales = OPTIONS["metadata_locales"]
 
     if not append_locale_name and len(locales) > 1:
         raise ValueError(
@@ -213,70 +213,6 @@ def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
     attrs_mapping = loc_dict["attrs_mapping"].copy()
     mods = attrs_mapping.pop("modifiers")
     return AttrFormatter(attrs_mapping, mods)
-
-
-def set_locales(*locales: Union[str, Sequence[str], Tuple[str, dict]]):
-    """Set the current locales.
-
-    All indicators computed through atmos, land or seaIce will have additionnal metadata
-    in the given languages, as available and defined in xclim.locales data files or in given file.
-
-    Parameters
-    ----------
-    *locales : str or tuple of str
-        IETF language tag or a tuple of the language tag and a translation dict, or
-        a tuple of the language tag and a path to a json file defining translation
-        of attributes.
-
-    Raises
-    ------
-    UnavailableLocaleError
-        If a requested locale is not available.
-    """
-    for locale in locales:
-        if (isinstance(locale, str) and get_best_locale(locale) is None) or (
-            not isinstance(locale, str)
-            and isinstance(locale[1], str)
-            and not Path(locale[1]).is_file()
-        ):
-            raise UnavailableLocaleError(locale)
-    LOCALES[:] = locales
-
-
-class metadata_locale:
-    """Set a locale for the metadata output within a context.
-    """
-
-    def __init__(self, *locales: Union[str, Sequence[str], Tuple[str, dict]]):
-        """Create the context object to manage locales.
-
-        Parameters
-        ----------
-        **locales : str
-            IETF language tag or a tuple of the language tag and a translation dict, or
-            a tuple of the language tag and a path to a json file defining translation
-            of attributes.
-
-        Raises
-        ------
-        UnavailableLocaleError
-            If a requested locale is not defined in `xclim.locales`.
-
-        Examples
-        --------
-        >>> with metadata_locale("fr", "de"):
-        >>>     gdd = atmos.growing_degree_days(ds.tas)  # Will be created with english, french and german metadata.
-        >>> gdd = atmos.growing_degree_days(ds.tas)  # Will be created with english metadata only.
-        """
-
-        self.locales = locales
-
-    def __enter__(self):
-        self.old_locales = LOCALES[:]
-        set_locales(*self.locales)
-
-    def __exit__(self, *args, **kwargs):
-        set_locales(*self.old_locales)
 
 
 class UnavailableLocaleError(ValueError):
