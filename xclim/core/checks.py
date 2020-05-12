@@ -13,8 +13,9 @@ import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.options import check
+from xclim.core.options import cfcheck
 from xclim.core.options import CHECK_MISSING
+from xclim.core.options import datacheck
 from xclim.core.options import MISSING_METHODS
 from xclim.core.options import OPTIONS
 from xclim.core.options import register_missing_method
@@ -35,7 +36,7 @@ from xclim.indices import generic
 
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
-@check
+@cfcheck
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
 
@@ -48,7 +49,7 @@ def check_valid(var, key, expected):
         )
 
 
-@check
+@datacheck
 def check_daily(var):
     r"""Assert that the series is daily and monotonic (no jumps in time index).
 

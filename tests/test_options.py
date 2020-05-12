@@ -13,8 +13,10 @@ from xclim.core.options import register_missing_method
     "option,value",
     [
         ("metadata_locales", ["fr"]),
-        ("validate_inputs", "log"),
-        ("validate_inputs", "raise"),
+        ("data_validation", "log"),
+        ("data_validation", "raise"),
+        ("cf_compliance", "log"),
+        ("cf_compliance", "raise"),
         ("check_missing", "wmo"),
         ("check_missing", "any"),
         ("missing_options", {"wmo": {"nm": 10, "nc": 3}}),
@@ -40,7 +42,8 @@ def test_set_options_valid(option, value):
     [
         ("metadata_locales", ["tlh"]),
         ("metadata_locales", [("tlh", "not/a/real/klingo/file.json")]),
-        ("validate_inputs", True),
+        ("data_validation", True),
+        ("cf_compliance", False),
         ("missing_options", {"pct": {"nm": 45}}),
         ("missing_options", {"wmo": {"nm": 45, "nc": 3}}),
         (

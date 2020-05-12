@@ -19,7 +19,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
-from xclim.core.options import check
+from xclim.core.options import datacheck
 from xclim.core.utils import ValidationError
 
 
@@ -278,7 +278,7 @@ def convert_units_to(
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-@check
+@datacheck
 def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
         return

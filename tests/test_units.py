@@ -125,7 +125,7 @@ class TestCheckUnits:
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
 
-        with set_options(validate_inputs="raise"):
+        with set_options(data_validation="raise"):
             with pytest.raises(ValidationError):
                 check_units("mm", "[precipitation]")
 

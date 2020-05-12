@@ -12,7 +12,8 @@ logging.captureWarnings(True)
 
 
 METADATA_LOCALES = "metadata_locales"
-VALIDATE_INPUTS = "validate_inputs"
+DATA_VALIDATION = "data_validation"
+CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
 
@@ -20,12 +21,13 @@ MISSING_METHODS = {}
 
 OPTIONS = {
     METADATA_LOCALES: [],
-    VALIDATE_INPUTS: "warn",
+    DATA_VALIDATION: "raise",
+    CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
     MISSING_OPTIONS: MISSING_METHODS,
 }
 
-_VALIDATION_OPTIONS = frozenset(["log", "warn", "raise"])
+_LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 
 
 def _valid_locales(locales):
@@ -66,7 +68,8 @@ def _valid_missing_options(mopts):
 
 _VALIDATORS = {
     METADATA_LOCALES: _valid_locales,
-    VALIDATE_INPUTS: _VALIDATION_OPTIONS.__contains__,
+    DATA_VALIDATION: _LOUDNESS_OPTIONS.__contains__,
+    CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
     CHECK_MISSING: MISSING_METHODS.__contains__,
     MISSING_OPTIONS: _valid_missing_options,
 }
@@ -94,15 +97,31 @@ def register_missing_method(name, validator=None):
     return _register_missing_method
 
 
-def check(func):
+def datacheck(func):
     @wraps(func)
     def _run_check(*args, **kwargs):
         try:
             func(*args, **kwargs)
         except ValidationError as err:
-            if OPTIONS[VALIDATE_INPUTS] == "log":
+            if OPTIONS[DATA_VALIDATION] == "log":
                 logging.info(err.msg)
-            elif OPTIONS[VALIDATE_INPUTS] == "warn":
+            elif OPTIONS[DATA_VALIDATION] == "warn":
+                warn(err.msg, UserWarning, stacklevel=3)
+            else:
+                raise err
+
+    return _run_check
+
+
+def cfcheck(func):
+    @wraps(func)
+    def _run_check(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except ValidationError as err:
+            if OPTIONS[CF_COMPLIANCE] == "log":
+                logging.info(err.msg)
+            elif OPTIONS[CF_COMPLIANCE] == "warn":
                 warn(err.msg, UserWarning, stacklevel=3)
             else:
                 raise err
@@ -120,11 +139,14 @@ class set_options:
         tuples of language tags and a path to a json file defining translation
         of attributes.
       Default: ``[]``.
-    - ``validate_inputs``: Whether to do nothing ('no'),  'raise' an error or
-        'warn' the user on inputs that fail the checks in `xclim.core.checks`.
+    - ``data_validation``: Whether to 'log',  'raise' an error or
+        'warn' the user on inputs that fail the data checks in `xclim.core.checks`.
+      Default: ``'raise'``.
+    - ``cf_compliance``: Whether to 'log',  'raise' an error or
+        'warn' the user on inputs that fail the CF compliance checks in `xclim.core.checks`.
       Default: ``'warn'``.
     - ``check_missing``: How to check for missing data and flag computed indicators.
-        Default available methods are "any", "wmo" and "pct". or None to skip missing checks.
+        Default available methods are "any", "wmo", "pct" and "at_least_n".
         Missing method can be registered through the `xclim.core.checks.register_missing_method` decorator.
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of

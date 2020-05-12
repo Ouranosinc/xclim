@@ -16,7 +16,7 @@ K2C = 273.15
 
 TESTS_HOME = Path(__file__).absolute().parent
 TESTS_DATA = Path(TESTS_HOME, "testdata")
-set_options(validate_inputs="raise")
+set_options(cf_compliance="raise", data_validation="raise")
 TestObj = namedtuple("TestObj", ["test"])
 
 
@@ -77,12 +77,12 @@ class TestDateHandling:
             tg_mean(da)
 
 
-def test_validate_inputs_options(tas_series, caplog):
+def test_cf_compliance_options(tas_series, caplog):
     tas = tas_series(np.ones(365))
     tas.attrs["standard_name"] = "not the right name"
 
     with caplog.at_level(logging.INFO):
-        with set_options(validate_inputs="log"):
+        with set_options(cf_compliance="log"):
             checks.check_valid_temperature(tas, "degK")
 
             assert all([rec.levelname == "INFO" for rec in caplog.records])
@@ -92,13 +92,13 @@ def test_validate_inputs_options(tas_series, caplog):
             assert "Variable has a non-conforming units" in caplog.records[1].msg
 
     with pytest.warns(UserWarning, match="Variable has a non-conforming"):
-        with set_options(validate_inputs="warn"):
+        with set_options(cf_compliance="warn"):
             checks.check_valid_temperature(tas, "degK")
 
     with pytest.raises(
         ValidationError, match="Variable has a non-conforming standard_name"
     ):
-        with set_options(validate_inputs="raise"):
+        with set_options(cf_compliance="raise"):
             checks.check_valid_temperature(tas, "degK")
 
 
