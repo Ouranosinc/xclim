@@ -265,7 +265,14 @@ class MissingBase:
         """Return whether or not the values within each period should be considered missing or not."""
         raise NotImplementedError
 
+    @staticmethod
+    def validate(**kwargs):
+        """Return whether or not arguments are valid."""
+        return True
+
     def __call__(self, **kwargs):
+        if not self.validate(**kwargs):
+            raise ValueError("Invalid arguments")
         return self.is_missing(self.null, self.count, **kwargs)
 
 
