@@ -30,7 +30,6 @@ def test_set_options_valid(option, value):
         else:
             for k, opts in value.items():
                 curr_opts = OPTIONS["missing_options"][k].copy()
-                curr_opts.pop("_cls")
                 assert curr_opts == opts
     assert OPTIONS[option] == old
 

@@ -48,7 +48,7 @@ def _valid_missing_options(mopts):
     for meth, opts in mopts.items():
         cls = MISSING_METHODS.get(meth, None)
         if (
-            meth not in cls  # Method must be registered
+            cls is None  # Method must be registered
             # All options must exist
             or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
             # Method option validator, if it exists, must pass
@@ -68,7 +68,7 @@ _VALIDATORS = {
 
 def _set_missing_options(mopts):
     for meth, opts in mopts.items():
-        MISSING_METHODS[meth].update(opts)
+        OPTIONS[MISSING_OPTIONS][meth].update(opts)
 
 
 _SETTERS = {MISSING_OPTIONS: _set_missing_options}
