@@ -7,7 +7,7 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 
 from .base import Grouper
-from .base import ParametrizableClass
+from .base import Parametrizable
 from .base import parse_group
 from .detrending import BaseDetrend
 from .detrending import PolyDetrend
@@ -26,13 +26,15 @@ from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 
 
-class BaseAdjustment(ParametrizableClass):
+class BaseAdjustment(Parametrizable):
     """Base object for adjustment algorithms.
 
     Subclasses should implement the `_train` and `_adjust` methods.
     """
 
-    __trained = False
+    def __init__(self, **kwargs):
+        self.__trained = False
+        super().__init__(**kwargs)
 
     def train(
         self, ref: DataArray, hist: DataArray,
@@ -103,7 +105,7 @@ class BaseAdjustment(ParametrizableClass):
         Adds the adjustment parameters as the "adj_params" dictionary attribute.
         """
         self.ds = xr.Dataset(data_vars=kwargs)
-        self.ds.attrs["adj_params"] = self.parameters_to_json()
+        self.ds.attrs["adj_params"] = str(self)
 
     def _train(self):
         raise NotImplementedError
