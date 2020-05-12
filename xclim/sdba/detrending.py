@@ -1,14 +1,14 @@
 """Detrending objects"""
 import xarray as xr
 
-from .base import ParametrizableClass
+from .base import Parametrizable
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import invert
 from .utils import loffsets
 
 
-class BaseDetrend(ParametrizableClass):
+class BaseDetrend(Parametrizable):
     """Base class for detrending objects
 
     Defines three methods:
@@ -30,7 +30,7 @@ class BaseDetrend(ParametrizableClass):
 
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
-        new = self.__class__(**self.parameters)
+        new = self.copy()
         new._fit(da, dim=dim)
         new._fitted_dim = dim
         new.__fitted = True

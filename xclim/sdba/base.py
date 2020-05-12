@@ -15,7 +15,7 @@ from boltons.funcutils import wraps
 
 
 # ## Base class for the sdba module
-class ParametrizableClass(dict):
+class Parametrizable(dict):
     """Helper base class that sets as attribute every kwarg it receives in __init__.
 
     Only parameters passed in the init are considered as such and returned in the
@@ -29,13 +29,16 @@ class ParametrizableClass(dict):
         """All parameters as a dictionary."""
         return dict(**self)
 
+    def copy(self):
+        return self.__class__(**self.parameters)
+
     def __repr__(self):
         """Return a string representation that allows eval to recreate it."""
         params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
         return f"{self.__class__.__name__}({params})"
 
 
-class Grouper(ParametrizableClass):
+class Grouper(Parametrizable):
     """Helper object to perform grouping actions on dataarrays and datasets."""
 
     def __init__(

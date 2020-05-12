@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 import xarray as xr
 
-sdba = pytest.importorskip("xclim.sdba")
+sdba = pytest.importorskip("xclim.sdba")  # noqa
 
 from xclim.sdba.base import Grouper
-from xclim.sdba.base import ParametrizableClass
+from xclim.sdba.base import Parametrizable
 from xclim.sdba.processing import normalize
 
 
@@ -14,7 +14,7 @@ def test_param_class():
     in_params = dict(
         anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr
     )
-    obj = ParametrizableClass(**in_params)
+    obj = Parametrizable(**in_params)
 
     assert obj.parameters == in_params
 
