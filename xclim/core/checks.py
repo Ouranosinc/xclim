@@ -17,6 +17,7 @@ from xclim.core.options import cfcheck
 from xclim.core.options import CHECK_MISSING
 from xclim.core.options import datacheck
 from xclim.core.options import MISSING_METHODS
+from xclim.core.options import MISSING_OPTIONS
 from xclim.core.options import OPTIONS
 from xclim.core.options import register_missing_method
 from xclim.core.utils import ValidationError
@@ -450,7 +451,8 @@ def missing_from_context(da, freq, **indexer):
 
     See `xclim.set_options` and `xclim.core.options.register_missing_method`.
     """
-    meth = MISSING_METHODS[OPTIONS[CHECK_MISSING]]
+    name = OPTIONS[CHECK_MISSING]
+    cls = MISSING_METHODS[name]
+    opts = OPTIONS[MISSING_OPTIONS][name]
 
-    opts = {k: v for k, v in meth.items() if k != "_cls"}
-    return meth["_cls"](da, freq, **indexer)(**opts)
+    return cls(da, freq, **indexer)(**opts)

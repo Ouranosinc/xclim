@@ -24,7 +24,7 @@ OPTIONS = {
     DATA_VALIDATION: "raise",
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
-    MISSING_OPTIONS: MISSING_METHODS,
+    MISSING_OPTIONS: {},
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -48,19 +48,13 @@ def _valid_locales(locales):
 
 def _valid_missing_options(mopts):
     for meth, opts in mopts.items():
+        cls = MISSING_METHODS.get(meth, None)
         if (
-            meth not in MISSING_METHODS  # Method must be registered
+            cls is None  # Method must be registered
             # All options must exist
-            or any([opt not in MISSING_METHODS[meth] for opt in opts.keys()])
+            or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
             # Method option validator, if it exists, must pass
-            or (
-                hasattr(MISSING_METHODS[meth]["_cls"], "validate")
-                and not MISSING_METHODS[meth]["_cls"].validate(
-                    **{k: v for k, v in opts.items() if k != "_cls"}
-                )
-            )
-            # Must not overwrite cls
-            or "_cls" in opts
+            or (hasattr(cls, "validate") and not cls.validate(**opts))
         ):
             return False
     return True
@@ -77,21 +71,22 @@ _VALIDATORS = {
 
 def _set_missing_options(mopts):
     for meth, opts in mopts.items():
-        MISSING_METHODS[meth].update(opts)
+        OPTIONS[MISSING_OPTIONS][meth].update(opts)
 
 
 _SETTERS = {MISSING_OPTIONS: _set_missing_options}
 
 
-def register_missing_method(name, validator=None):
+def register_missing_method(name):
     def _register_missing_method(cls):
         sig = signature(cls.is_missing)
         opts = {
-            name: param.default
-            for name, param in sig.parameters.items()
-            if name not in ["self", "null", "count"]
+            key: param.default
+            for key, param in sig.parameters.items()
+            if key not in ["self", "null", "count"]
         }
-        MISSING_METHODS[name] = {"_cls": cls, **opts}
+        MISSING_METHODS[name] = cls
+        OPTIONS[MISSING_OPTIONS][name] = opts
         return cls
 
     return _register_missing_method
