@@ -30,6 +30,7 @@ class Parametrizable(dict):
         return dict(**self)
 
     def copy(self):
+        """Return a copy of this instance."""
         return self.__class__(**self.parameters)
 
     def __repr__(self):
