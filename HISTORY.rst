@@ -6,6 +6,8 @@ History
 ------
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
+* Fix outdated code examples in the docs and docstrings.
+* Run doctests as part of the test suite.
 
 0.16.0 (2020-04-23)
 -------------------
