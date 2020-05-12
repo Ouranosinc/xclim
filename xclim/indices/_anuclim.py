@@ -23,6 +23,7 @@ __all__ = [
     "tg_mean_wetdry_quarter",
     "prcptot_wetdry_quarter",
     "prcptot_warmcold_quarter",
+    "prcptot",
 ]
 
 
@@ -64,8 +65,8 @@ def temperature_seasonality(tas: xarray.DataArray,):
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the C of V on input data of any frequency. As such weekly or monthly averages, if desired, should be calculated prior
-    to calling the function
+    the C of V on input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
+    calculated prior to calling the function
 
     """
 
@@ -115,8 +116,8 @@ def precip_seasonality(pr: xarray.DataArray,):
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the C of V on input data of any frequency. As such weekly or monthly averages, if desired, should be calculated prior
-    to calling the function.
+    the C of V on input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
 
     If input units are in mm s-1 or equivalent values are converted to mm/day to avoid potentially small denominator values
 
@@ -135,7 +136,7 @@ def precip_seasonality(pr: xarray.DataArray,):
 
 @declare_units("[temperature]", tas="[temperature]")
 def tg_mean_warmcold_quarter(
-    tas: xarray.DataArray, op: str = None, input_freq: str = None
+    tas: xarray.DataArray, op: str = None, input_freq: str = None, freq="YS",
 ):
     r""" ANUCLIM Mean temperature of warmest/coldest quarter
     The warmest (or coldest) quarter of the year is determined, and the mean
@@ -152,6 +153,9 @@ def tg_mean_warmcold_quarter(
 
     input_freq : str
         input data time frequency - One of 'daily', 'weekly' or 'monthly'
+
+    freq : str
+      Resampling frequency; Defaults to "YS".
 
     Returns
     -------
@@ -173,7 +177,8 @@ def tg_mean_warmcold_quarter(
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data of any frequency.
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
 
     """
     # determine input data frequency
@@ -199,9 +204,9 @@ def tg_mean_warmcold_quarter(
         )
         out.attrs = data1.attrs
         if op == "warmest":
-            out = out.resample(time="YS").max(dim="time")
+            out = out.resample(time=freq).max(dim="time")
         elif op == "coldest":
-            out = out.resample(time="YS").min(dim="time")
+            out = out.resample(time=freq).min(dim="time")
         else:
             raise NotImplementedError(
                 f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
@@ -236,6 +241,9 @@ def tg_mean_wetdry_quarter(
     input_freq : str
         input data time frequency - One of 'daily', 'weekly' or 'monthly'
 
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
     Returns
     -------
     xarray.DataArray
@@ -245,7 +253,8 @@ def tg_mean_wetdry_quarter(
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data of any frequency.
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
 
     """
     # determine input data frequency
@@ -288,7 +297,7 @@ def tg_mean_wetdry_quarter(
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: str = None, input_freq: str = None
+    pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
     r""" ANUCLIM Total precipitation of wettest/driest quarter
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this
@@ -306,10 +315,16 @@ def prcptot_wetdry_quarter(
     input_freq : str
         input data time frequency - One of 'daily', 'weekly' or 'monthly'
 
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
     Returns
     -------
     xarray.DataArray
        Total precipitation values of the wettest/driest quarter of each year.
+
+    freq : str
+      Resampling frequency; Defaults to "YS".
 
     Examples
     --------
@@ -325,7 +340,8 @@ def prcptot_wetdry_quarter(
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data of any frequency.
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
 
     """
     # determine input data frequency
@@ -350,9 +366,9 @@ def prcptot_wetdry_quarter(
         out.attrs = data1.attrs
         # out.attrs["units"] = "mm"
         if op == "wettest":
-            out = out.resample(time="YS").max(dim="time")
+            out = out.resample(time=freq).max(dim="time")
         elif op == "driest":
-            out = out.resample(time="YS").min(dim="time")
+            out = out.resample(time=freq).min(dim="time")
         else:
             raise NotImplementedError(
                 f'Unknown operation "{op}" : op parameter must be one of "wettest" or "driest"'
@@ -387,6 +403,9 @@ def prcptot_warmcold_quarter(
     input_freq : str
         input data time frequency - One of 'daily', 'weekly' or 'monthly'
 
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
     Returns
     -------
     xarray.DataArray
@@ -396,7 +415,8 @@ def prcptot_warmcold_quarter(
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data of any frequency.
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
 
     """
     # determine input data frequency
@@ -436,6 +456,44 @@ def prcptot_warmcold_quarter(
         out.attrs = pr.attrs
         out.attrs["units"] = "mm"
         return out
+
+
+@declare_units("mm", pr="[precipitation]")
+def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
+    r"""ANUCLIM Accumulated total precipitation.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Mean total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar
+
+    input_freq : str
+        input data time frequency - One of 'daily', 'weekly' or 'monthly'
+
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+       Total precipitation [mm].
+
+    Notes
+    -----
+    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
+    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
+    the result with input data with daily frequency as well.
+
+    """
+
+    if input_freq == "monthly":
+        pr = pint_multiply(pr, 1 * units.month, "mm")
+    elif input_freq == "weekly":
+        pr = pint_multiply(pr, 1 * units.weekly, "mm")
+    elif input_freq == "daily":
+        pr = pint_multiply(pr, 1 * units.day, "mm")
+
+    return pr.resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray):

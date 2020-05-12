@@ -762,7 +762,7 @@ def precip_accumulation(
 
     Resample the original daily mean precipitation flux and accumulate over each period.
     If the daily mean temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
-    When the mean temperature is over 0 degC, precipitatio is assumed to be liquid rain and snow otherwise.
+    When the mean temperature is over 0 degC, precipitation is assumed to be liquid rain and snow otherwise.
 
     Parameters
     ----------
