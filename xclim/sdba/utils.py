@@ -4,6 +4,7 @@ from typing import Sequence
 from typing import Union
 from warnings import warn
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -211,6 +212,7 @@ def broadcast(
                 warn(
                     "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
                 )
+
             grouped = grouped.interp(sel, method=interp)
 
         for var in sel.keys():
@@ -461,4 +463,48 @@ def interp_on_quantiles(
         vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
+    )
+
+
+def rank(da, dim="time", pct=False):
+    """Ranks data.
+
+    Replicates `xr.DataArray.rank` but with support for dask-stored data. Xarray's docstring is below:
+
+    Equal values are assigned a rank that is the average of the ranks that
+    would have been otherwise assigned to all of the values within that
+    set.  Ranks begin at 1, not 0. If pct, computes percentage ranks.
+
+    NaNs in the input array are returned as NaNs.
+
+    The `bottleneck` library is required.
+
+    Parameters
+    ----------
+    dim : hashable
+        Dimension over which to compute rank.
+    pct : bool, optional
+        If True, compute percentage ranks, otherwise compute integer ranks.
+
+    Returns
+    -------
+    ranked : DataArray
+        DataArray with the same coordinates and dtype 'float64'.
+    """
+
+    def _nanrank(data):
+        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
+        ranked = func(data, axis=-1)
+        if pct:
+            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
+            ranked /= count
+        return ranked
+
+    return xr.apply_ufunc(
+        _nanrank,
+        da,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        dask="parallelized",
+        output_dtypes=[da.dtype],
     )
