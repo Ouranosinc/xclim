@@ -21,12 +21,12 @@ from xclim.core.formatting import default_formatter
 from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
+from xclim.core.options import MISSING_METHODS
+from xclim.core.options import OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.units import units
-from xclim.core.utils import wrapped_partial
 from xclim.locales import get_local_attrs
 from xclim.locales import get_local_formatter
-from xclim.locales import LOCALES
 
 
 class Indicator:
@@ -52,6 +52,11 @@ class Indicator:
       Representative units of the physical quantity (CF).
     compute: func
       The function computing the indicator.
+    missing: {any, wmo, pct, at_least_n, from_context}
+      The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`).
+    missing_options : dict, None
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     cell_methods: str
       List of blank-separated words of the form "name: method" (CF).
     description: str
@@ -104,7 +109,8 @@ class Indicator:
     standard_name = ""
     long_name = ""
     units = ""
-    missing_func = staticmethod(checks.missing_any)
+    missing = None
+    missing_options = None
     cell_methods = ""
     description = ""
     context = "none"
@@ -153,16 +159,35 @@ class Indicator:
         """Run checks and assign default values.
         """
 
+        # Check identifier is well formed - no funny characters
         self.identifier = kwds.pop("identifier", self.identifier)
         self.check_identifier(self.identifier)
 
+        # If missing is not specified, use context value (at runtime)
+        if self.missing is None:
+            self._missing = checks.missing_from_context
+
+        # Otherwise assign the method given
+        else:
+            self._missing = MISSING_METHODS[self.missing]
+
+        # Check missing_options are valid.
+        if self.missing_options is not None:
+            if self.missing is None:
+                raise ValueError(
+                    "Cannot set `missing_options` without setting `missing` method."
+                )
+
+            self._missing.validate(self.missing_options)
+
+        # Default for output variable name
         if self.var_name is None:
             self.var_name = self.identifier
 
-        # The signature
+        # The `compute` signature
         self._sig = signature(self.compute)
 
-        # The input parameter names
+        # The input parameters' name
         self._parameters = tuple(self._sig.parameters.keys())
 
         # Copy the docstring and signature
@@ -200,7 +225,7 @@ class Indicator:
         mba = signature(self.missing).bind(*das.values(), **ba.arguments)
 
         # Mask results that do not meet criteria defined by the `missing` method.
-        mask = self.missing(*mba.args, **mba.kwargs)
+        mask = self.mask(*mba.args, **mba.kwargs)
         ma_out = out.where(~mask)
 
         return ma_out.rename(vname)
@@ -217,7 +242,7 @@ class Indicator:
         """
         args = ba.arguments
         out = self.format(self.cf_attrs, args)
-        for locale in LOCALES:
+        for locale in OPTIONS["metadata_locales"]:
             out.update(
                 self.format(
                     get_local_attrs(
@@ -368,32 +393,46 @@ class Indicator:
 
         return out
 
-    @staticmethod
-    def cfprobe(*das):
-        """Check input data compliance to expectations.
-        Warn of potential issues."""
-        return True
-
-    @staticmethod
-    def compute(self, *args, **kwds):
-        """The function computing the indicator."""
-        raise NotImplementedError
-
-    @staticmethod
-    def missing(*args, **kwds):
-        """Return whether an output is considered missing or not."""
+    def mask(self, *args, **kwds):
+        """Return whether mask for output values, based on the output of the `missing` method.
+        """
         from functools import reduce
 
         freq = kwds.get("freq")
         indexer = kwds.get("indexer") or {}
 
-        # We flag any period with missing data
-        miss = (checks.missing_any(da, freq, **indexer) for da in args)
+        # We flag periods according to the missing method.
+        miss = (self._missing(da, freq, **indexer)() for da in args)
 
         return reduce(np.logical_or, miss)
 
+    # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
-    def validate(da):
-        """Validate input data requirements.
-        Raise error if conditions are not met."""
-        checks.assert_daily(da)
+    def cfcheck(*das):
+        """Compare metadata attributes to CF-Convention standards.
+
+        When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
+        """
+        return True
+
+    @staticmethod
+    def compute(self, *args, **kwds):
+        """The function computing the indicator.
+
+        This would typically be a function from `xclim.indices`.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def datacheck(da):
+        """Verify that input data is valid.
+
+         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
+
+         For example, checks could include:
+          - assert temporal frequency is daily
+          - assert no precipitation is negative
+          - assert no temperature has the same value 5 days in a row
+
+        """
+        return True

@@ -167,8 +167,22 @@ def check_is_dataarray(comp):
 
 # This function can probably be made simpler once CFPeriodIndex is implemented.
 class MissingBase:
+    """Base class used to determined where Indicator outputs should be masked.
+
+    Subclasses should implement `is_missing` and `validate` methods.
+
+    Decorate subclasses with `xclim.core.options.register_missing_method` to add them
+    to the registry before using them in an Indicator.
+    """
+
     def __init__(self, da, freq, **indexer):
         self.null, self.count = self.prepare(da, freq, **indexer)
+
+    @classmethod
+    def execute(cls, da, freq, options, indexer):
+        """Create the instance and call it in one operation."""
+        obj = cls(da, freq, **indexer)
+        return obj(**options)
 
     @staticmethod
     def split_freq(freq):
@@ -279,7 +293,7 @@ class MissingBase:
 
 @register_missing_method("any")
 class MissingAny(MissingBase):
-    def is_missing(self, null, count, **kwargs):
+    def is_missing(self, null, count):
         cond0 = null.count(dim="time") != count  # Check total number of days
         cond1 = null.sum(dim="time") > 0  # Check if any is missing
         return cond0 | cond1
@@ -336,6 +350,31 @@ class AtLeastNValid(MissingBase):
     @staticmethod
     def validate(n):
         return n > 0
+
+
+@register_missing_method("skip")
+class Skip(MissingBase):
+    def __init__(self, da, freq=None, **indexer):
+        pass
+
+    def is_missing(self, null, count):
+        """Return whether or not the values within each period should be considered missing or not."""
+        return False
+
+    def __call__(self):
+        return False
+
+
+@register_missing_method("from_context")
+class FromContext(MissingBase):
+    @classmethod
+    def execute(cls, da, freq, options, indexer):
+
+        name = OPTIONS[CHECK_MISSING]
+        kls = MISSING_METHODS[name]
+        opts = OPTIONS[MISSING_OPTIONS][name]
+
+        return kls(da, freq, **indexer)(**opts)
 
 
 def missing_any(da, freq, **indexer):
@@ -451,8 +490,4 @@ def missing_from_context(da, freq, **indexer):
 
     See `xclim.set_options` and `xclim.core.options.register_missing_method`.
     """
-    name = OPTIONS[CHECK_MISSING]
-    cls = MISSING_METHODS[name]
-    opts = OPTIONS[MISSING_OPTIONS][name]
-
-    return cls(da, freq, **indexer)(**opts)
+    return FromContext.execute(da, freq, indexer=indexer)
