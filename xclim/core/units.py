@@ -19,6 +19,9 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
+from xclim.core.options import datacheck
+from xclim.core.utils import ValidationError
+
 
 __all__ = [
     "convert_units_to",
@@ -275,7 +278,8 @@ def convert_units_to(
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
+@datacheck
+def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
         return
 
@@ -315,7 +319,7 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
     try:
         (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
-        raise AttributeError(
+        raise ValidationError(
             f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
         )
 
@@ -349,14 +353,14 @@ def declare_units(out_units, check_output=True, **units_by_name):
             # Match all passed in value to their proper arguments so we can check units
             bound_args = sig.bind(*args, **kwargs)
             for name, val in bound_args.arguments.items():
-                _check_units(val, bound_units.arguments.get(name, None))
+                check_units(val, bound_units.arguments.get(name, None))
 
             out = func(*args, **kwargs)
             if check_output:
                 if "units" in out.attrs:
                     # Check that output units dimensions match expectations, e.g. [temperature]
                     if "[" in out_units:
-                        _check_units(out, out_units)
+                        check_units(out, out_units)
                     # Explicitly convert units if units are declared, e.g K
                     else:
                         out = convert_units_to(out, out_units)

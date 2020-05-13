@@ -4,6 +4,8 @@ History
 
 0.17.x
 ------
+* Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
+* New `xclim.set_options` context to control the missing checks, input validation and locales.
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
 * Add `at_least_n_valid` function, indentifying null calculations based on minimum threshold.

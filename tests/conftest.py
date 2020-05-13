@@ -123,7 +123,7 @@ def q_series():
             coords=[coords],
             dims="time",
             name="q",
-            attrs={"standard_name": "dis", "units": "m3 s-1"},
+            attrs={"standard_name": "streamflow", "units": "m3 s-1"},
         )
 
     return _q_series

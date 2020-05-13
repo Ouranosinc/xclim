@@ -76,3 +76,9 @@ def walk_map(d: dict, func: FunctionType):
         else:
             out[k] = func(v)
     return out
+
+
+class ValidationError(ValueError):
+    @property
+    def msg(self):
+        return self.args[0]
