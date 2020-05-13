@@ -207,14 +207,12 @@ def broadcast(
             if group.prop is not None:
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
-            if len(sel) > 1:
-                sel = dict(zip(sel.keys(), xr.broadcast(*sel.values())))
-
             if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
                     "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
                 )
+
             grouped = grouped.interp(sel, method=interp)
 
         for var in sel.keys():
