@@ -172,7 +172,7 @@ def __build_anuclim(mode="warn"):
         "P2_MeanDiurnalRange": wrapped_partial(
             indices.daily_temperature_range, freq="YS"
         ),
-        "P3_Isothermality": indices.isothermality,
+        "P3_Isothermality": wrapped_partial(indices.isothermality, freq="YS"),
         "P4_TempSeasonality": indices.temperature_seasonality,
         "P5_MaxTempWarmestPeriod": wrapped_partial(indices.tx_max, freq="YS"),
         "P6_MinTempColdestPeriod": wrapped_partial(indices.tn_min, freq="YS"),
