@@ -162,7 +162,7 @@ def convert_calendar(
         raise ValueError(
             "Argument `align_on` must be specified with either 'date'  or 'year' when converting to or from a '360_day' calendar."
         )
-    elif (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
+    if (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
         warn(
             "Argument `align_on` was specified, but none of the source or target calendars is '360_day'. `align_on` will be ignored."
         )
