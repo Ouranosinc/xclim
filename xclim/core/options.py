@@ -150,11 +150,12 @@ class set_options:
     You can use ``set_options`` either as a context manager:
 
     >>> with xclim.set_options(metadata_locales=['fr']):
-    ...     ...
+    ...     out = xclim.atmos.tg_mean(tas)
 
     Or to set global options:
 
     >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})
+    <xclim.core.options.set_options object at ...>
     """
 
     def __init__(self, **kwargs):

@@ -162,7 +162,7 @@ def convert_calendar(
         raise ValueError(
             "Argument `align_on` must be specified with either 'date'  or 'year' when converting to or from a '360_day' calendar."
         )
-    elif (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
+    if (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
         warn(
             "Argument `align_on` was specified, but none of the source or target calendars is '360_day'. `align_on` will be ignored."
         )
@@ -617,15 +617,12 @@ def time_bnds(group, freq):
 
     Examples
     --------
-    >>> index = xr.cftime_range(start='2000-01-01', periods=3,
-                                freq='2QS', calendar='360_day')
-    >>> time_bnds(index, '2Q')
-    ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0, 1, 1),
-      cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999, 0, 91)),
-     (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0, 6, 181),
-      cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999, 5, 271)),
-     (cftime.Datetime360Day(2001, 1, 1, 0, 0, 0, 0, 4, 1),
-      cftime.Datetime360Day(2001, 3, 30, 23, 59, 59, 999999, 3, 91)))
+    >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
+    >>> time_bnds(index, '2Q')  # doctest: +SKIP
+    (cftime.Datetime360Day(2000-01-01 00:00:00), cftime.Datetime360Day(2000-03-30 23:59:59.999999)),
+    (cftime.Datetime360Day(2000-07-01 00:00:00), cftime.Datetime360Day(2000-09-30 23:59:59.999999)),
+    (cftime.Datetime360Day(2001-01-01 00:00:00), cftime.Datetime360Day(2001-03-30 23:59:59.999999)))
+
     """
     if isinstance(group, CFTimeIndex):
         cfindex = group
