@@ -32,17 +32,17 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
 
     >>> from inspect import signature
     >>> def func(a, b=1, c=1):
-            print(a, b, c)
+    ...     print(a, b, c)
     >>> newf = wrapped_partial(func, b=2)
     >>> signature(newf)
-    (a, *, c=1)
+    <Signature (a, *, c=1)>
     >>> newf(1)
-    1, 2, 1
+    1 2 1
     >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
     >>> signature(newf)
-    (a, *, c=2)
+    <Signature (a, *, c=2)>
     >>> newf(1)
-    1, 2, 2
+    1 2 2
     """
     suggested = suggested or {}
     partial_func = partial(func, **suggested, **fixed)
