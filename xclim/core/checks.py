@@ -6,18 +6,22 @@ Health checks
 Functions performing basic health checks on xarray.DataArrays.
 """
 import datetime as dt
-import logging
-from functools import wraps
-from warnings import warn
+import fnmatch
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from boltons.funcutils import wraps
 
+from xclim.core.options import cfcheck
+from xclim.core.options import CHECK_MISSING
+from xclim.core.options import datacheck
+from xclim.core.options import MISSING_METHODS
+from xclim.core.options import MISSING_OPTIONS
+from xclim.core.options import OPTIONS
+from xclim.core.options import register_missing_method
+from xclim.core.utils import ValidationError
 from xclim.indices import generic
-
-logging.captureWarnings(True)
-
 
 # Dev notes
 # ---------
@@ -25,28 +29,29 @@ logging.captureWarnings(True)
 # I suggest we use `check` for weak checking, and `assert` for strong checking.
 # Weak checking would log problems in a log, while strong checking would raise an error.
 #
+# ANSWER to the above:
+#   The use of set_options with a switch for raising vs warning vs logging would render these terms useless.
+#
 # `functools.wraps` is used to copy the docstring and the function's original name from the source
 # function to the decorated function. This allows sphinx to correctly find and document functions.
 
 
-# TODO: Implement pandas infer_freq in xarray with CFTimeIndex.
-
-
+# TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
+@cfcheck
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
 
     att = getattr(var, key, None)
     if att is None:
-        warn(f"Variable does not have a `{key}` attribute.", UserWarning, stacklevel=3)
-    elif att != expected:
-        warn(
+        raise ValidationError(f"Variable does not have a `{key}` attribute.")
+    if not fnmatch.fnmatch(att, expected):
+        raise ValidationError(
             f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
-            UserWarning,
-            stacklevel=3,
         )
 
 
-def assert_daily(var):
+@datacheck
+def check_daily(var):
     r"""Assert that the series is daily and monotonic (no jumps in time index).
 
     A ValueError is raised otherwise."""
@@ -56,15 +61,15 @@ def assert_daily(var):
     # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now
     if isinstance(t0.values, np.datetime64):
         if pd.infer_freq(var.time.to_pandas()) != "D":
-            raise ValueError("time series is not recognized as daily.")
+            raise ValidationError("time series is not recognized as daily.")
 
     # Check that the first time step is one day.
     if np.timedelta64(dt.timedelta(days=1)) != (t1 - t0).data:
-        raise ValueError("time series is not daily.")
+        raise ValidationError("time series is not daily.")
 
     # Check that the series does not go backward in time
     if not var.time.to_pandas().is_monotonic_increasing:
-        raise ValueError("time index is not monotonically increasing.")
+        raise ValidationError("time index is not monotonically increasing.")
 
 
 def check_valid_temperature(var, units):
@@ -72,7 +77,7 @@ def check_valid_temperature(var, units):
 
     check_valid(var, "standard_name", "air_temperature")
     check_valid(var, "units", units)
-    assert_daily(var)
+    check_daily(var)
 
 
 def check_valid_discharge(var):
@@ -261,10 +266,18 @@ class MissingBase:
         """Return whether or not the values within each period should be considered missing or not."""
         raise NotImplementedError
 
+    @staticmethod
+    def validate(**kwargs):
+        """Return whether or not arguments are valid."""
+        return True
+
     def __call__(self, **kwargs):
+        if not self.validate(**kwargs):
+            raise ValueError("Invalid arguments")
         return self.is_missing(self.null, self.count, **kwargs)
 
 
+@register_missing_method("any")
 class MissingAny(MissingBase):
     def is_missing(self, null, count, **kwargs):
         cond0 = null.count(dim="time") != count  # Check total number of days
@@ -272,6 +285,7 @@ class MissingAny(MissingBase):
         return cond0 | cond1
 
 
+@register_missing_method("wmo")
 class MissingWMO(MissingAny):
     def __init__(self, da, freq, **indexer):
         # Force computation on monthly frequency
@@ -293,7 +307,12 @@ class MissingWMO(MissingAny):
 
         return cond0 | cond1 | cond2
 
+    @staticmethod
+    def validate(nm, nc):
+        return nm < 31 and nc < 31
 
+
+@register_missing_method("pct")
 class MissingPct(MissingBase):
     def is_missing(self, null, count, tolerance=0.1):
         if tolerance < 0 or tolerance > 1:
@@ -302,12 +321,21 @@ class MissingPct(MissingBase):
         n = count - null.count(dim="time") + null.sum(dim="time")
         return n / count >= tolerance
 
+    @staticmethod
+    def validate(tolerance):
+        return 0 <= tolerance <= 1
 
+
+@register_missing_method("at_least_n")
 class AtLeastNValid(MissingBase):
     def is_missing(self, null, count, n=20):
         """The result of a reduction operation is considered missing if less than `n` values are valid."""
         nvalid = null.count(dim="time") - null.sum(dim="time")
         return nvalid < n
+
+    @staticmethod
+    def validate(n):
+        return n > 0
 
 
 def missing_any(da, freq, **indexer):
@@ -393,7 +421,7 @@ def missing_pct(da, freq, tolerance, **indexer):
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(da, freq, n, **indexer):
+def at_least_n_valid(da, freq, n=1, **indexer):
     r"""Return whether there are at least a given number of valid values.
 
         Parameters
@@ -415,3 +443,16 @@ def at_least_n_valid(da, freq, n, **indexer):
           A boolean array set to True if period has missing values.
         """
     return AtLeastNValid(da, freq, **indexer)(n=n)
+
+
+def missing_from_context(da, freq, **indexer):
+    """Return whether each element of the resampled da should be considered missing according
+    to the currently set options in `xclim.set_options`.
+
+    See `xclim.set_options` and `xclim.core.options.register_missing_method`.
+    """
+    name = OPTIONS[CHECK_MISSING]
+    cls = MISSING_METHODS[name]
+    opts = OPTIONS[MISSING_OPTIONS][name]
+
+    return cls(da, freq, **indexer)(**opts)
