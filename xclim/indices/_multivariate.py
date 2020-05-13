@@ -908,9 +908,7 @@ def days_over_precip_thresh(
 
     Example
     -------
-    >>> import xarray as xr
-    >>> import xclim
-    >>> pr = xr.open_dataset("precipitation_data.nc").pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
     >>> r75p = xclim.indices.days_over_precip_thresh(pr, p75)
     """

@@ -13,6 +13,7 @@ class TestSeaIceExtent:
         s = s.where(s.lat <= 0, 50)
         sic = xr.concat([s, s], dim="time")
         sic.attrs["units"] = "%"
+        sic.attrs["standard_name"] = "sea_ice_area_fraction"
 
         return areacella, sic
 

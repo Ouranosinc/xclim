@@ -8,4 +8,5 @@ Examples
    example
    subset
    ensembles
+   options
    mappings

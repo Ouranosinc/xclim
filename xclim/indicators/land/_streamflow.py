@@ -14,8 +14,8 @@ __all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_
 
 
 class Streamflow(Indicator):
-    units = "m^3 s-1"
     context = "hydro"
+    units = "m^3 s-1"
     standard_name = "discharge"
 
     @staticmethod
@@ -48,6 +48,9 @@ class FA(Streamflow):
 # Disable the daily checks because the inputs are period extremas.
 class Fit(FA):
     def validate(self, da):
+        pass
+
+    def cfprobe(self, q):
         pass
 
 

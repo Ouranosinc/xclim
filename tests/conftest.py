@@ -5,7 +5,10 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+import xclim
 from xclim.core.calendar import max_doy
+
+TD = Path(__file__).parent / "testdata"
 
 
 @pytest.fixture
@@ -120,7 +123,7 @@ def q_series():
             coords=[coords],
             dims="time",
             name="q",
-            attrs={"standard_name": "dis", "units": "m3 s-1"},
+            attrs={"standard_name": "streamflow", "units": "m3 s-1"},
         )
 
     return _q_series
@@ -243,7 +246,66 @@ def ps_series():
             coords=[coords],
             dims="time",
             name="ps",
-            attrs={"standard_name": "air_pressure", "units": "Pa",},
+            attrs={"standard_name": "air_pressure", "units": "Pa"},
         )
 
     return _ps_series
+
+
+@pytest.fixture(autouse=True)
+def add_imports(doctest_namespace):
+    """Add these imports into the doctests scope."""
+    ns = doctest_namespace
+    ns["np"] = np
+    ns["xr"] = xr
+    ns["xclim"] = xclim
+
+
+@pytest.fixture(autouse=True)
+def add_example_file_paths(doctest_namespace):
+    """Add these datasets in the doctests scope."""
+    ns = doctest_namespace
+    ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
+
+    ns["path_to_tasmax_file"] = str(
+        TD / "NRCANdaily" / "nrcan_canada_daily_tasmax_1990.nc"
+    )
+
+    ns["path_to_tasmin_file"] = str(
+        TD / "NRCANdaily" / "nrcan_canada_daily_tasmin_1990.nc"
+    )
+
+    ns["path_to_tas_file"] = str(
+        TD / "cmip3" / "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
+    )
+
+    ns["path_to_multi_shape_file"] = str(TD / "cmip5" / "multi_regions.json")
+
+    ns["path_to_shape_file"] = str(TD / "cmip5" / "southern_qc_geojson.json")
+
+    ns["temperature_datasets"] = [
+        str(
+            TD
+            / "EnsembleStats"
+            / "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
+        ),
+        str(
+            TD
+            / "EnsembleStats"
+            / "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
+        ),
+    ]
+    ns["precipitation_datasets"] = [
+        str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc"),
+        str(
+            TD
+            / "CanESM2_365day"
+            / "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc"
+        ),
+    ]
+
+
+@pytest.fixture(autouse=True)
+def add_example_dataarray(doctest_namespace, tas_series):
+    ns = doctest_namespace
+    ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)

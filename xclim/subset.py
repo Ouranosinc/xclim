@@ -332,18 +332,19 @@ def create_mask_vectorize(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> import xarray as xr
     >>> import geopandas as gpd
-    >>> ds = xr.open_dataset('example.nc')
-    >>> polys = gpd.read_file('regions.json')
-    Get a mask from all polygons in 'regions.json'
-    >>> mask = subset.create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
+    >>> ds = xr.open_dataset(path_to_tasmin_file)
+    >>> polys = gpd.read_file(path_to_multi_shape_file)
+
+    Get a mask from all polygons in the shape file
+    >>> mask = create_mask_vectorize(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
     >>> ds = ds.assign_coords(regions=mask)
+
     Operations can be applied to each regions with  `groupby`. Ex:
     >>> ds = ds.groupby('regions').mean()
-    Extra step to retrieve the names of those polygons stored in the "id" column
-    >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
+
+    Extra step to retrieve the names of those polygons stored in another column (here "id")
+    >>> region_names = xr.DataArray(polys.id, dims=('regions',))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
     if check_overlap:
@@ -412,18 +413,19 @@ def create_mask(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> import xarray as xr
     >>> import geopandas as gpd
-    >>> ds = xr.open_dataset('example.nc')
-    >>> polys = gpd.read_file('regions.json')
-    Get a mask from all polygons in 'regions.json'
-    >>> mask = subset.create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
+    >>> ds = xr.open_dataset(path_to_tasmin_file)
+    >>> polys = gpd.read_file(path_to_multi_shape_file)
+
+    Get a mask from all polygons in the shape file
+    >>> mask = create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)
     >>> ds = ds.assign_coords(regions=mask)
+
     Operations can be applied to each regions with  `groupby`. Ex:
     >>> ds = ds.groupby('regions').mean()
+
     Extra step to retrieve the names of those polygons stored in the "id" column
-    >>> region_names = xr.DataArray(polys.id, dims=('regions',)))
+    >>> region_names = xr.DataArray(polys.id, dims=('regions',))
     >>> ds = ds.assign_coords(regions_names=region_names)
     """
     wgs84 = CRS(4326)
@@ -519,21 +521,18 @@ def subset_shape(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> import xarray as xr
-    >>> pr = xarray.open_dataset('pr.day.nc').pr
-    Subset data array by shape and multiple years
-    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
+
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+
+    Subset data array by shape
+    >>> prSub = subset_shape(pr, shape=path_to_shape_file)
+
     Subset data array by shape and single year
-    >>> prSub = subset.subset_shape(pr, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1990')
+    >>> prSub = subset_shape(pr, shape=path_to_shape_file, start_date='1990-01-01', end_date='1990-12-31')
+
     Subset multiple variables in a single dataset
-    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_shape(ds, shape="/path/to/polygon.shp", start_yr='1990', end_yr='1999')
-     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03', end_date='1999-08')
-    # Subset with specific start_dates and end_dates
-    >>> prSub = \
-            subset.subset_shape(ds.pr, shape="/path/to/polygon.shp", start_date='1990-03-13', end_date='1990-08-17')
+    >>> ds = xr.open_mfdataset([path_to_tasmin_file, path_to_tasmax_file])
+    >>> dsSub = subset_shape(ds, shape=path_to_shape_file)
     """
     wgs84 = CRS(4326)
     # PROJ4 definition for WGS84 with longitudes ranged between -180/+180.
@@ -688,23 +687,10 @@ def subset_bbox(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> ds = xarray.open_dataset('pr.day.nc')
-    Subset lat lon and years
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
-    Subset data array lat, lon and single year
-    >>> prSub = subset.subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1990')
-    Subset dataarray single year keep entire lon, lat grid
-    >>> prSub = subset.subset_bbox(ds.pr, start_yr='1990', end_yr='1990') # one year only entire grid
-    Subset multiple variables in a single dataset
-    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_bbox(ds, lon_bnds=[-75, -70], lat_bnds=[40, 45], start_yr='1990', end_yr='1999')
-     # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = \
-        subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],start_date='1990-03', end_date='1999-08')
-    # Subset with specific start_dates and end_dates
-    >>> prSub = subset.subset_time(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45],\
-                                    start_date='1990-03-13', end_date='1990-08-17')
+    >>> ds = xr.open_dataset(path_to_pr_file)
+
+    Subset lat lon
+    >>> prSub = subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45])
     """
 
     # Rectilinear case (lat and lon are the 1D dimensions)
@@ -826,7 +812,7 @@ def _check_has_overlaps(polygons: gpd.GeoDataFrame):
             non_overlapping.append(p)
     if len(polygons) != len(non_overlapping):
         warnings.warn(
-            f"List of shapes contains overlap between features. Results will vary on feature order.",
+            "List of shapes contains overlap between features. Results will vary on feature order.",
             UserWarning,
             stacklevel=5,
         )
@@ -910,19 +896,14 @@ def subset_gridpoint(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> ds = xarray.open_dataset('pr.day.nc')
-    Subset lat lon point and multiple years
-    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
-    Subset lat, lon point and single year
-    >>> prSub = subset.subset_gridpoint(ds.pr, lon=-75,lat=45,start_date='1990',end_date='1999')
-     Subset multiple variables in a single dataset
-    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_gridpoint(ds, lon=-75,lat=45,start_date='1990',end_date='1999')
-    # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = subset.subset_time(ds.pr,lon=-75, lat=45, start_date='1990-03',end_date='1999-08')
-    # Subset with specific start_dates and end_dates
-    >>> prSub = subset.subset_time(ds.pr,lon=-75,lat=45, start_date='1990-03-13',end_date='1990-08-17')
+    >>> ds = xarray.open_dataset(path_to_pr_file)
+
+    Subset lat lon point
+    >>> prSub = subset_gridpoint(ds.pr, lon=-75,lat=45)
+
+    Subset multiple variables in a single dataset
+    >>> ds = xr.open_mfdataset([path_to_tasmax_file, path_to_tasmin_file])
+    >>> dsSub = subset_gridpoint(ds, lon=-75, lat=45)
     """
     if lat is None or lon is None:
         raise ValueError("Insufficient coordinates provided to locate grid point(s).")
@@ -1012,19 +993,23 @@ def subset_time(
 
     Examples
     --------
-    >>> from xclim import subset
-    >>> ds = xarray.open_dataset('pr.day.nc')
-    # Subset complete years
-    >>> prSub = subset.subset_time(ds.pr,start_date='1990',end_date='1999')
-    # Subset single complete year
-    >>> prSub = subset.subset_time(ds.pr,start_date='1990',end_date='1990')
-    # Subset multiple variables in a single dataset
-    >>> ds = xarray.open_mfdataset(['pr.day.nc','tas.day.nc'])
-    >>> dsSub = subset.subset_time(ds,start_date='1990',end_date='1999')
-    # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
-    >>> prSub = subset.subset_time(ds.pr,start_date='1990-03',end_date='1999-08')
-    # Subset with specific start_dates and end_dates
-    >>> prSub = subset.subset_time(ds.pr,start_date='1990-03-13',end_date='1990-08-17')
+    >>> ds = xarray.open_dataset(path_to_pr_file)
+
+    Subset complete years
+    >>> prSub = subset_time(ds.pr,start_date='1990',end_date='1999')
+
+    Subset single complete year
+    >>> prSub = subset_time(ds.pr,start_date='1990',end_date='1990')
+
+    Subset multiple variables in a single dataset
+    >>> ds = xr.open_mfdataset([path_to_tasmax_file, path_to_tasmin_file])
+    >>> dsSub = subset_time(ds,start_date='1990',end_date='1999')
+
+    Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    >>> txSub = subset_time(ds.tasmax,start_date='1990-03',end_date='1999-08')
+
+    Subset with specific start_dates and end_dates
+    >>> tnSub = subset_time(ds.tasmin,start_date='1990-03-13',end_date='1990-08-17')
 
     Notes
     -----
@@ -1060,13 +1045,10 @@ def distance(
     Note
     ----
     To get the indices from closest point, use:
-    >>> import numpy as np
-    >>> import xarray as xr
-    >>> import xclim.subset
-    >>> da = xr.open_dataset("/path/to/file.nc").variable
-    >>> d = xclim.subset.distance(da, lon=lon, lat=lat)
+    >>> da = xr.open_dataset(path_to_pr_file).pr
+    >>> d = distance(da, lon=-75, lat=45)
     >>> k = d.argmin()
-    >>> i, j = np.unravel_index(k, d.shape)
+    >>> i, j, _ = np.unravel_index(k, d.shape)
     """
     ptdim = lat.dims[0]
 
