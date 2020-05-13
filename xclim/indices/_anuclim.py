@@ -465,7 +465,7 @@ def prcptot_warmcold_quarter(
         wind = 3
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
-        pr = pint_multiply(pr, 1 * units.weekly, "mm")
+        pr = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
         tas = xci.tg_mean(tas, freq="7D")
@@ -530,7 +530,7 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
     if input_freq == "monthly":
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
-        pr = pint_multiply(pr, 1 * units.weekly, "mm")
+        pr = pint_multiply(pr, 1 * units.week, "mm")
     elif input_freq == "daily":
         pr = pint_multiply(pr, 1 * units.day, "mm")
     else:
@@ -577,7 +577,7 @@ def prcptot_wetdry_period(
     if input_freq == "monthly":
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
-        pr = pint_multiply(pr, 1 * units.weekly, "mm")
+        pr = pint_multiply(pr, 1 * units.week, "mm")
     elif input_freq == "daily":
         pr = pint_multiply(pr, 1 * units.day, "mm")
     else:

@@ -1088,10 +1088,63 @@ class TestTempWarmestColdestQuarter:
         a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
 
         out = xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="daily")
-        np.testing.assert_array_almost_equal(out, [22, 25])
+        np.testing.assert_array_almost_equal(out, [21.51648352, 25])
 
         out = xci.tg_mean_warmcold_quarter(a, op="coldest", input_freq="daily")
-        np.testing.assert_array_almost_equal(out, [-15, -10])
+        np.testing.assert_array_almost_equal(out, [-14.835165, -9.89011])
+
+
+class TestPrcptot:
+    def get_data(self, pr_series):
+        pr = pr_series(np.zeros(365 * 2), start="1971-01-01")
+        pr += 1 / 3600 / 24
+        pr[0:7] += 10 / 3600 / 24
+        pr[-7:] += 11 / 3600 / 24
+        return pr
+
+    @pytest.mark.parametrize(
+        "freq,units,expected",
+        [
+            (("D", "daily"), "mm/day", [435.0, 442.0]),
+            (("7D", "weekly"), "mm/week", [441.0, 436.0]),
+            (("MS", "monthly"), "mm/month", [435.0, 442.0]),
+        ],
+    )
+    def test_simple(self, pr_series, freq, units, expected):
+        pr = self.get_data(pr_series)
+        freq, input_freq = freq
+        pr = xci.precip_accumulation(pr, freq=freq)
+        pr.attrs["units"] = units
+        out = xci.prcptot(pr=pr, freq="YS", input_freq=input_freq)
+        np.testing.assert_array_almost_equal(out, expected)
+
+
+class TestPrecipWettestDriestPeriod:
+    def get_data(self, pr_series):
+        pr = pr_series(np.zeros(365 * 2), start="1971-01-01")
+        pr += 1 / 3600 / 24
+        pr[0:7] += 10 / 3600 / 24
+        pr[-7:] += 11 / 3600 / 24
+        return pr
+
+    @pytest.mark.parametrize(
+        "freq,units,op,expected",
+        [
+            (("D", "daily"), "mm/day", "wettest", [11.0, 12.0]),
+            (("D", "daily"), "mm/day", "driest", [1, 1]),
+            (("7D", "weekly"), "mm/week", "wettest", [77, 62]),
+            (("7D", "weekly"), "mm/week", "driest", [7, 7]),
+            (("MS", "monthly"), "mm/month", "wettest", [101, 107]),
+            (("MS", "monthly"), "mm/month", "driest", [28, 29]),
+        ],
+    )
+    def test_simple(self, pr_series, freq, units, op, expected):
+        pr = self.get_data(pr_series)
+        freq, input_freq = freq
+        pr = xci.precip_accumulation(pr, freq=freq)
+        pr.attrs["units"] = units
+        out = xci.prcptot_wetdry_period(pr=pr, op=op, freq="YS", input_freq=input_freq)
+        np.testing.assert_array_almost_equal(out, expected)
 
 
 class TestIsothermality:
