@@ -130,10 +130,8 @@ def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
     precipitation fallen over days with precipitation >= 5 mm at seasonal
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> import xarray as xr
-    >>> import xclim.indices
-    >>> pr = xr.open_dataset("pr_day.nc").pr
-    >>> daily_int = xclim.indices.daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
 
