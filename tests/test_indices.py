@@ -1048,8 +1048,9 @@ class TestPrecipWettestDriestQuarter:
         np.testing.assert_array_almost_equal(out, [242, 242])
 
 
-class TestTempWettestDriestQuarter:
-    def get_data(self, tas_series, pr_series):
+class TestTempWetDryPrecipWarmColdQuarter:
+    @staticmethod
+    def get_data(tas_series, pr_series):
         np.random.seed(123)
         times = pd.date_range("2000-01-01", "2001-12-31", name="time")
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
@@ -1078,7 +1079,7 @@ class TestTempWettestDriestQuarter:
             (("MS", "monthly"), "mm/month", "dryest", [272.00644843, 269.04077039]),
         ],
     )
-    def test_simple(self, tas_series, pr_series, freq, units, op, expected):
+    def test_tg_wetdry(self, tas_series, pr_series, freq, units, op, expected):
         tas, pr = self.get_data(tas_series, pr_series)
         freq, input_freq = freq
         pr = xci.precip_accumulation(pr, freq=freq)
@@ -1087,6 +1088,30 @@ class TestTempWettestDriestQuarter:
         tas = xci.tg_mean(tas, freq=freq)
 
         out = xci.tg_mean_wetdry_quarter(
+            tas=tas, pr=pr, freq="YS", input_freq=input_freq, op=op
+        )
+        np.testing.assert_array_almost_equal(out, expected)
+
+    @pytest.mark.parametrize(
+        "freq,units,op,expected",
+        [
+            (("D", "daily"), "mm/day", "warmest", [2021.82232981, 2237.15117103]),
+            (("7D", "weekly"), "mm/week", "warmest", [2021.82232981, 2237.15117103]),
+            (("MS", "monthly"), "mm/month", "warmest", [2038.54763205, 2247.47136629]),
+            (("D", "daily"), "mm/day", "coldest", [311.91895223, 264.50013361]),
+            (("7D", "weekly"), "mm/week", "coldest", [311.91895223, 264.50013361]),
+            (("MS", "monthly"), "mm/month", "coldest", [311.91895223, 259.36682028]),
+        ],
+    )
+    def test_pr_warmcold(self, tas_series, pr_series, freq, units, op, expected):
+        tas, pr = self.get_data(tas_series, pr_series)
+        freq, input_freq = freq
+        pr = xci.precip_accumulation(pr, freq=freq)
+        pr.attrs["units"] = units
+
+        tas = xci.tg_mean(tas, freq=freq)
+
+        out = xci.prcptot_warmcold_quarter(
             tas=tas, pr=pr, freq="YS", input_freq=input_freq, op=op
         )
         np.testing.assert_array_almost_equal(out, expected)
@@ -1139,7 +1164,8 @@ class TestTempWarmestColdestQuarter:
 
 
 class TestPrcptot:
-    def get_data(self, pr_series):
+    @staticmethod
+    def get_data(pr_series):
         pr = pr_series(np.zeros(365 * 2), start="1971-01-01")
         pr += 1 / 3600 / 24
         pr[0:7] += 10 / 3600 / 24
@@ -1164,7 +1190,8 @@ class TestPrcptot:
 
 
 class TestPrecipWettestDriestPeriod:
-    def get_data(self, pr_series):
+    @staticmethod
+    def get_data(pr_series):
         pr = pr_series(np.zeros(365 * 2), start="1971-01-01")
         pr += 1 / 3600 / 24
         pr[0:7] += 10 / 3600 / 24
@@ -1192,7 +1219,8 @@ class TestPrecipWettestDriestPeriod:
 
 
 class TestIsothermality:
-    def get_data(self, tasmin_series, tasmax_series):
+    @staticmethod
+    def get_data(tasmin_series, tasmax_series):
         np.random.seed(123)
         times = pd.date_range("2000-01-01", "2001-12-31", name="time")
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
@@ -1210,9 +1238,9 @@ class TestIsothermality:
     @pytest.mark.parametrize(
         "freq,expected",
         [
-            ("D", [18.8700109 + K2C, 19.40941685 + K2C]),
-            ("7D", [23.29006069 + K2C, 23.36559839 + K2C]),
-            ("MS", [25.05925319 + K2C, 25.09443682 + K2C]),
+            ("D", [18.8700109, 19.40941685]),
+            ("7D", [23.29006069, 23.36559839]),
+            ("MS", [25.05925319, 25.09443682]),
         ],
     )
     def test_simple(self, tasmax_series, tasmin_series, freq, expected):
