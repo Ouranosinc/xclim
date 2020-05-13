@@ -303,3 +303,9 @@ def add_example_file_paths(doctest_namespace):
             / "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc"
         ),
     ]
+
+
+@pytest.fixture(autouse=True)
+def add_example_dataarray(doctest_namespace, tas_series):
+    ns = doctest_namespace
+    ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
