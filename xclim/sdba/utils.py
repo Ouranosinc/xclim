@@ -4,6 +4,7 @@ from typing import Sequence
 from typing import Union
 from warnings import warn
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -205,6 +206,9 @@ def broadcast(
         else:  # Find quantile for nearest time group and quantile.
             if group.prop is not None:
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
+
+            if len(sel) > 1:
+                sel = dict(zip(sel.keys(), xr.broadcast(*sel.values())))
 
             if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
@@ -461,4 +465,23 @@ def interp_on_quantiles(
         vectorize=True,
         dask="parallelized",
         output_dtypes=[np.float],
+    )
+
+
+def rank(da, dim="time", pct=False):
+    def _nanrank(data):
+        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
+        ranked = func(data, axis=-1)
+        if pct:
+            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
+            ranked /= count
+        return ranked
+
+    return xr.apply_ufunc(
+        _nanrank,
+        da,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        dask="parallelized",
+        output_dtypes=[da.dtype],
     )
