@@ -606,9 +606,9 @@ def _anuclim_coeff_var(arr: xarray.DataArray):
 
 def _get_from_other_extreme(ds, var, crit, op, dim="time"):
     if op == "max":
-        op = np.argmax
+        op = np.nanargmax
     elif op == "min":
-        op = np.argmin
+        op = np.nanargmin
 
     def func(var, crit):
         return var[op(crit)]
