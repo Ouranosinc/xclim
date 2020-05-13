@@ -1011,7 +1011,7 @@ class TestPrecipWettestDriestQuarter:
         out = xci.prcptot_wetdry_quarter(a, op="wettest", input_freq="daily")
         np.testing.assert_array_almost_equal(out, [241, 241])
 
-        out = xci.prcptot_wetdry_quarter(a, op="driest", input_freq="daily")
+        out = xci.prcptot_wetdry_quarter(a, op="dryest", input_freq="daily")
         np.testing.assert_array_almost_equal(out, [60, 60])
 
     def test_weekly_monthly(self, pr_series):
@@ -1025,14 +1025,14 @@ class TestPrecipWettestDriestQuarter:
         p_weekly.attrs["units"] = "mm week-1"
         out = xci.prcptot_wetdry_quarter(p_weekly, op="wettest", input_freq="weekly")
         np.testing.assert_array_almost_equal(out, [241, 241])
-        out = xci.prcptot_wetdry_quarter(p_weekly, op="driest", input_freq="weekly")
+        out = xci.prcptot_wetdry_quarter(p_weekly, op="dryest", input_freq="weekly")
         np.testing.assert_array_almost_equal(out, [60, 60])
 
         p_month = xci.precip_accumulation(a, freq="MS")
         p_month.attrs["units"] = "mm month-1"
         out = xci.prcptot_wetdry_quarter(p_month, op="wettest", input_freq="monthly")
         np.testing.assert_array_almost_equal(out, [242, 242])
-        out = xci.prcptot_wetdry_quarter(p_month, op="driest", input_freq="monthly")
+        out = xci.prcptot_wetdry_quarter(p_month, op="dryest", input_freq="monthly")
         np.testing.assert_array_almost_equal(out, [58, 59])
 
     def test_convertunits_nondaily(self, pr_series):
@@ -1046,6 +1046,50 @@ class TestPrecipWettestDriestQuarter:
         p_month_m.attrs["units"] = "cm month-1"
         out = xci.prcptot_wetdry_quarter(p_month_m, op="wettest", input_freq="monthly")
         np.testing.assert_array_almost_equal(out, [242, 242])
+
+
+class TestTempWettestDriestQuarter:
+    def get_data(self, tas_series, pr_series):
+        np.random.seed(123)
+        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
+        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
+        base = 10 + 15 * annual_cycle.reshape(-1, 1)
+        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
+        tas = tas_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        base = 15 * annual_cycle.reshape(-1, 1)
+        values = base + 10 + 10 * np.random.randn(annual_cycle.size, 1)
+        values = values / 3600 / 24
+        values[values < 0] = 0
+        pr = pr_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        return tas, pr
+
+    @pytest.mark.parametrize(
+        "freq,units,op,expected",
+        [
+            (("D", "daily"), "mm/day", "wettest", [296.22664037, 296.99585849]),
+            (("7D", "weekly"), "mm/week", "wettest", [296.22664037, 296.99585849]),
+            (("MS", "monthly"), "mm/month", "wettest", [296.25598395, 296.98613685]),
+            (("D", "daily"), "mm/day", "dryest", [272.161376, 269.31008671]),
+            (("7D", "weekly"), "mm/week", "dryest", [272.161376, 269.31008671]),
+            (("MS", "monthly"), "mm/month", "dryest", [272.00644843, 269.04077039]),
+        ],
+    )
+    def test_simple(self, tas_series, pr_series, freq, units, op, expected):
+        tas, pr = self.get_data(tas_series, pr_series)
+        freq, input_freq = freq
+        pr = xci.precip_accumulation(pr, freq=freq)
+        pr.attrs["units"] = units
+
+        tas = xci.tg_mean(tas, freq=freq)
+
+        out = xci.tg_mean_wetdry_quarter(
+            tas=tas, pr=pr, freq="YS", input_freq=input_freq, op=op
+        )
+        np.testing.assert_array_almost_equal(out, expected)
 
 
 class TestTempWarmestColdestQuarter:
@@ -1131,11 +1175,11 @@ class TestPrecipWettestDriestPeriod:
         "freq,units,op,expected",
         [
             (("D", "daily"), "mm/day", "wettest", [11.0, 12.0]),
-            (("D", "daily"), "mm/day", "driest", [1, 1]),
+            (("D", "daily"), "mm/day", "dryest", [1, 1]),
             (("7D", "weekly"), "mm/week", "wettest", [77, 62]),
-            (("7D", "weekly"), "mm/week", "driest", [7, 7]),
+            (("7D", "weekly"), "mm/week", "dryest", [7, 7]),
             (("MS", "monthly"), "mm/month", "wettest", [101, 107]),
-            (("MS", "monthly"), "mm/month", "driest", [28, 29]),
+            (("MS", "monthly"), "mm/month", "dryest", [28, 29]),
         ],
     )
     def test_simple(self, pr_series, freq, units, op, expected):
@@ -1153,11 +1197,11 @@ class TestIsothermality:
         times = pd.date_range("2000-01-01", "2001-12-31", name="time")
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
         base = 10 + 15 * annual_cycle.reshape(-1, 1)
-        values = base + 3 * np.random.randn(annual_cycle.size, 1)
+        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
         tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
             time=slice("2001", "2002")
         )
-        values = base + 10 + 3 * np.random.randn(annual_cycle.size, 1)
+        values = base + 10 + 3 * np.random.randn(annual_cycle.size, 1) + K2C
         tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
             time=slice("2001", "2002")
         )
@@ -1166,9 +1210,9 @@ class TestIsothermality:
     @pytest.mark.parametrize(
         "freq,expected",
         [
-            ("D", [18.8700109, 19.40941685]),
-            ("7D", [23.29006069, 23.36559839]),
-            ("MS", [25.05925319, 25.09443682]),
+            ("D", [18.8700109 + K2C, 19.40941685 + K2C]),
+            ("7D", [23.29006069 + K2C, 23.36559839 + K2C]),
+            ("MS", [25.05925319 + K2C, 25.09443682 + K2C]),
         ],
     )
     def test_simple(self, tasmax_series, tasmin_series, freq, expected):
