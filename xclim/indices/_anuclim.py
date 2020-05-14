@@ -338,14 +338,11 @@ def prcptot_wetdry_quarter(
     Parameters
     ----------
     pr : xarray.DataArray
-      Total precipitation rate at daily, weekly, or monthly frequency
-
+      Total precipitation rate at daily, weekly, or monthly frequency.
     op : str
-        Operation to perform :  'wettest' calculate wettest quarter ; 'dryest' calculate dryest quarter
-
+      Operation to perform :  'wettest' calculate wettest quarter ; 'dryest' calculate dryest quarter.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
