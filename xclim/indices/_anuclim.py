@@ -185,14 +185,11 @@ def tg_mean_warmcold_quarter(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency
-
+      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     op : str
-        Operation to perform :  'warmest' calculate warmest quarter ; 'coldest' calculate coldest quarter
-
+      Operation to perform :  'warmest' calculate warmest quarter ; 'coldest' calculate coldest quarter.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
