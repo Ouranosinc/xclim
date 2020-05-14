@@ -265,17 +265,13 @@ def tg_mean_wetdry_quarter(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency
-
+      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
-      Total precipitation rate at daily, weekly, or monthly frequency
-
+      Total precipitation rate at daily, weekly, or monthly frequency.
     op : str
-        Operation to perform :  'wettest' calculate for the wettest quarter ; 'dryest' calculate for the dryest quarter
-
+      Operation to perform :  'wettest' calculate for the wettest quarter ; 'dryest' calculate for the dryest quarter.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
