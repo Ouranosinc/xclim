@@ -46,7 +46,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     Returns
     -------
     xarray.DataArray
-      The isothermailty value expressed as a percent.
+      The isothermality value expressed as a percent.
 
     Notes
     -----
