@@ -1142,7 +1142,7 @@ class TestTempWarmestColdestQuarter:
         with pytest.raises(NotImplementedError):
             xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="toto")
 
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(KeyError):
             xci.tg_mean_warmcold_quarter(a, op="toto", input_freq="daily")
 
         out = xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="daily")
