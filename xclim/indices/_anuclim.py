@@ -1,10 +1,10 @@
-import numpy as np
 import xarray
 
 from ._multivariate import daily_temperature_range
 from ._multivariate import extreme_temperature_range
 from ._multivariate import precip_accumulation
 from ._simple import tg_mean
+from .run_length import lazy_indexing
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
@@ -276,9 +276,15 @@ def tg_mean_wetdry_quarter(
     with xarray.set_options(keep_attrs=True):
 
         if op == "wettest":
-            np_op = "max"
+
+            def get_at_extreme(ds):
+                return lazy_indexing(ds.tas, ds.pr.argmax(dim="time"), dim="time")
+
         elif op == "dryest":
-            np_op = "min"
+
+            def get_at_extreme(ds):
+                return lazy_indexing(ds.tas, ds.pr.argmin(dim="time"), dim="time")
+
         else:
             raise NotImplementedError(
                 f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
@@ -286,7 +292,7 @@ def tg_mean_wetdry_quarter(
         out = (
             xarray.Dataset(data_vars={"tas": tas_qrt, "pr": pr_qrt})
             .resample(time=freq)
-            .map(_get_from_other_extreme, args=("tas", "pr", np_op))
+            .map(get_at_extreme)
         )
         out.attrs = tas.attrs
         return out
@@ -430,17 +436,24 @@ def prcptot_warmcold_quarter(
         pr_qrt = pr.rolling(time=wind, center=False).sum()
 
         if op == "warmest":
-            np_op = "max"
+
+            def get_at_extreme(ds):
+                return lazy_indexing(ds.pr, ds.tas.argmax(dim="time"), dim="time")
+
         elif op == "coldest":
-            np_op = "min"
+
+            def get_at_extreme(ds):
+                return lazy_indexing(ds.pr, ds.tas.argmin(dim="time"), dim="time")
+
         else:
             raise NotImplementedError(
                 f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
             )
+
         out = (
             xarray.Dataset(data_vars={"tas": tas_qrt, "pr": pr_qrt})
             .resample(time=freq)
-            .map(_get_from_other_extreme, args=("pr", "tas", np_op))
+            .map(get_at_extreme)
         )
         out.attrs = pr.attrs
         out.attrs["units"] = "mm"
@@ -543,26 +556,6 @@ def _anuclim_coeff_var(arr: xarray.DataArray):
     std = arr.resample(time="YS").std(dim="time")
     mu = arr.resample(time="YS").mean(dim="time")
     return std / mu
-
-
-def _get_from_other_extreme(ds, var, crit, op, dim="time"):
-    # use nanargmin/max - rolling on pads initial vals with nan
-    if op == "max":
-        op = np.nanargmax
-    elif op == "min":
-        op = np.nanargmin
-
-    def func(var, crit):
-        return var[op(crit)]
-
-    return xarray.apply_ufunc(
-        func,
-        ds[var],
-        ds[crit],
-        input_core_dims=[[dim], [dim]],
-        vectorize=True,
-        dask="allowed",
-    )
 
 
 def _to_quarter(freq, pr=None, tas=None):
