@@ -417,17 +417,13 @@ def prcptot_warmcold_quarter(
     Parameters
     ----------
     pr : xarray.DataArray
-      Total precipitation rate at daily, weekly, or monthly frequency
-
+      Total precipitation rate at daily, weekly, or monthly frequency.
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency
-
+      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     op : str
-        Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter
-
+      Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
