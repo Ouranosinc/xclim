@@ -528,14 +528,11 @@ def prcptot_wetdry_period(
     Parameters
     ----------
     pr : xarray.DataArray
-        Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar
-
+      Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
     op : str
-        Operation to perform :  'wettest' calculate wettest period ; 'dryest' calculate dryest period
-
+      Operation to perform :  'wettest' calculate wettest period ; 'dryest' calculate dryest period.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
