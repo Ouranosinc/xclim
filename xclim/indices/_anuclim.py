@@ -486,11 +486,9 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-        Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar
-
+      Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
     input_freq : str
-        Input data time frequency - One of 'daily', 'weekly' or 'monthly'
-
+      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
       Resampling frequency; Defaults to "YS".
 
