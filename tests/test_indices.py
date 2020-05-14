@@ -1090,14 +1090,16 @@ class TestTempWetDryPrecipWarmColdQuarter:
 
         tas = xci.tg_mean(tas, freq=freq)
 
-        if use_dask and freq != "D":
+        if use_dask:
+            if freq == "D":
+                pytest.skip("Daily input freq and dask arrays not working")
             tas = tas.expand_dims(lat=[0, 1, 2, 3]).chunk({"lat": 1})
             pr = pr.expand_dims(lat=[0, 1, 2, 3]).chunk({"lat": 1})
 
         out = xci.tg_mean_wetdry_quarter(
             tas=tas, pr=pr, freq="YS", input_freq=input_freq, op=op
         )
-        if use_dask and freq != "D":
+        if use_dask:
             out = out.isel(lat=0)
         np.testing.assert_array_almost_equal(out, expected)
 
