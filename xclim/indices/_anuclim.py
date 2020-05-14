@@ -351,9 +351,6 @@ def prcptot_wetdry_quarter(
     xarray.DataArray
        Total precipitation values of the wettest/dryest quarter of each year.
 
-    freq : str
-      Resampling frequency; Defaults to "YS".
-
     Examples
     --------
 
