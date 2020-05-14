@@ -218,7 +218,6 @@ def tg_mean_warmcold_quarter(
 
     """
     # determine input data frequency
-    # determine input data frequency
     if input_freq == "monthly":
         data1 = tas
         wind = 3
