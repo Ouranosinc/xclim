@@ -1140,8 +1140,11 @@ class TestTempWarmestColdestQuarter:
         a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
 
         with pytest.raises(NotImplementedError):
-            out = xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="toto")
-            out = xci.tg_mean_warmcold_quarter(a, op="toto", input_freq="daily")
+            xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="toto")
+
+        with pytest.raises(NotImplementedError):
+            xci.tg_mean_warmcold_quarter(a, op="toto", input_freq="daily")
+
         out = xci.tg_mean_warmcold_quarter(a, op="warmest", input_freq="daily")
         np.testing.assert_array_almost_equal(out, [294.66648352, 298.15])
 

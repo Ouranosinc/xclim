@@ -217,27 +217,9 @@ def tg_mean_warmcold_quarter(
     should be calculated prior to calling the function.
 
     """
-    # determine input data frequency
-    if input_freq == "monthly":
-        data1 = tas
-        wind = 3
-    elif input_freq == "weekly":
-        data1 = tas
-        wind = 13
-    elif input_freq == "daily":
-        data1 = tg_mean(tas, freq="7D")
-        wind = 13
-    else:
-        raise NotImplementedError(
-            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
-            f'one of "daily", "weekly" or "monthly"'
-        )
+    out = _to_quarter(input_freq, tas=tas)
 
     with xarray.set_options(keep_attrs=True):
-        out = data1.rolling(time=wind, center=False,).mean(
-            allow_lazy=True, skipna=False
-        )
-        out.attrs = data1.attrs
         if op == "warmest":
             out = out.resample(time=freq).max(dim="time")
         elif op == "coldest":
@@ -259,9 +241,8 @@ def tg_mean_wetdry_quarter(
 ):
     r""" ANUCLIM Mean temperature of wettest/dryest quarter
 
-    The wettest (or dryest) quarter of the year is determined, and the mean
-    temperature of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
-    are defined as 13 week periods, otherwise are 3 months.
+    The wettest (or dryest) quarter of the year is determined, and the mean temperature of this period is calculated.
+    If the input data frequency is "daily" or "weekly" quarters are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
     ----------
@@ -270,7 +251,7 @@ def tg_mean_wetdry_quarter(
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : str
-      Operation to perform :  'wettest' calculate for the wettest quarter ; 'dryest' calculate for the dryest quarter.
+      Operation to perform: 'wettest' calculate for the wettest quarter; 'dryest' calculate for the dryest quarter.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
@@ -279,7 +260,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray
-       mean temperature values of the wettest/dryest quarter of each year.
+       Mean temperature values of the wettest/dryest quarter of each year.
 
     Notes
     -----
@@ -289,26 +270,10 @@ def tg_mean_wetdry_quarter(
     should be calculated prior to calling the function.
 
     """
-    # determine input data frequency
-    if input_freq == "monthly":
-        pr = pint_multiply(pr, 1 * units.month, "mm")
-        wind = 3
-    elif input_freq == "weekly":
-        pr = pint_multiply(pr, 1 * units.week, "mm")
-        wind = 13
-    elif input_freq == "daily":
-        tas = tg_mean(tas, freq="7D")
-        pr = precip_accumulation(pr, freq="7D")
-        wind = 13
-    else:
-        raise NotImplementedError(
-            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
-            f'one of "daily", "weekly" or "monthly"'
-        )
+    tas_qrt = _to_quarter(input_freq, tas=tas)
+    pr_qrt = _to_quarter(input_freq, pr=pr)
 
     with xarray.set_options(keep_attrs=True):
-        tas_qrt = tas.rolling(time=wind, center=False).mean()
-        pr_qrt = pr.rolling(time=wind, center=False).sum()
 
         if op == "wettest":
             np_op = "max"
@@ -598,3 +563,44 @@ def _get_from_other_extreme(ds, var, crit, op, dim="time"):
         vectorize=True,
         dask="allowed",
     )
+
+
+def _to_quarter(freq, pr=None, tas=None):
+    """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
+
+    if freq.upper().startswith("D"):
+        if tas is not None:
+            tas = tg_mean(tas, freq="7D")
+
+        if pr is not None:
+            pr = precip_accumulation(pr, freq="7D")
+            pr.attrs["units"] = "mm/week"
+
+        freq = "W"
+
+    if freq.upper().startswith("W"):
+        window = 13
+        u = units.week
+
+    elif freq.upper().startswith("M"):
+        window = 3
+        u = units.month
+
+    else:
+        raise NotImplementedError(
+            f'Unknown input time frequency "{freq}": must be one of "daily", "weekly" or "monthly".'
+        )
+
+    with xarray.set_options(keep_attrs=True):
+        if pr is not None:
+            pr = pint_multiply(pr, 1 * u, "mm")
+            out = pr.rolling(time=window, center=False).sum()
+            out.attrs = pr.attrs
+
+        if tas is not None:
+            out = tas.rolling(time=window, center=False).mean(
+                allow_lazy=True, skipna=False
+            )
+            out.attrs = tas.attrs
+
+    return out
