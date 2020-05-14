@@ -950,6 +950,7 @@ class TestTemperatureSeasonality:
         t_weekly = xci.tg_mean(a, freq="7D")
         out = xci.temperature_seasonality(t_weekly)
         np.testing.assert_array_almost_equal(out, 4.87321337)
+        assert out.units == "%"
 
     def test_celsius(self, tas_series):
         a = np.zeros(365)
@@ -1262,6 +1263,7 @@ class TestIsothermality:
         tmax = tasmax.resample(time=freq).mean(dim="time", keep_attrs=True)
         out = xci.isothermality(tasmax=tmax, tasmin=tmin, freq="YS")
         np.testing.assert_array_almost_equal(out, expected)
+        assert out.units == "%"
 
 
 class TestWarmDayFrequency:

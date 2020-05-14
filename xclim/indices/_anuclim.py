@@ -9,6 +9,7 @@ from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
+from xclim.core.units import units2pint
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -32,7 +33,7 @@ __all__ = [
 ]
 
 
-@declare_units("percent", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units("%", tasmin="[temperature]", tasmax="[temperature]")
 def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"):
     r"""Isothermality
 
@@ -68,7 +69,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     return iso
 
 
-@declare_units("percent", tas="[temperature]")
+@declare_units("%", tas="[temperature]")
 def temperature_seasonality(tas: xarray.DataArray):
     r"""ANUCLIM temperature seasonality (coefficient of variation)
 
@@ -111,7 +112,7 @@ def temperature_seasonality(tas: xarray.DataArray):
     tas = convert_units_to(tas, "K")
 
     with xarray.set_options(keep_attrs=True):
-        seas = 100 * (_anuclim_coeff_var(tas))
+        seas = 100 * _anuclim_coeff_var(tas)
 
     seas.attrs["units"] = "%"
     return seas
@@ -120,6 +121,7 @@ def temperature_seasonality(tas: xarray.DataArray):
 @declare_units("percent", pr="[precipitation]")
 def precip_seasonality(pr: xarray.DataArray,):
     r""" ANUCLIM Precipitation Seasonality (C of V)
+
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
     of precipitation values for a given year expressed as a percentage of the mean of those values.
     See : https://fennerschool.anu.edu.au/files/anuclim61.pdf ch. 6
@@ -127,20 +129,18 @@ def precip_seasonality(pr: xarray.DataArray,):
     Parameters
     ----------
     pr : xarray.DataArray
-       total precipitation rate at daily, weekly, or monthly frequency.
-       pr units need to be defined as a rate (e.g. mm d-1, mm week-1)
+      Total precipitation rate at daily, weekly, or monthly frequency.
+      Units need to be defined as a rate (e.g. mm d-1, mm week-1).
 
     Returns
     -------
     xarray.DataArray
-      The Coefficient of Variation of precipitation values
+      The coefficient of variation of precipitation values.
 
     Examples
     --------
-
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
-    >>> import xarray as xr
     >>> import xclim.indices as xci
     >>> p = xr.open_dataset('pr.day.nc')
     >>> pday_seasonality = xci.precip_seasonality(p)
@@ -160,13 +160,13 @@ def precip_seasonality(pr: xarray.DataArray,):
     values.
 
     """
-    pr_units = units.parse_units(pr.attrs["units"].replace("-", "**-"))
-    mm_s = units.parse_units("mm s-1".replace("-", "**-"))
-    # if units in mm/sec convert to mm/days to avoid potentially small denominator
-    if 1 * mm_s == 1 * pr_units:
+
+    # If units in mm/sec convert to mm/days to avoid potentially small denominator
+    if units2pint(pr) == units("mm / s"):
         pr = convert_units_to(pr, "mm d-1")
+
     with xarray.set_options(keep_attrs=True):
-        seas = 100 * (_anuclim_coeff_var(pr))
+        seas = 100 * _anuclim_coeff_var(pr)
 
     seas.attrs["units"] = "percent"
     return seas
@@ -176,17 +176,18 @@ def precip_seasonality(pr: xarray.DataArray,):
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS",
 ):
-    r""" ANUCLIM Mean temperature of warmest/coldest quarter
-    The warmest (or coldest) quarter of the year is determined, and the mean
-    temperature of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
-    are defined as 13 week periods, otherwise are 3 months.
+    r"""ANUCLIM Mean temperature of warmest/coldest quarter
+
+    The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
+    calculated.  If the input data frequency is "daily" or "weekly", quarters are defined as 13 week periods,
+    otherwise as 3 months.
 
     Parameters
     ----------
     tas : xarray.DataArray
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     op : str
-      Operation to perform :  'warmest' calculate warmest quarter ; 'coldest' calculate coldest quarter.
+      Operation to perform:  'warmest' calculate warmest quarter; 'coldest' calculate coldest quarter.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
@@ -257,6 +258,7 @@ def tg_mean_wetdry_quarter(
     freq: str = "YS",
 ):
     r""" ANUCLIM Mean temperature of wettest/dryest quarter
+
     The wettest (or dryest) quarter of the year is determined, and the mean
     temperature of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
     are defined as 13 week periods, otherwise are 3 months.
@@ -330,6 +332,7 @@ def prcptot_wetdry_quarter(
     pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
     r""" ANUCLIM Total precipitation of wettest/dryest quarter
+
     The wettest (or dryest) quarter of the year is determined, and the total precipitation of this
     period is calculated. If the input data frequency is "daily" or "weekly" quarters
     are defined as 13 week periods, otherwise are 3 months.
@@ -409,6 +412,7 @@ def prcptot_warmcold_quarter(
     freq="YS",
 ):
     r""" ANUCLIM Total precipitation of warmest/coldest quarter
+
     The warmest (or coldest) quarter of the year is determined, and the total
     precipitation of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
     are defined as 13 week periods, otherwise are 3 months.
@@ -571,10 +575,9 @@ def prcptot_wetdry_period(
 
 def _anuclim_coeff_var(arr: xarray.DataArray):
     r""" calculate the annual coefficient of variation for anuclim indices"""
-    cv = arr.resample(time="YS").std(dim="time") / arr.resample(time="YS").mean(
-        dim="time"
-    )
-    return cv
+    std = arr.resample(time="YS").std(dim="time")
+    mu = arr.resample(time="YS").mean(dim="time")
+    return std / mu
 
 
 def _get_from_other_extreme(ds, var, crit, op, dim="time"):
