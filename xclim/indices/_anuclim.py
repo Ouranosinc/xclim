@@ -38,10 +38,8 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     ----------
     tasmin : xarray.DataArray
       average daily minimum temperature [℃] or [K] at daily, weekly, or monthly frequency
-
     tasmax : xarray.DataArray
       average daily maximum temperature [℃] or [K] at daily, weekly, or monthly frequency
-
     freq : str
       Resampling frequency; Defaults to "YS".
 
