@@ -565,10 +565,9 @@ def prcptot_wetdry_period(
         return pr.resample(time=freq).max(dim="time", keep_attrs=True)
     elif op == "dryest":
         return pr.resample(time=freq).min(dim="time", keep_attrs=True)
-    else:
-        raise NotImplementedError(
-            f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
-        )
+    raise NotImplementedError(
+        f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
+    )
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray):
