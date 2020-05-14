@@ -105,6 +105,9 @@ class TestUnitConversion:
         u = units2pint("%")
         assert str(u) == "percent"
 
+        u = units2pint("1")
+        assert str(u) == "dimensionless"
+
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = pint_multiply(a, 1 * units.days)
