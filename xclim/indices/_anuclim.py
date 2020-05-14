@@ -10,6 +10,7 @@ from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
 from xclim.core.units import units2pint
+from xclim.indices.generic import select_resample_op
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -31,6 +32,22 @@ __all__ = [
     "prcptot_wetdry_period",
     "isothermality",
 ]
+
+_np_argops = {
+    "wettest": np.nanargmax,
+    "warmest": np.nanargmax,
+    "dryest": np.nanargmin,
+    "driest": np.nanargmin,
+    "coldest": np.nanargmin,
+}
+
+_np_ops = {
+    "wettest": "max",
+    "warmest": "max",
+    "dryest": "min",
+    "driest": "min",
+    "coldest": "min",
+}
 
 
 @declare_units("%", tasmin="[temperature]", tasmax="[temperature]")
@@ -219,16 +236,8 @@ def tg_mean_warmcold_quarter(
     """
     out = _to_quarter(input_freq, tas=tas)
 
-    with xarray.set_options(keep_attrs=True):
-        if op == "warmest":
-            out = out.resample(time=freq).max(dim="time")
-        elif op == "coldest":
-            out = out.resample(time=freq).min(dim="time")
-        else:
-            raise NotImplementedError(
-                f'Unknown operation "{op}" ; op parameter but be one of "warmest" or "coldest"'
-            )
-        return out
+    op = _np_ops[op]
+    return select_resample_op(out, op, freq)
 
 
 @declare_units("[temperature]", tas="[temperature]", pr="[precipitation]")
@@ -250,7 +259,7 @@ def tg_mean_wetdry_quarter(
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
-    op : str
+    op : str {'wettest', 'dryest'}
       Operation to perform: 'wettest' calculate for the wettest quarter; 'dryest' calculate for the dryest quarter.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
@@ -273,21 +282,9 @@ def tg_mean_wetdry_quarter(
     tas_qrt = _to_quarter(input_freq, tas=tas)
     pr_qrt = _to_quarter(input_freq, pr=pr)
 
+    np_op = _np_argops[op]
     with xarray.set_options(keep_attrs=True):
-
-        if op == "wettest":
-            np_op = "max"
-        elif op == "dryest":
-            np_op = "min"
-        else:
-            raise NotImplementedError(
-                f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
-            )
-        out = (
-            xarray.Dataset(data_vars={"tas": tas_qrt, "pr": pr_qrt})
-            .resample(time=freq)
-            .map(_get_from_other_extreme, args=("tas", "pr", np_op))
-        )
+        out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=np_op, freq=freq)
         out.attrs = tas.attrs
         return out
 
@@ -323,7 +320,6 @@ def prcptot_wetdry_quarter(
 
     The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
 
-    >>> import xarray as xr
     >>> import xclim.indices as xci
     >>> p = xr.open_dataset('pr.day.nc')
     >>> pr_warm_qrt = xci.prcptot_wetdry_quarter(pr=p.pr, op='wettest', input_freq='daily')
@@ -336,36 +332,16 @@ def prcptot_wetdry_quarter(
     should be calculated prior to calling the function.
 
     """
-    # determine input data frequency
+    out = _to_quarter(input_freq, pr=pr)
 
-    if input_freq == "monthly":
-        data1 = pint_multiply(pr, 1 * units.month, "mm")
-        wind = 3
-    elif input_freq == "weekly":
-        data1 = pint_multiply(pr, 1 * units.week, "mm")
-        wind = 13
-    elif input_freq == "daily":
-        data1 = precip_accumulation(pr, freq="7D")
-        wind = 13
-    else:
+    try:
+        op = _np_ops[op]
+    except KeyError:
         raise NotImplementedError(
-            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
-            f'one of "daily", "weekly" or "monthly"'
+            f'Unknown operation "{op}" ; not one of "wettest" or "dryest"'
         )
 
-    with xarray.set_options(keep_attrs=True):
-        out = data1.rolling(time=wind, center=False,).sum(allow_lazy=True, skipna=False)
-        out.attrs = data1.attrs
-        # out.attrs["units"] = "mm"
-        if op == "wettest":
-            out = out.resample(time=freq).max(dim="time")
-        elif op == "dryest":
-            out = out.resample(time=freq).min(dim="time")
-        else:
-            raise NotImplementedError(
-                f'Unknown operation "{op}" : op parameter must be one of "wettest" or "dryest"'
-            )
-        return out
+    return select_resample_op(out, op, freq)
 
 
 @declare_units("mm", pr="[precipitation]", tas="[temperature]")
@@ -563,6 +539,26 @@ def _get_from_other_extreme(ds, var, crit, op, dim="time"):
         vectorize=True,
         dask="allowed",
     )
+
+
+def _from_other_arg(criteria, output, op, freq):
+    ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
+    dim = "time"
+
+    def func(ds):
+        def select(criteria, output):
+            return output[op(criteria)]
+
+        return xarray.apply_ufunc(
+            select,
+            ds["criteria"],
+            ds["output"],
+            input_core_dims=[[dim], [dim]],
+            vectorize=True,
+            dask="allowed",
+        )
+
+    return ds.resample(time=freq).map(func)
 
 
 def _to_quarter(freq, pr=None, tas=None):
