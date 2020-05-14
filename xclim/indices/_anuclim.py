@@ -1,7 +1,10 @@
 import numpy as np
 import xarray
 
-import xclim.indices as xci
+from ._multivariate import daily_temperature_range
+from ._multivariate import extreme_temperature_range
+from ._multivariate import precip_accumulation
+from ._simple import tg_mean
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
@@ -31,15 +34,16 @@ __all__ = [
 
 @declare_units("percent", tasmin="[temperature]", tasmax="[temperature]")
 def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"):
-    r""" ANUCLIM Isothermality
-    The mean diurnal range divided by the temperature range.
+    r"""Isothermality
+
+    The mean diurnal range divided by the annual temperature range.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      average daily minimum temperature [℃] or [K] at daily, weekly, or monthly frequency
+      Average daily minimum temperature [℃] or [K] at daily, weekly, or monthly frequency.
     tasmax : xarray.DataArray
-      average daily maximum temperature [℃] or [K] at daily, weekly, or monthly frequency
+      Average daily maximum temperature [℃] or [K] at daily, weekly, or monthly frequency.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -52,14 +56,12 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     -----
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the output with input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
-    calculated prior to calling the function
-
-
+    the output with input data with daily frequency as well. As such weekly or monthly input values, if desired, should
+    be calculated prior to calling the function.
     """
 
-    dtr = xci.daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
-    etr = xci.extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
+    dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
+    etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     with xarray.set_options(keep_attrs=True):
         iso = dtr / etr * 100
         iso.attrs["units"] = "%"
@@ -67,19 +69,16 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
 
 
 @declare_units("percent", tas="[temperature]")
-def temperature_seasonality(tas: xarray.DataArray,):
-    r""" ANUCLIM Temperature Seasonality (C of V)
-    The annual temperature Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
-    of temperature values for a given year expressed as a percentage of the mean of those temperatures. For this
-    calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to
-    divide by zero, but it does mean that the values are usually quite small.
-    See : https://fennerschool.anu.edu.au/files/anuclim61.pdf ch. 6
+def temperature_seasonality(tas: xarray.DataArray):
+    r"""ANUCLIM temperature seasonality (coefficient of variation)
 
+    The annual temperature coefficient of variation expressed in percent. Calculated as the standard deviation
+    of temperature values for a given year expressed as a percentage of the mean of those temperatures.
 
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency
+      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
 
     Returns
     -------
@@ -88,13 +87,11 @@ def temperature_seasonality(tas: xarray.DataArray,):
 
     Examples
     --------
-
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature
     temperature seasonality:
 
-    >>> import xarray as xr
     >>> import xclim.indices as xci
-    >>> t = xr.open_dataset('tas.day.nc')
+    >>> t = xr.open_dataset('tas.day.nc').tas
     >>> tday_seasonality = xci.temperature_seasonality(t)
 
     >>> t_weekly = xci.tg_mean(t, freq='7D')
@@ -102,14 +99,15 @@ def temperature_seasonality(tas: xarray.DataArray,):
 
     Notes
     -----
+    For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to
+    divide by zero, but it does mean that the values are usually quite small.
+    See : https://fennerschool.anu.edu.au/files/anuclim61.pdf ch. 6
+
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
-    calculated prior to calling the function
-
+    calculated prior to calling the function.
     """
-
-    # Ensure temperature data is in Kelvin
     tas = convert_units_to(tas, "K")
 
     with xarray.set_options(keep_attrs=True):
@@ -158,7 +156,8 @@ def precip_seasonality(pr: xarray.DataArray,):
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
 
-    If input units are in mm s-1 or equivalent values are converted to mm/day to avoid potentially small denominator values
+    If input units are in mm s-1 or equivalent values are converted to mm/day to avoid potentially small denominator
+    values.
 
     """
     pr_units = units.parse_units(pr.attrs["units"].replace("-", "**-"))
@@ -225,7 +224,7 @@ def tg_mean_warmcold_quarter(
         data1 = tas
         wind = 13
     elif input_freq == "daily":
-        data1 = xci.tg_mean(tas, freq="7D")
+        data1 = tg_mean(tas, freq="7D")
         wind = 13
     else:
         raise NotImplementedError(
@@ -296,8 +295,8 @@ def tg_mean_wetdry_quarter(
         pr = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
-        tas = xci.tg_mean(tas, freq="7D")
-        pr = xci.precip_accumulation(pr, freq="7D")
+        tas = tg_mean(tas, freq="7D")
+        pr = precip_accumulation(pr, freq="7D")
         wind = 13
     else:
         raise NotImplementedError(
@@ -378,7 +377,7 @@ def prcptot_wetdry_quarter(
         data1 = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
-        data1 = xci.precip_accumulation(pr, freq="7D")
+        data1 = precip_accumulation(pr, freq="7D")
         wind = 13
     else:
         raise NotImplementedError(
@@ -448,8 +447,8 @@ def prcptot_warmcold_quarter(
         pr = pint_multiply(pr, 1 * units.week, "mm")
         wind = 13
     elif input_freq == "daily":
-        tas = xci.tg_mean(tas, freq="7D")
-        pr = xci.precip_accumulation(pr, freq="7D")
+        tas = tg_mean(tas, freq="7D")
+        pr = precip_accumulation(pr, freq="7D")
         wind = 13
     else:
         raise NotImplementedError(
