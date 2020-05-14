@@ -255,7 +255,7 @@ def tg_mean_wetdry_quarter(
     pr: xarray.DataArray,
     op: str = None,
     input_freq: str = None,
-    freq="YS",
+    freq: str = "YS",
 ):
     r""" ANUCLIM Mean temperature of wettest/dryest quarter
     The wettest (or dryest) quarter of the year is determined, and the mean
