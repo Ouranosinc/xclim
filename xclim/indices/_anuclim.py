@@ -595,5 +595,5 @@ def _get_from_other_extreme(ds, var, crit, op, dim="time"):
         ds[crit],
         input_core_dims=[[dim], [dim]],
         vectorize=True,
-        dask="parallelized",
+        dask="allowed",
     )

@@ -1079,7 +1079,10 @@ class TestTempWetDryPrecipWarmColdQuarter:
             (("MS", "monthly"), "mm/month", "dryest", [272.00644843, 269.04077039]),
         ],
     )
-    def test_tg_wetdry(self, tas_series, pr_series, freq, units, op, expected):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_tg_wetdry(
+        self, tas_series, pr_series, use_dask, freq, units, op, expected
+    ):
         tas, pr = self.get_data(tas_series, pr_series)
         freq, input_freq = freq
         pr = xci.precip_accumulation(pr, freq=freq)
@@ -1087,9 +1090,15 @@ class TestTempWetDryPrecipWarmColdQuarter:
 
         tas = xci.tg_mean(tas, freq=freq)
 
+        if use_dask and freq != "D":
+            tas = tas.expand_dims(lat=[0, 1, 2, 3]).chunk({"lat": 1})
+            pr = pr.expand_dims(lat=[0, 1, 2, 3]).chunk({"lat": 1})
+
         out = xci.tg_mean_wetdry_quarter(
             tas=tas, pr=pr, freq="YS", input_freq=input_freq, op=op
         )
+        if use_dask and freq != "D":
+            out = out.isel(lat=0)
         np.testing.assert_array_almost_equal(out, expected)
 
     @pytest.mark.parametrize(
