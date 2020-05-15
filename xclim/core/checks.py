@@ -13,15 +13,14 @@ import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.options import cfcheck
-from xclim.core.options import CHECK_MISSING
-from xclim.core.options import datacheck
-from xclim.core.options import MISSING_METHODS
-from xclim.core.options import MISSING_OPTIONS
-from xclim.core.options import OPTIONS
-from xclim.core.options import register_missing_method
-from xclim.core.utils import ValidationError
-from xclim.indices import generic
+from .options import cfcheck
+from .options import CHECK_MISSING
+from .options import datacheck
+from .options import MISSING_METHODS
+from .options import MISSING_OPTIONS
+from .options import OPTIONS
+from .options import register_missing_method
+from .utils import ValidationError
 
 # Dev notes
 # ---------
@@ -183,6 +182,8 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
+        from xclim.indices import generic
+
         selected = generic.select_time(da, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
@@ -218,6 +219,8 @@ class MissingBase:
         If `freq=None` and an indexer is given, then missing values during period at the start or end of array won't be
         flagged.
         """
+        from xclim.indices import generic
+
         null = self.is_null(da, freq, **indexer)
 
         pfreq, anchor = self.split_freq(freq)
