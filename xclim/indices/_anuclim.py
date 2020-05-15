@@ -249,9 +249,9 @@ def tg_mean_wetdry_quarter(
     input_freq: str = None,
     freq: str = "YS",
 ):
-    r""" ANUCLIM Mean temperature of wettest/dryest quarter
+    r""" ANUCLIM Mean temperature of wettest/driest quarter
 
-    The wettest (or dryest) quarter of the year is determined, and the mean temperature of this period is calculated.
+    The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
     If the input data frequency is "daily" or "weekly" quarters are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
@@ -260,8 +260,8 @@ def tg_mean_wetdry_quarter(
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
-    op : str {'wettest', 'dryest'}
-      Operation to perform: 'wettest' calculate for the wettest quarter; 'dryest' calculate for the dryest quarter.
+    op : str {'wettest', 'driest'}
+      Operation to perform: 'wettest' calculate for the wettest quarter; 'driest' calculate for the driest quarter.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
@@ -270,7 +270,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray
-       Mean temperature values of the wettest/dryest quarter of each year.
+       Mean temperature values of the wettest/driest quarter of each year.
 
     Notes
     -----
@@ -294,9 +294,9 @@ def tg_mean_wetdry_quarter(
 def prcptot_wetdry_quarter(
     pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
-    r""" ANUCLIM Total precipitation of wettest/dryest quarter
+    r""" ANUCLIM Total precipitation of wettest/driest quarter
 
-    The wettest (or dryest) quarter of the year is determined, and the total precipitation of this
+    The wettest (or driest) quarter of the year is determined, and the total precipitation of this
     period is calculated. If the input data frequency is "daily" or "weekly" quarters
     are defined as 13 week periods, otherwise are 3 months.
 
@@ -305,7 +305,7 @@ def prcptot_wetdry_quarter(
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : str
-      Operation to perform :  'wettest' calculate wettest quarter ; 'dryest' calculate dryest quarter.
+      Operation to perform :  'wettest' calculate wettest quarter ; 'driest' calculate driest quarter.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
@@ -314,7 +314,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray
-       Total precipitation values of the wettest/dryest quarter of each year.
+       Total precipitation values of the wettest/driest quarter of each year.
 
     Examples
     --------
@@ -339,7 +339,7 @@ def prcptot_wetdry_quarter(
         op = _np_ops[op]
     except KeyError:
         raise NotImplementedError(
-            f'Unknown operation "{op}" ; not one of "wettest" or "dryest"'
+            f'Unknown operation "{op}" ; not one of "wettest" or "driest"'
         )
 
     return select_resample_op(out, op, freq)
@@ -440,14 +440,14 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
 def prcptot_wetdry_period(
     pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
-    r"""ANUCLIM precipitation of the wettest/dryest day, week or month, depending on the time step
+    r"""ANUCLIM precipitation of the wettest/driest day, week or month, depending on the time step
 
     Parameters
     ----------
     pr : xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
     op : str
-      Operation to perform :  'wettest' calculate wettest period ; 'dryest' calculate dryest period.
+      Operation to perform :  'wettest' calculate wettest period ; 'driest' calculate driest period.
     input_freq : str
       Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
     freq : str
@@ -456,7 +456,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray
-       Total precipitation [mm] of the wettest / dryest period.
+       Total precipitation [mm] of the wettest / driest period.
 
     Notes
     -----
@@ -480,10 +480,10 @@ def prcptot_wetdry_period(
 
     if op == "wettest":
         return pr.resample(time=freq).max(dim="time", keep_attrs=True)
-    if op == "dryest":
+    if op == "driest":
         return pr.resample(time=freq).min(dim="time", keep_attrs=True)
     raise NotImplementedError(
-        f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
+        f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "driest"'
     )
 
 
