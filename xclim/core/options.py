@@ -1,12 +1,12 @@
 """Global or contextual options for xclim, similar to xarray.set_options"""
 import logging
 from inspect import signature
-from pathlib import Path
 from warnings import warn
 
 from boltons.funcutils import wraps
 
-from xclim.core.utils import ValidationError
+from .locales import _valid_locales
+from .utils import ValidationError
 
 logging.captureWarnings(True)
 
@@ -28,22 +28,6 @@ OPTIONS = {
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
-
-
-def _valid_locales(locales):
-    from xclim.locales import get_best_locale
-
-    return all(
-        [
-            (isinstance(locale, str) and get_best_locale(locale) is not None)
-            or (
-                not isinstance(locale, str)
-                and isinstance(locale[0], str)
-                and (Path(locale[1]).is_file() or isinstance(locale[1], dict))
-            )
-            for locale in locales
-        ]
-    )
 
 
 def _valid_missing_options(mopts):
