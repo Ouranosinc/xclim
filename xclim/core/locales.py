@@ -137,7 +137,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
         return (
             locale,
-            json.load(pkg_resources.resource_stream(__package__, f"{locale}.json")),
+            json.load(pkg_resources.resource_stream("xclim.locales", f"{locale}.json")),
         )
     if isinstance(locale[1], dict):
         return locale
