@@ -6,10 +6,11 @@ import json
 import numpy as np
 import pytest
 
-import xclim.locales as xloc
+import xclim.core.locales as xloc
 from xclim import atmos
 from xclim.core.formatting import default_formatter
 from xclim.core.options import set_options
+from xclim.locales import generate_local_dict
 
 
 esperanto = (
@@ -167,7 +168,7 @@ def test_xclim_translations(locale):
     "initeng,expected", [(False, ""), (True, atmos.tg_mean.long_name)]
 )
 def test_local_dict_generation(initeng, expected):
-    dic = xloc.generate_local_dict("tlh", init_english=initeng)
+    dic = generate_local_dict("tlh", init_english=initeng)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
     assert dic["atmos.tg_mean"]["long_name"] == expected

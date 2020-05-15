@@ -15,17 +15,18 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from xclim.core import checks
-from xclim.core.formatting import AttrFormatter
-from xclim.core.formatting import default_formatter
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import parse_doc
-from xclim.core.formatting import update_history
-from xclim.core.options import OPTIONS
-from xclim.core.units import convert_units_to
-from xclim.core.units import units
-from xclim.locales import get_local_attrs
-from xclim.locales import get_local_formatter
+from .checks import check_daily
+from .checks import missing_from_context
+from .formatting import AttrFormatter
+from .formatting import default_formatter
+from .formatting import merge_attributes
+from .formatting import parse_doc
+from .formatting import update_history
+from .locales import get_local_attrs
+from .locales import get_local_formatter
+from .options import OPTIONS
+from .units import convert_units_to
+from .units import units
 
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
@@ -316,14 +317,14 @@ class Indicator:
         indexer = kwds.get("indexer") or {}
 
         # We flag periods according to the currently set missing data method
-        miss = (checks.missing_from_context(da, freq, **indexer) for da in args)
+        miss = (missing_from_context(da, freq, **indexer) for da in args)
 
         return reduce(np.logical_or, miss)
 
     def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        checks.check_daily(da)
+        check_daily(da)
 
 
 class Indicator2D(Indicator):
