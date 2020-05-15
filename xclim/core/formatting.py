@@ -210,7 +210,7 @@ def update_history(
     --------
     merge_attributes
     """
-    from xclim import __version__
+    from xclim import __version__  # pylint: disable=cyclic-import
 
     merged_history = merge_attributes(
         "history",
