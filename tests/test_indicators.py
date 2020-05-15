@@ -71,10 +71,18 @@ def test_attrs(tas_series):
 
     assert "TMIN" in Indicator.registry
 
-    class TestSub(Indicator.registry["TMIN"]):
+    # Because this has not been instantiated, it's not in any registry.
+    class Test123(Indicator.registry["TMIN"]):
         identifier = "test123"
 
-    Indicator.registry["TMIN"](identifier="test_again", missing_func=missing_pct)
+    assert "TEST123" not in Indicator.registry
+
+    # Confirm registries live in subclasses.
+    class IndicatorNew(Indicator):
+        _nvar = 2
+
+    IndicatorNew(identifier="i2d")
+    assert "I2D" in IndicatorNew.registry
 
 
 def test_temp_unit_conversion(tas_series):

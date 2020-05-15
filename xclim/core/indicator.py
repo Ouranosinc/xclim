@@ -1,7 +1,38 @@
 # -*- coding: utf-8 -*-
 """
-Indicator base submodule
-========================
+Indicator base classes
+======================
+
+The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
+the class runs data and metadata health checks. After computations, the class masks values that should be considered
+missing and adds metadata attributes to the output object.
+
+The `Indicator` class is not meant to be used directly, but should rather be subclassed for each individual `compute`
+function. To ease the creation of these subclasses, simply calling `Indicator` will create a new subclass with call
+arguments assigned to the new subclass instead of the instance. An instance is then created from this new subclass.
+
+The key ingredients to create a new indicator are the `identifier`, the `compute` function, the name of the missing
+value algorithm, and the `datacheck` and `cfcheck` functions, which respectively assess the validity of data and
+metadata. The `indicators` module contains over 50 examples of indicators to draw inspiration from.
+
+
+Subclass registries
+-------------------
+`Indicator` subclasses created by instantiation are registered in the `Indicator.registry` attribute:
+
+  >>> my_indicator = Indicator(identifier="my_new_index", compute=lambda x: x.mean())
+  >>> assert "MY_INDICATOR" in Indicator.registry
+
+Ordinary subclasses can also be created, so for example, an Indicator expecting daily input data is defined as
+
+  >>> class Daily(Indicator):
+  ...     @staticmethod
+  ...     def datacheck(*das):
+  ...         for da in das:
+  ...             checks.check_daily(da)
+
+And while `Daily` will not appear in `Indicator.registry`, new indicators instantiated from `Daily` will appear in
+`Daily.registry`.
 """
 import re
 import warnings
@@ -403,20 +434,20 @@ class Indicator:
 
     # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
-    def cfcheck(*das):
-        """Compare metadata attributes to CF-Convention standards.
-
-        When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
-        """
-        return True
-
-    @staticmethod
     def compute(*args, **kwds):
         """The function computing the indicator.
 
         This would typically be a function from `xclim.indices`.
         """
         raise NotImplementedError
+
+    @staticmethod
+    def cfcheck(*das):
+        """Compare metadata attributes to CF-Convention standards.
+
+        When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
+        """
+        return True
 
     @staticmethod
     def datacheck(*das):
