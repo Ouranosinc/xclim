@@ -4,13 +4,14 @@ from ._multivariate import daily_temperature_range
 from ._multivariate import extreme_temperature_range
 from ._multivariate import precip_accumulation
 from ._simple import tg_mean
+from .generic import select_resample_op
 from .run_length import lazy_indexing
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
 from xclim.core.units import units2pint
-from xclim.indices.generic import select_resample_op
+
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -479,7 +480,7 @@ def prcptot_wetdry_period(
 
     if op == "wettest":
         return pr.resample(time=freq).max(dim="time", keep_attrs=True)
-    elif op == "dryest":
+    if op == "dryest":
         return pr.resample(time=freq).min(dim="time", keep_attrs=True)
     raise NotImplementedError(
         f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "dryest"'
@@ -494,11 +495,29 @@ def _anuclim_coeff_var(arr: xarray.DataArray):
 
 
 def _from_other_arg(criteria, output, op, freq):
+    """Pick values from output based on operation returning an index from criteria.
+
+    Parameters
+    ----------
+    criteria : DataArray
+      Series on which operation returning index is applied.
+    output : DataArray
+      Series to be indexed.
+    op : func
+      Function returning an index, for example np.argmin, np.argmax, np.nanargmin, np.nanargmax.
+    freq : str
+      Temporal grouping.
+
+    Returns
+    -------
+    DataArray
+      Output values where criteria is met at the given frequency.
+    """
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
     def get_other_op(ds):
-        return lazy_indexing(ds.output, op(ds.criteria, dim=dim), dim=dim)
+        return lazy_indexing(ds.output, index=op(ds.criteria, dim=dim), dim=dim)
 
     return ds.resample(time=freq).map(get_other_op)
 
