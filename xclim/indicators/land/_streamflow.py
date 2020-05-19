@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from xclim.core import checks
+from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index
@@ -20,7 +20,7 @@ class Streamflow(Daily):
 
     @staticmethod
     def cfcheck(da):
-        checks.check_valid(da, "standard_name", "streamflow")
+        check_valid(da, "standard_name", "streamflow")
 
 
 class Stats(Streamflow):

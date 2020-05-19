@@ -45,7 +45,7 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from xclim.core import checks
+from xclim.core import datachecks
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
 from xclim.core.formatting import merge_attributes
@@ -255,14 +255,22 @@ class Indicator:
         return out.where(~mask).rename(vname)
 
     def update_attrs(self, ba, das):
-        """Update attributes.
+        """Format attributes with the run-time values of `compute` call parameters.
+
+        Cell methods and history attributes are updated, adding to existing values. The language of the string is
+        taken from the `OPTIONS` configuration dictionary.
 
         Parameters
         ----------
-        ba: bound argument object
-          ...
         das: tuple
           Input arrays.
+        ba: bound argument object
+          Keyword arguments of the `compute` call.
+
+        Returns
+        -------
+        dict
+          Attributes with {} expressions replaced by call argument values.
         """
         args = ba.arguments
         out = self.format(self.cf_attrs, args)
@@ -472,7 +480,7 @@ class Daily(Indicator):
     @staticmethod
     def datacheck(*das):
         for da in das:
-            checks.check_daily(da)
+            datachecks.check_daily(da)
 
 
 class Daily2D(Daily):

@@ -5,7 +5,7 @@ Sea ice indicators
 import abc
 
 from xclim import indices
-from xclim.core import checks
+from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Indicator2D
 
 __all__ = ["sea_ice_area", "sea_ice_extent"]
@@ -18,8 +18,8 @@ class SicArea(Indicator2D):
 
     @staticmethod
     def cfcheck(sic, area):
-        checks.check_valid(sic, "standard_name", "sea_ice_area_fraction")
-        checks.check_valid(area, "standard_name", "areacello")
+        check_valid(sic, "standard_name", "sea_ice_area_fraction")
+        check_valid(area, "standard_name", "areacello")
 
 
 sea_ice_extent = SicArea(

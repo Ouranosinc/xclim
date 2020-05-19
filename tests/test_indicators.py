@@ -8,13 +8,13 @@ import xarray as xr
 
 from xclim import __version__
 from xclim import atmos
-from xclim.core.checks import missing_pct
 from xclim.core.formatting import AttrFormatter
 from xclim.core.formatting import default_formatter
 from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
 from xclim.core.indicator import Indicator
+from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
