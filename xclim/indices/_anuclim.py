@@ -120,7 +120,6 @@ def temperature_seasonality(tas: xarray.DataArray):
     -----
     For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to
     divide by zero, but it does mean that the values are usually quite small.
-    See : https://fennerschool.anu.edu.au/files/anuclim61.pdf ch. 6
 
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
@@ -142,7 +141,7 @@ def precip_seasonality(pr: xarray.DataArray,):
 
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
     of precipitation values for a given year expressed as a percentage of the mean of those values.
-    See : https://fennerschool.anu.edu.au/files/anuclim61.pdf ch. 6
+
 
     Parameters
     ----------
@@ -174,7 +173,7 @@ def precip_seasonality(pr: xarray.DataArray,):
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
 
-    If input units are in mm s-1 or equivalent values are converted to mm/day to avoid potentially small denominator
+    If input units are in mm s-1 (or equivalent) values are converted to mm/day to avoid potentially small denominator
     values.
 
     """
