@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from functools import wraps
+
 """
 Indicators module
 =================
@@ -163,53 +165,64 @@ def __build_icclim(mode="warn"):
     return mod
 
 
+def ensure_annual(func):
+    @wraps(func)
+    def _wrapper(*args, **kwargs):
+        if "freq" not in kwargs:
+            raise ValueError(
+                "Frequency must be provided as a keyword argument (freq='Y[S]' or freq='A[S][-month]')"
+            )
+        freq = kwargs["freq"]
+        if freq[0] not in ["Y", "A"]:
+            raise ValueError("Frequency must be annual ('Y[S]' or 'A[S][-month]')")
+        return func(*args, **kwargs)
+
+    return _wrapper
+
+
 def __build_anuclim(mode="warn"):
     from xclim import indices
     from xclim.core.utils import wrapped_partial
 
     mapping = {
-        "P1_AnnMeanTemp": wrapped_partial(indices.growing_degree_days, freq="YS"),
-        "P2_MeanDiurnalRange": wrapped_partial(
-            indices.daily_temperature_range, freq="YS"
-        ),
-        "P3_Isothermality": wrapped_partial(indices.isothermality, freq="YS"),
+        "P1_AnnMeanTemp": ensure_annual(indices.tg_mean),
+        "P2_MeanDiurnalRange": ensure_annual(indices.daily_temperature_range),
+        "P3_Isothermality": ensure_annual(indices.isothermality),
         "P4_TempSeasonality": indices.temperature_seasonality,
-        "P5_MaxTempWarmestPeriod": wrapped_partial(indices.tx_max, freq="YS"),
-        "P6_MinTempColdestPeriod": wrapped_partial(indices.tn_min, freq="YS"),
-        "P7_TempAnnualRange": wrapped_partial(
-            indices.extreme_temperature_range, freq="YS"
+        "P5_MaxTempWarmestPeriod": ensure_annual(indices.tx_max),
+        "P6_MinTempColdestPeriod": ensure_annual(indices.tn_min),
+        "P7_TempAnnualRange": ensure_annual(indices.extreme_temperature_range),
+        "P8_MeanTempWettestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_wetdry_quarter, op="wettest")
         ),
-        "P8_MeanTempWettestQuarter": wrapped_partial(
-            indices.tg_mean_wetdry_quarter, freq="YS", op="wettest"
+        "P9_MeanTempDriestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_wetdry_quarter, op="driest")
         ),
-        "P9_MeanTempDriestQuarter": wrapped_partial(
-            indices.tg_mean_wetdry_quarter, freq="YS", op="driest"
+        "P10_MeanTempWarmestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_warmcold_quarter, op="warmest")
         ),
-        "P10_MeanTempWarmestQuarter": wrapped_partial(
-            indices.tg_mean_warmcold_quarter, freq="YS", op="warmest"
+        "P11_MeanTempColdestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_warmcold_quarter, op="coldest")
         ),
-        "P11_MeanTempColdestQuarter": wrapped_partial(
-            indices.tg_mean_warmcold_quarter, freq="YS", op="coldest"
+        "P12_AnnualPrecip": ensure_annual(indices.prcptot),
+        "P13_PrecipWettestPeriod": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_period, op="wettest")
         ),
-        "P12_AnnualPrecip": wrapped_partial(indices.prcptot, freq="YS"),
-        "P13_PrecipWettestPeriod": wrapped_partial(
-            indices.prcptot_wetdry_period, freq="YS", op="wettest"
-        ),
-        "P14_PrecipDriestPeriod": wrapped_partial(
-            indices.prcptot_wetdry_period, freq="YS", op="driest"
+        "P14_PrecipDriestPeriod": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_period, op="driest")
         ),
         "P15_PrecipSeasonality": indices.precip_seasonality,
-        "P16_PrecipWettestQuarter": wrapped_partial(
-            indices.prcptot_wetdry_quarter, freq="YS", op="wettest"
+        "P16_PrecipWettestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_quarter, op="wettest")
         ),
-        "P17_PrecipDriestQuarter": wrapped_partial(
-            indices.prcptot_wetdry_quarter, freq="YS", op="driest"
+        "P17_PrecipDriestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_quarter, op="driest")
         ),
-        "P18_PrecipWarmestQuarter": wrapped_partial(
-            indices.prcptot_warmcold_quarter, freq="YS", op="warmest"
+        "P18_PrecipWarmestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_warmcold_quarter, op="warmest")
         ),
-        "P19_PrecipColdestQuarter": wrapped_partial(
-            indices.prcptot_warmcold_quarter, freq="YS", op="coldest"
+        "P19_PrecipColdestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_warmcold_quarter, op="coldest")
         ),
     }
 
