@@ -50,10 +50,8 @@ class AttrFormatter(string.Formatter):
         In french, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
-        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']},
-                                ['m', 'f'])
-        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}",
-                       adj1='nice', adj2='evil')
+        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']}, ['m', 'f'])
+        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}", adj1='nice', adj2='evil')
         "Le chien est beau, l'oie est méchante"
         """
         if value in self.mapping and not format_spec:

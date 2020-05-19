@@ -2,12 +2,18 @@
 History
 =======
 
-0.17.x
-------
+0.17.x (2020-05-15)
+-------------------
+* Added support for operations on dimensionless variables (`units = '1'`)
+* Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
+* Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
+* New `xclim.set_options` context to control the missing checks, input validation and locales.
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
-* Add `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
-* Add support for `freq=None` in missing calculations.
+* Added `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
+* Added support for `freq=None` in missing calculations.
+* Fixed outdated code examples in the docs and docstrings.
+* Doctests are now run as part of the test suite.
 
 0.16.0 (2020-04-23)
 -------------------

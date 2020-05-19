@@ -2,18 +2,18 @@
 Bias adjustment and downscaling algorithms
 ==========================================
 
-`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`bias-adjustment-algos`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and return a `Dataset` object storing the *transfer* information allowing to go from `x` to `y`. This dataset can then be used as an input to the `adjust` function to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
+`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`bias-adjustment-algos`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
 For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 
   from xclim.sdba.adjustment import DetrendedQuantileMapping
   dqm = DetrendedQuantileMapping()
   dqm.train(ref, hist)
-  scen = dqm.predict(sim)
+  scen = dqm.adjust(sim)
 
 Most method can either be applied additively or multiplicatively. Also, most methods can be applied independently on different time groupings (monthly, seasonally) or according to the day of the year and a rolling window width.
 
-When transfer factors are applied in adjustment, they can be interpolated according to the time grouping. This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationaly cheaper than computing adjustment factors for each day of the year.
+When transfer factors are applied in adjustment, they can be interpolated according to the time grouping. This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationaly cheaper than computing adjustment factors for each day of the year. (Currently only implemented for monthly grouping)
 
 
 Application in multivariate settings

@@ -3,12 +3,12 @@ import datetime
 import numpy as np
 import xarray
 
+from . import run_length as rl
+from .generic import threshold_count
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
-from xclim.indices import run_length as rl
-from xclim.indices.generic import threshold_count
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -130,10 +130,8 @@ def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
     precipitation fallen over days with precipitation >= 5 mm at seasonal
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> import xarray as xr
-    >>> import xclim.indices
-    >>> pr = xr.open_dataset("pr_day.nc").pr
-    >>> daily_int = xclim.indices.daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
 
