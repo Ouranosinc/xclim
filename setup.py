@@ -22,7 +22,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "numpy>=1.16",
+    "numpy==1.17",
     "xarray>=0.14.1",
     "scipy>=1.2",
     "numba",
