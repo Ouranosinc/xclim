@@ -89,6 +89,13 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
+    - env: TOXENV=py36-bottleneck
+      name: "Python3.6 (Linux + bottleneck@master)"
+      python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py38-anaconda
       name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
@@ -119,6 +126,7 @@ jobs:
       - GDAL_VERSION=3.0.0
       - GDAL_DATA=/c/OSGeo4W64/share/gdal
     - env: TOXENV=py36-xarray
+    - env: TOXENV=py36-bottleneck
 
 before_install:
     - printenv
