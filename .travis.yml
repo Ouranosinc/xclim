@@ -122,7 +122,7 @@ jobs:
 
 before_install:
     - printenv
-    - pip install --upgrade pip
+    - pip install --upgrade pip setuptools
 
 install:
     - pip install -U tox-travis
