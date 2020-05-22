@@ -250,7 +250,7 @@ def first_run(
 
         out = lazy_indexing(crd, out)
 
-    if dim in out:
+    if dim in out.coords:
         out = out.drop_vars(dim)
 
     return out
