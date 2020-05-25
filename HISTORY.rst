@@ -3,6 +3,7 @@ History
 =======
 0.18.x
 ------
+* `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
 * Added indicator `first_day_below` and run length helper `first_run_after_date`
 * Added ANUCLIM model climate indices mappings.
 
