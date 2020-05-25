@@ -197,7 +197,7 @@ def ensemble_percentiles(
     """
 
     if isinstance(ens, xr.Dataset):
-        return xr.merge(
+        out = xr.merge(
             [
                 ensemble_percentiles(
                     da, values, keep_chunk_size=keep_chunk_size, split=split
@@ -206,9 +206,15 @@ def ensemble_percentiles(
                 if "realization" in da.dims
             ]
         )
+        out.attrs["history"] = update_history(
+            f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+            ens,
+        )
+
+        return out
 
     # Percentile calculation forbids any chunks along realization
-    if len(ens.chunks.get("realization", [])) > 1:
+    if ens.chunks and len(ens.chunks[ens.get_axis_num("realization")]) > 1:
         if keep_chunk_size is None:
             # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
             keep_chunk_size = (
@@ -218,11 +224,13 @@ def ensemble_percentiles(
         if keep_chunk_size:
             # Smart rechunk on dimension where chunks are the largest
             chkDim, chks = max(
-                ens.chunks.items(),
-                key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
+                enumerate(ens.chunks),
+                key=lambda kv: 0
+                if kv[0] == ens.get_axis_num("realization")
+                else max(kv[1]),
             )
             ens = ens.chunk(
-                {"realization": -1, chkDim: len(chks) * ens.realization.size}
+                {"realization": -1, ens.dims[chkDim]: len(chks) * ens.realization.size}
             )
         else:
             ens = ens.chunk({"realization": -1})
@@ -248,11 +256,11 @@ def ensemble_percentiles(
         percs.append(perc)
 
     if split:
-        out = xr.merge(percs)
-    else:
-        out = xr.concat(
-            percs, xr.DataArray(values, dims=("percentiles",), name="percentiles")
-        )
+        return xr.merge(percs)
+
+    out = xr.concat(
+        percs, xr.DataArray(list(values), dims=("percentiles",), name="percentiles")
+    )
 
     out.attrs["history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",

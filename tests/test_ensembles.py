@@ -122,7 +122,8 @@ class TestEnsembleStats:
         ens = ensembles.create_ensemble(self.nc_files_simple)
         if transpose:
             ens = ens.transpose()
-        out1 = ensembles.ensemble_percentiles(ens)
+
+        out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_equal(
             np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 10),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
@@ -137,27 +138,31 @@ class TestEnsembleStats:
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
-        out1 = ensembles.ensemble_percentiles(ens, values=(25, 75))
-        assert np.all(out1["tg_mean_p75"] > out1["tg_mean_p25"])
+
+        out2 = ensembles.ensemble_percentiles(ens, values=(25, 75), split=True)
+        assert np.all(out2["tg_mean_p75"] > out2["tg_mean_p25"])
         assert "Computation of the percentiles on" in out1.attrs["history"]
+
+        out3 = ensembles.ensemble_percentiles(ens)
+        xr.testing.assert_equal(
+            out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
+        )
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
     def test_calc_perc_dask(self, keep_chunk_size):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         out2 = ensembles.ensemble_percentiles(
-            ens.chunk({"time": 2}), values=(10, 50, 90), keep_chunk_size=keep_chunk_size
+            ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size
         )
         out1 = ensembles.ensemble_percentiles(ens.load())
-        np.testing.assert_array_equal(out1["tg_mean_p10"], out2["tg_mean_p10"])
-        np.testing.assert_array_equal(out1["tg_mean_p50"], out2["tg_mean_p50"])
-        np.testing.assert_array_equal(out1["tg_mean_p90"], out2["tg_mean_p90"])
+        np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
     def test_calc_perc_nans(self):
         ens = ensembles.create_ensemble(self.nc_files_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
-        out1 = ensembles.ensemble_percentiles(ens)
+        out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_equal(
             np.percentile(ens["tg_mean"][:, 0, 5, 5], 10), np.nan
         )
