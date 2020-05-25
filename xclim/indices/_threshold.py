@@ -28,6 +28,7 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "last_spring_frost",
+    "first_day_below",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -495,6 +496,50 @@ def last_spring_frost(
         rl.last_run_before_date,
         window=window,
         date=before_date,
+        dim="time",
+        coord="dayofyear",
+    )
+
+
+@declare_units("", tasmin="[temperature]", thresh="[temperature]")
+def first_day_below(
+    tasmin: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: str = "07-01",
+    window: int = 1,
+    freq: str = "YS",
+):
+    r"""First day of temperatures inferior to a threshold temperature.
+
+    Returns first day of period where a temperature is inferior to a threshold
+    over a given number of days, limited to a starting calendar date.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K].
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
+    after_date : str
+      Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
+    window : int
+      Minimum number of days with temperature below threshold needed for evaluation.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Day of the year when minimu temperature is inferior to a threshold over a given number of days for the first time.
+      If there is no such day, return np.nan.
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    cond = tasmin < thresh
+
+    return cond.resample(time=freq).map(
+        rl.first_run_after_date,
+        window=window,
+        date=after_date,
         dim="time",
         coord="dayofyear",
     )
