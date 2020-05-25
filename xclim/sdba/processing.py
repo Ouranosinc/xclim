@@ -86,7 +86,7 @@ def adapt_freq(
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
         # The value in ref with the same rank as the first non zero value in sim.
         pth = xr.apply_ufunc(
-            np.percentile,
+            np.nanpercentile,
             ds.ref,
             P0_sim
             * 100,  # np.percentile takes values in [0, 100], ecdf outputs in [0, 1]
