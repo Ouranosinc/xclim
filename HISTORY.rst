@@ -1,9 +1,9 @@
 =======
 History
 =======
-
 0.18.x
 ------
+* Added indicator `first_day_below` and run length helper `first_run_after_date`
 * Added ANUCLIM model climate indices mappings.
 
 0.17.0 (2020-05-15)
