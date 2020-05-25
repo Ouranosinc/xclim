@@ -42,6 +42,7 @@ __all__ = [
     "freshet_start",
     "frost_days",
     "last_spring_frost",
+    "first_day_below",
     "ice_days",
     "consecutive_frost_days",
     "maximum_consecutive_frost_free_days",
@@ -421,6 +422,15 @@ last_spring_frost = Tasmin(
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
     "threshold of {thresh} is not exceeded before a given date.",
     compute=indices.last_spring_frost,
+)
+
+first_day_below = Tasmin(
+    identifier="first_day_below",
+    units="",
+    standard_name="day_of_year",
+    long_name="First day of year with temperature below {thresh}",
+    description="First day of year with temperature below {thresh} for at least {window} days.",
+    compute=indices.first_day_below,
 )
 
 ice_days = Tasmax(

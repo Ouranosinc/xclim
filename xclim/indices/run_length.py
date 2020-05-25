@@ -347,7 +347,7 @@ def run_end_after_date(
     dim: str = "time",
     coord: str = "dayofyear",
 ):
-    """Return the index of the first item after the end of a run after a given date.
+    """Return the index of the first item after the end of a run after a given date. The run must begin before the date.
 
     Parameters
     ----------
@@ -386,6 +386,46 @@ def run_end_after_date(
         end.isnull() & beg.notnull(), da.time.isel(time=-1).dt.dayofyear, end
     )
     return end.where(beg.notnull())
+
+
+def first_run_after_date(
+    da: xr.DataArray,
+    window: int,
+    date: str = "07-01",
+    dim: str = "time",
+    coord: str = "dayofyear",
+):
+    """Return the index of the first item of the first run after a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    date : str
+      The date after which to look for the run.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
+    """
+    after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+    mid_idx = np.where(da.time.dt.dayofyear == after_date)[0]
+    if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+
+    return first_run(
+        da.where(da.time >= da.time[mid_idx][0]), window=window, dim=dim, coord=coord,
+    )
 
 
 def last_run_before_date(
