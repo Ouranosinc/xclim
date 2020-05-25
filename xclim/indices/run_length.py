@@ -656,30 +656,51 @@ def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.appl
     return ind
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray):
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None, drop=True):
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
+
+    The algorithm differs whether da is 1D or not.
 
     Parameters
     ----------
     da : xr.DataArray
-      1D Input array
+      Input array. If not 1D, `dim` must be given and the corresponding dimension shouldn't be chunked.
     index : xr.DataArray
       N-d integer indices
+    dim : Dimension along which to index,
+          unused if `da` is 1D, should not be present in `index`.
 
     Returns
     -------
     xr.DataArray
       Values of `da` at indices `index`
     """
+    if da.ndim == 1:
 
-    def _index_from_1d_array(array, indices):
-        return array[
-            indices,
-        ]
+        def _index_from_1d_array(array, indices):
+            return array[
+                indices,
+            ]
 
-    invalid = index.isnull()
-    index = index.fillna(0).astype(int)
-    func = partial(_index_from_1d_array, da)
+        invalid = index.isnull()
+        index = index.fillna(0).astype(int)
+        func = partial(_index_from_1d_array, da)
 
-    out = index.map_blocks(func)
-    return out.where(~invalid)
+        out = index.map_blocks(func)
+        out = out.where(~invalid)
+        if index.shape == ():
+            out = out.drop_vars(da.dims[0])
+        return out
+
+    # else:
+    def _isel(array, indx):
+        return np.take_along_axis(array, indx[..., None], -1)[..., 0]
+
+    return xr.apply_ufunc(
+        _isel,
+        da,
+        index,
+        input_core_dims=[[dim], []],
+        output_core_dims=[[]],
+        dask="allowed",
+    )
