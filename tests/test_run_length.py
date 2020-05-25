@@ -280,6 +280,34 @@ class TestRunsWithDates:
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(
+        "coord,date,beg,expected",
+        [
+            ("dayofyear", "07-01", 210, 211),
+            (False, "07-01", 190, 190),
+            ("dayofyear", "04-01", False, np.NaN),  # no run
+            ("dayofyear", "11-01", 150, 305),  # run already started
+        ],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_first_run_after_date(
+        self, tas_series, coord, date, beg, expected, use_dask
+    ):
+        t = np.zeros(365)
+        if beg:
+            t[beg:] = 1
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.first_run_after_date(
+            runs, window=1, date=date, dim="time", coord=coord
+        )
+        np.testing.assert_array_equal(np.mean(out.load()), expected)
+
+    @pytest.mark.parametrize(
         "coord,date,end,expected",
         [
             ("dayofyear", "07-01", 210, 182),

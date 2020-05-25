@@ -258,6 +258,22 @@ class TestLastSpringFrost:
         assert lsf == 180
 
 
+class TestFirstDayBelow:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[180:270] = 303.15
+        tas = tas_series(a, start="2000/1/1")
+
+        fdb = xci.first_day_below(tas)
+        assert fdb == 271
+
+        a[:] = 303.15
+        tas = tas_series(a, start="2000/1/1")
+
+        fdb = xci.first_day_below(tas)
+        assert np.isnan(fdb)
+
+
 class TestDaysOverPrecipThresh:
     def test_simple(self, pr_series, per_doy):
         a = np.zeros(365)
