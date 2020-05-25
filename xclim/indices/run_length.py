@@ -345,7 +345,7 @@ def run_end_after_date(
     window: int,
     date: str = "07-01",
     dim: str = "time",
-    coord: str = "dayofyear",
+    coord: Optional[Union[bool, str]] = "dayofyear",
 ):
     """Return the index of the first item after the end of a run after a given date. The run must begin before the date.
 
@@ -359,7 +359,7 @@ def run_end_after_date(
       The date after which to look for the end of a run.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : Optional[Union[bool, str]]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
       DateTimeAccessor object to use (ex: 'dayofyear').
@@ -393,7 +393,7 @@ def first_run_after_date(
     window: int,
     date: str = "07-01",
     dim: str = "time",
-    coord: str = "dayofyear",
+    coord: Optional[Union[bool, str]] = "dayofyear",
 ):
     """Return the index of the first item of the first run after a given date.
 
@@ -407,7 +407,7 @@ def first_run_after_date(
       The date after which to look for the run.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : Optional[Union[bool, str]]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
       DateTimeAccessor object to use (ex: 'dayofyear').
@@ -433,7 +433,7 @@ def last_run_before_date(
     window: int,
     date: str = "07-01",
     dim: str = "time",
-    coord: str = "dayofyear",
+    coord: Optional[Union[bool, str]] = "dayofyear",
 ):
     """Return the index of the last item of the last run before a given date.
 
@@ -447,7 +447,7 @@ def last_run_before_date(
       The date before which to look for the last event.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : Optional[Union[bool, str]]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
       DateTimeAccessor object to use (ex: 'dayofyear').
