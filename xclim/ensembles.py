@@ -12,6 +12,8 @@ import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
+from xclim.core.calendar import convert_calendar
+from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 
 # Avoid having to include matplotlib in xclim requirements
@@ -30,6 +32,7 @@ def create_ensemble(
     datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     resample_freq: Optional[str] = None,
+    calendar: str = "default",
     **xr_kwargs,
 ) -> xr.Dataset:
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
@@ -56,6 +59,10 @@ def create_ensemble(
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
 
+    calendar : str
+      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
+      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
+
     xr_kwargs :
       Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
 
@@ -81,7 +88,9 @@ def create_ensemble(
     >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
-    ds = _ens_align_datasets(datasets, mf_flag, resample_freq, **xr_kwargs)
+    ds = _ens_align_datasets(
+        datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
+    )
 
     dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
 
@@ -239,6 +248,7 @@ def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     resample_freq: str = None,
+    calendar: str = "default",
     **xr_kwargs,
 ) -> List[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
@@ -254,6 +264,9 @@ def _ens_align_datasets(
     resample_freq : Optional[str]
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
+    calendar : str
+      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
+      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
@@ -288,9 +301,12 @@ def _ens_align_datasets(
                     )
                 time = counts.time
 
-            ds["time"] = pd.to_datetime(
-                {"year": time.dt.year, "month": time.dt.month, "day": time.dt.day}
-            ).values
+            ds["time"] = time
+
+            cal = get_calendar(time)
+            ds = convert_calendar(
+                ds, calendar, align_on="date" if "360_day" in [cal, calendar] else None,
+            )
 
         ds_all.append(ds)
 
