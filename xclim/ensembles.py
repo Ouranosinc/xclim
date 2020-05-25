@@ -301,11 +301,11 @@ def _ens_align_datasets(
                     )
                 time = counts.time
 
+            ds["time"] = time
+
             cal = get_calendar(time)
-            ds["time"] = convert_calendar(
-                time,
-                calendar,
-                align_on="date" if "360_day" in [cal, calendar] else None,
+            ds = convert_calendar(
+                ds, calendar, align_on="date" if "360_day" in [cal, calendar] else None,
             )
 
         ds_all.append(ds)
