@@ -1,10 +1,12 @@
 =======
 History
 =======
-
-0.17.x (2020-05-15)
--------------------
+0.18.x
+------
 * Added indicator `first_day_below` and run length helper `first_run_after_date`
+
+0.17.0 (2020-05-15)
+-------------------
 * Added support for operations on dimensionless variables (`units = '1'`)
 * Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
 * Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
