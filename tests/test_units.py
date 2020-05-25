@@ -108,6 +108,9 @@ class TestUnitConversion:
         u = units2pint("1")
         assert str(u) == "dimensionless"
 
+        u = units2pint("mm s-1")
+        assert str(u) == "millimeter / second"
+
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = pint_multiply(a, 1 * units.days)
