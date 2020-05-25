@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
-from functools import wraps
-
 """
 Indicators module
 =================
 
 Indicators are then main tool xclim provides to compute climate indices. In contrast
-to the function defined in `xclim.indices`, Indicators add a layer of heatlh checks
+to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into realms : atmos, land and
-seaIce. The module also defines an additionnal virtual module : ICCLIM.
+seaIce. The module also defines an additional virtual module : ICCLIM.
 """
+from functools import wraps
 
 
-def build_module(name, objs, doc="", source=None, mode="ignore"):
+def build_module(
+    name: str, objs: dict, doc: str = "", source=None, mode: str = "ignore"
+):
     """Create a module from imported objects.
 
     Parameters

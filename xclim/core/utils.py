@@ -23,7 +23,7 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     suggested : dict
         Keyword arguments that should have new default values
         but still appear in the signature.
-    fixed : dict
+    fixed : kwargs
         Keyword arguments that should be fixed by the wrapped
         and removed from the signature.
 
