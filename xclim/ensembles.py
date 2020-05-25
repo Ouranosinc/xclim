@@ -14,6 +14,7 @@ from sklearn.cluster import KMeans
 
 from xclim.core.calendar import convert_calendar
 from xclim.core.calendar import get_calendar
+from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import update_history
 
 # Avoid having to include matplotlib in xclim requirements
@@ -150,9 +151,10 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: xr.Dataset,
-    values: Tuple[int, int, int] = (10, 50, 90),
+    ens: Union[xr.Dataset, xr.DataArray],
+    values: Tuple[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
+    split: bool = False,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -160,20 +162,24 @@ def ensemble_percentiles(
 
     Parameters
     ----------
-    ens: xr.Dataset
-      Ensemble dataset (see xclim.ensembles.create_ensemble).
-    values : Tuple[int, int, int]
+    ens: Union[xr.Dataset, xr.DataArray]
+      Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
+    values : Tuple[int]
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : Optional[bool]
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
       If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
       If False, no shrinking is performed, resulting in much larger chunks
       If not defined, the function decides which is best
+    split : bool
+      Whether to split each percentile into a new variable of concatenate the ouput along a new
+      "percentiles" dimension.
 
     Returns
     -------
-    xr.Dataset
-      Dataset with containing data variables of requested ensemble statistics
+    Union[xr.Dataset, xr.DataArray]
+      If split is True, same type as ens; dataset otherwise,
+      containing data variable(s) of requested ensemble statistics
 
     Examples
     --------
@@ -190,58 +196,70 @@ def ensemble_percentiles(
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
 
-    ds_out = xr.Dataset(attrs=ens.attrs)
-    for v in ens.data_vars:
-        # Percentile calculation forbids any chunks along realization
-        if len(ens.chunks.get("realization", [])) > 1:
-            if keep_chunk_size is None:
-                # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
-                keep_chunk_size = (
-                    np.prod(ens[v].isel(realization=0).data.chunksize)
-                    * ens.realization.size
-                    > 2e8
+    if isinstance(ens, xr.Dataset):
+        return xr.merge(
+            [
+                ensemble_percentiles(
+                    da, values, keep_chunk_size=keep_chunk_size, split=split
                 )
-            if keep_chunk_size:
-                # Smart rechunk on dimension where chunks are the largest
-                chkDim, chks = max(
-                    ens.chunks.items(),
-                    key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
-                )
-                var = ens[v].chunk(
-                    {"realization": -1, chkDim: len(chks) * ens.realization.size}
-                )
-            else:
-                var = ens[v].chunk({"realization": -1})
-        else:
-            var = ens[v]
+                for da in ens.data_vars.values()
+                if "realization" in da.dims
+            ]
+        )
 
-        for p in values:
-            perc = xr.apply_ufunc(
-                _calc_perc,
-                var,
-                input_core_dims=[["realization"]],
-                output_core_dims=[[]],
-                keep_attrs=True,
-                kwargs=dict(p=p),
-                dask="parallelized",
-                output_dtypes=[ens[v].dtype],
+    # Percentile calculation forbids any chunks along realization
+    if len(ens.chunks.get("realization", [])) > 1:
+        if keep_chunk_size is None:
+            # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
+            keep_chunk_size = (
+                np.prod(ens.isel(realization=0).data.chunksize) * ens.realization.size
+                > 2e8
             )
+        if keep_chunk_size:
+            # Smart rechunk on dimension where chunks are the largest
+            chkDim, chks = max(
+                ens.chunks.items(),
+                key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
+            )
+            ens = ens.chunk(
+                {"realization": -1, chkDim: len(chks) * ens.realization.size}
+            )
+        else:
+            ens = ens.chunk({"realization": -1})
 
-            perc.name = f"{v}_p{p:02d}"
-            ds_out[perc.name] = perc
+    percs = []
+    for p in values:
+        perc = xr.apply_ufunc(
+            _calc_perc,
+            ens,
+            input_core_dims=[["realization"]],
+            output_core_dims=[[]],
+            keep_attrs=True,
+            kwargs=dict(p=p),
+            dask="parallelized",
+            output_dtypes=[ens.dtype],
+        )
 
-            if "description" in ds_out[perc.name].attrs:
-                ds_out[perc.name].attrs[
-                    "description"
-                ] = f"{ds_out[perc.name].attrs['description']} : {p}th percentile of ensemble"
-            else:
-                ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
+        if split:
+            perc.name = f"{ens.name}_p{p:02d}"
+            perc.attrs["description"] = (
+                perc.attrs.get("descrption", "") + " {p}th percentile of ensemble."
+            )
+        percs.append(perc)
 
-    ds_out.attrs["history"] = update_history(
+    if split:
+        out = xr.merge(percs)
+    else:
+        out = xr.concat(
+            percs, xr.DataArray(values, dims=("percentiles",), name="percentiles")
+        )
+
+    out.attrs["history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",
-        ds_out,
+        ens,
     )
-    return ds_out
+
+    return out
 
 
 def _ens_align_datasets(
