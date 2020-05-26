@@ -206,6 +206,7 @@ def ensemble_percentiles(
                 if "realization" in da.dims
             ]
         )
+        out.attrs.update(ens.attrs)
         out.attrs["history"] = update_history(
             f"Computation of the percentiles on {ens.realization.size} ensemble members.",
             ens,
@@ -235,32 +236,30 @@ def ensemble_percentiles(
         else:
             ens = ens.chunk({"realization": -1})
 
-    percs = []
-    for p in values:
-        perc = xr.apply_ufunc(
-            _calc_perc,
-            ens,
-            input_core_dims=[["realization"]],
-            output_core_dims=[[]],
-            keep_attrs=True,
-            kwargs=dict(p=p),
-            dask="parallelized",
-            output_dtypes=[ens.dtype],
-        )
+    out = xr.apply_ufunc(
+        _calc_perc,
+        ens,
+        input_core_dims=[["realization"]],
+        output_core_dims=[["percentiles"]],
+        keep_attrs=True,
+        kwargs=dict(p=values),
+        dask="parallelized",
+        output_dtypes=[ens.dtype],
+        output_sizes={"percentiles": len(values)},
+    )
 
-        if split:
-            perc.name = f"{ens.name}_p{p:02d}"
+    out = out.assign_coords(
+        percentiles=xr.DataArray(list(values), dims=("percentiles",))
+    )
+
+    if split:
+        out = out.to_dataset(dim="percentiles")
+        for p, perc in out.data_vars.items():
+            perc.attrs.update(ens.attrs)
             perc.attrs["description"] = (
                 perc.attrs.get("descrption", "") + " {p}th percentile of ensemble."
             )
-        percs.append(perc)
-
-    if split:
-        return xr.merge(percs)
-
-    out = xr.concat(
-        percs, xr.DataArray(list(values), dims=("percentiles",), name="percentiles")
-    )
+            out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
     out.attrs["history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",
@@ -339,7 +338,7 @@ def _ens_align_datasets(
     return ds_all
 
 
-def _calc_perc(arr, p=50):
+def _calc_perc(arr, p=[50]):
     """Ufunc-like computing a percentile over the last axis of the array.
 
     Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
@@ -356,16 +355,15 @@ def _calc_perc(arr, p=50):
     np.array
     """
     nan_count = np.isnan(arr).sum(axis=-1)
-    out = np.percentile(arr, p, axis=-1)
+    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
     nans = (nan_count > 0) & (nan_count < arr.shape[-1])
     if np.any(nans):
-        arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
+        out_mask = np.stack([nans] * len(p), axis=-1)
+        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
         # only use nanpercentile where we need it (slow performance compared to standard) :
-        nan_index = np.where(nans)
-        t = np.ravel_multi_index(nan_index, nan_count.shape)
-        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
-            arr1[t, :], p, axis=-1
-        )
+        out[out_mask] = np.moveaxis(
+            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
+        ).ravel()
     return out
 
 
