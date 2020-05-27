@@ -15,17 +15,18 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from xclim.core import checks
-from xclim.core.formatting import AttrFormatter
-from xclim.core.formatting import default_formatter
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import parse_doc
-from xclim.core.formatting import update_history
-from xclim.core.units import convert_units_to
-from xclim.core.units import units
-from xclim.locales import get_local_attrs
-from xclim.locales import get_local_formatter
-from xclim.locales import LOCALES
+from .checks import check_daily
+from .checks import missing_from_context
+from .formatting import AttrFormatter
+from .formatting import default_formatter
+from .formatting import merge_attributes
+from .formatting import parse_doc
+from .formatting import update_history
+from .locales import get_local_attrs
+from .locales import get_local_formatter
+from .options import OPTIONS
+from .units import convert_units_to
+from .units import units
 
 
 # This class needs to be subclassed by individual indicator classes defining metadata information, compute and
@@ -126,7 +127,7 @@ class Indicator:
 
         # Update attributes
         out_attrs = self.format(self.cf_attrs, ba.arguments)
-        for locale in LOCALES:
+        for locale in OPTIONS["metadata_locales"]:
             out_attrs.update(
                 self.format(
                     get_local_attrs(
@@ -172,7 +173,12 @@ class Indicator:
         # Pre-computation validation checks
         for da in das.values():
             self.validate(da)
-        self.cfprobe(*das.values())
+        try:
+            cfba = signature(self.cfprobe).bind(**das)
+        except TypeError:
+            self.cfprobe(*das.values())
+        else:
+            self.cfprobe(*cfba.args, **cfba.kwargs)
 
         # Compute the indicator values, ignoring NaNs.
         out = self.compute(**das, **ba.kwargs)
@@ -247,7 +253,7 @@ class Indicator:
 
         return out
 
-    def cfprobe(self, *das):
+    def cfprobe(self, **das):
         """Check input data compliance to expectations.
         Warn of potential issues."""
         return True
@@ -308,18 +314,17 @@ class Indicator:
         from functools import reduce
 
         freq = kwds.get("freq")
-        if freq is not None:
-            # We flag any period with missing data
-            miss = (checks.missing_any(da, freq) for da in args)
-        else:
-            # There is no resampling, we flag where one of the input is missing
-            miss = (da.isnull() for da in args)
+        indexer = kwds.get("indexer") or {}
+
+        # We flag periods according to the currently set missing data method
+        miss = (missing_from_context(da, freq, **indexer) for da in args)
+
         return reduce(np.logical_or, miss)
 
     def validate(self, da):
         """Validate input data requirements.
         Raise error if conditions are not met."""
-        checks.assert_daily(da)
+        check_daily(da)
 
 
 class Indicator2D(Indicator):

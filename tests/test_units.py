@@ -4,12 +4,14 @@ import pytest
 import xarray as xr
 
 from xclim import indices
-from xclim.core.units import _check_units
+from xclim import set_options
+from xclim.core.units import check_units
 from xclim.core.units import convert_units_to
 from xclim.core.units import pint2cfunits
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
 from xclim.core.units import units2pint
+from xclim.core.utils import ValidationError
 
 
 class TestUnits:
@@ -103,6 +105,12 @@ class TestUnitConversion:
         u = units2pint("%")
         assert str(u) == "percent"
 
+        u = units2pint("1")
+        assert str(u) == "dimensionless"
+
+        u = units2pint("mm s-1")
+        assert str(u) == "millimeter / second"
+
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = pint_multiply(a, 1 * units.days)
@@ -112,19 +120,20 @@ class TestUnitConversion:
 
 class TestCheckUnits:
     def test_basic(self):
-        _check_units("%", "[]")
-        _check_units("pct", "[]")
-        _check_units("mm/day", "[precipitation]")
-        _check_units("mm/s", "[precipitation]")
-        _check_units("kg/m2/s", "[precipitation]")
-        _check_units("kg/m2", "[length]")
-        _check_units("cms", "[discharge]")
-        _check_units("m3/s", "[discharge]")
-        _check_units("m/s", "[speed]")
-        _check_units("km/h", "[speed]")
+        check_units("%", "[]")
+        check_units("pct", "[]")
+        check_units("mm/day", "[precipitation]")
+        check_units("mm/s", "[precipitation]")
+        check_units("kg/m2/s", "[precipitation]")
+        check_units("kg/m2", "[length]")
+        check_units("cms", "[discharge]")
+        check_units("m3/s", "[discharge]")
+        check_units("m/s", "[speed]")
+        check_units("km/h", "[speed]")
 
-        with pytest.raises(AttributeError):
-            _check_units("mm", "[precipitation]")
+        with set_options(data_validation="raise"):
+            with pytest.raises(ValidationError):
+                check_units("mm", "[precipitation]")
 
-        with pytest.raises(AttributeError):
-            _check_units("m3", "[discharge]")
+            with pytest.raises(ValidationError):
+                check_units("m3", "[discharge]")

@@ -9,7 +9,6 @@ from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
-
 K2C = 273.15
 
 
@@ -468,6 +467,7 @@ class TestCoolingDegreeDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tas = xr.open_dataset(self.nc_file).tasmax
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 
@@ -490,6 +490,7 @@ class TestCoolingDegreeDays:
         tas = xr.open_dataset(self.nc_file).tasmax
         tas.values -= K2C
         tas.attrs["units"] = "C"
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 
@@ -521,7 +522,7 @@ class TestHeatingDegreeDays:
         tas = xr.open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
-
+        tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17 + K2C
         hdd = atmos.heating_degree_days(tas, freq="YS")
@@ -543,6 +544,7 @@ class TestHeatingDegreeDays:
         tas.values[180, 1, 0] = np.nan
         tas.values -= K2C
         tas.attrs["units"] = "C"
+        tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17
         hdd = atmos.heating_degree_days(tas, freq="YS")
@@ -566,6 +568,7 @@ class TestGrowingDegreeDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tas = xr.open_dataset(self.nc_file).tasmax
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 

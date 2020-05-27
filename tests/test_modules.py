@@ -37,6 +37,14 @@ class TestBuildModules:
 
 class TestICCLIM:
     def test_exists(self):
-        from xclim import icclim
+        from xclim import ICCLIM as icclim
 
         assert getattr(icclim, "TG", None) is not None
+
+
+class TestANUCLIM:
+    def test_exists(self):
+        from xclim import anuclim
+
+        assert getattr(anuclim, "P1_AnnMeanTemp", None) is not None
+        assert getattr(anuclim, "P19_PrecipColdestQuarter", None) is not None

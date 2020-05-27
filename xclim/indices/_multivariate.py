@@ -3,14 +3,14 @@ from typing import Optional
 import numpy as np
 import xarray
 
+from . import fwi
+from . import run_length as rl
 from xclim.core.calendar import resample_doy
 from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
 from xclim.core.units import units2pint
-from xclim.indices import fwi
-from xclim.indices import run_length as rl
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
@@ -762,7 +762,7 @@ def precip_accumulation(
 
     Resample the original daily mean precipitation flux and accumulate over each period.
     If the daily mean temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
-    When the mean temperature is over 0 degC, precipitatio is assumed to be liquid rain and snow otherwise.
+    When the mean temperature is over 0 degC, precipitation is assumed to be liquid rain and snow otherwise.
 
     Parameters
     ----------
@@ -908,9 +908,7 @@ def days_over_precip_thresh(
 
     Example
     -------
-    >>> import xarray as xr
-    >>> import xclim
-    >>> pr = xr.open_dataset("precipitation_data.nc").pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
     >>> r75p = xclim.indices.days_over_precip_thresh(pr, p75)
     """

@@ -9,6 +9,7 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from functools import partial
 from types import FunctionType
+
 from boltons.funcutils import update_wrapper
 
 
@@ -22,7 +23,7 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     suggested : dict
         Keyword arguments that should have new default values
         but still appear in the signature.
-    fixed : dict
+    fixed : kwargs
         Keyword arguments that should be fixed by the wrapped
         and removed from the signature.
 
@@ -31,17 +32,17 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
 
     >>> from inspect import signature
     >>> def func(a, b=1, c=1):
-            print(a, b, c)
+    ...     print(a, b, c)
     >>> newf = wrapped_partial(func, b=2)
     >>> signature(newf)
-    (a, *, c=1)
+    <Signature (a, *, c=1)>
     >>> newf(1)
-    1, 2, 1
+    1 2 1
     >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
     >>> signature(newf)
-    (a, *, c=2)
+    <Signature (a, *, c=2)>
     >>> newf(1)
-    1, 2, 2
+    1 2 2
     """
     suggested = suggested or {}
     partial_func = partial(func, **suggested, **fixed)
@@ -75,3 +76,9 @@ def walk_map(d: dict, func: FunctionType):
         else:
             out[k] = func(v)
     return out
+
+
+class ValidationError(ValueError):
+    @property
+    def msg(self):
+        return self.args[0]

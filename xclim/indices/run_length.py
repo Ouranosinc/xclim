@@ -95,7 +95,7 @@ def longest_run(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
     Returns
     -------
     N-dimensional array (int)
@@ -250,7 +250,7 @@ def first_run(
 
         out = lazy_indexing(crd, out)
 
-    if dim in out:
+    if dim in out.coords:
         out = out.drop_vars(dim)
 
     return out
@@ -345,9 +345,9 @@ def run_end_after_date(
     window: int,
     date: str = "07-01",
     dim: str = "time",
-    coord: str = "dayofyear",
+    coord: Optional[Union[bool, str]] = "dayofyear",
 ):
-    """Return the index of the first item after the end of a run after a given date.
+    """Return the index of the first item after the end of a run after a given date. The run must begin before the date.
 
     Parameters
     ----------
@@ -359,7 +359,7 @@ def run_end_after_date(
       The date after which to look for the end of a run.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : Optional[Union[bool, str]]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
       DateTimeAccessor object to use (ex: 'dayofyear').
@@ -388,12 +388,52 @@ def run_end_after_date(
     return end.where(beg.notnull())
 
 
+def first_run_after_date(
+    da: xr.DataArray,
+    window: int,
+    date: str = "07-01",
+    dim: str = "time",
+    coord: Optional[Union[bool, str]] = "dayofyear",
+):
+    """Return the index of the first item of the first run after a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive run to accumulate values.
+    date : str
+      The date after which to look for the run.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[Union[bool, str]]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    out : xr.DataArray
+      Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
+    """
+    after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+    mid_idx = np.where(da.time.dt.dayofyear == after_date)[0]
+    if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+
+    return first_run(
+        da.where(da.time >= da.time[mid_idx][0]), window=window, dim=dim, coord=coord,
+    )
+
+
 def last_run_before_date(
     da: xr.DataArray,
     window: int,
     date: str = "07-01",
     dim: str = "time",
-    coord: str = "dayofyear",
+    coord: Optional[Union[bool, str]] = "dayofyear",
 ):
     """Return the index of the last item of the last run before a given date.
 
@@ -407,7 +447,7 @@ def last_run_before_date(
       The date before which to look for the last event.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : Optional[Union[bool, str]]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
       DateTimeAccessor object to use (ex: 'dayofyear').
@@ -656,30 +696,51 @@ def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.appl
     return ind
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray):
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None, drop=True):
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
+
+    The algorithm differs whether da is 1D or not.
 
     Parameters
     ----------
     da : xr.DataArray
-      1D Input array
+      Input array. If not 1D, `dim` must be given and the corresponding dimension shouldn't be chunked.
     index : xr.DataArray
       N-d integer indices
+    dim : Dimension along which to index,
+          unused if `da` is 1D, should not be present in `index`.
 
     Returns
     -------
     xr.DataArray
       Values of `da` at indices `index`
     """
+    if da.ndim == 1:
 
-    def _index_from_1d_array(array, indices):
-        return array[
-            indices,
-        ]
+        def _index_from_1d_array(array, indices):
+            return array[
+                indices,
+            ]
 
-    invalid = index.isnull()
-    index = index.fillna(0).astype(int)
-    func = partial(_index_from_1d_array, da)
+        invalid = index.isnull()
+        index = index.fillna(0).astype(int)
+        func = partial(_index_from_1d_array, da)
 
-    out = index.map_blocks(func)
-    return out.where(~invalid)
+        out = index.map_blocks(func)
+        out = out.where(~invalid)
+        if index.shape == ():
+            out = out.drop_vars(da.dims[0])
+        return out
+
+    # else:
+    def _isel(array, indx):
+        return np.take_along_axis(array, indx[..., None], -1)[..., 0]
+
+    return xr.apply_ufunc(
+        _isel,
+        da,
+        index,
+        input_core_dims=[[dim], []],
+        output_core_dims=[[]],
+        dask="allowed",
+    )

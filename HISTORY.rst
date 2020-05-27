@@ -1,9 +1,27 @@
 =======
 History
 =======
-
-0.16.x
+0.18.x
 ------
+* `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
+* Added indicator `first_day_below` and run length helper `first_run_after_date`
+* Added ANUCLIM model climate indices mappings.
+
+0.17.0 (2020-05-15)
+-------------------
+* Added support for operations on dimensionless variables (`units = '1'`)
+* Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
+* Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
+* New `xclim.set_options` context to control the missing checks, input validation and locales.
+* New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
+* Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
+* Added `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
+* Added support for `freq=None` in missing calculations.
+* Fixed outdated code examples in the docs and docstrings.
+* Doctests are now run as part of the test suite.
+
+0.16.0 (2020-04-23)
+-------------------
 * Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
 * Removed `start_yr` and `end_yr` flags from subsetting functions.
 * Add multi gridpoints support in `subset.subset_gridpoint`.
@@ -15,6 +33,8 @@ History
 * Ensembles : Allow alignment of datasets with same frequency but different offsets.
 * Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
 * Remove deepcopy from subset.subset_shape to improve memory usage.
+* Add `missing_wmo` function, identifying null calculations based on criteria from WMO.
+* Add `missing_pct` function, identifying null calculations based on percentage of missing values.
 
 0.15.x (2020-03-12)
 -------------------
