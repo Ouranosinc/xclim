@@ -121,7 +121,7 @@ jobs:
         - printenv
         - wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe -O miniconda.exe
         - chmod +x miniconda.exe
-        - ./miniconda.exe "/S" "/D=$(cygpath -m -a $HOME/miniconda)" # configuration example from https://github.com/TimoRoth/oggm/blob/master/ci/travis_stage_script.sh
+        - travis_wait 40 ./miniconda.exe "/S" "/D=$(cygpath -m -a $HOME/miniconda)" # configuration example from https://github.com/TimoRoth/oggm/blob/master/ci/travis_stage_script.sh
         - export PATH="$HOME/miniconda/bin:$PATH"
         - hash -r
         - conda config --set always_yes yes --set changeps1 no
