@@ -1,6 +1,7 @@
 language: python
 
 os: linux
+dist: xenial
 
 branches:
   only:
@@ -29,7 +30,6 @@ jobs:
     - env: TOXENV=py38
       name: "Python3.8 (Linux)"
       python: 3.8
-      dist: xenial
       addons:
         apt:
           packages:
@@ -56,7 +56,6 @@ jobs:
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
-      dist: xenial
       addons:
         apt:
           packages:
@@ -64,7 +63,6 @@ jobs:
     - env: TOXENV=py37-doctests
       name: "Python3.7 (Linux + doctests)"
       python: 3.7
-      dist: xenial
       addons:
         apt:
           packages:
@@ -114,12 +112,14 @@ jobs:
     - env:
         - TOXENV=py37-windows
         - DESIRED_PYTHON=3.7
-      name: "Python3.7 (Windows + Anaconda)"
+        - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
+      name: "Python3.7 (Windows + Anaconda via Chocolatey)"
       os: windows
       language: shell
       before_install:
         - printenv
-        - choco install miniconda3 --params="'/AddToPath:1'" -y
+        - choco install miniconda3 --params="'/AddToPath:0 /D:$MINICONDA_PATH'"
+        - source /c/miniconda/Scripts/activate
         - hash -r
         - conda config --set always_yes yes --set changeps1 no
         - conda install setuptools
@@ -156,6 +156,7 @@ jobs:
     - env:
       - TOXENV=py37-windows
       - DESIRED_PYTHON=3.7
+      - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
     - env: TOXENV=py36-xarray
     - env: TOXENV=py36-bottleneck
 #    - env:
