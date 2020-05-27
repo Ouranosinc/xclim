@@ -49,8 +49,8 @@ jobs:
             - python@3.8
       before_install:
         - printenv
-        - /usr/local/opt/python@3.8/bin/pip3 install --upgrade setuptools
-        - /usr/local/opt/python@3.8/bin/pip3 install --upgrade pip
+        - /usr/local/lib/python3.8/bin/pip3 install --upgrade setuptools
+        - /usr/local/lib/python3.8/bin/pip3 install --upgrade pip
       install:
         - /usr/local/opt/python@3.8/bin/pip3 install -U tox-travis
     - env: TOXENV=py37
