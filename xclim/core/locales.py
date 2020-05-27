@@ -141,7 +141,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         )
     if isinstance(locale[1], dict):
         return locale
-    with open(locale[1]) as locf:
+    with open(locale[1], encoding="utf-8") as locf:
         return locale[0], json.load(locf)
 
 
