@@ -61,7 +61,7 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py37-doctest
+    - env: TOXENV=py37-doctests
       name: "Python3.7 (Linux + doctests)"
       python: 3.7
       dist: xenial
@@ -154,7 +154,7 @@ jobs:
   allow_failures:
     - env: TOXENV=py38-anaconda
     - env: TOXENV=py38-macOS
-    - env: TOXENV=py37-doctest
+    - env: TOXENV=py37-doctests
     - env:
       - TOXENV=py37-windows
       - DESIRED_PYTHON=3.7
