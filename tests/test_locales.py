@@ -58,7 +58,7 @@ def test_local_dict(tmp_path):
     assert loc == "eo"
     assert dic["atmos.tg_mean"]["long_name"] == "Meza ciutaga averaga temperaturo"
 
-    with (tmp_path / "ru.json").open("w") as f:
+    with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     loc, dic = xloc.get_local_dict(("ru", tmp_path / "ru.json"))
@@ -98,7 +98,7 @@ def test_local_attrs_sing(fill, isin, notin):
     ],
 )
 def test_local_attrs_multi(fill, isin, notin, tmp_path):
-    with (tmp_path / "ru.json").open("w") as f:
+    with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     attrs = xloc.get_local_attrs(
