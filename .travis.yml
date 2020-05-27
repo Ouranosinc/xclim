@@ -157,7 +157,7 @@ jobs:
     - env: TOXENV=py37-doctest
     - env:
       - TOXENV=py37-windows
-      - WINDOWS_PYTHON=3.7
+      - DESIRED_PYTHON=3.7
     - env: TOXENV=py36-xarray
     - env: TOXENV=py36-bottleneck
 #    - env:
