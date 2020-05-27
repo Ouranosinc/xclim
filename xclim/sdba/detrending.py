@@ -2,6 +2,7 @@
 import xarray as xr
 
 from .base import Parametrizable
+from .base import parse_group
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import invert
@@ -21,40 +22,57 @@ class BaseDetrend(Parametrizable):
     Only _fit() should store data. _detrend() and _retrend() are meant to be used on any dataarray with the trend computed in fit.
     """
 
-    def __init__(self, **kwargs):
+    @parse_group
+    def __init__(self, *, group="time", kind="+", **kwargs):
         self.__fitted = False
-        super().__init__(**kwargs)
+        super().__init__(group=group, kind=kind, **kwargs)
 
-    def fit(self, da: xr.DataArray, dim="time"):
+    def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
 
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
         new = self.copy()
-        new._fit(da, dim=dim)
-        new._fitted_dim = dim
+        new._set_fitds(new.group.apply(new._fit, da, main_only=True))
         new.__fitted = True
         return new
+
+    def get_trend(self, da: xr.DataArray):
+        return self.group.apply(
+            self._get_trend,
+            {self.group.dim: da[self.group.dim], **self.fit_ds.data_vars},
+            main_only=True,
+        )
 
     def detrend(self, da: xr.DataArray):
         """Removes the previously fitted trend from a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before detrending.")
-        return self._detrend(da)
+        trend = self.get_trend(da)
+        return self._detrend(da, trend)
 
     def retrend(self, da: xr.DataArray):
         """Puts back the previsouly fitted trend on a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before retrending")
-        return self._retrend(da)
+        trend = self.get_trend(da)
+        return self._retrend(da, trend)
+
+    def _set_fitds(self, ds):
+        self.fit_ds = ds
+
+    def _detrend(self, da, trend):
+        # Remove trend from series
+        return apply_correction(da, invert(trend, self.kind), self.kind)
+
+    def _retrend(self, da, trend):
+        # Add trend to series
+        return apply_correction(da, trend, self.kind)
+
+    def _get_trend(self, grpd, dim="time"):
+        raise NotImplementedError
 
     def _fit(self, da):
-        raise NotImplementedError
-
-    def _detrend(self, da):
-        raise NotImplementedError
-
-    def _retrend(self, da):
         raise NotImplementedError
 
 
@@ -62,12 +80,12 @@ class NoDetrend(BaseDetrend):
     """Convenience class for polymorphism. Does nothing."""
 
     def _fit(self, da, dim=None):
-        pass
+        return da.isel({dim: 0})
 
-    def _detrend(self, da):
+    def _detrend(self, da, trend):
         return da
 
-    def _retrend(self, da):
+    def _retrend(self, da, trend):
         return da
 
 
@@ -75,13 +93,12 @@ class MeanDetrend(BaseDetrend):
     """Simple detrending removing only the mean from the data, quite similar to normalizing in additive mode."""
 
     def _fit(self, da, dim="time"):
-        self._mean = da.mean(dim=dim)
+        mean = da.mean(dim=dim)
+        mean.name = "mean"
+        return mean
 
-    def _detrend(self, da):
-        return da - self._mean
-
-    def _retrend(self, da):
-        return da + self._mean
+    def _get_trend(self, grpd, dim="time"):
+        return grpd.mean
 
 
 class PolyDetrend(BaseDetrend):
@@ -102,35 +119,23 @@ class PolyDetrend(BaseDetrend):
     If freq is used to resample at a lower frequency, make sure the series includes full periods.
     """
 
-    def __init__(self, degree=4, freq=None, kind=ADDITIVE, preserve_mean=False):
-        super().__init__(
-            degree=degree, freq=freq, kind=kind, preserve_mean=preserve_mean
-        )
+    def __init__(self, degree=4, preserve_mean=False, **kwargs):
+        super().__init__(degree=degree, preserve_mean=preserve_mean, **kwargs)
 
     def _fit(self, da, dim="time"):
-        if self.freq is not None:
-            da = da.resample(
-                time=self.freq, label="left", loffset=loffsets[self.freq]
-            ).mean()
-        self._fitds = da.polyfit(dim=dim, deg=self.degree, full=True)
+        # if self.freq is not None:
+        #     da = da.resample(
+        #         time=self.freq, label="left", loffset=loffsets[self.freq]
+        #     ).mean()
+        return da.polyfit(dim=dim, deg=self.degree)
 
-    def _get_trend(self, da):
+    def _get_trend(self, grpd, dim="time"):
         # Estimate trend over da
-        trend = xr.polyval(
-            coord=da[self._fitted_dim], coeffs=self._fitds.polyfit_coefficients
-        )
+        trend = xr.polyval(coord=grpd[dim], coeffs=grpd.polyfit_coefficients)
 
         if self.preserve_mean:
             trend = apply_correction(
-                trend, invert(trend.mean(dim=self._fitted_dim), self.kind), self.kind
+                trend, invert(trend.mean(dim=dim), self.kind), self.kind
             )
 
         return trend
-
-    def _detrend(self, da):
-        # Remove trend from series
-        return apply_correction(da, invert(self._get_trend(da), self.kind), self.kind)
-
-    def _retrend(self, da):
-        # Add trend to series
-        return apply_correction(da, self._get_trend(da), self.kind)

@@ -261,38 +261,38 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             self.kind,
         )
 
-        # Normalize sim group-wise
-        # This group-wise pre normalization + reapplication further down
-        # is to circumvent #442 (detrending is not groupwise)
-        mu_sim = self.group.apply("mean", sim)
-        sim_norm = apply_correction(
-            sim,
-            broadcast(
-                invert(mu_sim, kind=self.kind), sim, group=self.group, interp=interp,
-            ),
-            kind=self.kind,
-        )
+        # # Normalize sim group-wise
+        # # This group-wise pre normalization + reapplication further down
+        # # is to circumvent #442 (detrending is not groupwise)
+        # mu_sim = self.group.apply("mean", sim)
+        # sim_norm = apply_correction(
+        #     sim,
+        #     broadcast(
+        #         invert(mu_sim, kind=self.kind), sim, group=self.group, interp=interp,
+        #     ),
+        #     kind=self.kind,
+        # )
 
         # Find trend on sim (for debugging purpose, the detrending is overridable)
         if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind)
+            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
 
-        sim_fit = detrend.fit(sim_norm)
-        sim_detrended = sim_fit.detrend(sim_norm)
+        sim_fit = detrend.fit(sim)
+        sim_detrended = sim_fit.detrend(sim)
 
         # Adjust using `EmpiricalQuantileMapping.adjust`
         scen_detrended = super()._adjust(
             sim_detrended, extrapolation=extrapolation, interp=interp
         )
         # Retrend
-        scen_norm = sim_fit.retrend(scen_detrended)
+        scen = sim_fit.retrend(scen_detrended)
 
-        # # Reapply-mean
-        scen = apply_correction(
-            scen_norm,
-            broadcast(mu_sim, sim, group=self.group, interp=interp),
-            kind=self.kind,
-        )
+        # # # Reapply-mean
+        # scen = apply_correction(
+        #     scen_norm,
+        #     broadcast(mu_sim, sim, group=self.group, interp=interp),
+        #     kind=self.kind,
+        # )
         return scen
 
 
