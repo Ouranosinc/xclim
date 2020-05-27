@@ -103,20 +103,20 @@ jobs:
           - py.test --cov=xclim
     - env:
         - TOXENV=py37-windows
-        - WINDOWS_PYTHON=3.7
+        - DESIRED_PYTHON=3.7
       name: "Python3.7 (Windows + Anaconda)"
       os: windows
       language: shell
       before_install:
         - printenv
-        - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+        - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.sh -O miniconda.exe
         - bash miniconda.sh -b -p $HOME/miniconda
         - export PATH="$HOME/miniconda/bin:$PATH"
         - hash -r
         - conda config --set always_yes yes --set changeps1 no
         - conda install setuptools
         - conda update -q conda
-        - conda create -n xclim -c conda-forge python=$WINDOWS_PYTHON
+        - conda create -n xclim -c conda-forge python=$DESIRED_PYTHON
         - source activate xclim
         - conda env update -f environment.yml
         - conda install pytest coveralls pytest-cov
