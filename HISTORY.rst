@@ -1,6 +1,7 @@
 =======
 History
 =======
+
 0.18.x
 ------
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
@@ -15,7 +16,7 @@ History
 * New `xclim.set_options` context to control the missing checks, input validation and locales.
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
-* Added `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
+* Added `at_least_n_valid` function, identifying null calculations based on minimum threshold.
 * Added support for `freq=None` in missing calculations.
 * Fixed outdated code examples in the docs and docstrings.
 * Doctests are now run as part of the test suite.

@@ -36,24 +36,8 @@ jobs:
             - libspatialindex-dev
             - libnetcdf-dev
             - libhdf5-dev
-    - env:
-        - TOXENV=py37-windows
-        - PROJ_DIR=/c/OSGeo4W64
-        - GDAL_VERSION=3.0.0
-        - GDAL_DATA=/c/OSGeo4W64/share/gdal
-      name: "Python3.7 (Windows)"
-      os: windows
-      language: shell
-      before_install:
-        - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
-        - choco install python --version=3.7.5
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
-        - printenv
-        - python -m pip install --upgrade pip wheel
-    - env: TOXENV=py37-macOS
-      name: "Python3.7 (macOS)"
+    - env: TOXENV=py38-macOS
+      name: "Python3.8 (macOS)"
       os: osx
       language: shell
       addons:
@@ -62,11 +46,11 @@ jobs:
           packages:
             - netcdf
             - spatialindex
+            - python@3.8
       before_install:
         - printenv
-        - brew link --overwrite python
-        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
-        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
+        - python3 -m pip install --upgrade setuptools
+        - python3 -m pip install --upgrade pip
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
@@ -117,16 +101,59 @@ jobs:
           - pip install -e .
       script:
           - py.test --cov=xclim
+    - env:
+        - TOXENV=py37-windows
+        - WINDOWS_PYTHON=3.7
+      name: "Python3.7 (Windows + Anaconda)"
+      os: windows
+      language: shell
+      before_install:
+        - printenv
+        - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+        - bash miniconda.sh -b -p $HOME/miniconda
+        - export PATH="$HOME/miniconda/bin:$PATH"
+        - hash -r
+        - conda config --set always_yes yes --set changeps1 no
+        - conda install setuptools
+        - conda update -q conda
+        - conda create -n xclim -c conda-forge python=$WINDOWS_PYTHON
+        - source activate xclim
+        - conda env update -f environment.yml
+        - conda install pytest coveralls pytest-cov
+      install:
+        - conda install pip
+        - pip install -e .
+      script:
+        - py.test --cov=xclim
+#    - env:
+#        - TOXENV=py37-windows
+#        - PROJ_DIR=/c/OSGeo4W64
+#        - GDAL_VERSION=3.0.0
+#        - GDAL_DATA=/c/OSGeo4W64/share/gdal
+#      name: "Python3.7 (Windows)"
+#      os: windows
+#      language: shell
+#      before_install:
+#        - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
+#        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
+#        - choco install python --version=3.7.5
+#        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+#        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
+#        - printenv
+#        - python -m pip install --upgrade pip wheel
   allow_failures:
     - env: TOXENV=py38-anaconda
-    - env: TOXENV=py37-macOS
+    - env: TOXENV=py38-macOS
     - env:
       - TOXENV=py37-windows
-      - PROJ_DIR=/c/OSGeo4W64
-      - GDAL_VERSION=3.0.0
-      - GDAL_DATA=/c/OSGeo4W64/share/gdal
+      - WINDOWS_PYTHON=3.7
     - env: TOXENV=py36-xarray
     - env: TOXENV=py36-bottleneck
+#    - env:
+#      - TOXENV=py37-windows
+#      - PROJ_DIR=/c/OSGeo4W64
+#      - GDAL_VERSION=3.0.0
+#      - GDAL_DATA=/c/OSGeo4W64/share/gdal
 
 before_install:
     - printenv
