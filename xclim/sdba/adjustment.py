@@ -132,7 +132,7 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
     Parameters
     ----------
-    At init:
+    At instantiation:
 
     nquantiles : int
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
@@ -141,7 +141,7 @@ class EmpiricalQuantileMapping(BaseAdjustment):
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
 
-    In adjust:
+    In adjustment:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use when interpolating the adjustment factors. Defaults to "nearset".
@@ -201,12 +201,9 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
     2. `ref` and `hist` are normalized by removing the group-wise mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor, normalized by the group-wise mean and then detrended using a linear fit.*
+    4. `sim` is corrected by the scaling factor, and detrended group-wise using a linear fit.
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
-    6. The group-wise mean and trend are put back on the result.*
-
-    * Steps 4 and 6 include a group-wise normalization to overcome the fact that detrending is not made group-wise.
-    A future release of xclim will have grouped detrending and not require this extra step any more.
+    6. The trend is put back on the result.
 
     .. math::
 
@@ -217,7 +214,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
 
     Parameters
     ----------
-    At init:
+    At instantiation:
 
     nquantiles : int
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
@@ -226,7 +223,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
 
-    In adjust:
+    In adjustment:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
@@ -291,7 +288,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     Parameters
     ----------
-    At init:
+    At instantiation:
 
     nquantiles : int
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
@@ -300,7 +297,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
 
-    In adjust:
+    In adjustment:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
@@ -348,14 +345,14 @@ class LOCI(BaseAdjustment):
 
     Parameters
     ----------
-    At init:
+    At instantiation:
 
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     thresh : float
       The threshold in `ref` above which the values are scaled.
 
-    In adjust:
+    In adjustment:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use then interpolating the adjustment factors. Defaults to "linear".
@@ -403,14 +400,14 @@ class Scaling(BaseAdjustment):
 
     Parameters
     ----------
-    At init:
+    At instantiation:
 
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
 
-    In adjust:
+    In adjustment:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
