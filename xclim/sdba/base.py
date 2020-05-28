@@ -97,7 +97,7 @@ class Grouper(Parametrizable):
         They are boadcasted, merged to the grouping dataset and regrouped in the output.
         """
         if das:
-            from .utils import broadcast
+            from .utils import broadcast  # pylint: disable=cyclic-import
 
             if da is not None:
                 das[da.name] = da
