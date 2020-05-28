@@ -53,7 +53,7 @@ def test_grouper_get_index(tas_series, group, interp, val90):
 
 @pytest.mark.parametrize(
     "group,n",
-    [("time", 1), ("time.month", 12), ("time.week", 52), ("time.dayofyear", 366)],
+    [("time", 1), ("time.month", 12), ("time.week", 52), ("mytime.dayofyear", 366)],
 )
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_grouper_apply(tas_series, use_dask, group, n):
@@ -61,18 +61,23 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     tas0 = tas_series(np.zeros(366), start="2000-01-01")
     tas = xr.concat((tas1, tas0), dim="lat")
 
+    grouper = Grouper(group)
+    if not group.startswith("time"):
+        tas = tas.rename(time=grouper.dim)
+        tas1 = tas1.rename(time=grouper.dim)
+        tas0 = tas0.rename(time=grouper.dim)
+
     if use_dask:
-        tas = tas.chunk({"lat": 1, "time": -1})
-        tas0 = tas1.chunk({"time": -1})
-        tas1 = tas0.chunk({"time": -1})
+        tas = tas.chunk({"lat": 1, grouper.dim: -1})
+        tas0 = tas1.chunk({grouper.dim: -1})
+        tas1 = tas0.chunk({grouper.dim: -1})
 
     # Normal monthly mean
-    grouper = Grouper(group)
     out_mean = grouper.apply("mean", tas)
     if grouper.prop:
         exp = tas.groupby(group).mean()
     else:
-        exp = tas.mean(dim="time")
+        exp = tas.mean(dim=grouper.dim)
     np.testing.assert_array_equal(out_mean, exp)
 
     # With additionnal dimension included
@@ -81,7 +86,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     assert out.ndim == int(grouper.prop is not None)
     np.testing.assert_array_equal(out, exp.mean("lat"))
     assert out.attrs["group"] == group
-    assert out.attrs["group_compute_dims"] == ["time", "lat"]
+    assert out.attrs["group_compute_dims"] == [grouper.dim, "lat"]
     assert out.attrs["group_window"] == 1
 
     # Additionnal but main_only
@@ -91,11 +96,11 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     # With window
     grouper = Grouper(group, window=5)
     out = grouper.apply("mean", tas)
-    rolld = tas.rolling(time=5, center=True).construct(window_dim="window")
+    rolld = tas.rolling({grouper.dim: 5}, center=True).construct(window_dim="window")
     if grouper.prop:
-        exp = rolld.groupby(group).mean(dim=["time", "window"])
+        exp = rolld.groupby(group).mean(dim=[grouper.dim, "window"])
     else:
-        exp = rolld.mean(dim=["time", "window"])
+        exp = rolld.mean(dim=[grouper.dim, "window"])
     np.testing.assert_array_equal(out, exp)
 
     # With function + nongrouping-grouped
