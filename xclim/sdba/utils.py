@@ -195,7 +195,7 @@ def broadcast(
     """
     if sel is None:
         sel = {}
-    print(group)
+
     if group.prop is not None and group.prop not in sel:
         sel.update({group.prop: group.get_index(x, interp=interp)})
 

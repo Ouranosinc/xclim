@@ -6,6 +6,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
+import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -163,6 +164,12 @@ class Grouper(Parametrizable):
 
         ind = da.indexes[self.dim]
         i = getattr(ind, self.prop)
+
+        if i.dtype != np.int:
+            raise ValueError(
+                f"Index {self.name} is not of type int (rather {ind.dtype}), but {self.__class__.__name__} requires integer indexes."
+            )
+
         interp = (
             (interp or self.interp)
             if not isinstance(interp, str)
@@ -262,10 +269,12 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    if outvar.attrs["_group_apply_reshape"] and self.prop is not None:
+                    if self.prop is not None:
                         out[name] = outvar.groupby(self.name).first(
                             skipna=False, keep_attrs=True
                         )
+                    else:
+                        out[name] = out[name].isel({self.dim: 0})
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.
