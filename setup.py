@@ -58,6 +58,7 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "distributed>=2.0",
 ]
 
 dev_requirements = []
