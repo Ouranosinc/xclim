@@ -10,4 +10,4 @@ from xclim.indicators import seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.17.2-beta"
+__version__ = "0.17.3-beta"
