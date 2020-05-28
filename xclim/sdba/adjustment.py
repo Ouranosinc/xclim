@@ -261,19 +261,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             self.kind,
         )
 
-        # # Normalize sim group-wise
-        # # This group-wise pre normalization + reapplication further down
-        # # is to circumvent #442 (detrending is not groupwise)
-        # mu_sim = self.group.apply("mean", sim)
-        # sim_norm = apply_correction(
-        #     sim,
-        #     broadcast(
-        #         invert(mu_sim, kind=self.kind), sim, group=self.group, interp=interp,
-        #     ),
-        #     kind=self.kind,
-        # )
-
-        # Find trend on sim (for debugging purpose, the detrending is overridable)
+        # Find trend on sim
         if isinstance(detrend, int):
             detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
 
@@ -285,15 +273,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             sim_detrended, extrapolation=extrapolation, interp=interp
         )
         # Retrend
-        scen = sim_fit.retrend(scen_detrended)
-
-        # # # Reapply-mean
-        # scen = apply_correction(
-        #     scen_norm,
-        #     broadcast(mu_sim, sim, group=self.group, interp=interp),
-        #     kind=self.kind,
-        # )
-        return scen
+        return sim_fit.retrend(scen_detrended)
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
