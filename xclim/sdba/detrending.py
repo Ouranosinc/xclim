@@ -1,12 +1,16 @@
 """Detrending objects"""
+from typing import Union
+
 import xarray as xr
 
+from .base import Grouper
 from .base import Parametrizable
 from .base import parse_group
 from .utils import ADDITIVE
 from .utils import apply_correction
 from .utils import invert
-from .utils import loffsets
+
+# from .utils import loffsets
 
 
 class BaseDetrend(Parametrizable):
@@ -14,16 +18,31 @@ class BaseDetrend(Parametrizable):
 
     Defines three methods:
 
-    fit(da)     : Compute trend from da and return a new _fitted_ Detrend object.
-    detrend(da) : Return detrended array.
-    retrend(da) : Puts trend back on da.
+    fit(da)      : Compute trend from da and return a new _fitted_ Detrend object.
+    get_trend(da): Return the fitted trend along da's coordinate.
+    detrend(da)  : Return detrended array.
+    retrend(da)  : Puts trend back on da.
 
-    * Subclasses should implement _fit(), _detrend() and _retrend(), not the methods themselves.
-    Only _fit() should store data. _detrend() and _retrend() are meant to be used on any dataarray with the trend computed in fit.
+    * Subclasses should implement _fit() and _get_trend(). Both will be called in a `group.apply()`.
+    `_fit()` is called with the dataarray and str `dim` that indicates the fitting dimension,
+        it should return a dataset that will be set as `.fitds`.
+    `_get_trend()` is called with .fitds broadcasted on the main dim of the input DataArray.
     """
 
     @parse_group
-    def __init__(self, *, group="time", kind="+", **kwargs):
+    def __init__(
+        self, *, group: Union[Grouper, str] = "time", kind: str = "+", **kwargs
+    ):
+        """Initialize Detrending object.
+
+        Parameters
+        ----------
+        group : Union[str, Grouper]
+            The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+            The fit is performed along the group's main dim.
+        kind : {'*', '+'}
+            The way the trend is removed or added, either additive or multiplicative.
+        """
         self.__fitted = False
         super().__init__(group=group, kind=kind, **kwargs)
 
@@ -90,7 +109,7 @@ class NoDetrend(BaseDetrend):
 
 
 class MeanDetrend(BaseDetrend):
-    """Simple detrending removing only the mean from the data, quite similar to normalizing in additive mode."""
+    """Simple detrending removing only the mean from the data, quite similar to normalizing."""
 
     def _fit(self, da, dim="time"):
         mean = da.mean(dim=dim)
@@ -107,26 +126,24 @@ class PolyDetrend(BaseDetrend):
 
     Parameters
     ----------
+    group : Union[str, Grouper]
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        The fit is performed along the group's main dim.
+    kind : {'*', '+'}
+        The way the trend is removed or added, either additive or multiplicative.
     degree : int
-      The order of the polynomial to fit.
-    freq : Optional[str]
-      If given, resamples the data to this frequency before computing the trend.
-    kind : {'+', '*'}
-      The way the trend is removed and put back, either additively or multiplicatively.
-
-    Notes
-    -----
-    If freq is used to resample at a lower frequency, make sure the series includes full periods.
+        The order of the polynomial to fit.
+    preserve_mean : bool
+        Whether to preserve the mean when de/re-trending. If True, the trend has its mean
+        removed before it is used.
     """
 
-    def __init__(self, degree=4, preserve_mean=False, **kwargs):
-        super().__init__(degree=degree, preserve_mean=preserve_mean, **kwargs)
+    def __init__(self, group="time", kind=ADDITIVE, degree=4, preserve_mean=False):
+        super().__init__(
+            group=group, kind=kind, degree=degree, preserve_mean=preserve_mean
+        )
 
     def _fit(self, da, dim="time"):
-        # if self.freq is not None:
-        #     da = da.resample(
-        #         time=self.freq, label="left", loffset=loffsets[self.freq]
-        #     ).mean()
         return da.polyfit(dim=dim, deg=self.degree)
 
     def _get_trend(self, grpd, dim="time"):
