@@ -296,7 +296,7 @@ class Grouper(Parametrizable):
             self.window > 1 and "window" in out.dims
         ):  # On non reducing ops, drop the constructed window
             out = out.isel(window=self.window // 2, drop=True)
-        if self.prop in out.dims and out.chunks is not None:
+        if self.prop in out.dims and bool(out.chunks):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
