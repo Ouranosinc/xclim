@@ -83,7 +83,7 @@ class TestPrecipAccumulation:
         out3 = atmos.precip_accumulation(pr, freq="MS")
 
         np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3)
+        np.testing.assert_array_almost_equal(out1, out3, 5)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
