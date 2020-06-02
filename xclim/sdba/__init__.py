@@ -32,7 +32,7 @@ Modular approach
 ================
 
 This module adopts a modular approach instead of implementing published and named methods directly.
-A generic bias adjustment process is to layed out like:
+A generic bias adjustment process is laid out as follows:
 
 - preprocessing on `ref`, `hist` and `sim` (using methods in `xclim.sdba.processing` or `xclim.sdba.detrending`)
 - creating the adjustment object `Adj = Adjustment(**kwargs)` (from `xclim.sdba.adjustment`)
