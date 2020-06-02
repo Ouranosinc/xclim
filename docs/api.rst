@@ -14,11 +14,13 @@ Indices submodules
 
 
 .. automodule:: xclim.indices.generic
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.indices.run_length
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,6 +30,7 @@ Unit handling module
 ====================
 
 .. automodule:: xclim.core.units
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,26 +50,31 @@ Other utilities
 ===============
 
 .. automodule:: xclim.core.calendar
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.core.checks
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.core.indicator
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.core.formatting
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.core.utils
+   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
