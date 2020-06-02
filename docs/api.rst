@@ -87,7 +87,6 @@ ensembles module
 ----------------
 
 .. automodule:: xclim.ensembles
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -97,7 +96,6 @@ subset module
 -------------
 
 .. automodule:: xclim.subset
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
