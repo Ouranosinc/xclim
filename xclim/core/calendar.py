@@ -105,7 +105,7 @@ def convert_calendar(
     target : Union[xr.DataArray, str]
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
-         that are missing in the converted `source` are filled by NaNs.
+      that are missing in the converted `source` are filled by NaNs.
     align_on : {None, 'date', 'year'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
 
@@ -160,11 +160,13 @@ def convert_calendar(
     out = source.copy()
     if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
         raise ValueError(
-            "Argument `align_on` must be specified with either 'date'  or 'year' when converting to or from a '360_day' calendar."
+            "Argument `align_on` must be specified with either 'date' or "
+            "'year' when converting to or from a '360_day' calendar."
         )
     if (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
         warn(
-            "Argument `align_on` was specified, but none of the source or target calendars is '360_day'. `align_on` will be ignored."
+            "Argument `align_on` was specified, but none of the source or "
+            "target calendars is '360_day'. `align_on` will be ignored."
         )
         align_on = None
 
@@ -172,7 +174,7 @@ def convert_calendar(
     if align_on == "year":
 
         def _yearly_interp_doy(time):
-            # This returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
+            # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
             yr = int(time.dt.year[0])
             return np.round(
                 days_in_year(yr, cal_tgt)
