@@ -238,20 +238,19 @@ class Grouper(Parametrizable):
         """
         if isinstance(da, dict):
             grpd = self.group(**da)
-            dim_is_chunked = any(
-                map(
-                    lambda d: (
-                        d.chunks is not None
-                        and self.dim in d.dims
-                        and len(d.chunks[d.get_axis_num(self.dim)]) > 1
-                    ),
-                    da.values(),
-                )
+            dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
+                [
+                    d.chunks[d.get_axis_num(self.dim)]
+                    for d in da.values()
+                    if d.chunks and self.dim in d.dims
+                ]
+                or [[]],  # pass [[]] if no dataarrays have chunks so min doesnt fail
+                key=lambda d: len(d),
             )
         else:
             grpd = self.group(da)
-            dim_is_chunked = (
-                da.chunks is not None and len(da.chunks[da.get_axis_num(self.dim)]) > 1
+            dim_chunks = (
+                [] if da.chunks is None else da.chunks[da.get_axis_num(self.dim)]
             )
 
         dims = self.dim
@@ -282,20 +281,20 @@ class Grouper(Parametrizable):
         out.attrs["group_compute_dims"] = dims
         out.attrs["group_window"] = self.window
 
+        # On non reducing ops, drop the constructed window
+        if self.window > 1 and "window" in out.dims:
+            out = out.isel(window=self.window // 2, drop=True)
+
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
             if out[self.dim].size == 1:
                 out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)
-                if out.chunks is not None and not dim_is_chunked:
-                    # If the main dim consisted of only one chunk, the expected behavior of downstream
-                    # methods is to conserve this, but grouping rechunks
-                    out = out.chunk({self.dim: -1})
-        if (
-            self.window > 1 and "window" in out.dims
-        ):  # On non reducing ops, drop the constructed window
-            out = out.isel(window=self.window // 2, drop=True)
+                # The expected behavior for downstream methods would be to conserve chunking along dim
+                if out.chunks is not None:
+                    # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
+                    out = out.chunk({self.dim: dim_chunks or -1})
         if self.prop in out.dims and bool(out.chunks):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
