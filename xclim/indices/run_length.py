@@ -696,7 +696,7 @@ def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.appl
     return ind
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None, drop=True):
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
     The algorithm differs whether da is 1D or not.
@@ -704,9 +704,9 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None, drop=True):
     Parameters
     ----------
     da : xr.DataArray
-      Input array. If not 1D, `dim` must be given and the corresponding dimension shouldn't be chunked.
+      Input array. If not 1D, `dim` must be given and must not appear in index.
     index : xr.DataArray
-      N-d integer indices
+      N-d integer indices, all dimensions of index must be in da
     dim : Dimension along which to index,
           unused if `da` is 1D, should not be present in `index`.
 
@@ -732,15 +732,14 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None, drop=True):
             out = out.drop_vars(da.dims[0])
         return out
 
-    # else:
-    def _isel(array, indx):
-        return np.take_along_axis(array, indx[..., None], -1)[..., 0]
+    # The following is stolen from xarray.core.computation._calc_idxminmax
+    # TODO: Use da.idxmin max where needed when 0.16 is released
+    if isinstance(da.data, dsk.Array):
+        chunks = dict(zip(da.dims, da.chunks))
+        dask_coord = dsk.from_array(da[dim].data, chunks=chunks[dim])
+        idxs = index.copy(data=dask_coord[(index.data,)])
+    else:
+        idxs = da[dim][(index,)]
+        del idxs.coords[dim]
 
-    return xr.apply_ufunc(
-        _isel,
-        da,
-        index,
-        input_core_dims=[[dim], []],
-        output_core_dims=[[]],
-        dask="allowed",
-    )
+    return da.sel({dim: idxs}, drop=True)

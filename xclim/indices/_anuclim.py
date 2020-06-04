@@ -516,7 +516,9 @@ def _from_other_arg(criteria, output, op, freq):
     dim = "time"
 
     def get_other_op(ds):
-        return lazy_indexing(ds.output, index=op(ds.criteria, dim=dim), dim=dim)
+        all_nans = ds.criteria.isnull().all(dim=dim)
+        index = op(ds.criteria.where(~all_nans, 0), dim=dim)
+        return lazy_indexing(ds.output, index=index, dim=dim).where(~all_nans)
 
     return ds.resample(time=freq).map(get_other_op)
 
