@@ -245,7 +245,7 @@ class Grouper(Parametrizable):
                     if d.chunks and self.dim in d.dims
                 ]
                 or [[]],  # pass [[]] if no dataarrays have chunks so min doesnt fail
-                key=lambda d: len(d),
+                key=len,
             )
         else:
             grpd = self.group(da)
