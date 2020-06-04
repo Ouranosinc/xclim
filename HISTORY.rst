@@ -4,6 +4,7 @@ History
 
 0.18.x
 ------
+* `xclim.sdba.detrending` objects can now act on groups.
 * Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
 * `xclim.core.locales` now supported in Windows build environments.
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.

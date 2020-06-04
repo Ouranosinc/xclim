@@ -6,6 +6,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
+import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -91,11 +92,31 @@ class Grouper(Parametrizable):
         More than one array can be combined to a dataset before grouping using the `das`  kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
+
+        When multiple arrays are passed, some of them can be grouped along the same group as self.
+        They are boadcasted, merged to the grouping dataset and regrouped in the output.
         """
         if das:
+            from .utils import broadcast  # pylint: disable=cyclic-import
+
             if da is not None:
                 das[da.name] = da
-            da = xr.Dataset(data_vars=das)
+
+            da = xr.Dataset(
+                data_vars={
+                    name: das.pop(name)
+                    for name in list(das.keys())
+                    if self.dim in das[name].dims
+                }
+            )
+
+            # "Ungroup" the grouped arrays
+            da = da.assign(
+                {
+                    name: broadcast(var, da[self.dim], group=self, interp="nearest")
+                    for name, var in das.items()
+                }
+            )
 
         if self.window > 1:
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
@@ -143,6 +164,12 @@ class Grouper(Parametrizable):
 
         ind = da.indexes[self.dim]
         i = getattr(ind, self.prop)
+
+        if i.dtype != np.int:
+            raise ValueError(
+                f"Index {self.name} is not of type int (rather {ind.dtype}), but {self.__class__.__name__} requires integer indexes."
+            )
+
         interp = (
             (interp or self.interp)
             if not isinstance(interp, str)
@@ -215,6 +242,7 @@ class Grouper(Parametrizable):
                 map(
                     lambda d: (
                         d.chunks is not None
+                        and self.dim in d.dims
                         and len(d.chunks[d.get_axis_num(self.dim)]) > 1
                     ),
                     da.values(),
@@ -241,10 +269,12 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    if outvar.attrs["_group_apply_reshape"] and self.prop is not None:
+                    if self.prop is not None:
                         out[name] = outvar.groupby(self.name).first(
                             skipna=False, keep_attrs=True
                         )
+                    else:
+                        out[name] = out[name].isel({self.dim: 0})
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.
@@ -266,7 +296,7 @@ class Grouper(Parametrizable):
             self.window > 1 and "window" in out.dims
         ):  # On non reducing ops, drop the constructed window
             out = out.isel(window=self.window // 2, drop=True)
-        if self.prop in out.dims and out.chunks is not None:
+        if self.prop in out.dims and bool(out.chunks):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
@@ -282,7 +312,7 @@ def parse_group(func):
 
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        group = kwargs.get("group", default_group)
+        group = kwargs.setdefault("group", default_group)
         if not isinstance(group, Grouper):
             if not isinstance(group, str):
                 dim, *add_dims = group

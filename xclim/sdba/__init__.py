@@ -37,10 +37,10 @@ A generic bias adjustment process is laid out as follows:
 - preprocessing on `ref`, `hist` and `sim` (using methods in `xclim.sdba.processing` or `xclim.sdba.detrending`)
 - creating the adjustment object `Adj = Adjustment(**kwargs)` (from `xclim.sdba.adjustment`)
 - training `Adj.train(obs, sim)`
-- adjustment with corresponding arguments `scen = Adj.adjust(sim, **kwargs)`
+- adjustment `scen = Adj.adjust(sim, **kwargs)`
 - post-processing on `scen` (for example: re-trending)
 
-The train-adjust approach allows to inspect the trained adjustment object. The trained information is stored in
+The train-adjust approach allows to inspect the trained adjustment object. The training information is stored in
 the underlying `Adj.ds` dataset and always has a `af` variable with the adjustment factors. Its layout and the
 other available variables vary between the different algorithm, refer to :ref:`bias-adjustment-algos`.
 

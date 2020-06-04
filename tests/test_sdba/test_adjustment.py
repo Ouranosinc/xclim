@@ -209,7 +209,7 @@ class TestDQM:
         DQM = DetrendedQuantileMapping(group="time.month")
         DQM.train(ref, hist)
         scen = DQM.adjust(sim, interp="linear")
-        xr.testing.assert_allclose(ref, scen, rtol=1.5e-4)
+        xr.testing.assert_allclose(ref, scen, rtol=1e-3)
 
 
 class TestQDM:
