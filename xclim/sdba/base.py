@@ -227,9 +227,9 @@ class Grouper(Parametrizable):
         -------
         DataArray or Dataset
           Attributes "group", "group_window" and "group_compute_dims" are added.
-          If the function did not reduce the array, its is sorted along the main dimension.
-          If the function did reduce the array and there is only one group, it is squeezed out of the output.
-
+          If the function did not reduce the array, its is sorted along the main dimension and chunking along it is conserved (apply performs a rechunking)
+          If the function reduces the array and there is only one group, it is squeezed out of the output.
+          If the function reduces the array, it is rechunked to have only 1 chunk along the new dimension.
         Notes
         -----
         For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping, xarray's `GroupBy.map` will
