@@ -63,7 +63,7 @@ except ImportError as err:
 else:
     del polyval
 
-from . import adjustment
+from .adjustment import *
 from .base import Grouper
 from . import detrending
 from . import processing

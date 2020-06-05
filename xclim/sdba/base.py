@@ -19,7 +19,12 @@ class Parametrizable(dict):
     :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
-    __getattr__ = dict.__getitem__
+    def __getattr__(self, attr):
+        try:
+            return self.__getitem__(attr)
+        except KeyError as err:
+            # Raise the proper error type for getattr
+            raise AttributeError(*err.args)
 
     @property
     def parameters(self):
@@ -227,9 +232,15 @@ class Grouper(Parametrizable):
         -------
         DataArray or Dataset
           Attributes "group", "group_window" and "group_compute_dims" are added.
-          If the function did not reduce the array, its is sorted along the main dimension and chunking along it is conserved (apply performs a rechunking)
-          If the function reduces the array and there is only one group, it is squeezed out of the output.
-          If the function reduces the array, it is rechunked to have only 1 chunk along the new dimension.
+          If the function did not reduce the array:
+            - The output is sorted along the main dimension.
+            - The output is rechunked to match the chunks on the input
+                If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
+          If the function reduces the array:
+            - If there is only one group, the singleton dimension is squeezed out of the output
+            - The output is rechunked as to have only 1 chunk along the new dimension.
+
+
         Notes
         -----
         For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping, xarray's `GroupBy.map` will
@@ -249,6 +260,8 @@ class Grouper(Parametrizable):
             )
         else:
             grpd = self.group(da)
+            # Get chunking to rechunk is the operation is non-grouping
+            # To match the behaviour of the case above, an empty list signifies that dask is not used for the input.
             dim_chunks = (
                 [] if da.chunks is None else da.chunks[da.get_axis_num(self.dim)]
             )
