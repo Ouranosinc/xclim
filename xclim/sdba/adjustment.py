@@ -335,7 +335,14 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             description="Scaling factor making the mean of hist match the one of hist.",
         )
 
-    def _adjust(self, sim, interp="nearest", extrapolation="constant", detrend=1):
+    def _adjust(
+        self,
+        sim,
+        interp="nearest",
+        extrapolation="constant",
+        detrend=1,
+        normalize_sim=False,
+    ):
 
         # Apply preliminary scaling from obs to hist
         sim = apply_correction(
@@ -344,9 +351,17 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             self.kind,
         )
 
+        if normalize_sim:
+            ds = normalize(sim, group=self.norm_group, kind=self.kind, return_norm=True)
+            sim = ds.anomaly
+
         # Find trend on sim
         if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.norm_group)
+            detrend = PolyDetrend(
+                degree=detrend,
+                kind=self.kind,
+                group=self.group if normalize_sim else self.norm_group,
+            )
 
         sim_fit = detrend.fit(sim)
         sim_detrended = sim_fit.detrend(sim)
@@ -356,7 +371,15 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             sim_detrended, extrapolation=extrapolation, interp=interp
         )
         # Retrend
-        return sim_fit.retrend(scen_detrended)
+        scen_anom = sim_fit.retrend(scen_detrended)
+
+        if normalize_sim:
+            return apply_correction(
+                scen_anom,
+                broadcast(ds.norm, scen_anom, group=self.norm_group, interp=interp),
+                self.kind,
+            )
+        return scen_anom
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):

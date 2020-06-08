@@ -173,7 +173,11 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
 
 @parse_group
 def normalize(
-    x: xr.DataArray, *, group: Union[str, Grouper] = "time", kind: str = ADDITIVE
+    x: xr.DataArray,
+    *,
+    group: Union[str, Grouper] = "time",
+    kind: str = ADDITIVE,
+    return_norm: bool = False,
 ):
     """Normalize an array by remove its mean.
 
@@ -190,6 +194,11 @@ def normalize(
     """
 
     def _normalize_group(grp, dim=["time"]):
-        return apply_correction(grp, invert(grp.mean(dim=dim), kind), kind)
+        norm = grp.mean(dim=dim)
+        anomaly = apply_correction(grp, invert(norm, kind), kind)
+        if return_norm:
+            norm.attrs["_group_apply_reshape"] = True
+            return xr.Dataset(data_vars={"norm": norm, "anomaly": anomaly})
+        return anomaly
 
     return group.apply(_normalize_group, x)
