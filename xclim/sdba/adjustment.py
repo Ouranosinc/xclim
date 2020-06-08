@@ -164,7 +164,7 @@ class BaseAdjustment(Parametrizable):
             # We use mkstemp to be sure the filename is reserved.
             fid, filename = tempfile.mkstemp(suffix=".nc", dir=tempdir)
             os.close(fid)  # Passing file-like objects is too restrictive with xarray.
-            self._ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
+            self.__ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
 
         self._ds_file = Path(filename)
         previous_chunking = self.ds.chunks  # Expected behavior is to conserve chunking
@@ -175,7 +175,7 @@ class BaseAdjustment(Parametrizable):
 
     def __del__(self):
         # Delete the training data file if it was saved to a temporary file.
-        if self._ds_is_tempfile and hasattr(self, "_ds_filename"):
+        if self.__ds_is_tempfile and hasattr(self, "_ds_filename"):
             self._ds_file.unlink()
 
     def _train(self):
@@ -313,12 +313,14 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         kind: str = ADDITIVE,
         group: Union[str, Grouper] = "time",
         norm_group: Optional[Union[str, Grouper]] = None,
-        prescale: bool = True,
     ):
         super().__init__(
             nquantiles=nquantiles, kind=kind, group=group,
         )
-        self["norm_group"] = norm_group or group
+        norm_group = norm_group or group
+        if isinstance(norm_group, str):
+            norm_group = Grouper(norm_group)
+        self["norm_group"] = norm_group
 
     def _train(self, ref, hist):
         refn = normalize(ref, group=self.norm_group, kind=self.kind)
