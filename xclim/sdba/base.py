@@ -19,7 +19,12 @@ class Parametrizable(dict):
     :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
-    __getattr__ = dict.__getitem__
+    def __getattr__(self, attr):
+        try:
+            return self.__getitem__(attr)
+        except KeyError as err:
+            # Raise the proper error type for getattr
+            raise AttributeError(*err.args)
 
     @property
     def parameters(self):
@@ -227,8 +232,14 @@ class Grouper(Parametrizable):
         -------
         DataArray or Dataset
           Attributes "group", "group_window" and "group_compute_dims" are added.
-          If the function did not reduce the array, its is sorted along the main dimension.
-          If the function did reduce the array and there is only one group, it is squeezed out of the output.
+          If the function did not reduce the array:
+            - The output is sorted along the main dimension.
+            - The output is rechunked to match the chunks on the input
+                If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
+          If the function reduces the array:
+            - If there is only one group, the singleton dimension is squeezed out of the output
+            - The output is rechunked as to have only 1 chunk along the new dimension.
+
 
         Notes
         -----
@@ -238,20 +249,21 @@ class Grouper(Parametrizable):
         """
         if isinstance(da, dict):
             grpd = self.group(**da)
-            dim_is_chunked = any(
-                map(
-                    lambda d: (
-                        d.chunks is not None
-                        and self.dim in d.dims
-                        and len(d.chunks[d.get_axis_num(self.dim)]) > 1
-                    ),
-                    da.values(),
-                )
+            dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
+                [
+                    d.chunks[d.get_axis_num(self.dim)]
+                    for d in da.values()
+                    if d.chunks and self.dim in d.dims
+                ]
+                or [[]],  # pass [[]] if no dataarrays have chunks so min doesnt fail
+                key=len,
             )
         else:
             grpd = self.group(da)
-            dim_is_chunked = (
-                da.chunks is not None and len(da.chunks[da.get_axis_num(self.dim)]) > 1
+            # Get chunking to rechunk is the operation is non-grouping
+            # To match the behaviour of the case above, an empty list signifies that dask is not used for the input.
+            dim_chunks = (
+                [] if da.chunks is None else da.chunks[da.get_axis_num(self.dim)]
             )
 
         dims = self.dim
@@ -282,20 +294,20 @@ class Grouper(Parametrizable):
         out.attrs["group_compute_dims"] = dims
         out.attrs["group_window"] = self.window
 
+        # On non reducing ops, drop the constructed window
+        if self.window > 1 and "window" in out.dims:
+            out = out.isel(window=self.window // 2, drop=True)
+
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
             if out[self.dim].size == 1:
                 out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
             else:
                 out = out.sortby(self.dim)
-                if out.chunks is not None and not dim_is_chunked:
-                    # If the main dim consisted of only one chunk, the expected behavior of downstream
-                    # methods is to conserve this, but grouping rechunks
-                    out = out.chunk({self.dim: -1})
-        if (
-            self.window > 1 and "window" in out.dims
-        ):  # On non reducing ops, drop the constructed window
-            out = out.isel(window=self.window // 2, drop=True)
+                # The expected behavior for downstream methods would be to conserve chunking along dim
+                if out.chunks is not None:
+                    # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
+                    out = out.chunk({self.dim: dim_chunks or -1})
         if self.prop in out.dims and bool(out.chunks):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
