@@ -738,7 +738,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
             raise ValueError(
                 "da must have at least one dimension more than index for lazy_indexing."
             )
-        elif len(diff_dims) > 1:
+        if len(diff_dims) > 1:
             raise ValueError(
                 "If da has more than one dimension more than index, the indexing dim must be given through `dim`"
             )
