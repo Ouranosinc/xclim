@@ -94,11 +94,13 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     np.testing.assert_array_equal(out, out_mean)
 
     # With window
-    grouper = Grouper(group, window=5)
-    out = grouper.apply("mean", tas)
-    rolld = tas.rolling({grouper.dim: 5}, center=True).construct(window_dim="window")
+    win_grouper = Grouper(group, window=5)
+    out = win_grouper.apply("mean", tas)
+    rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(
+        window_dim="window"
+    )
     if grouper.prop:
-        exp = rolld.groupby(group).mean(dim=[grouper.dim, "window"])
+        exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
     else:
         exp = rolld.mean(dim=[grouper.dim, "window"])
     np.testing.assert_array_equal(out, exp)
@@ -113,6 +115,10 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     assert normed.shape == tas.shape
     if use_dask:
         assert normed.chunks == ((1, 1), (366,))
+
+    # With window + nongrouping-grouped
+    out = win_grouper.apply(normalize, tas)
+    assert out.shape == tas.shape
 
     # Mixed output
     def mixed_reduce(grdds, dim=None):

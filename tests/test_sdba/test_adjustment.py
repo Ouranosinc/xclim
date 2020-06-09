@@ -5,11 +5,13 @@ from scipy.stats import norm
 from scipy.stats import uniform
 
 sdba = pytest.importorskip("xclim.sdba")  # noqa
+from xclim.sdba.adjustment import BaseAdjustment
 from xclim.sdba.adjustment import DetrendedQuantileMapping
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.adjustment import LOCI
 from xclim.sdba.adjustment import QuantileDeltaMapping
 from xclim.sdba.adjustment import Scaling
+from xclim.sdba.base import Grouper
 from xclim.sdba.utils import ADDITIVE
 from xclim.sdba.utils import apply_correction
 from xclim.sdba.utils import get_correction
@@ -397,3 +399,10 @@ class TestQM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, ref, 2)
+
+
+def test_raise_on_multiple_chunks(tas_series):
+    ref = tas_series(np.arange(730)).chunk({"time": 365})
+    Adj = BaseAdjustment(group=Grouper("time.month"))
+    with pytest.raises(ValueError):
+        Adj.train(ref, ref)
