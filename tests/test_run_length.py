@@ -350,3 +350,56 @@ class TestRunsWithDates:
 
         out = runs.resample(time="MS").map(func, window=1, date="07-01", dim="time")
         assert out.isnull().all()
+
+
+def test_lazy_indexing_nd():
+    a = xr.DataArray(
+        np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": np.arange(10)}
+    )
+    b = xr.DataArray(
+        np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": np.arange(10)}
+    )
+
+    ac = a.chunk({"y": 5, "z": 5})
+    bc = b.chunk({"y": 5, "z": 1})
+
+    npout = np.take_along_axis(
+        a.values, np.argmin(b.values, axis=0)[np.newaxis, ...], axis=0
+    )[0, ...]
+
+    xrout = rl.lazy_indexing(a, b.argmin("x"))
+    dskout = rl.lazy_indexing(ac, bc.argmin("x"))
+    xr.testing.assert_equal(xrout, dskout)
+
+    np.testing.assert_equal(xrout.values, npout)
+    np.testing.assert_equal(dskout.values, npout)
+
+    assert "x" not in xrout.coords
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_lazy_indexing_special_cases(use_dask):
+    a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
+    b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
+
+    if use_dask:
+        a = a.chunk({"y": 5, "z": 5})
+        b = b.chunk({"y": 5, "z": 1})
+
+    with pytest.raises(ValueError):
+        rl.lazy_indexing(a, b)
+
+    b = b.argmin("x").argmin("y")
+
+    with pytest.raises(ValueError, match="more than one dimension more than index"):
+        rl.lazy_indexing(a, b)
+
+    if use_dask:
+        with pytest.raises(
+            ValueError, match="dask requires that passed dim has coordinates"
+        ):
+            rl.lazy_indexing(a, b, dim="x")
+
+    a["x"] = np.arange(10)
+    out = rl.lazy_indexing(a, b, dim="x")
+    assert out.shape == (10, 10)

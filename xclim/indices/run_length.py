@@ -732,14 +732,31 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
             out = out.drop_vars(da.dims[0])
         return out
 
-    # The following is stolen from xarray.core.computation._calc_idxminmax
+    if dim is None:
+        diff_dims = set(da.dims) - set(index.dims)
+        if len(diff_dims) == 0:
+            raise ValueError(
+                "da must have at least one dimension more than index for lazy_indexing."
+            )
+        elif len(diff_dims) > 1:
+            raise ValueError(
+                "If da has more than one dimension more than index, the indexing dim must be given through `dim`"
+            )
+        dim = diff_dims.pop()
+
     # TODO: Use da.idxmin max where needed when 0.16 is released
     if isinstance(da.data, dsk.Array):
+        if dim not in da.coords:
+            raise ValueError(
+                "lazy_indexing with dask requires that passed dim has coordinates."
+            )
+        # Integer indexing not available with dask, create coord array and use sel
         chunks = dict(zip(da.dims, da.chunks))
         dask_coord = dsk.from_array(da[dim].data, chunks=chunks[dim])
-        idxs = index.copy(data=dask_coord[(index.data,)])
-    else:
-        idxs = da[dim][(index,)]
-        del idxs.coords[dim]
+        crd = index.copy(data=dask_coord[index.data.ravel()].reshape(index.shape))
 
-    return da.sel({dim: idxs}, drop=True)
+        res = da.sel({dim: crd}, drop=True)
+    else:
+        res = da.isel({dim: index}, drop=True)
+
+    return res
