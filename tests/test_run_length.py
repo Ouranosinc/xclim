@@ -352,13 +352,17 @@ class TestRunsWithDates:
         assert out.isnull().all()
 
 
-def test_lazy_indexing_nd():
-    a = xr.DataArray(
-        np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": np.arange(10)}
-    )
-    b = xr.DataArray(
-        np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": np.arange(10)}
-    )
+@pytest.mark.parametrize(
+    "x",
+    [
+        np.arange(10),
+        xr.cftime_range("2000-01-01", periods=10, freq="MS"),
+        pd.date_range("2000-01-01", periods=10, freq="MS"),
+    ],
+)
+def test_lazy_indexing_nd(x):
+    a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": x})
+    b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": x})
 
     ac = a.chunk({"y": 5, "z": 5})
     bc = b.chunk({"y": 5, "z": 1})

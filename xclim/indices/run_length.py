@@ -18,6 +18,9 @@ import dask.array as dsk
 import numpy as np
 import xarray as xr
 
+from xclim.core.calendar import convert_calendar
+from xclim.core.calendar import get_calendar
+
 
 logging.captureWarnings(True)
 npts_opt = 9000
@@ -746,6 +749,16 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
 
     # TODO: Use da.idxmin max where needed when 0.16 is released
     if isinstance(da.data, dsk.Array):
+        # Problem is, sel doesn't work with dask arrays if the coord is a pd.DatetimeIndex
+        # Here we workaround by converting to integers
+        try:
+            cal = get_calendar(da, dim=dim)
+        except ValueError:
+            pass
+        else:
+            if cal == "default":
+                da[dim] = da.indexes[dim].asi8
+
         if dim not in da.coords:
             raise ValueError(
                 "lazy_indexing with dask requires that passed dim has coordinates."
