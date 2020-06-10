@@ -1,4 +1,8 @@
 """Detrending objects"""
+import os
+import tempfile
+from pathlib import Path
+from typing import Optional
 from typing import Union
 
 import xarray as xr
@@ -44,6 +48,7 @@ class BaseDetrend(Parametrizable):
             The way the trend is removed or added, either additive or multiplicative.
         """
         self.__fitted = False
+        self.__ds_is_tempfile = False
         super().__init__(group=group, kind=kind, **kwargs)
 
     def fit(self, da: xr.DataArray):
@@ -77,6 +82,41 @@ class BaseDetrend(Parametrizable):
         trend = self.get_trend(da)
         return self._retrend(da, trend)
 
+    def save_fit(
+        self, filename: Optional[Union[Path, str]] = None, tempdir: Optional[str] = None
+    ):
+        """Save fit data to a (temporary) file.
+
+        Save to a temporary file if `filename` is not given. The file will be
+        deleted when this Adjustment instance is deleted.
+
+        The dataset is immediately reload from file. This is meant to help divide dask's
+        workload when needed.
+
+        Parameters
+        ----------
+        filename : Optional[Union[Path, str]]
+          Filename of the saved file. When given, the file is not considered "temporary"
+          and is not deleted when the Detrending object is deleted by Python.
+        tempdir : Optional[str]
+          The path to a directory where to save the temporary file. Ignored if `filename`
+          is given.
+        """
+        if filename is None:
+            # We use mkstemp to be sure the filename is reserved.
+            fid, filename = tempfile.mkstemp(suffix=".nc", dir=tempdir)
+            os.close(fid)  # Passing file-like objects is too restrictive with xarray.
+            self.__ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
+
+        self._ds_file = Path(filename)
+        previous_chunking = (
+            self.fit_ds.chunks
+        )  # Expected behavior is to conserve chunking
+        self.fit_ds.to_netcdf(self._ds_file)
+        # chunks: non-dask data will return an empty set on ds.chunks, but that means 1 chunk for open_dataset
+        # `previous_chunking or None` returns None is ds.chunks was an empty set
+        self.fit_ds = xr.open_dataset(self._ds_file, chunks=previous_chunking or None)
+
     def _set_fitds(self, ds):
         self.fit_ds = ds
 
@@ -93,6 +133,11 @@ class BaseDetrend(Parametrizable):
 
     def _fit(self, da):
         raise NotImplementedError
+
+    def __del__(self):
+        # Delete the training data file if it was saved to a temporary file.
+        if self.__ds_is_tempfile and hasattr(self, "_ds_file"):
+            self._ds_file.unlink()
 
 
 class NoDetrend(BaseDetrend):

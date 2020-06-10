@@ -175,7 +175,7 @@ class BaseAdjustment(Parametrizable):
 
     def __del__(self):
         # Delete the training data file if it was saved to a temporary file.
-        if self.__ds_is_tempfile and hasattr(self, "_ds_filename"):
+        if self.__ds_is_tempfile and hasattr(self, "_ds_file"):
             self._ds_file.unlink()
 
     def _train(self):
