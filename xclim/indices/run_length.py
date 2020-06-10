@@ -768,7 +768,11 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
         dask_coord = dsk.from_array(da[dim].data, chunks=chunks[dim])
         crd = index.copy(data=dask_coord[index.data.ravel()].reshape(index.shape))
 
-        res = da.sel({dim: crd}, drop=True)
+        dsu = xr.Dataset(data_vars={"da": da, "crd": crd}).unify_chunks()
+        res = dsu.map_blocks(
+            lambda dd: dd.da.sel({dim: dd.crd}, drop=True),
+            template=dsu.da.isel({dim: 0}, drop=True),
+        )
     else:
         res = da.isel({dim: index}, drop=True)
 
