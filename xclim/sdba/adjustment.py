@@ -290,6 +290,8 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
       The adjustment kind, either additive or multiplicative.
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+    norm_group : Union[str, Grouper]
+      If given, the normalization steps are done using this group. Otherwise, they use the main `group`.
 
     In adjustment:
 
@@ -299,6 +301,11 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
       The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree. Defaults to 1 (linear detrending)
     extrapolation : {'constant', 'nan'}
       The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+    normalize_sim : bool
+      If True, scaled sim is normalized using `norm_group` and then detrended using `group`.
+      If False, scaled sim is detrended using `norm_group`.
+      This is useful on large datasets using dask, when `norm_group` is a very small division (e.g. 'time.dayofyear')
+        because normalisation is a more efficient operation than detrending for similarly sized groups.
 
     References
     ----------
@@ -319,6 +326,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         )
         norm_group = norm_group or group
         if isinstance(norm_group, str):
+            # parse_group only manages kwargs named "group"
             norm_group = Grouper(norm_group)
         self["norm_group"] = norm_group
 

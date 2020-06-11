@@ -179,7 +179,7 @@ def normalize(
     kind: str = ADDITIVE,
     return_norm: bool = False,
 ):
-    """Normalize an array by remove its mean.
+    """Normalize an array by removing its mean.
 
     Normalization if performed group-wise.
 
@@ -191,6 +191,16 @@ def normalize(
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     kind : {'+', '*'}
       How to apply the adjustment, either additively or multiplicatively.
+    return_norm : bool
+      Whether to return only the normalized array or also the grouped norm.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+      if `return_norm is True`, returns a Dataset with:
+        - `anomaly` the normalized array along the main dimension
+        - `norm` the groupwise mean that was removed.
+      otherwise onl the `anomaly` dataarray is returned.
     """
 
     def _normalize_group(grp, dim=["time"]):
