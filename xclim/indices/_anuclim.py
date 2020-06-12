@@ -562,4 +562,4 @@ def _to_quarter(freq, pr=None, tas=None):
             )
             out.attrs = tas.attrs
 
-    return out
+    return out.chunk({'time': -1})

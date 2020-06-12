@@ -352,35 +352,6 @@ class TestRunsWithDates:
         assert out.isnull().all()
 
 
-@pytest.mark.parametrize(
-    "x",
-    [
-        np.arange(10),
-        xr.cftime_range("2000-01-01", periods=10, freq="MS"),
-        pd.date_range("2000-01-01", periods=10, freq="MS"),
-    ],
-)
-def test_lazy_indexing_nd(x):
-    a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": x})
-    b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"), coords={"x": x})
-
-    ac = a.chunk({"y": 5, "z": 5})
-    bc = b.chunk({"y": 5, "z": 1})
-
-    npout = np.take_along_axis(
-        a.values, np.argmin(b.values, axis=0)[np.newaxis, ...], axis=0
-    )[0, ...]
-
-    xrout = rl.lazy_indexing(a, b.argmin("x"))
-    dskout = rl.lazy_indexing(ac, bc.argmin("x"))
-    xr.testing.assert_equal(xrout, dskout)
-
-    np.testing.assert_equal(xrout.values, npout)
-    np.testing.assert_equal(dskout.values, npout)
-
-    assert "x" not in xrout.coords
-
-
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_lazy_indexing_special_cases(use_dask):
     a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
@@ -397,13 +368,3 @@ def test_lazy_indexing_special_cases(use_dask):
 
     with pytest.raises(ValueError, match="more than one dimension more than index"):
         rl.lazy_indexing(a, b)
-
-    if use_dask:
-        with pytest.raises(
-            ValueError, match="dask requires that passed dim has coordinates"
-        ):
-            rl.lazy_indexing(a, b, dim="x")
-
-    a["x"] = np.arange(10)
-    out = rl.lazy_indexing(a, b, dim="x")
-    assert out.shape == (10, 10)

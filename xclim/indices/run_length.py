@@ -747,33 +747,14 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
             )
         dim = diff_dims.pop()
 
-    # TODO: Use da.idxmin max where needed when 0.16 is released
-    if isinstance(da.data, dsk.Array):
-        # Problem is, sel doesn't work with dask arrays if the coord is a pd.DatetimeIndex
-        # Here we workaround by converting to integers
-        try:
-            cal = get_calendar(da, dim=dim)
-        except ValueError:
-            pass
-        else:
-            if cal == "default":
-                da[dim] = da.indexes[dim].asi8
+    def _index_from_nd_array(array, indices):
+        return np.take_along_axis(array, indices[..., np.newaxis], axis=-1)[..., 0]
 
-        if dim not in da.coords:
-            raise ValueError(
-                "lazy_indexing with dask requires that passed dim has coordinates."
-            )
-        # Integer indexing not available with dask, create coord array and use sel
-        chunks = dict(zip(da.dims, da.chunks))
-        dask_coord = dsk.from_array(da[dim].data, chunks=chunks[dim])
-        crd = index.copy(data=dask_coord[index.data.ravel()].reshape(index.shape))
-
-        dsu = xr.Dataset(data_vars={"da": da, "crd": crd}).unify_chunks()
-        res = dsu.map_blocks(
-            lambda dd: dd.da.sel({dim: dd.crd}, drop=True),
-            template=dsu.da.isel({dim: 0}, drop=True),
-        )
-    else:
-        res = da.isel({dim: index}, drop=True)
-
-    return res
+    return xr.apply_ufunc(
+        _index_from_nd_array,
+        da, index,
+        input_core_dims=[[dim], []],
+        output_core_dims=[[]],
+        dask='parallelized',
+        output_dtypes=[da.dtype],
+    )
