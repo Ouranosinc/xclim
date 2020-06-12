@@ -62,11 +62,18 @@ class BaseDetrend(Parametrizable):
         return new
 
     def get_trend(self, da: xr.DataArray):
-        return self.group.apply(
+        """Get the trend computed from the fit, the fitting dim as found on da.
+
+        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        """
+        out = self.group.apply(
             self._get_trend,
             {self.group.dim: da[self.group.dim], **self.fit_ds.data_vars},
             main_only=True,
         )
+        if hasattr(da, 'dtype'):
+            out = out.astype(da.dtype)
+        return out
 
     def detrend(self, da: xr.DataArray):
         """Removes the previously fitted trend from a DataArray."""
