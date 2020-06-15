@@ -91,7 +91,8 @@ def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
-    If many chunks are too small, they are grouped tog
+    If many chunks are too small, they are grouped together by merging adjacent chunks.
+
     Parameters
     ----------
     da : xr.DataArray
