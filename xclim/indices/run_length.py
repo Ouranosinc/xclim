@@ -752,9 +752,10 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
 
     return xr.apply_ufunc(
         _index_from_nd_array,
-        da, index,
+        da,
+        index,
         input_core_dims=[[dim], []],
         output_core_dims=[[]],
-        dask='parallelized',
+        dask="parallelized",
         output_dtypes=[da.dtype],
     )

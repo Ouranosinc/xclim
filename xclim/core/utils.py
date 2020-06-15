@@ -87,27 +87,46 @@ class ValidationError(ValueError):
         return self.args[0]
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks):
+def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
+    """Ensure that the input dataarray has chunks of at least the given size.
+
+    If only one chunk is too small, it is merged with an adjacent chunk.
+    If many chunks are too small, they are grouped tog
+    Parameters
+    ----------
+    da : xr.DataArray
+      The input dataarray, with or without the dask backend. Does nothing when passed a non-dask array.
+    **minchunks : int
+      A kwarg mapping from dimension name to minimum chunk size.
+      Pass -1 to force a single chunk along that dimension.
+    """
     if not isinstance(da.data, dsk.Array):
         return da
 
-    chunks = dict(zip(da.dims, da.chunks))
+    all_chunks = dict(zip(da.dims, da.chunks))
     chunking = {}
     for dim, minchunk in minchunks.items():
-        if minchunk == -1 and len(chunks[dim]) != 1:
+        chunks = all_chunks[dim]
+        if minchunk == -1 and len(chunks) > 1:
+            # Rechunk to single chunk only if it's not already one
             chunking[dim] = -1
-        toosmall = (np.array(chunks[dim]) < minchunk).sum()
-        if toosmall == 1:
+
+        toosmall = np.array(chunks) < minchunk  # Chunks that are too small
+        if toosmall.sum() > 1:
+            # Many chunks are too small, merge them by groups
+            fac = np.ceil(minchunk / min(chunks))
+            chunking[dim] = [sum(chunks[i : i + fac]) for i in range(len(chunks), fac)]
+            # Reset counter is case the last chunks are still too small
+            chunks = chunking[dim]
+            toosmall = np.array(chunks) < minchunk
+        if toosmall.sum() == 1:
+            # Only one, merge it with adjacent chunk
             ind = np.where(toosmall)[0]
-            new_chunks = list(chunks[dim])
+            new_chunks = list(chunks)
             sml = new_chunks.pop(ind)
             new_chunks[max(ind - 1, 0)] += sml
             chunking[dim] = new_chunks
-        elif toosmall > 1:
-            fac = np.ceil(minchunk / min(chunks[dim]))
-            chunking[dim] = [
-                chunks[dim][i : i + fac] for i in range(len(chunks[dim]), fac)
-            ]
+
     if chunking:
         return da.chunk(chunks=chunking)
     return da
