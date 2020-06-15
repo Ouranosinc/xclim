@@ -14,7 +14,7 @@ from scipy.interpolate import interp1d
 from .base import Grouper
 from .base import parse_group
 from xclim.core.calendar import _interpolate_doy_calendar
-
+from xclim.core.utils import ensure_chunk_size
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -278,10 +278,7 @@ def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
         vals[-1] = vals[-2] + diff[-1]
         qmf = qmf.assign_coords({att: vals})
         qmf[att].attrs.update(da.coords[att].attrs)
-    if da.chunks is not None and len(da.chunks[da.get_axis_num(att)]) == 1:
-        # Downstream methos do not expect this method to change the number of chunks
-        return qmf.chunk({att: -1})
-    return qmf
+    return ensure_chunk_size(qmf, **{att: -1})
 
 
 def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"):
@@ -365,10 +362,7 @@ def add_endpoints(
         elems.append(y)
     l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
     out = xr.concat((l, da, r), dim=dim)
-    if da.chunks is not None and len(da.chunks[da.get_axis_num(dim)]) == 1:
-        # Downstream methos do not expect this method to change the number of chunks
-        return out.chunk({dim: -1})
-    return out
+    return ensure_chunk_size(out, **{dim: -1})
 
 
 @parse_group
