@@ -114,18 +114,20 @@ def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
         toosmall = np.array(chunks) < minchunk  # Chunks that are too small
         if toosmall.sum() > 1:
             # Many chunks are too small, merge them by groups
-            fac = np.ceil(minchunk / min(chunks))
-            chunking[dim] = [sum(chunks[i : i + fac]) for i in range(len(chunks), fac)]
+            fac = np.ceil(minchunk / min(chunks)).astype(int)
+            chunking[dim] = tuple(
+                sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac)
+            )
             # Reset counter is case the last chunks are still too small
             chunks = chunking[dim]
             toosmall = np.array(chunks) < minchunk
         if toosmall.sum() == 1:
             # Only one, merge it with adjacent chunk
-            ind = np.where(toosmall)[0]
+            ind = np.where(toosmall)[0][0]
             new_chunks = list(chunks)
             sml = new_chunks.pop(ind)
             new_chunks[max(ind - 1, 0)] += sml
-            chunking[dim] = new_chunks
+            chunking[dim] = tuple(new_chunks)
 
     if chunking:
         return da.chunk(chunks=chunking)
