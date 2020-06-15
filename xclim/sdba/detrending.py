@@ -57,7 +57,7 @@ class BaseDetrend(Parametrizable):
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
         new = self.copy()
-        new._set_fitds(new.group.apply(new._fit, da, main_only=True))
+        new._set_ds(new.group.apply(new._fit, da, main_only=True))
         new.__fitted = True
         return new
 
@@ -68,10 +68,10 @@ class BaseDetrend(Parametrizable):
         """
         out = self.group.apply(
             self._get_trend,
-            {self.group.dim: da[self.group.dim], **self.fit_ds.data_vars},
+            {self.group.dim: da[self.group.dim], **self.ds.data_vars},
             main_only=True,
         )
-        if hasattr(da, 'dtype'):
+        if hasattr(da, "dtype"):
             out = out.astype(da.dtype)
         return out
 
@@ -116,16 +116,16 @@ class BaseDetrend(Parametrizable):
             self.__ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
 
         self._ds_file = Path(filename)
-        previous_chunking = (
-            self.fit_ds.chunks
-        )  # Expected behavior is to conserve chunking
-        self.fit_ds.to_netcdf(self._ds_file)
+        # Expected behavior is to conserve chunking
+        previous_chunking = self.ds.chunks
+        self.ds.to_netcdf(self._ds_file)
         # chunks: non-dask data will return an empty set on ds.chunks, but that means 1 chunk for open_dataset
         # `previous_chunking or None` returns None is ds.chunks was an empty set
-        self.fit_ds = xr.open_dataset(self._ds_file, chunks=previous_chunking or None)
+        self.ds = xr.open_dataset(self._ds_file, chunks=previous_chunking or None)
 
-    def _set_fitds(self, ds):
-        self.fit_ds = ds
+    def _set_ds(self, ds):
+        self.ds = ds
+        self.ds.attrs["fit_params"] = str(self)
 
     def _detrend(self, da, trend):
         # Remove trend from series

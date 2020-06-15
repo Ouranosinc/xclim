@@ -303,6 +303,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
       The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     normalize_sim : bool
       If True, scaled sim is normalized using `norm_group` and then detrended using `group`.
+        The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
       If False, scaled sim is detrended using `norm_group`.
       This is useful on large datasets using dask, when `norm_group` is a very small division (e.g. 'time.dayofyear')
         because normalisation is a more efficient operation than detrending for similarly sized groups.
@@ -384,7 +385,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         if normalize_sim:
             return apply_correction(
                 scen_anom,
-                broadcast(ds.norm, scen_anom, group=self.norm_group, interp=interp),
+                broadcast(ds.norm, scen_anom, group=self.norm_group, interp="nearest"),
                 self.kind,
             )
         return scen_anom

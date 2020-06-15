@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -202,15 +204,17 @@ class TestDQM:
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
-    def test_group_norm(self, tas_series):
+    @pytest.mark.parametrize("norm_group", ["time.dayofyear", "time.month"])
+    @pytest.mark.parametrize("normalize_sim", [True, False])
+    def test_group_norm(self, tas_series, norm_group, normalize_sim):
         x = np.arange(365)
         ref = tas_series(273 - 10 * np.cos(2 * np.pi * x / 365), start="2001-01-01")
         hist = sim = tas_series(
             273 - 8 * np.cos(2 * np.pi * x / 365), start="2001-01-01"
         )
-        DQM = DetrendedQuantileMapping(group="time.month")
+        DQM = DetrendedQuantileMapping(group="time.month", norm_group=norm_group)
         DQM.train(ref, hist)
-        scen = DQM.adjust(sim, interp="linear")
+        scen = DQM.adjust(sim, interp="linear", normalize_sim=normalize_sim)
         xr.testing.assert_allclose(ref, scen, rtol=1e-3)
 
 
@@ -406,3 +410,26 @@ def test_raise_on_multiple_chunks(tas_series):
     Adj = BaseAdjustment(group=Grouper("time.month"))
     with pytest.raises(ValueError):
         Adj.train(ref, ref)
+
+
+def test_save_training(series):
+    x = series(np.arange(20 * 365.25), "tas")
+
+    DQM = DetrendedQuantileMapping()
+    DQM.train(x, x)
+    DQM.save_training()
+
+    tmpfile = Path(DQM.ds.encoding["source"])
+    assert tmpfile.is_file()
+    del DQM
+    assert not tmpfile.is_file()
+
+    DQM = DetrendedQuantileMapping()
+    DQM.train(x, x)
+    DQM.save_training(filename="test.nc")
+
+    tmpfile = Path(DQM.ds.encoding["source"])
+    assert tmpfile.name == "test.nc"
+    del DQM
+    assert tmpfile.is_file()
+    tmpfile.unlink()
