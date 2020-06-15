@@ -154,7 +154,7 @@ def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
     values: Tuple[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
-    split: bool = False,
+    split: bool = True,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 

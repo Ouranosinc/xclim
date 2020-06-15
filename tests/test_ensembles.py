@@ -139,11 +139,11 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-        out2 = ensembles.ensemble_percentiles(ens, values=(25, 75), split=True)
+        out2 = ensembles.ensemble_percentiles(ens, values=(25, 75))
         assert np.all(out2["tg_mean_p75"] > out2["tg_mean_p25"])
         assert "Computation of the percentiles on" in out1.attrs["history"]
 
-        out3 = ensembles.ensemble_percentiles(ens)
+        out3 = ensembles.ensemble_percentiles(ens, split=False)
         xr.testing.assert_equal(
             out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
         )
@@ -152,9 +152,9 @@ class TestEnsembleStats:
     def test_calc_perc_dask(self, keep_chunk_size):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         out2 = ensembles.ensemble_percentiles(
-            ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size
+            ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
-        out1 = ensembles.ensemble_percentiles(ens.load())
+        out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
     def test_calc_perc_nans(self):
