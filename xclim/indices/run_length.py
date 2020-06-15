@@ -18,10 +18,6 @@ import dask.array as dsk
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import get_calendar
-
-
 logging.captureWarnings(True)
 npts_opt = 9000
 
