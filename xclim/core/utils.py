@@ -10,6 +10,9 @@ from collections import defaultdict
 from functools import partial
 from types import FunctionType
 
+import dask.array as dsk
+import numpy as np
+import xarray as xr
 from boltons.funcutils import update_wrapper
 
 
@@ -82,3 +85,29 @@ class ValidationError(ValueError):
     @property
     def msg(self):
         return self.args[0]
+
+
+def ensure_chunk_size(da: xr.DataArray, **minchunks):
+    if not isinstance(da.data, dsk.Array):
+        return da
+
+    chunks = dict(zip(da.dims, da.chunks))
+    chunking = {}
+    for dim, minchunk in minchunks.items():
+        if minchunk == -1 and len(chunks[dim]) != 1:
+            chunking[dim] = -1
+        toosmall = (np.array(chunks[dim]) < minchunk).sum()
+        if toosmall == 1:
+            ind = np.where(toosmall)[0]
+            new_chunks = list(chunks[dim])
+            sml = new_chunks.pop(ind)
+            new_chunks[max(ind - 1, 0)] += sml
+            chunking[dim] = new_chunks
+        elif toosmall > 1:
+            fac = np.ceil(minchunk / min(chunks[dim]))
+            chunking[dim] = [
+                chunks[dim][i : i + fac] for i in range(len(chunks[dim]), fac)
+            ]
+    if chunking:
+        return da.chunk(chunks=chunking)
+    return da
