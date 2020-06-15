@@ -52,13 +52,15 @@ max_doy = {
 }
 
 
-def get_calendar(arr: Union[xr.DataArray, xr.Dataset]) -> str:
+def get_calendar(arr: Union[xr.DataArray, xr.Dataset], dim: str = "time") -> str:
     """Return the calendar of the time coord of the DataArray
 
     Parameters
     ----------
-    arr : xr.DataArray
-      Array with `time` coordinate. Values must either be of datetime64 dtype or have a dt.calendar attribute.
+    arr : Union[xr.DataArray, xr.Dataset]
+      Array/dataset with a datetime coordinate. Values must either be of datetime64 dtype or have a dt.calendar attribute.
+    dim : str
+      Name of the coordinate to check.
 
     Raises
     ------
@@ -70,14 +72,14 @@ def get_calendar(arr: Union[xr.DataArray, xr.Dataset]) -> str:
     str
       The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64.
     """
-    if arr.time.dtype == "O":  # Assume cftime, if it fails, not our fault
-        non_na_item = arr.time.where(arr.time.notnull(), drop=True)[0].item()
+    if arr[dim].dtype == "O":  # Assume cftime, if it fails, not our fault
+        non_na_item = arr[dim].where(arr[dim].notnull(), drop=True)[0].item()
         cal = non_na_item.calendar
-    elif "datetime64" in arr.time.dtype.name:
+    elif "datetime64" in arr[dim].dtype.name:
         cal = "default"
     else:
         raise ValueError(
-            f"Cannot infer calendars from timeseries of type {arr.time[0].dtype}"
+            f"Cannot infer calendars from timeseries of type {arr[dim][0].dtype}"
         )
     return cal
 
@@ -86,6 +88,7 @@ def convert_calendar(
     source: Union[xr.DataArray, xr.Dataset],
     target: Union[xr.DataArray, str],
     align_on: Optional[str] = None,
+    dim: str = "time",
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
@@ -108,6 +111,8 @@ def convert_calendar(
       that are missing in the converted `source` are filled by NaNs.
     align_on : {None, 'date', 'year'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
+    dim : str
+      Name of the time coordinate.
 
     Returns
     -------
@@ -147,12 +152,12 @@ def convert_calendar(
 
         This option is best used with data on a frequency coarser than daily.
     """
-    cal_src = get_calendar(source)
+    cal_src = get_calendar(source, dim=dim)
 
     if isinstance(target, str):
         cal_tgt = target
     else:
-        cal_tgt = get_calendar(target)
+        cal_tgt = get_calendar(target, dim=dim)
 
     if cal_src == cal_tgt:
         return source
@@ -182,36 +187,36 @@ def convert_calendar(
                 / days_in_year(yr, cal_src)
             ).astype(int)
 
-        new_doy = source.time.groupby("time.year").map(_yearly_interp_doy)
+        new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
 
         # Convert the source datetimes, but override the doy with our new doys
-        out["time"] = xr.DataArray(
+        out[dim] = xr.DataArray(
             [
                 _convert_datetime(datetime, new_doy=doy, calendar=cal_tgt)
-                for datetime, doy in zip(source.time.indexes["time"], new_doy)
+                for datetime, doy in zip(source[dim].indexes[dim], new_doy)
             ],
-            dims=("time",),
-            name="time",
+            dims=(dim,),
+            name=dim,
         )
         # Remove duplicate timestamps, happens when reducing the number of days
-        out = out.isel(time=np.unique(out.time, return_index=True)[1])
+        out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
     else:
-        time_idx = source.time.indexes["time"]
-        out["time"] = xr.DataArray(
+        time_idx = source[dim].indexes[dim]
+        out[dim] = xr.DataArray(
             [_convert_datetime(time, calendar=cal_tgt) for time in time_idx],
-            dims=("time",),
-            name="time",
+            dims=(dim,),
+            name=dim,
         )
         # Remove NaN that where put on invalid dates in target calendar
-        out = out.where(out.time.notnull(), drop=True)
+        out = out.where(out[dim].notnull(), drop=True)
 
     if isinstance(target, xr.DataArray):
-        out = out.reindex(time=target)
+        out = out.reindex({dim: target})
     return out
 
 
 def interp_calendar(
-    source: Union[xr.DataArray, xr.Dataset], target: xr.DataArray,
+    source: Union[xr.DataArray, xr.Dataset], target: xr.DataArray, dim: str = "time",
 ) -> xr.DataArray:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
@@ -228,22 +233,22 @@ def interp_calendar(
       The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
     target: xr.DataArray
       The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
+    dim : str
+      The time coordinate name.
 
     Return
     ------
     Union[xr.DataArray, xr.Dataset]
       The source interpolated on the decimal years of target,
     """
-    cal_src = get_calendar(source)
-    cal_tgt = get_calendar(target)
+    cal_src = get_calendar(source, dim=dim)
+    cal_tgt = get_calendar(target, dim=dim)
 
     out = source.copy()
-    out["time"] = datetime_to_decimal_year(source.time, calendar=cal_src).drop_vars(
-        "time"
-    )
+    out[dim] = datetime_to_decimal_year(source[dim], calendar=cal_src).drop_vars(dim)
     target_idx = datetime_to_decimal_year(target, calendar=cal_tgt)
     out = out.interp(time=target_idx)
-    out["time"] = target
+    out[dim] = target
     return out
 
 
