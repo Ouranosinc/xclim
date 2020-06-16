@@ -167,7 +167,12 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     If thresh is high, this will change the mean value of x.
     """
     epsilon = np.finfo(x.dtype).eps
-    jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
+    if isinstance(x.data, dsk.Array):
+        jitter = dsk.random.uniform(
+            low=epsilon, high=thresh, size=x.shape, chunks=x.chunks
+        )
+    else:
+        jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
     return x.where(~((x < thresh) & (x.notnull())), jitter)
 
 
