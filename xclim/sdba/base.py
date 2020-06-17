@@ -50,7 +50,6 @@ class Grouper(Parametrizable):
         window: int = 1,
         add_dims: Optional[Sequence[str]] = None,
         interp: Union[bool, str] = False,
-        manage_chunking: bool = True,
     ):
         """Create the Grouper object.
 
@@ -71,9 +70,6 @@ class Grouper(Parametrizable):
           Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
           Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names are translated to True.
           This modifies the default, but `get_index` also accepts an `interp` argument overriding the one defined here..
-        manage_chunking : bool
-          If True (default), apply's output will have the same chunking as in the input.
-          If False, apply output's chunking is whatever the groupby.map call returns, usually one chunk per contiguous group.
         """
         if "." in group:
             dim, prop = group.split(".")
@@ -93,7 +89,6 @@ class Grouper(Parametrizable):
             name=group,
             window=window,
             interp=interp,
-            manage_chunking=manage_chunking,
         )
 
     def group(self, da: xr.DataArray = None, **das: xr.DataArray):
@@ -240,11 +235,11 @@ class Grouper(Parametrizable):
           Attributes "group", "group_window" and "group_compute_dims" are added.
           If the function did not reduce the array:
             - The output is sorted along the main dimension.
-            - If self.manage_chunking is True, the output is rechunked to match the chunks on the input
+            - The output is rechunked to match the chunks on the input
                 If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
           If the function reduces the array:
             - If there is only one group, the singleton dimension is squeezed out of the output
-            - If self.manage_chunking is True, the output is rechunked as to have only 1 chunk along the new dimension.
+            - The output is rechunked as to have only 1 chunk along the new dimension.
 
 
         Notes
@@ -311,10 +306,10 @@ class Grouper(Parametrizable):
             else:
                 out = out.sortby(self.dim)
                 # The expected behavior for downstream methods would be to conserve chunking along dim
-                if self.manage_chunking and out.chunks is not None:
+                if out.chunks is not None:
                     # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                     out = out.chunk({self.dim: dim_chunks or -1})
-        if self.manage_chunking and self.prop in out.dims and bool(out.chunks):
+        if self.prop in out.dims and bool(out.chunks):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
