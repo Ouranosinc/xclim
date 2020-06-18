@@ -1,12 +1,7 @@
 """Adjustment objects"""
-import os
-import tempfile
-from pathlib import Path
-from typing import Optional
 from typing import Union
 from warnings import warn
 
-import h5py
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
@@ -54,7 +49,6 @@ class BaseAdjustment(Parametrizable):
 
     def __init__(self, **kwargs):
         self.__trained = False
-        self.__ds_is_tempfile = False
         super().__init__(**kwargs)
 
     def train(
@@ -140,65 +134,6 @@ class BaseAdjustment(Parametrizable):
         """
         self.ds = xr.Dataset(data_vars=kwargs)
         self.ds.attrs["adj_params"] = str(self)
-
-    def _save_training(
-        self,
-        filename: Optional[Union[Path, str]] = None,
-        tempdir: Optional[str] = None,
-        use_hdf5_store: bool = False,
-    ):
-        """Save training data to a (temporary) file.
-
-        Save to a temporary file if `filename` is not given. The file will be
-        deleted when this Adjustment instance is deleted.
-
-        The dataset is immediately reload from file. This is meant to help divide dask's
-        workload when needed.
-
-        Parameters
-        ----------
-        filename : Optional[Union[Path, str]]
-          Filename of the saved file. When given, the file is not considered "temporary"
-          and is not deleted when the Adjustment object is deleted by Python.
-        tempdir : Optional[str]
-          The path to a directory where to save the temporary file. Ignored if `filename`
-          is given.
-        """
-        if filename is None:
-            # We use mkstemp to be sure the filename is reserved.
-            fid, filename = tempfile.mkstemp(suffix=".nc", dir=tempdir)
-            os.close(fid)  # Passing file-like objects is too restrictive with xarray.
-            self.__ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
-
-        if not use_hdf5_store:
-            self._ds_file = Path(filename)
-            previous_chunking = (
-                self.ds.chunks
-            )  # Expected behavior is to conserve chunking
-            self.ds.to_netcdf(self._ds_file)
-            # chunks: non-dask data will return an empty set on ds.chunks, but that means 1 chunk for open_dataset
-            # `previous_chunking or None` returns None is ds.chunks was an empty set
-            self.ds = xr.open_dataset(self._ds_file, chunks=previous_chunking or None)
-        else:
-            self._ds_hdf5 = h5py.File(filename, mode="w")
-            new_ds = {}
-            for name, data in self.ds.data_vars.items():
-                d = self._ds_hdf5.require_dataset(
-                    name, shape=data.shape, dtype=data.dtype
-                )
-                new_ds[name] = data.copy(
-                    data=data.data.store(d, return_stored=True, compute=False)
-                )
-            self.ds = xr.Dataset(data_vars=new_ds)
-
-    def __del__(self):
-        # Delete the training data file if it was saved to a temporary file.
-        if self.__ds_is_tempfile and hasattr(self, "_ds_file"):
-            if hasattr(self, "_ds_hdf5"):
-                self._ds_hdf5.close()
-            else:
-                self.ds.close()
-            self._ds_file.unlink()
 
     def _train(self):
         raise NotImplementedError

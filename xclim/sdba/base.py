@@ -209,7 +209,6 @@ class Grouper(Parametrizable):
         func: Union[FunctionType, str],
         da: Union[xr.DataArray, Mapping[str, xr.DataArray]],
         main_only: bool = False,
-        manage_chunking: bool = True,
         **kwargs,
     ):
         """Apply a function group-wise on DataArrays.
