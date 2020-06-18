@@ -1,8 +1,4 @@
 """Adjustment objects"""
-import os
-import tempfile
-from pathlib import Path
-from typing import Optional
 from typing import Union
 from warnings import warn
 
@@ -53,7 +49,6 @@ class BaseAdjustment(Parametrizable):
 
     def __init__(self, **kwargs):
         self.__trained = False
-        self.__ds_is_tempfile = False
         super().__init__(**kwargs)
 
     def train(
@@ -139,44 +134,6 @@ class BaseAdjustment(Parametrizable):
         """
         self.ds = xr.Dataset(data_vars=kwargs)
         self.ds.attrs["adj_params"] = str(self)
-
-    def save_training(
-        self, filename: Optional[Union[Path, str]] = None, tempdir: Optional[str] = None
-    ):
-        """Save training data to a (temporary) file.
-
-        Save to a temporary file if `filename` is not given. The file will be
-        deleted when this Adjustment instance is deleted.
-
-        The dataset is immediately reload from file. This is meant to help divide dask's
-        workload when needed.
-
-        Parameters
-        ----------
-        filename : Optional[Union[Path, str]]
-          Filename of the saved file. When given, the file is not considered "temporary"
-          and is not deleted when the Adjustment object is deleted by Python.
-        tempdir : Optional[str]
-          The path to a directory where to save the temporary file. Ignored if `filename`
-          is given.
-        """
-        if filename is None:
-            # We use mkstemp to be sure the filename is reserved.
-            fid, filename = tempfile.mkstemp(suffix=".nc", dir=tempdir)
-            os.close(fid)  # Passing file-like objects is too restrictive with xarray.
-            self.__ds_is_tempfile = True  # So that the file is deleted when this instance is garbage collected
-
-        self._ds_file = Path(filename)
-        previous_chunking = self.ds.chunks  # Expected behavior is to conserve chunking
-        self.ds.to_netcdf(self._ds_file)
-        # chunks: non-dask data will return an empty set on ds.chunks, but that means 1 chunk for open_dataset
-        # `previous_chunking or None` returns None is ds.chunks was an empty set
-        self.ds = xr.open_dataset(self._ds_file, chunks=previous_chunking or None)
-
-    def __del__(self):
-        # Delete the training data file if it was saved to a temporary file.
-        if self.__ds_is_tempfile and hasattr(self, "_ds_file"):
-            self._ds_file.unlink()
 
     def _train(self):
         raise NotImplementedError
@@ -267,9 +224,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     The algorithm follows these steps, 1-3 being the 'train' and 4-6, the 'adjust' steps.
 
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
-    2. `ref` and `hist` are normalized by removing the group-wise mean.
+    2. `ref` and `hist` are normalized by removing the "dayofyear" mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor, and detrended group-wise using a linear fit.
+    4. `sim` is corrected by the scaling factor, and either normalized by "dayofyear" and  detrended group-wise
+       or directly detrended per "dayofyear", using a linear fit (modifiable).
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
     6. The trend is put back on the result.
 
@@ -289,9 +247,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-    norm_group : Union[str, Grouper]
-      If given, the normalization steps are done using this group. Otherwise, they use the main `group`.
+      The grouping information use in the quantile mappgin process. See :py:class:`xclim.sdba.base.Grouper` for details.
+      the normalization step is always performed on each day of the year.
+    norm_window : 1
+      The window size used in the normalization grouping. Defaults to 1.
 
     In adjustment:
 
@@ -302,11 +261,11 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     extrapolation : {'constant', 'nan'}
       The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     normalize_sim : bool
-      If True, scaled sim is normalized using `norm_group` and then detrended using `group`.
+      If True, scaled sim is normalized by its "dayofyear" mean and then detrended using `group`.
         The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
-      If False, scaled sim is detrended using `norm_group`.
-      This is useful on large datasets using dask, when `norm_group` is a very small division (e.g. 'time.dayofyear')
-        because normalisation is a more efficient operation than detrending for similarly sized groups.
+      If False, scaled sim is detrended per "dayofyear".
+      This is useful on large datasets using dask, in which case "dayofyear" is a very small division,
+        because normalization is a more efficient operation than detrending for similarly sized groups.
 
     References
     ----------
@@ -320,16 +279,12 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         nquantiles: int = 20,
         kind: str = ADDITIVE,
         group: Union[str, Grouper] = "time",
-        norm_group: Optional[Union[str, Grouper]] = None,
+        norm_window: int = 1,
     ):
         super().__init__(
             nquantiles=nquantiles, kind=kind, group=group,
         )
-        norm_group = norm_group or group
-        if isinstance(norm_group, str):
-            # parse_group only manages kwargs named "group"
-            norm_group = Grouper(norm_group)
-        self["norm_group"] = norm_group
+        self["norm_group"] = Grouper("time.dayofyear", window=norm_window)
 
     def _train(self, ref, hist):
         refn = normalize(ref, group=self.norm_group, kind=self.kind)
@@ -361,8 +316,8 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         )
 
         if normalize_sim:
-            ds = normalize(sim, group=self.norm_group, kind=self.kind, return_norm=True)
-            sim = ds.anomaly
+            sim_norm = self.norm_group.apply("mean", sim)
+            sim = normalize(sim, group=self.norm_group, kind=self.kind, norm=sim_norm)
 
         # Find trend on sim
         if isinstance(detrend, int):
@@ -380,15 +335,15 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             sim_detrended, extrapolation=extrapolation, interp=interp
         )
         # Retrend
-        scen_anom = sim_fit.retrend(scen_detrended)
+        scen = sim_fit.retrend(scen_detrended)
 
         if normalize_sim:
             return apply_correction(
-                scen_anom,
-                broadcast(ds.norm, scen_anom, group=self.norm_group, interp="nearest"),
+                scen,
+                broadcast(sim_norm, scen, group=self.norm_group, interp="nearest"),
                 self.kind,
             )
-        return scen_anom
+        return scen
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):

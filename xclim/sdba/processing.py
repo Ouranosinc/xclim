@@ -1,4 +1,5 @@
 """Pre and post processing for bias adjustement"""
+from typing import Optional
 from typing import Union
 
 import dask.array as dsk
@@ -9,6 +10,7 @@ from .base import Grouper
 from .base import parse_group
 from .utils import ADDITIVE
 from .utils import apply_correction
+from .utils import broadcast
 from .utils import ecdf
 from .utils import invert
 
@@ -167,7 +169,12 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     If thresh is high, this will change the mean value of x.
     """
     epsilon = np.finfo(x.dtype).eps
-    jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
+    if isinstance(x.data, dsk.Array):
+        jitter = dsk.random.uniform(
+            low=epsilon, high=thresh, size=x.shape, chunks=x.chunks
+        )
+    else:
+        jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
     return x.where(~((x < thresh) & (x.notnull())), jitter)
 
 
@@ -177,7 +184,7 @@ def normalize(
     *,
     group: Union[str, Grouper] = "time",
     kind: str = ADDITIVE,
-    return_norm: bool = False,
+    norm: Optional[xr.DataArray] = None,
 ):
     """Normalize an array by removing its mean.
 
@@ -191,24 +198,21 @@ def normalize(
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     kind : {'+', '*'}
       How to apply the adjustment, either additively or multiplicatively.
-    return_norm : bool
-      Whether to return only the normalized array or also the grouped norm.
+    norm : xr.DataArray
+      If the norm was already computed (for example with `group.apply("mean", x)`), skip the
+        computation step. The array should have the same dimensions as `x` except for "time" that should
+        be replaced by `group.prop`.
 
     Returns
     -------
     xr.DataArray or xr.Dataset
-      if `return_norm is True`, returns a Dataset with:
-        - `anomaly` the normalized array along the main dimension
-        - `norm` the groupwise mean that was removed.
-      otherwise onl the `anomaly` dataarray is returned.
+      Group-wise anomaly of x
     """
 
     def _normalize_group(grp, dim=["time"]):
-        norm = grp.mean(dim=dim)
-        anomaly = apply_correction(grp, invert(norm, kind), kind)
-        if return_norm:
-            norm.attrs["_group_apply_reshape"] = True
-            return xr.Dataset(data_vars={"norm": norm, "anomaly": anomaly})
-        return anomaly
+        return apply_correction(grp, invert(grp.mean(dim=dim), kind), kind)
 
-    return group.apply(_normalize_group, x)
+    if norm is None:
+        return group.apply(_normalize_group, x)
+
+    return apply_correction(x, broadcast(norm, x, group=group, interp="nearest"), kind,)
