@@ -46,7 +46,9 @@ if not os.getenv("READTHEDOCS"):
     requirements.append("rtree>=0.9")
 else:
     requirements.remove("xarray>=0.14.1")
-    requirements.append("https://github.com/pydata/xarray/archive/master.zip")
+    requirements.append(
+        "xarray @ https://github.com/pydata/xarray/archive/master.zip#egg=xarray"
+    )
 
 setup_requirements = ["pytest-runner"]
 
