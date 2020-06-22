@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """The setup script."""
 import os
+import subprocess
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -46,6 +48,9 @@ if not os.getenv("READTHEDOCS"):
     requirements.append("rtree>=0.9")
 else:
     requirements.remove("xarray>=0.14.1")
+    # This is a terrible workaround. Dump as soon as you possibly can.
+    XARRAY_MASTER = "git+https://github.com/pydata/xarray.git#egg=xarray"
+    subprocess.check_call([sys.executable, "-m", "pip", "install", XARRAY_MASTER])
 
 setup_requirements = ["pytest-runner"]
 
@@ -61,7 +66,6 @@ docs_requirements = [
     "jupyter_client",
     "matplotlib",
     "distributed>=2.0",
-    "https://github.com/pydata/xarray.git#egg=xarray",
 ]
 
 dev_requirements = []
