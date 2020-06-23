@@ -10,6 +10,7 @@ History
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
 * Added indicator `first_day_below` and run length helper `first_run_after_date`.
 * Added ANUCLIM model climate indices mappings.
+* Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
 
 0.17.0 (2020-05-15)
 -------------------
