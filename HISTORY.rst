@@ -11,6 +11,7 @@ History
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
 * Added indicator `first_day_below` and run length helper `first_run_after_date`.
 * Added ANUCLIM model climate indices mappings.
+* Renamed `areacella` to `areacello` in sea ice tests.
 
 0.17.0 (2020-05-15)
 -------------------
