@@ -5,7 +5,7 @@ Sea ice indicators
 import abc
 
 from xclim import indices
-from xclim.core import checks
+from xclim.core import cfchecks
 from xclim.core.indicator import Indicator2D
 
 __all__ = ["sea_ice_area", "sea_ice_extent"]
@@ -15,7 +15,7 @@ class SicArea(Indicator2D):
     """Class for indicators having sea ice concentration and grid cell area inputs."""
 
     def cfprobe(self, sic, area):
-        checks.check_valid(sic, "standard_name", "sea_ice_area_fraction")
+        cfchecks.check_valid(sic, "standard_name", "sea_ice_area_fraction")
 
     @abc.abstractmethod
     def compute(*args, **kwds):

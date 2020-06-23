@@ -8,7 +8,8 @@ import pytest
 import xarray as xr
 
 from xclim import set_options
-from xclim.core import checks
+from xclim.core import cfchecks
+from xclim.core import datachecks
 from xclim.core.utils import ValidationError
 from xclim.indicators.atmos import tg_mean
 
@@ -25,7 +26,7 @@ TestObj = namedtuple("TestObj", ["test"])
 )
 def test_check_valid_ok(value, expected):
     d = TestObj(value)
-    checks.check_valid(d, "test", expected)
+    cfchecks.check_valid(d, "test", expected)
 
 
 @pytest.mark.parametrize(
@@ -34,7 +35,7 @@ def test_check_valid_ok(value, expected):
 def test_check_valid_raise(value, expected):
     d = TestObj(value)
     with pytest.raises(ValidationError):
-        checks.check_valid(d, "test", expected)
+        cfchecks.check_valid(d, "test", expected)
 
 
 class TestDateHandling:
@@ -83,7 +84,7 @@ def test_cf_compliance_options(tas_series, caplog):
 
     with caplog.at_level(logging.INFO):
         with set_options(cf_compliance="log"):
-            checks.check_valid_temperature(tas, "degK")
+            cfchecks.check_valid_temperature(tas, "degK")
 
             assert all([rec.levelname == "INFO" for rec in caplog.records])
             assert (
@@ -93,10 +94,10 @@ def test_cf_compliance_options(tas_series, caplog):
 
     with pytest.warns(UserWarning, match="Variable has a non-conforming"):
         with set_options(cf_compliance="warn"):
-            checks.check_valid_temperature(tas, "degK")
+            cfchecks.check_valid_temperature(tas, "degK")
 
     with pytest.raises(
         ValidationError, match="Variable has a non-conforming standard_name"
     ):
         with set_options(cf_compliance="raise"):
-            checks.check_valid_temperature(tas, "degK")
+            cfchecks.check_valid_temperature(tas, "degK")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from xclim.core import checks
+from xclim.core import cfchecks
 from xclim.core import missing
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
@@ -22,7 +22,7 @@ class Streamflow(Indicator):
         pass
 
     def cfprobe(self, q):
-        checks.check_valid(q, "standard_name", "streamflow")
+        cfchecks.check_valid(q, "standard_name", "streamflow")
 
 
 class Stats(Streamflow):

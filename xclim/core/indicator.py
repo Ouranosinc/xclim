@@ -15,7 +15,7 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from .checks import check_daily
+from .datachecks import check_daily
 from .formatting import AttrFormatter
 from .formatting import default_formatter
 from .formatting import merge_attributes
