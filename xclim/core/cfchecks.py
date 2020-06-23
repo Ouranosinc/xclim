@@ -6,8 +6,6 @@ Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
 import fnmatch
 
-from boltons.funcutils import wraps
-
 from .options import cfcheck
 from .utils import ValidationError
 
