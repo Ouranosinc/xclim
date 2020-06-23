@@ -2,13 +2,12 @@
 import numpy as np
 
 from xclim.core import checks
+from xclim.core import missing
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index
 from xclim.indices import generic
 
-# from boltons.funcutils import FunctionBuilder
-# import calendar
 
 __all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
 
@@ -34,7 +33,7 @@ class Stats(Streamflow):
         indexer = kwds["indexer"]
         freq = kwds["freq"] or generic.default_freq(**indexer)
 
-        miss = (checks.missing_any(da, freq, **indexer) for da in args)
+        miss = (missing.missing_any(da, freq, **indexer) for da in args)
         return reduce(np.logical_or, miss)
 
 
