@@ -1,3 +1,4 @@
+import numpy as np
 import xarray
 
 from ._multivariate import daily_temperature_range
@@ -11,6 +12,7 @@ from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
 from xclim.core.units import units2pint
+from xclim.core.utils import ensure_chunk_size
 
 
 xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
@@ -516,7 +518,9 @@ def _from_other_arg(criteria, output, op, freq):
     dim = "time"
 
     def get_other_op(ds):
-        return lazy_indexing(ds.output, index=op(ds.criteria, dim=dim), dim=dim)
+        all_nans = ds.criteria.isnull().all(dim=dim)
+        index = op(ds.criteria.where(~all_nans, 0), dim=dim)
+        return lazy_indexing(ds.output, index=index, dim=dim).where(~all_nans)
 
     return ds.resample(time=freq).map(get_other_op)
 
@@ -547,6 +551,11 @@ def _to_quarter(freq, pr=None, tas=None):
             f'Unknown input time frequency "{freq}": must be one of "daily", "weekly" or "monthly".'
         )
 
+    if tas is not None:
+        tas = ensure_chunk_size(tas, time=np.ceil(window / 2))
+    if pr is not None:
+        pr = ensure_chunk_size(pr, time=np.ceil(window / 2))
+
     with xarray.set_options(keep_attrs=True):
         if pr is not None:
             pr = pint_multiply(pr, 1 * u, "mm")
@@ -560,4 +569,5 @@ def _to_quarter(freq, pr=None, tas=None):
             )
             out.attrs = tas.attrs
 
+    out = ensure_chunk_size(out, time=-1)
     return out

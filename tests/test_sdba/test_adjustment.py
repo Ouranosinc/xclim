@@ -190,7 +190,7 @@ class TestDQM:
         if spatial_dims:
             mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_array_almost_equal(p, ref_t, 1)
+        np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon(self, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000)
@@ -201,17 +201,6 @@ class TestDQM:
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
-
-    def test_group_norm(self, tas_series):
-        x = np.arange(365)
-        ref = tas_series(273 - 10 * np.cos(2 * np.pi * x / 365), start="2001-01-01")
-        hist = sim = tas_series(
-            273 - 8 * np.cos(2 * np.pi * x / 365), start="2001-01-01"
-        )
-        DQM = DetrendedQuantileMapping(group="time.month")
-        DQM.train(ref, hist)
-        scen = DQM.adjust(sim, interp="linear")
-        xr.testing.assert_allclose(ref, scen, rtol=1e-3)
 
 
 class TestQDM:
