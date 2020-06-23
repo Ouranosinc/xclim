@@ -52,16 +52,23 @@ class BaseDetrend(Parametrizable):
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
         new = self.copy()
-        new._set_fitds(new.group.apply(new._fit, da, main_only=True))
+        new._set_ds(new.group.apply(new._fit, da, main_only=True))
         new.__fitted = True
         return new
 
     def get_trend(self, da: xr.DataArray):
-        return self.group.apply(
+        """Get the trend computed from the fit, the fitting dim as found on da.
+
+        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        """
+        out = self.group.apply(
             self._get_trend,
-            {self.group.dim: da[self.group.dim], **self.fit_ds.data_vars},
+            {self.group.dim: da[self.group.dim], **self.ds.data_vars},
             main_only=True,
         )
+        if hasattr(da, "dtype"):
+            out = out.astype(da.dtype)
+        return out
 
     def detrend(self, da: xr.DataArray):
         """Removes the previously fitted trend from a DataArray."""
@@ -77,8 +84,9 @@ class BaseDetrend(Parametrizable):
         trend = self.get_trend(da)
         return self._retrend(da, trend)
 
-    def _set_fitds(self, ds):
-        self.fit_ds = ds
+    def _set_ds(self, ds):
+        self.ds = ds
+        self.ds.attrs["fit_params"] = str(self)
 
     def _detrend(self, da, trend):
         # Remove trend from series

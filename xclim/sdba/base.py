@@ -170,9 +170,9 @@ class Grouper(Parametrizable):
         ind = da.indexes[self.dim]
         i = getattr(ind, self.prop)
 
-        if i.dtype != np.int:
+        if not np.issubdtype(i.dtype, np.integer):
             raise ValueError(
-                f"Index {self.name} is not of type int (rather {ind.dtype}), but {self.__class__.__name__} requires integer indexes."
+                f"Index {self.name} is not of type int (rather {i.dtype}), but {self.__class__.__name__} requires integer indexes."
             )
 
         interp = (

@@ -4,6 +4,7 @@ History
 
 0.18.x
 ------
+* Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
 * `xclim.sdba.detrending` objects can now act on groups.
 * Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
 * `xclim.core.locales` now supported in Windows build environments.

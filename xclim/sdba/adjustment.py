@@ -224,9 +224,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     The algorithm follows these steps, 1-3 being the 'train' and 4-6, the 'adjust' steps.
 
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
-    2. `ref` and `hist` are normalized by removing the group-wise mean.
+    2. `ref` and `hist` are normalized by removing the "dayofyear" mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor, and detrended group-wise using a linear fit.
+    4. `sim` is corrected by the scaling factor, and either normalized by "dayofyear" and  detrended group-wise
+       or directly detrended per "dayofyear", using a linear fit (modifiable).
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
     6. The trend is put back on the result.
 
@@ -246,7 +247,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      The grouping information used in the quantile mapping process. See :py:class:`xclim.sdba.base.Grouper` for details.
+      the normalization step is always performed on each day of the year.
+    norm_window : 1
+      The window size used in the normalization grouping. Defaults to 1.
 
     In adjustment:
 
@@ -256,26 +260,54 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
       The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree. Defaults to 1 (linear detrending)
     extrapolation : {'constant', 'nan'}
       The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+    normalize_sim : bool
+      If True, scaled sim is normalized by its "dayofyear" mean and then detrended using `group`.
+        The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
+      If False, scaled sim is detrended per "dayofyear".
+      This is useful on large datasets using dask, in which case "dayofyear" is a very small division,
+        because normalization is a more efficient operation than detrending for similarly sized groups.
 
     References
     ----------
     .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
+    @parse_group
+    def __init__(
+        self,
+        *,
+        nquantiles: int = 20,
+        kind: str = ADDITIVE,
+        group: Union[str, Grouper] = "time",
+        norm_window: int = 1,
+    ):
+        super().__init__(
+            nquantiles=nquantiles, kind=kind, group=group,
+        )
+        self["norm_group"] = Grouper("time.dayofyear", window=norm_window)
+
     def _train(self, ref, hist):
+        refn = normalize(ref, group=self.norm_group, kind=self.kind)
+        histn = normalize(hist, group=self.norm_group, kind=self.kind)
+        super()._train(refn, histn)
+
         mu_ref = self.group.apply("mean", ref)
         mu_hist = self.group.apply("mean", hist)
-        ref = normalize(ref, group=self.group, kind=self.kind)
-        hist = normalize(hist, group=self.group, kind=self.kind)
-        super()._train(ref, hist)
-
         self.ds["scaling"] = get_correction(mu_hist, mu_ref, kind=self.kind)
         self.ds.scaling.attrs.update(
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
 
-    def _adjust(self, sim, interp="nearest", extrapolation="constant", detrend=1):
+    def _adjust(
+        self,
+        sim,
+        interp="nearest",
+        extrapolation="constant",
+        detrend=1,
+        normalize_sim=False,
+    ):
+
         # Apply preliminary scaling from obs to hist
         sim = apply_correction(
             sim,
@@ -283,9 +315,17 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             self.kind,
         )
 
+        if normalize_sim:
+            sim_norm = self.norm_group.apply("mean", sim)
+            sim = normalize(sim, group=self.norm_group, kind=self.kind, norm=sim_norm)
+
         # Find trend on sim
         if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
+            detrend = PolyDetrend(
+                degree=detrend,
+                kind=self.kind,
+                group=self.group if normalize_sim else self.norm_group,
+            )
 
         sim_fit = detrend.fit(sim)
         sim_detrended = sim_fit.detrend(sim)
@@ -295,7 +335,15 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             sim_detrended, extrapolation=extrapolation, interp=interp
         )
         # Retrend
-        return sim_fit.retrend(scen_detrended)
+        scen = sim_fit.retrend(scen_detrended)
+
+        if normalize_sim:
+            return apply_correction(
+                scen,
+                broadcast(sim_norm, scen, group=self.norm_group, interp="nearest"),
+                self.kind,
+            )
+        return scen
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
