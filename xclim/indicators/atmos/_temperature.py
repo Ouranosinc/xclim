@@ -2,7 +2,7 @@
 import abc
 
 from xclim import indices
-from xclim.core import checks
+from xclim.core import cfchecks
 from xclim.core.indicator import Indicator
 from xclim.core.indicator import Indicator2D
 from xclim.core.units import check_units
@@ -60,8 +60,8 @@ class Tas(Indicator):
     """Class for univariate indices using mean daily temperature as the input."""
 
     def cfprobe(self, tas):
-        checks.check_valid(tas, "cell_methods", "**time: mean within days*")
-        checks.check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(tas, "cell_methods", "**time: mean within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
     @abc.abstractmethod
     def compute(*args, **kwds):
@@ -72,8 +72,8 @@ class Tasmin(Indicator):
     """Class for univariate indices using min daily temperature as the input."""
 
     def cfprobe(self, tasmin):
-        checks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        checks.check_valid(tasmin, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
+        cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
 
     @abc.abstractmethod
     def compute(*args, **kwds):
@@ -84,8 +84,8 @@ class Tasmax(Indicator):
     """Class for univariate indices using max daily temperature as the input."""
 
     def cfprobe(self, tasmax):
-        checks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        checks.check_valid(tasmax, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
+        cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
 
     @abc.abstractmethod
     def compute(*args, **kwds):
@@ -95,9 +95,9 @@ class Tasmax(Indicator):
 class TasminTasmax(Indicator2D):
     def cfprobe(self, tasmin, tasmax):
         for da in (tasmin, tasmax):
-            checks.check_valid(da, "standard_name", "air_temperature")
-        checks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        checks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
+            cfchecks.check_valid(da, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
+        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
         check_units(tasmax, tasmin.attrs["units"])
 
     @abc.abstractmethod

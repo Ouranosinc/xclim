@@ -15,8 +15,7 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from .checks import check_daily
-from .checks import missing_from_context
+from .datachecks import check_daily
 from .formatting import AttrFormatter
 from .formatting import default_formatter
 from .formatting import merge_attributes
@@ -24,6 +23,7 @@ from .formatting import parse_doc
 from .formatting import update_history
 from .locales import get_local_attrs
 from .locales import get_local_formatter
+from .missing import missing_from_context
 from .options import OPTIONS
 from .units import convert_units_to
 from .units import units
