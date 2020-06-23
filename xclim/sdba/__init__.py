@@ -9,9 +9,9 @@ Adjustment algorithms all conform to the `train` - `adjust` scheme, formalized w
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and the observations series, and then applying these factors to `sim`, which could be a future simulation::
 
-  Adj = Adjustment(group="time.month", interp="linear")
+  Adj = Adjustment(group="time.month")
   Adj.train(ref, hist)
-  scen = Adj.adjust(sim)
+  scen = Adj.adjust(sim, interp="linear")
   Adj.ds.af  # adjustment factors.
 
 The `group` argument allows adjustment factors to be estimated independently for different periods: the full
@@ -32,17 +32,21 @@ Modular approach
 ================
 
 This module adopts a modular approach instead of implementing published and named methods directly.
-A generic bias adjustment process is to layed out like:
+A generic bias adjustment process is laid out as follows:
 
 - preprocessing on `ref`, `hist` and `sim` (using methods in `xclim.sdba.processing` or `xclim.sdba.detrending`)
 - creating the adjustment object `Adj = Adjustment(**kwargs)` (from `xclim.sdba.adjustment`)
 - training `Adj.train(obs, sim)`
-- adjustment `scen = Adj.adjust(sim)`
+- adjustment `scen = Adj.adjust(sim, **kwargs)`
 - post-processing on `scen` (for example: re-trending)
 
-The train-adjust approach allows to inspect the trained adjustment object. The adjustment information is stored in
+The train-adjust approach allows to inspect the trained adjustment object. The training information is stored in
 the underlying `Adj.ds` dataset and always has a `af` variable with the adjustment factors. Its layout and the
 other available variables vary between the different algorithm, refer to :ref:`bias-adjustment-algos`.
+
+Parameters needed by the training and the adjustment are saved to the `Adj.ds` dataset as a  `adj_params` attribute.
+Other parameters, those only needed by the adjustment are passed in the `adjust` call and written to the history attribute
+in the output scenario dataarray.
 
 Grouping
 ========
@@ -59,6 +63,11 @@ except ImportError as err:
 else:
     del polyval
 
+from .adjustment import *
+from .base import Grouper
+from . import detrending
+from . import processing
+from . import utils
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;

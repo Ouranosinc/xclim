@@ -29,7 +29,7 @@ Ordinary subclasses can also be created, so for example, an Indicator expecting 
   ...     @staticmethod
   ...     def datacheck(*das):
   ...         for da in das:
-  ...             checks.check_daily(da)
+  ...             xclim.core.datachecks.check_daily(da)
 
 And while `Daily` will not appear in `Indicator.registry`, new indicators instantiated from `Daily` will appear in
 `Daily.registry`.
@@ -45,20 +45,21 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
+from .datachecks import check_daily
+from .formatting import AttrFormatter
+from .formatting import default_formatter
+from .formatting import merge_attributes
+from .formatting import parse_doc
+from .formatting import update_history
+from .locales import get_local_attrs
+from .locales import get_local_formatter
+from .options import OPTIONS
+from .units import convert_units_to
+from .units import units
 from xclim.core import datachecks
-from xclim.core.formatting import AttrFormatter
-from xclim.core.formatting import default_formatter
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import parse_doc
-from xclim.core.formatting import update_history
 from xclim.core.options import MISSING_METHODS
 from xclim.core.options import MISSING_OPTIONS
-from xclim.core.options import OPTIONS
-from xclim.core.units import convert_units_to
-from xclim.core.units import units
 from xclim.indices.generic import default_freq
-from xclim.locales import get_local_attrs
-from xclim.locales import get_local_formatter
 
 
 class Indicator:

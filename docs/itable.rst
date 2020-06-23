@@ -1,3 +1,4 @@
+:orphan:
 .. _table:
 
 Table of indicators

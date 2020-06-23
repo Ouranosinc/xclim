@@ -20,8 +20,25 @@ from .utils import get_correction
 from .utils import interp_on_quantiles
 from .utils import map_cdf
 from .utils import MULTIPLICATIVE
+from .utils import rank
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
+
+
+__all__ = [
+    "EmpiricalQuantileMapping",
+    "DetrendedQuantileMapping",
+    "QuantileDeltaMapping",
+    "Scaling",
+    "LOCI",
+]
+
+
+def _raise_on_multiple_chunk(da, main_dim):
+    if da.chunks is not None and len(da.chunks[da.get_axis_num(main_dim)]) > 1:
+        raise ValueError(
+            f"Multiple chunks along the main adjustment dimension {main_dim} is not supported."
+        )
 
 
 class BaseAdjustment(Parametrizable):
@@ -48,20 +65,25 @@ class BaseAdjustment(Parametrizable):
         """
         if self.__trained:
             warn("train() was already called, overwriting old results.")
-        if (
-            hasattr(self, "group")
-            and self.group.prop == "dayofyear"
-            and get_calendar(ref) != get_calendar(hist)
-        ):
-            warn(
-                (
-                    "Input ref and hist are defined on different calendars, "
-                    "this is not recommended when using 'dayofyear' grouping "
-                    "and could give strange results. See `xclim.core.calendar` "
-                    "for tools to convert your data to a common calendar."
-                ),
-                stacklevel=4,
-            )
+
+        if hasattr(self, "group"):
+            # Right now there is no other way of getting the main adjustment dimension
+            _raise_on_multiple_chunk(ref, self.group.dim)
+            _raise_on_multiple_chunk(hist, self.group.dim)
+
+            if self.group.prop == "dayofyear" and get_calendar(ref) != get_calendar(
+                hist
+            ):
+                warn(
+                    (
+                        "Input ref and hist are defined on different calendars, "
+                        "this is not recommended when using 'dayofyear' grouping "
+                        "and could give strange results. See `xclim.core.calendar` "
+                        "for tools to convert your data to a common calendar."
+                    ),
+                    stacklevel=4,
+                )
+
         self._train(ref, hist)
         self._hist_calendar = get_calendar(hist)
         self.__trained = True
@@ -73,26 +95,34 @@ class BaseAdjustment(Parametrizable):
         ----------
         sim : DataArray
           Time series to be bias-adjusted, usually a model output.
+        kwargs :
+          Algorithm-specific keyword arguments, see class doc.
         """
         if not self.__trained:
             raise ValueError("train() must be called before adjusting.")
-        if (
-            hasattr(self, "group")
-            and self.group.prop == "dayofyear"
-            and get_calendar(sim) != self._hist_calendar
-        ):
-            warn(
-                (
-                    "This adjustment was trained on a simulation with the "
-                    f"{self._hist_calendar} calendar but the sim input uses "
-                    f"{get_calendar(sim)}. This is not recommended with dayofyear "
-                    "grouping and could give strange results."
-                ),
-                stacklevel=4,
-            )
+
+        if hasattr(self, "group"):
+            # Right now there is no other way of getting the main adjustment dimension
+            _raise_on_multiple_chunk(sim, self.group.dim)
+
+            if (
+                self.group.prop == "dayofyear"
+                and get_calendar(sim) != self._hist_calendar
+            ):
+                warn(
+                    (
+                        "This adjustment was trained on a simulation with the "
+                        f"{self._hist_calendar} calendar but the sim input uses "
+                        f"{get_calendar(sim)}. This is not recommended with dayofyear "
+                        "grouping and could give strange results."
+                    ),
+                    stacklevel=4,
+                )
+
         scen = self._adjust(sim, **kwargs)
+        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         scen.attrs["history"] = update_history(
-            f"Bias-adjusted with method {str(self)}", sim
+            f"Bias-adjusted with {str(self)}.adjust(sim, {params})", sim
         )
         return scen
 
@@ -127,16 +157,21 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
     Parameters
     ----------
+    At instantiation:
+
     nquantiles : int
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
-    interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use then interpolating the adjustment factors.
-    extrapolation : {'constant', 'nan'}
-      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details.
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+
+    In adjustment:
+
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearset".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
     References
     ----------
@@ -149,16 +184,10 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         *,
         nquantiles: int = 20,
         kind: str = ADDITIVE,
-        interp: str = "nearest",
-        extrapolation: str = "constant",
         group: Union[str, Grouper] = "time",
     ):
         super().__init__(
-            nquantiles=nquantiles,
-            kind=kind,
-            interp=interp,
-            extrapolation=extrapolation,
-            group=group,
+            nquantiles=nquantiles, kind=kind, group=group,
         )
 
     def _train(self, ref, hist):
@@ -182,11 +211,9 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         )
         self._make_dataset(af=af, hist_q=hist_q)
 
-    def _adjust(self, sim):
-        af, hist_q = extrapolate_qm(
-            self.ds.af, self.ds.hist_q, method=self.extrapolation
-        )
-        af = interp_on_quantiles(sim, hist_q, af, group=self.group, method=self.interp)
+    def _adjust(self, sim, interp="nearest", extrapolation="constant"):
+        af, hist_q = extrapolate_qm(self.ds.af, self.ds.hist_q, method=extrapolation)
+        af = interp_on_quantiles(sim, hist_q, af, group=self.group, method=interp)
 
         return apply_correction(sim, af, self.kind)
 
@@ -197,9 +224,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     The algorithm follows these steps, 1-3 being the 'train' and 4-6, the 'adjust' steps.
 
     1. A scaling factor that would make the mean of `hist` match the mean of `ref` is computed.
-    2. `ref` and `hist` are normalized by removing the group-wise mean.
+    2. `ref` and `hist` are normalized by removing the "dayofyear" mean.
     3. Adjustment factors are computed between the quantiles of the normalized `ref` and `hist`.
-    4. `sim` is corrected by the scaling factor then detrended using a linear fit.
+    4. `sim` is corrected by the scaling factor, and either normalized by "dayofyear" and  detrended group-wise
+       or directly detrended per "dayofyear", using a linear fit (modifiable).
     5. Values of detrended `sim` are matched to the corresponding quantiles of normalized `hist` and corrected accordingly.
     6. The trend is put back on the result.
 
@@ -210,34 +238,111 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     where :math:`F` is the cumulative distribution function (CDF) and :math:`\overline{xyz}` is the linear trend of the data.
     This equation is valid for multiplicative adjustment. Based on the DQM method of [Cannon2015]_.
 
+    Parameters
+    ----------
+    At instantiation:
+
+    nquantiles : int
+      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
+    kind : {'+', '*'}
+      The adjustment kind, either additive or multiplicative.
+    group : Union[str, Grouper]
+      The grouping information used in the quantile mapping process. See :py:class:`xclim.sdba.base.Grouper` for details.
+      the normalization step is always performed on each day of the year.
+    norm_window : 1
+      The window size used in the normalization grouping. Defaults to 1.
+
+    In adjustment:
+
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
+    detrend : int or BaseDetrend instance
+      The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree. Defaults to 1 (linear detrending)
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+    normalize_sim : bool
+      If True, scaled sim is normalized by its "dayofyear" mean and then detrended using `group`.
+        The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
+      If False, scaled sim is detrended per "dayofyear".
+      This is useful on large datasets using dask, in which case "dayofyear" is a very small division,
+        because normalization is a more efficient operation than detrending for similarly sized groups.
+
     References
     ----------
     .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
+    @parse_group
+    def __init__(
+        self,
+        *,
+        nquantiles: int = 20,
+        kind: str = ADDITIVE,
+        group: Union[str, Grouper] = "time",
+        norm_window: int = 1,
+    ):
+        super().__init__(
+            nquantiles=nquantiles, kind=kind, group=group,
+        )
+        self["norm_group"] = Grouper("time.dayofyear", window=norm_window)
+
     def _train(self, ref, hist):
+        refn = normalize(ref, group=self.norm_group, kind=self.kind)
+        histn = normalize(hist, group=self.norm_group, kind=self.kind)
+        super()._train(refn, histn)
+
         mu_ref = self.group.apply("mean", ref)
         mu_hist = self.group.apply("mean", hist)
-        ref = normalize(ref, group=self.group, kind=self.kind)
-        hist = normalize(hist, group=self.group, kind=self.kind)
-        super()._train(ref, hist)
-
         self.ds["scaling"] = get_correction(mu_hist, mu_ref, kind=self.kind)
         self.ds.scaling.attrs.update(
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
 
-    def _adjust(self, sim, degree=0):
+    def _adjust(
+        self,
+        sim,
+        interp="nearest",
+        extrapolation="constant",
+        detrend=1,
+        normalize_sim=False,
+    ):
+
+        # Apply preliminary scaling from obs to hist
         sim = apply_correction(
             sim,
-            broadcast(self.ds.scaling, sim, group=self.group, interp=self.interp),
+            broadcast(self.ds.scaling, sim, group=self.group, interp=interp),
             self.kind,
         )
-        sim_fit = PolyDetrend(degree=degree, kind=self.kind).fit(sim)
+
+        if normalize_sim:
+            sim_norm = self.norm_group.apply("mean", sim)
+            sim = normalize(sim, group=self.norm_group, kind=self.kind, norm=sim_norm)
+
+        # Find trend on sim
+        if isinstance(detrend, int):
+            detrend = PolyDetrend(
+                degree=detrend,
+                kind=self.kind,
+                group=self.group if normalize_sim else self.norm_group,
+            )
+
+        sim_fit = detrend.fit(sim)
         sim_detrended = sim_fit.detrend(sim)
-        scen_detrended = super()._adjust(sim_detrended)
+
+        # Adjust using `EmpiricalQuantileMapping.adjust`
+        scen_detrended = super()._adjust(
+            sim_detrended, extrapolation=extrapolation, interp=interp
+        )
+        # Retrend
         scen = sim_fit.retrend(scen_detrended)
+
+        if normalize_sim:
+            return apply_correction(
+                scen,
+                broadcast(sim_norm, scen, group=self.norm_group, interp="nearest"),
+                self.kind,
+            )
         return scen
 
 
@@ -254,17 +359,35 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
     where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
     The algorithm is based on the "QDM" method of [Cannon2015]_.
 
+    Parameters
+    ----------
+    At instantiation:
+
+    nquantiles : int
+      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
+    kind : {'+', '*'}
+      The adjustment kind, either additive or multiplicative.
+    group : Union[str, Grouper]
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+
+    In adjustment:
+
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+
     References
     ----------
     .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
-    def _adjust(self, sim):
-        af, _ = extrapolate_qm(self.ds.af, self.ds.hist_q, method=self.extrapolation)
+    def _adjust(self, sim, interp="nearest", extrapolation="constant"):
+        af, _ = extrapolate_qm(self.ds.af, self.ds.hist_q, method=extrapolation)
 
-        sim_q = self.group.apply(xr.DataArray.rank, sim, main_only=True, pct=True)
+        sim_q = self.group.apply(rank, sim, main_only=True, pct=True)
         sel = {"quantiles": sim_q}
-        af = broadcast(af, sim, group=self.group, interp=self.interp, sel=sel)
+        af = broadcast(af, sim, group=self.group, interp=interp, sel=sel)
 
         return apply_correction(sim, af, self.kind)
 
@@ -295,12 +418,17 @@ class LOCI(BaseAdjustment):
 
     Parameters
     ----------
+    At instantiation:
+
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     thresh : float
       The threshold in `ref` above which the values are scaled.
+
+    In adjustment:
+
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use then interpolating the adjustment factors.
+      The interpolation method to use then interpolating the adjustment factors. Defaults to "linear".
 
     References
     ----------
@@ -308,14 +436,8 @@ class LOCI(BaseAdjustment):
     """
 
     @parse_group
-    def __init__(
-        self,
-        *,
-        group: Union[str, Grouper] = "time",
-        thresh: float = None,
-        interp: str = "linear",
-    ):
-        super().__init__(group=group, thresh=thresh, interp=interp)
+    def __init__(self, *, group: Union[str, Grouper] = "time", thresh: float = None):
+        super().__init__(group=group, thresh=thresh)
 
     def _train(self, ref, hist):
         s_thresh = map_cdf(hist, ref, self.thresh, group=self.group).isel(
@@ -335,9 +457,9 @@ class LOCI(BaseAdjustment):
         s_thresh.attrs.update(long_name="Threshold over modeled data")
         self._make_dataset(hist_thresh=s_thresh, ref_thresh=self.thresh, af=af)
 
-    def _adjust(self, sim):
-        sth = broadcast(self.ds.hist_thresh, sim, group=self.group, interp=self.interp)
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=self.interp)
+    def _adjust(self, sim, interp="linear"):
+        sth = broadcast(self.ds.hist_thresh, sim, group=self.group, interp=interp)
+        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
         with xr.set_options(keep_attrs=True):
             scen = (factor * (sim - sth) + self.ds.ref_thresh).clip(min=0)
         return scen
@@ -351,17 +473,22 @@ class Scaling(BaseAdjustment):
 
     Parameters
     ----------
+    At instantiation:
+
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
+
+    In adjustment:
+
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use then interpolating the adjustment factors.
+      The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
     """
 
     @parse_group
-    def __init__(self, *, group="time", kind=ADDITIVE, interp="nearest"):
-        super().__init__(group=group, kind=kind, interp=interp)
+    def __init__(self, *, group="time", kind=ADDITIVE):
+        super().__init__(group=group, kind=kind)
 
     def _train(self, ref, hist):
         mean_hist = self.group.apply("mean", hist)
@@ -370,6 +497,6 @@ class Scaling(BaseAdjustment):
         af.attrs.update(long_name="Scaling adjustment factors")
         self._make_dataset(af=af)
 
-    def _adjust(self, sim):
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=self.interp)
+    def _adjust(self, sim, interp="nearest"):
+        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
         return apply_correction(sim, factor, self.kind)

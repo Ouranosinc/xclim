@@ -1,10 +1,16 @@
+"""
+Data checks
+===========
+
+Utilities designed to check the validity of data inputs.
+"""
 import datetime as dt
 
 import numpy as np
 import pandas as pd
 
-from xclim.core.options import datacheck
-from xclim.core.utils import ValidationError
+from .options import datacheck
+from .utils import ValidationError
 
 
 @datacheck

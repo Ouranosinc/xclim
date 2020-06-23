@@ -1,14 +1,9 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index
 from xclim.indices import generic
 
-# from boltons.funcutils import FunctionBuilder
-# import calendar
 
 __all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
 
@@ -20,7 +15,7 @@ class Streamflow(Daily):
 
     @staticmethod
     def cfcheck(da):
-        check_valid(da, "standard_name", "streamflow")
+        check_valid(da, "standard_name", "discharge")
 
 
 class Stats(Streamflow):
@@ -35,7 +30,7 @@ class FA(Streamflow):
 # Disable the daily checks because the inputs are period extremas.
 class Fit(FA):
     @staticmethod
-    def cfprobe(da):
+    def cfcheck(da):
         pass
 
     @staticmethod

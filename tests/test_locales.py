@@ -6,10 +6,11 @@ import json
 import numpy as np
 import pytest
 
-import xclim.locales as xloc
+import xclim.core.locales as xloc
 from xclim import atmos
 from xclim.core.formatting import default_formatter
 from xclim.core.options import set_options
+from xclim.locales import generate_local_dict
 
 
 esperanto = (
@@ -57,7 +58,7 @@ def test_local_dict(tmp_path):
     assert loc == "eo"
     assert dic["atmos.tg_mean"]["long_name"] == "Meza ciutaga averaga temperaturo"
 
-    with (tmp_path / "ru.json").open("w") as f:
+    with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     loc, dic = xloc.get_local_dict(("ru", tmp_path / "ru.json"))
@@ -97,7 +98,7 @@ def test_local_attrs_sing(fill, isin, notin):
     ],
 )
 def test_local_attrs_multi(fill, isin, notin, tmp_path):
-    with (tmp_path / "ru.json").open("w") as f:
+    with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     attrs = xloc.get_local_attrs(
@@ -167,7 +168,7 @@ def test_xclim_translations(locale):
     "initeng,expected", [(False, ""), (True, atmos.tg_mean.long_name)]
 )
 def test_local_dict_generation(initeng, expected):
-    dic = xloc.generate_local_dict("tlh", init_english=initeng)
+    dic = generate_local_dict("tlh", init_english=initeng)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
     assert dic["atmos.tg_mean"]["long_name"] == expected

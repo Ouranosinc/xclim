@@ -1,14 +1,17 @@
 import numpy as np
 import pytest
+import xarray as xr
 from scipy.stats import norm
 from scipy.stats import uniform
 
 sdba = pytest.importorskip("xclim.sdba")  # noqa
+from xclim.sdba.adjustment import BaseAdjustment
 from xclim.sdba.adjustment import DetrendedQuantileMapping
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.adjustment import LOCI
 from xclim.sdba.adjustment import QuantileDeltaMapping
 from xclim.sdba.adjustment import Scaling
+from xclim.sdba.base import Grouper
 from xclim.sdba.utils import ADDITIVE
 from xclim.sdba.utils import apply_correction
 from xclim.sdba.utils import get_correction
@@ -40,7 +43,7 @@ class TestLoci:
         np.testing.assert_array_almost_equal(p, ref, dec)
 
         assert "history" in p.attrs
-        assert "Bias-adjusted with method" in p.attrs["history"]
+        assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
 
 class TestScaling:
@@ -108,11 +111,9 @@ class TestDQM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        DQM = DetrendedQuantileMapping(
-            kind=kind, group="time", nquantiles=50, interp="linear"
-        )
+        DQM = DetrendedQuantileMapping(kind=kind, group="time", nquantiles=50,)
         DQM.train(ref, hist)
-        p = DQM.adjust(sim)
+        p = DQM.adjust(sim, interp="linear")
 
         q = DQM.ds.quantiles
         ex = apply_correction(xd.ppf(q), invert(xd.mean(), kind), kind)
@@ -132,7 +133,7 @@ class TestDQM:
         sim2 = apply_correction(sim, ff, kind)
         ref2 = apply_correction(ref, ff, kind)
 
-        p2 = DQM.adjust(sim2)
+        p2 = DQM.adjust(sim2, interp="linear")
 
         np.testing.assert_array_almost_equal(p2[middle], ref2[middle], 1)
 
@@ -142,7 +143,7 @@ class TestDQM:
         )
         sim3 = apply_correction(sim, trend, kind)
         ref3 = apply_correction(ref, trend, kind)
-        p3 = DQM.adjust(sim3)
+        p3 = DQM.adjust(sim3, interp="linear")
         np.testing.assert_array_almost_equal(p3[middle], ref3[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
@@ -189,7 +190,7 @@ class TestDQM:
         if spatial_dims:
             mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_array_almost_equal(p, ref_t, 1)
+        np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon(self, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000)
@@ -224,11 +225,9 @@ class TestQDM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        QDM = QuantileDeltaMapping(
-            kind=kind, group="time", nquantiles=10, interp="linear"
-        )
+        QDM = QuantileDeltaMapping(kind=kind, group="time", nquantiles=10,)
         QDM.train(ref, hist)
-        p = QDM.adjust(sim)
+        p = QDM.adjust(sim, interp="linear")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -241,8 +240,12 @@ class TestQDM:
         middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
+    @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+    @pytest.mark.parametrize("add_dims", [True, False])
+    def test_mon_U(
+        self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask
+    ):
         """
         Train on
         hist: U
@@ -263,6 +266,15 @@ class TestQDM:
 
         # Test train
         hist = sim = series(x, name)
+        if use_dask:
+            sim = sim.chunk({"time": -1})
+        if add_dims:
+            hist = hist.expand_dims(site=[0, 1, 2, 3, 4])
+            sim = sim.expand_dims(site=[0, 1, 2, 3, 4])
+            sel = {"site": 0}
+        else:
+            sel = {}
+
         ref = mon_series(y, name)
 
         QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
@@ -275,10 +287,12 @@ class TestQDM:
         expected = apply_correction(
             mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
         )
-        np.testing.assert_array_almost_equal(QDM.ds.af.sel(quantiles=q), expected, 1)
+        np.testing.assert_array_almost_equal(
+            QDM.ds.af.sel(quantiles=q, **sel), expected, 1
+        )
 
         # Test predict
-        np.testing.assert_array_almost_equal(p, ref, 1)
+        np.testing.assert_array_almost_equal(p.isel(**sel), ref, 1)
 
     def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
@@ -326,11 +340,9 @@ class TestQM:
         # Test train
         hist = sim = series(x, name)
         ref = series(y, name)
-        QM = EmpiricalQuantileMapping(
-            kind=kind, group="time", nquantiles=50, interp="linear"
-        )
+        QM = EmpiricalQuantileMapping(kind=kind, group="time", nquantiles=50,)
         QM.train(ref, hist)
-        p = QM.adjust(sim)
+        p = QM.adjust(sim, interp="linear")
 
         q = QM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -376,3 +388,10 @@ class TestQM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, ref, 2)
+
+
+def test_raise_on_multiple_chunks(tas_series):
+    ref = tas_series(np.arange(730)).chunk({"time": 365})
+    Adj = BaseAdjustment(group=Grouper("time.month"))
+    with pytest.raises(ValueError):
+        Adj.train(ref, ref)

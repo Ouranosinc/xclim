@@ -19,8 +19,8 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
-from xclim.core.options import datacheck
-from xclim.core.utils import ValidationError
+from .options import datacheck
+from .utils import ValidationError
 
 
 __all__ = [
@@ -143,6 +143,9 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
     unit = unit.replace("%", "pct")
+    if unit == "1":
+        unit = ""
+
     try:  # Pint compatible
         return units.parse_expression(unit).units
     except (

@@ -10,6 +10,9 @@ from collections import defaultdict
 from functools import partial
 from types import FunctionType
 
+import dask.array as dsk
+import numpy as np
+import xarray as xr
 from boltons.funcutils import update_wrapper
 
 
@@ -23,7 +26,7 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
     suggested : dict
         Keyword arguments that should have new default values
         but still appear in the signature.
-    fixed : dict
+    fixed : kwargs
         Keyword arguments that should be fixed by the wrapped
         and removed from the signature.
 
@@ -82,3 +85,51 @@ class ValidationError(ValueError):
     @property
     def msg(self):
         return self.args[0]
+
+
+def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
+    """Ensure that the input dataarray has chunks of at least the given size.
+
+    If only one chunk is too small, it is merged with an adjacent chunk.
+    If many chunks are too small, they are grouped together by merging adjacent chunks.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      The input dataarray, with or without the dask backend. Does nothing when passed a non-dask array.
+    **minchunks : int
+      A kwarg mapping from dimension name to minimum chunk size.
+      Pass -1 to force a single chunk along that dimension.
+    """
+    if not isinstance(da.data, dsk.Array):
+        return da
+
+    all_chunks = dict(zip(da.dims, da.chunks))
+    chunking = {}
+    for dim, minchunk in minchunks.items():
+        chunks = all_chunks[dim]
+        if minchunk == -1 and len(chunks) > 1:
+            # Rechunk to single chunk only if it's not already one
+            chunking[dim] = -1
+
+        toosmall = np.array(chunks) < minchunk  # Chunks that are too small
+        if toosmall.sum() > 1:
+            # Many chunks are too small, merge them by groups
+            fac = np.ceil(minchunk / min(chunks)).astype(int)
+            chunking[dim] = tuple(
+                sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac)
+            )
+            # Reset counter is case the last chunks are still too small
+            chunks = chunking[dim]
+            toosmall = np.array(chunks) < minchunk
+        if toosmall.sum() == 1:
+            # Only one, merge it with adjacent chunk
+            ind = np.where(toosmall)[0][0]
+            new_chunks = list(chunks)
+            sml = new_chunks.pop(ind)
+            new_chunks[max(ind - 1, 0)] += sml
+            chunking[dim] = tuple(new_chunks)
+
+    if chunking:
+        return da.chunk(chunks=chunking)
+    return da

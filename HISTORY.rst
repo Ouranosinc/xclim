@@ -2,16 +2,29 @@
 History
 =======
 
-0.17.x
+0.18.x
 ------
+* Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
+* `xclim.sdba.detrending` objects can now act on groups.
+* Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
+* `xclim.core.locales` now supported in Windows build environments.
+* `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
+* Added indicator `first_day_below` and run length helper `first_run_after_date`.
+* Added ANUCLIM model climate indices mappings.
+* Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
+
+0.17.0 (2020-05-15)
+-------------------
+* Added support for operations on dimensionless variables (`units = '1'`).
+* Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
 * Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
 * New `xclim.set_options` context to control the missing checks, input validation and locales.
 * New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
 * Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
-* Add `at_least_n_valid` function, indentifying null calculations based on minimum threshold.
-* Add support for `freq=None` in missing calculations.
-* Fix outdated code examples in the docs and docstrings.
-* Run doctests as part of the test suite.
+* Added `at_least_n_valid` function, identifying null calculations based on minimum threshold.
+* Added support for `freq=None` in missing calculations.
+* Fixed outdated code examples in the docs and docstrings.
+* Doctests are now run as part of the test suite.
 
 0.16.0 (2020-04-23)
 -------------------

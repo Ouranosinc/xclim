@@ -4,6 +4,7 @@ from typing import Sequence
 from typing import Union
 from warnings import warn
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -13,7 +14,7 @@ from scipy.interpolate import interp1d
 from .base import Grouper
 from .base import parse_group
 from xclim.core.calendar import _interpolate_doy_calendar
-
+from xclim.core.utils import ensure_chunk_size
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -211,6 +212,7 @@ def broadcast(
                 warn(
                     "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
                 )
+
             grouped = grouped.interp(sel, method=interp)
 
         for var in sel.keys():
@@ -276,10 +278,7 @@ def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
         vals[-1] = vals[-2] + diff[-1]
         qmf = qmf.assign_coords({att: vals})
         qmf[att].attrs.update(da.coords[att].attrs)
-    if da.chunks is not None and len(da.chunks[da.get_axis_num(att)]) == 1:
-        # Downstream methos do not expect this method to change the number of chunks
-        return qmf.chunk({att: -1})
-    return qmf
+    return ensure_chunk_size(qmf, **{att: -1})
 
 
 def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"):
@@ -363,10 +362,7 @@ def add_endpoints(
         elems.append(y)
     l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
     out = xr.concat((l, da, r), dim=dim)
-    if da.chunks is not None and len(da.chunks[da.get_axis_num(dim)]) == 1:
-        # Downstream methos do not expect this method to change the number of chunks
-        return out.chunk({dim: -1})
-    return out
+    return ensure_chunk_size(out, **{dim: -1})
 
 
 @parse_group
@@ -460,5 +456,49 @@ def interp_on_quantiles(
         output_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.float],
+        output_dtypes=[yq.dtype],
+    )
+
+
+def rank(da, dim="time", pct=False):
+    """Ranks data.
+
+    Replicates `xr.DataArray.rank` but with support for dask-stored data. Xarray's docstring is below:
+
+    Equal values are assigned a rank that is the average of the ranks that
+    would have been otherwise assigned to all of the values within that
+    set.  Ranks begin at 1, not 0. If pct, computes percentage ranks.
+
+    NaNs in the input array are returned as NaNs.
+
+    The `bottleneck` library is required.
+
+    Parameters
+    ----------
+    dim : hashable
+        Dimension over which to compute rank.
+    pct : bool, optional
+        If True, compute percentage ranks, otherwise compute integer ranks.
+
+    Returns
+    -------
+    ranked : DataArray
+        DataArray with the same coordinates and dtype 'float64'.
+    """
+
+    def _nanrank(data):
+        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
+        ranked = func(data, axis=-1)
+        if pct:
+            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
+            ranked /= count
+        return ranked
+
+    return xr.apply_ufunc(
+        _nanrank,
+        da,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        dask="parallelized",
+        output_dtypes=[da.dtype],
     )

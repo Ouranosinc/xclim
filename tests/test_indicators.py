@@ -97,25 +97,25 @@ def test_temp_unit_conversion(tas_series):
 
 
 def test_missing(tas_series):
-    a = tas_series(np.ones(360, float))
+    a = tas_series(np.ones(360, float), start="1/1/2000")
     ind = UniIndTemp()
     clim = UniClim()
 
     # Null value
     a[5] = np.nan
 
-    out = ind(a, freq="MS")
-    assert out[0].isnull()
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
 
     # With freq=None
-    out = clim(a)
-    assert out.isnull()
+    c = clim(a)
+    assert c.isnull()
 
     # With indexer
-    out = clim(a, month=[1])
-    assert not out.isnull()
+    ci = clim(a, month=[2])
+    assert not ci.isnull()
 
-    out = clim(a, month=[7])
+    out = clim(a, month=[1])
     assert out.isnull()
 
 
