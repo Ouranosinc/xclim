@@ -247,7 +247,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative.
     group : Union[str, Grouper]
-      The grouping information use in the quantile mappgin process. See :py:class:`xclim.sdba.base.Grouper` for details.
+      The grouping information used in the quantile mapping process. See :py:class:`xclim.sdba.base.Grouper` for details.
       the normalization step is always performed on each day of the year.
     norm_window : 1
       The window size used in the normalization grouping. Defaults to 1.
