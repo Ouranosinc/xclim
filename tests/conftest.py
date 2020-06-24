@@ -168,7 +168,7 @@ def per_doy():
 
 
 @pytest.fixture
-def areacello():
+def areacella():
     """Return a rectangular grid of grid cell area. """
     r = 6100000
     lon_bnds = np.arange(-180, 181, 1)
@@ -188,8 +188,11 @@ def areacello():
         data=area,
         dims=("lat", "lon"),
         coords={"lon": lon, "lat": lat},
-        attrs={"r": r, "units": "m^2", "standard_name": "areacello"},
+        attrs={"r": r, "units": "m^2"},
     )
+
+
+areacello = areacella
 
 
 @pytest.fixture

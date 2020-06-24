@@ -1,3 +1,17 @@
+"""
+Missing values identification
+=============================
+
+Algorithms identifying missing values using different criteria:
+
+- missing_any: A result is missing if any input value is missing.
+- missing_wmo: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
+- missing_pct: A result is missing if more than a given fraction of values are missing.
+- at_least_n_valid: A result is missing if less than a given number of valid values are present.
+
+New missing value algorithms should subclass :class:`MissingBase`, see instructions in docstring.
+
+"""
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -8,6 +22,15 @@ from xclim.core.options import MISSING_OPTIONS
 from xclim.core.options import OPTIONS
 from xclim.core.options import register_missing_method
 from xclim.indices import generic
+
+__all__ = [
+    "missing_wmo",
+    "missing_any",
+    "missing_pct",
+    "at_least_n_valid",
+    "missing_from_context",
+    "register_missing_method",
+]
 
 
 class MissingBase:
@@ -353,7 +376,7 @@ def at_least_n_valid(da, freq, n=1, **indexer):
 
 
 def missing_from_context(da, freq, **indexer):
-    return FromContext.execute(da, freq, indexer=indexer)
+    return FromContext.execute(da, freq, options={}, indexer=indexer)
 
 
 missing_any.__doc__ = MissingAny.__doc__
