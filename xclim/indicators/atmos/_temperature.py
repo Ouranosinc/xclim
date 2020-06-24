@@ -3,7 +3,6 @@ import abc
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.indicator import Daily2D
 from xclim.core.units import check_units
@@ -63,32 +62,32 @@ class Tas(Daily):
 
     @staticmethod
     def cfcheck(tas):
-        check_valid(tas, "cell_methods", "*time: mean within days*")
-        check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
 class Tasmin(Tas):
     """Class for univariate indices using min daily temperature as the input."""
 
     def cfcheck(self, tasmin):
-        check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        check_valid(tasmin, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
+        cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
 
 
 class Tasmax(Tas):
     """Class for univariate indices using max daily temperature as the input."""
 
     def cfcheck(self, tasmax):
-        check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        check_valid(tasmax, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
+        cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
 
 
 class TasminTasmax(Daily2D):
-    def cfcheck(self, tasmax, tasmin):
+    def cfcheck(self, tasmin, tasmax):
         for da in (tasmin, tasmax):
-            check_valid(da, "standard_name", "air_temperature")
-        check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        check_valid(tasmax, "cell_methods", "*time: maximum within days*")
+            cfchecks.check_valid(da, "standard_name", "air_temperature")
+        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
+        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
         check_units(tasmax, tasmin.attrs["units"])
 
 

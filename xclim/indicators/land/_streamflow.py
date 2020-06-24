@@ -15,7 +15,7 @@ class Streamflow(Daily):
 
     @staticmethod
     def cfcheck(da):
-        check_valid(da, "standard_name", "discharge")
+        check_valid(da, "standard_name", "water_volume_transport_in_river_channel")
 
 
 class Stats(Streamflow):

@@ -19,7 +19,7 @@ class SicArea(Indicator2D):
     @staticmethod
     def cfcheck(sic, area):
         cfchecks.check_valid(sic, "standard_name", "sea_ice_area_fraction")
-        cfchecks.check_valid(area, "standard_name", "areacello")
+        cfchecks.check_valid(area, "standard_name", "cell_area")
 
 
 sea_ice_extent = SicArea(

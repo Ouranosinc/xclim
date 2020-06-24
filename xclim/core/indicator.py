@@ -7,14 +7,14 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-The `Indicator` class is not meant to be used directly, but should rather be subclassed for each individual `compute`
-function. To ease the creation of these subclasses, simply calling `Indicator` will create a new subclass with call
-arguments assigned to the new subclass instead of the instance. An instance is then created from this new subclass.
+The `Indicator` class is not meant to be used directly, but should rather be subclassed. For example,
+a `Daily` subclass is created for indicators operating on daily input data. To create an indicator from one of the
+indices function, simply call `Daily(identifier=<identifier>, compute=<compute_function>). This will first create a
+`Daily` subclass called `IDENTIFIER`, then return an instance of this subclass.
 
 The key ingredients to create a new indicator are the `identifier`, the `compute` function, the name of the missing
 value algorithm, and the `datacheck` and `cfcheck` functions, which respectively assess the validity of data and
 metadata. The `indicators` module contains over 50 examples of indicators to draw inspiration from.
-
 
 Subclass registries
 -------------------
@@ -45,7 +45,6 @@ from typing import Union
 import numpy as np
 from boltons.funcutils import wraps
 
-from .datachecks import check_daily
 from .formatting import AttrFormatter
 from .formatting import default_formatter
 from .formatting import merge_attributes
