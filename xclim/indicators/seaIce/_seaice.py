@@ -31,7 +31,7 @@ class SicArea(Indicator2D):
 
 sea_ice_extent = SicArea(
     identifier="sea_ice_extent",
-    units="m^2",
+    units="m2",
     standard_name="sea_ice_extent",
     long_name="Sea ice extent",
     description="The sum of ocean areas where sea ice concentration is at least {thresh}.",
@@ -42,7 +42,7 @@ sea_ice_extent = SicArea(
 
 sea_ice_area = SicArea(
     identifier="sea_ice_area",
-    units="m^2",
+    units="m2",
     standard_name="sea_ice_area",
     long_name="Sea ice area",
     description="The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
