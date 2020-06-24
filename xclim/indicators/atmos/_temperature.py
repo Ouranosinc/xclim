@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-import abc
-
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily
@@ -66,7 +63,7 @@ class Tas(Daily):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
-class Tasmin(Tas):
+class Tasmin(Daily):
     """Class for univariate indices using min daily temperature as the input."""
 
     def cfcheck(self, tasmin):
@@ -74,7 +71,7 @@ class Tasmin(Tas):
         cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
 
 
-class Tasmax(Tas):
+class Tasmax(Daily):
     """Class for univariate indices using max daily temperature as the input."""
 
     def cfcheck(self, tasmax):
@@ -181,6 +178,7 @@ heat_wave_index = Tasmax(
     cell_methods="",
     compute=indices.heat_wave_index,
 )
+
 
 hot_spell_frequency = Tasmax(
     identifier="hot_spell_frequency",
