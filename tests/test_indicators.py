@@ -85,6 +85,11 @@ def test_attrs(tas_series):
     assert "I2D" in IndicatorNew.registry
 
 
+def test_module():
+    """Translations are keyed according to the module where the indicators are defined."""
+    assert atmos.tg_mean.__module__.split('.')[2] == "atmos"
+
+
 def test_temp_unit_conversion(tas_series):
     a = tas_series(np.arange(360.0))
     ind = UniIndTemp()
