@@ -176,11 +176,17 @@ class Indicator:
         }
         attrs.update(kwds)
 
-        # Create new class object and add it to registry
+        # Create new class object
         new = type(identifier.upper(), (cls,), attrs)
+
+        # Set the module to the base class' module. Otherwise all indicators will have module `xclim.core.indicator`.
+        new.__module__ = cls.__module__
+
+        #  Add the created class to the registry
         cls.register(new)
 
-        return super(Indicator, cls).__new__(new)
+        # This will create an instance from the new class and call __init__.
+        return super().__new__(new)
 
     @classmethod
     def register(cls, obj):
