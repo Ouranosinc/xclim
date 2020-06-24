@@ -7,32 +7,32 @@ from xclim.indices import sea_ice_extent
 
 
 class TestSeaIceExtent:
-    def values(self, areacella):
-        s = xr.ones_like(areacella)
+    def values(self, areacello):
+        s = xr.ones_like(areacello)
         s = s.where(s.lat > 0, 10)
         s = s.where(s.lat <= 0, 50)
         sic = xr.concat([s, s], dim="time")
         sic.attrs["units"] = "%"
         sic.attrs["standard_name"] = "sea_ice_area_fraction"
 
-        return areacella, sic
+        return areacello, sic
 
-    def test_simple(self, areacella):
-        area, sic = self.values(areacella)
+    def test_simple(self, areacello):
+        area, sic = self.values(areacello)
 
         a = sea_ice_extent(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
         assert a.units == "m^2"
 
-    def test_indicator(self, areacella):
-        area, sic = self.values(areacella)
+    def test_indicator(self, areacello):
+        area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_extent(sic, area)
         assert a.units == "m^2"
 
-    def test_dimensionless(self, areacella):
-        area, sic = self.values(areacella)
+    def test_dimensionless(self, areacello):
+        area, sic = self.values(areacello)
         sic = sic / 100
         sic.attrs["units"] = ""
 
@@ -41,8 +41,8 @@ class TestSeaIceExtent:
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
         assert a.units == "m^2"
 
-    def test_area_units(self, areacella):
-        area, sic = self.values(areacella)
+    def test_area_units(self, areacello):
+        area, sic = self.values(areacello)
 
         # Convert area to km^2
         area /= 1e6
@@ -56,22 +56,22 @@ class TestSeaIceExtent:
 
 
 class TestSeaIceArea(TestSeaIceExtent):
-    def test_simple(self, areacella):
-        area, sic = self.values(areacella)
+    def test_simple(self, areacello):
+        area, sic = self.values(areacello)
 
         a = sea_ice_area(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
         assert a.units == "m^2"
 
-    def test_indicator(self, areacella):
-        area, sic = self.values(areacella)
+    def test_indicator(self, areacello):
+        area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_area(sic, area)
         assert a.units == "m^2"
 
-    def test_dimensionless(self, areacella):
-        area, sic = self.values(areacella)
+    def test_dimensionless(self, areacello):
+        area, sic = self.values(areacello)
         sic /= 100
         sic.attrs["units"] = ""
 
@@ -80,8 +80,8 @@ class TestSeaIceArea(TestSeaIceExtent):
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
         assert a.units == "m^2"
 
-    def test_area_units(self, areacella):
-        area, sic = self.values(areacella)
+    def test_area_units(self, areacello):
+        area, sic = self.values(areacello)
 
         # Convert area to km^2
         area /= 1e6

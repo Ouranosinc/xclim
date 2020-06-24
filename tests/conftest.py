@@ -192,6 +192,9 @@ def areacella():
     )
 
 
+areacello = areacella
+
+
 @pytest.fixture
 def rh_series():
     def _rh_series(values, start="7/1/2000"):

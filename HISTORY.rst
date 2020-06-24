@@ -11,6 +11,7 @@ History
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
 * Added indicator `first_day_below` and run length helper `first_run_after_date`.
 * Added ANUCLIM model climate indices mappings.
+* Renamed `areacella` to `areacello` in sea ice tests.
 * Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
 * Added `FromContext` subclass of `MissingBase` to have a uniform API for missing value operations.
 
