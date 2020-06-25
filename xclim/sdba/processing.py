@@ -215,4 +215,6 @@ def normalize(
     if norm is None:
         return group.apply(_normalize_group, x)
 
-    return apply_correction(x, broadcast(norm, x, group=group, interp="nearest"), kind,)
+    return apply_correction(
+        x, broadcast(invert(norm, kind), x, group=group, interp="nearest"), kind,
+    )
