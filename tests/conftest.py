@@ -188,7 +188,7 @@ def areacella():
         data=area,
         dims=("lat", "lon"),
         coords={"lon": lon, "lat": lat},
-        attrs={"r": r, "units": "m^2"},
+        attrs={"r": r, "units": "m2"},
     )
 
 
