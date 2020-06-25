@@ -23,13 +23,13 @@ class TestSeaIceExtent:
         a = sea_ice_extent(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_indicator(self, areacello):
         area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_extent(sic, area)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_dimensionless(self, areacello):
         area, sic = self.values(areacello)
@@ -39,7 +39,7 @@ class TestSeaIceExtent:
         a = sea_ice_extent(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_area_units(self, areacello):
         area, sic = self.values(areacello)
@@ -62,13 +62,13 @@ class TestSeaIceArea(TestSeaIceExtent):
         a = sea_ice_area(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_indicator(self, areacello):
         area, sic = self.values(areacello)
 
         a = seaIce.sea_ice_area(sic, area)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_dimensionless(self, areacello):
         area, sic = self.values(areacello)
@@ -78,7 +78,7 @@ class TestSeaIceArea(TestSeaIceExtent):
         a = sea_ice_area(sic, area)
         expected = 4 * np.pi * area.r ** 2 / 2.0 / 2.0
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
-        assert a.units == "m^2"
+        assert a.units == "m2"
 
     def test_area_units(self, areacello):
         area, sic = self.values(areacello)
