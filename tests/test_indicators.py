@@ -14,6 +14,7 @@ from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
 from xclim.core.indicator import Indicator
+from xclim.core.indicator import registry
 from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
@@ -69,20 +70,22 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
-    assert "TMIN" in Indicator.registry
+    assert "TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
-    class Test123(Indicator.registry["TMIN"]):
+    class Test123(registry["TMIN"]):
         identifier = "test123"
 
-    assert "TEST123" not in Indicator.registry
+    assert "TEST123" not in registry
+    Test123()
+    assert "TEST123" in registry
 
     # Confirm registries live in subclasses.
     class IndicatorNew(Indicator):
         _nvar = 2
 
     IndicatorNew(identifier="i2d")
-    assert "I2D" in IndicatorNew.registry
+    assert "I2D" in registry
 
 
 def test_module():

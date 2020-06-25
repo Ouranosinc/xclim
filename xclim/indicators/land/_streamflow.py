@@ -14,8 +14,8 @@ class Streamflow(Daily):
     standard_name = "discharge"
 
     @staticmethod
-    def cfcheck(da):
-        check_valid(da, "standard_name", "water_volume_transport_in_river_channel")
+    def cfcheck(q):
+        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
 class Stats(Streamflow):
@@ -30,11 +30,11 @@ class FA(Streamflow):
 # Disable the daily checks because the inputs are period extremas.
 class Fit(FA):
     @staticmethod
-    def cfcheck(da):
+    def cfcheck(**das):
         pass
 
     @staticmethod
-    def datacheck(*das):
+    def datacheck(**das):
         pass
 
 

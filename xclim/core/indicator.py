@@ -7,32 +7,57 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-The `Indicator` class is not meant to be used directly, but should rather be subclassed. For example,
-a `Daily` subclass is created for indicators operating on daily input data. To create an indicator from one of the
-indices function, simply call `Daily(identifier=<identifier>, compute=<compute_function>). This will first create a
-`Daily` subclass called `IDENTIFIER`, then return an instance of this subclass.
+
+Defining new indicators
+=======================
 
 The key ingredients to create a new indicator are the `identifier`, the `compute` function, the name of the missing
 value algorithm, and the `datacheck` and `cfcheck` functions, which respectively assess the validity of data and
 metadata. The `indicators` module contains over 50 examples of indicators to draw inspiration from.
 
+New indicators can be created using standard Python subclasses::
+
+    class NewIndicator(xclim.core.indicator.Indicator):
+        identifier = "new_indicator"
+        missing = "any"
+
+        @staticmethod
+        def compute(tas):
+            return tas.mean(dim="time")
+
+        @staticmethod
+        def cfcheck(tas):
+            xclim.core.cfchecks.check_valid(tas, "standard_name", "air_temperature")
+
+        @staticmethod
+        def datacheck(tas):
+            xclim.core.datachecks.check_daily(tas)
+
+Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
+
+    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, units="K")
+
+Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance.
+
+One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
+are common to indicators, then call this subclass with the custom attributes. See for example in
+`xclim.indicators.atmos` how indicators based on daily mean temperatures are created from the :class:`Tas` subclass
+of the :class:`Daily` subclass.
+
+
 Subclass registries
 -------------------
-`Indicator` subclasses created by instantiation are registered in the `Indicator.registry` attribute:
+All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
+example::
 
-  >>> my_indicator = Indicator(identifier="my_new_index", compute=lambda x: x.mean())
-  >>> assert "MY_INDICATOR" in Indicator.registry
+  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())
+  >>> assert "MY_INDICATOR" in xclim.core.indicator.registry
 
-Ordinary subclasses can also be created, so for example, an Indicator expecting daily input data is defined as
+This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
+a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
 
-  >>> class Daily(Indicator):
-  ...     @staticmethod
-  ...     def datacheck(*das):
-  ...         for da in das:
-  ...             xclim.core.datachecks.check_daily(da)
+  >>> tg_mean_c = xclim.core.indicator.registry["TG_MEAN"](identifier="tg_mean_c", units="C")
 
-And while `Daily` will not appear in `Indicator.registry`, new indicators instantiated from `Daily` will appear in
-`Daily.registry`.
 """
 import re
 import warnings
@@ -59,6 +84,9 @@ from xclim.core import datachecks
 from xclim.core.options import MISSING_METHODS
 from xclim.core.options import MISSING_OPTIONS
 from xclim.indices.generic import default_freq
+
+# Indicators registry
+registry = {}
 
 
 class Indicator:
@@ -153,9 +181,6 @@ class Indicator:
     comment = ""
     notes = ""
 
-    # Subclass registry
-    registry = {}
-
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
         identifier = kwds.get("identifier", getattr(cls, "identifier"))
@@ -192,9 +217,9 @@ class Indicator:
     def register(cls, obj):
         """Add subclass to registry."""
         name = obj.__name__
-        if name in cls.registry:
+        if name in registry:
             warnings.warn(f"Class {name} already exists and will be overwritten.")
-        cls.registry[name] = obj
+        registry[name] = obj
 
     def __init__(self, **kwds):
         """Run checks and assign default values.
@@ -233,7 +258,7 @@ class Indicator:
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
-        # Assume the first arguments are always the DataArray.
+        # Assume the first arguments are always the DataArrays.
         das = OrderedDict()
         for i in range(self._nvar):
             das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
@@ -242,9 +267,9 @@ class Indicator:
         attrs = self.update_attrs(ba, das)
         vname = attrs.pop("var_name")
 
-        # Pre-computation validation checks
-        self.datacheck(*das.values())
-        self.cfcheck(*das.values())
+        # Pre-computation validation checks on DataArray arguments
+        self.bind_call(self.datacheck, **das)
+        self.bind_call(self.cfcheck, **das)
 
         # Compute the indicator values, ignoring NaNs and missing values.
         out = self.compute(**das, **ba.kwargs)
@@ -259,6 +284,38 @@ class Indicator:
         mask = self.mask(*das.values(), **ba.arguments)
 
         return out.where(~mask).rename(vname)
+
+    def bind_call(self, func, **das):
+        """Call function using `__call__` `DataArray` arguments.
+
+        This will try to bind keyword arguments to `func` arguments. If this fails, `func` is called with positional
+        arguments only.
+
+        Notes
+        -----
+        This method is used to support two main use cases.
+
+        In use case #1, we have two compute functions with arguments in a different order:
+            `func1(tasmin, tasmax)` and `func2(tasmax, tasmin)`
+
+        In use case #2, we have two compute functions with arguments that have different names:
+            `generic_func(da)` and `custom_func(tas)`
+
+        For each case, we want to define a single `cfcheck` and `datacheck` methods that will work with both compute
+        functions.
+
+        Passing a dictionary of arguments will solve #1, but not #2.
+        """
+
+        # First try to bind arguments to function.
+        try:
+            ba = signature(func).bind(**das)
+        except TypeError:
+            # If this fails, simply call the function using positional arguments
+            return func(*das.values())
+        else:
+            # Call the func using bound arguments
+            return func(*ba.args, **ba.kwargs)
 
     def update_attrs(self, ba, das):
         """Format attributes with the run-time values of `compute` call parameters.
@@ -456,7 +513,7 @@ class Indicator:
         raise NotImplementedError
 
     @staticmethod
-    def cfcheck(*das):
+    def cfcheck(**das):
         """Compare metadata attributes to CF-Convention standards.
 
         When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
@@ -464,7 +521,7 @@ class Indicator:
         return True
 
     @staticmethod
-    def datacheck(*das):
+    def datacheck(**das):
         """Verify that input data is valid.
 
          When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
@@ -484,8 +541,8 @@ class Indicator2D(Indicator):
 
 class Daily(Indicator):
     @staticmethod
-    def datacheck(*das):
-        for da in das:
+    def datacheck(**das):
+        for key, da in das.items():
             datachecks.check_daily(da)
 
 
