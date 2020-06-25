@@ -2,6 +2,12 @@
 History
 =======
 
+0.19.x
+------
+* Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
+  method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
+  the fly and stores it in a registry, allowing users to subclass existing indicators easily.
+
 0.18.x
 ------
 * Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
