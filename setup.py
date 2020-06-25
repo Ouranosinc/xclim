@@ -59,7 +59,6 @@ docs_requirements = [
     "jupyter_client",
     "matplotlib",
     "distributed>=2.0",
-    "https://github.com/pydata/xarray.git#egg=xarray",
 ]
 
 dev_requirements = []
