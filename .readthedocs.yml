@@ -3,8 +3,9 @@ build:
 
 python:
   version: 3.6
-  pip_install: true
-  extra_requirements:
+  install:
+    method: pip
+    extra_requirements:
       - docs
 
 formats:

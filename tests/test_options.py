@@ -42,6 +42,7 @@ def test_set_options_valid(option, value):
         ("metadata_locales", ["tlh"]),
         ("metadata_locales", [("tlh", "not/a/real/klingo/file.json")]),
         ("data_validation", True),
+        ("check_missing", "from_context"),
         ("cf_compliance", False),
         ("missing_options", {"pct": {"nm": 45}}),
         ("missing_options", {"wmo": {"nm": 45, "nc": 3}}),
