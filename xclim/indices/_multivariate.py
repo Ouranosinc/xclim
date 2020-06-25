@@ -163,8 +163,8 @@ def cold_and_dry_days(
     thresh_tasmin="[temperature]",
 )
 def daily_freezethaw_cycles(
-    tasmax: xarray.DataArray,
     tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
     thresh_tasmax: str = "UNSET 0 degC",
     thresh_tasmin: str = "UNSET 0 degC",
     freq: str = "YS",
@@ -175,10 +175,10 @@ def daily_freezethaw_cycles(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    tasmax : xarray.DataArray
+      Maximum daily temperature [℃] or [K
     thresh_tasmax : str
       The temperature threshold needed to trigger a thaw event [℃] or [K]. Default : '0 degC'
     thresh_tasmin : str
@@ -219,17 +219,19 @@ def daily_freezethaw_cycles(
 
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
-def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArray:
+def daily_temperature_range(
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Mean of daily temperature range.
 
     The mean difference between the daily maximum temperature and the daily minimum temperature.
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    tasmax : xarray.DataArray
+      Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -256,7 +258,7 @@ def daily_temperature_range(tasmax, tasmin, freq: str = "YS") -> xarray.DataArra
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range_variability(
-    tasmax: xarray.DataArray, tasmin: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Mean absolute day-to-day variation in daily temperature range.
 
@@ -264,10 +266,10 @@ def daily_temperature_range_variability(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    tasmax : xarray.DataArray
+      Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -295,7 +297,7 @@ def daily_temperature_range_variability(
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def extreme_temperature_range(
-    tasmax: xarray.DataArray, tasmin: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Extreme intra-period temperature range.
 
@@ -303,10 +305,10 @@ def extreme_temperature_range(
 
     Parameters
     ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
     tasmin : xarray.DataArray
       Minimum daily temperature values [℃] or [K]
+    tasmax : xarray.DataArray
+      Maximum daily temperature values [℃] or [K]
     freq : Optional[str[
       Resampling frequency; Defaults to "YS".
 

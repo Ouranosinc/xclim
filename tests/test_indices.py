@@ -208,7 +208,7 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(mx, mn, freq="M")
+        out = xci.daily_freezethaw_cycles(mn, mx, freq="M")
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 
@@ -227,7 +227,7 @@ class TestDailyFreezeThawCycles:
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
         out = xci.daily_freezethaw_cycles(
-            mx, mn, thresh_tasmax="0 degC", thresh_tasmin="0 degC", freq="M"
+            mn, mx, thresh_tasmax="0 degC", thresh_tasmin="0 degC", freq="M"
         )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -866,75 +866,75 @@ class TestTxMax:
 
 class TestTgMaxTgMinIndices:
     @staticmethod
-    def random_tmax_tmin_setup(length, tasmax_series, tasmin_series):
+    def random_tmin_tmax_setup(length, tasmax_series, tasmin_series):
         max_values = np.random.uniform(-20, 40, length)
         min_values = []
         for i in range(length):
             min_values.append(np.random.uniform(-40, max_values[i]))
         tasmax = tasmax_series(np.add(max_values, K2C))
         tasmin = tasmin_series(np.add(min_values, K2C))
-        return tasmax, tasmin
+        return tasmin, tasmax
 
     @staticmethod
-    def static_tmax_tmin_setup(tasmax_series, tasmin_series):
+    def static_tmin_tmax_setup(tasmin_series, tasmax_series):
         max_values = np.add([22, 10, 35.2, 25.1, 18.9, 12, 16], K2C)
         min_values = np.add([17, 3.5, 22.7, 16, 12.4, 7, 12], K2C)
         tasmax = tasmax_series(max_values)
         tasmin = tasmin_series(min_values)
-        return tasmax, tasmin
+        return tasmin, tasmax
 
     # def test_random_daily_temperature_range(self, tasmax_series, tasmin_series):
     #     days = 365
-    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
-    #     dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+    #     tasmin, tasmax = self.random_tmin_tmax_setup(days, tasmin_series, tasmax_series)
+    #     dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS")
     #
     #     np.testing.assert_array_less(-dtr, [0, 0])
     #     np.testing.assert_allclose([dtr.mean()], [20], atol=10)
 
-    def test_static_daily_temperature_range(self, tasmax_series, tasmin_series):
-        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
-        dtr = xci.daily_temperature_range(tasmax, tasmin, freq="YS")
+    def test_static_daily_temperature_range(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS")
         assert dtr.units == "K"
         output = np.mean(tasmax - tasmin)
 
         np.testing.assert_equal(dtr, output)
 
-    # def test_random_variable_daily_temperature_range(self, tasmax_series, tasmin_series):
+    # def test_random_variable_daily_temperature_range(self, tasmin_series, tasmax_series):
     #     days = 1095
-    #     tasmax, tasmin = self.random_tmax_tmin_setup(days, tasmax_series, tasmin_series)
-    #     vdtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
+    #     tasmin, tasmax = self.random_tmin_tmax_setup(days, tasmin_series, tasmax_series)
+    #     vdtr = xci.daily_temperature_range_variability(tasmin, tasmax, freq="YS")
     #
     #     np.testing.assert_allclose(vdtr.mean(), 20, atol=10)
     #     np.testing.assert_array_less(-vdtr, [0, 0, 0, 0])
 
     def test_static_variable_daily_temperature_range(
-        self, tasmax_series, tasmin_series
+        self, tasmin_series, tasmax_series
     ):
-        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
-        dtr = xci.daily_temperature_range_variability(tasmax, tasmin, freq="YS")
+        tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = xci.daily_temperature_range_variability(tasmin, tasmax, freq="YS")
 
         np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
 
-    def test_static_extreme_temperature_range(self, tasmax_series, tasmin_series):
-        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
-        etr = xci.extreme_temperature_range(tasmax, tasmin)
+    def test_static_extreme_temperature_range(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        etr = xci.extreme_temperature_range(tasmin, tasmax)
 
         np.testing.assert_array_almost_equal(etr, 31.7)
 
-    def test_uniform_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
+    def test_uniform_freeze_thaw_cycles(self, tasmin_series, tasmax_series):
         temp_values = np.zeros(365)
         tasmax, tasmin = (
             tasmax_series(temp_values + 5 + K2C),
             tasmin_series(temp_values - 5 + K2C),
         )
-        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
 
         np.testing.assert_array_equal([np.sum(ft)], [365])
 
-    def test_static_freeze_thaw_cycles(self, tasmax_series, tasmin_series):
-        tasmax, tasmin = self.static_tmax_tmin_setup(tasmax_series, tasmin_series)
+    def test_static_freeze_thaw_cycles(self, tasmin_series, tasmax_series):
+        tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         tasmin -= 15
-        ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
 
         np.testing.assert_array_equal([np.sum(ft)], [4])
 
@@ -943,8 +943,8 @@ class TestTgMaxTgMinIndices:
     #     runs = np.array([])
     #     for i in range(10):
     #         temp_values = np.random.uniform(-30, 30, 365)
-    #         tasmax, tasmin = self.tmax_tmin_time_series(temp_values + K2C)
-    #         ft = xci.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+    #         tasmin, tasmax = self.tmin_tmax_time_series(temp_values + K2C)
+    #         ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
     #         runs = np.append(runs, ft)
     #
     #     np.testing.assert_allclose(np.mean(runs), 120, atol=20)
@@ -1264,7 +1264,7 @@ class TestIsothermality:
         tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
             time=slice("2001", "2002")
         )
-        return tasmax, tasmin
+        return tasmin, tasmax
 
     @pytest.mark.parametrize(
         "freq,expected",
@@ -1275,7 +1275,7 @@ class TestIsothermality:
         ],
     )
     def test_simple(self, tasmax_series, tasmin_series, freq, expected):
-        tasmax, tasmin = self.get_data(tasmin_series, tasmax_series)
+        tasmin, tasmax = self.get_data(tasmin_series, tasmax_series)
 
         # weekly
         tmin = tasmin.resample(time=freq).mean(dim="time", keep_attrs=True)
