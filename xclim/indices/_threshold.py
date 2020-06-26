@@ -1,6 +1,3 @@
-import datetime
-
-import numpy as np
 import xarray
 
 from . import run_length as rl
@@ -9,8 +6,6 @@ from xclim.core.units import convert_units_to
 from xclim.core.units import declare_units
 from xclim.core.units import pint_multiply
 from xclim.core.units import units
-
-xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
