@@ -15,6 +15,8 @@
 import os
 import sys
 
+import xarray as xr
+
 import xclim
 
 # If extensions (or modules to document with autodoc) are in another
@@ -24,6 +26,10 @@ import xclim
 #
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
+
+# Hack to be able to parse sdba
+# sdba.__init__ fails if xarray doesn't have polyval as a test for the version.
+xr.__dict__["polyval"] = None
 
 
 def _get_indicators(module):
