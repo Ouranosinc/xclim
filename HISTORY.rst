@@ -16,6 +16,7 @@ History
 * Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
 * Changed signature of `daily_freeze_thaw_cycles`, `daily_temperature_range`, `daily_temperature_range_variability` and `extreme_temperature_range` to take (tasmin, tasmax) instead of (tasmax, tasmin) and match signature of other similar multivariate indices.
 * Added `FromContext` subclass of `MissingBase` to have a uniform API for missing value operations.
+* Remove logging commands that captured all xclim warnings. Remove deprecated xr.set_options calls.
 
 0.17.0 (2020-05-15)
 -------------------

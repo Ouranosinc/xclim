@@ -14,9 +14,6 @@ from xclim.core.units import units
 from xclim.core.units import units2pint
 from xclim.core.utils import ensure_chunk_size
 
-
-xarray.set_options(enable_cftimeindex=True)  # Set xarray to use cftimeindex
-
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
 
