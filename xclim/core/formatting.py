@@ -132,7 +132,8 @@ def merge_attributes(
     missing_str: Optional[str] = None,
     **inputs_kws: Union[xr.DataArray, xr.Dataset],
 ):
-    """Merge attributes from several DataArrays or Datasets.
+    """
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
@@ -144,7 +145,7 @@ def merge_attributes(
       The datasets or variables that were used to produce the new object. Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
       The character to put between each instance of the attributes. Usually, in CF-conventions,
-      the history attributes uses "\n" while cell_methods uses " ".
+      the history attributes uses '\\n' while cell_methods uses ' '.
     missing_str : str
       A string that is printed if an input doesn't have the attribute. Defaults to None, in which
       case the input is simply skipped.
