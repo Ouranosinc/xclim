@@ -5,7 +5,6 @@ Run length algorithms submodule
 
 Computation of statistics on runs of True values in boolean arrays.
 """
-import logging
 from datetime import datetime
 from functools import partial
 from typing import Optional
@@ -18,7 +17,6 @@ import dask.array as dsk
 import numpy as np
 import xarray as xr
 
-logging.captureWarnings(True)
 npts_opt = 9000
 
 
