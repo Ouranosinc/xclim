@@ -161,7 +161,10 @@ def test_xclim_translations(locale):
             # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
     # Leftover indicators need to have some translations!
-    assert not bool(registry_cp)
+    if bool(registry_cp):
+        pytest.xfail(
+            f"Indicators {','.join(registry_cp.keys())} do not have translations for official locale {locale}."
+        )
 
 
 @pytest.mark.parametrize(
