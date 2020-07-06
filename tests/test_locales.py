@@ -9,6 +9,7 @@ import pytest
 import xclim.core.locales as xloc
 from xclim import atmos
 from xclim.core.formatting import default_formatter
+from xclim.core.indicator import registry
 from xclim.core.options import set_options
 from xclim.locales import generate_local_dict
 
@@ -17,7 +18,7 @@ esperanto = (
     "eo",
     {
         "attrs_mapping": {"modifiers": ["adj"], "YS": ["jara"], "MS": ["monata"]},
-        "atmos.tg_mean": {
+        "TG_MEAN": {
             "long_name": "Meza ciutaga averaga temperaturo",
             "title": "Meza ciutaga averaga temperaturo",
         },
@@ -32,7 +33,7 @@ russian = (
             "YS": ["годовое", "годовая"],
             "MS": ["месячный", "месячная"],
         },
-        "atmos.tg_mean": {
+        "TG_MEAN": {
             "long_name": "Среднее значение среднесуточной температуры.",
             "description": "Средне{freq:nf} среднесуточная температура.",
         },
@@ -50,23 +51,19 @@ def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict("fr")
     assert loc == "fr"
     assert (
-        dic["atmos.tg_mean"]["long_name"]
-        == "Moyenne de la température journalière moyenne"
+        dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière moyenne"
     )
 
     loc, dic = xloc.get_local_dict(esperanto)
     assert loc == "eo"
-    assert dic["atmos.tg_mean"]["long_name"] == "Meza ciutaga averaga temperaturo"
+    assert dic["TG_MEAN"]["long_name"] == "Meza ciutaga averaga temperaturo"
 
     with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     loc, dic = xloc.get_local_dict(("ru", tmp_path / "ru.json"))
     assert loc == "ru"
-    assert (
-        dic["atmos.tg_mean"]["long_name"]
-        == "Среднее значение среднесуточной температуры."
-    )
+    assert dic["TG_MEAN"]["long_name"] == "Среднее значение среднесуточной температуры."
 
     with pytest.raises(xloc.UnavailableLocaleError):
         xloc.get_local_dict("tlh")
@@ -145,6 +142,7 @@ def test_indicator_integration():
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
 def test_xclim_translations(locale):
+    registry_cp = registry.copy()
     loc, dic = xloc.get_local_dict(locale)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
@@ -158,10 +156,12 @@ def test_xclim_translations(locale):
 
     for indicator, fields in dic.items():
         if indicator != "attrs_mapping":
-            mod, name = indicator.split(".")
-            assert mod in ["atmos", "land", "seaIce"]
-            # no easy to test if indicator exists!
+            # Checking that the translated indicator does exist
+            assert registry_cp.pop(indicator)
+            # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
+    # Leftover indicators need to have some translations!
+    assert not bool(registry_cp)
 
 
 @pytest.mark.parametrize(
@@ -171,4 +171,4 @@ def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
-    assert dic["atmos.tg_mean"]["long_name"] == expected
+    assert dic["TG_MEAN"]["long_name"] == expected
