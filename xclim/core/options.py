@@ -8,8 +8,6 @@ from boltons.funcutils import wraps
 from .locales import _valid_locales
 from .utils import ValidationError
 
-logging.captureWarnings(True)
-
 
 METADATA_LOCALES = "metadata_locales"
 DATA_VALIDATION = "data_validation"
