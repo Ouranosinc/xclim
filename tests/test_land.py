@@ -35,6 +35,13 @@ class Test_FA:
         )
         assert np.isnan(out.values[:, 0, 0]).all()
 
+    def test_too_short(self, q_series):
+        q = q_series(np.random.rand(10))
+        out = land.freq_analysis(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        assert np.isnan(out.values[0])
+
 
 class TestStats:
     def test_simple(self, ndq_series):

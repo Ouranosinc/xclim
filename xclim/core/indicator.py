@@ -238,7 +238,7 @@ class Indicator:
         kls = MISSING_METHODS[self.missing]
         self._missing = kls.execute
         if self.missing_options:
-            kls.validate(self.missing_options)
+            kls.validate(**self.missing_options)
 
         # Default for output variable name
         if self.var_name is None:
