@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-
-from xclim.core import cfchecks
-from xclim.core import missing
-from xclim.core.indicator import Indicator
+from xclim.core.cfchecks import check_valid
+from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index
 from xclim.indices import generic
@@ -12,44 +8,35 @@ from xclim.indices import generic
 __all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
 
 
-class Streamflow(Indicator):
+class Streamflow(Daily):
     context = "hydro"
     units = "m^3 s-1"
     standard_name = "discharge"
 
     @staticmethod
-    def compute(*args, **kwds):
-        pass
-
-    def cfprobe(self, q):
-        cfchecks.check_valid(q, "standard_name", "streamflow")
+    def cfcheck(q):
+        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
 class Stats(Streamflow):
-    def missing(self, *args, **kwds):
-        """Return whether an output is considered missing or not."""
-        from functools import reduce
-
-        indexer = kwds["indexer"]
-        freq = kwds["freq"] or generic.default_freq(**indexer)
-
-        miss = (missing.missing_any(da, freq, **indexer) for da in args)
-        return reduce(np.logical_or, miss)
+    missing = "any"
 
 
-# Disable the missing value check because the output here is not a time series.
 class FA(Streamflow):
-    def missing(self, *args, **kwds):
-        """Return whether an output is considered missing or not."""
-        return False
+    """Frequency analysis."""
+
+    missing = "at_least_n"
+    missing_options = {"n": 20}
 
 
 # Disable the daily checks because the inputs are period extremas.
 class Fit(FA):
-    def validate(self, da):
+    @staticmethod
+    def cfcheck(**das):
         pass
 
-    def cfprobe(self, q):
+    @staticmethod
+    def datacheck(**das):
         pass
 
 

@@ -14,19 +14,12 @@ __all__ = ["sea_ice_area", "sea_ice_extent"]
 class SicArea(Indicator2D):
     """Class for indicators having sea ice concentration and grid cell area inputs."""
 
-    def cfprobe(self, sic, area):
+    missing = "skip"
+
+    @staticmethod
+    def cfcheck(sic, area):
         cfchecks.check_valid(sic, "standard_name", "sea_ice_area_fraction")
-
-    @abc.abstractmethod
-    def compute(*args, **kwds):
-        """The function computing the indicator."""
-
-    def validate(self, da):
-        """Input validation."""
-
-    def missing(self, *args, **kwds):
-        """Return whether an output is considered missing or not."""
-        return False
+        cfchecks.check_valid(area, "standard_name", "cell_area")
 
 
 sea_ice_extent = SicArea(

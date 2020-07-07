@@ -33,6 +33,7 @@ def check_valid_temperature(var, units):
 
 def check_valid_discharge(var):
     r"""Check that the variable is a discharge."""
+
     check_valid(var, "standard_name", "water_volume_transport_in_river_channel")
     check_valid(var, "units", "m3 s-1")
 

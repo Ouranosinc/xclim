@@ -123,7 +123,10 @@ def q_series():
             coords=[coords],
             dims="time",
             name="q",
-            attrs={"standard_name": "streamflow", "units": "m3 s-1"},
+            attrs={
+                "standard_name": "water_volume_transport_in_river_channel",
+                "units": "m3 s-1",
+            },
         )
 
     return _q_series
@@ -147,7 +150,10 @@ def ndq_series():
         np.random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time, "x": cx, "y": cy},
-        attrs={"units": "m^3 s-1", "standard_name": "streamflow"},
+        attrs={
+            "units": "m^3 s-1",
+            "standard_name": "water_volume_transport_in_river_channel",
+        },
     )
 
 
@@ -188,7 +194,7 @@ def areacella():
         data=area,
         dims=("lat", "lon"),
         coords={"lon": lon, "lat": lat},
-        attrs={"r": r, "units": "m2"},
+        attrs={"r": r, "units": "m2", "standard_name": "cell_area"},
     )
 
 

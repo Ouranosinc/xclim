@@ -9,7 +9,6 @@ import xarray as xr
 
 from xclim import set_options
 from xclim.core import cfchecks
-from xclim.core import datachecks
 from xclim.core.utils import ValidationError
 from xclim.indicators.atmos import tg_mean
 

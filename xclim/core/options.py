@@ -63,10 +63,11 @@ def register_missing_method(name):
     def _register_missing_method(cls):
         sig = signature(cls.is_missing)
         opts = {
-            key: param.default
+            key: param.default if param.default != param.empty else None
             for key, param in sig.parameters.items()
             if key not in ["self", "null", "count"]
         }
+
         MISSING_METHODS[name] = cls
         OPTIONS[MISSING_OPTIONS][name] = opts
         return cls
@@ -74,36 +75,40 @@ def register_missing_method(name):
     return _register_missing_method
 
 
-def datacheck(func):
-    @wraps(func)
-    def _run_check(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ValidationError as err:
-            if OPTIONS[DATA_VALIDATION] == "log":
-                logging.info(err.msg)
-            elif OPTIONS[DATA_VALIDATION] == "warn":
-                warn(err.msg, UserWarning, stacklevel=3)
-            else:
-                raise err
+def _run_check(func, option, *args, **kwargs):
+    """Run function and customize exception handling based on option."""
+    try:
+        func(*args, **kwargs)
+    except ValidationError as err:
+        if OPTIONS[option] == "log":
+            logging.info(err.msg)
+        elif OPTIONS[option] == "warn":
+            warn(err.msg, UserWarning, stacklevel=3)
+        else:
+            raise err
 
-    return _run_check
+
+def datacheck(func):
+    """Decorate functions checking data inputs validity."""
+
+    @wraps(func)
+    def run_check(*args, **kwargs):
+        return _run_check(func, DATA_VALIDATION, *args, **kwargs)
+
+    return run_check
 
 
 def cfcheck(func):
-    @wraps(func)
-    def _run_check(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ValidationError as err:
-            if OPTIONS[CF_COMPLIANCE] == "log":
-                logging.info(err.msg)
-            elif OPTIONS[CF_COMPLIANCE] == "warn":
-                warn(err.msg, UserWarning, stacklevel=3)
-            else:
-                raise err
+    """Decorate functions checking CF-compliance of DataArray attributes.
 
-    return _run_check
+    Functions should raise ValidationError exceptions whenever attributes are non-conformant.
+    """
+
+    @wraps(func)
+    def run_check(*args, **kwargs):
+        return _run_check(func, CF_COMPLIANCE, *args, **kwargs)
+
+    return run_check
 
 
 class set_options:

@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-import abc
-
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Indicator
-from xclim.core.indicator import Indicator2D
+from xclim.core.indicator import Daily
+from xclim.core.indicator import Daily2D
 from xclim.core.units import check_units
+
 
 __all__ = [
     "tn_days_below",
@@ -56,53 +54,41 @@ __all__ = [
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
 
 
-class Tas(Indicator):
+class Tas(Daily):
     """Class for univariate indices using mean daily temperature as the input."""
 
-    def cfprobe(self, tas):
-        cfchecks.check_valid(tas, "cell_methods", "**time: mean within days*")
+    @staticmethod
+    def cfcheck(tas):
+        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
-    @abc.abstractmethod
-    def compute(*args, **kwds):
-        """The function computing the indicator."""
 
-
-class Tasmin(Indicator):
+class Tasmin(Daily):
     """Class for univariate indices using min daily temperature as the input."""
 
-    def cfprobe(self, tasmin):
+    @staticmethod
+    def cfcheck(tasmin):
         cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
         cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
 
-    @abc.abstractmethod
-    def compute(*args, **kwds):
-        """The function computing the indicator."""
 
-
-class Tasmax(Indicator):
+class Tasmax(Daily):
     """Class for univariate indices using max daily temperature as the input."""
 
-    def cfprobe(self, tasmax):
+    @staticmethod
+    def cfcheck(tasmax):
         cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
         cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
 
-    @abc.abstractmethod
-    def compute(*args, **kwds):
-        """The function computing the indicator."""
 
-
-class TasminTasmax(Indicator2D):
-    def cfprobe(self, tasmin, tasmax):
+class TasminTasmax(Daily2D):
+    @staticmethod
+    def cfcheck(tasmin, tasmax):
         for da in (tasmin, tasmax):
             cfchecks.check_valid(da, "standard_name", "air_temperature")
         cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
         cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
         check_units(tasmax, tasmin.attrs["units"])
-
-    @abc.abstractmethod
-    def compute(*args, **kwds):
-        """The function computing the indicator."""
 
 
 tn_days_below = Tasmin(
@@ -195,6 +181,7 @@ heat_wave_index = Tasmax(
     cell_methods="",
     compute=indices.heat_wave_index,
 )
+
 
 hot_spell_frequency = Tasmax(
     identifier="hot_spell_frequency",
