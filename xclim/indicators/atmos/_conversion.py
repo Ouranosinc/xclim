@@ -15,13 +15,7 @@ __all__ = [
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)"""
 
-    def validate(self, da):
-        """Input validation."""
-
-    def missing(self, *args, **kwds):
-        """Return whether an output is considered missing or not."""
-        # Converters should propagate null values themselves.
-        return False
+    missing = "skip"
 
 
 tg = Converter(
@@ -67,7 +61,7 @@ saturation_vapor_pressure = Converter(
 
 
 relative_humidity_from_dewpoint = Converter(
-    identifier="rh",
+    identifier="rh_fromdewpoint",
     _nvar=2,
     units="%",
     long_name="Relative Humidity",

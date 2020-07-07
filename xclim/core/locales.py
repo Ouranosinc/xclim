@@ -141,7 +141,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         )
     if isinstance(locale[1], dict):
         return locale
-    with open(locale[1]) as locf:
+    with open(locale[1], encoding="utf-8") as locf:
         return locale[0], json.load(locf)
 
 
@@ -191,11 +191,10 @@ def get_local_attrs(
     for locale in locales:
         loc_name, loc_dict = get_local_dict(locale)
         loc_name = f"_{loc_name}" if append_locale_name else ""
-        ind_name = f"{indicator.__module__.split('.')[2]}.{indicator.identifier}"
-        local_attrs = loc_dict.get(ind_name)
+        local_attrs = loc_dict.get(indicator.__class__.__name__)
         if local_attrs is None:
             warnings.warn(
-                f"Attributes of indicator {ind_name} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {indicator.__class__.__name__} in language {locale} were requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:

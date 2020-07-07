@@ -42,8 +42,6 @@ def build_module(
     import warnings
     import logging
 
-    logging.captureWarnings(capture=True)
-
     try:
         out = types.ModuleType(name, doc)
     except TypeError:

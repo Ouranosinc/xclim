@@ -4,8 +4,10 @@
 from inspect import signature
 
 import numpy as np
+import xarray as xr
 
 from xclim.core.indicator import Indicator
+from xclim.core.utils import ensure_chunk_size
 from xclim.core.utils import walk_map
 from xclim.core.utils import wrapped_partial
 
@@ -50,9 +52,17 @@ def test_wrapped_indicator(tas_series):
         out.attrs["units"] = "days"
         return out
 
-    ind1 = Indicator(_nvar=1, units="days", compute=wrapped_partial(indice, tas2=None))
+    ind1 = Indicator(
+        identifier="test_ind1",
+        _nvar=1,
+        units="days",
+        compute=wrapped_partial(indice, tas2=None),
+    )
     ind2 = Indicator(
-        _nvar=2, units="days", compute=wrapped_partial(indice, thresh=None)
+        identifier="test_ind2",
+        _nvar=2,
+        units="days",
+        compute=wrapped_partial(indice, thresh=None),
     )
 
     tas = tas_series(np.arange(366), start="2000-01-01")
@@ -60,3 +70,19 @@ def test_wrapped_indicator(tas_series):
 
     assert ind2(tas, tas2) == 366
     assert ind1(tas, thresh=1111) == 366
+
+
+def test_ensure_chunk_size():
+    da = xr.DataArray(np.zeros((20, 21, 20)), dims=("x", "y", "z"))
+
+    out = ensure_chunk_size(da, x=10, y=-1)
+
+    assert da is out
+
+    dac = da.chunk({"x": (1,) * 20, "y": (10, 10, 1), "z": (10, 10)})
+
+    out = ensure_chunk_size(dac, x=3, y=5, z=-1)
+
+    assert out.chunks[0] == (3, 3, 3, 3, 3, 5)
+    assert out.chunks[1] == (10, 11)
+    assert out.chunks[2] == (20,)

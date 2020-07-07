@@ -291,9 +291,10 @@ def default_freq(**indexer):
     """Return the default frequency."""
     freq = "AS-JAN"
     if indexer:
-        if "DJF" in indexer.values():
+        group, value = indexer.popitem()
+        if "DJF" in value:
             freq = "AS-DEC"
-        if "month" in indexer and sorted(indexer.values()) != indexer.values():
+        if group == "month" and sorted(value) != value:
             raise NotImplementedError
 
     return freq

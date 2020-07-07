@@ -8,8 +8,6 @@ from boltons.funcutils import wraps
 from .locales import _valid_locales
 from .utils import ValidationError
 
-logging.captureWarnings(True)
-
 
 METADATA_LOCALES = "metadata_locales"
 DATA_VALIDATION = "data_validation"
@@ -48,7 +46,7 @@ _VALIDATORS = {
     METADATA_LOCALES: _valid_locales,
     DATA_VALIDATION: _LOUDNESS_OPTIONS.__contains__,
     CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
-    CHECK_MISSING: MISSING_METHODS.__contains__,
+    CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
     MISSING_OPTIONS: _valid_missing_options,
 }
 
@@ -65,10 +63,11 @@ def register_missing_method(name):
     def _register_missing_method(cls):
         sig = signature(cls.is_missing)
         opts = {
-            key: param.default
+            key: param.default if param.default != param.empty else None
             for key, param in sig.parameters.items()
             if key not in ["self", "null", "count"]
         }
+
         MISSING_METHODS[name] = cls
         OPTIONS[MISSING_OPTIONS][name] = opts
         return cls
@@ -76,36 +75,40 @@ def register_missing_method(name):
     return _register_missing_method
 
 
-def datacheck(func):
-    @wraps(func)
-    def _run_check(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ValidationError as err:
-            if OPTIONS[DATA_VALIDATION] == "log":
-                logging.info(err.msg)
-            elif OPTIONS[DATA_VALIDATION] == "warn":
-                warn(err.msg, UserWarning, stacklevel=3)
-            else:
-                raise err
+def _run_check(func, option, *args, **kwargs):
+    """Run function and customize exception handling based on option."""
+    try:
+        func(*args, **kwargs)
+    except ValidationError as err:
+        if OPTIONS[option] == "log":
+            logging.info(err.msg)
+        elif OPTIONS[option] == "warn":
+            warn(err.msg, UserWarning, stacklevel=3)
+        else:
+            raise err
 
-    return _run_check
+
+def datacheck(func):
+    """Decorate functions checking data inputs validity."""
+
+    @wraps(func)
+    def run_check(*args, **kwargs):
+        return _run_check(func, DATA_VALIDATION, *args, **kwargs)
+
+    return run_check
 
 
 def cfcheck(func):
-    @wraps(func)
-    def _run_check(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ValidationError as err:
-            if OPTIONS[CF_COMPLIANCE] == "log":
-                logging.info(err.msg)
-            elif OPTIONS[CF_COMPLIANCE] == "warn":
-                warn(err.msg, UserWarning, stacklevel=3)
-            else:
-                raise err
+    """Decorate functions checking CF-compliance of DataArray attributes.
 
-    return _run_check
+    Functions should raise ValidationError exceptions whenever attributes are non-conformant.
+    """
+
+    @wraps(func)
+    def run_check(*args, **kwargs):
+        return _run_check(func, CF_COMPLIANCE, *args, **kwargs)
+
+    return run_check
 
 
 class set_options:
@@ -125,7 +128,7 @@ class set_options:
         'warn' the user on inputs that fail the CF compliance checks in `xclim.core.checks`.
       Default: ``'warn'``.
     - ``check_missing``: How to check for missing data and flag computed indicators.
-        Default available methods are "any", "wmo", "pct" and "at_least_n".
+        Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
         Missing method can be registered through the `xclim.core.checks.register_missing_method` decorator.
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of

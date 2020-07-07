@@ -5,11 +5,13 @@ from scipy.stats import norm
 from scipy.stats import uniform
 
 sdba = pytest.importorskip("xclim.sdba")  # noqa
+from xclim.sdba.adjustment import BaseAdjustment
 from xclim.sdba.adjustment import DetrendedQuantileMapping
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.adjustment import LOCI
 from xclim.sdba.adjustment import QuantileDeltaMapping
 from xclim.sdba.adjustment import Scaling
+from xclim.sdba.base import Grouper
 from xclim.sdba.utils import ADDITIVE
 from xclim.sdba.utils import apply_correction
 from xclim.sdba.utils import get_correction
@@ -188,7 +190,7 @@ class TestDQM:
         if spatial_dims:
             mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_array_almost_equal(p, ref_t, 1)
+        np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon(self, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000)
@@ -199,17 +201,6 @@ class TestDQM:
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
-
-    def test_group_norm(self, tas_series):
-        x = np.arange(365)
-        ref = tas_series(273 - 10 * np.cos(2 * np.pi * x / 365), start="2001-01-01")
-        hist = sim = tas_series(
-            273 - 8 * np.cos(2 * np.pi * x / 365), start="2001-01-01"
-        )
-        DQM = DetrendedQuantileMapping(group="time.month")
-        DQM.train(ref, hist)
-        scen = DQM.adjust(sim, interp="linear")
-        xr.testing.assert_allclose(ref, scen, rtol=1.5e-4)
 
 
 class TestQDM:
@@ -397,3 +388,10 @@ class TestQM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, ref, 2)
+
+
+def test_raise_on_multiple_chunks(tas_series):
+    ref = tas_series(np.arange(730)).chunk({"time": 365})
+    Adj = BaseAdjustment(group=Grouper("time.month"))
+    with pytest.raises(ValueError):
+        Adj.train(ref, ref)

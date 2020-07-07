@@ -154,7 +154,7 @@ def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
     values: Tuple[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
-    split: bool = False,
+    split: bool = True,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -257,8 +257,9 @@ def ensemble_percentiles(
         for p, perc in out.data_vars.items():
             perc.attrs.update(ens.attrs)
             perc.attrs["description"] = (
-                perc.attrs.get("descrption", "") + " {p}th percentile of ensemble."
+                perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
             )
+            out[p] = perc
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
     out.attrs["history"] = update_history(

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+import xclim
 from xclim import __version__
 from xclim import atmos
 from xclim.core.formatting import AttrFormatter
@@ -14,6 +15,8 @@ from xclim.core.formatting import merge_attributes
 from xclim.core.formatting import parse_doc
 from xclim.core.formatting import update_history
 from xclim.core.indicator import Indicator
+from xclim.core.indicator import registry
+from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
@@ -68,6 +71,28 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
+    assert "TMIN" in registry
+
+    # Because this has not been instantiated, it's not in any registry.
+    class Test123(registry["TMIN"]):
+        identifier = "test123"
+
+    assert "TEST123" not in registry
+    Test123()
+    assert "TEST123" in registry
+
+    # Confirm registries live in subclasses.
+    class IndicatorNew(Indicator):
+        _nvar = 2
+
+    IndicatorNew(identifier="i2d")
+    assert "I2D" in registry
+
+
+def test_module():
+    """Translations are keyed according to the module where the indicators are defined."""
+    assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
+
 
 def test_temp_unit_conversion(tas_series):
     a = tas_series(np.arange(360.0))
@@ -81,26 +106,45 @@ def test_temp_unit_conversion(tas_series):
 
 
 def test_missing(tas_series):
-    a = tas_series(np.ones(360, float))
+    a = tas_series(np.ones(360, float), start="1/1/2000")
+
+    # By default, missing is set to "from_context", and the default missing option is "any"
     ind = UniIndTemp()
     clim = UniClim()
 
     # Null value
     a[5] = np.nan
 
-    out = ind(a, freq="MS")
-    assert out[0].isnull()
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
+
+    with xclim.set_options(
+        check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}
+    ):
+        m = ind(a, freq="MS")
+        assert not m[0].isnull()
 
     # With freq=None
-    out = clim(a)
-    assert out.isnull()
+    c = clim(a)
+    assert c.isnull()
 
     # With indexer
-    out = clim(a, month=[1])
-    assert not out.isnull()
+    ci = clim(a, month=[2])
+    assert not ci.isnull()
 
-    out = clim(a, month=[7])
+    out = clim(a, month=[1])
     assert out.isnull()
+
+
+def test_missing_from_context(tas_series):
+    a = tas_series(np.ones(360, float), start="1/1/2000")
+    # Null value
+    a[5] = np.nan
+
+    ind = UniIndTemp(missing="from_context")
+
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
 
 
 def test_json(pr_series):
