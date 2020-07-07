@@ -52,9 +52,17 @@ def test_wrapped_indicator(tas_series):
         out.attrs["units"] = "days"
         return out
 
-    ind1 = Indicator(_nvar=1, units="days", compute=wrapped_partial(indice, tas2=None))
+    ind1 = Indicator(
+        identifier="test_ind1",
+        _nvar=1,
+        units="days",
+        compute=wrapped_partial(indice, tas2=None),
+    )
     ind2 = Indicator(
-        _nvar=2, units="days", compute=wrapped_partial(indice, thresh=None)
+        identifier="test_ind2",
+        _nvar=2,
+        units="days",
+        compute=wrapped_partial(indice, thresh=None),
     )
 
     tas = tas_series(np.arange(366), start="2000-01-01")

@@ -132,31 +132,31 @@ def merge_attributes(
     missing_str: Optional[str] = None,
     **inputs_kws: Union[xr.DataArray, xr.Dataset],
 ):
-    """Merge attributes from several DataArrays or Datasets.
+    """
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
     Parameters
     ----------
     attribute : str
-        The attribute to merge.
-    *inputs_list : Union[xr.DataArray, xr.Dataset]
-        The datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixed by their "name" attribute if available.
+      The attribute to merge.
+    inputs_list : Union[xr.DataArray, xr.Dataset]
+      The datasets or variables that were used to produce the new object. Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
-        The character to put between each instance of the attributes. Usually, in CF-conventions,
-        the history attributes uses "\n" while cell_methods uses " ".
+      The character to put between each instance of the attributes. Usually, in CF-conventions,
+      the history attributes uses '\\n' while cell_methods uses ' '.
     missing_str : str
-        A string that is printed if an input doesn't have the attribute. Defaults to None, in which
-        case the input is simply skipped.
-    **inputs_kws : Union[xr.DataArray, xr.Dataset]
-        Mapping from names to the datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixes by the passed name.
+      A string that is printed if an input doesn't have the attribute. Defaults to None, in which
+      case the input is simply skipped.
+    inputs_kws : Union[xr.DataArray, xr.Dataset]
+      Mapping from names to the datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-        The new attribute made from the combination of the ones from all the inputs.
+      The new attribute made from the combination of the ones from all the inputs.
     """
     inputs = []
     for in_ds in inputs_list:
@@ -191,20 +191,20 @@ def update_history(
     Parameters
     ----------
     hist_str : str
-        The string describing what has been done on the data.
+      The string describing what has been done on the data.
     new_name : Optional[str]
-        The name of the newly created variable or dataset to prefix hist_msg.
+      The name of the newly created variable or dataset to prefix hist_msg.
     *inputs_list : Union[xr.DataArray, xr.Dataset]
-        The datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixed by their "name" attribute if available.
+      The datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixed by their "name" attribute if available.
     **inputs_kws : Union[xr.DataArray, xr.Dataset]
-        Mapping from names to the datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixes by the passed name.
+      Mapping from names to the datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-        The combine history of all inputs starting with `hist_str`.
+      The combine history of all inputs starting with `hist_str`.
 
     See also
     --------

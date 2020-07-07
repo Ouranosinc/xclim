@@ -2,6 +2,16 @@
 History
 =======
 
+0.19.x
+------
+* Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
+  method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
+  the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
+  missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
+* Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+* Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
+* Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
+
 0.18.x
 ------
 * Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
@@ -11,6 +21,12 @@ History
 * `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
 * Added indicator `first_day_below` and run length helper `first_run_after_date`.
 * Added ANUCLIM model climate indices mappings.
+* Renamed `areacella` to `areacello` in sea ice tests.
+* Sea ice extent and area outputs now have units of m2 to comply with CF-Convention.
+* Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
+* Changed signature of `daily_freeze_thaw_cycles`, `daily_temperature_range`, `daily_temperature_range_variability` and `extreme_temperature_range` to take (tasmin, tasmax) instead of (tasmax, tasmin) and match signature of other similar multivariate indices.
+* Added `FromContext` subclass of `MissingBase` to have a uniform API for missing value operations.
+* Remove logging commands that captured all xclim warnings. Remove deprecated xr.set_options calls.
 
 0.17.0 (2020-05-15)
 -------------------
