@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+import xclim
 from xclim import __version__
 from xclim import atmos
 from xclim.core.formatting import AttrFormatter
@@ -106,6 +107,8 @@ def test_temp_unit_conversion(tas_series):
 
 def test_missing(tas_series):
     a = tas_series(np.ones(360, float), start="1/1/2000")
+
+    # By default, missing is set to "from_context", and the default missing option is "any"
     ind = UniIndTemp()
     clim = UniClim()
 
@@ -114,6 +117,12 @@ def test_missing(tas_series):
 
     m = ind(a, freq="MS")
     assert m[0].isnull()
+
+    with xclim.set_options(
+        check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}
+    ):
+        m = ind(a, freq="MS")
+        assert not m[0].isnull()
 
     # With freq=None
     c = clim(a)
@@ -125,6 +134,17 @@ def test_missing(tas_series):
 
     out = clim(a, month=[1])
     assert out.isnull()
+
+
+def test_missing_from_context(tas_series):
+    a = tas_series(np.ones(360, float), start="1/1/2000")
+    # Null value
+    a[5] = np.nan
+
+    ind = UniIndTemp(missing="from_context")
+
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
 
 
 def test_json(pr_series):
