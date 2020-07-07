@@ -494,7 +494,7 @@ class Indicator:
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") or default_freq(**indexer)
+        freq = kwds.get("freq") if "freq" in kwds else default_freq(**indexer)
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
