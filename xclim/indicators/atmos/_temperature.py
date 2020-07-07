@@ -66,7 +66,8 @@ class Tas(Daily):
 class Tasmin(Daily):
     """Class for univariate indices using min daily temperature as the input."""
 
-    def cfcheck(self, tasmin):
+    @staticmethod
+    def cfcheck(tasmin):
         cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
         cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
 
@@ -74,13 +75,15 @@ class Tasmin(Daily):
 class Tasmax(Daily):
     """Class for univariate indices using max daily temperature as the input."""
 
-    def cfcheck(self, tasmax):
+    @staticmethod
+    def cfcheck(tasmax):
         cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
         cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
 
 
 class TasminTasmax(Daily2D):
-    def cfcheck(self, tasmin, tasmax):
+    @staticmethod
+    def cfcheck(tasmin, tasmax):
         for da in (tasmin, tasmax):
             cfchecks.check_valid(da, "standard_name", "air_temperature")
         cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")

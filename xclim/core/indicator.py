@@ -112,7 +112,7 @@ class Indicator:
       Representative units of the physical quantity (CF).
     compute: func
       The function computing the indicator.
-    missing: {any, wmo, pct, at_least_n, from_context}
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
     missing_options : dict, None
@@ -238,7 +238,7 @@ class Indicator:
         kls = MISSING_METHODS[self.missing]
         self._missing = kls.execute
         if self.missing_options:
-            kls.validate(self.missing_options)
+            kls.validate(**self.missing_options)
 
         # Default for output variable name
         if self.var_name is None:
@@ -494,7 +494,7 @@ class Indicator:
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") or default_freq(**indexer)
+        freq = kwds.get("freq") if "freq" in kwds else default_freq(**indexer)
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 

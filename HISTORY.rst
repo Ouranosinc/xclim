@@ -8,6 +8,9 @@ History
   method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
+* Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+* Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
+* Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 
 0.18.x
 ------

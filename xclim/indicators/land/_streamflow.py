@@ -22,9 +22,11 @@ class Stats(Streamflow):
     missing = "any"
 
 
-# Disable the missing value check because the output here is not a time series.
 class FA(Streamflow):
-    missing = "skip"
+    """Frequency analysis."""
+
+    missing = "at_least_n"
+    missing_options = {"n": 20}
 
 
 # Disable the daily checks because the inputs are period extremas.
