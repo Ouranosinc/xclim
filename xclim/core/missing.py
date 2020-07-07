@@ -2,14 +2,25 @@
 Missing values identification
 =============================
 
-Algorithms identifying missing values using different criteria:
+Indicators may use different criteria to determine whether or not a computed indicator value should be
+considered missing. In some cases, the presence of any missing value in the input time series should result in a
+missing indicator value for that period. In other cases, a minimum number of valid values or a percentage of missing
+values should be enforced. The World Meteorological Organisation  (WMO) suggests criteria based on the number of
+consecutive and overall missing values per month.
 
-- missing_any: A result is missing if any input value is missing.
-- missing_wmo: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
-- missing_pct: A result is missing if more than a given fraction of values are missing.
-- at_least_n_valid: A result is missing if less than a given number of valid values are present.
+`xclim` has a registry of missing value detection algorithms that can be extended by users to customize the behavior
+of indicators. Once registered, algorithms can be be used within indicators by setting the `missing` attribute of an
+`Indicator` subclass. By default, `xclim` registers the following algorithms:
 
-New missing value algorithms should subclass :class:`MissingBase`, see instructions in docstring.
+ * `any`: A result is missing if any input value is missing.
+ * `at_least_n`: A result is missing if less than a given number of valid values are present.
+ * `pct`: A result is missing if more than a given fraction of values are missing.
+ * `wmo`: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
+ * `skip`: Skip missing value detection.
+ * `from_context`: Look-up the missing value algorithm from options settings. See :func:`xclim.set_options`.
+
+To define another missing value algorithm, subclass :class:`MissingBase` and decorate it with
+`xclim.core.options.register_missing_method`.
 
 """
 import numpy as np
@@ -355,7 +366,8 @@ class FromContext(MissingBase):
 # --------------------------
 # --- Shortcut functions ---
 # --------------------------
-# These functions hide the fact the the algorithms are implemented in a class and make their use more user-friendly.
+# These stand-alone functions hide the fact the the algorithms are implemented in a class and make their use more
+# user-friendly. This can also be useful for testing.
 
 
 def missing_any(da, freq, **indexer):

@@ -112,7 +112,7 @@ class Indicator:
       Representative units of the physical quantity (CF).
     compute: func
       The function computing the indicator.
-    missing: {any, wmo, pct, at_least_n, from_context}
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
     missing_options : dict, None
