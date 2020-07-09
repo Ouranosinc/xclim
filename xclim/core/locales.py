@@ -146,7 +146,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
 
 def get_local_attrs(
-    indicator: Any,
+    indicator: str,
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
     fill_missing: bool = True,
@@ -156,16 +156,14 @@ def get_local_attrs(
 
     Parameters
     ----------
-    indicator : Union[utils.Indicator, utils.Indicator2D]
-        Indicator object
+    indicator : str
+        Indicator's class name, usually the same as in `xc.core.indicator.registry`.
     *locales : str
         IETF language tag or a tuple of the language tag and a translation dict, or
         a tuple of the language tag and a path to a json file defining translation
         of attributes.
     names : Optional[Sequence[str]]
         If given, only returns translations of attributes in this list.
-    fill_missing : bool
-        If True (default), fill untranslated attributes by the default (english) ones.
     append_locale_name : bool
         If True (default), append the language tag (as "{attr_name}_{locale}") to the
         returned attributes.
@@ -191,19 +189,15 @@ def get_local_attrs(
     for locale in locales:
         loc_name, loc_dict = get_local_dict(locale)
         loc_name = f"_{loc_name}" if append_locale_name else ""
-        local_attrs = loc_dict.get(indicator.__class__.__name__)
+        local_attrs = loc_dict.get(indicator)
         if local_attrs is None:
             warnings.warn(
-                f"Attributes of indicator {indicator.__class__.__name__} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {indicator} in language {locale} were requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:
-                if (names is None or name in names) and (
-                    fill_missing or name in local_attrs
-                ):
-                    attrs[f"{name}{loc_name}"] = local_attrs.get(
-                        name, getattr(indicator, name)
-                    )
+                if (names is None or name in names) and name in local_attrs:
+                    attrs[f"{name}{loc_name}"] = local_attrs[name]
     return attrs
 
 

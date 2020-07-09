@@ -69,6 +69,7 @@ from typing import Union
 
 import numpy as np
 from boltons.funcutils import wraps
+from xarray import Dataset
 
 from .formatting import AttrFormatter
 from .formatting import default_formatter
@@ -77,6 +78,7 @@ from .formatting import parse_doc
 from .formatting import update_history
 from .locales import get_local_attrs
 from .locales import get_local_formatter
+from .locales import TRANSLATABLE_ATTRS
 from .options import OPTIONS
 from .units import convert_units_to
 from .units import units
@@ -264,7 +266,9 @@ class Indicator:
             das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
 
         # Metadata attributes from templates
-        attrs = self.update_attrs(ba, das)
+        attrs = self.update_attrs(
+            ba, das, dict(var_name=self.var_name, **self.cf_attrs)
+        )
         vname = attrs.pop("var_name")
 
         # Pre-computation validation checks on DataArray arguments
@@ -317,7 +321,8 @@ class Indicator:
             # Call the func using bound arguments
             return func(*ba.args, **ba.kwargs)
 
-    def update_attrs(self, ba, das):
+    @classmethod
+    def update_attrs(cls, ba, das, attrs, identifier=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values. The language of the string is
@@ -329,32 +334,34 @@ class Indicator:
           Input arrays.
         ba: bound argument object
           Keyword arguments of the `compute` call.
+        attrs : Mapping[str, str]
+          The attributes to format and update.
+        identifier : str
+          The identifier to use when requesting the attributes translations of the cf_names and in the history attribute.
+          Defaults to the class name (for the translations) or the `identifier` field of the class (for the history attribute).
+          If given, the identifier will be converted to uppercase to get the translation attributes.
 
         Returns
         -------
         dict
-          Attributes with {} expressions replaced by call argument values.
+          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
         """
         args = ba.arguments
-        out = self.format(self.cf_attrs, args)
+
+        out = cls.format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
-                self.format(
+                cls.format(
                     get_local_attrs(
-                        self,
+                        (identifier or cls.__name__).upper(),
                         locale,
-                        names=self._cf_names,
-                        fill_missing=False,
+                        names=cls._cf_names,
                         append_locale_name=True,
                     ),
                     args=args,
                     formatter=get_local_formatter(locale),
                 )
             )
-
-        out["var_name"] = vname = self.format({"var_name": self.var_name}, args)[
-            "var_name"
-        ]
 
         # Update the signature with the values of the actual call.
         cp = OrderedDict()
@@ -373,8 +380,8 @@ class Indicator:
             attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         attrs["history"] = update_history(
-            f"{self.identifier}{ba.signature.replace(parameters=cp.values())}",
-            new_name=vname,
+            f"{identifier or cls.identifier}{ba.signature.replace(parameters=cp.values())}",
+            new_name=out["var_name"],
             **das,
         )
 
@@ -396,7 +403,7 @@ class Indicator:
     ):
         """Return a dictionary of unformated translated translatable attributes.
 
-        Translatable attributes are defined in xclim.locales.TRANSLATABLE_ATTRS
+        Translatable attributes are defined in xclim.core.locales.TRANSLATABLE_ATTRS
 
         Parameters
         ----------
@@ -406,9 +413,17 @@ class Indicator:
         fill_missing : bool
             If True (default fill the missing attributes by their english values.
         """
-        return get_local_attrs(
-            self, locale, fill_missing=fill_missing, append_locale_name=False
+        attrs = get_local_attrs(
+            self.__class__.__name__,
+            locale,
+            names=TRANSLATABLE_ATTRS,
+            append_locale_name=False,
         )
+        if fill_missing:
+            for name in TRANSLATABLE_ATTRS:
+                if name not in attrs and hasattr(self, name):
+                    attrs[name] = getattr(self, name)
+        return attrs
 
     @property
     def cf_attrs(self):
@@ -442,8 +457,9 @@ class Indicator:
         )
         return out
 
+    @classmethod
     def format(
-        self,
+        cls,
         attrs: dict,
         args: dict = None,
         formatter: AttrFormatter = default_formatter,
@@ -483,7 +499,7 @@ class Indicator:
 
             out[key] = formatter.format(val, **mba)
 
-            if key in self._text_fields:
+            if key in cls._text_fields:
                 out[key] = out[key].strip().capitalize()
 
         return out
@@ -537,6 +553,137 @@ class Indicator:
 
 class Indicator2D(Indicator):
     _nvar = 2
+
+
+class MultiIndicator(Indicator):
+    r"""Climate multi-indicator base class.
+
+    Climate indicator object that, when called, computes multiple indicator and assigns its outputs a number of
+    CF-compliant attributes. Some of these attributes can be *templated*, allowing metadata to reflect
+    the value of call arguments.
+
+    Instantiating a new multi-indicator returns an instance but also creates and registers a custom subclass.
+
+    The usage of this class is similar to the base `Indicator` except that its output is a _Dataset_ containing
+    multiple arrays istead of a single _DataArray_. Attributes of the children arrays are given through the `children`
+    list of dictionaries. Attributes passed directly to the class will be assigned to the output dataset.
+
+    Parameters
+    ----------
+    identifier: str
+      Unique ID for class registry, should be a valid slug.
+    compute: func
+      The function computing the indicators. It should return a sequence of more than one DataArray.
+    children : Sequence[Mapping[str, str]]
+      List of dictionaries containing the attributes of the individual output arrays. Its length and order should match the output of the compute function.
+      Each dictionary should at least define the `var_name` parameter.
+      Other valid parameters are:
+        standard_name : str : Variable name (CF).
+        long_name: str : Descriptive variable name.
+        units: str : Representative units of the physical quantity (CF).
+        cell_methods : str : List of blank-separated words of the form "name: method" (CF).
+        description : str : Sentence meant to clarify the qualifiers of the fundamental quantities.
+        keywords : str : Comma separated list of keywords.
+        comment : str : Miscellaneous information about the data or methods used to produce it.
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, None
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    description: str
+      Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
+      surface a quantity is defined on or what the flux sign conventions are.
+      Individual indicators can overwrite this value.
+    context: str
+      The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
+    title: str, None
+      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
+    abstract: str
+      A long description of what is in the computed outputs. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
+    keywords: str
+      Comma separated list of keywords. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
+    references: str
+      Published or web-based references that describe the data or methods used to produce it. Parsed from
+      `compute` docstring if None. Will be assigned to the output dataset.
+    comment: str
+      Miscellaneous information about the data or methods used to produce it. Will be assigned to the output dataset.
+    notes: str
+      Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
+      docstring if None. Will be assigned to the output dataset.
+
+    Notes
+    -----
+    All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
+
+    Parameters `var_name`, `standard_name`, `long_name`, `units`, `cell_methods` are not valid at the MultiIndicator class level, they must be given through `children`.
+    """
+    _ds_attrs = ["description", "keywords", "comment"]
+    var_name = None
+    standard_name = None
+    long_name = None
+    units = None
+    cell_methods = None
+
+    def __call__(self, *args, **kwds):
+        # Bind call arguments to `compute` arguments and set defaults.
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
+
+        # Assume the first arguments are always the DataArrays.
+        das = OrderedDict()
+        for i in range(self._nvar):
+            das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
+
+        # Metadata attributes from templates
+        attrs = [
+            self.update_attrs(
+                ba, das, child, identifier=f"{self.identifier}_{child['var_name']}"
+            )
+            for child in self.children
+        ]
+        ds_attrs = {getattr(self, attr) for attr in self._ds_attrs}
+        ds_attrs = self.update_attrs(ba, das, ds_attrs)
+
+        vnames = [child["var_name"] for child in self.children]
+
+        # Pre-computation validation checks on DataArray arguments
+        self.bind_call(self.datacheck, **das)
+        self.bind_call(self.cfcheck, **das)
+
+        # Compute the indicator values, ignoring NaNs and missing values.
+        outs = self.compute(**das, **ba.kwargs)
+
+        # Convert to output units
+        outs = [
+            convert_units_to(out, child.get("units", ""), self.context)
+            for out, child in zip(outs, self.children)
+        ]
+
+        # Update variable attributes
+        for out, var_attrs in zip(outs, attrs):
+            out.attrs.update(var_attrs)
+
+        out = Dataset(data_vars=dict(zip(vnames, outs)), attrs=ds_attrs)
+
+        # Mask results that do not meet criteria defined by the `missing` method.
+        # This means all variables must have the same dimensions...
+        mask = self.mask(*das.values(), **ba.arguments)
+
+        return out.where(~mask)
+
+    @property
+    def cf_attrs(self):
+        """CF-Convention attributes of the output value."""
+        attrs = [
+            {k: child[k] for k in self._cf_names if k in child}
+            for child in self.children
+        ]
+        return attrs
+
+    def json(self, args=None):
+        raise NotImplementedError(
+            "Serialization to json not yet implemented for MutliIndicator instances."
+        )
 
 
 class Daily(Indicator):
