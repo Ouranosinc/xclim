@@ -26,6 +26,22 @@ class TestRLE:
         np.testing.assert_array_equal(l, [1, 10, 354])
         np.testing.assert_array_equal(p, [0, 1, 11])
 
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_dataarray_nd(self, use_dask):
+        values = np.zeros((10, 365, 4, 4))
+        time = pd.date_range("2000-01-01", periods=365, freq="D")
+        values[:, 1:11, ...] = 1
+        da = xr.DataArray(values, coords={"time": time}, dims=("a", "time", "b", "c"))
+
+        if use_dask:
+            da = da.chunk({"a": 1, "b": 2})
+
+        out = rl.rle(da != 0).mean(["a", "b", "c"])
+        expected = np.zeros(366)
+        expected[1] = 10
+        expected[2:12] = np.nan
+        np.testing.assert_array_equal(out, expected)
+
 
 class TestLongestRun:
     nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
