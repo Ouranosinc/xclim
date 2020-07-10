@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Units handling submodule
-========================
+Units handling submodule.
 
 `Pint` is used to define the `units` `UnitRegistry` and `xclim.units.core` defines
 most unit handling methods.

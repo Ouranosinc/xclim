@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Locales and languages module.
+
 Internationalization
 ====================
 
@@ -220,8 +222,7 @@ def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
 
 class UnavailableLocaleError(ValueError):
-    """Error raised when a locale is requested but doesn"t exist.
-    """
+    """Error raised when a locale is requested but doesn't exist."""
 
     def __init__(self, locale):
         super().__init__(

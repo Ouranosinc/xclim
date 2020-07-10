@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Indicator base classes
-======================
+Indicator base class mdoule.
 
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
-
 
 Defining new indicators
 =======================
@@ -43,7 +41,6 @@ One pattern to create multiple indicators is to write a standard subclass that d
 are common to indicators, then call this subclass with the custom attributes. See for example in
 `xclim.indicators.atmos` how indicators based on daily mean temperatures are created from the :class:`Tas` subclass
 of the :class:`Daily` subclass.
-
 
 Subclass registries
 -------------------
@@ -142,6 +139,7 @@ class Indicator:
     All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
 
     """
+
     # Number of DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
@@ -220,9 +218,7 @@ class Indicator:
         registry[name] = obj
 
     def __init__(self, **kwds):
-        """Run checks and assign default values.
-        """
-
+        """Run checks and assign default values."""
         # Check identifier is well formed - no funny characters
         self.identifier = kwds.pop("identifier", self.identifier)
         self.check_identifier(self.identifier)
@@ -252,6 +248,7 @@ class Indicator:
         self.__call__ = wraps(self.compute)(self.__call__)
 
     def __call__(self, *args, **kwds):
+        """Call function of Indicator class."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
@@ -304,7 +301,6 @@ class Indicator:
 
         Passing a dictionary of arguments will solve #1, but not #2.
         """
-
         # First try to bind arguments to function.
         try:
             ba = signature(func).bind(**das)
@@ -487,8 +483,7 @@ class Indicator:
         return out
 
     def mask(self, *args, **kwds):
-        """Return whether mask for output values, based on the output of the `missing` method.
-        """
+        """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
@@ -504,7 +499,7 @@ class Indicator:
     # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
     def compute(*args, **kwds):
-        """The function computing the indicator.
+        """Compute the indicator.
 
         This would typically be a function from `xclim.indices`.
         """
@@ -522,27 +517,32 @@ class Indicator:
     def datacheck(**das):
         """Verify that input data is valid.
 
-         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
+        When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
-         For example, checks could include:
-          - assert temporal frequency is daily
-          - assert no precipitation is negative
-          - assert no temperature has the same value 5 days in a row
-
+        For example, checks could include:
+         - assert temporal frequency is daily
+         - assert no precipitation is negative
+         - assert no temperature has the same value 5 days in a row
         """
         return True
 
 
 class Indicator2D(Indicator):
+    """Indicator using two dimensions."""
+
     _nvar = 2
 
 
 class Daily(Indicator):
+    """Indicator at Daily frequency."""
+
     @staticmethod
-    def datacheck(**das):
+    def datacheck(**das):  # noqa
         for key, da in das.items():
             datachecks.check_daily(da)
 
 
 class Daily2D(Daily):
+    """Indicator using two dimensions at Daily frequency."""
+
     _nvar = 2

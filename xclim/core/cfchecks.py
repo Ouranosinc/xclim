@@ -1,6 +1,5 @@
 """
-CF-Convention checks
-====================
+CF-Convention checks module.
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
@@ -15,7 +14,6 @@ from .utils import ValidationError
 @cfcheck
 def check_valid(var, key, expected):
     r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
-
     att = getattr(var, key, None)
     if att is None:
         raise ValidationError(f"Variable does not have a `{key}` attribute.")
@@ -33,21 +31,18 @@ def check_valid_temperature(var, units):
 
 def check_valid_discharge(var):
     r"""Check that the variable is a discharge."""
-
     check_valid(var, "standard_name", "water_volume_transport_in_river_channel")
     check_valid(var, "units", "m3 s-1")
 
 
 def check_valid_min_temperature(var, units="K"):
     r"""Check that a variable is a valid daily minimum temperature."""
-
     check_valid_temperature(var, units)
     check_valid(var, "cell_methods", "time: minimum within days")
 
 
 def check_valid_mean_temperature(var, units="K"):
     r"""Check that a variable is a valid daily mean temperature."""
-
     check_valid_temperature(var, units)
     check_valid(var, "cell_methods", "time: mean within days")
 

@@ -446,7 +446,7 @@ def kmeans_reduce_ensemble(
       Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
-    -----
+    ----------
     Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
 
 

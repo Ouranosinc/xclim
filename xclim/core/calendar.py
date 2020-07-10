@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """
+Calendar handling utility module.
+
 Calendar handling utilities
 ===========================
 
 Helper function to handle dates, times and different calendars with xarray.
 """
+
 import datetime as pydt
 from typing import Optional, Sequence, Union
 from warnings import warn
@@ -52,7 +55,7 @@ max_doy = {
 
 
 def get_calendar(arr: Union[xr.DataArray, xr.Dataset], dim: str = "time") -> str:
-    """Return the calendar of the time coord of the DataArray
+    """Return the calendar of the time coord of the DataArray.
 
     Parameters
     ----------
@@ -90,6 +93,7 @@ def convert_calendar(
     dim: str = "time",
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
+
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
 
     If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
@@ -323,7 +327,6 @@ def datetime_to_decimal_year(
     Decimal years are the number of years since 0001-01-01 00:00:00 AD.
     Ex: '2000-03-01 12:00' is 2000.1653 in a standard calendar, 2000.16301 in a "noleap" or 2000.16806 in a "360_day".
     """
-
     calendar = calendar or get_calendar(times)
     if calendar == "default":
         calendar = "standard"
@@ -355,7 +358,7 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def percentile_doy(
     arr: xr.DataArray, window: int = 5, per: float = 0.1
 ) -> xr.DataArray:
-    """Percentile value for each day of the year
+    """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
 
@@ -392,7 +395,7 @@ def percentile_doy(
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
-    """Interpolate from one set of dayofyear range to another
+    """Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -486,26 +489,24 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
 
 
 def cftime_start_time(date, freq):
-    """
-    Get the cftime.datetime for the start of a period. As we are not supplying
-    actual period objects, assumptions regarding the period are made based on
-    the given freq. IMPORTANT NOTE: this function cannot be used
-    on greater-than-day freq that start at the beginning of a month, e.g.,
-    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    """Get the cftime.datetime for the start of a period.
+
+    As we are not supplying actual period objects, assumptions regarding the period are made based on
+    the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq that start at the
+    beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
 
     Parameters
-    __________
-    datetime : cftime.datetime
+    ----------
+    date : cftime.datetime
         The original datetime object as a proxy representation for period.
     freq : str
         String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
 
     Returns
-    _______
+    -------
     cftime.datetime
         The starting datetime of the period inferred from date and freq.
     """
-
     freq = to_offset(freq)
     if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
         raise ValueError("Invalid frequency: " + freq.rule_code())
@@ -521,22 +522,21 @@ def cftime_start_time(date, freq):
 
 
 def cftime_end_time(date, freq):
-    """
-    Get the cftime.datetime for the end of a period. As we are not supplying
-    actual period objects, assumptions regarding the period are made based on
-    the given freq. IMPORTANT NOTE: this function cannot be used
-    on greater-than-day freq that start at the beginning of a month, e.g.,
-    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    """Get the cftime.datetime for the end of a period.
+
+    As we are not supplying actual period objects, assumptions regarding the period are made based on
+    the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq that start at the
+    beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
 
     Parameters
-    __________
-    datetime : cftime.datetime
+    ----------
+    date : cftime.datetime
         The original datetime object as a proxy representation for period.
     freq : str
         String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
 
     Returns
-    _______
+    -------
     cftime.datetime
         The ending datetime of the period inferred from date and freq.
     """
@@ -556,21 +556,21 @@ def cftime_end_time(date, freq):
 
 def cfindex_start_time(cfindex, freq):
     """
-    Get the start of a period for a pseudo-period index. As we are using
-    datetime indices to stand in for period indices, assumptions regarding the
-    period are made based on the given freq. IMPORTANT NOTE: this function
-    cannot be used on greater-than-day freq that start at the beginning of a
-    month, e.g., 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    Get the start of a period for a pseudo-period index.
+
+    As we are using datetime indices to stand in for period indices, assumptions regarding the
+    period are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day
+    freq that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
 
     Parameters
-    __________
+    ----------
     cfindex : CFTimeIndex
         CFTimeIndex as a proxy representation for CFPeriodIndex
     freq : str
         String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
 
     Returns
-    _______
+    -------
     CFTimeIndex
         The starting datetimes of periods inferred from dates and freq
     """
@@ -579,21 +579,21 @@ def cfindex_start_time(cfindex, freq):
 
 def cfindex_end_time(cfindex, freq):
     """
-    Get the start of a period for a pseudo-period index. As we are using
-    datetime indices to stand in for period indices, assumptions regarding the
-    period are made based on the given freq. IMPORTANT NOTE: this function
-    cannot be used on greater-than-day freq that start at the beginning of a
-    month, e.g., 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    Get the end of a period for a pseudo-period index.
+
+    As we are using datetime indices to stand in for period indices, assumptions regarding the
+    period are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day
+    freq that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
 
     Parameters
-    __________
+    ----------
     cfindex : CFTimeIndex
         CFTimeIndex as a proxy representation for CFPeriodIndex
     freq : str
         String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
 
     Returns
-    _______
+    -------
     CFTimeIndex
         The ending datetimes of periods inferred from dates and freq
     """
@@ -602,14 +602,14 @@ def cfindex_end_time(cfindex, freq):
 
 def time_bnds(group, freq):
     """
-    Find the time bounds for a pseudo-period index. As we are using datetime
-    indices to stand in for period indices, assumptions regarding the period
-    are made based on the given freq. IMPORTANT NOTE: this function cannot be
-    used on greater-than-day freq that start at the beginning of a month, e.g.,
-    'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    Find the time bounds for a pseudo-period index.
+
+    As we are using datetime indices to stand in for period indices, assumptions regarding the period
+    are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq
+    that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
 
     Parameters
-    __________
+    ----------
     group : CFTimeIndex or DataArrayResample
         Object which contains CFTimeIndex as a proxy representation for
         CFPeriodIndex
@@ -617,7 +617,7 @@ def time_bnds(group, freq):
         String specifying the frequency/offset such as 'MS', '2D', or '3T'
 
     Returns
-    _______
+    -------
     start_time : cftime.datetime
         The start time of the period inferred from datetime and freq.
 

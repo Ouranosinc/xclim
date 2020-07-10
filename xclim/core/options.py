@@ -1,4 +1,4 @@
-"""Global or contextual options for xclim, similar to xarray.set_options"""
+"""Global or contextual options for xclim, similar to xarray.set_options."""
 import logging
 from inspect import signature
 from warnings import warn
@@ -59,6 +59,8 @@ _SETTERS = {MISSING_OPTIONS: _set_missing_options}
 
 
 def register_missing_method(name):
+    """Register missing method."""
+
     def _register_missing_method(cls):
         sig = signature(cls.is_missing)
         opts = {
@@ -160,9 +162,11 @@ class set_options:
         self.update(kwargs)
 
     def __enter__(self):
+        """Context management."""
         return
 
     def update(self, kwargs):
+        """Update values."""
         for k, v in kwargs.items():
             if k in _SETTERS:
                 _SETTERS[k](v)
@@ -170,4 +174,5 @@ class set_options:
                 OPTIONS[k] = v
 
     def __exit__(self, type, value, traceback):
+        """Context management."""
         self.update(self.old)
