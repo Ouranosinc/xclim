@@ -1,16 +1,16 @@
+"""Ensembles Module."""
 import logging
 import warnings
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
 from xclim.core.calendar import convert_calendar, get_calendar
-from xclim.core.formatting import merge_attributes, update_history
+from xclim.core.formatting import update_history
 
 # Avoid having to include matplotlib in xclim requirements
 try:
@@ -31,14 +31,14 @@ def create_ensemble(
     calendar: str = "default",
     **xr_kwargs,
 ) -> xr.Dataset:
-    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
-    concatenated along a newly created data dimension ('realization')
+    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
-    Returns an xarray dataset object containing input data from the list of netcdf files concatenated along
-    a new dimension (name:'realization'). In the case where input files have unequal time dimensions, the output
-    ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, datasets not
-    covering the entire time span have their data padded with NaN values.
-    Dataset and variable attributes of the first dataset are copied to the resulting dataset.
+    Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
+    containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
+    In the case where input files have unequal time dimensions, the output ensemble Dataset is created for maximum
+    time-step interval of all input files.  Before concatenation, datasets not covering the entire time span have
+    their data padded with NaN values. Dataset and variable attributes of the first dataset are copied to the
+    resulting dataset.
 
     Parameters
     ----------
@@ -99,7 +99,7 @@ def create_ensemble(
 
 
 def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
     simulations.
@@ -190,7 +190,6 @@ def ensemble_percentiles(
     If the original array has many small chunks, it might be more efficient to do:
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
-
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
@@ -374,12 +373,12 @@ def kmeans_reduce_ensemble(
     sample_weights: Optional[np.ndarray] = None,
     random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> Tuple[list, np.ndarray, dict]:
-    """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
-    reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
-    uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    """Return a sample of ensemble members using k-means clustering.
+
+    The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
+    the ensemble uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
     Subsequently a single representative simulation is retained from each group.
-
 
     Parameters
     ----------
@@ -602,7 +601,6 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
-
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
         # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
@@ -633,8 +631,10 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
 
 
 def plot_rsqprofile(fig_data):
-    """Create an R² profile plot using kmeans_reduce_ensemble output. The R² plot allows evaluation of the proportion
-    of total uncertainty in the original ensemble that is provided by the reduced selected.
+    """Create an R² profile plot using kmeans_reduce_ensemble output.
+
+    The R² plot allows evaluation of the proportion of total uncertainty in the original ensemble that is provided
+    by the reduced selected.
 
     Examples
     --------
@@ -642,7 +642,6 @@ def plot_rsqprofile(fig_data):
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)  # doctest: +SKIP
     >>> plot_rsqprofile(fig_data)  # doctest: +SKIP
     """
-
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
     n_clusters = fig_data["n_clusters"]
