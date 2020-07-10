@@ -7,8 +7,7 @@ Helper functions for common generic actions done in the computation of indices.
 """
 # Note: scipy.stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import dask.array
 import numpy as np

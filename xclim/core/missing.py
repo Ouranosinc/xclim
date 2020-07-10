@@ -27,11 +27,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.core.options import CHECK_MISSING
-from xclim.core.options import MISSING_METHODS
-from xclim.core.options import MISSING_OPTIONS
-from xclim.core.options import OPTIONS
-from xclim.core.options import register_missing_method
+from xclim.core.options import (
+    CHECK_MISSING,
+    MISSING_METHODS,
+    MISSING_OPTIONS,
+    OPTIONS,
+    register_missing_method,
+)
 from xclim.indices import generic
 
 __all__ = [
@@ -245,7 +247,7 @@ class MissingWMO(MissingAny):
         super().__init__(da, freq, **indexer)
 
     def is_missing(self, null, count, nm=11, nc=5):
-        import xclim.indices.run_length as rl
+        from xclim.indices import run_length as rl
 
         # Check total number of days
         cond0 = null.count(dim="time") != count

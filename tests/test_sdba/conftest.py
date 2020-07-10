@@ -6,8 +6,7 @@ from . import utils as tu
 
 try:
     from xclim.sdba.base import parse_group
-    from xclim.sdba.utils import apply_correction
-    from xclim.sdba.utils import equally_spaced_nodes
+    from xclim.sdba.utils import apply_correction, equally_spaced_nodes
 except ImportError:
     parse_group = lambda x: x  # noqa
     apply_correction = None

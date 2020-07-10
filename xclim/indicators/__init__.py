@@ -37,10 +37,10 @@ def build_module(
       A module built from a list of objects' name.
 
     """
+    import logging
     import sys
     import types
     import warnings
-    import logging
 
     try:
         out = types.ModuleType(name, doc)

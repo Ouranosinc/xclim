@@ -1,20 +1,16 @@
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Mapping, Optional, Sequence, Union
 from warnings import warn
 
 import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
-from scipy.interpolate import griddata
-from scipy.interpolate import interp1d
+from scipy.interpolate import griddata, interp1d
 
-from .base import Grouper
-from .base import parse_group
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
+
+from .base import Grouper, parse_group
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"

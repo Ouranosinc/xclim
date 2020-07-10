@@ -1,10 +1,7 @@
 import logging
 import warnings
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,14 +9,12 @@ import scipy.stats
 import xarray as xr
 from sklearn.cluster import KMeans
 
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import get_calendar
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import update_history
+from xclim.core.calendar import convert_calendar, get_calendar
+from xclim.core.formatting import merge_attributes, update_history
 
 # Avoid having to include matplotlib in xclim requirements
 try:
-    import matplotlib.pyplot as plt
+    from matplotlib import pyplot as plt
 
     logging.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True

@@ -83,9 +83,7 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from dask.array import Array as dskarray
-from numba import jit
-from numba import vectorize
-
+from numba import jit, vectorize
 
 DEFAULT_PARAMS = dict(
     # min_lat=-58,

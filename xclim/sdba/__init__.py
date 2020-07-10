@@ -63,11 +63,9 @@ except ImportError as err:
 else:
     del polyval
 
+from . import detrending, processing, utils
 from .adjustment import *
 from .base import Grouper
-from . import detrending
-from . import processing
-from . import utils
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;

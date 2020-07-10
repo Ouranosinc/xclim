@@ -7,15 +7,12 @@ Computation of statistics on runs of True values in boolean arrays.
 """
 from datetime import datetime
 from functools import partial
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
+from dask import array as dsk
 
 npts_opt = 9000
 

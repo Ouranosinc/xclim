@@ -1,9 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-
+from xclim.core.units import convert_units_to, declare_units
 
 __all__ = [
     "tas",

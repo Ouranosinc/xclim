@@ -27,7 +27,6 @@ from ._multivariate import *
 from ._simple import *
 from ._threshold import *
 
-
 """
 Notes for docstring
 -------------------

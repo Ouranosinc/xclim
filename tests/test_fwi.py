@@ -4,17 +4,18 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.indices.fwi import _shut_down_and_start_ups
-from xclim.indices.fwi import build_up_index
-from xclim.indices.fwi import day_length
-from xclim.indices.fwi import day_length_factor
-from xclim.indices.fwi import drought_code
-from xclim.indices.fwi import duff_moisture_code
-from xclim.indices.fwi import fine_fuel_moisture_code
-from xclim.indices.fwi import fire_weather_index
-from xclim.indices.fwi import fire_weather_ufunc
-from xclim.indices.fwi import initial_spread_index
-
+from xclim.indices.fwi import (
+    _shut_down_and_start_ups,
+    build_up_index,
+    day_length,
+    day_length_factor,
+    drought_code,
+    duff_moisture_code,
+    fine_fuel_moisture_code,
+    fire_weather_index,
+    fire_weather_ufunc,
+    initial_spread_index,
+)
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
@@ -22,6 +23,7 @@ TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 def get_data():
     import io
+
     import pandas as pd
 
     f = io.StringIO(CFS_data)

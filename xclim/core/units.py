@@ -9,9 +9,7 @@ most unit handling methods.
 import re
 import warnings
 from inspect import signature
-from typing import Any
-from typing import Optional
-from typing import Union
+from typing import Any, Optional, Union
 
 import pint.converters
 import pint.unit
@@ -21,7 +19,6 @@ from packaging import version
 
 from .options import datacheck
 from .utils import ValidationError
-
 
 __all__ = [
     "convert_units_to",

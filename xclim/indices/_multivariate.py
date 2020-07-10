@@ -3,14 +3,17 @@ from typing import Optional
 import numpy as np
 import xarray
 
+from xclim.core.calendar import resample_doy
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint_multiply,
+    units,
+    units2pint,
+)
+
 from . import fwi
 from . import run_length as rl
-from xclim.core.calendar import resample_doy
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-from xclim.core.units import pint_multiply
-from xclim.core.units import units
-from xclim.core.units import units2pint
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases

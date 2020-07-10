@@ -21,7 +21,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.indices as xci
+from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))

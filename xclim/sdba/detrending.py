@@ -3,12 +3,8 @@ from typing import Union
 
 import xarray as xr
 
-from .base import Grouper
-from .base import Parametrizable
-from .base import parse_group
-from .utils import ADDITIVE
-from .utils import apply_correction
-from .utils import invert
+from .base import Grouper, Parametrizable, parse_group
+from .utils import ADDITIVE, apply_correction, invert
 
 # from .utils import loffsets
 

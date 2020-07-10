@@ -2,10 +2,7 @@ import logging
 import warnings
 from functools import wraps
 from pathlib import Path
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Optional, Sequence, Tuple, Union
 
 import geopandas as gpd
 import numpy as np
@@ -14,12 +11,8 @@ import xarray
 from pyproj import Geod
 from pyproj.crs import CRS
 from shapely import vectorized
-from shapely.geometry import LineString
-from shapely.geometry import MultiPolygon
-from shapely.geometry import Point
-from shapely.geometry import Polygon
-from shapely.ops import cascaded_union
-from shapely.ops import split
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
+from shapely.ops import cascaded_union, split
 
 __all__ = [
     "create_mask",

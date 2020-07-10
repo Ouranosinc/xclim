@@ -61,29 +61,27 @@ a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could 
 """
 import re
 import warnings
-from collections import defaultdict
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
 
-from .formatting import AttrFormatter
-from .formatting import default_formatter
-from .formatting import merge_attributes
-from .formatting import parse_doc
-from .formatting import update_history
-from .locales import get_local_attrs
-from .locales import get_local_formatter
-from .options import OPTIONS
-from .units import convert_units_to
-from .units import units
 from xclim.core import datachecks
-from xclim.core.options import MISSING_METHODS
-from xclim.core.options import MISSING_OPTIONS
+from xclim.core.options import MISSING_METHODS, MISSING_OPTIONS
 from xclim.indices.generic import default_freq
+
+from .formatting import (
+    AttrFormatter,
+    default_formatter,
+    merge_attributes,
+    parse_doc,
+    update_history,
+)
+from .locales import get_local_attrs, get_local_formatter
+from .options import OPTIONS
+from .units import convert_units_to, units
 
 # Indicators registry
 registry = {}

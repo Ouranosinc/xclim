@@ -5,7 +5,6 @@ from .cfchecks import *
 from .datachecks import *
 from .missing import *
 
-
 warn(
     (
         "Submodule 'checks' is deprecated in favor of 'cfchecks', 'datachecks'"

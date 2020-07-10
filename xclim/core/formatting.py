@@ -6,10 +6,7 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Mapping, Optional, Sequence, Union
 
 import xarray as xr
 

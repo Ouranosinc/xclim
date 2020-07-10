@@ -6,25 +6,24 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Optional, Sequence, Union
 from warnings import warn
 
 import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import MonthBegin
-from xarray.coding.cftime_offsets import MonthEnd
-from xarray.coding.cftime_offsets import QuarterBegin
-from xarray.coding.cftime_offsets import QuarterEnd
-from xarray.coding.cftime_offsets import to_offset
-from xarray.coding.cftime_offsets import YearBegin
-from xarray.coding.cftime_offsets import YearEnd
+from xarray.coding.cftime_offsets import (
+    MonthBegin,
+    MonthEnd,
+    QuarterBegin,
+    QuarterEnd,
+    YearBegin,
+    YearEnd,
+    to_offset,
+)
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
-
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {
