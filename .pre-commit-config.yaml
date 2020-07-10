@@ -35,6 +35,10 @@ repos:
     hooks:
     -   id: reorder-python-imports
         language_version: python3
+#-   repo: https://github.com/pycqa/pydocstyle
+#    rev: 5.0.2
+#    hooks:
+#    -   id: pydocstyle
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.4.1
     hooks:
