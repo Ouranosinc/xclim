@@ -1,3 +1,5 @@
+"""Streamflow indicator definitions."""
+
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial

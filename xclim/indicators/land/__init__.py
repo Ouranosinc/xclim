@@ -1,4 +1,6 @@
 """
+Land indicators module.
+
 Land indicators
 ---------------
 """

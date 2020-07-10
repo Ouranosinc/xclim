@@ -1,4 +1,6 @@
 """
+Sea-Ice indicators module.
+
 Ice-related indicators
 ======================
 """

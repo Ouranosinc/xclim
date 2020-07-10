@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Termperature indicator definitions."""
+
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D

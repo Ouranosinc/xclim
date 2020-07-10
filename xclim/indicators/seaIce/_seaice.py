@@ -1,4 +1,6 @@
 """
+Sea ice indicator definitions.
+
 Sea ice indicators
 ------------------
 """

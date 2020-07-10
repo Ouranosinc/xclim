@@ -1,4 +1,6 @@
 """
+Atmospheric indicators module.
+
 Atmospheric indicator calculation instances
 ===========================================
 
