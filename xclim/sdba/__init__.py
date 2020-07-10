@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Statistical Downscaling and Bias Adjustment module.
+
 ===========================================
 Statistical Downscaling and Bias Adjustment
 ===========================================
@@ -56,6 +58,7 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
 """
+
 try:
     from xarray import polyval  # noqa
 except ImportError as err:

@@ -1,4 +1,4 @@
-"""Detrending objects"""
+"""Detrending objects."""
 from typing import Union
 
 import xarray as xr
@@ -10,7 +10,7 @@ from .utils import ADDITIVE, apply_correction, invert
 
 
 class BaseDetrend(Parametrizable):
-    """Base class for detrending objects
+    """Base class for detrending objects.
 
     Defines three methods:
 
@@ -67,14 +67,14 @@ class BaseDetrend(Parametrizable):
         return out
 
     def detrend(self, da: xr.DataArray):
-        """Removes the previously fitted trend from a DataArray."""
+        """Remove the previously fitted trend from a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before detrending.")
         trend = self.get_trend(da)
         return self._detrend(da, trend)
 
     def retrend(self, da: xr.DataArray):
-        """Puts back the previsouly fitted trend on a DataArray."""
+        """Replace the previously fitted trend on a DataArray."""
         if not self.__fitted:
             raise ValueError("You must call fit() before retrending")
         trend = self.get_trend(da)

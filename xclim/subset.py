@@ -1,3 +1,4 @@
+"""Subset module."""
 import logging
 import warnings
 from functools import wraps
@@ -26,9 +27,7 @@ __all__ = [
 def check_start_end_dates(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
-        """
-        A decorator to verify that start and end dates are valid in a time subsetting function.
-        """
+        """Verify that start and end dates are valid in a time subsetting function."""
         da = args[0]
         if "start_date" not in kwargs or kwargs["start_date"] is None:
             # use string for first year only - .sel() will include all time steps
@@ -85,11 +84,11 @@ def check_lons(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator to reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied
-         Dataset or DataArray. Examines an xarray object longitude dimensions and depending on extent
-         (either -180 to +180 or 0 to +360), will reformat user-specified lon values to be synonymous with
-         xarray object boundaries.
-         Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
+        Reformat user-specified "lon" or "lon_bnds" values based on the lon dimensions of a supplied Dataset or DataArray.
+
+        Examines an xarray object longitude dimensions and depending on extent (either -180 to +180 or 0 to +360),
+        will reformat user-specified lon values to be synonymous with xarray object boundaries.
+        Returns a numpy array of reformatted `lon` or `lon_bnds` in kwargs with min() and max() values.
         """
         if "lon_bnds" in kwargs:
             lon = "lon_bnds"
@@ -128,11 +127,11 @@ def check_latlon_dimnames(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator examining the names of the latitude and longitude dimensions and renames them temporarily.
-         Checks here ensure that the names supplied via the xarray object dims are changed to be synonymous with subset
-         algorithm dimensions, conversions are saved and are then undone to the processed file.
-        """
+        Examine the names of the latitude and longitude dimensions and rename them temporarily.
 
+        Checks here ensure that the names supplied via the xarray object dims are changed to be synonymous with subset
+        algorithm dimensions, conversions are saved and are then undone to the processed file.
+        """
         if range(len(args)) == 0:
             return func(*args, **kwargs)
 
@@ -177,7 +176,7 @@ def convert_lat_lon_to_da(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator to transform input lat, lon to DataArrays.
+        Transform input lat, lon to DataArrays.
 
         Input can be int, float or any iterable.
         Expects a DataArray as first argument and checks is dim "site" already exists,
@@ -213,12 +212,13 @@ def wrap_lons_and_split_at_greenwich(func):
     @wraps(func)
     def func_checker(*args, **kwargs):
         """
-        A decorator to split and reproject polygon vectors in a GeoDataFrame whose values cross the Greenwich Meridian.
-         Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
-         the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
-         transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
+        Split and reproject polygon vectors in a GeoDataFrame whose values cross the Greenwich Meridian.
 
-         Returns a GeoDataFrame with the new features in a wrap_lon WGS84 projection if needed.
+        Begins by examining whether the geometry bounds the supplied cross longitude = 0 and if so, proceeds to split
+        the polygons at the meridian into new polygons and erase a small buffer to prevent invalid geometries when
+        transforming the lons from WGS84 to WGS84 +lon_wrap=180 (longitudes from 0 to 360).
+
+        Returns a GeoDataFrame with the new features in a wrap_lon WGS84 projection if needed.
         """
         try:
             poly = kwargs["poly"]
@@ -302,7 +302,7 @@ def create_mask_vectorize(
     wrap_lons: bool = False,
     check_overlap: bool = False,
 ):
-    """Creates a mask with values corresponding to the features in a GeoDataFrame using vectorize methods.
+    """Create a mask with values corresponding to the features in a GeoDataFrame using vectorize methods.
 
     The returned mask's points have the value of the first geometry of `poly` they fall in.
 
@@ -383,7 +383,7 @@ def create_mask(
     wrap_lons: bool = False,
     check_overlap: bool = False,
 ):
-    """Creates a mask with values corresponding to the features in a GeoDataFrame using spatial join methods.
+    """Create a mask with values corresponding to the features in a GeoDataFrame using spatial join methods.
 
     The returned mask's points have the value of the first geometry of `poly` they fall in.
 
@@ -482,7 +482,7 @@ def subset_shape(
     """Subset a DataArray or Dataset spatially (and temporally) using a vector shape and date selection.
 
     Return a subset of a DataArray or Dataset for grid points falling within the area of a Polygon and/or
-     MultiPolygon shape, or grid points along the path of a LineString and/or MultiLineString.
+    MultiPolygon shape, or grid points along the path of a LineString and/or MultiLineString.
 
     Parameters
     ----------
@@ -514,7 +514,6 @@ def subset_shape(
 
     Examples
     --------
-
     >>> pr = xr.open_dataset(path_to_pr_file).pr
 
     Subset data array by shape
@@ -685,7 +684,6 @@ def subset_bbox(
     Subset lat lon
     >>> prSub = subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45])
     """
-
     # Rectilinear case (lat and lon are the 1D dimensions)
     if ("lat" in da.dims) or ("lon" in da.dims):
 
@@ -792,7 +790,7 @@ def in_bounds(bounds: Tuple[float, float], coord: xarray.Coordinate) -> bool:
 
 
 def _check_desc_coords(coord, bounds, dim):
-    """If Dataset coordinates are descending reverse bounds"""
+    """If Dataset coordinates are descending reverse bounds."""
     if np.all(coord.diff(dim=dim) < 0):
         bounds = np.flip(bounds)
     return bounds
@@ -823,7 +821,7 @@ def _check_has_overlaps_old(polygons: gpd.GeoDataFrame):
 
 
 def _check_crs_compatibility(shape_crs: CRS, raster_crs: CRS):
-    """If CRS definitions are not WGS84 or incompatible, raise operation warnings"""
+    """If CRS definitions are not WGS84 or incompatible, raise operation warnings."""
     wgs84 = CRS(4326)
     if not shape_crs.equals(raster_crs):
         if (
@@ -1008,7 +1006,6 @@ def subset_time(
     -----
     TODO add notes about different calendar types. Avoid "%Y-%m-31". If you want complete month use only "%Y-%m".
     """
-
     return da.sel(time=slice(start_date, end_date))
 
 

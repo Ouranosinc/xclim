@@ -1,4 +1,4 @@
-"""Pre and post processing for bias adjustement"""
+"""Pre and post processing for bias adjustment."""
 from typing import Optional, Union
 
 import numpy as np

@@ -1,4 +1,4 @@
-"""Adjustment objects"""
+"""Adjustment objects."""
 from typing import Union
 from warnings import warn
 
@@ -466,7 +466,7 @@ class LOCI(BaseAdjustment):
 
 
 class Scaling(BaseAdjustment):
-    """Scaling bias-adjustment
+    """Scaling bias-adjustment.
 
     Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
     matches the mean of `ref`.
