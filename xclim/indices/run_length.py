@@ -40,8 +40,11 @@ def get_npts(da: xr.DataArray) -> int:
 
 def rle(da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000):
     n = len(da[dim])
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": 1})
-    ind = xr.broadcast(i, da)[0].chunk(da.chunks)
+    # Need to chunk here to ensure the broadcasting is not made in memory
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": -1})
+    ind, da = xr.broadcast(i, da)
+    # Rechunk, but with broadcasted da
+    ind = ind.chunk(da.chunks)
     b = ind.where(~da)  # find indexes where false
     end1 = (
         da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
