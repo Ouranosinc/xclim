@@ -4,6 +4,7 @@ History
 
 0.19.x
 ------
+* New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
   method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
