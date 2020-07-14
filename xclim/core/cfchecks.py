@@ -1,5 +1,7 @@
+# noqa: D205,D400
 """
-CF-Convention checks module.
+CF-Convention checking
+======================
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """

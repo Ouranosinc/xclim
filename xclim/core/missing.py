@@ -1,6 +1,5 @@
+# noqa: D205,D400
 """
-Missing values identification module.
-
 Missing values identification
 =============================
 

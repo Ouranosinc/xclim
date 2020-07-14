@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
-Indicators module.
+Indicators module
+=================
 
 Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks

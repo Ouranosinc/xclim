@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
-Statistical Downscaling and Bias Adjustment module.
-
 ===========================================
 Statistical Downscaling and Bias Adjustment
 ===========================================

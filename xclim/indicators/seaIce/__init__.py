@@ -1,6 +1,5 @@
+# noqa: D205,D400
 """
-Sea-Ice indicators module.
-
 Ice-related indicators
 ======================
 """

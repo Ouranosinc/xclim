@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
-Indicator base class mdoule.
+Indicator base classes
+======================
 
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered

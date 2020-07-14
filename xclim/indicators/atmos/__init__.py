@@ -1,6 +1,5 @@
+# noqa: D205,D400
 """
-Atmospheric indicators module.
-
 Atmospheric indicator calculation instances
 ===========================================
 

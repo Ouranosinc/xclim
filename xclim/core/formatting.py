@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
-Formatting utilities module.
-
 Formatting utilities for indicators
 ===================================
 """

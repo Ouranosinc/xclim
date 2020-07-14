@@ -1,3 +1,4 @@
+# noqa: D100
 import numpy as np
 import xarray as xr
 
@@ -39,9 +40,9 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(None, check_output=False, uas="[speed]", vas="[speed]")
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray = None, vas: xr.DataArray = None, return_direction=True
+    uas: xr.DataArray = None, vas: xr.DataArray = None, return_direction: bool = True
 ):
-    """Converts eastward and northward wind components to wind speed and direction.
+    """Convert eastward and northward wind components to wind speed and direction.
 
     Parameters
     ----------
@@ -49,6 +50,8 @@ def uas_vas_2_sfcwind(
       Eastward wind velocity (m s-1)
     vas : xr.DataArray
       Northward wind velocity (m s-1)
+    return_direction:: bool
+      If true, returns direction, else returns surface windspeed.
 
     Returns
     -------
@@ -104,7 +107,7 @@ def uas_vas_2_sfcwind(
 
 @declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")
 def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
-    """Converts wind speed and direction to eastward and northward wind components.
+    """Convert wind speed and direction to eastward and northward wind components.
 
     Parameters
     ----------
@@ -338,7 +341,6 @@ def relative_humidity(
     .. [Lawrence2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
     .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
     """
-
     if method in ("bohren98", "BA90"):
         if dtas is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
@@ -385,7 +387,7 @@ def specific_humidity(
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
-    """Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure)
+    r"""Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure).
 
     Parameters
     ----------
@@ -407,14 +409,13 @@ def specific_humidity(
 
     Notes
     -----
-
     In the following, let :math:`T`, :math:`rh` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
 
         ... math::
 
-            w_{sat} = 0.622\\frac{e_{sat}}{P - e_{sat}}
+            w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
             w = w_{sat} * rh / 100
             q = w / (1 + w)
 

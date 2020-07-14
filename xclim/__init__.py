@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Climate indices computation package based on xArray"""
+"""Climate indices computation package based on Xarray."""
 from xclim.core import units
 from xclim.core.options import set_options
 from xclim.indicators import ICCLIM, anuclim, atmos, land, seaIce

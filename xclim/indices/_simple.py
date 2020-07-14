@@ -1,3 +1,4 @@
+# noqa: D100
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, pint_multiply, units
@@ -57,7 +58,6 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
 
         TNx_j = max(TN_{ij})
     """
-
     return tas.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
@@ -97,14 +97,13 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-
     arr = tas.resample(time=freq) if freq else tas
     return arr.mean(dim="time", keep_attrs=True)
 
 
 @declare_units("[temperature]", tas="[temperature]")
 def tg_min(tas: xarray.DataArray, freq: str = "YS"):
-    r"""Lowest mean temperature
+    r"""Lowest mean temperature.
 
     Minimum of daily mean temperature.
 
@@ -129,7 +128,6 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS"):
 
         TGn_j = min(TG_{ij})
     """
-
     return tas.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
@@ -160,7 +158,6 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
 
         TNx_j = max(TN_{ij})
     """
-
     return tasmin.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
@@ -191,14 +188,13 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
 
         TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-
     arr = tasmin.resample(time=freq) if freq else tasmin
     return arr.mean(dim="time", keep_attrs=True)
 
 
 @declare_units("[temperature]", tasmin="[temperature]")
 def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
-    r"""Lowest minimum temperature
+    r"""Lowest minimum temperature.
 
     Minimum of daily minimum temperature.
 
@@ -223,13 +219,12 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
 
         TNn_j = min(TN_{ij})
     """
-
     return tasmin.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
 @declare_units("[temperature]", tasmax="[temperature]")
 def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
-    r"""Highest max temperature
+    r"""Highest max temperature.
 
     The maximum value of daily maximum temperature.
 
@@ -254,13 +249,12 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
 
         TXx_j = max(TX_{ij})
     """
-
     return tasmax.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
 @declare_units("[temperature]", tasmax="[temperature]")
 def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
-    r"""Mean max temperature
+    r"""Mean max temperature.
 
     The mean of daily maximum temperature.
 
@@ -285,14 +279,13 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
 
         TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-
     arr = tasmax.resample(time=freq) if freq else tasmax
     return arr.mean(dim="time", keep_attrs=True)
 
 
 @declare_units("[temperature]", tasmax="[temperature]")
 def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
-    r"""Lowest max temperature
+    r"""Lowest max temperature.
 
     The minimum of daily maximum temperature.
 
@@ -317,13 +310,12 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
 
         TXn_j = min(TX_{ij})
     """
-
     return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
 @declare_units("", q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
-    r"""Base flow index
+def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
+    r"""Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
 
@@ -356,7 +348,6 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
 
     """
-
     m7 = (
         q.rolling(time=7, center=True)
         .mean(allow_lazy=True, skipna=False)
@@ -412,7 +403,7 @@ def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
 
 @declare_units("days", tasmin="[temperature]")
 def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
-    r"""Frost days index
+    r"""Frost days index.
 
     Number of days where daily minimum temperatures are below 0℃.
 
@@ -447,8 +438,8 @@ def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units("days", tasmax="[temperature]")
-def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):
-    r"""Number of ice/freezing days
+def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):  # noqa: D401
+    r"""Number of ice/freezing days.
 
     Number of days where daily maximum temperatures are below 0℃.
 

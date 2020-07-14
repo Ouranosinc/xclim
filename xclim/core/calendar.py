@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
-Calendar handling utility module.
-
 Calendar handling utilities
 ===========================
 

@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 ==============================
 Fire Weather Indices Submodule
@@ -144,7 +145,7 @@ def day_length(lat, mth):  # pragma: no cover
 
 @jit
 def day_length_factor(lat, mth):  # pragma: no cover
-    """Return the day length factor"""
+    """Return the day length factor."""
     if -15 > lat >= -90:
         dlf = DAY_LENGTH_FACTORS[0, :]
     elif 15 > lat >= -15:
@@ -156,7 +157,7 @@ def day_length_factor(lat, mth):  # pragma: no cover
 
 @vectorize
 def fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
-    """Computation of the fine fuel moisture code over one time step.
+    """Compute the fine fuel moisture code over one time step.
 
     Parameters
     ----------
@@ -236,7 +237,7 @@ def fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
 @vectorize
 def duff_moisture_code(t, p, h, mth, lat, dmc0):  # pragma: no cover
-    """Computation of the Duff moisture code over one time step.
+    """Compute the Duff moisture code over one time step.
 
     Parameters
     ----------
@@ -293,7 +294,7 @@ def duff_moisture_code(t, p, h, mth, lat, dmc0):  # pragma: no cover
 
 @vectorize
 def drought_code(t, p, mth, lat, dc0):  # pragma: no cover
-    """Computation of the drought code over one time step.
+    """Compute the drought code over one time step.
 
     Parameters
     ----------
@@ -336,7 +337,7 @@ def drought_code(t, p, mth, lat, dc0):  # pragma: no cover
 
 
 def initial_spread_index(ws, ffmc):
-    """Initial spread index
+    """Initialize spread index.
 
     Parameters
     ----------
@@ -357,7 +358,7 @@ def initial_spread_index(ws, ffmc):
 
 
 def build_up_index(dmc, dc):
-    """Build up index
+    """Build-up index.
 
     Parameters
     ----------
@@ -380,7 +381,7 @@ def build_up_index(dmc, dc):
 
 
 def fire_weather_index(isi, bui):
-    """Fire weather index
+    """Fire weather index.
 
     Parameters
     ----------
@@ -408,7 +409,7 @@ def fire_weather_index(isi, bui):
 
 
 def daily_severity_rating(fwi):
-    """Daily severity rating
+    """Daily severity rating.
 
     Parameters
     ----------
@@ -433,9 +434,10 @@ def _shut_down_and_start_ups(
     start_up_mode=None,
     **params,
 ):
-    """Computation of the shut_down and start_up masks.
+    """Compute the shut_down and start_up masks.
 
-    prev is a previous map of any code: it is assumed that dcprev, dmcprev and ffmcprev have the same shut down (NaN) grid points.
+    `prev` is a previous map of any code: it is assumed that `dcprev`, `dmcprev` and `ffmcprev` have
+    the same shut down (NaN) grid points.
 
     Returns
     -------
@@ -495,7 +497,7 @@ def _shut_down_and_start_ups(
 def _fire_weather_calc(
     tas, pr, rh, ws, snd, mth, lat, dcprev, dmcprev, ffmcprev, **params
 ):
-    """Main function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead.
+    """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead.
 
     Input arguments must be given in the following order: tas, pr, rh, ws, mth, lat, dcprev, dmcprev, ffmcprev, snd
 

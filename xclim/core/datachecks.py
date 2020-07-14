@@ -1,6 +1,5 @@
+# noqa: D205,D400
 """
-Data checks module.
-
 Data checks
 ===========
 

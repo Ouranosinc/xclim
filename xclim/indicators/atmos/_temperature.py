@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Termperature indicator definitions."""
+"""Temperature indicator definitions."""
 
 from xclim import indices
 from xclim.core import cfchecks

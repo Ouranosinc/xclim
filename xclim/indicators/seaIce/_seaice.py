@@ -1,6 +1,5 @@
+# noqa: D205,D400
 """
-Sea ice indicator definitions.
-
 Sea ice indicators
 ------------------
 """
