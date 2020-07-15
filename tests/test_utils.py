@@ -7,9 +7,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.indicator import Indicator
-from xclim.core.utils import ensure_chunk_size
-from xclim.core.utils import walk_map
-from xclim.core.utils import wrapped_partial
+from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
 
 
 def test_walk_map():

@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 Data checks
 ===========
@@ -15,10 +16,10 @@ from .utils import ValidationError
 
 @datacheck
 def check_daily(var):
-    r"""Assert that the series is daily and monotonic (no jumps in time index).
+    """Assert that the series is daily and monotonic (no jumps in time index).
 
-    A ValueError is raised otherwise."""
-
+    A ValueError is raised otherwise.
+    """
     t0, t1 = var.time[:2]
 
     # This won't work for non-standard calendars. Needs to be implemented in xarray. Comment for now

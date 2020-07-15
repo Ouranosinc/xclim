@@ -1,10 +1,7 @@
-"""Base classes"""
+"""Base classes."""
 from inspect import signature
 from types import FunctionType
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Mapping, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -13,13 +10,14 @@ from boltons.funcutils import wraps
 
 # ## Base class for the sdba module
 class Parametrizable(dict):
-    """Helper base class ressembling a dictionary.
+    """Helper base class resembling a dictionary.
 
     Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
     :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
     def __getattr__(self, attr):
+        """Get attributes."""
         try:
             return self.__getitem__(attr)
         except KeyError as err:
@@ -42,7 +40,7 @@ class Parametrizable(dict):
 
 
 class Grouper(Parametrizable):
-    """Helper object to perform grouping actions on dataarrays and datasets."""
+    """Helper object to perform grouping actions on DataArrays and Datasets."""
 
     def __init__(
         self,
@@ -316,7 +314,7 @@ class Grouper(Parametrizable):
 
 
 def parse_group(func):
-    """Decorator to parse the "group" argument of a function and return a Grouper object.
+    """Parse the "group" argument of a function and return a Grouper object.
 
     Adds the possiblity to pass a window argument and a list of dimensions in group.
     """

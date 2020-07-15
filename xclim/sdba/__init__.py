@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 ===========================================
 Statistical Downscaling and Bias Adjustment
@@ -56,6 +57,7 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
 """
+
 try:
     from xarray import polyval  # noqa
 except ImportError as err:
@@ -63,11 +65,9 @@ except ImportError as err:
 else:
     del polyval
 
+from . import detrending, processing, utils
 from .adjustment import *
 from .base import Grouper
-from . import detrending
-from . import processing
-from . import utils
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;

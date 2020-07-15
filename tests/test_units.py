@@ -1,16 +1,17 @@
-import dask.array as dsk
 import numpy as np
 import pytest
 import xarray as xr
+from dask import array as dsk
 
-from xclim import indices
-from xclim import set_options
-from xclim.core.units import check_units
-from xclim.core.units import convert_units_to
-from xclim.core.units import pint2cfunits
-from xclim.core.units import pint_multiply
-from xclim.core.units import units
-from xclim.core.units import units2pint
+from xclim import indices, set_options
+from xclim.core.units import (
+    check_units,
+    convert_units_to,
+    pint2cfunits,
+    pint_multiply,
+    units,
+    units2pint,
+)
 from xclim.core.utils import ValidationError
 
 

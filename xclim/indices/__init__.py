@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 ===============
 Indices library
@@ -26,7 +27,6 @@ from ._conversion import *
 from ._multivariate import *
 from ._simple import *
 from ._threshold import *
-
 
 """
 Notes for docstring

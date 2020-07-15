@@ -1,18 +1,12 @@
-"""Pre and post processing for bias adjustement"""
-from typing import Optional
-from typing import Union
+"""Pre and post processing for bias adjustment."""
+from typing import Optional, Union
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
+from dask import array as dsk
 
-from .base import Grouper
-from .base import parse_group
-from .utils import ADDITIVE
-from .utils import apply_correction
-from .utils import broadcast
-from .utils import ecdf
-from .utils import invert
+from .base import Grouper, parse_group
+from .utils import ADDITIVE, apply_correction, broadcast, ecdf, invert
 
 
 @parse_group

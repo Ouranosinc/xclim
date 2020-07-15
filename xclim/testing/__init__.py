@@ -1,15 +1,16 @@
+# noqa: D104
 import urllib.request
 from pathlib import Path
 
 
-def as_tuple(x):
+def as_tuple(x):  # noqa: D103
     if isinstance(x, (list, tuple)):
         return x
     else:
         return (x,)
 
 
-class TestFile:
+class TestFile:  # noqa: D101
     def __init__(self, name, path=None, url=None):
         """Register a test file.
 
@@ -35,7 +36,7 @@ class TestFile:
         for u, p in zip(as_tuple(self.url), as_tuple(self.path)):
             urllib.request.urlretrieve(u, str(p))
 
-    def __call__(self):
+    def __call__(self):  # noqa: D102
         """Return the path to the file."""
         if not self.path.exists():
             if self.url is not None:
@@ -49,7 +50,7 @@ class TestFile:
         return self.path
 
 
-class TestDataSet:
+class TestDataSet:  # noqa: D101
     def __init__(self, name, path, files=()):
         self.name = name
         self.files = list(files)
@@ -57,7 +58,7 @@ class TestDataSet:
         if not self.path.exists():
             self.path.mkdir()
 
-    def add(self, name, url, path=None):
+    def add(self, name, url, path=None):  # noqa: D102
         if path is None:
             # Create a relative path
             path = self.path / Path(url).name
@@ -69,5 +70,5 @@ class TestDataSet:
         setattr(self, name, tf)
         self.files.append(tf)
 
-    def __call__(self):
+    def __call__(self):  # noqa: D102
         return [f() for f in self.files]

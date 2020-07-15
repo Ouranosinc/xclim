@@ -1,22 +1,25 @@
 import numpy as np
 import pytest
 import xarray as xr
-from scipy.stats import norm
-from scipy.stats import uniform
+from scipy.stats import norm, uniform
 
 sdba = pytest.importorskip("xclim.sdba")  # noqa
-from xclim.sdba.adjustment import BaseAdjustment
-from xclim.sdba.adjustment import DetrendedQuantileMapping
-from xclim.sdba.adjustment import EmpiricalQuantileMapping
-from xclim.sdba.adjustment import LOCI
-from xclim.sdba.adjustment import QuantileDeltaMapping
-from xclim.sdba.adjustment import Scaling
+from xclim.sdba.adjustment import (
+    LOCI,
+    BaseAdjustment,
+    DetrendedQuantileMapping,
+    EmpiricalQuantileMapping,
+    QuantileDeltaMapping,
+    Scaling,
+)
 from xclim.sdba.base import Grouper
-from xclim.sdba.utils import ADDITIVE
-from xclim.sdba.utils import apply_correction
-from xclim.sdba.utils import get_correction
-from xclim.sdba.utils import invert
-from xclim.sdba.utils import MULTIPLICATIVE
+from xclim.sdba.utils import (
+    ADDITIVE,
+    MULTIPLICATIVE,
+    apply_correction,
+    get_correction,
+    invert,
+)
 
 
 @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))

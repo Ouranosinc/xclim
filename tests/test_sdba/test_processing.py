@@ -5,8 +5,7 @@ import xarray as xr
 
 sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba.base import Grouper
-from xclim.sdba.processing import adapt_freq
-from xclim.sdba.processing import jitter_under_thresh
+from xclim.sdba.processing import adapt_freq, jitter_under_thresh
 
 
 def test_jitter_under_thresh():
