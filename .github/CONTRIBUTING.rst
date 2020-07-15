@@ -80,25 +80,26 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Now you can make your changes locally!
 
-5. When you're done making changes, check that you verify your changes with `black` and run the tests, including testing other Python versions with `tox`::
+5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     # For virtualenv environments:
-    $ pip install black pytest tox
+    $ pip install black pytest pydocstyle tox
 
     # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge black pytest tox
+    $ conda install -c conda-forge black pytest pydocstyle tox
 
     $ black xclim tests
     $ python setup.py test
+    $ pydocstyle --conventions=numpy xclim
     $ tox
 
-6. Before committing your changes, we ask that you install `pre-commit` in your virtualenv. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
+6. Before committing your changes, we ask that you install `pre-commit` in your dev environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
 
     # For virtualenv environments:
     $ pip install pre-commit
 
     # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge pre_commit
+    $ conda install -c conda-forge pre-commit
 
     $ pre-commit install
 
@@ -134,21 +135,21 @@ Before you submit a pull request, please follow these guidelines:
    If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
-   Please ensure that the docstrings adhere to one of the following standards:
+   Please ensure that the docstrings adhere to one of the following standards (badly formed docstrings will fail build tests):
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 3.6, 3.7 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7, and 3.8 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
     https://travis-ci.org/Ouranosinc/xclim/pull_requests
 
 .. warning::
-    PEP8 and Black is strongly enforced. Ensure that your changes pass **Flake8** and **Black**
-    tests prior to pushing your final commits to your branch. Code formatting errors are treated
-    as build errors and will block your pull request from being accepted.
+    PEP8, Black, and Pydocstyle (for numpy docstrings) conventions are strongly enforced. Ensure that your
+    changes pass **Flake8** and **Black** tests prior to pushing your final commits to your branch.
+    Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
 Tips
 ----
@@ -157,6 +158,9 @@ To run a subset of tests::
 
 $ pytest tests.test_xclim
 
+To run all conventions tests at once::
+
+$ pre-commit run --all-files
 
 Versioning
 ----------
