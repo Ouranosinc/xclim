@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import scipy.stats
 import xarray as xr
+from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
 from xclim.core.calendar import convert_calendar, get_calendar
@@ -360,6 +361,77 @@ def _calc_perc(arr, p=[50]):
             np.nanpercentile(arr[nans], p, axis=-1), 0, -1
         ).ravel()
     return out
+
+
+def kkz_reduce_ensemble(
+    data: xr.DataArray,
+    num_select: int,
+    *,
+    dist_method: str = "euclidean",
+    standardize: bool = True,
+    **cdist_kwargs,
+) -> list:
+    """Return a sample of ensemble members using KKZ selection. The algorithm selects `num_select`
+    ensemble members spanning the overall range of the ensemble.
+
+    The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
+    The first selected member is the one nearest to the centroid of the ensemble, all subsequent members
+    are selected in a way maximizing the phase-space coverage of the group. Algorithm taken from [CannonKKZ]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+      ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    num_select : int
+      The number of members to select.
+    dist_method : str
+      Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+    standardize : bool
+      Whether to standardize the input before running the selection or not.
+      Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
+    **cdist_kwargs
+      All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
+
+    Returns
+    -------
+    list
+        Selected model indices along the `realization` dimension.
+
+    References
+    ----------
+    .. [CannonKKZ] Cannon, Alex J. (2015). Selecting GCM Scenarios that Span the Range of Changes in a Multimodel Ensemble: Application to CMIP5 Climate Extremes Indices. Journal of Climate, (28)3, 1260-1267. https://doi.org/10.1175/JCLI-D-14-00636.1
+    .. Kastsavounidis, I, Kuo, C.-C. Jay, Zhang, Zhen (1994). A new initialization technique for generalized Lloyd iteration. IEEE Signal Processing Letters, 1(10), 144-146. https://doi.org/10.1109/97.329844
+    """
+    if standardize:
+        data = (data - data.mean("realization")) / data.std("realization")
+
+    data = data.transpose("realization", "criteria")
+    data["realization"] = np.arange(data.realization.size)
+
+    unselected = list(data.realization.values)
+    selected = []
+
+    dist0 = cdist(
+        data.mean("realization").expand_dims("realization"),
+        data,
+        metric=dist_method,
+        **cdist_kwargs,
+    )
+    selected.append(unselected.pop(dist0.argmin()))
+
+    for i in range(1, num_select):
+        dist = cdist(
+            data.isel(realization=selected),
+            data.isel(realization=unselected),
+            metric=dist_method,
+            **cdist_kwargs,
+        )
+        dist = dist.min(axis=0)
+        selected.append(unselected.pop(dist.argmax()))
+
+    return selected
 
 
 def kmeans_reduce_ensemble(
