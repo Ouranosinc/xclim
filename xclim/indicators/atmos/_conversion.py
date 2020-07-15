@@ -1,3 +1,5 @@
+"""Atmospheric conversion definitions."""
+
 from xclim import indices
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
@@ -13,7 +15,7 @@ __all__ = [
 
 
 class Converter(Indicator):
-    """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)"""
+    """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
     missing = "skip"
 

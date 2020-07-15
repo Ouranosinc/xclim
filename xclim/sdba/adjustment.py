@@ -1,4 +1,4 @@
-"""Adjustment objects"""
+"""Adjustment objects."""
 from typing import Union
 from warnings import warn
 
@@ -6,24 +6,24 @@ import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
 
-from .base import Grouper
-from .base import Parametrizable
-from .base import parse_group
-from .detrending import PolyDetrend
-from .processing import normalize
-from .utils import ADDITIVE
-from .utils import apply_correction
-from .utils import broadcast
-from .utils import equally_spaced_nodes
-from .utils import extrapolate_qm
-from .utils import get_correction
-from .utils import interp_on_quantiles
-from .utils import map_cdf
-from .utils import MULTIPLICATIVE
-from .utils import rank
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 
+from .base import Grouper, Parametrizable, parse_group
+from .detrending import PolyDetrend
+from .processing import normalize
+from .utils import (
+    ADDITIVE,
+    MULTIPLICATIVE,
+    apply_correction,
+    broadcast,
+    equally_spaced_nodes,
+    extrapolate_qm,
+    get_correction,
+    interp_on_quantiles,
+    map_cdf,
+    rank,
+)
 
 __all__ = [
     "EmpiricalQuantileMapping",
@@ -466,7 +466,7 @@ class LOCI(BaseAdjustment):
 
 
 class Scaling(BaseAdjustment):
-    """Scaling bias-adjustment
+    """Scaling bias-adjustment.
 
     Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
     matches the mean of `ref`.

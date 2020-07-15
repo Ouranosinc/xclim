@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 ===========================================
 Statistical Downscaling and Bias Adjustment
@@ -56,9 +57,7 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
 """
-from . import detrending
-from . import processing
-from . import utils
+from . import detrending, processing, utils
 from .adjustment import *
 from .base import Grouper
 

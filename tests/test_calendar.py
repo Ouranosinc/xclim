@@ -7,17 +7,18 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from xarray.coding.cftimeindex import CFTimeIndex
 
-from xclim.core.calendar import adjust_doy_calendar
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import datetime_to_decimal_year
-from xclim.core.calendar import days_in_year
-from xclim.core.calendar import ensure_cftime_array
-from xclim.core.calendar import get_calendar
-from xclim.core.calendar import interp_calendar
-from xclim.core.calendar import max_doy
-from xclim.core.calendar import percentile_doy
-from xclim.core.calendar import time_bnds
-
+from xclim.core.calendar import (
+    adjust_doy_calendar,
+    convert_calendar,
+    datetime_to_decimal_year,
+    days_in_year,
+    ensure_cftime_array,
+    get_calendar,
+    interp_calendar,
+    max_doy,
+    percentile_doy,
+    time_bnds,
+)
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")

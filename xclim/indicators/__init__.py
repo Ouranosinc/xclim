@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Indicators module
 =================
 
-Indicators are then main tool xclim provides to compute climate indices. In contrast
+Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into realms : atmos, land and
 seaIce. The module also defines an additional virtual module : ICCLIM.
@@ -37,10 +38,10 @@ def build_module(
       A module built from a list of objects' name.
 
     """
+    import logging
     import sys
     import types
     import warnings
-    import logging
 
     try:
         out = types.ModuleType(name, doc)
@@ -165,6 +166,8 @@ def __build_icclim(mode="warn"):
 
 
 def ensure_annual(func):
+    """Ensure that supplied frequency keyword denotes annual time step."""
+
     @wraps(func)
     def _wrapper(*args, **kwargs):
         if "freq" not in kwargs:

@@ -1,18 +1,24 @@
+# noqa: D100
 import numpy as np
 import xarray
 
-from ._multivariate import daily_temperature_range
-from ._multivariate import extreme_temperature_range
-from ._multivariate import precip_accumulation
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint_multiply,
+    units,
+    units2pint,
+)
+from xclim.core.utils import ensure_chunk_size
+
+from ._multivariate import (
+    daily_temperature_range,
+    extreme_temperature_range,
+    precip_accumulation,
+)
 from ._simple import tg_mean
 from .generic import select_resample_op
 from .run_length import lazy_indexing
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-from xclim.core.units import pint_multiply
-from xclim.core.units import units
-from xclim.core.units import units2pint
-from xclim.core.utils import ensure_chunk_size
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -52,7 +58,7 @@ _np_ops = {
 
 @declare_units("%", tasmin="[temperature]", tasmax="[temperature]")
 def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"):
-    r"""Isothermality
+    r"""Isothermality.
 
     The mean diurnal range divided by the annual temperature range.
 
@@ -77,7 +83,6 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     the output with input data with daily frequency as well. As such weekly or monthly input values, if desired, should
     be calculated prior to calling the function.
     """
-
     dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     with xarray.set_options(keep_attrs=True):
@@ -88,7 +93,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
 
 @declare_units("%", tas="[temperature]")
 def temperature_seasonality(tas: xarray.DataArray):
-    r"""ANUCLIM temperature seasonality (coefficient of variation)
+    r"""ANUCLIM temperature seasonality (coefficient of variation).
 
     The annual temperature coefficient of variation expressed in percent. Calculated as the standard deviation
     of temperature values for a given year expressed as a percentage of the mean of those temperatures.
@@ -136,11 +141,10 @@ def temperature_seasonality(tas: xarray.DataArray):
 
 @declare_units("percent", pr="[precipitation]")
 def precip_seasonality(pr: xarray.DataArray,):
-    r""" ANUCLIM Precipitation Seasonality (C of V)
+    r"""ANUCLIM Precipitation Seasonality (C of V).
 
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
     of precipitation values for a given year expressed as a percentage of the mean of those values.
-
 
     Parameters
     ----------
@@ -174,9 +178,7 @@ def precip_seasonality(pr: xarray.DataArray,):
 
     If input units are in mm s-1 (or equivalent) values are converted to mm/day to avoid potentially small denominator
     values.
-
     """
-
     # If units in mm/sec convert to mm/days to avoid potentially small denominator
     if units2pint(pr) == units("mm / s"):
         pr = convert_units_to(pr, "mm d-1")
@@ -192,7 +194,7 @@ def precip_seasonality(pr: xarray.DataArray,):
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS",
 ):
-    r"""ANUCLIM Mean temperature of warmest/coldest quarter
+    r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
     calculated.  If the input data frequency is "daily" or "weekly", quarters are defined as 13 week periods,
@@ -216,7 +218,6 @@ def tg_mean_warmcold_quarter(
 
     Examples
     --------
-
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature
     warmest quarter mean temperature:
 
@@ -231,7 +232,6 @@ def tg_mean_warmcold_quarter(
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
-
     """
     out = _to_quarter(input_freq, tas=tas)
 
@@ -247,7 +247,7 @@ def tg_mean_wetdry_quarter(
     input_freq: str = None,
     freq: str = "YS",
 ):
-    r""" ANUCLIM Mean temperature of wettest/driest quarter
+    r"""ANUCLIM Mean temperature of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
     If the input data frequency is "daily" or "weekly" quarters are defined as 13 week periods, otherwise are 3 months.
@@ -276,7 +276,6 @@ def tg_mean_wetdry_quarter(
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
-
     """
     tas_qrt = _to_quarter(input_freq, tas=tas)
     pr_qrt = _to_quarter(input_freq, pr=pr)
@@ -292,7 +291,7 @@ def tg_mean_wetdry_quarter(
 def prcptot_wetdry_quarter(
     pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
-    r""" ANUCLIM Total precipitation of wettest/driest quarter
+    r"""ANUCLIM Total precipitation of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this
     period is calculated. If the input data frequency is "daily" or "weekly" quarters
@@ -316,7 +315,6 @@ def prcptot_wetdry_quarter(
 
     Examples
     --------
-
     The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
 
     >>> import xclim.indices as xci
@@ -329,7 +327,6 @@ def prcptot_wetdry_quarter(
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
-
     """
     out = _to_quarter(input_freq, pr=pr)
 
@@ -351,7 +348,7 @@ def prcptot_warmcold_quarter(
     input_freq: str = None,
     freq="YS",
 ):
-    r""" ANUCLIM Total precipitation of warmest/coldest quarter
+    r"""ANUCLIM Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total
     precipitation of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
@@ -381,7 +378,6 @@ def prcptot_warmcold_quarter(
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
-
     """
     # determine input data frequency
     tas_qrt = _to_quarter(input_freq, tas=tas)
@@ -417,9 +413,7 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well.
-
     """
-
     if input_freq == "monthly":
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
@@ -438,7 +432,7 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
 def prcptot_wetdry_period(
     pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
 ):
-    r"""ANUCLIM precipitation of the wettest/driest day, week or month, depending on the time step
+    r"""ANUCLIM precipitation of the wettest/driest day, week, or month, depending on the time step.
 
     Parameters
     ----------
@@ -463,7 +457,6 @@ def prcptot_wetdry_period(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
-
     if input_freq == "monthly":
         pr = pint_multiply(pr, 1 * units.month, "mm")
     elif input_freq == "weekly":
@@ -486,7 +479,7 @@ def prcptot_wetdry_period(
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray):
-    r""" calculate the annual coefficient of variation for anuclim indices"""
+    r"""Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time="YS").std(dim="time")
     mu = arr.resample(time="YS").mean(dim="time")
     return std / mu
@@ -524,7 +517,6 @@ def _from_other_arg(criteria, output, op, freq):
 
 def _to_quarter(freq, pr=None, tas=None):
     """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
-
     if freq.upper().startswith("D"):
         if tas is not None:
             tas = tg_mean(tas, freq="7D")

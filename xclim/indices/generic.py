@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Generic indices submodule
 =========================
@@ -7,8 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 """
 # Note: scipy.stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import dask.array
 import numpy as np
@@ -301,8 +301,7 @@ def default_freq(**indexer):
 
 
 def get_dist(dist):
-    """Return a distribution object from scipy.stats.
-    """
+    """Return a distribution object from scipy.stats."""
     from scipy import stats
 
     dc = getattr(stats, dist, None)
@@ -352,8 +351,7 @@ def threshold_count(
 
 
 def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
-    r"""
-    function that returns a 0/1 mask when a condition is True or False
+    r"""Return a 0/1 mask when a condition is True or False.
 
     the function returns 1 where operator(da, da_value) is True
                          0 where operator(da, da_value) is False
@@ -378,7 +376,7 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
 
 
 def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Daily climate data downsampler
+    r"""Daily climate data downsampler.
 
     Parameters
     ----------
@@ -403,7 +401,6 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
             x2 = x2.swap_dims({'tags': 'time'})
             x2 = x2.sortby('time')
     """
-
     # generate tags from da.time and freq
     if isinstance(da.time.values[0], np.datetime64):
         years = [f"{y:04d}" for y in da.time.dt.year.values]

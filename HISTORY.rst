@@ -26,6 +26,7 @@ Internal changes
 * `datachecks.check_daily` now uses `xr.infer_freq`.
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
+* Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 
 
 0.18.0 (2020-06-26)

@@ -4,8 +4,7 @@ import pytest
 import xarray as xr
 
 from xclim.sdba.base import Grouper
-from xclim.sdba.processing import adapt_freq
-from xclim.sdba.processing import jitter_under_thresh
+from xclim.sdba.processing import adapt_freq, jitter_under_thresh
 
 
 def test_jitter_under_thresh():

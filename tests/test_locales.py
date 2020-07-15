@@ -6,13 +6,12 @@ import json
 import numpy as np
 import pytest
 
-import xclim.core.locales as xloc
 from xclim import atmos
+from xclim.core import locales as xloc
 from xclim.core.formatting import default_formatter
 from xclim.core.indicator import registry
 from xclim.core.options import set_options
 from xclim.locales import generate_local_dict
-
 
 esperanto = (
     "eo",

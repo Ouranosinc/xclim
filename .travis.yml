@@ -21,7 +21,7 @@ jobs:
           packages:
             - pandoc
     - env: TOXENV=black
-      name: "Black and flake8 compliance"
+      name: "Black, flake8, and numpy-like Docstring compliance"
       python: 3.6
       addons:
         apt:
@@ -61,7 +61,7 @@ jobs:
           packages:
             - libspatialindex-dev
     - env: TOXENV=py37-doctests
-      name: "Python3.7 (Linux + doctests)"
+      name: "Python3.7 (Linux + Linting and Doctests)"
       python: 3.7
       addons:
         apt:
