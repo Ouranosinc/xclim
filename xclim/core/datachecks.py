@@ -15,7 +15,8 @@ from .utils import ValidationError
 def check_daily(var):
     """Assert that the series is daily and monotonic (no jumps in time index).
 
-    A ValidationError is raised otherwise."""
+    A ValidationError is raised otherwise.
+    """
     if xr.infer_freq(var.time.to_pandas()) != "D":
         raise ValidationError("time series is not recognized as daily.")
 
