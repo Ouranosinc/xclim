@@ -3,15 +3,9 @@ import pytest
 import xarray as xr
 
 from . import utils as tu
-
-try:
-    from xclim.sdba.base import parse_group
-    from xclim.sdba.utils import apply_correction
-    from xclim.sdba.utils import equally_spaced_nodes
-except ImportError:
-    parse_group = lambda x: x  # noqa
-    apply_correction = None
-    equally_spaced_nodes = None
+from xclim.sdba.base import parse_group
+from xclim.sdba.utils import apply_correction
+from xclim.sdba.utils import equally_spaced_nodes
 
 
 # Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in

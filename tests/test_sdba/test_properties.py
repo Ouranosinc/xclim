@@ -7,8 +7,4 @@ Testing the properties of downscaling methods
 3. ... ?
 
 """
-import pytest
-
-sdba = pytest.importorskip("xclim.sdba")  # noqa
-
 # TODO

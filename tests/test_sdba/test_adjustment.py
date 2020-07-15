@@ -4,7 +4,6 @@ import xarray as xr
 from scipy.stats import norm
 from scipy.stats import uniform
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba.adjustment import BaseAdjustment
 from xclim.sdba.adjustment import DetrendedQuantileMapping
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
