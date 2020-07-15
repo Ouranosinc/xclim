@@ -375,29 +375,24 @@ class FromContext(MissingBase):
 # user-friendly. This can also be useful for testing.
 
 
-def missing_any(da, freq, **indexer):
-    """Check for any missing values."""
+def missing_any(da, freq, **indexer):  # noqa: D103
     return MissingAny(da, freq, **indexer)()
 
 
-def missing_wmo(da, freq, nm=11, nc=5, **indexer):
-    """Check for missing data within WMO limits."""
+def missing_wmo(da, freq, nm=11, nc=5, **indexer):  # noqa: D103
     missing = MissingWMO(da, "M", **indexer)(nm=nm, nc=nc)
     return missing.resample(time=freq).any()
 
 
-def missing_pct(da, freq, tolerance, **indexer):
-    """Check for missing data by percentage."""
+def missing_pct(da, freq, tolerance, **indexer):  # noqa: D103
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(da, freq, n=1, **indexer):
-    """Check for at least n-valid entries."""
+def at_least_n_valid(da, freq, n=1, **indexer):  # noqa: D103
     return AtLeastNValid(da, freq, **indexer)(n=n)
 
 
-def missing_from_context(da, freq, **indexer):
-    """Check for data missing from context."""
+def missing_from_context(da, freq, **indexer):  # noqa: D103
     return FromContext.execute(da, freq, options={}, indexer=indexer)
 
 
