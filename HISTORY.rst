@@ -11,9 +11,10 @@ History
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
+* Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 
-0.18.x
-------
+0.18.0 (2020-06-26)
+-------------------
 * Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
 * `xclim.sdba.detrending` objects can now act on groups.
 * Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
