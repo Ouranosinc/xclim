@@ -440,3 +440,20 @@ class TestEnsembleReduction:
         )
         assert sel_euc == [23, 10, 19, 14]
         assert sel_mah == [5, 3, 4, 0]
+
+    def test_standardize_seuclidean(self):
+        # This test the odd choice of standardizing data for a standardized distance metric
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data
+        for n in np.arange(1, len(data)):
+            sel1 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=True
+            )
+            sel2 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=False
+            )
+            sel3 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="euclidean", standardize=True
+            )
+            assert sel1 == sel2
+            assert sel1 == sel3
