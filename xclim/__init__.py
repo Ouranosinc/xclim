@@ -6,4 +6,4 @@ from xclim.indicators import ICCLIM, anuclim, atmos, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.18.0-beta"
+__version__ = "0.18.1-beta"
