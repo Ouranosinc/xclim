@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 import xarray as xr
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
-
 from xclim.sdba.base import Grouper, Parametrizable
 
 

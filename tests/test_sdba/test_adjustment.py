@@ -3,7 +3,6 @@ import pytest
 import xarray as xr
 from scipy.stats import norm, uniform
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba.adjustment import (
     LOCI,
     BaseAdjustment,

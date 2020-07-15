@@ -3,7 +3,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import adapt_freq, jitter_under_thresh
 

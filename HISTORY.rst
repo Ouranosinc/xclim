@@ -4,14 +4,30 @@ History
 
 0.19.x
 ------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
 * Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
   method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
+* xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+
+Bug fixes
+~~~~~~~~~
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `datachecks.check_daily` now uses `xr.infer_freq`.
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
+
 
 0.18.0 (2020-06-26)
 -------------------

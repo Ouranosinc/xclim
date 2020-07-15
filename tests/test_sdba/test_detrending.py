@@ -1,7 +1,5 @@
 import numpy as np
-import pytest
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba.detrending import PolyDetrend
 
 

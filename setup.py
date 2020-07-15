@@ -22,7 +22,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.14.1",
+    "xarray>=0.16",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
@@ -57,6 +57,7 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "nc-time-axis",
     "distributed>=2.0",
 ]
 

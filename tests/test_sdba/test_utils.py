@@ -4,7 +4,6 @@ import pytest
 import xarray as xr
 from scipy.stats import norm
 
-sdba = pytest.importorskip("xclim.sdba")  # noqa
 from xclim.sdba import utils as u
 from xclim.sdba.base import Grouper
 

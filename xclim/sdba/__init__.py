@@ -57,14 +57,6 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
 """
-
-try:
-    from xarray import polyval  # noqa
-except ImportError as err:
-    raise ImportError("Update xarray to master to use the sdba package.") from err
-else:
-    del polyval
-
 from . import detrending, processing, utils
 from .adjustment import *
 from .base import Grouper
