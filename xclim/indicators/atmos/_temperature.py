@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+"""Temperature indicator definitions."""
+
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily
-from xclim.core.indicator import Daily2D
+from xclim.core.indicator import Daily, Daily2D
 from xclim.core.units import check_units
-
 
 __all__ = [
     "tn_days_below",

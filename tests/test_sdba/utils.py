@@ -5,10 +5,7 @@ import pandas as pd
 import xarray as xr
 from scipy.stats import gamma
 
-try:
-    from xclim.sdba.utils import equally_spaced_nodes
-except ImportError:
-    equally_spaced_nodes = None
+from xclim.sdba.utils import equally_spaced_nodes
 
 
 def series(values, name, start="2000-01-01"):

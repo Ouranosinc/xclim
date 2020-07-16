@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Miscellaneous indices utilities
 ===============================
@@ -10,10 +11,10 @@ from collections import defaultdict
 from functools import partial
 from types import FunctionType
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
+from dask import array as dsk
 
 
 def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
@@ -32,7 +33,6 @@ def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
 
     Examples
     --------
-
     >>> from inspect import signature
     >>> def func(a, b=1, c=1):
     ...     print(a, b, c)
@@ -82,8 +82,10 @@ def walk_map(d: dict, func: FunctionType):
 
 
 class ValidationError(ValueError):
+    """Xclim ValidationError class."""
+
     @property
-    def msg(self):
+    def msg(self):  # noqa
         return self.args[0]
 
 

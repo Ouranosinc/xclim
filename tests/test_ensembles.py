@@ -402,3 +402,58 @@ class TestEnsembleReduction:
         )
         assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
         assert len(ids) == 10
+
+    @pytest.mark.parametrize(
+        "crit,num_select,expected",
+        [
+            ([0, 1], 5, [16, 19, 20, 15, 9]),
+            ([0, 1], 4, [16, 19, 20, 15]),
+            (np.arange(6), 8, [23, 19, 10, 14, 11, 8, 20, 3]),
+            ([4, 5], 4, [15, 10, 14, 1]),
+            ([4, 5], 1, [15]),
+        ],
+    )
+    def test_kkz_simple(self, crit, num_select, expected):
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=crit)
+
+        selected = ensembles.kkz_reduce_ensemble(data, num_select)
+        assert selected == expected
+
+    def test_kkz_standardize(self):
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=[1, 3, 5])
+
+        sel_std = ensembles.kkz_reduce_ensemble(data, 4, standardize=True)
+        sel_no = ensembles.kkz_reduce_ensemble(data, 4, standardize=False)
+        assert sel_std == [23, 10, 19, 14]
+        assert sel_no == [23, 1, 14, 10]
+
+    def test_kkz_change_metric(self):
+        # This test uses stupid values but is meant to test is kwargs are passed and if dist_method is used.
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=[1, 3, 5])
+
+        sel_euc = ensembles.kkz_reduce_ensemble(data, 4, dist_method="euclidean")
+        sel_mah = ensembles.kkz_reduce_ensemble(
+            data, 4, dist_method="mahalanobis", VI=np.arange(24)
+        )
+        assert sel_euc == [23, 10, 19, 14]
+        assert sel_mah == [5, 3, 4, 0]
+
+    def test_standardize_seuclidean(self):
+        # This test the odd choice of standardizing data for a standardized distance metric
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data
+        for n in np.arange(1, len(data)):
+            sel1 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=True
+            )
+            sel2 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=False
+            )
+            sel3 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="euclidean", standardize=True
+            )
+            assert sel1 == sel2
+            assert sel1 == sel3

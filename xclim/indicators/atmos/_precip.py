@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+"""Precipitation indicator definitions."""
+
 from xclim import indices
-from xclim.core.indicator import Daily
-from xclim.core.indicator import Daily2D
+from xclim.core.indicator import Daily, Daily2D
 from xclim.core.utils import wrapped_partial
 
 __all__ = [

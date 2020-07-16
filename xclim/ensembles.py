@@ -1,25 +1,21 @@
+"""Ensembles Module."""
 import logging
 import warnings
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import scipy.stats
 import xarray as xr
+from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import get_calendar
-from xclim.core.formatting import merge_attributes
+from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
 
 # Avoid having to include matplotlib in xclim requirements
 try:
-    import matplotlib.pyplot as plt
+    from matplotlib import pyplot as plt
 
     logging.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
@@ -36,14 +32,14 @@ def create_ensemble(
     calendar: str = "default",
     **xr_kwargs,
 ) -> xr.Dataset:
-    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
-    concatenated along a newly created data dimension ('realization')
+    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
-    Returns an xarray dataset object containing input data from the list of netcdf files concatenated along
-    a new dimension (name:'realization'). In the case where input files have unequal time dimensions, the output
-    ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, datasets not
-    covering the entire time span have their data padded with NaN values.
-    Dataset and variable attributes of the first dataset are copied to the resulting dataset.
+    Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
+    containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
+    In the case where input files have unequal time dimensions, the output ensemble Dataset is created for maximum
+    time-step interval of all input files.  Before concatenation, datasets not covering the entire time span have
+    their data padded with NaN values. Dataset and variable attributes of the first dataset are copied to the
+    resulting dataset.
 
     Parameters
     ----------
@@ -104,7 +100,7 @@ def create_ensemble(
 
 
 def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
     simulations.
@@ -195,7 +191,6 @@ def ensemble_percentiles(
     If the original array has many small chunks, it might be more efficient to do:
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
-
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
@@ -368,6 +363,77 @@ def _calc_perc(arr, p=[50]):
     return out
 
 
+def kkz_reduce_ensemble(
+    data: xr.DataArray,
+    num_select: int,
+    *,
+    dist_method: str = "euclidean",
+    standardize: bool = True,
+    **cdist_kwargs,
+) -> list:
+    """Return a sample of ensemble members using KKZ selection. The algorithm selects `num_select`
+    ensemble members spanning the overall range of the ensemble.
+
+    The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
+    The first selected member is the one nearest to the centroid of the ensemble, all subsequent members
+    are selected in a way maximizing the phase-space coverage of the group. Algorithm taken from [CannonKKZ]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+      ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    num_select : int
+      The number of members to select.
+    dist_method : str
+      Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+    standardize : bool
+      Whether to standardize the input before running the selection or not.
+      Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
+    **cdist_kwargs
+      All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
+
+    Returns
+    -------
+    list
+        Selected model indices along the `realization` dimension.
+
+    References
+    ----------
+    .. [CannonKKZ] Cannon, Alex J. (2015). Selecting GCM Scenarios that Span the Range of Changes in a Multimodel Ensemble: Application to CMIP5 Climate Extremes Indices. Journal of Climate, (28)3, 1260-1267. https://doi.org/10.1175/JCLI-D-14-00636.1
+    .. Kastsavounidis, I, Kuo, C.-C. Jay, Zhang, Zhen (1994). A new initialization technique for generalized Lloyd iteration. IEEE Signal Processing Letters, 1(10), 144-146. https://doi.org/10.1109/97.329844
+    """
+    if standardize:
+        data = (data - data.mean("realization")) / data.std("realization")
+
+    data = data.transpose("realization", "criteria")
+    data["realization"] = np.arange(data.realization.size)
+
+    unselected = list(data.realization.values)
+    selected = []
+
+    dist0 = cdist(
+        data.mean("realization").expand_dims("realization"),
+        data,
+        metric=dist_method,
+        **cdist_kwargs,
+    )
+    selected.append(unselected.pop(dist0.argmin()))
+
+    for i in range(1, num_select):
+        dist = cdist(
+            data.isel(realization=selected),
+            data.isel(realization=unselected),
+            metric=dist_method,
+            **cdist_kwargs,
+        )
+        dist = dist.min(axis=0)
+        selected.append(unselected.pop(dist.argmax()))
+
+    return selected
+
+
 def kmeans_reduce_ensemble(
     data: xr.DataArray,
     *,
@@ -379,12 +445,12 @@ def kmeans_reduce_ensemble(
     sample_weights: Optional[np.ndarray] = None,
     random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> Tuple[list, np.ndarray, dict]:
-    """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
-    reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
-    uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    """Return a sample of ensemble members using k-means clustering.
+
+    The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
+    the ensemble uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
     Subsequently a single representative simulation is retained from each group.
-
 
     Parameters
     ----------
@@ -452,7 +518,7 @@ def kmeans_reduce_ensemble(
       Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
-    -----
+    ----------
     Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
 
 
@@ -607,7 +673,6 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
-
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
         # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
@@ -638,8 +703,10 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
 
 
 def plot_rsqprofile(fig_data):
-    """Create an R² profile plot using kmeans_reduce_ensemble output. The R² plot allows evaluation of the proportion
-    of total uncertainty in the original ensemble that is provided by the reduced selected.
+    """Create an R² profile plot using kmeans_reduce_ensemble output.
+
+    The R² plot allows evaluation of the proportion of total uncertainty in the original ensemble that is provided
+    by the reduced selected.
 
     Examples
     --------
@@ -647,7 +714,6 @@ def plot_rsqprofile(fig_data):
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)  # doctest: +SKIP
     >>> plot_rsqprofile(fig_data)  # doctest: +SKIP
     """
-
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
     n_clusters = fig_data["n_clusters"]

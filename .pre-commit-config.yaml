@@ -30,11 +30,17 @@ repos:
 #    hooks:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.3.0
+-   repo: https://github.com/timothycrosley/isort
+    rev: 5.0.7
     hooks:
-    -   id: reorder-python-imports
+    -   id: isort
         language_version: python3
+        args: ['--profile', 'black']
+#-   repo: https://github.com/pycqa/pydocstyle
+#    rev: 5.0.2
+#    hooks:
+#    -   id: pydocstyle
+#        args: ["--conventions=numpy"]
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.4.1
     hooks:
