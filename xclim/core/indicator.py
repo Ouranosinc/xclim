@@ -49,13 +49,13 @@ Subclass registries
 All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
 example::
 
-  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())
-  >>> assert "MY_INDICATOR" in xclim.core.indicator.registry
+  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
+  >>> assert "MY_INDICATOR" in xclim.core.indicator.registry  # doctest: +SKIP
 
 This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
 a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-
-  >>> tg_mean_c = xclim.core.indicator.registry["TG_MEAN"](identifier="tg_mean_c", units="C")
+  >>> import xclim
+  >>> tg_mean_c = xclim.core.indicator.registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
 
 """
 import re
