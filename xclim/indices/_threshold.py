@@ -441,9 +441,9 @@ def growing_season_length(
 
     Examples
     --------
-    >>> import xarray as xr
+    >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import growing_season_length  # doctest: +SKIP
-    >>> tas = xr.open_dataset("tas.nc").tas
+    >>> tas = xr.open_dataset("tas.nc").tas  # doctest: +SKIP
     # For the Northern Hemisphere:
     >>> gsl_nh = growing_season_length(tas, mid_date='07-01', freq='AS-Jan')  # doctest: +SKIP
     # If working in the Southern Hemisphere, one can use:
