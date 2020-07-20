@@ -94,9 +94,10 @@ def cold_spell_duration_index(
     ----------
     From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
 
-    Example
-    -------
-    >>> from xclim.core.calendar import percentile_doy
+    Examples
+    --------
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import cold_spell_duration_index  # doctest: +SKIP
     >>> tn10 = percentile_doy(historical_tasmin, per=.1)  # doctest: +SKIP
     >>> cold_spell_duration_index(reference_tasmin, tn10)  # doctest: +SKIP
     """
@@ -794,10 +795,10 @@ def precip_accumulation(
 
     Examples
     --------
-    The following would compute for each grid cell of file `pr_day.nc` the total
-    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import precip_accumulation  # doctest: +SKIP
+    # The following would compute for each grid cell of file `pr_day.nc` the total
+    # precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
     >>> pr_day = xr.open_dataset('pr_day.nc').pr  # doctest: +SKIP
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")  # doctest: +SKIP
     """
@@ -905,8 +906,8 @@ def days_over_precip_thresh(
     xarray.DataArray
       Count of days with daily precipitation above the given percentile [days]
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import days_over_precip_thresh  # doctest: +SKIP
     >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
@@ -1001,8 +1002,8 @@ def tg90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tg90p  # doctest: +SKIP
@@ -1047,8 +1048,8 @@ def tg10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tg10p  # doctest: +SKIP
@@ -1093,8 +1094,8 @@ def tn90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tn90p  # doctest: +SKIP
@@ -1139,8 +1140,8 @@ def tn10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tn10p  # doctest: +SKIP
@@ -1185,8 +1186,8 @@ def tx90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tx90p  # doctest: +SKIP
@@ -1231,8 +1232,8 @@ def tx10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
     >>> from xclim.indices import tx10p  # doctest: +SKIP

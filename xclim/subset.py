@@ -17,6 +17,7 @@ from shapely.ops import cascaded_union, split
 
 __all__ = [
     "create_mask",
+    "create_mask_vectorize",
     "distance",
     "subset_bbox",
     "subset_gridpoint",
@@ -331,15 +332,15 @@ def create_mask_vectorize(
     >>> from xclim.subset import create_mask_vectorize  # doctest: +SKIP
     >>> ds = xr.open_dataset(path_to_tasmin_file)  # doctest: +SKIP
     >>> polys = gpd.read_file(path_to_multi_shape_file)  # doctest: +SKIP
-
-    Get a mask from all polygons in the shape file
+    ...
+    # Get a mask from all polygons in the shape file
     >>> mask = create_mask_vectorize(x_dim=ds.lon, y_dim=ds.lat, poly=polys)  # doctest: +SKIP
     >>> ds = ds.assign_coords(regions=mask)  # doctest: +SKIP
-
-    Operations can be applied to each regions with  `groupby`. Ex:
+    ...
+    # Operations can be applied to each regions with  `groupby`. Ex:
     >>> ds = ds.groupby('regions').mean()  # doctest: +SKIP
-
-    Extra step to retrieve the names of those polygons stored in another column (here "id")
+    ...
+    # Extra step to retrieve the names of those polygons stored in another column (here "id")
     >>> region_names = xr.DataArray(polys.id, dims=('regions',))  # doctest: +SKIP
     >>> ds = ds.assign_coords(regions_names=region_names)  # doctest: +SKIP
     """
@@ -414,15 +415,15 @@ def create_mask(
     >>> from xclim.subset import create_mask  # doctest: +SKIP
     >>> ds = xr.open_dataset(path_to_tasmin_file)  # doctest: +SKIP
     >>> polys = gpd.read_file(path_to_multi_shape_file)  # doctest: +SKIP
-
-    Get a mask from all polygons in the shape file
+    ...
+    # Get a mask from all polygons in the shape file
     >>> mask = create_mask(x_dim=ds.lon, y_dim=ds.lat, poly=polys)  # doctest: +SKIP
     >>> ds = ds.assign_coords(regions=mask)  # doctest: +SKIP
-
-    Operations can be applied to each regions with  `groupby`. Ex:
+    ...
+    # Operations can be applied to each regions with  `groupby`. Ex:
     >>> ds = ds.groupby('regions').mean()  # doctest: +SKIP
-
-    Extra step to retrieve the names of those polygons stored in the "id" column
+    ...
+    # Extra step to retrieve the names of those polygons stored in the "id" column
     >>> region_names = xr.DataArray(polys.id, dims=('regions',))  # doctest: +SKIP
     >>> ds = ds.assign_coords(regions_names=region_names)  # doctest: +SKIP
     """
@@ -519,17 +520,17 @@ def subset_shape(
 
     Examples
     --------
-    >>> import xarray as xr
-    >>> from xclim.subset import subset_shape
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.subset import subset_shape  # doctest: +SKIP
     >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
-
-    Subset data array by shape
+    ...
+    # Subset data array by shape
     >>> prSub = subset_shape(pr, shape=path_to_shape_file)  # doctest: +SKIP
-
-    Subset data array by shape and single year
+    ...
+    # Subset data array by shape and single year
     >>> prSub = subset_shape(pr, shape=path_to_shape_file, start_date='1990-01-01', end_date='1990-12-31')  # doctest: +SKIP
-
-    Subset multiple variables in a single dataset
+    ...
+    # Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset([path_to_tasmin_file, path_to_tasmax_file])  # doctest: +SKIP
     >>> dsSub = subset_shape(ds, shape=path_to_shape_file)  # doctest: +SKIP
     """
@@ -686,11 +687,11 @@ def subset_bbox(
 
     Examples
     --------
-    >>> import xarray as xr
-    >>> from xclim.subset import subset_bbox
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.subset import subset_bbox  # doctest: +SKIP
     >>> ds = xr.open_dataset(path_to_pr_file)  # doctest: +SKIP
-
-    Subset lat lon
+    ...
+    # Subset lat lon
     >>> prSub = subset_bbox(ds.pr, lon_bnds=[-75, -70], lat_bnds=[40, 45])  # doctest: +SKIP
     """
     # Rectilinear case (lat and lon are the 1D dimensions)
@@ -896,14 +897,14 @@ def subset_gridpoint(
 
     Examples
     --------
-    >>> import xarray as xr
-    >>> from xclim.subset import subset_gridpoint
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.subset import subset_gridpoint  # doctest: +SKIP
     >>> ds = xr.open_dataset(path_to_pr_file)  # doctest: +SKIP
-
-    Subset lat lon point
+    ...
+    # Subset lat lon point
     >>> prSub = subset_gridpoint(ds.pr, lon=-75,lat=45)  # doctest: +SKIP
-
-    Subset multiple variables in a single dataset
+    ...
+    # Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset([path_to_tasmax_file, path_to_tasmin_file])  # doctest: +SKIP
     >>> dsSub = subset_gridpoint(ds, lon=-75, lat=45)  # doctest: +SKIP
     """
@@ -995,24 +996,24 @@ def subset_time(
 
     Examples
     --------
-    >>> import xarray as xr
-    >>> from xclim.subset import subset_time
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.subset import subset_time  # doctest: +SKIP
     >>> ds = xr.open_dataset(path_to_pr_file)  # doctest: +SKIP
-
-    Subset complete years
+    ...
+    # Subset complete years
     >>> prSub = subset_time(ds.pr,start_date='1990',end_date='1999')  # doctest: +SKIP
-
-    Subset single complete year
+    ...
+    # Subset single complete year
     >>> prSub = subset_time(ds.pr,start_date='1990',end_date='1990')  # doctest: +SKIP
-
-    Subset multiple variables in a single dataset
+    ...
+    # Subset multiple variables in a single dataset
     >>> ds = xr.open_mfdataset([path_to_tasmax_file, path_to_tasmin_file])  # doctest: +SKIP
     >>> dsSub = subset_time(ds,start_date='1990',end_date='1999')  # doctest: +SKIP
-
-    Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
+    ...
+    # Subset with year-month precision - Example subset 1990-03-01 to 1999-08-31 inclusively
     >>> txSub = subset_time(ds.tasmax,start_date='1990-03',end_date='1999-08')  # doctest: +SKIP
-
-    Subset with specific start_dates and end_dates
+    ...
+    # Subset with specific start_dates and end_dates
     >>> tnSub = subset_time(ds.tasmin,start_date='1990-03-13',end_date='1990-08-17')  # doctest: +SKIP
 
     Notes
@@ -1045,11 +1046,12 @@ def distance(
     xarray.DataArray
       Distance in meters to point.
 
-    Note
-    ----
-    To get the indices from closest point, use:
+    Examples
+    --------
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.subset import distance  # doctest: +SKIP
+    ...
+    To get the indices from closest point, use:
     >>> da = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
     >>> d = distance(da, lon=-75, lat=45)  # doctest: +SKIP
     >>> k = d.argmin()  # doctest: +SKIP

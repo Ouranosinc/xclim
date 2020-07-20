@@ -88,12 +88,13 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
 
        TG_p = \frac{\sum_{i=a}^{b} TN_i}{b - a + 1}
 
-
     Examples
     --------
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
     at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import tg_mean  # doctest: +SKIP
     >>> t = xr.open_dataset(path_to_tas_file).tas  # doctest: +SKIP
     >>> tg = tg_mean(t, freq="QS-DEC")  # doctest: +SKIP
     """
@@ -501,10 +502,10 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
 
     Examples
     --------
-    The following would compute for each grid cell the highest 1-day total
-    at an annual frequency:
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import max_1day_precipitation_amount  # doctest: +SKIP
+    # The following would compute for each grid cell the highest 1-day total
+    # at an annual frequency:
     >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")  # doctest: +SKIP
     """
@@ -535,10 +536,10 @@ def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
 
     Examples
     --------
-    The following would compute for each grid cell the highest 5-day total precipitation
-    at an annual frequency:
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import max_n_day_precipitation_amount  # doctest: +SKIP
+    # The following would compute for each grid cell the highest 5-day total precipitation
+    #at an annual frequency:
     >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")  # doctest: +SKIP
     """

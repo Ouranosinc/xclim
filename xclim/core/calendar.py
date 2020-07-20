@@ -622,12 +622,13 @@ def time_bnds(group, freq):
 
     Examples
     --------
+    >>> import xarray as xr
+    >>> from xclim.core.calendar import time_bnds
     >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
-    >>> time_bnds(index, '2Q')  # doctest: +SKIP
-    (cftime.Datetime360Day(2000-01-01 00:00:00), cftime.Datetime360Day(2000-03-30 23:59:59.999999)),
+    >>> time_bnds(index, '2Q')
+    ((cftime.Datetime360Day(2000-01-01 00:00:00), cftime.Datetime360Day(2000-03-30 23:59:59.999999)),
     (cftime.Datetime360Day(2000-07-01 00:00:00), cftime.Datetime360Day(2000-09-30 23:59:59.999999)),
     (cftime.Datetime360Day(2001-01-01 00:00:00), cftime.Datetime360Day(2001-03-30 23:59:59.999999)))
-
     """
     if isinstance(group, CFTimeIndex):
         cfindex = group
