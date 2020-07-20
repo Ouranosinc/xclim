@@ -60,7 +60,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 
 .. |build| image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
-        :target: https://travis-ci.org/Ouranosinc/xclim
+        :target: https://travis-ci.com/Ouranosinc/xclim
         :alt: Build Status
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg

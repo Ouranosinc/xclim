@@ -9,4 +9,5 @@ twine
 pytest
 pytest-runner
 pylint
+xdoctest
 pre-commit
