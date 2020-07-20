@@ -136,13 +136,13 @@ class set_options:
         missing method and values must be mappings from option names to values.
 
     You can use ``set_options`` either as a context manager:
-
-    >>> with xclim.set_options(metadata_locales=['fr']):
-    ...     out = xclim.atmos.tg_mean(tas)
+    >>> import xclim  # doctest: +SKIP
+    >>> with xclim.set_options(metadata_locales=['fr'])  # doctest: +SKIP
+    ...     out = xclim.atmos.tg_mean(tas)  # doctest: +SKIP
 
     Or to set global options:
 
-    >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})
+    >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})  # doctest: +SKIP
     <xclim.core.options.set_options object at ...>
     """
 
