@@ -795,10 +795,11 @@ def precip_accumulation(
 
     Examples
     --------
+    The following would compute for each grid cell of file `pr_day.nc` the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
     >>> import xarray as xr  # doctest: +SKIP
     >>> from xclim.indices import precip_accumulation  # doctest: +SKIP
-    # The following would compute for each grid cell of file `pr_day.nc` the total
-    # precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
     >>> pr_day = xr.open_dataset('pr_day.nc').pr  # doctest: +SKIP
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")  # doctest: +SKIP
     """
