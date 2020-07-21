@@ -41,8 +41,8 @@ class AttrFormatter(string.Formatter):
         of value is given. If `format_spec` is not specified but `value` is in the
         mapping, the first variation is returned.
 
-        Example
-        -------
+        Examples
+        --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
         to french and that we know that possible values of `adj` are `nice` and `evil`.
         In french, the genre of the noun changes the adjective (cat = chat is masculine,

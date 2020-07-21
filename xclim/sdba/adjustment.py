@@ -154,7 +154,6 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
     where :math:`F` is the cumulative distribution function (CDF) and `mod` stands for model data.
 
-
     Parameters
     ----------
     At instantiation:

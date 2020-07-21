@@ -413,19 +413,19 @@ def specific_humidity(
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
 
-        ... math::
+    .. math::
 
-            w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
-            w = w_{sat} * rh / 100
-            q = w / (1 + w)
+        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+        w = w_{sat} * rh / 100
+        q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
 
     If `invalid_values` is not `None`, the saturation specific humidity :math:`q_{sat}` is computed as:
 
-        ... math::
+    .. math::
 
-            q_{sat} = w_{sat} / (1 + w_{sat})
+        q_{sat} = w_{sat} / (1 + w_{sat})
     """
     ps = convert_units_to(ps, "Pa")
     rh = convert_units_to(rh, "")

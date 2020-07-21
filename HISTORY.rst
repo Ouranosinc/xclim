@@ -12,6 +12,7 @@ Breaking changes
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
+* The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,7 +28,7 @@ Internal changes
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
-
+* Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 
 0.18.0 (2020-06-26)
 -------------------
