@@ -27,6 +27,13 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
+    - env: TOXENV=doctests
+      name: "Linting suggestions and Doctests"
+      python: 3.6
+      addons:
+        apt:
+          packages:
+            - libspatialindex-dev
     - env: TOXENV=py38
       name: "Python3.8 (Linux)"
       python: 3.8
@@ -55,13 +62,6 @@ jobs:
         - /usr/local/opt/python@3.8/bin/pip3 install -U tox-travis
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
-      python: 3.7
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
-    - env: TOXENV=py37-doctests
-      name: "Python3.7 (Linux + Linting and Doctests)"
       python: 3.7
       addons:
         apt:
