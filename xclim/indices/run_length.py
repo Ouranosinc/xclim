@@ -503,6 +503,7 @@ def rle_1d(
 
     Examples
     --------
+    >>> from xclim.indices.run_length import rle_1d
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     >>> rle_1d(a)
     (array([1, 2, 3]), array([2, 4, 6]), array([0, 2, 6]))

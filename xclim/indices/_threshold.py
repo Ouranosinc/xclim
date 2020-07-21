@@ -125,8 +125,10 @@ def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
     precipitation fallen over days with precipitation >= 5 mm at seasonal
     frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import daily_pr_intensity  # doctest: +SKIP
+    >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
+    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")  # doctest: +SKIP
     """
     t = convert_units_to(thresh, pr, "hydro")
 
@@ -439,9 +441,13 @@ def growing_season_length(
 
     Examples
     --------
-    If working in the Southern Hemisphere, one can use:
-
-    >>> gsl = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import growing_season_length  # doctest: +SKIP
+    >>> tas = xr.open_dataset("tas.nc").tas  # doctest: +SKIP
+    # For the Northern Hemisphere:
+    >>> gsl_nh = growing_season_length(tas, mid_date='07-01', freq='AS-Jan')  # doctest: +SKIP
+    # If working in the Southern Hemisphere, one can use:
+    >>> gsl_sh = growing_season_length(tas, mid_date='01-01', freq='AS-Jul')  # doctest: +SKIP
     """
     thresh = convert_units_to(thresh, tas)
     cond = tas >= thresh
@@ -888,10 +894,10 @@ def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
     The following would compute for each grid cell of file `pr.day.nc` the number days
     with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> pr = xr.open_dataset('pr.day.nc').pr
-    >>> wd = xclim.indices.wetdays(pr, pr_min=5., freq="QS-DEC")
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import wetdays  # doctest: +SKIP
+    >>> pr = xr.open_dataset('pr.day.nc').pr  # doctest: +SKIP
+    >>> wd = wetdays(pr, pr_min=5., freq="QS-DEC")  # doctest: +SKIP
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
