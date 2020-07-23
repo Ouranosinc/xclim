@@ -59,6 +59,7 @@ docs_requirements = [
     "matplotlib",
     "nc-time-axis",
     "distributed>=2.0",
+    "clisops>=0.3",
 ]
 
 dev_requirements = []
