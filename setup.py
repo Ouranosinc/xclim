@@ -28,21 +28,13 @@ requirements = [
     "pandas>=0.23",
     "cftime>=1.0.4",
     "netCDF4>=1.4",
-    "fiona>=1.8",
-    "geojson>=2.5.0",
-    "shapely>=1.6",
-    "geopandas>=0.7",
     "dask[array]>=2.6",
-    "pyproj>=2.5",
     "pint>=0.9",
     "bottleneck~=1.3.1",
     "boltons>=20.1",
     "scikit-learn>=0.21.3",
     "packaging>=20.0",
 ]
-
-if not os.getenv("READTHEDOCS"):
-    requirements.append("rtree>=0.9")
 
 setup_requirements = ["pytest-runner"]
 
