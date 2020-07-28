@@ -4,14 +4,13 @@ import numpy as np
 import pytest
 import xarray as xr
 
-
 # class TestSubsetImport:
 #     subset = pytest.importorskip('clisops.core.subset', reason="`clisops` subset utilities are not installed.")
 #     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
 
 try:
-    from clisops.core import subset
     import geopandas as gpd
+    from clisops.core import subset
 except ImportError:
     subset = False
     gpd = False

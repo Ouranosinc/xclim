@@ -89,7 +89,11 @@ setup(
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements, "gis": gis_requirements},
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+        "gis": gis_requirements,
+    },
     url=URL,
     version=VERSION,
     zip_safe=False,
