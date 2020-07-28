@@ -20,7 +20,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
-* xclim now depends on clisops for subsetting, offloading several GIS dependencies typically that are typically installed,
+* xclim now depends on clisops for subsetting, offloading several GIS dependencies that are typically installed by default,
   whether subsetting utilities are desired. This improves maintainability and reduces the size of a "vanilla" xclim
   installation considerably.
 
@@ -34,7 +34,7 @@ Internal changes
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
-* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is a temporary API workaround for backwards compatibility.
+* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround for backwards compatibility.
 
 0.18.0 (2020-06-26)
 -------------------
