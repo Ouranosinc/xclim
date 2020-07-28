@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The setup script."""
-import os
-
 from setuptools import find_packages, setup
 
 NAME = "xclim"
@@ -51,8 +49,9 @@ docs_requirements = [
     "matplotlib",
     "nc-time-axis",
     "distributed>=2.0",
-    "clisops>=0.3",
 ]
+
+gis_requirements = ["rtree>=0.9", "clisops>=0.3"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
@@ -90,7 +89,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    extras_require={"docs": docs_requirements, "dev": dev_requirements, "gis": gis_requirements},
     url=URL,
     version=VERSION,
     zip_safe=False,
