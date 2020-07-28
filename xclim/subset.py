@@ -1,0 +1,21 @@
+"""Mock subset module for API compatibility"""
+import warnings
+
+try:
+    from clisops.core.subset import *
+    from clisops.core.subset import __all__
+    __all__ = [x for x in __all__]
+
+    warnings.warn(
+        f"{__name__} is deprecated in xclim v0.19.x. "
+        f"Please begin using the 'clisops' library subset utilities via `from clisops.core import subset`.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+except ImportError as e:
+    raise ImportError(
+        f"`{__name__} is deprecated in xclim v0.19.x. "
+        f"Subset functions are now dependent on `clisops`. This library can be installed via "
+        f'`pip install xclim["gis"]`, `pip install clisops` or `conda install clisops`.'
+    ) from e
