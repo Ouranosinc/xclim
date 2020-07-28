@@ -89,8 +89,8 @@ ensembles module
 
 subset module
 -------------
-
-.. automodule:: xclim.subset
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. warning::
+    Subsetting is now offered via `clisops`. The functions offered by clisops
+    will be described here once the subsetting functions API is made available.
+    For now, refer to their documentation here:
+    :doc:`clisops subset examples <clisops:notebooks/subset>`
