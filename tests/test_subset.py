@@ -9,8 +9,8 @@ import xarray as xr
 #     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
 
 try:
+    import clisops.core.subset as subset
     import geopandas as gpd
-    from clisops.core import subset
 except ImportError:
     subset = False
     gpd = False
@@ -416,8 +416,6 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
 
     def test_irregular(self):
-        pytest.importorskip("xclim.subset")
-
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
@@ -434,8 +432,6 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
 
     def test_irregular_dataset(self):
-        pytest.importorskip("xclim.subset")
-
         da = xr.open_dataset(self.nc_2dlonlat)
         out = subset.subset_bbox(da, lon_bnds=[-150, 100], lat_bnds=[10, 60])
         variables = list(da.data_vars)
