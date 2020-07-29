@@ -9,14 +9,15 @@ try:
 
     warnings.warn(
         f"{__name__} is deprecated in xclim v0.19.x. "
-        f"Please begin using the 'clisops' library subset utilities via `from clisops.core import subset`.",
+        f"Please take note that xclim presently exposes the 'clisops' library subsetting API "
+        f"via `from clisops.core import subset`. This functionality may eventually change.",
         DeprecationWarning,
         stacklevel=2,
     )
 
 except ImportError as e:
     raise ImportError(
-        f"`{__name__} is deprecated in xclim v0.19.x. "
-        f"Subset functions are now dependent on `clisops`. This library can be installed via "
+        f"{__name__} is deprecated in xclim v0.19.x. "
+        f"Subset functions are now dependent on the `clisops` library. This library can be installed via "
         f'`pip install xclim["gis"]`, `pip install clisops` or `conda install clisops`.'
     ) from e
