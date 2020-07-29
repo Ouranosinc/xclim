@@ -51,7 +51,7 @@ docs_requirements = [
     "distributed>=2.0",
 ]
 
-gis_requirements = ["rtree>=0.9", "clisops>=0.3"]
+gis_requirements = ["clisops>=0.3.1"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
