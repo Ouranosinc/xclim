@@ -635,7 +635,7 @@ class MultiIndicator(Indicator):
         # Metadata attributes from templates
         attrs = [
             self.update_attrs(
-                ba, das, child, identifier=f"{self.identifier}_{child['var_name']}"
+                ba, das, child, identifier=f"{self.identifier}.{child['var_name']}"
             )
             for child in self.children
         ]
@@ -680,7 +680,9 @@ class MultiIndicator(Indicator):
     @property
     def ds_attrs(self):
         """Attributes of the output dataset."""
-        return {attr: getattr(self, attr) for attr in self._ds_names}
+        return {
+            attr: getattr(self, attr) for attr in self._ds_names if getattr(self, attr)
+        }
 
     def json(self, args=None):
         """Return a dictionary representation of the class.

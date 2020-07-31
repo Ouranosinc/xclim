@@ -139,10 +139,18 @@ def test_xclim_translations(locale):
         default_formatter.mapping.keys()
     ) == {"modifiers"}
 
+    translated_inds = []
     for indicator, fields in dic.items():
         if indicator != "attrs_mapping":
             # Checking that the translated indicator does exist
-            assert registry_cp.pop(indicator)
+            if (
+                "." in indicator
+            ):  # For translations of children of MultiIndicators, only check that the indicator exists
+                indicator = indicator.split(".")[0]
+                assert indicator in registry_cp or indicator in translated_inds
+            else:
+                assert registry_cp.pop(indicator)
+                translated_inds.append(indicator)
             # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
     # Leftover indicators need to have some translations!

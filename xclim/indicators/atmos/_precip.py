@@ -165,6 +165,7 @@ drought_code = PrTas(
 
 fire_weather_indexes = MultiIndicator(
     identifier="FWI",
+    description="The Canadian Forest Fire Weather Index (FWI) System consists of six components that account for the effects of fuel moisture and weather conditions on fire behavior.",
     children=[
         {
             "var_name": "dc",
