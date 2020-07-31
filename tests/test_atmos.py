@@ -5,7 +5,6 @@ import xarray as xr
 
 from xclim import atmos
 
-
 K2C = 273.16
 
 

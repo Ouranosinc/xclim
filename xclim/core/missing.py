@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 Missing values identification
 =============================
@@ -27,11 +28,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.core.options import CHECK_MISSING
-from xclim.core.options import MISSING_METHODS
-from xclim.core.options import MISSING_OPTIONS
-from xclim.core.options import OPTIONS
-from xclim.core.options import register_missing_method
+from xclim.core.options import (
+    CHECK_MISSING,
+    MISSING_METHODS,
+    MISSING_OPTIONS,
+    OPTIONS,
+    register_missing_method,
+)
 from xclim.indices import generic
 
 __all__ = [
@@ -245,7 +248,7 @@ class MissingWMO(MissingAny):
         super().__init__(da, freq, **indexer)
 
     def is_missing(self, null, count, nm=11, nc=5):
-        import xclim.indices.run_length as rl
+        from xclim.indices import run_length as rl
 
         # Check total number of days
         cond0 = null.count(dim="time") != count
@@ -322,8 +325,11 @@ class AtLeastNValid(MissingBase):
       A boolean array set to True if period has missing values.
     """
 
-    def is_missing(self, null, count, n=20):
-        """The result of a reduction operation is considered missing if less than `n` values are valid."""
+    def is_missing(self, null, count, n: int = 20):
+        """Check for missing results after a reduction operation.
+
+        The result of a reduction operation is considered missing if less than `n` values are valid.
+        """
         nvalid = null.count(dim="time") - null.sum(dim="time")
         return nvalid < n
 
@@ -347,8 +353,7 @@ class Skip(MissingBase):
 
 @register_missing_method("from_context")
 class FromContext(MissingBase):
-    """Return whether each element of the resampled da should be considered missing according
-    to the currently set options in `xclim.set_options`.
+    """Return whether each element of the resampled da should be considered missing according to the currently set options in `xclim.set_options`.
 
     See `xclim.set_options` and `xclim.core.options.register_missing_method`.
     """
@@ -370,24 +375,24 @@ class FromContext(MissingBase):
 # user-friendly. This can also be useful for testing.
 
 
-def missing_any(da, freq, **indexer):
+def missing_any(da, freq, **indexer):  # noqa: D103
     return MissingAny(da, freq, **indexer)()
 
 
-def missing_wmo(da, freq, nm=11, nc=5, **indexer):
+def missing_wmo(da, freq, nm=11, nc=5, **indexer):  # noqa: D103
     missing = MissingWMO(da, "M", **indexer)(nm=nm, nc=nc)
     return missing.resample(time=freq).any()
 
 
-def missing_pct(da, freq, tolerance, **indexer):
+def missing_pct(da, freq, tolerance, **indexer):  # noqa: D103
     return MissingPct(da, freq, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(da, freq, n=1, **indexer):
+def at_least_n_valid(da, freq, n=1, **indexer):  # noqa: D103
     return AtLeastNValid(da, freq, **indexer)(n=n)
 
 
-def missing_from_context(da, freq, **indexer):
+def missing_from_context(da, freq, **indexer):  # noqa: D103
     return FromContext.execute(da, freq, options={}, indexer=indexer)
 
 

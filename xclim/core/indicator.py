@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Indicator base classes
 ======================
@@ -6,7 +7,6 @@ Indicator base classes
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
-
 
 Defining new indicators
 =======================
@@ -44,48 +44,44 @@ are common to indicators, then call this subclass with the custom attributes. Se
 `xclim.indicators.atmos` how indicators based on daily mean temperatures are created from the :class:`Tas` subclass
 of the :class:`Daily` subclass.
 
-
 Subclass registries
 -------------------
 All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
 example::
-
-  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())
-  >>> assert "MY_INDICATOR" in xclim.core.indicator.registry
+  >>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
+  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
+  >>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
 
 This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
 a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-
-  >>> tg_mean_c = xclim.core.indicator.registry["TG_MEAN"](identifier="tg_mean_c", units="C")
+  >>> from xclim.core.indicator import registry
+  >>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
 
 """
 import re
 import warnings
-from collections import defaultdict
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
 from xarray import Dataset
 
-from .formatting import AttrFormatter
-from .formatting import default_formatter
-from .formatting import merge_attributes
-from .formatting import parse_doc
-from .formatting import update_history
-from .locales import get_local_attrs
-from .locales import get_local_formatter
-from .locales import TRANSLATABLE_ATTRS
-from .options import OPTIONS
-from .units import convert_units_to
-from .units import units
 from xclim.core import datachecks
-from xclim.core.options import MISSING_METHODS
-from xclim.core.options import MISSING_OPTIONS
+from xclim.core.options import MISSING_METHODS, MISSING_OPTIONS
 from xclim.indices.generic import default_freq
+
+from .formatting import (
+    AttrFormatter,
+    default_formatter,
+    merge_attributes,
+    parse_doc,
+    update_history,
+)
+from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
+from .options import OPTIONS
+from .units import convert_units_to, units
 
 # Indicators registry
 registry = {}
@@ -146,6 +142,7 @@ class Indicator:
     All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
 
     """
+
     # Number of DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
@@ -224,9 +221,7 @@ class Indicator:
         registry[name] = obj
 
     def __init__(self, **kwds):
-        """Run checks and assign default values.
-        """
-
+        """Run checks and assign default values."""
         # Check identifier is well formed - no funny characters
         self.identifier = kwds.pop("identifier", self.identifier)
         self.check_identifier(self.identifier)
@@ -256,6 +251,7 @@ class Indicator:
         self.__call__ = wraps(self.compute)(self.__call__)
 
     def __call__(self, *args, **kwds):
+        """Call function of Indicator class."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
@@ -310,7 +306,6 @@ class Indicator:
 
         Passing a dictionary of arguments will solve #1, but not #2.
         """
-
         # First try to bind arguments to function.
         try:
             ba = signature(func).bind(**das)
@@ -381,7 +376,7 @@ class Indicator:
 
         attrs["history"] = update_history(
             f"{identifier or cls.identifier}{ba.signature.replace(parameters=cp.values())}",
-            new_name=out["var_name"],
+            new_name=out.get("var_name"),
             **das,
         )
 
@@ -472,6 +467,7 @@ class Indicator:
           Attributes containing tags to replace with arguments' values.
         args : dict
           Function call arguments.
+        formatter : AttrFormatter
         """
         if args is None:
             return attrs
@@ -505,8 +501,7 @@ class Indicator:
         return out
 
     def mask(self, *args, **kwds):
-        """Return whether mask for output values, based on the output of the `missing` method.
-        """
+        """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
@@ -522,7 +517,7 @@ class Indicator:
     # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
     def compute(*args, **kwds):
-        """The function computing the indicator.
+        """Compute the indicator.
 
         This would typically be a function from `xclim.indices`.
         """
@@ -540,18 +535,19 @@ class Indicator:
     def datacheck(**das):
         """Verify that input data is valid.
 
-         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
+        When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
-         For example, checks could include:
-          - assert temporal frequency is daily
-          - assert no precipitation is negative
-          - assert no temperature has the same value 5 days in a row
-
+        For example, checks could include:
+         - assert temporal frequency is daily
+         - assert no precipitation is negative
+         - assert no temperature has the same value 5 days in a row
         """
         return True
 
 
 class Indicator2D(Indicator):
+    """Indicator using two dimensions."""
+
     _nvar = 2
 
 
@@ -593,24 +589,23 @@ class MultiIndicator(Indicator):
     description: str
       Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
       surface a quantity is defined on or what the flux sign conventions are.
-      Individual indicators can overwrite this value.
+      Individual indicators can overwrite this value. Will be assigned to the output dataset.
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     title: str, None
-      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
+      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None.
     abstract: str
-      A long description of what is in the computed outputs. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
+      A long description of what is in the computed outputs. Parsed from `compute` docstring if None.
     keywords: str
       Comma separated list of keywords. Parsed from `compute` docstring if None. Will be assigned to the output dataset.
     references: str
       Published or web-based references that describe the data or methods used to produce it. Parsed from
-      `compute` docstring if None. Will be assigned to the output dataset.
+      `compute` docstring if None.
     comment: str
       Miscellaneous information about the data or methods used to produce it. Will be assigned to the output dataset.
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
-      docstring if None. Will be assigned to the output dataset.
-
+      docstring if None.
     Notes
     -----
     All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
@@ -641,7 +636,7 @@ class MultiIndicator(Indicator):
             )
             for child in self.children
         ]
-        ds_attrs = {getattr(self, attr) for attr in self._ds_attrs}
+        ds_attrs = {attr: getattr(self, attr) for attr in self._ds_attrs}
         ds_attrs = self.update_attrs(ba, das, ds_attrs)
 
         vnames = [child["var_name"] for child in self.children]
@@ -668,7 +663,6 @@ class MultiIndicator(Indicator):
         # Mask results that do not meet criteria defined by the `missing` method.
         # This means all variables must have the same dimensions...
         mask = self.mask(*das.values(), **ba.arguments)
-
         return out.where(~mask)
 
     @property
@@ -687,11 +681,15 @@ class MultiIndicator(Indicator):
 
 
 class Daily(Indicator):
+    """Indicator at Daily frequency."""
+
     @staticmethod
-    def datacheck(**das):
+    def datacheck(**das):  # noqa
         for key, da in das.items():
             datachecks.check_daily(da)
 
 
 class Daily2D(Daily):
+    """Indicator using two dimensions at Daily frequency."""
+
     _nvar = 2

@@ -1,20 +1,17 @@
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+"""SDBA utilities module."""
+from typing import Mapping, Optional, Sequence, Union
 from warnings import warn
 
 import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
-from scipy.interpolate import griddata
-from scipy.interpolate import interp1d
+from scipy.interpolate import griddata, interp1d
 
-from .base import Grouper
-from .base import parse_group
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
+
+from .base import Grouper, parse_group
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -42,6 +39,8 @@ def map_cdf(
       Value within the support of `y`.
     dim : str
       Dimension along which to compute quantile.
+    group: Union[str, Grouper]
+    skipna: bool
 
     Returns
     -------
@@ -97,6 +96,8 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
 
 
 def ensure_longest_doy(func):
+    """Ensure that selected day is the longest day of year for x and y dims."""
+
     @wraps(func)
     def _ensure_longest_doy(x, y, *args, **kwargs):
         if (
@@ -249,8 +250,7 @@ def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
 
 
 def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
-    """Reindex an array to include the last slice at the beginning
-    and the first at the end.
+    """Reindex an array to include the last slice at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
 

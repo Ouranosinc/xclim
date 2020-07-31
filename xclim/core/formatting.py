@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Formatting utilities for indicators
 ===================================
@@ -6,10 +7,7 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
@@ -43,8 +41,8 @@ class AttrFormatter(string.Formatter):
         of value is given. If `format_spec` is not specified but `value` is in the
         mapping, the first variation is returned.
 
-        Example
-        -------
+        Examples
+        --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
         to french and that we know that possible values of `adj` are `nice` and `evil`.
         In french, the genre of the noun changes the adjective (cat = chat is masculine,
@@ -132,7 +130,7 @@ def merge_attributes(
     missing_str: Optional[str] = None,
     **inputs_kws: Union[xr.DataArray, xr.Dataset],
 ):
-    """
+    r"""
     Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
@@ -206,7 +204,7 @@ def update_history(
     str
       The combine history of all inputs starting with `hist_str`.
 
-    See also
+    See Also
     --------
     merge_attributes
     """

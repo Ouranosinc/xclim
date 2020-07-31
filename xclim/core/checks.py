@@ -1,10 +1,10 @@
 # This file is kept for backward compatibility. It will be removed in a later version.
+"""Module that doesn't even go here."""
 from warnings import warn
 
 from .cfchecks import *
 from .datachecks import *
 from .missing import *
-
 
 warn(
     (

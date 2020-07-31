@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Run length algorithms submodule
 ===============================
@@ -7,15 +8,12 @@ Computation of statistics on runs of True values in boolean arrays.
 """
 from datetime import datetime
 from functools import partial
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
+from dask import array as dsk
 
 npts_opt = 9000
 
@@ -41,7 +39,21 @@ def get_npts(da: xr.DataArray) -> int:
     return npts
 
 
-def rle(da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000):
+def rle(
+    da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000
+) -> xr.DataArray:
+    """Generate basic run length function.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+    dim : str
+    max_chunk : int
+
+    Returns
+    -------
+    xr.DataArray
+    """
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
     i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": -1})
@@ -83,7 +95,7 @@ def rle(da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000):
 
 def longest_run(
     da: xr.DataArray, dim: str = "time", ufunc_1dim: Union[str, bool] = "auto"
-):
+) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
 
     Parameters
@@ -96,10 +108,11 @@ def longest_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
+
     Returns
     -------
-    N-dimensional array (int)
-      Length of longest run of True values along dimension
+    xr.DataArray
+      Length of longest run of True values along dimension (int).
     """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
@@ -134,6 +147,7 @@ def windowed_run_events(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+
     Returns
     -------
     xr.DataArray
@@ -217,7 +231,7 @@ def first_run(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Index (or coordinate if `coord` is not False) of first item in first valid run. Returns np.nan if there are no valid run.
     """
     if ufunc_1dim == "auto":
@@ -284,7 +298,7 @@ def last_run(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
     reversed_da = da.sortby(dim, ascending=False)
@@ -298,9 +312,8 @@ def last_run(
 
 def run_length_with_date(
     da: xr.DataArray, window: int, date: str = "07-01", dim: str = "time",
-):
-    """Return the length of the longest consecutive run of True values found
-    to be semi-continuous before and after a given date.
+) -> xr.DataArray:
+    """Return the length of the longest consecutive run of True values found to be semi-continuous before and after a given date.
 
     Parameters
     ----------
@@ -315,7 +328,7 @@ def run_length_with_date(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Length of longest run of True values along a given dimension inclusive of a given date.
 
     Notes
@@ -346,8 +359,10 @@ def run_end_after_date(
     date: str = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
-):
-    """Return the index of the first item after the end of a run after a given date. The run must begin before the date.
+) -> xr.DataArray:
+    """Return the index of the first item after the end of a run after a given date.
+
+    The run must begin before the date.
 
     Parameters
     ----------
@@ -366,7 +381,7 @@ def run_end_after_date(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
     after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
@@ -434,7 +449,7 @@ def last_run_before_date(
     date: str = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
-):
+) -> xr.DataArray:
     """Return the index of the last item of the last run before a given date.
 
     Parameters
@@ -454,7 +469,7 @@ def last_run_before_date(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
     before_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
@@ -488,6 +503,7 @@ def rle_1d(
 
     Examples
     --------
+    >>> from xclim.indices.run_length import rle_1d
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     >>> rle_1d(a)
     (array([1, 2, 3]), array([2, 4, 6]), array([0, 2, 6]))
@@ -579,7 +595,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int):
 
     Returns
     -------
-    out : func
+    func
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle_1d(arr)
@@ -587,8 +603,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int):
 
 
 def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
-    """Dask-parallel version of windowed_run_count_1d, ie the number of consecutive true values in
-    array for runs at least as long as given duration.
+    """Dask-parallel version of windowed_run_count_1d, ie: the number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
     ----------
@@ -615,7 +630,7 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
 
 
 def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
-    """Dask-parallel version of windowed_run_events_1d, ie the number of runs at least as long as given duration.
+    """Dask-parallel version of windowed_run_events_1d, ie: the number of runs at least as long as given duration.
 
     Parameters
     ----------
@@ -642,8 +657,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
 
 
 def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
-    """Dask-parallel version of longest_run_1d, ie the maximum number of consecutive true values in
-    array.
+    """Dask-parallel version of longest_run_1d, ie: the maximum number of consecutive true values in array.
 
     Parameters
     ----------
@@ -667,7 +681,7 @@ def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
 
 
 def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.apply_ufunc:
-    """Dask-parallel version of first_run_1d, ie the first entry in array of consecutive true values.
+    """Dask-parallel version of first_run_1d, ie: the first entry in array of consecutive true values.
 
     Parameters
     ----------
@@ -681,7 +695,6 @@ def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.appl
     out : func
       A function operating along the time dimension of a dask-array.
     """
-
     ind = xr.apply_ufunc(
         first_run_1d,
         x,

@@ -1,16 +1,20 @@
+# noqa: D100
 from typing import Optional
 
 import numpy as np
 import xarray
 
+from xclim.core.calendar import resample_doy
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint_multiply,
+    units,
+    units2pint,
+)
+
 from . import fwi
 from . import run_length as rl
-from xclim.core.calendar import resample_doy
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-from xclim.core.units import pint_multiply
-from xclim.core.units import units
-from xclim.core.units import units2pint
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -52,7 +56,7 @@ __all__ = [
 def cold_spell_duration_index(
     tasmin: xarray.DataArray, tn10: xarray.DataArray, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Cold spell duration index
+    r"""Cold spell duration index.
 
     Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
     percentile.
@@ -90,11 +94,12 @@ def cold_spell_duration_index(
     ----------
     From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
 
-    Example
-    -------
-    >>> import xclim.utils as xcu
-    >>> tn10 = xcu.percentile_doy(historical_tasmin, per=.1)
-    >>> cold_spell_duration_index(reference_tasmin, tn10)
+    Examples
+    --------
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import cold_spell_duration_index  # doctest: +SKIP
+    >>> tn10 = percentile_doy(historical_tasmin, per=.1)  # doctest: +SKIP
+    >>> cold_spell_duration_index(reference_tasmin, tn10)  # doctest: +SKIP
     """
     tn10 = convert_units_to(tn10, tasmin)
 
@@ -165,8 +170,8 @@ def daily_freezethaw_cycles(
     thresh_tasmax: str = "UNSET 0 degC",
     thresh_tasmin: str = "UNSET 0 degC",
     freq: str = "YS",
-) -> xarray.DataArray:
-    r"""Number of days with a diurnal freeze-thaw cycle
+) -> xarray.DataArray:  # noqa: D401
+    r"""Number of days with a diurnal freeze-thaw cycle.
 
     The number of days where Tmax > thresh_tasmax and Tmin <= thresh_tasmin.
 
@@ -334,8 +339,7 @@ def extreme_temperature_range(
 
 
 @declare_units(
-    "",
-    check_output=False,
+    [""] * 6,
     tas="[temperature]",
     pr="[precipitation]",
     ws="[speed]",
@@ -353,6 +357,8 @@ def fire_weather_indexes(
     dmc0: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
     start_date: str = None,
+    start_up_mode: str = None,
+    shut_down_mode: str = "temperature",
     **params,
 ):
     r"""Return the six daily fire weather indexes.
@@ -383,6 +389,10 @@ def fire_weather_indexes(
       Initial values of the drought code.
     start_date : str, datetime.datetime
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
+    start_up_mode : {None, "snow_depth"}
+        How to compute start up. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
+    shut_down_mode : {"temperature", "snow_depth"}
+        How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
     params :
         Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
@@ -442,7 +452,7 @@ def drought_code(
     shut_down_mode: str = "snow_depth",
     **params,
 ):
-    r"""The daily drought code (FWI component)
+    r"""Compute the daily drought code (FWI component).
 
     The drought code is part of the Canadian Forest Fire Weather Index System.
     It is a numeric rating of the average moisture content of organic layers.
@@ -513,7 +523,7 @@ def heat_wave_frequency(
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
-    r"""Heat wave frequency
+    r"""Heat wave frequency.
 
     Number of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
@@ -521,7 +531,6 @@ def heat_wave_frequency(
 
     Parameters
     ----------
-
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
@@ -582,7 +591,7 @@ def heat_wave_max_length(
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
-    r"""Heat wave max length
+    r"""Heat wave max length.
 
     Maximum length of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
@@ -592,7 +601,6 @@ def heat_wave_max_length(
 
     Parameters
     ----------
-
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
@@ -654,7 +662,7 @@ def heat_wave_total_length(
     freq: str = "YS",
 ) -> xarray.DataArray:
     # Dev note : we should decide if it is deg K or C
-    r"""Heat wave total length
+    r"""Heat wave total length.
 
     Total length of heat waves over a given period. A heat wave is defined as an event
     where the minimum and maximum daily temperature both exceeds specific thresholds
@@ -699,7 +707,7 @@ def liquid_precip_ratio(
     tas: xarray.DataArray = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
-    r"""Ratio of rainfall to total precipitation
+    r"""Ratio of rainfall to total precipitation.
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
     then precipitation is assumed solid if the temperature is below 0°C.
@@ -729,10 +737,9 @@ def liquid_precip_ratio(
 
         PR_{ij} = \sum_{i=a}^{b} PR_i
 
-
         PRwet_{ij}
 
-    See also
+    See Also
     --------
     winter_rain_ratio
     """
@@ -796,11 +803,11 @@ def precip_accumulation(
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> import xarray as xr
-    >>> pr_day = xr.open_dataset('pr_day.nc').pr
-    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import precip_accumulation  # doctest: +SKIP
+    >>> pr_day = xr.open_dataset('pr_day.nc').pr  # doctest: +SKIP
+    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")  # doctest: +SKIP
     """
-
     if phase in ["liquid", "solid"]:
         frz = convert_units_to("0 degC", tas)
 
@@ -821,8 +828,8 @@ def rain_on_frozen_ground_days(
     tas: xarray.DataArray,
     thresh: str = "1 mm/d",
     freq: str = "YS",
-) -> xarray.DataArray:
-    """Number of rain on frozen ground events
+) -> xarray.DataArray:  # noqa: D401
+    """Number of rain on frozen ground events.
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
     Precipitation is assumed to be rain when the temperature is above 0℃.
@@ -883,7 +890,7 @@ def days_over_precip_thresh(
     per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
     Number of days over period where the precipitation is above a threshold defining wet days and above a given
@@ -905,11 +912,13 @@ def days_over_precip_thresh(
     xarray.DataArray
       Count of days with daily precipitation above the given percentile [days]
 
-    Example
-    -------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
-    >>> r75p = xclim.indices.days_over_precip_thresh(pr, p75)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.indices import days_over_precip_thresh  # doctest: +SKIP
+    >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
+    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)  # doctest: +SKIP
+    >>> r75p = days_over_precip_thresh(pr, p75)  # doctest: +SKIP
     """
     per = convert_units_to(per, pr)
     thresh = convert_units_to(thresh, pr)
@@ -976,7 +985,7 @@ def fraction_over_precip_thresh(
 @declare_units("days", tas="[temperature]", t90="[temperature]")
 def tg90p(
     tas: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
     Number of days with daily mean temperature over the 90th percentile.
@@ -999,13 +1008,14 @@ def tg90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
-    >>> hot_days = tg90p(tas, t90)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tg90p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
+    >>> hot_days = tg90p(tas, t90)  # doctest: +SKIP
     """
     t90 = convert_units_to(t90, tas)
 
@@ -1021,7 +1031,7 @@ def tg90p(
 @declare_units("days", tas="[temperature]", t10="[temperature]")
 def tg10p(
     tas: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
     Number of days with daily mean temperature below the 10th percentile.
@@ -1044,13 +1054,14 @@ def tg10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
-    >>> cold_days = tg10p(tas, t10)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tg10p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
+    >>> cold_days = tg10p(tas, t10)  # doctest: +SKIP
     """
     t10 = convert_units_to(t10, tas)
 
@@ -1066,7 +1077,7 @@ def tg10p(
 @declare_units("days", tasmin="[temperature]", t90="[temperature]")
 def tn90p(
     tasmin: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
     Number of days with daily minimum temperature over the 90th percentile.
@@ -1089,13 +1100,14 @@ def tn90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
-    >>> hot_days = tn90p(tas, t90)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tn90p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
+    >>> hot_days = tn90p(tas, t90)  # doctest: +SKIP
     """
     t90 = convert_units_to(t90, tasmin)
 
@@ -1111,14 +1123,13 @@ def tn90p(
 @declare_units("days", tasmin="[temperature]", t10="[temperature]")
 def tn10p(
     tasmin: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
     Number of days with daily minimum temperature below the 10th percentile.
 
     Parameters
     ----------
-
     tasmin : xarray.DataArray
       Mean daily temperature [℃] or [K]
     t10 : xarray.DataArray
@@ -1135,13 +1146,14 @@ def tn10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
-    >>> cold_days = tg10p(tas, t10)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tn10p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
+    >>> cold_days = tn10p(tas, t10)  # doctest: +SKIP
     """
     t10 = convert_units_to(t10, tasmin)
 
@@ -1157,7 +1169,7 @@ def tn10p(
 @declare_units("days", tasmax="[temperature]", t90="[temperature]")
 def tx90p(
     tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
     Number of days with daily maximum temperature over the 90th percentile.
@@ -1180,13 +1192,14 @@ def tx90p(
     -----
     The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t90 = xclim.utils.percentile_doy(tas, per=0.9)
-    >>> hot_days = tg90p(tas, t90)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tx90p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
+    >>> hot_days = tx90p(tas, t90)  # doctest: +SKIP
     """
     t90 = convert_units_to(t90, tasmax)
 
@@ -1202,7 +1215,7 @@ def tx90p(
 @declare_units("days", tasmax="[temperature]", t10="[temperature]")
 def tx10p(
     tasmax: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
     Number of days with daily maximum temperature below the 10th percentile.
@@ -1225,13 +1238,14 @@ def tx10p(
     -----
     The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
 
-    Example
-    -------
-    >>> import xarray as xr
-    >>> import xclim.utils
-    >>> tas = xr.open_dataset("temperature_data.nc").tas
-    >>> t10 = xclim.utils.percentile_doy(tas, per=0.1)
-    >>> cold_days = tg10p(tas, t10)
+    Examples
+    --------
+    >>> import xarray as xr  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import tx10p  # doctest: +SKIP
+    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
+    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
+    >>> cold_days = tx10p(tas, t10)  # doctest: +SKIP
     """
     t10 = convert_units_to(t10, tasmax)
 
@@ -1257,7 +1271,7 @@ def tx_tn_days_above(
     thresh_tasmin: str = "22 degC",
     thresh_tasmax: str = "30 degC",
     freq: str = "YS",
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.
@@ -1300,7 +1314,6 @@ def tx_tn_days_above(
         TN_{ij} > TN_{thresh} [℃]
 
     """
-
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
@@ -1311,7 +1324,7 @@ def tx_tn_days_above(
 def warm_spell_duration_index(
     tasmax: xarray.DataArray, tx90: float, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Warm spell duration index
+    r"""Warm spell duration index.
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
     percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
@@ -1359,7 +1372,7 @@ def winter_rain_ratio(
     tas: xarray.DataArray = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
-    """Ratio of rainfall to total precipitation during winter
+    """Ratio of rainfall to total precipitation during winter.
 
     The ratio of total liquid precipitation over the total precipitation over the winter months (DJF. If solid
     precipitation is not provided, then precipitation is assumed solid if the temperature is below 0°C.

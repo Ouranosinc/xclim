@@ -7,15 +7,15 @@ import pytest
 import xarray as xr
 
 import xclim
-from xclim import __version__
-from xclim import atmos
-from xclim.core.formatting import AttrFormatter
-from xclim.core.formatting import default_formatter
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import parse_doc
-from xclim.core.formatting import update_history
-from xclim.core.indicator import Indicator
-from xclim.core.indicator import registry
+from xclim import __version__, atmos
+from xclim.core.formatting import (
+    AttrFormatter,
+    default_formatter,
+    merge_attributes,
+    parse_doc,
+    update_history,
+)
+from xclim.core.indicator import Indicator, MultiIndicator, registry
 from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
@@ -57,6 +57,22 @@ class UniClim(Indicator):
     def compute(da, **indexer):
         select = select_time(da, **indexer)
         return select.mean(dim="time", keep_attrs=True)
+
+
+class MultiTemp(MultiIndicator):
+    identifier = "minmaxtemp"
+    children = [
+        {"var_name": "tmin", "units": "K", "standard_name": "Min temp"},
+        {"var_name": "tmax", "units": "K"},
+    ]
+    description = "Grouped computation of tmax and tmin"
+
+    @staticmethod
+    def compute(tas, freq):
+        return (
+            tas.resample(time=freq).min(keep_attrs=True),
+            tas.resample(time=freq).max(keep_attrs=True),
+        )
 
 
 def test_attrs(tas_series):
@@ -103,6 +119,17 @@ def test_temp_unit_conversion(tas_series):
     txc = ind(a, freq="YS")
 
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
+
+
+def test_multiindicator(tas_series):
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    ind = MultiTemp()
+
+    out = ind(tas, freq="YS")
+    assert out.tmin[0] == tas.min()
+    assert out.tmax[0] == tas.max()
+    assert out.tmin.attrs["standard_name"] == "Min temp"
+    assert out.attrs["description"] == "Grouped computation of tmax and tmin"
 
 
 def test_missing(tas_series):

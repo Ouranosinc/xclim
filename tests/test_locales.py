@@ -6,13 +6,12 @@ import json
 import numpy as np
 import pytest
 
-import xclim.core.locales as xloc
 from xclim import atmos
+from xclim.core import locales as xloc
 from xclim.core.formatting import default_formatter
 from xclim.core.indicator import registry
 from xclim.core.options import set_options
 from xclim.locales import generate_local_dict
-
 
 esperanto = (
     "eo",
@@ -69,17 +68,11 @@ def test_local_dict(tmp_path):
         xloc.get_local_dict("tlh")
 
 
-@pytest.mark.parametrize(
-    "fill,isin,notin", [(True, ["description"], []), (False, [], ["description"])]
-)
-def test_local_attrs_sing(fill, isin, notin):
+def test_local_attrs_sing():
     attrs = xloc.get_local_attrs(
-        atmos.tg_mean, esperanto, fill_missing=fill, append_locale_name=False
+        atmos.tg_mean.__class__.__name__, esperanto, append_locale_name=False
     )
-    for key in isin:
-        assert key in attrs
-    for key in notin:
-        assert key not in attrs
+    assert "description" not in attrs
 
     with pytest.raises(ValueError):
         attrs = xloc.get_local_attrs(
@@ -87,28 +80,21 @@ def test_local_attrs_sing(fill, isin, notin):
         )
 
 
-@pytest.mark.parametrize(
-    "fill,isin,notin",
-    [
-        (True, ["description_fr", "description_eo", "description_ru"], []),
-        (False, ["description_fr", "description_ru"], ["description_eo"]),
-    ],
-)
 def test_local_attrs_multi(fill, isin, notin, tmp_path):
     with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     attrs = xloc.get_local_attrs(
-        atmos.tg_mean,
+        atmos.tg_mean.__class__.__name__,
         "fr",
         esperanto,
         ("ru", tmp_path / "ru.json"),
         fill_missing=fill,
         append_locale_name=True,
     )
-    for key in isin:
+    for key in ["description_fr", "description_ru"]:
         assert key in attrs
-    for key in notin:
+    for key in ["description_eo"]:
         assert key not in attrs
 
 

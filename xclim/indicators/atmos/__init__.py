@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 Atmospheric indicator calculation instances
 ===========================================

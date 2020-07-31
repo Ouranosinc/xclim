@@ -20,6 +20,11 @@ set_options(cf_compliance="raise", data_validation="raise")
 TestObj = namedtuple("TestObj", ["test"])
 
 
+@pytest.fixture(scope="module", params=[xr.cftime_range, pd.date_range])
+def date_range(request):
+    return request.param
+
+
 @pytest.mark.parametrize(
     "value,expected", [("a string", "a string"), ("a long string", "a * string")]
 )
@@ -44,35 +49,45 @@ class TestDateHandling:
         "standard_name": "air_temperature",
     }
 
-    def test_assert_daily(self):
+    def test_assert_daily(self, date_range):
         n = 365  # one day short of a full year
-        times = pd.date_range("2000-01-01", freq="1D", periods=n)
+        times = date_range("2000-01-01", freq="1D", periods=n)
         da = xr.DataArray(np.arange(n), [("time", times)], attrs=self.tas_attrs)
         tg_mean(da)
 
     # Bad frequency
-    def test_bad_frequency(self):
+    def test_bad_frequency(self, date_range):
         with pytest.raises(ValidationError):
             n = 365
-            times = pd.date_range("2000-01-01", freq="12H", periods=n)
+            times = date_range("2000-01-01", freq="12H", periods=n)
             da = xr.DataArray(np.arange(n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 
-    # Missing one day between the two years
-    def test_missing_one_day_between_two_years(self):
+    # Decreasing index
+    def test_decreasing_index(self, date_range):
         with pytest.raises(ValidationError):
             n = 365
-            times = pd.date_range("2000-01-01", freq="1D", periods=n)
-            times = times.append(pd.date_range("2001-01-01", freq="1D", periods=n))
+            times = date_range("2000-01-01", freq="12H", periods=n)
+            da = xr.DataArray(
+                np.arange(n), [("time", times[::-1])], attrs=self.tas_attrs
+            )
+            tg_mean(da)
+
+    # Missing one day between the two years
+    def test_missing_one_day_between_two_years(self, date_range):
+        with pytest.raises(ValidationError):
+            n = 365
+            times = date_range("2000-01-01", freq="1D", periods=n)
+            times = times.append(date_range("2001-01-01", freq="1D", periods=n))
             da = xr.DataArray(np.arange(2 * n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 
     # Duplicate dates
-    def test_duplicate_dates(self):
+    def test_duplicate_dates(self, date_range):
         with pytest.raises(ValidationError):
             n = 365
-            times = pd.date_range("2000-01-01", freq="1D", periods=n)
-            times = times.append(pd.date_range("2000-12-29", freq="1D", periods=n))
+            times = date_range("2000-01-01", freq="1D", periods=n)
+            times = times.append(date_range("2000-12-29", freq="1D", periods=n))
             da = xr.DataArray(np.arange(2 * n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 

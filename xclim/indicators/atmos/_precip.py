@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+"""Precipitation indicator definitions."""
+
 from xclim import indices
-from xclim.core.indicator import Daily
-from xclim.core.indicator import Daily2D
+from xclim.core.indicator import Daily, Daily2D, MultiIndicator
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
     "drought_code",
+    "fire_weather_indexes",
 ]
 
 
@@ -158,4 +160,55 @@ drought_code = PrTas(
     long_name="Drought Code",
     description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
     compute=indices.drought_code,
+    missing="skip",
+)
+
+fire_weather_indexes = MultiIndicator(
+    identifier="FWI",
+    children=[
+        {
+            "var_name": "dc",
+            "standard_name": "drought_code",
+            "long_name": "Drought Code",
+            "description": "Numeric rating of the average moisture content of deep, compact organic layers. Computed with start up method {start_up_mode}",
+            "units": "",
+        },
+        {
+            "var_name": "dmc",
+            "standard_name": "duff_moisture_code",
+            "long_name": "Duff Moisture Code",
+            "description": "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth. Computed with start up method {start_up_mode}",
+            "units": "",
+        },
+        {
+            "var_name": "ffmc",
+            "standard_name": "fine_fuel_moisture_code",
+            "long_name": "Fine Fuel Moisture Code",
+            "description": "Numeric rating of the average moisture content of litter and other cured fine fuels. Computed with start up method {start_up_mode}",
+            "units": "",
+        },
+        {
+            "var_name": "isi",
+            "standard_name": "initial_spread_index",
+            "long_name": "Initial Spread Index",
+            "description": "Numeric rating of the expected rate of fire spread.",
+            "units": "",
+        },
+        {
+            "var_name": "bui",
+            "standard_name": "buildup_index",
+            "long_name": "Buildup Index",
+            "description": "Numeric rating of the total amount of fuel available for combustion.",
+            "units": "",
+        },
+        {
+            "var_name": "fwi",
+            "standard_name": "fire_weather_index",
+            "long_name": "Fire Weather Index",
+            "description": "Numeric rating of fire intensity.",
+            "units": "",
+        },
+    ],
+    compute=indices.fire_weather_indexes,
+    missing="skip",
 )

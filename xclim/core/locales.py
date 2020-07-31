@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Internationalization
 ====================
@@ -48,11 +49,7 @@ TRANSLATABLE_ATTRS
 import json
 import warnings
 from pathlib import Path
-from typing import Any
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import pkg_resources
 
@@ -218,8 +215,7 @@ def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
 
 class UnavailableLocaleError(ValueError):
-    """Error raised when a locale is requested but doesn"t exist.
-    """
+    """Error raised when a locale is requested but doesn't exist."""
 
     def __init__(self, locale):
         super().__init__(

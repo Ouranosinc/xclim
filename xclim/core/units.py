@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Units handling submodule
 ========================
@@ -9,9 +10,7 @@ most unit handling methods.
 import re
 import warnings
 from inspect import signature
-from typing import Any
-from typing import Optional
-from typing import Union
+from typing import Any, Optional, Union
 
 import pint.converters
 import pint.unit
@@ -21,7 +20,6 @@ from packaging import version
 
 from .options import datacheck
 from .utils import ValidationError
-
 
 __all__ = [
     "convert_units_to",
@@ -316,6 +314,8 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         tu = "cms"
     elif dim == "[length]":
         tu = "m"
+    elif dim == "[speed]":
+        tu = "m s-1"
     else:
         raise NotImplementedError(f"Dimension `{dim}` is not supported.")
 
@@ -359,7 +359,8 @@ def declare_units(out_units, check_output=True, **units_by_name):
                 check_units(val, bound_units.arguments.get(name, None))
 
             out = func(*args, **kwargs)
-            if check_output:
+
+            def _check_out_units(out, out_units):
                 if "units" in out.attrs:
                     # Check that output units dimensions match expectations, e.g. [temperature]
                     if "[" in out_units:
@@ -376,6 +377,15 @@ def declare_units(out_units, check_output=True, **units_by_name):
                     raise ValueError(
                         "Output units are not propagated by computation nor specified by decorator."
                     )
+                return out
+
+            if check_output:
+                if isinstance(out, tuple):
+                    out = tuple(
+                        _check_out_units(o, o_u) for o, o_u in zip(out, out_units)
+                    )
+                else:
+                    out = _check_out_units(out, out_units)
 
             return out
 

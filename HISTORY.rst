@@ -4,16 +4,34 @@ History
 
 0.19.x
 ------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
 * Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
   method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
+* xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
+* The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+
+Bug fixes
+~~~~~~~~~
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `datachecks.check_daily` now uses `xr.infer_freq`.
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
+* Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
+* Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 
-0.18.x
-------
+0.18.0 (2020-06-26)
+-------------------
 * Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
 * `xclim.sdba.detrending` objects can now act on groups.
 * Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
