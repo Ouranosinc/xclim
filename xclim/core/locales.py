@@ -18,31 +18,35 @@ These files are expected to be defined as in this example for french:
             "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
             ... and so on for other frequent parameters translation...
         },
-        "atmos.dtrvar" : {
-            "long_name": "Variabilité de l'intervalle de température moyen",
-            "description": "Variabilité {freq:f} de l'intervalle de température moyen."
-        },
+          "DTRVAR": {
+            "long_name": "Variabilité de l'amplitude de la température diurne",
+            "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
+            "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
+            "comment": "",
+            "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
+          },
         ... and so on for other indicators...
     }
 
-Indicators are named by their module and identifier, which can differ from the callable name.
-In this case, the indicator is called through `atmos.daily_temperature_range_variability`,
-but its identifier is `dtrvar`.
+Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
+but which can differ from the callable name. In this case, the indicator is called through
+`atmos.daily_temperature_range_variability`, but its identifier is `DTRVAR`.
+Use the `ind.__class__.__name__` accessor to get its registry name.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually
 translated from "YS" to "annual". However, in french and in this sentence, the feminine
 form should be used, so the "f" modifier is added by the translator so that the
 formatting function knows which translation to use. Acceptable entries for the mappings
-are limited to what is already defined in `xclim.indicators.utils.default_formatter`.
+are limited to what is already defined in `xclim.core.indicators.utils.default_formatter`.
 
-The "attrs_mapping" and its "modifiers" key are mandatory in the locale dict, all other
-entries (translations of frequent parameters and all indicator entries) are optional.
+For user-provided internationalization dictionaries, only the "attrs_mapping" and
+its "modifiers" key are mandatory, all other entries (translations of frequent parameters
+and all indicator entries) are optional. For xclim-provided translations (for now only french),
+all indicators must have en entry and the "attrs_mapping" entries must match exactly the default formatter.
+Those default translations are found in the `xclim/locales` folder.
 
 Attributes
 ----------
-LOCALES
-    List of currently set locales. Computing indicator through a xclim.indicators.indicator.Indicator
-    object will add metadata in these languages as available.
 TRANSLATABLE_ATTRS
     List of attributes to consider translatable when generating locale dictionaries.
 """
