@@ -332,6 +332,16 @@ def declare_units(out_units, check_output=True, **units_by_name):
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
 
+    Parameters
+    ----------
+    out_units : str or Sequence[str]
+      The units of the output(s). If the indice outputs multiple DataArray, a sequence of string of the same length must be given.
+      Pass "" for unitless quantities.
+    check_output : bool
+      Set to False to skip the output units check.
+    units_by_name : Mapping[str, str]
+      Mapping from the input parameter names to their units or dimensionality ("[...]").
+
     Examples
     --------
     In the following function definition:

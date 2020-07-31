@@ -49,7 +49,7 @@ TRANSLATABLE_ATTRS
 import json
 import warnings
 from pathlib import Path
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import pkg_resources
 
@@ -146,7 +146,6 @@ def get_local_attrs(
     indicator: str,
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
-    fill_missing: bool = True,
     append_locale_name: bool = True,
 ):
     """Get all attributes of an indicator in the requested locales.
@@ -219,5 +218,5 @@ class UnavailableLocaleError(ValueError):
 
     def __init__(self, locale):
         super().__init__(
-            f"Locale {locale} not available. Use `xclim.locales.list_locales()` to see available languages."
+            f"Locale {locale} not available. Use `xclim.core.locales.list_locales()` to see available languages."
         )
