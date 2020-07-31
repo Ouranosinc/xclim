@@ -620,6 +620,7 @@ class MultiIndicator(Indicator):
     cell_methods = None
 
     def __call__(self, *args, **kwds):
+        """Call function of MultiIndicator class."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
@@ -692,8 +693,7 @@ class MultiIndicator(Indicator):
         out.update(self.ds_attrs)
         out = self.format(out, args)
 
-        for child, cf_attrs in self.cf_attrs.items():
-            out[child] = self.format(cf_attrs, args)
+        out["children"] = [self.format(cf_attrs, args) for cf_attrs in self.cf_attrs]
 
         out["notes"] = self.notes
 
