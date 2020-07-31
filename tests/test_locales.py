@@ -80,7 +80,7 @@ def test_local_attrs_sing():
         )
 
 
-def test_local_attrs_multi(fill, isin, notin, tmp_path):
+def test_local_attrs_multi(tmp_path):
     with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
@@ -89,7 +89,6 @@ def test_local_attrs_multi(fill, isin, notin, tmp_path):
         "fr",
         esperanto,
         ("ru", tmp_path / "ru.json"),
-        fill_missing=fill,
         append_locale_name=True,
     )
     for key in ["description_fr", "description_ru"]:

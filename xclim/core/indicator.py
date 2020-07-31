@@ -612,7 +612,7 @@ class MultiIndicator(Indicator):
 
     Parameters `var_name`, `standard_name`, `long_name`, `units`, `cell_methods` are not valid at the MultiIndicator class level, they must be given through `children`.
     """
-    _ds_attrs = ["description", "keywords", "comment"]
+    _ds_names = ["description", "keywords", "comment"]
     var_name = None
     standard_name = None
     long_name = None
@@ -636,8 +636,8 @@ class MultiIndicator(Indicator):
             )
             for child in self.children
         ]
-        ds_attrs = {attr: getattr(self, attr) for attr in self._ds_attrs}
-        ds_attrs = self.update_attrs(ba, das, ds_attrs)
+
+        ds_attrs = self.update_attrs(ba, das, self.ds_attrs)
 
         vnames = [child["var_name"] for child in self.children]
 
@@ -674,10 +674,38 @@ class MultiIndicator(Indicator):
         ]
         return attrs
 
+    @property
+    def ds_attrs(self):
+        return {attr: getattr(self, attr) for attr in self._ds_attrs}
+
     def json(self, args=None):
-        raise NotImplementedError(
-            "Serialization to json not yet implemented for MutliIndicator instances."
+        """Return a dictionary representation of the class.
+
+        Notes
+        -----
+        This is meant to be used by a third-party library wanting to wrap this class into another interface.
+
+        """
+        names = ["identifier", "abstract"]
+        out = {key: getattr(self, key) for key in names}
+        out.update(self.ds_attrs)
+        out = self.format(out, args)
+
+        for child, cf_attrs in self.cf_attrs.items():
+            out[child] = self.format(cf_attrs, args)
+
+        out["notes"] = self.notes
+
+        out["parameters"] = str(
+            {
+                key: {
+                    "default": p.default if p.default != p.empty else None,
+                    "desc": "",
+                }
+                for (key, p) in self._sig.parameters.items()
+            }
         )
+        return out
 
 
 class Daily(Indicator):
