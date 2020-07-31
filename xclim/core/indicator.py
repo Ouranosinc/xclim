@@ -667,7 +667,7 @@ class MultiIndicator(Indicator):
 
     @property
     def cf_attrs(self):
-        """CF-Convention attributes of the output value."""
+        """CF-Convention attributes of each output values."""
         attrs = [
             {k: child[k] for k in self._cf_names if k in child}
             for child in self.children
@@ -676,7 +676,8 @@ class MultiIndicator(Indicator):
 
     @property
     def ds_attrs(self):
-        return {attr: getattr(self, attr) for attr in self._ds_attrs}
+        """Attributes of the output dataset."""
+        return {attr: getattr(self, attr) for attr in self._ds_names}
 
     def json(self, args=None):
         """Return a dictionary representation of the class.
