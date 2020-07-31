@@ -606,12 +606,14 @@ class MultiIndicator(Indicator):
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None.
+
     Notes
     -----
     All subclasses created are available in the `registry` attribute and can be used to defined custom subclasses.
 
     Parameters `var_name`, `standard_name`, `long_name`, `units`, `cell_methods` are not valid at the MultiIndicator class level, they must be given through `children`.
     """
+
     _ds_names = ["description", "keywords", "comment"]
     var_name = None
     standard_name = None
