@@ -13,7 +13,7 @@ Breaking changes
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
-* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself, also it no longer accept the `fill_missing` keyword. Behavior is now the same as passing `False`.
+* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
