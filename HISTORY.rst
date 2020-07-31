@@ -13,11 +13,14 @@ Breaking changes
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
+* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself, also it no longer accept the `fill_missing` keyword. Behavior is now the same as passing `False`.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+* New `MultiIndicator` subclass for indicators outputing multiple indices for the same input.
+* `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
 
 Bug fixes
 ~~~~~~~~~
@@ -29,6 +32,7 @@ Internal changes
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
+* Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must as passed.
 
 0.18.0 (2020-06-26)
 -------------------
