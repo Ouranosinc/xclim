@@ -153,6 +153,11 @@ def test_xclim_translations(locale):
         default_formatter.mapping.keys()
     ) == {"modifiers"}
 
+    # Remove unofficial indicators (as those created during the tests)
+    for identifier, cls in registry.items():
+        if not cls.__module__.startswith("xclim.indicators"):
+            registry_cp.pop(identifier)
+
     for indicator, fields in dic.items():
         if indicator != "attrs_mapping":
             # Checking that the translated indicator does exist
