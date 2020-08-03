@@ -29,6 +29,7 @@ Internal changes
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
+* Indicators definitions without an accompanying translation (presently French) will cause build failures.
 
 0.18.0 (2020-06-26)
 -------------------
