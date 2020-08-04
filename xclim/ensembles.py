@@ -375,9 +375,9 @@ def kkz_reduce_ensemble(
     standardize: bool = True,
     **cdist_kwargs,
 ) -> list:
-    """Return a sample of ensemble members using KKZ selection. The algorithm selects `num_select`
-    ensemble members spanning the overall range of the ensemble.
+    """Return a sample of ensemble members using KKZ selection.
 
+    The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
     The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
     The first selected member is the one nearest to the centroid of the ensemble, all subsequent members
     are selected in a way maximizing the phase-space coverage of the group. Algorithm taken from [CannonKKZ]_.
