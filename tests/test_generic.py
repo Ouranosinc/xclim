@@ -64,6 +64,7 @@ class TestFA(object):
         p = generic.fit(da)
         assert p.dims[-1] == "dparams"
 
+
 class TestFrequencyAnalysis:
     def test_simple(self, ndq_series):
         q = ndq_series.copy()
