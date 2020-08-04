@@ -131,6 +131,7 @@ def fit(da: xr.DataArray, dist: str = "norm"):
 
         return params
 
+
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
     data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
 
@@ -143,9 +144,7 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     coords["dparams"] = dist_params
 
     # Dimensions for the distribution parameters
-    dims = ["dparams"]
-    dims.extend(da.dims)
-    dims.remove("time")
+    dims = [d if d != "time" else "dparams" for d in da.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
