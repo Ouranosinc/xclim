@@ -21,6 +21,8 @@ New features and enhancements
 
 Bug fixes
 ~~~~~~~~~
+* Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~

@@ -143,9 +143,7 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     coords["dparams"] = dist_params
 
     # Dimensions for the distribution parameters
-    dims = ["dparams"]
-    dims.extend(da.dims)
-    dims.remove("time")
+    dims = [d if d != "time" else "dparams" for d in da.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
