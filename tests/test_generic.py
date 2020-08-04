@@ -59,6 +59,11 @@ class TestFA(object):
         out = generic.fit(da, "lognorm").values
         assert np.isnan(out[:, 0, 0]).all()
 
+    def test_dims_order(self):
+        da = self.da.transpose()
+        p = generic.fit(da)
+        assert p.dims[-1] == "dparams"
+
 
 class TestFrequencyAnalysis:
     def test_simple(self, ndq_series):
