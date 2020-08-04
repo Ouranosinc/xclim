@@ -80,6 +80,11 @@ class TestFrequencyAnalysis:
         assert ~np.isnan(v[:, 1, 1])
         assert out.units == "m^3 s-1"
 
+        # smoke test when time is not the first dimension
+        generic.frequency_analysis(
+            q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+
 
 class TestSelectResampleOp:
     def test_month(self, q_series):

@@ -205,9 +205,7 @@ def quantile(p: xr.DataArray, t: Union[int, Sequence], mode: str = "high"):
     coords["return_period"] = t
 
     # Create dimensions
-    dims = list(p.dims)
-    dims.remove("dparams")
-    dims.insert(0, "return_period")
+    dims = [d if d != "dparams" else "return_period" for d in p.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = p.attrs
