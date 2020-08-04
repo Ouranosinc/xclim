@@ -147,32 +147,28 @@ def fit(da: xr.DataArray, dist: str = "norm"):
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
-    out.attrs["original_name"] = getattr(da, "standard_name", "")
+    out.attrs["original_name"] = da.attrs.get("standard_name", "")
+    out.attrs["original_units"] = da.attrs.get("units", "")
     out.attrs[
         "description"
-    ] = f"Parameters of the {dist} distribution fitted over {getattr(da, 'standard_name', '')}"
+    ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
     out.attrs["estimator"] = "Maximum likelihood"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
-    # out.name = 'params'
+
     return out
 
 
-def fa(
-    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "high"
-):
-    """Return the value corresponding to the given return period.
+def quantile(p: xr.DataArray, t: Union[int, Sequence], mode: str = "high"):
+    """Return the value corresponding to the given distribution parameters and return period.
 
     Parameters
     ----------
-    da : xr.DataArray
-      Maximized/minimized input data with a `time` dimension.
+    p : xr.DataArray
+      Distribution parameters returned by the `fit` function.
     t : Union[int, Sequence]
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
-    dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats).
     mode : {'min', 'max}
       Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
 
@@ -184,10 +180,8 @@ def fa(
     t = np.atleast_1d(t)
 
     # Get the distribution
+    dist = p.attrs["scipy_dist"]
     dc = get_dist(dist)
-
-    # Fit the parameters of the distribution
-    p = fit(da, dist)
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode in ["max", "high"]:
@@ -215,27 +209,52 @@ def fa(
     dims.remove("dparams")
     dims.insert(0, "return_period")
 
-    # TODO: add time and time_bnds coordinates (Low will work on this)
-    # time.attrs['climatology'] = 'climatology_bounds'
-    # coords['time'] =
-    # coords['climatology_bounds'] =
-
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = p.attrs
     out.attrs["standard_name"] = f"{dist} quantiles"
     out.attrs[
         "long_name"
-    ] = f"{dist} return period values for {getattr(da, 'standard_name', '')}"
+    ] = f"{dist} return period values for {p.attrs.get('standard_name', '')}"
     out.attrs["cell_methods"] = (
         out.attrs.get("cell_methods", "") + " dparams: ppf"
     ).strip()
-    out.attrs["units"] = da.attrs.get("units", "")
+    out.attrs["units"] = p.attrs["original_units"]
     out.attrs["mode"] = mode
     out.attrs["history"] = (
         out.attrs.get("history", "") + "Compute values corresponding to return periods."
     )
 
     return out
+
+
+def fa(
+    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "high"
+):
+    """Return the value corresponding to the given return period.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Maximized/minimized input data with a `time` dimension.
+    t : Union[int, Sequence]
+      Return period. The period depends on the resolution of the input data. If the input array's resolution is
+      yearly, then the return period is in years.
+    dist : str
+      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      (see scipy.stats).
+    mode : {'min', 'max}
+      Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of values with a 1/t probability of exceedance (if mode=='max').
+    """
+    # Fit the parameters of the distribution
+    p = fit(da, dist)
+
+    # Compute the quantiles
+    return quantile(p, t, mode)
 
 
 def frequency_analysis(da, mode, t, dist, window=1, freq=None, **indexer):

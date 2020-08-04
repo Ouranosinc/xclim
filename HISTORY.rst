@@ -18,6 +18,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+* New `generic.quantile` function taking parameters estimated by `generic.fit` as an input.
 
 Bug fixes
 ~~~~~~~~~

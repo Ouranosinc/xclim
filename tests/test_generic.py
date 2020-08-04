@@ -78,6 +78,7 @@ class TestFrequencyAnalysis:
         assert v.shape == (1, 2, 3)
         assert np.isnan(v[:, 0, 0])
         assert ~np.isnan(v[:, 1, 1])
+        assert out.units == "m^3 s-1"
 
 
 class TestSelectResampleOp:
