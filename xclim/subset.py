@@ -1,4 +1,4 @@
-"""Mock subset module for API compatibility"""
+"""Mock subset module for API compatibility."""
 import warnings
 
 try:
