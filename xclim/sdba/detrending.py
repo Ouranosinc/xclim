@@ -4,7 +4,7 @@ from typing import Union
 import xarray as xr
 
 from .base import Grouper, Parametrizable, parse_group
-from .utils import ADDITIVE, apply_correction, invert
+from .utils import ADDITIVE, apply_correction, invert, loess_smoothing
 
 # from .utils import loffsets
 
@@ -160,3 +160,55 @@ class PolyDetrend(BaseDetrend):
             )
 
         return trend
+
+
+class LoessDetrend(BaseDetrend):
+    """
+    Detrend time series using a LOESS regression.
+
+    The fit is a piecewise linear regression. For each point, the contribution of all
+    neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
+    The x-coordinate of the dataarray is normalized to 0..1 before the regression is computed.
+
+    Parameters
+    ----------
+    group : Union[str, Grouper]
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      The fit is performed along the group's main dim.
+    kind : {'*', '+'}
+      The way the trend is removed or added, either additive or multiplicative.
+    f : float
+      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+    niter : int
+      Number of robustness iterations to execute.
+    weights : ["tricube", "gaussian"]
+      Shape of the weighting function:
+      "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
+      "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+    """
+
+    def __init__(self, group="time", kind=ADDITIVE, f=0.2, niter=1, weights="tricube"):
+        super().__init__(group=group, kind=kind, f=f, niter=niter, weights=weights)
+
+    def _fit(self, da, dim="time"):
+        trend = loess_smoothing(
+            da, dim=self.group.dim, f=self.f, niter=self.niter, weights=self.weights
+        )
+        trend.name = "trend"
+        return trend.to_dataset()
+
+    def get_trend(self, da: xr.DataArray):
+        """Get the trend computed from the fit, the fitting dim as found on da.
+
+        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        """
+        # Check if we need to interpolate
+        if da[self.group.dim].equals(self.ds[self.group.dim]):
+            out = self.ds.trend
+        else:
+            print("INTERPOLATING")
+            out = self.ds.trend.interp(coords={self.group.dim: da[self.group.dim]})
+
+        if hasattr(da, "dtype"):
+            out = out.astype(da.dtype)
+        return out

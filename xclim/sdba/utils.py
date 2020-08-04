@@ -3,10 +3,12 @@ from typing import Mapping, Optional, Sequence, Union
 from warnings import warn
 
 import bottleneck as bn
+import numba
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from scipy.interpolate import griddata, interp1d
+from scipy.linalg import solve
 
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
@@ -501,4 +503,124 @@ def rank(da, dim="time", pct=False):
         output_core_dims=[[dim]],
         dask="parallelized",
         output_dtypes=[da.dtype],
+    )
+
+
+@numba.njit
+def _gaussian_weighting(x, xi, f):
+    """Kernel function for loess with a gaussian shape.
+
+    f is understood as 6 * sigma (the standard deviation)
+    """
+    return np.exp(-((x - xi) ** 2) / (2 * (f / 5.16) ** 2))
+
+
+@numba.njit
+def _tricube_weighting(x, xi, f):
+    """Kernel function for loess with a tricubic shape.
+
+    f is the span in x of the smooth top-hat-like shape.
+    """
+    w = np.abs((x - xi) * 2 / f)
+    w[w > 1] = 1
+    return (1 - w ** 3) ** 3
+
+
+@numba.njit
+def _loess_nb(x, y, f=0.2, niter=1, weight_func=_tricube_weighting):
+    """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
+
+    The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
+    a data point in the scatterplot. The function returns the estimated (smooth) values of y.
+
+    Users should call `utils.loess_smoothing`.
+
+    Parameters
+    ----------
+    x : np.ndarray
+      X-coordinates of the points.
+    y : np.ndarray
+      Y-coordinates of the points.
+    f : float
+      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+    niter : int
+      Number of robustness iterations to execute.
+    weight_func : numba func
+      Numba function giving the weights when passed X, X[i] and f.
+
+    References
+    ----------
+    Code adapted from https://xavierbourretsicotte.github.io/loess.html
+    Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+    """
+    n = x.size
+
+    yest = np.zeros(n)
+    delta = np.ones(n)
+    for iteration in range(niter):
+        for i in range(n):
+            weights = delta * weight_func(x, x[i], f)
+            b = np.array([np.sum(weights * y), np.sum(weights * y * x)])
+            A = np.array(
+                [
+                    [np.sum(weights), np.sum(weights * x)],
+                    [np.sum(weights * x), np.sum(weights * x * x)],
+                ]
+            )
+            beta = np.linalg.solve(A, b)
+            yest[i] = beta[0] + beta[1] * x[i]
+
+        if iteration < niter - 1:
+            residuals = y - yest
+            s = np.median(np.abs(residuals))
+            delta = residuals / (6.0 * s)
+            delta[delta < -1] = -1
+            delta[delta > 1] = 1
+            delta = (1 - delta ** 2) ** 2
+
+    return yest
+
+
+def loess_smoothing(da, dim="time", f=0.2, niter=1, weights="tricube"):
+    """Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
+
+    Returns a smoothed curve along given dimension. The regression is computed for each point using
+    a subset of neigboring points as given from evaluation the weighting function locally.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      The data to smooth using the loess approach.
+    dim : str
+      Name of the dimension along which to perform the loess.
+    f : float
+      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+    niter : int
+      Number of robustness iterations to execute.
+    weights : ["tricube", "gaussian"]
+      Shape of the weighting function:
+      "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
+      "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+
+    References
+    ----------
+    Code adapted from https://xavierbourretsicotte.github.io/loess.html
+    Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+    """
+    x = da[dim]
+    x = (x - x[0]) / (x[-1] - x[0])
+
+    weight_func = {"tricube": _tricube_weighting, "gaussian": _gaussian_weighting}[
+        weights
+    ]
+
+    return xr.apply_ufunc(
+        _loess_nb,
+        x,
+        da,
+        input_core_dims=[[dim], [dim]],
+        output_core_dims=[[dim]],
+        kwargs={"f": f, "weight_func": weight_func, "niter": niter},
+        dask="parallelized",
+        output_dtypes=np.float,
     )
