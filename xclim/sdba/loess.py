@@ -7,7 +7,7 @@ import xarray as xr
 
 
 @numba.njit
-def _gaussian_weighting(x):
+def _gaussian_weighting(x):  # pragma: no cover
     """
     Kernel function for loess with a gaussian shape.
     The span f covers 95% of the gaussian.
@@ -18,7 +18,7 @@ def _gaussian_weighting(x):
 
 
 @numba.njit
-def _tricube_weighting(x):
+def _tricube_weighting(x):  # pragma: no cover
     """Kernel function for loess with a tricubic shape."""
     w = (1 - x ** 3) ** 3
     w[x >= 1] = 0
@@ -26,14 +26,14 @@ def _tricube_weighting(x):
 
 
 @numba.njit
-def _constant_regression(xi, x, y, w):
+def _constant_regression(xi, x, y, w):  # pragma: no cover
     return (w * y).sum() / w.sum()
 
 
 @numba.njit
-def _linear_regression(xi, x, y, w):
+def _linear_regression(xi, x, y, w):  # pragma: no cover
     b = np.array([np.sum(w * y), np.sum(w * y * x)])
-    A = np.array([[np.sum(w), np.sum(w * x)], [np.sum(w * x), np.sum(w * x * x)],])
+    A = np.array([[np.sum(w), np.sum(w * x)], [np.sum(w * x), np.sum(w * x * x)]])
     beta = np.linalg.solve(A, b)
     return beta[0] + beta[1] * xi
 
@@ -41,7 +41,7 @@ def _linear_regression(xi, x, y, w):
 @numba.njit
 def _loess_nb(
     x, y, f=0.5, niter=2, weight_func=_tricube_weighting, reg_func=_linear_regression
-):
+):  # pragma: no cover
     """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
 
     The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
