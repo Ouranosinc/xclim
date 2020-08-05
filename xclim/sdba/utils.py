@@ -3,12 +3,10 @@ from typing import Mapping, Optional, Sequence, Union
 from warnings import warn
 
 import bottleneck as bn
-import numba
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from scipy.interpolate import griddata, interp1d
-from scipy.linalg import solve
 
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
