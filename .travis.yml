@@ -88,6 +88,7 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
+            - python-dev
     - env: TOXENV=py38-anaconda
       name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
