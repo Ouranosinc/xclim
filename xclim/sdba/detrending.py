@@ -4,9 +4,8 @@ from typing import Union
 import xarray as xr
 
 from .base import Grouper, Parametrizable, parse_group
-from .utils import ADDITIVE, apply_correction, invert, loess_smoothing
-
-# from .utils import loffsets
+from .loess import loess_smoothing
+from .utils import ADDITIVE, apply_correction, invert
 
 
 class BaseDetrend(Parametrizable):
@@ -177,22 +176,38 @@ class LoessDetrend(BaseDetrend):
       The fit is performed along the group's main dim.
     kind : {'*', '+'}
       The way the trend is removed or added, either additive or multiplicative.
+    d: [0, 1]
+      Order of the local regression. Only 0 and 1 currently implemented.
     f : float
-      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+      Parameter controling the span of the weights, between 0 and 1.
     niter : int
       Number of robustness iterations to execute.
     weights : ["tricube", "gaussian"]
       Shape of the weighting function:
       "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+
+    Notes
+    -----
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
+    can be useful to use smaller than usual chunks.
+    Moreover, it suffers from heavy boundary effects. As a thumb rule, the outermost f * N points
+    should be considered dubious. (N is the number of points along each group)
     """
 
-    def __init__(self, group="time", kind=ADDITIVE, f=0.2, niter=1, weights="tricube"):
-        super().__init__(group=group, kind=kind, f=f, niter=niter, weights=weights)
+    def __init__(
+        self, group="time", kind=ADDITIVE, f=0.2, niter=1, d=0, weights="tricube"
+    ):
+        super().__init__(group=group, kind=kind, f=f, niter=niter, d=0, weights=weights)
 
     def _fit(self, da, dim="time"):
         trend = loess_smoothing(
-            da, dim=self.group.dim, f=self.f, niter=self.niter, weights=self.weights
+            da,
+            dim=self.group.dim,
+            f=self.f,
+            niter=self.niter,
+            d=self.d,
+            weights=self.weights,
         )
         trend.name = "trend"
         return trend.to_dataset()
@@ -206,7 +221,6 @@ class LoessDetrend(BaseDetrend):
         if da[self.group.dim].equals(self.ds[self.group.dim]):
             out = self.ds.trend
         else:
-            print("INTERPOLATING")
             out = self.ds.trend.interp(coords={self.group.dim: da[self.group.dim]})
 
         if hasattr(da, "dtype"):
