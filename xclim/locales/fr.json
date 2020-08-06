@@ -521,7 +521,7 @@
  "FWI":{
   "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
   "title": "Indices Forêt-Météo",
-  "abstract": "Calcule les 6 indices forêt-météo tel que défini par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
+  "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
  },
  "FWI.DC": {
     "long_name": "Indice de sécheresse",
@@ -545,7 +545,7 @@
     "long_name": "Indice de propagation initiale",
     "description": "Évaluation numérique du taux prévu de propagation du feu.",
     "title": "Indice de propagation initiale quotidien (ISI)",
-    "abstract": "L'indice dde propagation intiale fait partie du système canadien des Indices Forêt-Météo. C'est une évaluation numérique de le taux prévu de propagation du feu."
+    "abstract": "L'indice de propagation intiale fait partie du système canadien des Indices Forêt-Météo. C'est une évaluation numérique de le taux prévu de propagation du feu."
   },
  "FWI.BUI": {
     "long_name": "Indice du combustible disponible",

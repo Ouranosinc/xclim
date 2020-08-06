@@ -552,16 +552,9 @@ class Indicator2D(Indicator):
 
 
 class MultiIndicator(Indicator):
-    r"""Climate multi-indicator base class.
+    r"""Multi-indicator base class extending `Indicator` to allow the computation of multiple outputs. 
 
-    Climate indicator object that, when called, computes multiple indicator and assigns its outputs a number of
-    CF-compliant attributes. Some of these attributes can be *templated*, allowing metadata to reflect
-    the value of call arguments.
-
-    Instantiating a new multi-indicator returns an instance but also creates and registers a custom subclass.
-
-    The usage of this class is similar to the base `Indicator` except that its output is a _Dataset_ containing
-    multiple arrays istead of a single _DataArray_. Attributes of the children arrays are given through the `children`
+    The usage of this class is similar to the base `Indicator` except that, upon execution, it returns a `Dataset` containing multiple `DataArray` objects. The attributes of individual output `DataArray` are specified using the `children` variable, a sequence of dictionaries mapped to the output variables. Class instance attributes refer to *global* dataset attributes. 
     list of dictionaries. Attributes passed directly to the class will be assigned to the output dataset.
 
     Parameters
