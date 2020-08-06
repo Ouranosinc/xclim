@@ -167,7 +167,7 @@ class LoessDetrend(BaseDetrend):
 
     The fit is a piecewise linear regression. For each point, the contribution of all
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
-    The x-coordinate of the dataarray is normalized to 0..1 before the regression is computed.
+    The x-coordinate of the dataarray is scaled to [0,1] before the regression is computed.
 
     Parameters
     ----------
@@ -191,7 +191,7 @@ class LoessDetrend(BaseDetrend):
     -----
     LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
     can be useful to use smaller than usual chunks.
-    Moreover, it suffers from heavy boundary effects. As a thumb rule, the outermost f * N points
+    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost f * N points
     should be considered dubious. (N is the number of points along each group)
     """
 

@@ -1,4 +1,4 @@
-"""LOESS smoothing module"""
+"""LOESS smoothing module."""
 from typing import Union
 
 import numba
@@ -10,6 +10,7 @@ import xarray as xr
 def _gaussian_weighting(x):  # pragma: no cover
     """
     Kernel function for loess with a gaussian shape.
+    
     The span f covers 95% of the gaussian.
     """
     w = np.exp(-(x ** 2) / (2 * (1 / 1.96) ** 2))
@@ -104,7 +105,7 @@ def loess_smoothing(
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
 
     Returns a smoothed curve along given dimension. The regression is computed for each point using
-    a subset of neigboring points as given from evaluation the weighting function locally.
+    a subset of neigboring points as given from evaluating the weighting function locally.
     Follows the procedure of [Cleveland1979]_.
 
     Parameters
