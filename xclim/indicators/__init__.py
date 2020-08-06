@@ -84,7 +84,6 @@ def __build_icclim(mode="warn"):
     from xclim.core.utils import wrapped_partial
 
     #  ['SD', 'SD1', 'SD5cm', 'SD50cm',
-
     # TODO : Complete mappings for ICCLIM indices
     mapping = {
         "TG": indices.tg_mean,

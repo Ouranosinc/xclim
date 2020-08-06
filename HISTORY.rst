@@ -24,6 +24,8 @@ New features and enhancements
 
 Bug fixes
 ~~~~~~~~~
+* Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -33,6 +35,7 @@ Internal changes
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must as passed.
+* Indicators definitions without an accompanying translation (presently French) will cause build failures.
 
 0.18.0 (2020-06-26)
 -------------------
