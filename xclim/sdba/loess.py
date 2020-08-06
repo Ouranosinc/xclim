@@ -10,7 +10,7 @@ import xarray as xr
 def _gaussian_weighting(x):  # pragma: no cover
     """
     Kernel function for loess with a gaussian shape.
-    
+
     The span f covers 95% of the gaussian.
     """
     w = np.exp(-(x ** 2) / (2 * (1 / 1.96) ** 2))

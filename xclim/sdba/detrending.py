@@ -52,7 +52,7 @@ class BaseDetrend(Parametrizable):
         return new
 
     def get_trend(self, da: xr.DataArray):
-        """Get the trend computed from the fit, the fitting dim as found on da.
+        """Get the trend computed from the fit, along the self.group.dim as found on da.
 
         If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
         """
@@ -213,7 +213,7 @@ class LoessDetrend(BaseDetrend):
         return trend.to_dataset()
 
     def get_trend(self, da: xr.DataArray):
-        """Get the trend computed from the fit, the fitting dim as found on da.
+        """Get the trend computed from the fit, along the self.group.dim as found on da.
 
         If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
         """
