@@ -191,7 +191,7 @@ class LoessDetrend(BaseDetrend):
     -----
     LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
     can be useful to use smaller than usual chunks.
-    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost f * N points
+    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
     should be considered dubious. (N is the number of points along each group)
     """
 
