@@ -33,16 +33,16 @@ xr.__dict__["polyval"] = None
 
 
 def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of xclim.indicators.Indicator.
+    """For all modules or classes listed, return the children that are instances of registered Indicator classes.
 
     modules : sequence
       Sequence of modules to inspect.
     """
-    from xclim.core.indicator import Indicator, Indicator2D
+    from xclim.core.indicator import registry
 
     out = {}
     for key, val in module.__dict__.items():
-        if isinstance(val, (Indicator, Indicator2D)):
+        if hasattr(val, "identifier") and val.identifier.upper() in registry:
             out[key] = val
 
     return out
@@ -56,12 +56,12 @@ def _indicator_table(realm):
     table = {}
     for indname, ind in inds.items():
         # Apply default values
-        args = {
-            name: p.default if p.default != inspect._empty else f"<{name}>"
-            for (name, p) in ind._sig.parameters.items()
-        }
+        # args = {
+        #     name: p.default if p.default != inspect._empty else f"<{name}>"
+        #     for (name, p) in ind._sig.parameters.items()
+        # }
         try:
-            table[indname] = ind.json(args)
+            table[indname] = ind.json()  # args)
         except KeyError as err:
             print(f"{ind.identifier} could not be documented.({err})")
         else:

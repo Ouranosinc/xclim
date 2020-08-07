@@ -35,9 +35,28 @@ New indicators can be created using standard Python subclasses::
 
 Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
 
-    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, units="K")
+    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_attrs=[{'var_name': 'tmean', 'units':"K"}])
 
-Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance.
+Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that variable metadata
+attributes should passed with the "var_attrs" keyword argument. This limits the possibility of using
+class inheritance to fill/override those attributes. However, for the common case where the indicator
+only has one output, metadata can be given directly as keyword arguments or as class attributes, altough
+the latter is not recommended if not necessary. Thus, the two following example will have the exact same
+behavior as the line above:
+
+.. code-block:: python
+
+    # Ex 1
+    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_name='tmean', units="K")
+
+    # Ex 2 - Use this method of setting variable metadata attributes only when necessary.
+    class NewIndicator(xclim.core.indicator.Indicator):
+        identifier = "new_indicator"
+        missing = "any"
+        var_name = 'tmean'
+        units = 'K'
+    NewIndicator()
+
 
 One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
 are common to indicators, then call this subclass with the custom attributes. See for example in
@@ -48,14 +67,16 @@ Subclass registries
 -------------------
 All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
 example::
-  >>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
-  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
-  >>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
+
+>>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
+>>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
+>>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
 
 This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
 a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-  >>> from xclim.core.indicator import registry
-  >>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
+
+>>> from xclim.core.indicator import registry
+>>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
 
 """
 import re
@@ -113,15 +134,25 @@ class Indicator:
     var_attrs : Sequence[Mapping[str, str]]
       List of dictionaries containing the attributes of the individual output arrays. Its length and order should match the output of the compute function.
       Each dictionary should at least define the `var_name` parameter.
-      Valid parameters are:
-        var_name : str : Variable name in the dataset.
-        standard_name : str : Variable name (CF).
-        long_name: str : Descriptive variable name.
-        units: str : Representative units of the physical quantity (CF).
-        cell_methods : str : List of blank-separated words of the form "name: method" (CF).
-        description : str : Sentence meant to clarify the qualifiers of the fundamental quantities
-        keywords : str : Comma separated list of keywords.
-        comment : str : Miscellaneous information about the data or methods used to produce it.
+      In the case of a single output, the parameters may be given directly as kwargs of the init.
+      Valid parameters are (all strings):
+
+      var_name : Variable name in the dataset. If not given in the single-output case, `identifier` is used.
+
+      standard_name : Variable name (CF).
+
+      long_name : Descriptive variable name.
+
+      units : Representative units of the physical quantity (CF).
+
+      cell_methods : List of blank-separated words of the form "name: method" (CF).
+
+      description : Sentence meant to clarify the qualifiers of the fundamental quantities
+
+      keywords : Comma separated list of keywords.
+
+      comment : Miscellaneous information about the data or methods used to produce it.
+
     description: str
       Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
       surface a quantity is defined on or what the flux sign conventions are.
@@ -156,7 +187,18 @@ class Indicator:
     # Number of input DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
-    # Allowed metadata attributes on the output
+    # Allowed metadata attributes for the variables
+    _var_names = [
+        "var_name",
+        "standard_name",
+        "long_name",
+        "units",
+        "cell_methods",
+        "description",
+        "keywords",
+        "comment",
+    ]
+    # Allowed metadata attributes on the output variables
     _cf_var = [
         "var_name",
         "standard_name",
@@ -166,10 +208,8 @@ class Indicator:
         "description",
         "comment",
     ]
-    _cf_global = [
-        "description",
-        "references",
-    ]
+    # Allowed metadata attributes on the output dataset
+    _cf_global = ["description", "references"]
 
     # metadata fields that are formatted as free text.
     _text_fields = ["long_name", "description", "comment"]
@@ -178,15 +218,14 @@ class Indicator:
 
     # Default attribute values
     identifier = None
-    var_attrs = [
-        {}
-    ]  # Default to 1 empty dict. __init__ will populate it with at least a var_name.
+    # Default to 1 empty dict,  __new__ will populate it with kwargs-passed attrs.
+    var_attrs = [{}]
     missing = "from_context"
     missing_options = None
-    units = ""  # Units could be the same for all outputs
-    cell_methods = ""  # cell_methods could be the same for all outputs
-    description = ""
     context = "none"
+
+    # Global metadata
+    description = ""
     title = ""
     abstract = ""
     keywords = ""
@@ -200,20 +239,48 @@ class Indicator:
         if identifier is None:
             raise AttributeError("`identifier` has not been set.")
 
+        if "var_attrs" not in kwds:
+            kwds["var_attrs"] = getattr(cls, "var_attrs")
+
+        # Parse `compute` docstring to extract missing attributes
+        # Priority: explicit arguments > super class attributes > `compute` docstring info
+        func = kwds.get("compute", None) or cls.compute
+        parsed = parse_doc(func.__doc__)
+
+        attrs = {}
+        for name, value in parsed.copy().items():
+            if not getattr(cls, name, True):
+                # Set if it is a class attr but not set by the class
+                attrs[name] = value
+            elif name in cls._var_names:
+                kwds["var_attrs"][0].setdefault(name, value)
+
+        # Single output case : accept var_attrs in kwargs
+        if len(kwds["var_attrs"]) == 1:
+            for name in cls._var_names:
+                if name in kwds or hasattr(cls, name):
+                    # Attributes existing in the class are also global metadata fields
+                    #   do not remove them from kwargs.
+                    kwds["var_attrs"][0].setdefault(
+                        name,
+                        kwds.get(name, getattr(cls, name))
+                        if hasattr(cls, name)
+                        else kwds.pop(name),
+                    )
+            kwds["var_attrs"][0].setdefault("var_name", identifier)
+        else:  # Multi output : Refuse var_attrs in kwargs
+            for name in cls._var_names:
+                if name in kwds and not hasattr(cls, name):
+                    raise AttributeError(
+                        f"Variable attributes must be set through 'var_attrs' if there are more than one output variables. ({name} was passed as kwarg)"
+                    )
+
         # Convert function objects to static methods.
         for key in cls._funcs + cls._cf_global:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
-        # Parse `compute` docstring to extract missing attributes
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-
-        func = kwds.get("compute", None) or cls.compute
-        attrs = {
-            k: v for (k, v) in parse_doc(func.__doc__).items() if not getattr(cls, k)
-        }
         attrs.update(kwds)
-
         # Create new class object
         new = type(identifier.upper(), (cls,), attrs)
 
@@ -250,10 +317,6 @@ class Indicator:
         self._missing = kls.execute
         if self.missing_options:
             kls.validate(**self.missing_options)
-
-        # Default for output variable name
-        if len(self.var_attrs) == 1 and self.var_attrs[0].get("var_name") is None:
-            self.var_attrs[0]["var_name"] = self.identifier
 
         # The `compute` signature
         self._sig = signature(self.compute)
@@ -317,15 +380,6 @@ class Indicator:
         else:
             out = outs[0]
             out.attrs.update(ds_attrs)
-            warnings.warn(
-                (
-                    "xclim indicators will begin to output Datasets by default, instead"
-                    "of DataArrays, by version 0.20. To use the future default, set the"
-                    "global option with xclim.set_options(output_dataset=True)."
-                ),
-                FutureWarning,
-                stacklevel=2,
-            )
 
         # Mask results that do not meet criteria defined by the `missing` method.
         # This means all variables must have the same dimensions...
@@ -461,16 +515,26 @@ class Indicator:
         fill_missing : bool
             If True (default fill the missing attributes by their english values.
         """
-        attrs = get_local_attrs(
-            self.__class__.__name__,
-            locale,
-            names=TRANSLATABLE_ATTRS,
-            append_locale_name=False,
-        )
-        if fill_missing:
-            for name in TRANSLATABLE_ATTRS:
-                if name not in attrs and hasattr(self, name):
-                    attrs[name] = getattr(self, name)
+
+        def _translate(var_id, var_attrs):
+            attrs = get_local_attrs(
+                var_id, locale, names=TRANSLATABLE_ATTRS, append_locale_name=False,
+            )
+            if fill_missing:
+                for name in TRANSLATABLE_ATTRS:
+                    if name not in attrs and var_attrs.get(name):
+                        attrs[name] = var_attrs.get(name)
+            return attrs
+
+        # Translate global attrs
+        attrs = _translate(self.identifier.upper(), self.__dict__)
+        attrs["vars"] = []
+        for var_attrs in self.var_attrs:  # Translate for each variable
+            attrs["vars"].append(
+                _translate(
+                    f"{self.identifier.upper()}.{var_attrs['var_name']}", var_attrs
+                )
+            )
         return attrs
 
     @property
@@ -480,11 +544,7 @@ class Indicator:
         # Get attributes of each variables
         # If the attribute is not given, but exists globally, use the global one.
         attrs["vars"] = [
-            {
-                k: attrs.get(k, getattr(self, k, None))
-                for k in self._cf_var
-                if attrs.get(k, getattr(self, k, None))
-            }
+            {k: attrs.get(k) for k in self._cf_var if attrs.get(k)}
             for attrs in self.var_attrs
         ]
         return attrs
@@ -500,7 +560,11 @@ class Indicator:
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
         out.update(self.cf_attrs)
+        vars_attrs = out.pop("vars")
         out = self.format(out, args)
+        out["vars"] = []
+        for var_attrs in vars_attrs:
+            out["vars"].append(self.format(var_attrs, args))
 
         out["notes"] = self.notes
 

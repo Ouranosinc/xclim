@@ -23,7 +23,7 @@ OPTIONS = {
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
     MISSING_OPTIONS: {},
-    OUTPUT_DATASET: False,  # TODO : Change to True in 0.20
+    OUTPUT_DATASET: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
