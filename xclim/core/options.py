@@ -13,6 +13,7 @@ DATA_VALIDATION = "data_validation"
 CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
+OUTPUT_DATASET = "output_dataset"
 
 MISSING_METHODS = {}
 
@@ -22,6 +23,7 @@ OPTIONS = {
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
     MISSING_OPTIONS: {},
+    OUTPUT_DATASET: False,  # TODO : Change to True in 0.20
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -47,6 +49,7 @@ _VALIDATORS = {
     CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
     CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
     MISSING_OPTIONS: _valid_missing_options,
+    OUTPUT_DATASET: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -134,6 +137,8 @@ class set_options:
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
+    - ``output_dataset` `: Whether calling Indicator objects returns a Dataset (True) or a single DataArray (False).
+        Indicators returning multiple variables are not affected by this option and will always return Datasets.
 
     You can use ``set_options`` either as a context manager:
     >>> import xclim  # doctest: +SKIP

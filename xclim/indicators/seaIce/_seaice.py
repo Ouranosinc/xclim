@@ -3,8 +3,6 @@
 Sea ice indicators
 ------------------
 """
-import abc
-
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Indicator2D
@@ -25,21 +23,29 @@ class SicArea(Indicator2D):
 
 sea_ice_extent = SicArea(
     identifier="sea_ice_extent",
-    units="m2",
-    standard_name="sea_ice_extent",
-    long_name="Sea ice extent",
-    description="The sum of ocean areas where sea ice concentration is at least {thresh}.",
-    cell_methods="lon: sum lat: sum",
+    var_attrs=[
+        dict(
+            units="m2",
+            standard_name="sea_ice_extent",
+            long_name="Sea ice extent",
+            description="The sum of ocean areas where sea ice concentration is at least {thresh}.",
+            cell_methods="lon: sum lat: sum",
+        )
+    ],
     compute=indices.sea_ice_extent,
 )
 
 
 sea_ice_area = SicArea(
     identifier="sea_ice_area",
-    units="m2",
-    standard_name="sea_ice_area",
-    long_name="Sea ice area",
-    description="The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
-    cell_methods="lon: sum lat: sum",
+    var_attrs=[
+        dict(
+            units="m2",
+            standard_name="sea_ice_area",
+            long_name="Sea ice area",
+            description="The sum of ice-covered areas where sea ice concentration is at least {thresh}.",
+            cell_methods="lon: sum lat: sum",
+        )
+    ],
     compute=indices.sea_ice_area,
 )

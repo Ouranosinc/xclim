@@ -32,11 +32,16 @@ def generate_local_dict(locale: str, init_english: bool = False):
 
     eng_attr = ""
     for ind_name, indicator in registry.items():
-        ind_attrs = attrs.setdefault(ind_name, {})
-        for translatable_attr in TRANSLATABLE_ATTRS:
-            if init_english:
-                eng_attr = getattr(indicator, translatable_attr)
-                if not isinstance(eng_attr, str):
-                    eng_attr = ""
-            ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+        for var_attrs in indicator.var_attrs:
+            if len(indicator.var_attrs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+            else:
+                ind_attrs = attrs.setdefault(ind_name, {})
+
+            for translatable_attr in TRANSLATABLE_ATTRS:
+                if init_english:
+                    eng_attr = var_attrs.get(translatable_attr)
+                    if not isinstance(eng_attr, str):
+                        eng_attr = ""
+                ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
     return attrs

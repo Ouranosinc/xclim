@@ -15,7 +15,7 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Indicator, MultiIndicator, registry
+from xclim.core.indicator import Indicator, registry
 from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
@@ -24,11 +24,15 @@ from xclim.indices.generic import select_time
 
 class UniIndTemp(Indicator):
     identifier = "tmin"
-    var_name = "tmin{thresh}"
-    units = "K"
-    long_name = "{freq} mean surface temperature"
-    standard_name = "{freq} mean temperature"
-    cell_methods = "time: mean within {freq:noun}"
+    var_attrs = [
+        dict(
+            var_name="tmin{thresh}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods="time: mean within {freq:noun}",
+        )
+    ]
 
     @staticmethod
     def compute(da, thresh=0.0, freq="YS"):
@@ -40,7 +44,7 @@ class UniIndTemp(Indicator):
 
 class UniIndPr(Indicator):
     identifier = "prmax"
-    units = "mm/s"
+    var_attrs = [{"units": "mm/s"}]
     context = "hydro"
 
     @staticmethod
@@ -51,7 +55,7 @@ class UniIndPr(Indicator):
 
 class UniClim(Indicator):
     identifier = "clim"
-    units = "K"
+    var_attrs = [{"units": "K"}]
 
     @staticmethod
     def compute(da, **indexer):
@@ -59,9 +63,9 @@ class UniClim(Indicator):
         return select.mean(dim="time", keep_attrs=True)
 
 
-class MultiTemp(MultiIndicator):
+class MultiTemp(Indicator):
     identifier = "minmaxtemp"
-    children = [
+    var_attrs = [
         {"var_name": "tmin", "units": "K", "standard_name": "Min temp"},
         {"var_name": "tmax", "units": "K"},
     ]
@@ -180,14 +184,13 @@ def test_json(pr_series):
 
     expected = {
         "identifier",
-        "var_name",
-        "units",
-        "long_name",
-        "standard_name",
-        "cell_methods",
+        "vars",
         "keywords",
+        "title",
         "abstract",
         "parameters",
+        "units",
+        "cell_methods",
         "description",
         "history",
         "references",
@@ -195,7 +198,20 @@ def test_json(pr_series):
         "notes",
     }
 
+    var_exp = {
+        "var_name",
+        "units",
+        "long_name",
+        "standard_name",
+        "cell_methods",
+        "comment",
+        "keywords",
+        "description",
+    }
+
     assert set(meta.keys()).issubset(expected)
+    for var in meta["vars"]:
+        assert set(var.keys()).issubset(var_exp)
 
 
 def test_signature():

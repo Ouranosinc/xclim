@@ -42,61 +42,83 @@ class Fit(FA):
 
 base_flow_index = Streamflow(
     identifier="base_flow_index",
-    units="",
-    long_name="Base flow index",
-    description="Minimum 7-day average flow divided by the mean flow.",
+    var_attrs=[
+        dict(
+            units="",
+            long_name="Base flow index",
+            description="Minimum 7-day average flow divided by the mean flow.",
+        )
+    ],
     compute=base_flow_index,
 )
 
 
 freq_analysis = FA(
     identifier="freq_analysis",
-    var_name="q{window}{mode}{indexer}",
-    long_name="N-year return period {mode} {indexer} {window}-day flow",
-    description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
-    "estimated using the {dist} distribution.",
+    var_attrs=[
+        dict(
+            var_name="q{window}{mode}{indexer}",
+            long_name="N-year return period {mode} {indexer} {window}-day flow",
+            description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
+            "estimated using the {dist} distribution.",
+        )
+    ],
     compute=generic.frequency_analysis,
 )
 
 
 stats = Stats(
     identifier="stats",
-    var_name="q{indexer}{op}",
-    long_name="{freq} {op} of {indexer} daily flow ",
-    description="{freq} {op} of {indexer} daily flow",
+    var_attrs=[
+        dict(
+            var_name="q{indexer}{op}",
+            long_name="{freq} {op} of {indexer} daily flow ",
+            description="{freq} {op} of {indexer} daily flow",
+        )
+    ],
     compute=generic.select_resample_op,
 )
 
 
 fit = Fit(
     identifier="fit",
-    var_name="params",
-    units="",
-    standard_name="{dist} parameters",
-    long_name="{dist} distribution parameters",
-    description="Parameters of the {dist} distribution",
-    cell_methods="time: fit",
+    var_attrs=[
+        dict(
+            var_name="params",
+            units="",
+            standard_name="{dist} parameters",
+            long_name="{dist} distribution parameters",
+            description="Parameters of the {dist} distribution",
+            cell_methods="time: fit",
+        )
+    ],
     compute=generic.fit,
 )
 
 
 doy_qmax = Streamflow(
     identifier="doy_qmax",
-    var_name="q{indexer}_doy_qmax",
-    long_name="Day of the year of the maximum over {indexer}",
-    description="Day of the year of the maximum over {indexer}",
-    units="",
-    _partial=True,
+    var_attrs=[
+        dict(
+            var_name="q{indexer}_doy_qmax",
+            long_name="Day of the year of the maximum over {indexer}",
+            description="Day of the year of the maximum over {indexer}",
+            units="",
+        )
+    ],
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymax),
 )
 
 
 doy_qmin = Streamflow(
     identifier="doy_qmin",
-    var_name="q{indexer}_doy_qmin",
-    long_name="Day of the year of the minimum over {indexer}",
-    description="Day of the year of the minimum over {indexer}",
-    units="",
-    _partial=True,
+    var_attrs=[
+        dict(
+            var_name="q{indexer}_doy_qmin",
+            long_name="Day of the year of the minimum over {indexer}",
+            description="Day of the year of the minimum over {indexer}",
+            units="",
+        )
+    ],
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymin),
 )
