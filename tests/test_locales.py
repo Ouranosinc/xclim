@@ -119,10 +119,10 @@ def test_indicator_output(tas_series):
 def test_indicator_integration():
     eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=True)
     assert "title" in eo_attrs
-    assert "long_name" in eo_attrs
+    assert "long_name" in eo_attrs["outputs"][0]
 
     eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=False)
-    assert "description" not in eo_attrs
+    assert "description" not in eo_attrs["outputs"][0]
 
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
@@ -165,7 +165,7 @@ def test_xclim_translations(locale):
 
 
 @pytest.mark.parametrize(
-    "initeng,expected", [(False, ""), (True, atmos.tg_mean.var_attrs[0]["long_name"])]
+    "initeng,expected", [(False, ""), (True, atmos.tg_mean.long_name)]
 )
 def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)

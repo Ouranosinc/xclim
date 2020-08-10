@@ -15,7 +15,7 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Indicator, MultiIndicator, registry
+from xclim.core.indicator import Indicator, registry
 from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
@@ -59,12 +59,11 @@ class UniClim(Indicator):
         return select.mean(dim="time", keep_attrs=True)
 
 
-class MultiTemp(MultiIndicator):
+class MultiTemp(Indicator):
     identifier = "minmaxtemp"
-    children = [
-        {"var_name": "tmin", "units": "K", "standard_name": "Min temp"},
-        {"var_name": "tmax", "units": "K"},
-    ]
+    var_name = ["tmin", "tmax"]
+    units = "K"
+    standard_name = ["Min temp", ""]
     description = "Grouped computation of tmax and tmin"
 
     @staticmethod
@@ -125,11 +124,12 @@ def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
     ind = MultiTemp()
 
-    out = ind(tas, freq="YS")
-    assert out.tmin[0] == tas.min()
-    assert out.tmax[0] == tas.max()
-    assert out.tmin.attrs["standard_name"] == "Min temp"
-    assert out.attrs["description"] == "Grouped computation of tmax and tmin"
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
 
 def test_missing(tas_series):
@@ -180,22 +180,29 @@ def test_json(pr_series):
 
     expected = {
         "identifier",
+        "title",
+        "keywords",
+        "abstract",
+        "parameters",
+        "history",
+        "references",
+        "notes",
+        "outputs",
+    }
+
+    output_exp = {
         "var_name",
         "units",
         "long_name",
         "standard_name",
         "cell_methods",
-        "keywords",
-        "abstract",
-        "parameters",
         "description",
-        "history",
-        "references",
         "comment",
-        "notes",
     }
 
     assert set(meta.keys()).issubset(expected)
+    for output in meta["outputs"]:
+        assert set(output.keys()).issubset(output_exp)
 
 
 def test_signature():

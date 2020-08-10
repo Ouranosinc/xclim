@@ -32,10 +32,10 @@ def generate_local_dict(locale: str, init_english: bool = False):
         attrs_mapping.setdefault(key, [value[0]])
 
     eng_attr = ""
-    for ind_name, indicator in [("TG_MEAN", tg_mean.__class__)]:  # registry.items():
+    for ind_name, indicator in registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
         for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
-            set(indicator._var_names)
+            set(indicator._cf_names)
         ):
             if init_english:
                 eng_attr = getattr(indicator, translatable_attr)
@@ -43,14 +43,13 @@ def generate_local_dict(locale: str, init_english: bool = False):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
 
-        print(ind_attrs)
-        for var_attrs in indicator.var_attrs:
+        for var_attrs in indicator.cf_attrs:
             # In the case of single output, put var attrs in main dict
-            if len(indicator.var_attrs) > 1:
+            if len(indicator.cf_attrs) > 1:
                 ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
-                set(indicator._var_names)
+                set(indicator._cf_names)
             ):
                 if init_english:
                     eng_attr = var_attrs.get(translatable_attr)

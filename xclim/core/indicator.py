@@ -87,7 +87,6 @@ from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
-from xarray import Dataset
 
 from xclim.indices.generic import default_freq
 
@@ -100,7 +99,7 @@ from .formatting import (
     update_history,
 )
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
-from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS, OUTPUT_DATASET
+from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
 
 # Indicators registry
@@ -131,31 +130,21 @@ class Indicator:
       Unique ID for class registry, should be a valid slug.
     compute: func
       The function computing the indicators. It should return a sequence of more than one DataArray.
-    var_attrs : Sequence[Mapping[str, str]]
-      List of dictionaries containing the attributes of the individual output arrays. Its length and order should match the output of the compute function.
-      Each dictionary should at least define the `var_name` parameter.
-      In the case of a single output, the parameters may be given directly as kwargs of the init.
-      Valid parameters are (all strings):
-
-      var_name : Variable name in the dataset. If not given in the single-output case, `identifier` is used.
-
-      standard_name : Variable name (CF).
-
-      long_name : Descriptive variable name.
-
-      units : Representative units of the physical quantity (CF).
-
-      cell_methods : List of blank-separated words of the form "name: method" (CF).
-
-      description : Sentence meant to clarify the qualifiers of the fundamental quantities
-
-      keywords : Comma separated list of keywords.
-
-      comment : Miscellaneous information about the data or methods used to produce it.
-
-    description: str
+    var_name: str or Sequence[str]
+      Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables, var_name *must* be a list of the same length.
+    standard_name: str or Sequence[str]
+      Variable name (CF).
+    long_name: str or Sequence[str]
+      Descriptive variable name.
+    units: str or Sequence[str]
+      Representative units of the physical quantity (CF).
+    cell_methods: str or Sequence[str]
+      List of blank-separated words of the form "name: method" (CF).
+    description: str or Sequence[str]
       Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
       surface a quantity is defined on or what the flux sign conventions are.
+    comment: str or Sequence[str]
+      Miscellaneous information about the data or methods used to produce it.
     title: str, None
       A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None.
     abstract: str
@@ -165,8 +154,6 @@ class Indicator:
     references: str
       Published or web-based references that describe the data or methods used to produce it. Parsed from
       `compute` docstring if None.
-    comment: str
-      Miscellaneous information about the data or methods used to produce it.
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None.
@@ -187,19 +174,8 @@ class Indicator:
     # Number of input DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
-    # Allowed metadata attributes for the variables
-    _var_names = [
-        "var_name",
-        "standard_name",
-        "long_name",
-        "units",
-        "cell_methods",
-        "description",
-        "keywords",
-        "comment",
-    ]
     # Allowed metadata attributes on the output variables
-    _cf_var = [
+    _cf_names = [
         "var_name",
         "standard_name",
         "long_name",
@@ -208,81 +184,78 @@ class Indicator:
         "description",
         "comment",
     ]
-    # Allowed metadata attributes on the output dataset
-    _cf_global = ["description", "references"]
 
     # metadata fields that are formatted as free text.
     _text_fields = ["long_name", "description", "comment"]
 
     _funcs = ["compute", "cfcheck", "datacheck"]
 
-    # Default attribute values
+    # Will become the classe's name
     identifier = None
-    # Default to 1 empty dict,  __new__ will populate it with kwargs-passed attrs.
-    var_attrs = [{}]
+
     missing = "from_context"
     missing_options = None
     context = "none"
 
-    # Global metadata
+    # Variable metadata (_cf_names, those that can be lists or strings)
+    # A developper should access those through _var_attrs on instances
+    var_name = None
+    standard_name = ""
+    long_name = ""
+    units = ""
+    cell_methods = ""
     description = ""
+    comment = ""
+
+    # Global metadata (must be strings, not attributed to the output)
     title = ""
     abstract = ""
     keywords = ""
     references = ""
-    comment = ""
     notes = ""
 
     def __new__(cls, **kwds):
-        """Create subclass from arguments."""
-        identifier = kwds.get("identifier", getattr(cls, "identifier"))
+        """Create subclass from arguments. Keywods of kwds that are class attributes are attributed here."""
+        identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
             raise AttributeError("`identifier` has not been set.")
 
-        if "var_attrs" not in kwds:
-            kwds["var_attrs"] = getattr(cls, "var_attrs")
+        kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
         # Parse `compute` docstring to extract missing attributes
         # Priority: explicit arguments > super class attributes > `compute` docstring info
         func = kwds.get("compute", None) or cls.compute
         parsed = parse_doc(func.__doc__)
 
-        attrs = {}
         for name, value in parsed.copy().items():
-            if not getattr(cls, name, True):
-                # Set if it is a class attr but not set by the class
-                attrs[name] = value
-            elif name in cls._var_names:
-                kwds["var_attrs"][0].setdefault(name, value)
-
-        # Single output case : accept var_attrs in kwargs
-        if len(kwds["var_attrs"]) == 1:
-            for name in cls._var_names:
-                if name in kwds or hasattr(cls, name):
-                    # Attributes existing in the class are also global metadata fields
-                    #   do not remove them from kwargs.
-                    kwds["var_attrs"][0].setdefault(
-                        name,
-                        kwds.get(name, getattr(cls, name))
-                        if hasattr(cls, name)
-                        else kwds.pop(name),
-                    )
-            kwds["var_attrs"][0].setdefault("var_name", identifier)
-        else:  # Multi output : Refuse var_attrs in kwargs
-            for name in cls._var_names:
-                if name in kwds and not hasattr(cls, name):
-                    raise AttributeError(
-                        f"Variable attributes must be set through 'var_attrs' if there are more than one output variables. ({name} was passed as kwarg)"
-                    )
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
 
         # Convert function objects to static methods.
-        for key in cls._funcs + cls._cf_global:
+        for key in cls._funcs:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
-        attrs.update(kwds)
+        # Get number of outputs
+        n_outs = (
+            len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
+        )
+        # Populate _var_attrs from attribute set during class creation and __new__
+        kwds["cf_attrs"] = [{} for i in range(n_outs)]
+        for name in cls._cf_names:
+            values = kwds.get(name, getattr(cls, name))
+            if not isinstance(values, (list, tuple)):
+                values = [values] * n_outs
+            elif len(values) != n_outs:
+                raise ValueError(
+                    f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
+                )
+            for attrs, value in zip(kwds["cf_attrs"], values):
+                attrs[name] = value
+
         # Create new class object
-        new = type(identifier.upper(), (cls,), attrs)
+        new = type(identifier.upper(), (cls,), kwds)
 
         # Set the module to the base class' module. Otherwise all indicators will have module `xclim.core.indicator`.
         new.__module__ = cls.__module__
@@ -302,9 +275,8 @@ class Indicator:
         registry[name] = obj
 
     def __init__(self, **kwds):
-        """Run checks and assign default values."""
-        # Check identifier is well formed - no funny characters
-        self.identifier = kwds.pop("identifier", self.identifier)
+        """Run checks and organizes the metadata."""
+        # keywords of kwds that are class attributes have already been set in __new__
         self.check_identifier(self.identifier)
 
         if self.missing == "from_context" and self.missing_options is not None:
@@ -330,7 +302,7 @@ class Indicator:
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # For convenience
-        n_outs = len(self.var_attrs)
+        n_outs = len(self.cf_attrs)
 
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self._sig.bind(*args, **kwds)
@@ -342,17 +314,14 @@ class Indicator:
             das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
 
         # Metadata attributes from templates
-        cf_attrs = self.cf_attrs
         var_id = None
         var_attrs = []
-        for attrs in cf_attrs.pop("vars"):
+        for attrs in self.cf_attrs:
             if n_outs > 1:
                 var_id = f"{self.identifier}.{attrs['var_name']}"
             var_attrs.append(
-                self.update_attrs(ba, das, attrs, names=self._cf_var, var_id=var_id)
+                self.update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
             )
-
-        ds_attrs = self.update_attrs(ba, das, cf_attrs, names=self._cf_global)
 
         # Pre-computation validation checks on DataArray arguments
         self.bind_call(self.datacheck, **das)
@@ -375,17 +344,15 @@ class Indicator:
             out.attrs.update(attrs)
             out.name = var_name
 
-        if OPTIONS[OUTPUT_DATASET] or n_outs > 1:
-            out = Dataset(data_vars={out.name: out for out in outs}, attrs=ds_attrs)
-        else:
-            out = outs[0]
-            out.attrs.update(ds_attrs)
-
         # Mask results that do not meet criteria defined by the `missing` method.
         # This means all variables must have the same dimensions...
         mask = self.mask(*das.values(), **ba.arguments)
+        outs = [out.where(~mask) for out in outs]
 
-        return out.where(~mask)
+        # Return a single DataArray in case of single output, otherwise a tuple
+        if n_outs == 1:
+            return outs[0]
+        return tuple(outs)
 
     def bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
@@ -516,37 +483,30 @@ class Indicator:
             If True (default fill the missing attributes by their english values.
         """
 
-        def _translate(var_id, var_attrs):
+        def _translate(var_id, var_attrs, names):
             attrs = get_local_attrs(
-                var_id, locale, names=TRANSLATABLE_ATTRS, append_locale_name=False,
+                var_id, locale, names=names, append_locale_name=False,
             )
             if fill_missing:
-                for name in TRANSLATABLE_ATTRS:
+                for name in names:
                     if name not in attrs and var_attrs.get(name):
                         attrs[name] = var_attrs.get(name)
             return attrs
 
         # Translate global attrs
-        attrs = _translate(self.identifier.upper(), self.__dict__)
-        attrs["vars"] = []
-        for var_attrs in self.var_attrs:  # Translate for each variable
-            attrs["vars"].append(
-                _translate(
-                    f"{self.identifier.upper()}.{var_attrs['var_name']}", var_attrs
-                )
-            )
-        return attrs
-
-    @property
-    def cf_attrs(self):
-        """CF-Convention attributes of the output value."""
-        attrs = {k: getattr(self, k) for k in self._cf_global if getattr(self, k)}
-        # Get attributes of each variables
-        # If the attribute is not given, but exists globally, use the global one.
-        attrs["vars"] = [
-            {k: attrs.get(k) for k in self._cf_var if attrs.get(k)}
-            for attrs in self.var_attrs
-        ]
+        attrid = self.identifier.upper()
+        attrs = _translate(
+            attrid,
+            self.__dict__,
+            # Translate only translatable attrs that are not variable attrs
+            set(TRANSLATABLE_ATTRS).difference(set(self._cf_names)),
+        )
+        # Translate variable attrs
+        attrs["outputs"] = []
+        for var_attrs in self.cf_attrs:  # Translate for each variable
+            if len(self.cf_attrs) > 1:
+                attrid = f"{self.identifier.upper()}.{var_attrs['var_name']}"
+            attrs["outputs"].append(_translate(attrid, var_attrs, TRANSLATABLE_ATTRS))
         return attrs
 
     def json(self, args=None):
@@ -559,12 +519,8 @@ class Indicator:
         """
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
-        out.update(self.cf_attrs)
-        vars_attrs = out.pop("vars")
         out = self.format(out, args)
-        out["vars"] = []
-        for var_attrs in vars_attrs:
-            out["vars"].append(self.format(var_attrs, args))
+        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
         out["notes"] = self.notes
 

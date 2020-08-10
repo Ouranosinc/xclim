@@ -119,7 +119,7 @@ def test_fire_weather_index():
 
 def test_fire_weather_indicator():
     ds = get_data(as_xr=True)
-    out = atmos.fire_weather_indexes(
+    dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
         tas=ds.temp,
         pr=ds.pr,
         rh=ds.rh,
@@ -129,8 +129,8 @@ def test_fire_weather_indicator():
         dmc0=ds.dmc[1],
         dc0=ds.dc[1],
     )
-    xr.testing.assert_allclose(out.dc.T[10:], ds.dc[10:], rtol=0.01)
-    xr.testing.assert_allclose(out.fwi.T[10:], ds.fwi[10:], rtol=0.05, atol=0.05)
+    xr.testing.assert_allclose(dc.T[10:], ds.dc[10:], rtol=0.01)
+    xr.testing.assert_allclose(fwi.T[10:], ds.fwi[10:], rtol=0.05, atol=0.05)
 
 
 def test_day_length():
