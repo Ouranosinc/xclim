@@ -23,7 +23,7 @@ atmos: Atmosphere
      <dt><b>{{ ind.title }}</b>  (<var>atmos.{{ indname | safe}}</var>)</dt>
      <dd>{{ ind.abstract }} <br>
      Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     Produces {% for var in ind['vars'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
      </dd>
    {% endfor %}
    </dl>
@@ -37,7 +37,7 @@ land: Land surface
      <dt><b>{{ ind.title | e }}</b>  (<var>land.{{ indname | safe}}</var>) </dt>
      <dd>{{ ind.abstract | e }} <br>
      Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     Produces {% for var in ind['vars'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code>  {% endfor %}
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code>  {% endfor %}
      </dd>
    {% endfor %}
    </dl>
@@ -51,7 +51,7 @@ seaIce: Sea ice
      <dt><b>{{ ind.title }}</b>  (<var>seaIce.{{ indname | safe}}</var>) </dt>
      <dd>{{ ind.abstract }}<br>
      Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     Produces {% for var in ind['vars'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
      </dd>
    {% endfor %}
    </dl>

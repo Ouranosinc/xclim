@@ -35,28 +35,11 @@ New indicators can be created using standard Python subclasses::
 
 Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
 
-    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_attrs=[{'var_name': 'tmean', 'units':"K"}])
-
-Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that variable metadata
-attributes should passed with the "var_attrs" keyword argument. This limits the possibility of using
-class inheritance to fill/override those attributes. However, for the common case where the indicator
-only has one output, metadata can be given directly as keyword arguments or as class attributes, altough
-the latter is not recommended if not necessary. Thus, the two following example will have the exact same
-behavior as the line above:
-
-.. code-block:: python
-
-    # Ex 1
     Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_name='tmean', units="K")
 
-    # Ex 2 - Use this method of setting variable metadata attributes only when necessary.
-    class NewIndicator(xclim.core.indicator.Indicator):
-        identifier = "new_indicator"
-        missing = "any"
-        var_name = 'tmean'
-        units = 'K'
-    NewIndicator()
-
+Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
+compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
+In the latter case, the same is used on all variables. However, the `var_name` attribute must be a list and have
 
 One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
 are common to indicators, then call this subclass with the custom attributes. See for example in
@@ -115,14 +98,9 @@ class Indicator:
 
     Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
 
-    The output type is controlled by global option "output_datasets". If True, calling an indicator always
-    returns a Dataset. If False, Indicators returning only one variable will return a single DataArray, whereas
-    indicators returning multiple variables will still return datasets.
-
-    Parameters whose names are in `Indicator._cf_global` will be added to the output dataset (if applicable).
-    Parameters in `Indicator._cf_var` will be added to the output variables. In the case that global option
-    "output_dataset" is False, that the indicator outputs a single DataArray and that a parameter is missing
-    from `var_attrs`, then the global version of that parameter will be used instead.
+    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new Indicators,
+    if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
+    In the latter case, the same value is used on all variables.
 
     Parameters
     ----------
@@ -131,11 +109,12 @@ class Indicator:
     compute: func
       The function computing the indicators. It should return a sequence of more than one DataArray.
     var_name: str or Sequence[str]
-      Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables, var_name *must* be a list of the same length.
+      Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables,
+      var_name *must* be a list of the same length.
     standard_name: str or Sequence[str]
       Variable name (CF).
     long_name: str or Sequence[str]
-      Descriptive variable name.
+      Descriptive variable name. Parsed from `compute` docstring if not given.
     units: str or Sequence[str]
       Representative units of the physical quantity (CF).
     cell_methods: str or Sequence[str]
@@ -145,7 +124,7 @@ class Indicator:
       surface a quantity is defined on or what the flux sign conventions are.
     comment: str or Sequence[str]
       Miscellaneous information about the data or methods used to produce it.
-    title: str, None
+    title: str
       A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None.
     abstract: str
       A long description of what is in the computed outputs. Parsed from `compute` docstring if None.
@@ -252,7 +231,8 @@ class Indicator:
                     f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
                 )
             for attrs, value in zip(kwds["cf_attrs"], values):
-                attrs[name] = value
+                if value:
+                    attrs[name] = value
 
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
@@ -329,6 +309,10 @@ class Indicator:
 
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **ba.kwargs)
+        if isinstance(outs, tuple) and len(outs) != n_outs:
+            raise ValueError(
+                f"Indicator {self.identifier} was wrongly defined. Expected {n_outs} outputs, got {len(outs)}."
+            )
         if n_outs == 1:
             outs = [outs]
 
