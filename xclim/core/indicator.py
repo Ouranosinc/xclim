@@ -39,7 +39,7 @@ Another mechanism to create subclasses is to call Indicator with all the attribu
 
 Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
 compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
-In the latter case, the same is used on all variables. However, the `var_name` attribute must be a list and have
+In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name` attribute must be a list and have
 
 One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
 are common to indicators, then call this subclass with the custom attributes. See for example in
@@ -98,7 +98,7 @@ class Indicator:
 
     Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
 
-    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new Indicators,
+    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators` subclasses,
     if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
     In the latter case, the same value is used on all variables.
 
@@ -107,7 +107,7 @@ class Indicator:
     identifier: str
       Unique ID for class registry, should be a valid slug.
     compute: func
-      The function computing the indicators. It should return a sequence of more than one DataArray.
+      The function computing the indicators. It should return one or more DataArray.
     var_name: str or Sequence[str]
       Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables,
       var_name *must* be a list of the same length.
@@ -194,7 +194,7 @@ class Indicator:
     notes = ""
 
     def __new__(cls, **kwds):
-        """Create subclass from arguments. Keywods of kwds that are class attributes are attributed here."""
+        """Create subclass from arguments."""
         identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
             raise AttributeError("`identifier` has not been set.")
