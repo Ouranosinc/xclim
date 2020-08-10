@@ -35,9 +35,9 @@ Internal changes
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
-* Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must as passed.
+* Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
-* Major refactoring of the internal marchinery of `Indicator` to use a generic number of outputs. `Indicator.cf_attrs` is now created in `__new__` and is a list of dictionaries.
+* Major refactoring of the internal marchinery of `Indicator` to support multiple outputs.
 
 0.18.0 (2020-06-26)
 -------------------

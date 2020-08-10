@@ -66,10 +66,11 @@ import re
 import warnings
 from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Sequence, Union
+from typing import Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
+from xarray import DataArray
 
 from xclim.indices.generic import default_freq
 
@@ -211,28 +212,15 @@ class Indicator:
                 # Set if neither the class attr is set nor the kwds attr
                 kwds.setdefault(name, value)
 
+        # Parse kwds to organize cf_attrs
+        # Must be done after parsing var_name
+        # And before converting callables to staticmethods
+        kwds["cf_attrs"] = cls._parse_cf_attrs(kwds)
+
         # Convert function objects to static methods.
-        for key in cls._funcs:
+        for key in cls._funcs + cls._cf_names:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
-
-        # Get number of outputs
-        n_outs = (
-            len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
-        )
-        # Populate _var_attrs from attribute set during class creation and __new__
-        kwds["cf_attrs"] = [{} for i in range(n_outs)]
-        for name in cls._cf_names:
-            values = kwds.get(name, getattr(cls, name))
-            if not isinstance(values, (list, tuple)):
-                values = [values] * n_outs
-            elif len(values) != n_outs:
-                raise ValueError(
-                    f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
-                )
-            for attrs, value in zip(kwds["cf_attrs"], values):
-                if value:
-                    attrs[name] = value
 
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
@@ -245,6 +233,29 @@ class Indicator:
 
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
+
+    @classmethod
+    def _parse_cf_attrs(cls, kwds):
+        """CF-compliant metadata attributes for all output variables."""
+        # Get number of outputs
+        n_outs = (
+            len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
+        )
+
+        # Populate _var_attrs from attribute set during class creation and __new__
+        cf_attrs = [{} for i in range(n_outs)]
+        for name in cls._cf_names:
+            values = kwds.get(name, getattr(cls, name))
+            if not isinstance(values, (list, tuple)):
+                values = [values] * n_outs
+            elif len(values) != n_outs:
+                raise ValueError(
+                    f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
+                )
+            for attrs, value in zip(cf_attrs, values):
+                if value:
+                    attrs[name] = value
+        return cf_attrs
 
     @classmethod
     def register(cls, obj):
@@ -309,12 +320,12 @@ class Indicator:
 
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **ba.kwargs)
-        if isinstance(outs, tuple) and len(outs) != n_outs:
+        if isinstance(outs, DataArray):
+            outs = [outs]
+        if len(outs) != n_outs:
             raise ValueError(
                 f"Indicator {self.identifier} was wrongly defined. Expected {n_outs} outputs, got {len(outs)}."
             )
-        if n_outs == 1:
-            outs = [outs]
 
         # Convert to output units
         outs = [
