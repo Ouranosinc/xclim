@@ -11,6 +11,7 @@ it is indeed the expected variable (e.g. a precipitation flux). The output is as
 that conform as much as possible with the `CF-Convention`_.
 
 Indicators are split into realms (atmos, land, seaIce), according to the variables they operate on.
+See :ref:`Defining new indicators` for instruction on how to create your own indicators.
 
 
 atmos: Atmosphere
@@ -19,9 +20,10 @@ atmos: Atmosphere
 .. raw:: html
     <dl>
    {% for indname, ind in indicators['atmos'].items() %}
-     <dt><b>{{ ind.long_name }}</b>  (<var>atmos.{{ indname | safe}}</var>)</dt>
-     <dd>{{ ind.description }} <br>
-     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a>
+     <dt><b>{{ ind.title }}</b>  (<var>atmos.{{ indname | safe}}</var>)</dt>
+     <dd>{{ ind.abstract }} <br>
+     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
      </dd>
    {% endfor %}
    </dl>
@@ -32,9 +34,10 @@ land: Land surface
 .. raw:: html
     <dl>
    {% for indname, ind in indicators['land'].items() %}
-     <dt><b>{{ ind.long_name | e }}</b>  (<var>land.{{ indname | safe}}</var>) </dt>
-     <dd>{{ ind.description | e }} <br>
-     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a>
+     <dt><b>{{ ind.title | e }}</b>  (<var>land.{{ indname | safe}}</var>) </dt>
+     <dd>{{ ind.abstract | e }} <br>
+     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code>  {% endfor %}
      </dd>
    {% endfor %}
    </dl>
@@ -45,9 +48,10 @@ seaIce: Sea ice
 .. raw:: html
     <dl>
    {% for indname, ind in indicators['seaIce'].items() %}
-     <dt><b>{{ ind.long_name }}</b>  (<var>seaIce.{{ ind.identifier | safe}}</var>) </dt>
-     <dd>{{ ind.description }}<br>
-     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a>
+     <dt><b>{{ ind.title }}</b>  (<var>seaIce.{{ indname | safe}}</var>) </dt>
+     <dd>{{ ind.abstract }}<br>
+     Based on <a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     Produces {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
      </dd>
    {% endfor %}
    </dl>

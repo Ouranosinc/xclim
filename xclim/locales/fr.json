@@ -518,6 +518,35 @@
     "title": "Fin de la saison de végétation",
     "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
   },
+ "FWI":{
+  "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
+  "title": "Indices Forêt-Météo",
+  "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
+ },
+ "FWI.dc": {
+    "long_name": "Indice de sécheresse",
+    "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+ "FWI.dmc": {
+    "long_name": "Indice d'humidité de l'humus",
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+ "FWI.ffmc": {
+    "long_name": "Indice du combustible léger (FFMC)",
+    "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+ "FWI.isi": {
+    "long_name": "Indice de propagation initiale",
+    "description": "Évaluation numérique du taux prévu de propagation du feu."
+  },
+ "FWI.bui": {
+    "long_name": "Indice du combustible disponible",
+    "description": "Évaluation numérique de la quantité totale de combustible disponible."
+  },
+ "FWI.fwi": {
+    "long_name": "Indice forêt météo",
+    "description": "Évaluation numérique de l'intensité du feu."
+  },
   "SFCWIND": {
     "long_name": "Vitesse du vent de surface",
     "description": "Magnitude de la vitesse vent calculée à partir des deux composantes uas et vas.",

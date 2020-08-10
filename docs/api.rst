@@ -25,6 +25,15 @@ Indices submodules
    :undoc-members:
    :show-inheritance:
 
+Indicator tools
+===============
+
+.. automodule:: xclim.core.indicator
+   :noindex:
+   :members:
+   :member-order: bysource
+   :show-inheritance:
+
 
 Unit handling module
 ====================
@@ -51,12 +60,6 @@ Other utilities
    :show-inheritance:
 
 .. automodule:: xclim.core.checks
-   :noindex:
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.indicator
    :noindex:
    :members:
    :undoc-members:
