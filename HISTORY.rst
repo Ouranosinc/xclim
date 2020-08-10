@@ -14,12 +14,13 @@ Breaking changes
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
 * `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
+* `Indicator.cf_attrs` is now a list of dictionaries. `Indicator.json` puts all the metadata attributes in the key "outputs" (a list of dicts). All variable metadata (names in `Indicator._cf_names`) might be strings or lists of strings when accessed as object attributes.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
-* New `MultiIndicator` subclass for indicators outputing multiple indices for the same input.
+* The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
 
 Bug fixes
@@ -36,6 +37,7 @@ Internal changes
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must as passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
+* Major refactoring of the internal marchinery of `Indicator` to use a generic number of outputs. `Indicator.cf_attrs` is now created in `__new__` and is a list of dictionaries.
 
 0.18.0 (2020-06-26)
 -------------------
