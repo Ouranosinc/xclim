@@ -142,7 +142,7 @@ def test_xclim_translations(locale):
     translated_inds = []
     # Remove unofficial indicators (as those created during the tests)
     for identifier, cls in registry.items():
-        if not cls.__module__.startswith("xclim.indicators"):
+        if not cls.__module__.startswith("xclim"):
             registry_cp.pop(identifier)
 
     for indicator, fields in dic.items():
@@ -165,7 +165,7 @@ def test_xclim_translations(locale):
 
 
 @pytest.mark.parametrize(
-    "initeng,expected", [(False, ""), (True, atmos.tg_mean.long_name)]
+    "initeng,expected", [(False, ""), (True, atmos.tg_mean.var_attrs[0]["long_name"])]
 )
 def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)

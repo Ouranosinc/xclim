@@ -1,6 +1,7 @@
 """Locales and language support module."""
 from xclim.core.formatting import default_formatter
 from xclim.core.locales import TRANSLATABLE_ATTRS, get_best_locale, get_local_dict
+from xclim.indicators.atmos import tg_mean
 
 
 def generate_local_dict(locale: str, init_english: bool = False):
@@ -31,12 +32,30 @@ def generate_local_dict(locale: str, init_english: bool = False):
         attrs_mapping.setdefault(key, [value[0]])
 
     eng_attr = ""
-    for ind_name, indicator in registry.items():
+    for ind_name, indicator in [("TG_MEAN", tg_mean.__class__)]:  # registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
-        for translatable_attr in TRANSLATABLE_ATTRS:
+        for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
+            set(indicator._var_names)
+        ):
             if init_english:
                 eng_attr = getattr(indicator, translatable_attr)
                 if not isinstance(eng_attr, str):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+
+        print(ind_attrs)
+        for var_attrs in indicator.var_attrs:
+            # In the case of single output, put var attrs in main dict
+            if len(indicator.var_attrs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+
+            for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
+                set(indicator._var_names)
+            ):
+                if init_english:
+                    eng_attr = var_attrs.get(translatable_attr)
+                    print(translatable_attr, eng_attr)
+                    if not isinstance(eng_attr, str):
+                        eng_attr = ""
+                ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
     return attrs
