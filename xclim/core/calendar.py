@@ -626,7 +626,9 @@ def time_bnds(group, freq):
     >>> from xclim.core.calendar import time_bnds
     >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
     >>> time_bnds(index, '2Q')
-    ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999)), (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999)), (cftime.Datetime360Day(2001, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2001, 3, 30, 23, 59, 59, 999999)))
+    ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999)),
+    (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999)),
+    (cftime.Datetime360Day(2001, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2001, 3, 30, 23, 59, 59, 999999)))
     """
     if isinstance(group, CFTimeIndex):
         cfindex = group
