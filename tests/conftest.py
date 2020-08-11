@@ -322,3 +322,17 @@ def add_example_file_paths(xdoctest_namespace):
 def add_example_dataarray(xdoctest_namespace, tas_series):
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
+
+
+@pytest.fixture(autouse=True)
+def is_matplotlib_installed(xdoctest_namespace):
+    def _is_matplotlib_installed():
+        try:
+            import matplotlib
+
+            return
+        except ImportError:
+            return pytest.skip("This doctest requires matplotlib to be installed.")
+
+    ns = xdoctest_namespace
+    ns["is_matplotlib_installed"] = _is_matplotlib_installed
