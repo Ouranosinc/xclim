@@ -103,7 +103,7 @@ jobs:
           - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
           - source activate xclim
           - conda env update -f environment.yml
-          - conda install pytest coveralls pytest-cov
+          - conda install pytest coveralls pytest-cov xdoctest
       install:
           - conda install pip
           - pip install -e .
@@ -127,7 +127,7 @@ jobs:
         - conda create -n xclim -c conda-forge python=$DESIRED_PYTHON
         - source activate xclim
         - conda env update -f environment.yml
-        - conda install pytest coveralls pytest-cov
+        - conda install pytest coveralls pytest-cov xdoctest
       install:
         - conda install pip
         - pip install -e .
