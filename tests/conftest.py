@@ -262,18 +262,18 @@ def ps_series():
 
 
 @pytest.fixture(autouse=True)
-def add_imports(doctest_namespace):
+def add_imports(xdoctest_namespace):
     """Add these imports into the doctests scope."""
-    ns = doctest_namespace
+    ns = xdoctest_namespace
     ns["np"] = np
     ns["xr"] = xr
     ns["xclim"] = xclim
 
 
 @pytest.fixture(autouse=True)
-def add_example_file_paths(doctest_namespace):
+def add_example_file_paths(xdoctest_namespace):
     """Add these datasets in the doctests scope."""
-    ns = doctest_namespace
+    ns = xdoctest_namespace
     ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
 
     ns["path_to_tasmax_file"] = str(
@@ -313,8 +313,12 @@ def add_example_file_paths(doctest_namespace):
         ),
     ]
 
+    ns["path_to_ensemble_file"] = str(
+        TD / "EnsembleReduce" / "TestEnsReduceCriteria.nc"
+    )
+
 
 @pytest.fixture(autouse=True)
-def add_example_dataarray(doctest_namespace, tas_series):
-    ns = doctest_namespace
+def add_example_dataarray(xdoctest_namespace, tas_series):
+    ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
