@@ -112,12 +112,11 @@ def temperature_seasonality(tas: xarray.DataArray):
     --------
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
 
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> import xclim.indices as xci  # doctest: +SKIP
-    >>> t = xr.open_dataset('tas.day.nc').tas   # doctest: +SKIP
-    >>> tday_seasonality = xci.temperature_seasonality(t)  # doctest: +SKIP
-    >>> t_weekly = xci.tg_mean(t, freq='7D')  # doctest: +SKIP
-    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)  # doctest: +SKIP
+    >>> import xclim.indices as xci
+    >>> t = xr.open_dataset(path_to_tas_file).tas
+    >>> tday_seasonality = xci.temperature_seasonality(t)
+    >>> t_weekly = xci.tg_mean(t, freq='7D')
+    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
 
     Notes
     -----
@@ -160,14 +159,14 @@ def precip_seasonality(pr: xarray.DataArray,):
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> import xclim.indices as xci  # doctest: +SKIP
-    >>> p = xr.open_dataset('pr.day.nc')  # doctest: +SKIP
-    >>> pday_seasonality = xci.precip_seasonality(p)  # doctest: +SKIP
-    >>> p_weekly = xci.precip_accumulation(p, freq='7D')  # doctest: +SKIP
+    >>> import xclim.indices as xci
+    >>> p = xr.open_dataset(path_to_pr_file).pr
+    >>> pday_seasonality = xci.precip_seasonality(p)
+    >>> p_weekly = xci.precip_accumulation(p, freq='7D')
+
     # Input units need to be a rate
-    >>> p_weekly.attrs['units'] = "mm/week"  # doctest: +SKIP
-    >>> pweek_seasonality = xci.precip_seasonality(p_weekly)  # doctest: +SKIP
+    >>> p_weekly.attrs['units'] = "mm/week"
+    >>> pweek_seasonality = xci.precip_seasonality(p_weekly)
 
     Notes
     -----
@@ -221,10 +220,9 @@ def tg_mean_warmcold_quarter(
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature
     warmest quarter mean temperature:
 
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> import xclim.indices as xci  # doctest: +SKIP
-    >>> t = xr.open_dataset('tas.day.nc')  # doctest: +SKIP
-    >>> t_warm_qrt = xci.tg_mean_warmest_quarter(tas=t.tas, op='warmest', input_freq='daily')  # doctest: +SKIP
+    >>> import xclim.indices as xci
+    >>> t = xr.open_dataset(path_to_tas_file)
+    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op='warmest', input_freq='daily')
 
     Notes
     -----
@@ -317,10 +315,9 @@ def prcptot_wetdry_quarter(
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
 
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.indices import prcptot_wetdry_quarter  # doctest: +SKIP
-    >>> p = xr.open_dataset('pr.day.nc')  # doctest: +SKIP
-    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op='wettest', input_freq='daily')  # doctest: +SKIP
+    >>> from xclim.indices import prcptot_wetdry_quarter
+    >>> p = xr.open_dataset(path_to_pr_file)
+    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op='wettest', input_freq='daily')
 
     Notes
     -----
