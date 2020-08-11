@@ -271,7 +271,7 @@ def add_imports(xdoctest_namespace):
 
 
 @pytest.fixture(autouse=True)
-def add_example_file_paths(xdoctest_namespace):
+def add_example_file_paths(xdoctest_namespace, tas_series):
     """Add these datasets in the doctests scope."""
     ns = xdoctest_namespace
     ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
@@ -292,24 +292,21 @@ def add_example_file_paths(xdoctest_namespace):
 
     ns["path_to_shape_file"] = str(TD / "cmip5" / "southern_qc_geojson.json")
 
+    time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     ns["temperature_datasets"] = [
-        str(
-            TD
-            / "EnsembleStats"
-            / "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
         ),
-        str(
-            TD
-            / "EnsembleStats"
-            / "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
-        ),
-    ]
-    ns["precipitation_datasets"] = [
-        str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc"),
-        str(
-            TD
-            / "CanESM2_365day"
-            / "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc"
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
         ),
     ]
 

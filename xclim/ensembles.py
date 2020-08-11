@@ -529,26 +529,26 @@ def kmeans_reduce_ensemble(
     Examples
     --------
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
+    >>> from xclim.indicators.atmos import tg_mean, hot_spell_frequency
 
-    # Start with ensemble datasets for temperature and precipitation
+    # Start with ensemble datasets for temperature
     >>> ensTas = create_ensemble(temperature_datasets)
-    >>> ensPr = create_ensemble(precipitation_datasets)
 
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
-    # Total annual precipation
-    >>> HistPr = ensPr.pr.sel(time=slice('1981','2010')).sum(dim='time').mean(dim=['lat','lon'])
-    >>> FutPr = ensPr.pr.sel(time=slice('2071','2100')).sum(dim='time').mean(dim=['lat','lon'])
-
-    # Expressed in percent change
-    >>> dPr = 100*((FutPr / HistPr) - 1)
-
     # Average annual temperature
-    >>> HistTas = ensTas.tg_mean.sel(time=slice('1981','2010')).mean(dim=['time','lat','lon'])
-    >>> FutTas = ensTas.tg_mean.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])
-    >>> dTas = FutTas - HistTas
+    >>> tg = tg_mean(tas=ensTas.tas)
+    >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dtg = fut_tg - his_tg
+
+    # Hotspell frequency as second indicator
+    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dhs = fut_hs - his_hs
 
     # Create selection criteria xr.DataArray
-    >>> crit = xr.concat((dTas,dPr), dim='criteria')
+    >>> crit = xr.concat((dtg, dhs), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
@@ -720,7 +720,7 @@ def plot_rsqprofile(fig_data):
     --------
     >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
     >>> crit = xr.open_dataset(path_to_ensemble_file).data
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
     >>> plot_rsqprofile(fig_data)
     """
     rsq = fig_data["rsq"]
