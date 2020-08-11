@@ -75,8 +75,8 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble
-    >>> ens = create_ensemble(temperature_datasets)
+    >>> from xclim.ensembles import create_ensemble  # doctest: +SKIP
+    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
 
     Using multifile datasets:
     Simulation 1 is a list of .nc files (e.g. separated by time)
