@@ -13,8 +13,11 @@ Breaking changes
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
-* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
-* `Indicator.cf_attrs` is now a list of dictionaries. `Indicator.json` puts all the metadata attributes in the key "outputs" (a list of dicts). All variable metadata (names in `Indicator._cf_names`) might be strings or lists of strings when accessed as object attributes.
+* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no
+  longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
+* `Indicator.cf_attrs` is now a list of dictionaries. `Indicator.json` puts all the metadata attributes in the key "outputs" (a list of dicts).
+  All variable metadata (names in `Indicator._cf_names`) might be strings or lists of strings when accessed as object attributes.
+* Passing doctests are now strictly enforced as a build requirement in the Travis CI testing ensemble.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,6 +25,7 @@ New features and enhancements
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and tesdata.
 
 Bug fixes
 ~~~~~~~~~

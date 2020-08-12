@@ -96,10 +96,13 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import cold_spell_duration_index  # doctest: +SKIP
-    >>> tn10 = percentile_doy(historical_tasmin, per=.1)  # doctest: +SKIP
-    >>> cold_spell_duration_index(reference_tasmin, tn10)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy # doctest: +SKIP
+    >>> from xclim.indices import cold_spell_duration_index # doctest: +SKIP
+
+    >>> historical_tasmin = xr.open_dataset(path_to_historical_tasmin_file).tasmin # doctest: +SKIP
+    >>> reference_tasmin = xr.open_dataset(path_to_tasmin_file).tasmin # doctest: +SKIP
+    >>> tn10 = percentile_doy(historical_tasmin, per=.1) # doctest: +SKIP
+    >>> cold_spell_duration_index(reference_tasmin, tn10) # doctest: +SKIP
     """
     tn10 = convert_units_to(tn10, tasmin)
 
@@ -408,6 +411,7 @@ def fire_weather_indexes(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
+    # TODO: start_up_mode and shut_down_mode not implemented.
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     ws = convert_units_to(ws, "km/h")
@@ -490,6 +494,7 @@ def drought_code(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
+    # TODO: shut_down_mode not implemented.
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     if snd is not None:
@@ -803,10 +808,9 @@ def precip_accumulation(
     The following would compute for each grid cell of file `pr_day.nc` the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.indices import precip_accumulation  # doctest: +SKIP
-    >>> pr_day = xr.open_dataset('pr_day.nc').pr  # doctest: +SKIP
-    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")  # doctest: +SKIP
+    >>> from xclim.indices import precip_accumulation
+    >>> pr_day = xr.open_dataset(path_to_pr_file).pr
+    >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
     if phase in ["liquid", "solid"]:
         frz = convert_units_to("0 degC", tas)
@@ -914,11 +918,10 @@ def days_over_precip_thresh(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.indices import days_over_precip_thresh  # doctest: +SKIP
-    >>> pr = xr.open_dataset(path_to_pr_file).pr  # doctest: +SKIP
-    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)  # doctest: +SKIP
-    >>> r75p = days_over_precip_thresh(pr, p75)  # doctest: +SKIP
+    >>> from xclim.indices import days_over_precip_thresh
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
+    >>> r75p = days_over_precip_thresh(pr, p75)
     """
     per = convert_units_to(per, pr)
     thresh = convert_units_to(thresh, pr)
@@ -1010,12 +1013,11 @@ def tg90p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tg90p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
-    >>> hot_days = tg90p(tas, t90)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tg90p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t90 = percentile_doy(tas, per=0.9)
+    >>> hot_days = tg90p(tas, t90)
     """
     t90 = convert_units_to(t90, tas)
 
@@ -1056,12 +1058,11 @@ def tg10p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tg10p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
-    >>> cold_days = tg10p(tas, t10)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tg10p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t10 = percentile_doy(tas, per=0.1)
+    >>> cold_days = tg10p(tas, t10)
     """
     t10 = convert_units_to(t10, tas)
 
@@ -1102,12 +1103,11 @@ def tn90p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tn90p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
-    >>> hot_days = tn90p(tas, t90)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tn90p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t90 = percentile_doy(tas, per=0.9)
+    >>> hot_days = tn90p(tas, t90)
     """
     t90 = convert_units_to(t90, tasmin)
 
@@ -1148,12 +1148,11 @@ def tn10p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tn10p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
-    >>> cold_days = tn10p(tas, t10)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tn10p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t10 = percentile_doy(tas, per=0.1)
+    >>> cold_days = tn10p(tas, t10)
     """
     t10 = convert_units_to(t10, tasmin)
 
@@ -1194,12 +1193,11 @@ def tx90p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tx90p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t90 = percentile_doy(tas, per=0.9)  # doctest: +SKIP
-    >>> hot_days = tx90p(tas, t90)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tx90p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t90 = percentile_doy(tas, per=0.9)
+    >>> hot_days = tx90p(tas, t90)
     """
     t90 = convert_units_to(t90, tasmax)
 
@@ -1240,12 +1238,11 @@ def tx10p(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import tx10p  # doctest: +SKIP
-    >>> tas = xr.open_dataset("temperature_data.nc").tas  # doctest: +SKIP
-    >>> t10 = percentile_doy(tas, per=0.1)  # doctest: +SKIP
-    >>> cold_days = tx10p(tas, t10)  # doctest: +SKIP
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tx10p
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t10 = percentile_doy(tas, per=0.1)
+    >>> cold_days = tx10p(tas, t10)
     """
     t10 = convert_units_to(t10, tasmax)
 
