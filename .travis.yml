@@ -106,7 +106,7 @@ jobs:
           - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
           - conda install pip
-          - pip install -e .
+          - pip install -e .[dev]
       script:
           - py.test --cov=xclim
     - env:
@@ -130,7 +130,7 @@ jobs:
         - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
         - conda install pip
-        - pip install -e .
+        - pip install -e .[dev]
       script:
         - py.test --cov=xclim
   allow_failures:
