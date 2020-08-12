@@ -1322,19 +1322,19 @@ def tx_tn_days_above(
 
 @declare_units("days", tasmax="[temperature]", tx90="[temperature]")
 def warm_spell_duration_index(
-    tasmax: xarray.DataArray, tx90: float, window: int = 6, freq: str = "YS"
+    tasmax: xarray.DataArray, tx90: xarray.DataArray, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
-    percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
+    percentile. The 90th percentile should be computed for a 5-day moving window, centered on each calendar day in the
     1961-1990 period.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    tx90 : float
+    tx90 : xarray.DataArray
       90th percentile of daily maximum temperature [℃] or [K]
     window : int
       Minimum number of days with temperature above threshold to qualify as a warm spell.
