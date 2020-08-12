@@ -1347,6 +1347,13 @@ def warm_spell_duration_index(
       Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
       percentile [days].
 
+    Examples
+    --------
+    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
+    >>> from xclim.indices import warm_spell_duration_index  # doctest: +SKIP
+    >>> tx90 = percentile_doy(historical_tasmax, per=.9)  # doctest: +SKIP
+    >>> warm_spell_duration_index(reference_tasmax, tx90)  # doctest: +SKIP
+
     References
     ----------
     From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
