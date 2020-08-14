@@ -65,7 +65,7 @@ a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could 
 import re
 import warnings
 from collections import OrderedDict, defaultdict
-from inspect import signature
+from inspect import _empty, signature
 from typing import Mapping, Sequence, Union
 
 import numpy as np
@@ -88,6 +88,7 @@ from .units import convert_units_to, units
 
 # Indicators registry
 registry = {}
+_ind_registry = {}
 
 
 class Indicator:
@@ -193,6 +194,7 @@ class Indicator:
     keywords = ""
     references = ""
     notes = ""
+    parameters = None
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
@@ -211,6 +213,21 @@ class Indicator:
             if not getattr(cls, name):
                 # Set if neither the class attr is set nor the kwds attr
                 kwds.setdefault(name, value)
+
+        # The `compute` signature
+        kwds["_sig"] = signature(func)
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+        # Fill default values and annotation in parameter doc
+        params = kwds.get("parameters", cls.parameters)
+        for name, param in kwds["_sig"].parameters.items():
+            param_doc = params.setdefault(name, {"type": "", "description": ""})
+            param_doc["default"] = param.default
+            param_doc["annotation"] = param.annotation
+        for name in list(params.keys()):
+            if name not in kwds["_parameters"]:
+                params.pop(name)
+        kwds["parameters"] = params
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -280,12 +297,6 @@ class Indicator:
         self._missing = kls.execute
         if self.missing_options:
             kls.validate(**self.missing_options)
-
-        # The `compute` signature
-        self._sig = signature(self.compute)
-
-        # The input parameters' name
-        self._parameters = tuple(self._sig.parameters.keys())
 
         # Copy the docstring and signature
         self.__call__ = wraps(self.compute)(self.__call__)
@@ -519,15 +530,10 @@ class Indicator:
 
         out["notes"] = self.notes
 
-        out["parameters"] = str(
-            {
-                key: {
-                    "default": p.default if p.default != p.empty else None,
-                    "desc": "",
-                }
-                for (key, p) in self._sig.parameters.items()
-            }
-        )
+        out["parameters"] = self.parameters.copy()
+        for param in out["parameters"].values():
+            if param["default"] == _empty:
+                param["default"] = "none"
         return out
 
     @classmethod

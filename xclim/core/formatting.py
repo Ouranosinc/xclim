@@ -99,7 +99,7 @@ def parse_doc(doc):
 
     out = {}
 
-    sections = re.split(r"(\w+)\n\s+-{4,50}", doc)  # obj.__doc__.split('\n\n')
+    sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
         content = list(map(str.strip, intro.strip().split("\n\n")))
@@ -113,18 +113,29 @@ def parse_doc(doc):
         header, content = sections[i : i + 2]
 
         if header in ["Notes", "References"]:
-            out[header.lower()] = content.replace("\n    ", "\n")
+            out[header.lower()] = content.replace("\n    ", "\n").strip()
         elif header == "Parameters":
-            out["parameters"] = {
-                name: doc.strip()
-                for name, doc in re.findall(r"(\w*)\ :\ .*[\r\n]+([^\r\n]+)", content)
-            }
+            out["parameters"] = _parse_parameters(content)
         elif header == "Returns":
             match = re.search(r"xarray\.DataArray\s*(.*)", content)
             if match:
                 out["long_name"] = match.groups()[0]
 
     return out
+
+
+def _parse_parameters(section):
+    curr_key = None
+    params = {}
+    for line in section.split("\n"):
+        if line.strip():
+            if line.startswith(" " * 6):  # description
+                params[curr_key]["description"] += line.strip() + " "
+            elif line.startswith(" " * 4):  # param title
+                name, annot = line.split(":", maxsplit=1)
+                curr_key = name.strip()
+                params[curr_key] = {"description": ""}
+    return params
 
 
 def merge_attributes(

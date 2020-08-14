@@ -3,6 +3,7 @@
 xclim command line interface module
 """
 import inspect
+import warnings
 
 import click
 import xarray as xr
@@ -17,35 +18,15 @@ xcmodules = {
 }
 
 
-def _isusable(indicator):
-    return isinstance(indicator, xc.core.indicator.Indicator) and all(
-        [
-            param.annotation is not inspect._empty
-            for param in indicator._sig.parameters.values()
-            if param.kind != param.VAR_KEYWORD
-        ]
-    )
-
-
 def _get_indicator(indname):
-    if "." in indname:
-        modname, indname = indname.split(".")
-    else:
-        raise click.BadArgumentUsage(
-            f"Indicator name must include the module name (ex: atmos.tg_mean) (got {indname})"
-        )
+    try:
+        indcls = xc.core.indicators.registry[indname]
+    except KeyError:
+        raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
 
-    if modname not in xcmodules or indname not in xcmodules[modname].__dict__:
-        raise click.BadArgumentUsage(
-            f"Indicator '{indname}' or module '{modname}' not found in xclim."
-        )
-
-    indicator = xcmodules[modname].__dict__[indname]
-
-    if not _isusable(xcmodules[modname].__dict__[indname]):
-        raise click.BadArgumentUsage(
-            f"Indicator '{indname}' exists but is not yet usable through the command line."
-        )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        indicator = indcls()
 
     return indicator
 
@@ -91,9 +72,7 @@ def _process_indicator(indicator, ctx, **params):
     from variables in the input one.
     Cmputation is not triggered here if dask is enabled.
     """
-    click.echo(
-        f"Processing : {indicator.format({'long_name': indicator.long_name}, params)['long_name']}"
-    )
+    click.echo(f"Processing : {indicator.identifier}")
     dsin = _get_input(ctx)
     dsout = _get_output(ctx)
 
@@ -104,7 +83,7 @@ def _process_indicator(indicator, ctx, **params):
         # A DataArray is expected, it has to come from the input dataset
         # All other parameters are passed as is.
         # TODO:  Find a better way to test this.
-        elif indicator._sig.parameters[key].annotation is xr.DataArray:
+        elif indicator.parameters[key]["annotation"] is xr.DataArray:
 
             if key == "tas" and val == "tas" and key not in dsin.data_vars:
                 # Special case for tas.
@@ -130,8 +109,11 @@ def _process_indicator(indicator, ctx, **params):
                         f"You should provide a name with --{key}",
                         ctx,
                     )
-    var = indicator(**params)
-    dsout = dsout.assign({var.name: var})
+    out = indicator(**params)
+    if isinstance(out, tuple):
+        dsout = dsout.assign(**{var.name: var for var in out})
+    else:
+        dsout = dsout.assign({out.name: out})
     ctx.obj["ds_out"] = dsout
 
 
@@ -139,19 +121,19 @@ def _create_command(indname):
     """Generate a Click.Command from an xclim Indicator."""
     indicator = _get_indicator(indname)
     params = []
-    for name, param in indicator._sig.parameters.items():
-        if param.kind != param.VAR_KEYWORD:
-            params.append(
-                click.Option(
-                    param_decls=[f"--{name}"],
-                    default=name
-                    if param.default is inspect._empty
-                    else (param.default or "None"),
-                    show_default=True,
-                    help=indicator._parameters_doc.get(name),
-                    metavar="VAR_NAME" if param.annotation is xr.DataArray else "TEXT",
-                )
+    for name, param in indicator.parameters.items():
+        # if param.kind != param.VAR_KEYWORD:
+        params.append(
+            click.Option(
+                param_decls=[f"--{name}"],
+                default=param["default"]
+                if param["default"] != inspect._empty
+                else None,
+                show_default=True,
+                help=param["description"],
+                metavar="VAR_NAME" if param["annotation"] is xr.DataArray else "TEXT",
             )
+        )
 
     @click.pass_context
     def _process(ctx, **kwargs):
@@ -162,43 +144,30 @@ def _create_command(indname):
         callback=_process,
         params=params,
         help=indicator.abstract,
-        short_help=indicator.long_name,
+        short_help=indicator.title,
     )
 
 
 @click.command(short_help="List indicators.")
-@click.argument("module", required=False, nargs=-1)
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def indices(module, info):
-    """List all indicators in MODULE
-
-    If MODULE is ommitted, lists everything.
-    """
-    if len(module) == 0:
-        module = "all"
+def indices(info):
+    """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    for xcmod in [xc.atmos, xc.land, xc.seaIce]:
-        modname = xcmod.__name__.split(".")[-1]
-        if module == "all" or modname in module:
-            with formatter.section(
-                click.style("Indicators in module ", fg="blue")
-                + click.style(f"{modname}", fg="yellow")
-            ):
-                rows = []
-                for name, ind in xcmod.__dict__.items():
-                    if _isusable(ind):
-                        left = click.style(name, fg="yellow")
-                        if ind.var_name != name:
-                            left += f" ({ind.var_name})"
-                        right = ind.long_name
-                        if info:
-                            right += "\n" + ind.abstract
-                        rows.append((left, right))
-                print(rows)
-                formatter.write_dl(rows)
+    rows = []
+    for name, indcls in xc.core.indicator.registry.items():
+        left = click.style(name.lower(), fg="yellow")
+        right = ", ".join([var["long_name"] for var in indcls.cf_attrs])
+        if indcls.cf_attrs[0]["var_name"] != name.lower():
+            right += (
+                " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
+            )
+        if info:
+            right += "\n" + indcls.abstract
+        rows.append((left, right))
+    formatter.write_dl(rows)
     click.echo(formatter.getvalue())
 
 
@@ -206,36 +175,39 @@ def indices(module, info):
 @click.argument("indicator", nargs=-1)
 @click.pass_context
 def info(ctx, indicator):
-    """Gives information about INDICATOR.
-
-    INDICATOR must include its module (ex: atmos.tg_mean)
-    """
+    """Gives information about INDICATOR."""
     for indname in indicator:
         ind = _get_indicator(indname)
         command = _create_command(indname)
-
         formatter = click.HelpFormatter()
         with formatter.section(
             click.style("Indicator", fg="blue")
             + click.style(f" {indname}", fg="yellow")
         ):
-            for attrs in [
-                "identifier",
-                "var_name",
-                "title",
-                "long_name",
-                "units",
-                "cell_methods",
-                "abstract",
-                "description",
-            ]:
-                formatter.write_text(
-                    click.style(f"{attrs}: ", fg="blue") + f"{getattr(ind, attrs)}"
-                )
+            data = ind.json()
+            data.pop("parameters")
+            _format_dict(data, formatter, key_fg="blue", spaces=2)
 
         command.format_options(ctx, formatter)
 
         click.echo(formatter.getvalue())
+
+
+def _format_dict(data, formatter, key_fg="blue", spaces=2):
+    for attr, val in data.items():
+        if isinstance(val, list):
+            for isub, sub in enumerate(val):
+                formatter.write_text(
+                    click.style(" " * spaces + f"{attr} (#{isub})", fg=key_fg)
+                )
+                _format_dict(sub, formatter, key_fg=key_fg, spaces=spaces + 2)
+        elif isinstance(val, dict):
+            formatter.write_text(click.style(" " * spaces + f"{attr}:", fg=key_fg))
+            _format_dict(val, formatter, key_fg=key_fg, spaces=spaces + 2)
+        else:
+            formatter.write_text(
+                click.style(" " * spaces + attr + " :", fg=key_fg) + " " + str(val)
+            )
 
 
 class XclimCli(click.MultiCommand):
