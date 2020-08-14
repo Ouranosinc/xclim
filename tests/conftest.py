@@ -5,7 +5,10 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import calendars
+import xclim
+from xclim.core.calendar import max_doy
+
+TD = Path(__file__).parent / "testdata"
 
 
 @pytest.fixture
@@ -120,7 +123,10 @@ def q_series():
             coords=[coords],
             dims="time",
             name="q",
-            attrs={"standard_name": "dis", "units": "m3 s-1"},
+            attrs={
+                "standard_name": "water_volume_transport_in_river_channel",
+                "units": "m3 s-1",
+            },
         )
 
     return _q_series
@@ -144,14 +150,17 @@ def ndq_series():
         np.random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time, "x": cx, "y": cy},
-        attrs={"units": "m^3 s-1", "standard_name": "streamflow"},
+        attrs={
+            "units": "m^3 s-1",
+            "standard_name": "water_volume_transport_in_river_channel",
+        },
     )
 
 
 @pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
-        n = calendars[calendar]
+        n = max_doy[calendar]
         if len(values) != n:
             raise ValueError(
                 "Values must be same length as number of days in calendar."
@@ -185,8 +194,11 @@ def areacella():
         data=area,
         dims=("lat", "lon"),
         coords={"lon": lon, "lat": lat},
-        attrs={"r": r, "units": "m^2"},
+        attrs={"r": r, "units": "m2", "standard_name": "cell_area"},
     )
+
+
+areacello = areacella
 
 
 @pytest.fixture
@@ -243,7 +255,81 @@ def ps_series():
             coords=[coords],
             dims="time",
             name="ps",
-            attrs={"standard_name": "air_pressure", "units": "Pa",},
+            attrs={"standard_name": "air_pressure", "units": "Pa"},
         )
 
     return _ps_series
+
+
+@pytest.fixture(autouse=True)
+def add_imports(xdoctest_namespace):
+    """Add these imports into the doctests scope."""
+    ns = xdoctest_namespace
+    ns["np"] = np
+    ns["xr"] = xr
+    ns["xclim"] = xclim
+
+
+@pytest.fixture(autouse=True)
+def add_example_file_paths(xdoctest_namespace, tas_series):
+    """Add these datasets in the doctests scope."""
+    ns = xdoctest_namespace
+    ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
+
+    ns["path_to_tasmax_file"] = str(
+        TD / "NRCANdaily" / "nrcan_canada_daily_tasmax_1990.nc"
+    )
+
+    ns["path_to_tasmin_file"] = str(
+        TD / "NRCANdaily" / "nrcan_canada_daily_tasmin_1990.nc"
+    )
+
+    ns["path_to_tas_file"] = str(
+        TD / "cmip3" / "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
+    )
+
+    ns["path_to_multi_shape_file"] = str(TD / "cmip5" / "multi_regions.json")
+
+    ns["path_to_shape_file"] = str(TD / "cmip5" / "southern_qc_geojson.json")
+
+    time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
+    ns["temperature_datasets"] = [
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
+        ),
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
+        ),
+    ]
+
+    ns["path_to_ensemble_file"] = str(
+        TD / "EnsembleReduce" / "TestEnsReduceCriteria.nc"
+    )
+
+
+@pytest.fixture(autouse=True)
+def add_example_dataarray(xdoctest_namespace, tas_series):
+    ns = xdoctest_namespace
+    ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
+
+
+@pytest.fixture(autouse=True)
+def is_matplotlib_installed(xdoctest_namespace):
+    def _is_matplotlib_installed():
+        try:
+            import matplotlib
+
+            return
+        except ImportError:
+            return pytest.skip("This doctest requires matplotlib to be installed.")
+
+    ns = xdoctest_namespace
+    ns["is_matplotlib_installed"] = _is_matplotlib_installed

@@ -1,7 +1,8 @@
+"""Atmospheric conversion definitions."""
+
 from xclim import indices
 from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
-
 
 __all__ = [
     "tg",
@@ -14,10 +15,9 @@ __all__ = [
 
 
 class Converter(Indicator):
-    """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)"""
+    """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
-    def validate(self, da):
-        """Input validation."""
+    missing = "skip"
 
 
 tg = Converter(
@@ -27,7 +27,7 @@ tg = Converter(
     standard_name="air_temperature",
     long_name="Daily mean temperature",
     description="Estimated mean temperature from maximum and minimum temperatures",
-    cell_methods="",
+    cell_methods="time: mean within days",
     compute=indices.tas,
 )
 
@@ -50,7 +50,7 @@ saturation_vapor_pressure = Converter(
     units="Pa",
     long_name="Saturation vapor pressure",
     description=lambda **kws: (
-        "The saturation vapor pressure was calculated from the temperature "
+        "The saturation vapor pressure was calculated from a temperature "
         "according to the {method} method."
     )
     + (
@@ -63,18 +63,23 @@ saturation_vapor_pressure = Converter(
 
 
 relative_humidity_from_dewpoint = Converter(
-    identifier="rh",
+    identifier="rh_fromdewpoint",
     _nvar=2,
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
-    description="Computed from temperature and dew point temperature.",
+    description=lambda **kws: (
+        "Computed from temperature, and dew point temperature through the "
+        "saturation vapor pressures, which were calculated "
+        "according to the {method} method."
+    )
+    + (
+        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        if kws["ice_thresh"] is not None
+        else ""
+    ),
     compute=wrapped_partial(
-        indices.relative_humidity,
-        huss=None,
-        ps=None,
-        method="dewpoint",
-        invalid_values="mask",
+        indices.relative_humidity, huss=None, ps=None, invalid_values="mask",
     ),
 )
 

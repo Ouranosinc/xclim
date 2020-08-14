@@ -1,5 +1,5 @@
 import numpy as np
-import pytest
+import xarray as xr
 
 from xclim import land
 
@@ -7,6 +7,7 @@ from xclim import land
 def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
     assert out.attrs["units"] == ""
+    assert isinstance(out, xr.DataArray)
 
 
 class Test_FA:
@@ -33,6 +34,13 @@ class Test_FA:
             q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
         )
         assert np.isnan(out.values[:, 0, 0]).all()
+
+    def test_too_short(self, q_series):
+        q = q_series(np.random.rand(10))
+        out = land.freq_analysis(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        assert np.isnan(out.values[0])
 
 
 class TestStats:

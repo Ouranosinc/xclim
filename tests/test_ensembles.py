@@ -122,7 +122,8 @@ class TestEnsembleStats:
         ens = ensembles.create_ensemble(self.nc_files_simple)
         if transpose:
             ens = ens.transpose()
-        out1 = ensembles.ensemble_percentiles(ens)
+
+        out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_equal(
             np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 10),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
@@ -137,27 +138,31 @@ class TestEnsembleStats:
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
-        out1 = ensembles.ensemble_percentiles(ens, values=(25, 75))
-        assert np.all(out1["tg_mean_p75"] > out1["tg_mean_p25"])
+
+        out2 = ensembles.ensemble_percentiles(ens, values=(25, 75))
+        assert np.all(out2["tg_mean_p75"] > out2["tg_mean_p25"])
         assert "Computation of the percentiles on" in out1.attrs["history"]
+
+        out3 = ensembles.ensemble_percentiles(ens, split=False)
+        xr.testing.assert_equal(
+            out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
+        )
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
     def test_calc_perc_dask(self, keep_chunk_size):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         out2 = ensembles.ensemble_percentiles(
-            ens.chunk({"time": 2}), values=(10, 50, 90), keep_chunk_size=keep_chunk_size
+            ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
-        out1 = ensembles.ensemble_percentiles(ens.load())
-        np.testing.assert_array_equal(out1["tg_mean_p10"], out2["tg_mean_p10"])
-        np.testing.assert_array_equal(out1["tg_mean_p50"], out2["tg_mean_p50"])
-        np.testing.assert_array_equal(out1["tg_mean_p90"], out2["tg_mean_p90"])
+        out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
+        np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
     def test_calc_perc_nans(self):
         ens = ensembles.create_ensemble(self.nc_files_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
-        out1 = ensembles.ensemble_percentiles(ens)
+        out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_equal(
             np.percentile(ens["tg_mean"][:, 0, 5, 5], 10), np.nan
         )
@@ -335,7 +340,8 @@ class TestEnsembleReduction:
             make_graph=False,
             variable_weights=var_weights,
         )
-        assert ids == [4, 10, 12, 13, 16]
+        # Results here may change according to sklearn version, hence the *isin* intead of ==
+        assert all(np.isin([4, 12, 13, 16], ids))
         assert len(ids) == 5
 
     def test_kmeans_modelweights(self):
@@ -397,3 +403,58 @@ class TestEnsembleReduction:
         )
         assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
         assert len(ids) == 10
+
+    @pytest.mark.parametrize(
+        "crit,num_select,expected",
+        [
+            ([0, 1], 5, [16, 19, 20, 15, 9]),
+            ([0, 1], 4, [16, 19, 20, 15]),
+            (np.arange(6), 8, [23, 19, 10, 14, 11, 8, 20, 3]),
+            ([4, 5], 4, [15, 10, 14, 1]),
+            ([4, 5], 1, [15]),
+        ],
+    )
+    def test_kkz_simple(self, crit, num_select, expected):
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=crit)
+
+        selected = ensembles.kkz_reduce_ensemble(data, num_select)
+        assert selected == expected
+
+    def test_kkz_standardize(self):
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=[1, 3, 5])
+
+        sel_std = ensembles.kkz_reduce_ensemble(data, 4, standardize=True)
+        sel_no = ensembles.kkz_reduce_ensemble(data, 4, standardize=False)
+        assert sel_std == [23, 10, 19, 14]
+        assert sel_no == [23, 1, 14, 10]
+
+    def test_kkz_change_metric(self):
+        # This test uses stupid values but is meant to test is kwargs are passed and if dist_method is used.
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data.isel(criteria=[1, 3, 5])
+
+        sel_euc = ensembles.kkz_reduce_ensemble(data, 4, dist_method="euclidean")
+        sel_mah = ensembles.kkz_reduce_ensemble(
+            data, 4, dist_method="mahalanobis", VI=np.arange(24)
+        )
+        assert sel_euc == [23, 10, 19, 14]
+        assert sel_mah == [5, 3, 4, 0]
+
+    def test_standardize_seuclidean(self):
+        # This test the odd choice of standardizing data for a standardized distance metric
+        ens = xr.open_dataset(self.nc_file)
+        data = ens.data
+        for n in np.arange(1, len(data)):
+            sel1 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=True
+            )
+            sel2 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="seuclidean", standardize=False
+            )
+            sel3 = ensembles.kkz_reduce_ensemble(
+                data, n, dist_method="euclidean", standardize=True
+            )
+            assert sel1 == sel2
+            assert sel1 == sel3

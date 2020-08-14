@@ -1,11 +1,17 @@
+version: 2
+
+sphinx:
+  configuration: docs/conf.py
+
+formats: []
+
 build:
   image: latest
 
 python:
   version: 3.6
-  pip_install: true
-  extra_requirements:
-      - docs
-
-formats:
-    - none
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

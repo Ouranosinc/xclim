@@ -19,10 +19,12 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/usage
    notebooks/index
    indicators
+   checks
    notebooks/units
    internationalization
    notebooks/cli
    icclim
+   sdba
    api
    contributing
    authors

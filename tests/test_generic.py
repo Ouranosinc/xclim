@@ -59,6 +59,11 @@ class TestFA(object):
         out = generic.fit(da, "lognorm").values
         assert np.isnan(out[:, 0, 0]).all()
 
+    def test_dims_order(self):
+        da = self.da.transpose()
+        p = generic.fit(da)
+        assert p.dims[-1] == "dparams"
+
 
 class TestFrequencyAnalysis:
     def test_simple(self, ndq_series):
@@ -186,3 +191,17 @@ class TestDailyDownsampler:
                 freq
             ]
             assert np.allclose(x2.values, target)
+
+
+def test_doyminmax(q_series):
+    a = np.ones(365)
+    a[9] = 2
+    a[19] = -2
+    a[39] = 4
+    a[49] = -4
+    q = q_series(a)
+    dmx = generic.doymax(q)
+    dmn = generic.doymin(q)
+    assert dmx.values == [40]
+    assert dmn.values == [50]
+    assert dmx.units == ""

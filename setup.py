@@ -3,8 +3,7 @@
 """The setup script."""
 import os
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 NAME = "xclim"
 DESCRIPTION = "Derived climate variables built with xarray."
@@ -12,7 +11,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.15.4-beta"
+VERSION = "0.18.4-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -23,7 +22,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.14.1",
+    "xarray>=0.16",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
@@ -33,7 +32,7 @@ requirements = [
     "geojson>=2.5.0",
     "shapely>=1.6",
     "geopandas>=0.7",
-    "dask[complete]>=2.6",
+    "dask[array]>=2.6",
     "pyproj>=2.5",
     "pint>=0.9",
     "bottleneck~=1.3.1",
@@ -59,6 +58,8 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "nc-time-axis",
+    "distributed>=2.0",
 ]
 
 dev_requirements = []

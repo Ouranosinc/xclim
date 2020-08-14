@@ -15,6 +15,8 @@
 import os
 import sys
 
+import xarray as xr
+
 import xclim
 
 # If extensions (or modules to document with autodoc) are in another
@@ -25,18 +27,22 @@ import xclim
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
+# Hack to be able to parse sdba
+# sdba.__init__ fails if xarray doesn't have polyval as a test for the version.
+xr.__dict__["polyval"] = None
+
 
 def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of xclim.indicators.Indicator.
+    """For all modules or classes listed, return the children that are instances of registered Indicator classes.
 
     modules : sequence
       Sequence of modules to inspect.
     """
-    from xclim.core.indicator import Indicator, Indicator2D
+    from xclim.core.indicator import registry
 
     out = {}
     for key, val in module.__dict__.items():
-        if isinstance(val, (Indicator, Indicator2D)):
+        if hasattr(val, "identifier") and val.identifier.upper() in registry:
             out[key] = val
 
     return out
@@ -50,12 +56,12 @@ def _indicator_table(realm):
     table = {}
     for indname, ind in inds.items():
         # Apply default values
-        args = {
-            name: p.default if p.default != inspect._empty else f"<{name}>"
-            for (name, p) in ind._sig.parameters.items()
-        }
+        # args = {
+        #     name: p.default if p.default != inspect._empty else f"<{name}>"
+        #     for (name, p) in ind._sig.parameters.items()
+        # }
         try:
-            table[indname] = ind.json(args)
+            table[indname] = ind.json()  # args)
         except KeyError as err:
             print(f"{ind.identifier} could not be documented.({err})")
         else:
@@ -92,7 +98,7 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-nbsphinx_execute = "always"
+nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 

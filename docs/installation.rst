@@ -67,11 +67,11 @@ Once you have a copy of the source, you can install it with:
 
     $ python setup.py install
 
-Alternatively, you can also install a local copy via pip:
+Alternatively, you can also install a local development copy via pip:
 
 .. code-block:: console
 
-    $ pip install .
+    $ pip install -e .[dev]
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
@@ -86,4 +86,4 @@ To create a conda development environment including all xclim dependencies, ente
 
     $ conda create -n my_xclim_env python=3.6 --file=requirements_dev.txt
     $ conda activate my_xclim_env
-    $ python setup.py install
+    $ pip install .[dev]

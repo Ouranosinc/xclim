@@ -606,7 +606,6 @@ class TestSubsetShape:
         # check subsetted values against original
         imask = np.where(~np.isnan(sub[vari].isel(time=0)))
         if len(imask[0]) > 70:
-            np.random.RandomState = 42
             ii = np.random.randint(0, len(imask[0]), 70)
         else:
             ii = np.arange(0, len(imask[0]))
@@ -768,6 +767,13 @@ class TestSubsetShape:
         vals, counts = np.unique(mask.values[mask.notnull()], return_counts=True)
         assert all(vals == [0, 1, 2])
         assert all(counts == [58, 250, 22])
+
+    def test_subset_multiregions(self):
+        ds = xr.open_dataset(self.nc_file)
+        regions = gpd.read_file(self.multi_regions_geojson)
+        regions.set_index("id")
+        ds_sub = subset.subset_shape(ds, shape=regions)
+        assert ds_sub.notnull().sum() == 58 + 250 + 22
 
 
 class TestDistance:

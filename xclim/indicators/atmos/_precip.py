@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Precipitation indicator definitions."""
 from inspect import _empty
 
 from xclim import indices
-from xclim.core.indicator import Indicator
-from xclim.core.indicator import Indicator2D
+from xclim.core.indicator import Daily, Daily2D
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -19,14 +19,16 @@ __all__ = [
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
     "drought_code",
+    "fire_weather_indexes",
 ]
 
 
-class Pr(Indicator):
+class Pr(Daily):
     context = "hydro"
 
 
-class PrTas(Indicator2D):
+class PrTas(Daily2D):
+    _nvar = 2
     context = "hydro"
 
 
@@ -51,7 +53,7 @@ max_1day_precipitation_amount = Pr(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="maximum 1-day total precipitation",
     description="{freq} maximum 1-day total precipitation",
-    cellmethods="time: sum within days time: maximum over days",
+    cell_methods="time: sum within days time: maximum over days",
     compute=indices.max_1day_precipitation_amount,
 )
 
@@ -62,7 +64,7 @@ max_n_day_precipitation_amount = Pr(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="maximum {window}-day total precipitation",
     description="{freq} maximum {window}-day total precipitation.",
-    cellmethods="time: sum within days time: maximum over days",
+    cell_methods="time: sum within days time: maximum over days",
     compute=indices.max_n_day_precipitation_amount,
 )
 
@@ -92,7 +94,7 @@ maximum_consecutive_wet_days = Pr(
     standard_name="number_of_days_with_lwe_thickness_of_"
     "precipitation_amount_at_or_above_threshold",
     long_name="Maximum consecutive wet days (Precip >= {thresh})",
-    description="{freq} maximum number of days with daily "
+    description="{freq} maximum number of consecutive days with daily "
     "precipitation over {thresh}.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.maximum_consecutive_wet_days,
@@ -104,7 +106,7 @@ maximum_consecutive_dry_days = Pr(
     standard_name="number_of_days_with_lwe_thickness_of_"
     "precipitation_amount_below_threshold",
     long_name="Maximum consecutive dry days (Precip < {thresh})",
-    description="{freq} maximum number of days with daily "
+    description="{freq} maximum number of consecutive days with daily "
     "precipitation below {thresh}.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.maximum_consecutive_dry_days,
@@ -114,9 +116,10 @@ daily_pr_intensity = Pr(
     identifier="sdii",
     units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Average precipitation during Wet Days (SDII)",
+    long_name="Average precipitation during wet days (SDII)",
     description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
-    "for days with daily precipitation over {thresh}.",
+    "for days with daily precipitation over {thresh}. This indicator is also known as the 'Simple Daily "
+    "Intensity Index' (SDII).",
     cell_methods="",
     compute=indices.daily_pr_intensity,
 )
@@ -162,4 +165,38 @@ drought_code = PrTas(
     long_name="Drought Code",
     description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
     compute=indices.drought_code,
+    missing="skip",
+)
+
+fire_weather_indexes = Daily(
+    _nvar=4,
+    identifier="FWI",
+    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
+    standard_name=[
+        "drought_code",
+        "duff_moisture_code",
+        "fine_fuel_moisture_code",
+        "initial_spread_index",
+        "buildup_index",
+        "fire_weather_index",
+    ],
+    long_name=[
+        "Drought Code",
+        "Duff Moisture Code",
+        "Fine Fuel Moisture Code",
+        "Initial Spread Index",
+        "Buildup Index",
+        "Fire Weather Index",
+    ],
+    description=[
+        "Numeric rating of the average moisture content of deep, compact organic layers. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels. Computed with start up method {start_up_mode}",
+        "Numeric rating of the expected rate of fire spread.",
+        "Numeric rating of the total amount of fuel available for combustion.",
+        "Numeric rating of fire intensity.",
+    ],
+    units="",
+    compute=indices.fire_weather_indexes,
+    missing="skip",
 )
