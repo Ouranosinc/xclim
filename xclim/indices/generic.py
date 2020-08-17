@@ -14,6 +14,21 @@ import dask.array
 import numpy as np
 import xarray as xr
 
+# Map the scipy distribution name to the lmoments3 name. Distributions with mismatched parameters are excluded.
+_lm3_dist_map = {
+    "expon": "exp",
+    "gamma": "gam",
+    "genextreme": "gev",
+    # "genlogistic": "glo",
+    # "gennorm": "gno",
+    "genpareto": "gpa",
+    "gumbel_r": "gum",
+    # "kappa4": "kap",
+    "norm": "nor",
+    "pearson3": "pe3",
+    "weibull_min": "wei",
+}
+
 
 def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
@@ -153,6 +168,83 @@ def fit(da: xr.DataArray, dist: str = "norm"):
         "description"
     ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
     out.attrs["estimator"] = "Maximum likelihood"
+    out.attrs["scipy_dist"] = dist
+    out.attrs["units"] = ""
+
+    return out
+
+
+def pwm_fit(da: xr.DataArray, dist: str = "norm"):
+    """Fit an array to a univariate distribution along the time dimension using Probability Weighted Moments.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Time series to be fitted along the time dimension.
+
+    Returns
+    -------
+    xr.DataArray
+      An array of distribution parameters fitted using the method of Maximum Likelihood.
+    dist : {'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'}
+      Name of the univariate distribution. Subset of scipy distributions supported by the `lmoments3` package.
+
+    Notes
+    -----
+    Probability Weighted Moments are also known as L-moments. This function uses an implementation from the
+    `lmoments3` package, which is not actively maintained. Ideally, parameter estimation from probability
+    weighted moments would be implemented directly into Scipy.
+
+    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
+    still contains NaNs, the distribution parameters will be returned as NaNs.
+    """
+    import dask
+
+    dc = get_dist(dist)
+    lm3dc = get_lm3_dist(dist)
+
+    shape_params = [] if dc.shapes is None else dc.shapes.split(",")
+    dist_params = shape_params + ["loc", "scale"]
+
+    # Fit the parameters.
+    # This would also be the place to impose constraints on the series minimum length if needed.
+    def fitfunc(arr):
+        """Fit distribution parameters."""
+        x = np.ma.masked_invalid(arr).compressed()
+
+        # Return NaNs if array is empty.
+        if len(x) <= 1:
+            return [np.nan] * len(dist_params)
+
+        # Fill with NaNs if one of the parameters is NaN
+        params = list(lm3dc.lmom_fit(x).values())
+        if np.isnan(params).any():
+            params[:] = np.nan
+
+        return params
+
+    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
+    data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
+
+    # Count the number of values used for the fit.
+    # n = da.notnull().count(dim='time')
+
+    # Coordinates for the distribution parameters
+    coords = dict(da.coords.items())
+    coords.pop("time")
+    coords["dparams"] = dist_params
+
+    # Dimensions for the distribution parameters
+    dims = [d if d != "time" else "dparams" for d in da.dims]
+
+    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out.attrs = da.attrs
+    out.attrs["original_name"] = da.attrs.get("standard_name", "")
+    out.attrs["original_units"] = da.attrs.get("units", "")
+    out.attrs[
+        "description"
+    ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
+    out.attrs["estimator"] = "Probability Weighted Moments"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
 
@@ -338,6 +430,19 @@ def get_dist(dist):
         e = f"Statistical distribution `{dist}` is not found in scipy.stats."
         raise ValueError(e)
     return dc
+
+
+def get_lm3_dist(dist):
+    """Return a distribution object from lmoments3.distr"""
+
+    # The lmoments3 library has to be installed from master.
+    # pip install git+https://github.com/OpenHydrology/lmoments3.git
+    import lmoments3.distr
+
+    if dist not in _lm3_dist_map:
+        raise ValueError(f"The {dist} distribution is not supported.")
+
+    return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
