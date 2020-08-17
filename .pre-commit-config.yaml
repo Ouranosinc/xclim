@@ -2,6 +2,17 @@ default_language_version:
     python: python3.6
 
 repos:
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.7.2
+    hooks:
+    -   id: pyupgrade
+        language_version: python3
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.3.7
+    hooks:
+    -   id: nbstripout
+        language_version: python3
+        files: ".ipynb"
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
@@ -36,23 +47,12 @@ repos:
     -   id: isort
         language_version: python3
         args: ['--profile', 'black']
-#-   repo: https://github.com/pycqa/pydocstyle
-#    rev: 5.0.2
-#    hooks:
-#    -   id: pydocstyle
-#        args: ["--conventions=numpy"]
--   repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 5.0.2
     hooks:
-    -   id: pyupgrade
-        language_version: python3
+    -   id: pydocstyle
+        args: ['--convention=numpy', '--match="(?!test_).*\.py"']
 -   repo: meta
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
--   repo: https://github.com/kynan/nbstripout
-    rev: 0.3.7
-    hooks:
-    -   id: nbstripout
-        language_version: python3
-        files: ".ipynb"

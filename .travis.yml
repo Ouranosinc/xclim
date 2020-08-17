@@ -103,10 +103,10 @@ jobs:
           - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
           - source activate xclim
           - conda env update -f environment.yml
-          - conda install pytest coveralls pytest-cov
+          - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
           - conda install pip
-          - pip install -e .
+          - pip install -e .[dev]
       script:
           - py.test --cov=xclim
     - env:
@@ -127,28 +127,12 @@ jobs:
         - conda create -n xclim -c conda-forge python=$DESIRED_PYTHON
         - source activate xclim
         - conda env update -f environment.yml
-        - conda install pytest coveralls pytest-cov
+        - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
         - conda install pip
-        - pip install -e .
+        - pip install -e .[dev]
       script:
         - py.test --cov=xclim
-#    - env:
-#        - TOXENV=py37-windows
-#        - PROJ_DIR=/c/OSGeo4W64
-#        - GDAL_VERSION=3.0.0
-#        - GDAL_DATA=/c/OSGeo4W64/share/gdal
-#      name: "Python3.7 (Windows)"
-#      os: windows
-#      language: shell
-#      before_install:
-#        - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-#        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
-#        - choco install python --version=3.7.5
-#        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-#        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
-#        - printenv
-#        - python -m pip install --upgrade pip wheel
   allow_failures:
     - env: TOXENV=py38-anaconda
     - env: TOXENV=py38-macOS
@@ -158,11 +142,6 @@ jobs:
       - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
     - env: TOXENV=py36-xarray
     - env: TOXENV=py36-bottleneck
-#    - env:
-#      - TOXENV=py37-windows
-#      - PROJ_DIR=/c/OSGeo4W64
-#      - GDAL_VERSION=3.0.0
-#      - GDAL_DATA=/c/OSGeo4W64/share/gdal
 
 before_install:
     - printenv

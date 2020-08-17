@@ -18,6 +18,7 @@ __all__ = [
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
     "drought_code",
+    "fire_weather_indexes",
 ]
 
 
@@ -159,4 +160,38 @@ drought_code = PrTas(
     long_name="Drought Code",
     description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
     compute=indices.drought_code,
+    missing="skip",
+)
+
+fire_weather_indexes = Daily(
+    _nvar=4,
+    identifier="FWI",
+    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
+    standard_name=[
+        "drought_code",
+        "duff_moisture_code",
+        "fine_fuel_moisture_code",
+        "initial_spread_index",
+        "buildup_index",
+        "fire_weather_index",
+    ],
+    long_name=[
+        "Drought Code",
+        "Duff Moisture Code",
+        "Fine Fuel Moisture Code",
+        "Initial Spread Index",
+        "Buildup Index",
+        "Fire Weather Index",
+    ],
+    description=[
+        "Numeric rating of the average moisture content of deep, compact organic layers. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels. Computed with start up method {start_up_mode}",
+        "Numeric rating of the expected rate of fire spread.",
+        "Numeric rating of the total amount of fuel available for combustion.",
+        "Numeric rating of fire intensity.",
+    ],
+    units="",
+    compute=indices.fire_weather_indexes,
+    missing="skip",
 )

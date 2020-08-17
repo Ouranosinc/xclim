@@ -262,18 +262,18 @@ def ps_series():
 
 
 @pytest.fixture(autouse=True)
-def add_imports(doctest_namespace):
+def add_imports(xdoctest_namespace):
     """Add these imports into the doctests scope."""
-    ns = doctest_namespace
+    ns = xdoctest_namespace
     ns["np"] = np
     ns["xr"] = xr
     ns["xclim"] = xclim
 
 
 @pytest.fixture(autouse=True)
-def add_example_file_paths(doctest_namespace):
+def add_example_file_paths(xdoctest_namespace, tas_series):
     """Add these datasets in the doctests scope."""
-    ns = doctest_namespace
+    ns = xdoctest_namespace
     ns["path_to_pr_file"] = str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc")
 
     ns["path_to_tasmax_file"] = str(
@@ -292,29 +292,44 @@ def add_example_file_paths(doctest_namespace):
 
     ns["path_to_shape_file"] = str(TD / "cmip5" / "southern_qc_geojson.json")
 
+    time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     ns["temperature_datasets"] = [
-        str(
-            TD
-            / "EnsembleStats"
-            / "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
         ),
-        str(
-            TD
-            / "EnsembleStats"
-            / "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc"
-        ),
-    ]
-    ns["precipitation_datasets"] = [
-        str(TD / "NRCANdaily" / "nrcan_canada_daily_pr_1990.nc"),
-        str(
-            TD
-            / "CanESM2_365day"
-            / "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc"
+        xr.DataArray(
+            12 * np.random.random_sample(time.size) + 273,
+            coords={"time": time},
+            name="tas",
+            dims=("time",),
+            attrs={"units": "K"},
         ),
     ]
+
+    ns["path_to_ensemble_file"] = str(
+        TD / "EnsembleReduce" / "TestEnsReduceCriteria.nc"
+    )
 
 
 @pytest.fixture(autouse=True)
-def add_example_dataarray(doctest_namespace, tas_series):
-    ns = doctest_namespace
+def add_example_dataarray(xdoctest_namespace, tas_series):
+    ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
+
+
+@pytest.fixture(autouse=True)
+def is_matplotlib_installed(xdoctest_namespace):
+    def _is_matplotlib_installed():
+        try:
+            import matplotlib
+
+            return
+        except ImportError:
+            return pytest.skip("This doctest requires matplotlib to be installed.")
+
+    ns = xdoctest_namespace
+    ns["is_matplotlib_installed"] = _is_matplotlib_installed

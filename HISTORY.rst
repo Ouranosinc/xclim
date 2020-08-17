@@ -2,6 +2,26 @@
 History
 =======
 
+0.20.x
+------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `generic.quantile` function taking parameters estimated by `generic.fit` as an input.
+
+
+Bug fixes
+~~~~~~~~~
+
+
+Internal changes
+~~~~~~~~~~~~~~~~
+
+
+
 0.19.x
 ------
 
@@ -13,12 +33,20 @@ Breaking changes
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
 * xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
+* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no
+  longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
+* `Indicator.cf_attrs` is now a list of dictionaries. `Indicator.json` puts all the metadata attributes in the key "outputs" (a list of dicts).
+  All variable metadata (names in `Indicator._cf_names`) might be strings or lists of strings when accessed as object attributes.
+* Passing doctests are now strictly enforced as a build requirement in the Travis CI testing ensemble.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
-* New `generic.quantile` function taking parameters estimated by `generic.fit` as an input.
+* The `Indicator` class now supports outputing multiple indices for the same inputs.
+* `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and tesdata.
+
 
 Bug fixes
 ~~~~~~~~~
@@ -32,7 +60,9 @@ Internal changes
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
 * Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
+* Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
+* Major refactoring of the internal marchinery of `Indicator` to support multiple outputs.
 
 0.18.0 (2020-06-26)
 -------------------

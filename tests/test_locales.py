@@ -68,17 +68,11 @@ def test_local_dict(tmp_path):
         xloc.get_local_dict("tlh")
 
 
-@pytest.mark.parametrize(
-    "fill,isin,notin", [(True, ["description"], []), (False, [], ["description"])]
-)
-def test_local_attrs_sing(fill, isin, notin):
+def test_local_attrs_sing():
     attrs = xloc.get_local_attrs(
-        atmos.tg_mean, esperanto, fill_missing=fill, append_locale_name=False
+        atmos.tg_mean.__class__.__name__, esperanto, append_locale_name=False
     )
-    for key in isin:
-        assert key in attrs
-    for key in notin:
-        assert key not in attrs
+    assert "description" not in attrs
 
     with pytest.raises(ValueError):
         attrs = xloc.get_local_attrs(
@@ -86,28 +80,20 @@ def test_local_attrs_sing(fill, isin, notin):
         )
 
 
-@pytest.mark.parametrize(
-    "fill,isin,notin",
-    [
-        (True, ["description_fr", "description_eo", "description_ru"], []),
-        (False, ["description_fr", "description_ru"], ["description_eo"]),
-    ],
-)
-def test_local_attrs_multi(fill, isin, notin, tmp_path):
+def test_local_attrs_multi(tmp_path):
     with (tmp_path / "ru.json").open("w", encoding="utf-8") as f:
         json.dump(russian[1], f, ensure_ascii=False)
 
     attrs = xloc.get_local_attrs(
-        atmos.tg_mean,
+        atmos.tg_mean.__class__.__name__,
         "fr",
         esperanto,
         ("ru", tmp_path / "ru.json"),
-        fill_missing=fill,
         append_locale_name=True,
     )
-    for key in isin:
+    for key in ["description_fr", "description_ru"]:
         assert key in attrs
-    for key in notin:
+    for key in ["description_eo"]:
         assert key not in attrs
 
 
@@ -133,10 +119,10 @@ def test_indicator_output(tas_series):
 def test_indicator_integration():
     eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=True)
     assert "title" in eo_attrs
-    assert "long_name" in eo_attrs
+    assert "long_name" in eo_attrs["outputs"][0]
 
     eo_attrs = atmos.tg_mean.translate_attrs(esperanto, fill_missing=False)
-    assert "description" not in eo_attrs
+    assert "description" not in eo_attrs["outputs"][0]
 
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
@@ -153,15 +139,22 @@ def test_xclim_translations(locale):
         default_formatter.mapping.keys()
     ) == {"modifiers"}
 
+    translated_inds = []
     # Remove unofficial indicators (as those created during the tests)
     for identifier, cls in registry.items():
-        if not cls.__module__.startswith("xclim.indicators"):
+        if not cls.__module__.startswith("xclim"):
             registry_cp.pop(identifier)
 
     for indicator, fields in dic.items():
         if indicator != "attrs_mapping":
             # Checking that the translated indicator does exist
-            assert registry_cp.pop(indicator)
+            # For translations of children of MultiIndicators, only check that the indicator exists
+            if "." in indicator:
+                indicator = indicator.split(".")[0]
+                assert indicator in registry_cp or indicator in translated_inds
+            else:
+                assert registry_cp.pop(indicator)
+                translated_inds.append(indicator)
             # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
 
