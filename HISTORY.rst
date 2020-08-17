@@ -10,7 +10,7 @@ Breaking changes
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* New `generic.quantile` function taking parameters estimated by `generic.fit` as an input.
+* New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 
 
 Bug fixes
