@@ -2,7 +2,7 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from scipy.stats import lognorm
+from scipy.stats import lognorm, norm
 
 from xclim.indices import generic
 
@@ -39,7 +39,7 @@ class TestFA(object):
     def test_fa(self):
         T = 10
         q = generic.fa(self.da, T, "lognorm")
-
+        assert "return_period" in q.coords
         p0 = lognorm.fit(self.da.values[:, 0, 0])
         q0 = lognorm.ppf(1 - 1.0 / T, *p0)
         np.testing.assert_array_equal(q[0, 0, 0], q0)
@@ -84,6 +84,27 @@ class TestFrequencyAnalysis:
         generic.frequency_analysis(
             q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
         )
+
+
+class TestQuantile:
+    def test_synth(self):
+        mu = 23
+        sigma = 2
+        n = 10000
+        per = 0.9
+        d = norm(loc=mu, scale=sigma)
+        r = xr.DataArray(
+            d.rvs(n),
+            dims=("time",),
+            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        )
+        expected = d.ppf(per)
+
+        p = generic.fit(r, dist="norm")
+        q = generic.parametric_quantile(p=p, q=per)
+
+        np.testing.assert_array_almost_equal(q, expected, 1)
+        assert "quantile" in q.coords
 
 
 class TestSelectResampleOp:
