@@ -96,13 +96,13 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    >>> from xclim.core.calendar import percentile_doy # doctest: +SKIP
-    >>> from xclim.indices import cold_spell_duration_index # doctest: +SKIP
+    # Note that this example does not use a proper 1961-1990 reference period.
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import cold_spell_duration_index
 
-    >>> historical_tasmin = xr.open_dataset(path_to_historical_tasmin_file).tasmin # doctest: +SKIP
-    >>> reference_tasmin = xr.open_dataset(path_to_tasmin_file).tasmin # doctest: +SKIP
-    >>> tn10 = percentile_doy(historical_tasmin, per=.1) # doctest: +SKIP
-    >>> cold_spell_duration_index(reference_tasmin, tn10) # doctest: +SKIP
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
+    >>> tn10 = percentile_doy(tasmin, per=.1)
+    >>> cold_spell_duration_index(tasmin, tn10)
     """
     tn10 = convert_units_to(tn10, tasmin)
 
@@ -1346,10 +1346,14 @@ def warm_spell_duration_index(
 
     Examples
     --------
-    >>> from xclim.core.calendar import percentile_doy  # doctest: +SKIP
-    >>> from xclim.indices import warm_spell_duration_index  # doctest: +SKIP
-    >>> tx90 = percentile_doy(historical_tasmax, per=.9)  # doctest: +SKIP
-    >>> warm_spell_duration_index(reference_tasmax, tx90)  # doctest: +SKIP
+    Note that this example does not use a proper 1961-1990 reference period.
+
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import warm_spell_duration_index
+
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
+    >>> tx90 = percentile_doy(tasmax, per=.9)
+    >>> warm_spell_duration_index(tasmax, tx90)
 
     References
     ----------
