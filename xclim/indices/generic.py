@@ -147,7 +147,8 @@ def fit(da: xr.DataArray, dist: str = "norm"):
         return params
 
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
+    duck = dask.array if isinstance(da.data, dask.array.Array) else np
+    data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
 
     # Count the number of values used for the fit.
     # n = da.notnull().count(dim='time')
@@ -224,7 +225,8 @@ def pwm_fit(da: xr.DataArray, dist: str = "norm"):
         return params
 
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
+    duck = dask.array if isinstance(da.data, dask.array.Array) else np
+    data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
 
     # Count the number of values used for the fit.
     # n = da.notnull().count(dim='time')
