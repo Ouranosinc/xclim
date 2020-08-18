@@ -2,8 +2,8 @@
 History
 =======
 
-0.19.x
-------
+0.19.0 (2020-08-18
+------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -30,7 +30,6 @@ New features and enhancements
 Bug fixes
 ~~~~~~~~~
 * Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
-
 
 Internal changes
 ~~~~~~~~~~~~~~~~
