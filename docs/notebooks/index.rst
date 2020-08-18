@@ -10,3 +10,4 @@ Examples
    options
    mappings
    sdba
+   sdba-advanced

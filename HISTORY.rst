@@ -11,15 +11,16 @@ Breaking changes
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `sdba.loess` submodule implementing LOESS smoothing tools used in `sdba.detrending.LoessDetrend`.
 * xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves maintainability and reduces the size of a "vanilla" xclim installation considerably.
 
 Bug fixes
 ~~~~~~~~~
+Nothing yet.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
-
 
 0.19.0 (2020-08-18)
 -------------------
@@ -60,7 +61,6 @@ Internal changes
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
 * Major refactoring of the internal marchinery of `Indicator` to support multiple outputs.
-
 
 0.18.0 (2020-06-26)
 -------------------
