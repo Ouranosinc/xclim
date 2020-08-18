@@ -59,6 +59,21 @@ class UniClim(Indicator):
         return select.mean(dim="time", keep_attrs=True)
 
 
+class MultiTemp(Indicator):
+    identifier = "minmaxtemp"
+    var_name = ["tmin", "tmax"]
+    units = "K"
+    standard_name = ["Min temp", ""]
+    description = "Grouped computation of tmax and tmin"
+
+    @staticmethod
+    def compute(tas, freq):
+        return (
+            tas.resample(time=freq).min(keep_attrs=True),
+            tas.resample(time=freq).max(keep_attrs=True),
+        )
+
+
 def test_attrs(tas_series):
     import datetime as dt
 
@@ -103,6 +118,18 @@ def test_temp_unit_conversion(tas_series):
     txc = ind(a, freq="YS")
 
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
+
+
+def test_multiindicator(tas_series):
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    ind = MultiTemp()
+
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
 
 def test_missing(tas_series):
@@ -153,22 +180,29 @@ def test_json(pr_series):
 
     expected = {
         "identifier",
+        "title",
+        "keywords",
+        "abstract",
+        "parameters",
+        "history",
+        "references",
+        "notes",
+        "outputs",
+    }
+
+    output_exp = {
         "var_name",
         "units",
         "long_name",
         "standard_name",
         "cell_methods",
-        "keywords",
-        "abstract",
-        "parameters",
         "description",
-        "history",
-        "references",
         "comment",
-        "notes",
     }
 
     assert set(meta.keys()).issubset(expected)
+    for output in meta["outputs"]:
+        assert set(output.keys()).issubset(output_exp)
 
 
 def test_signature():

@@ -2,7 +2,7 @@
 import logging
 import warnings
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import scipy.stats
@@ -75,15 +75,14 @@ def create_ensemble(
 
     Examples
     --------
-    >>> import glob  # doctest: +SKIP
     >>> from xclim.ensembles import create_ensemble  # doctest: +SKIP
-    >>> ens = create_ensemble(temperature_datasets) #doctest: +SKIP
-    ...
-    # Using multifile datasets:
-    # Simulation 1 is a list of .nc files (e.g. separated by time)
+    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
+
+    Using multifile datasets:
+    Simulation 1 is a list of .nc files (e.g. separated by time)
     >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
-    ...
-    # Simulation 2 is also a list of .nc files
+
+    Simulation 2 is also a list of .nc files
     >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
@@ -119,12 +118,13 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min  # doctest: +SKIP
+    >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
+
     # Create ensemble dataset
-    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
-    ...
+    >>> ens = create_ensemble(temperature_datasets)
+
     # Calculate ensemble statistics
-    >>> ens_mean_std = ensemble_mean_std_max_min(ens)  # doctest: +SKIP
+    >>> ens_mean_std = ensemble_mean_std_max_min(ens)
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
@@ -151,7 +151,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
-    values: Tuple[int] = (10, 50, 90),
+    values: Sequence[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
     split: bool = True,
 ) -> xr.Dataset:
@@ -163,7 +163,7 @@ def ensemble_percentiles(
     ----------
     ens: Union[xr.Dataset, xr.DataArray]
       Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
-    values : Tuple[int]
+    values : Tuple[int, int, int]
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : Optional[bool]
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
@@ -182,18 +182,19 @@ def ensemble_percentiles(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_percentiles  # doctest: +SKIP
+    >>> from xclim.ensembles import create_ensemble, ensemble_percentiles
+
     # Create ensemble dataset
-    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
-    ...
+    >>> ens = create_ensemble(temperature_datasets)
+
     # Calculate default ensemble percentiles
-    >>> ens_percs = ensemble_percentiles(ens)  # doctest: +SKIP
-    ...
+    >>> ens_percs = ensemble_percentiles(ens)
+
     # Calculate non-default percentiles (25th and 75th)
-    >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))  # doctest: +SKIP
-    ...
+    >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
+
     # If the original array has many small chunks, it might be more efficient to do:
-    >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)  # doctest: +SKIP
+    >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
@@ -527,32 +528,31 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble  # doctest: +SKIP
-    ...
-    # Start with ensemble datasets for temperature and precipitation
-    >>> ensTas = create_ensemble(temperature_datasets)  # doctest: +SKIP
-    >>> ensPr = create_ensemble(precipitation_datasets)  # doctest: +SKIP
-    ...
+    >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
+    >>> from xclim.indicators.atmos import tg_mean, hot_spell_frequency
+
+    # Start with ensemble datasets for temperature
+    >>> ensTas = create_ensemble(temperature_datasets)
+
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
-    # Total annual precipation
-    >>> HistPr = ensPr.pr.sel(time=slice('1981','2010')).sum(dim='time').mean(dim=['lat','lon'])  # doctest: +SKIP
-    >>> FutPr = ensPr.pr.sel(time=slice('2071','2100')).sum(dim='time').mean(dim=['lat','lon'])  # doctest: +SKIP
-    ...
-    # expressed in percent change
-    >>> dPr = 100*((FutPr / HistPr) - 1)  # doctest: +SKIP
-    ...
     # Average annual temperature
-    >>> HistTas = ensTas.tg_mean.sel(time=slice('1981','2010')).mean(dim=['time','lat','lon'])  # doctest: +SKIP
-    >>> FutTas = ensTas.tg_mean.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])  # doctest: +SKIP
-    >>> dTas = FutTas - HistTas  # doctest: +SKIP
-    ...
+    >>> tg = tg_mean(tas=ensTas.tas)
+    >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dtg = fut_tg - his_tg
+
+    # Hotspell frequency as second indicator
+    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dhs = fut_hs - his_hs
+
     # Create selection criteria xr.DataArray
-    >>> crit = xr.concat((dTas,dPr), dim='criteria')  # doctest: +SKIP
-    ...
+    >>> crit = xr.concat((dtg, dhs), dim='criteria')
+
     # Create clusters and select realization ids of reduced ensemble
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)  # doctest: +SKIP
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)  # doctest: +SKIP
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
     if make_graph:
         fig_data = {}
@@ -718,11 +718,11 @@ def plot_rsqprofile(fig_data):
 
     Examples
     --------
-    >>> import xarray as xr  # doctest: +SKIP
-    >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile  # doctest: +SKIP
-    >>> crit = xr.open_dataset(path_to_ensemble_file).data  # doctest: +SKIP
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)  # doctest: +SKIP
-    >>> plot_rsqprofile(fig_data)  # doctest: +SKIP
+    >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
+    >>> is_matplotlib_installed()
+    >>> crit = xr.open_dataset(path_to_ensemble_file).data
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
+    >>> plot_rsqprofile(fig_data)
     """
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
