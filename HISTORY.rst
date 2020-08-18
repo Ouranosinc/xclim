@@ -12,18 +12,15 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 
-
 Bug fixes
 ~~~~~~~~~
-
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 
 
-
-0.19.x
-------
+0.19.0 (2020-08-18)
+-------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -45,13 +42,11 @@ New features and enhancements
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
-* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and tesdata.
-
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and testdata.
 
 Bug fixes
 ~~~~~~~~~
 * Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
-
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -62,7 +57,7 @@ Internal changes
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
-* Major refactoring of the internal marchinery of `Indicator` to support multiple outputs.
+* Major refactoring of the internal machinery of `Indicator` to support multiple outputs.
 
 0.18.0 (2020-06-26)
 -------------------

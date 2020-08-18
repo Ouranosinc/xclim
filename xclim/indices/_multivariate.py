@@ -96,13 +96,13 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    >>> from xclim.core.calendar import percentile_doy # doctest: +SKIP
-    >>> from xclim.indices import cold_spell_duration_index # doctest: +SKIP
+    # Note that this example does not use a proper 1961-1990 reference period.
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import cold_spell_duration_index
 
-    >>> historical_tasmin = xr.open_dataset(path_to_historical_tasmin_file).tasmin # doctest: +SKIP
-    >>> reference_tasmin = xr.open_dataset(path_to_tasmin_file).tasmin # doctest: +SKIP
-    >>> tn10 = percentile_doy(historical_tasmin, per=.1) # doctest: +SKIP
-    >>> cold_spell_duration_index(reference_tasmin, tn10) # doctest: +SKIP
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
+    >>> tn10 = percentile_doy(tasmin, per=.1)
+    >>> cold_spell_duration_index(tasmin, tn10)
     """
     tn10 = convert_units_to(tn10, tasmin)
 
@@ -1319,19 +1319,19 @@ def tx_tn_days_above(
 
 @declare_units("days", tasmax="[temperature]", tx90="[temperature]")
 def warm_spell_duration_index(
-    tasmax: xarray.DataArray, tx90: float, window: int = 6, freq: str = "YS"
+    tasmax: xarray.DataArray, tx90: xarray.DataArray, window: int = 6, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
     Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
-    percentile. The 90th percentile should be computed for a 5-day window centred on each calendar day in the
+    percentile. The 90th percentile should be computed for a 5-day moving window, centered on each calendar day in the
     1961-1990 period.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    tx90 : float
+    tx90 : xarray.DataArray
       90th percentile of daily maximum temperature [℃] or [K]
     window : int
       Minimum number of days with temperature above threshold to qualify as a warm spell.
@@ -1343,6 +1343,17 @@ def warm_spell_duration_index(
     xarray.DataArray
       Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
       percentile [days].
+
+    Examples
+    --------
+    Note that this example does not use a proper 1961-1990 reference period.
+
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import warm_spell_duration_index
+
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
+    >>> tx90 = percentile_doy(tasmax, per=.9)
+    >>> warm_spell_duration_index(tasmax, tx90)
 
     References
     ----------
