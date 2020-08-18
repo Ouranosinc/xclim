@@ -7,21 +7,18 @@ History
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatiotemporal subsetting.
-  In order to maintain functionality, users must install xclim with `xclim[gis]` in order to retain the same functionality.
+* `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatiotemporal subsetting. Install with `pip install xclim[gis]` in order to retain the same functionality.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* xclim now depends on clisops for subsetting, offloading several GIS dependencies that are typically installed by default,
-  whether subsetting utilities are desired. This improves maintainability and reduces the size of a "vanilla" xclim
-  installation considerably.
+* xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves maintainability and reduces the size of a "vanilla" xclim installation considerably.
 
 Bug fixes
 ~~~~~~~~~
 
 Internal changes
 ~~~~~~~~~~~~~~~~
-* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround for backwards compatibility.
+* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
 
 
 0.19.0 (2020-08-18)
