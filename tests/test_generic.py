@@ -140,7 +140,7 @@ class TestFrequencyAnalysis:
         )
 
 
-class TestQuantile:
+class TestParametricQuantile:
     def test_synth(self):
         mu = 23
         sigma = 2

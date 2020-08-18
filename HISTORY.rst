@@ -11,7 +11,7 @@ Breaking changes
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* New `generic.quantile` function taking parameters estimated by `generic.fit` as an input.
+* New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 * New `generic.pwm_fit` function estimating statistical distribution parameters using probability
   weighted moments. Requires the `lmoments3` package, which is not included in dependencies because this
   functionality is still experimental.
