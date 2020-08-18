@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim import atmos
 from xclim.indices.fwi import (
     _shut_down_and_start_ups,
     build_up_index,
@@ -21,13 +22,27 @@ TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
-def get_data():
+def get_data(as_xr=False):
     import io
 
     import pandas as pd
 
     f = io.StringIO(CFS_data)
-    return pd.read_table(f, sep=" ", header=0)
+    d = pd.read_table(f, sep=" ", header=0)
+    if as_xr:
+        ds = d.to_xarray()
+        ds["index"] = pd.date_range("2000-04-13", periods=ds.index.size, freq="D")
+        ds = ds.rename(index="time")
+        ds.temp.attrs["units"] = "degC"
+        ds.pr.attrs["units"] = "mm d-1"
+        ds.rh.attrs["units"] = "%"
+        ds.ws.attrs["units"] = "km h-1"
+        return (
+            ds.drop_vars(["mth", "day", "lat"])
+            .expand_dims(lat=[44])
+            .transpose("time", "lat")
+        )
+    return d
 
 
 def test_fine_fuel_moisture_code():
@@ -100,6 +115,22 @@ def test_fire_weather_index():
     for i, row in d.iterrows():
         fwi[i] = fire_weather_index(row["isi"], row["bui"])
     np.testing.assert_allclose(fwi, d["fwi"], rtol=0.4)
+
+
+def test_fire_weather_indicator():
+    ds = get_data(as_xr=True)
+    dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
+        tas=ds.temp,
+        pr=ds.pr,
+        rh=ds.rh,
+        ws=ds.ws,
+        lat=ds.lat,
+        ffmc0=ds.ffmc[1],
+        dmc0=ds.dmc[1],
+        dc0=ds.dc[1],
+    )
+    xr.testing.assert_allclose(dc.T[10:], ds.dc[10:], rtol=0.01)
+    xr.testing.assert_allclose(fwi.T[10:], ds.fwi[10:], rtol=0.05, atol=0.05)
 
 
 def test_day_length():

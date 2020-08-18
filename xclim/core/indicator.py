@@ -35,9 +35,11 @@ New indicators can be created using standard Python subclasses::
 
 Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
 
-    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, units="K")
+    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_name='tmean', units="K")
 
-Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance.
+Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
+compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
+In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name` attribute must be a list and have
 
 One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
 are common to indicators, then call this subclass with the custom attributes. See for example in
@@ -48,29 +50,31 @@ Subclass registries
 -------------------
 All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
 example::
-  >>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
-  >>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
-  >>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
+
+>>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
+>>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
+>>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
 
 This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
 a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-  >>> from xclim.core.indicator import registry
-  >>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
+
+>>> from xclim.core.indicator import registry
+>>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
 
 """
 import re
 import warnings
 from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Sequence, Union
+from typing import Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
+from xarray import DataArray
 
-from xclim.core import datachecks
-from xclim.core.options import MISSING_METHODS, MISSING_OPTIONS
 from xclim.indices.generic import default_freq
 
+from . import datachecks
 from .formatting import (
     AttrFormatter,
     default_formatter,
@@ -78,8 +82,8 @@ from .formatting import (
     parse_doc,
     update_history,
 )
-from .locales import get_local_attrs, get_local_formatter
-from .options import OPTIONS
+from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
+from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
 
 # Indicators registry
@@ -95,46 +99,51 @@ class Indicator:
 
     Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
 
+    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators` subclasses,
+    if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
+    In the latter case, the same value is used on all variables.
+
     Parameters
     ----------
     identifier: str
       Unique ID for class registry, should be a valid slug.
-    var_name: str
-      Output variable name. May use tags {<tag>}.
-    standard_name: str
-      Variable name (CF).
-    long_name: str
-      Descriptive variable name.
-    units: str
-      Representative units of the physical quantity (CF).
     compute: func
-      The function computing the indicator.
-    missing: {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    missing_options : dict, None
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
-    cell_methods: str
+      The function computing the indicators. It should return one or more DataArray.
+    var_name: str or Sequence[str]
+      Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables,
+      var_name *must* be a list of the same length.
+    standard_name: str or Sequence[str]
+      Variable name (CF).
+    long_name: str or Sequence[str]
+      Descriptive variable name. Parsed from `compute` docstring if not given.
+    units: str or Sequence[str]
+      Representative units of the physical quantity (CF).
+    cell_methods: str or Sequence[str]
       List of blank-separated words of the form "name: method" (CF).
-    description: str
+    description: str or Sequence[str]
       Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
       surface a quantity is defined on or what the flux sign conventions are.
-    context: str
-      The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    title: str, None
-      A succinct description of what is in the computed output. Parsed from `compute` docstring if None.
+    comment: str or Sequence[str]
+      Miscellaneous information about the data or methods used to produce it.
+    title: str
+      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None.
     abstract: str
-      A long description of what is in the computed output. Parsed from `compute` docstring if None.
+      A long description of what is in the computed outputs. Parsed from `compute` docstring if None.
     keywords: str
       Comma separated list of keywords. Parsed from `compute` docstring if None.
     references: str
       Published or web-based references that describe the data or methods used to produce it. Parsed from
       `compute` docstring if None.
-    comment: str
-      Miscellaneous information about the data or methods used to produce it.
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None.
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, None
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    context: str
+      The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
 
     Notes
     -----
@@ -142,18 +151,18 @@ class Indicator:
 
     """
 
-    # Number of DataArray variables. Should be updated by subclasses if needed.
+    # Number of input DataArray variables. Should be updated by subclasses if needed.
     _nvar = 1
 
-    # Allowed metadata attributes on the output
+    # Allowed metadata attributes on the output variables
     _cf_names = [
+        "var_name",
         "standard_name",
         "long_name",
         "units",
         "cell_methods",
         "description",
         "comment",
-        "references",
     ]
 
     # metadata fields that are formatted as free text.
@@ -161,46 +170,60 @@ class Indicator:
 
     _funcs = ["compute", "cfcheck", "datacheck"]
 
-    # Default attribute values
+    # Will become the classe's name
     identifier = None
+
+    missing = "from_context"
+    missing_options = None
+    context = "none"
+
+    # Variable metadata (_cf_names, those that can be lists or strings)
+    # A developper should access those through _var_attrs on instances
     var_name = None
     standard_name = ""
     long_name = ""
     units = ""
-    missing = "from_context"
-    missing_options = None
     cell_methods = ""
     description = ""
-    context = "none"
+    comment = ""
+
+    # Global metadata (must be strings, not attributed to the output)
     title = ""
     abstract = ""
     keywords = ""
     references = ""
-    comment = ""
     notes = ""
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
-        identifier = kwds.get("identifier", getattr(cls, "identifier"))
+        identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
             raise AttributeError("`identifier` has not been set.")
+
+        kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
+
+        # Parse `compute` docstring to extract missing attributes
+        # Priority: explicit arguments > super class attributes > `compute` docstring info
+        func = kwds.get("compute", None) or cls.compute
+        parsed = parse_doc(func.__doc__)
+
+        for name, value in parsed.copy().items():
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
+
+        # Parse kwds to organize cf_attrs
+        # Must be done after parsing var_name
+        # And before converting callables to staticmethods
+        kwds["cf_attrs"] = cls._parse_cf_attrs(kwds)
 
         # Convert function objects to static methods.
         for key in cls._funcs + cls._cf_names:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
-        # Parse `compute` docstring to extract missing attributes
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-
-        func = kwds.get("compute", None) or cls.compute
-        attrs = {
-            k: v for (k, v) in parse_doc(func.__doc__).items() if not getattr(cls, k)
-        }
-        attrs.update(kwds)
-
         # Create new class object
-        new = type(identifier.upper(), (cls,), attrs)
+        new = type(identifier.upper(), (cls,), kwds)
 
         # Set the module to the base class' module. Otherwise all indicators will have module `xclim.core.indicator`.
         new.__module__ = cls.__module__
@@ -212,6 +235,29 @@ class Indicator:
         return super().__new__(new)
 
     @classmethod
+    def _parse_cf_attrs(cls, kwds):
+        """CF-compliant metadata attributes for all output variables."""
+        # Get number of outputs
+        n_outs = (
+            len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
+        )
+
+        # Populate _var_attrs from attribute set during class creation and __new__
+        cf_attrs = [{} for i in range(n_outs)]
+        for name in cls._cf_names:
+            values = kwds.get(name, getattr(cls, name))
+            if not isinstance(values, (list, tuple)):
+                values = [values] * n_outs
+            elif len(values) != n_outs:
+                raise ValueError(
+                    f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
+                )
+            for attrs, value in zip(cf_attrs, values):
+                if value:
+                    attrs[name] = value
+        return cf_attrs
+
+    @classmethod
     def register(cls, obj):
         """Add subclass to registry."""
         name = obj.__name__
@@ -220,9 +266,8 @@ class Indicator:
         registry[name] = obj
 
     def __init__(self, **kwds):
-        """Run checks and assign default values."""
-        # Check identifier is well formed - no funny characters
-        self.identifier = kwds.pop("identifier", self.identifier)
+        """Run checks and organizes the metadata."""
+        # keywords of kwds that are class attributes have already been set in __new__
         self.check_identifier(self.identifier)
 
         if self.missing == "from_context" and self.missing_options is not None:
@@ -236,10 +281,6 @@ class Indicator:
         if self.missing_options:
             kls.validate(**self.missing_options)
 
-        # Default for output variable name
-        if self.var_name is None:
-            self.var_name = self.identifier
-
         # The `compute` signature
         self._sig = signature(self.compute)
 
@@ -251,6 +292,9 @@ class Indicator:
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
+        # For convenience
+        n_outs = len(self.cf_attrs)
+
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
@@ -261,26 +305,49 @@ class Indicator:
             das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
 
         # Metadata attributes from templates
-        attrs = self.update_attrs(ba, das)
-        vname = attrs.pop("var_name")
+        var_id = None
+        var_attrs = []
+        for attrs in self.cf_attrs:
+            if n_outs > 1:
+                var_id = f"{self.identifier}.{attrs['var_name']}"
+            var_attrs.append(
+                self.update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
+            )
 
         # Pre-computation validation checks on DataArray arguments
         self.bind_call(self.datacheck, **das)
         self.bind_call(self.cfcheck, **das)
 
         # Compute the indicator values, ignoring NaNs and missing values.
-        out = self.compute(**das, **ba.kwargs)
+        outs = self.compute(**das, **ba.kwargs)
+        if isinstance(outs, DataArray):
+            outs = [outs]
+        if len(outs) != n_outs:
+            raise ValueError(
+                f"Indicator {self.identifier} was wrongly defined. Expected {n_outs} outputs, got {len(outs)}."
+            )
 
         # Convert to output units
-        out = convert_units_to(out, self.units, self.context)
+        outs = [
+            convert_units_to(out, attrs.get("units", ""), self.context)
+            for out, attrs in zip(outs, var_attrs)
+        ]
 
-        # Update netCDF attributes
-        out.attrs.update(attrs)
+        # Update variable attributes
+        for out, attrs in zip(outs, var_attrs):
+            var_name = attrs.pop("var_name")
+            out.attrs.update(attrs)
+            out.name = var_name
 
         # Mask results that do not meet criteria defined by the `missing` method.
+        # This means all variables must have the same dimensions...
         mask = self.mask(*das.values(), **ba.arguments)
+        outs = [out.where(~mask) for out in outs]
 
-        return out.where(~mask).rename(vname)
+        # Return a single DataArray in case of single output, otherwise a tuple
+        if n_outs == 1:
+            return outs[0]
+        return tuple(outs)
 
     def bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
@@ -313,7 +380,8 @@ class Indicator:
             # Call the func using bound arguments
             return func(*ba.args, **ba.kwargs)
 
-    def update_attrs(self, ba, das):
+    @classmethod
+    def update_attrs(cls, ba, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values. The language of the string is
@@ -325,32 +393,38 @@ class Indicator:
           Input arrays.
         ba: bound argument object
           Keyword arguments of the `compute` call.
+        attrs : Mapping[str, str]
+          The attributes to format and update.
+        var_id : str
+          The identifier to use when requesting the attributes translations.
+          Defaults to the class name (for the translations) or the `identifier` field of the class (for the history attribute).
+          If given, the identifier will be converted to uppercase to get the translation attributes.
+          This is meant for multi-outputs indicators.
+        names : Sequence[str]
+          List of attribute names for which to get a translation.
 
         Returns
         -------
         dict
-          Attributes with {} expressions replaced by call argument values.
+          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
+          `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
         args = ba.arguments
-        out = self.format(self.cf_attrs, args)
+
+        out = cls.format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
-                self.format(
+                cls.format(
                     get_local_attrs(
-                        self,
+                        (var_id or cls.__name__).upper(),
                         locale,
-                        names=self._cf_names,
-                        fill_missing=False,
+                        names=names or list(attrs.keys()),
                         append_locale_name=True,
                     ),
                     args=args,
                     formatter=get_local_formatter(locale),
                 )
             )
-
-        out["var_name"] = vname = self.format({"var_name": self.var_name}, args)[
-            "var_name"
-        ]
 
         # Update the signature with the values of the actual call.
         cp = OrderedDict()
@@ -362,15 +436,16 @@ class Indicator:
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
-        attrs["cell_methods"] = merge_attributes(
-            "cell_methods", new_line=" ", missing_str=None, **das
-        )
-        if "cell_methods" in out:
-            attrs["cell_methods"] += " " + out.pop("cell_methods")
+        if names is None or "cell_methods" in names:
+            attrs["cell_methods"] = merge_attributes(
+                "cell_methods", new_line=" ", missing_str=None, **das
+            )
+            if "cell_methods" in out:
+                attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         attrs["history"] = update_history(
-            f"{self.identifier}{ba.signature.replace(parameters=cp.values())}",
-            new_name=vname,
+            f"{var_id or cls.identifier}{ba.signature.replace(parameters=cp.values())}",
+            new_name=out.get("var_name"),
             **das,
         )
 
@@ -392,7 +467,7 @@ class Indicator:
     ):
         """Return a dictionary of unformated translated translatable attributes.
 
-        Translatable attributes are defined in xclim.locales.TRANSLATABLE_ATTRS
+        Translatable attributes are defined in xclim.core.locales.TRANSLATABLE_ATTRS
 
         Parameters
         ----------
@@ -402,14 +477,31 @@ class Indicator:
         fill_missing : bool
             If True (default fill the missing attributes by their english values.
         """
-        return get_local_attrs(
-            self, locale, fill_missing=fill_missing, append_locale_name=False
-        )
 
-    @property
-    def cf_attrs(self):
-        """CF-Convention attributes of the output value."""
-        attrs = {k: getattr(self, k) for k in self._cf_names if getattr(self, k)}
+        def _translate(var_id, var_attrs, names):
+            attrs = get_local_attrs(
+                var_id, locale, names=names, append_locale_name=False,
+            )
+            if fill_missing:
+                for name in names:
+                    if name not in attrs and var_attrs.get(name):
+                        attrs[name] = var_attrs.get(name)
+            return attrs
+
+        # Translate global attrs
+        attrid = self.identifier.upper()
+        attrs = _translate(
+            attrid,
+            self.__dict__,
+            # Translate only translatable attrs that are not variable attrs
+            set(TRANSLATABLE_ATTRS).difference(set(self._cf_names)),
+        )
+        # Translate variable attrs
+        attrs["outputs"] = []
+        for var_attrs in self.cf_attrs:  # Translate for each variable
+            if len(self.cf_attrs) > 1:
+                attrid = f"{self.identifier.upper()}.{var_attrs['var_name']}"
+            attrs["outputs"].append(_translate(attrid, var_attrs, TRANSLATABLE_ATTRS))
         return attrs
 
     def json(self, args=None):
@@ -420,10 +512,10 @@ class Indicator:
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
 
         """
-        names = ["identifier", "var_name", "abstract", "keywords"]
+        names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
-        out.update(self.cf_attrs)
         out = self.format(out, args)
+        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
         out["notes"] = self.notes
 
@@ -438,8 +530,9 @@ class Indicator:
         )
         return out
 
+    @classmethod
     def format(
-        self,
+        cls,
         attrs: dict,
         args: dict = None,
         formatter: AttrFormatter = default_formatter,
@@ -480,7 +573,7 @@ class Indicator:
 
             out[key] = formatter.format(val, **mba)
 
-            if key in self._text_fields:
+            if key in cls._text_fields:
                 out[key] = out[key].strip().capitalize()
 
         return out
