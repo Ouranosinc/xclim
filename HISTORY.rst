@@ -2,8 +2,16 @@
 History
 =======
 
-0.19.0 (2020-08-18
-------------------
+0.20.x
+------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `sdba.loess` submodule implementing LOESS smoothing tools used in `sdba.detrending.LoessDetrend`.
+
+
+0.19.0 (2020-08-18)
+-------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
