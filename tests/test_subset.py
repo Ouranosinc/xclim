@@ -1,16 +1,47 @@
 import os
 
-import geopandas as gpd
 import numpy as np
 import pytest
 import xarray as xr
 
-from xclim import subset
+# class TestSubsetImport:
+#     subset = pytest.importorskip('clisops.core.subset', reason="`clisops` subset utilities are not installed.")
+#     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
+
+try:
+    import clisops.core.subset as subset
+    import geopandas as gpd
+except ImportError:
+    subset = False
+    gpd = False
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
+class TestSubsetRaises:
+    @pytest.mark.skipif(
+        subset is False, reason="`clisops` subset utilities are not installed."
+    )
+    def test_raises_deprecation_warning(self):
+        with pytest.deprecated_call():
+            from xclim import subset
+
+            assert subset.__doc__
+
+    @pytest.mark.skipif(
+        hasattr(subset, "__all__"), reason="Necessary dependencies are installed."
+    )
+    def test_raise_import_error(self):
+        with pytest.raises(ImportError):
+            from xclim import subset
+
+            assert subset.__doc__
+
+
+@pytest.mark.skipif(
+    subset is False, reason="`clisops` subset utilities are not installed."
+)
 class TestSubsetTime:
     nc_poslons = os.path.join(
         TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
@@ -133,6 +164,9 @@ class TestSubsetTime:
         np.testing.assert_array_equal(out.time.max().dt.day, 30)
 
 
+@pytest.mark.skipif(
+    subset is False, reason="`clisops` subset utilities are not installed."
+)
 class TestSubsetGridPoint:
     nc_poslons = os.path.join(
         TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
@@ -186,7 +220,6 @@ class TestSubsetGridPoint:
         assert ("distance" in out.coords) ^ (not add_distance)
 
     def test_irregular(self):
-
         da = xr.open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
@@ -296,6 +329,9 @@ class TestSubsetGridPoint:
         subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1e5)
 
 
+@pytest.mark.skipif(
+    subset is False, reason="`clisops` subset utilities are not installed."
+)
 class TestSubsetBbox:
     nc_poslons = os.path.join(
         TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
@@ -585,6 +621,9 @@ class TestSubsetBbox:
         )
 
 
+@pytest.mark.skipif(
+    subset is False, reason="`clisops` subset utilities are not installed."
+)
 class TestSubsetShape:
     nc_file = os.path.join(
         TESTS_DATA, "cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"
@@ -776,6 +815,9 @@ class TestSubsetShape:
         assert ds_sub.notnull().sum() == 58 + 250 + 22
 
 
+@pytest.mark.skipif(
+    subset is False, reason="`clisops` subset utilities are not installed."
+)
 class TestDistance:
     def test_values(self):
         # Check values are OK. Values taken from pyproj test.
