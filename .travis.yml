@@ -13,7 +13,6 @@ jobs:
   include:
     - env:
         - TOXENV=docs
-        - READTHEDOCS=true
       name: "Documentation"
       python: 3.6
       addons:
@@ -23,10 +22,6 @@ jobs:
     - env: TOXENV=black
       name: "Black, Flake8, and Numpy-like Docstring compliance"
       python: 3.6
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
     - env: TOXENV=doctests
       name: "Linting suggestions and Doctests"
       python: 3.6
@@ -67,13 +62,9 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py36
-      name: "Python3.6 (Linux)"
+    - env: TOXENV=py36-nosubset
+      name: "Python3.6 (Linux) (No Subset)"
       python: 3.6
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
     - env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
