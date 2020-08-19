@@ -72,16 +72,14 @@ def _loess_nb(
     r = int(np.round(f * n))
     yest = np.zeros(n)
     delta = np.ones(n)
-    weights = np.empty((n, n))
-    for i in range(n):
-        diffs = np.abs(x - x[i])
-        h = np.sort(diffs)[r]
-        w = diffs / h
-        weights[:, i] = weight_func(w)
 
     for iteration in range(niter):
         for i in range(n):
-            w = delta * weights[:, i]
+            # The weights computation is repeater niter times
+            # The loss in speed is a clear gain in memory
+            diffs = np.abs(x - x[i])
+            h = np.sort(diffs)[r]
+            w = delta * weight_func(diffs / h)
             yest[i] = reg_func(x[i], x, y, w)
 
         if iteration < niter - 1:
