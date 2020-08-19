@@ -5,10 +5,22 @@ History
 0.20.x
 ------
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatiotemporal subsetting. Install with `pip install xclim[gis]` in order to retain the same functionality.
+
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `sdba.loess` submodule implementing LOESS smoothing tools used in `sdba.detrending.LoessDetrend`.
+* xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves maintainability and reduces the size of a "vanilla" xclim installation considerably.
 
+Bug fixes
+~~~~~~~~~
+Nothing yet.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
 
 0.19.0 (2020-08-18)
 -------------------
