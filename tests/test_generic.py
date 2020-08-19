@@ -110,7 +110,7 @@ class TestPWMFit:
             dims=("time",),
             coords={"time": xr.cftime_range("1980-01-01", periods=n)},
         )
-        out = generic.pwm_fit(da, dist=dist).compute()
+        out = generic.fit(da, dist=dist, method="PWM").compute()
 
         # Check that values are identical to lmoments3's output dict
         l3dc = generic.get_lm3_dist(dist)
@@ -151,6 +151,7 @@ class TestParametricQuantile:
             d.rvs(n),
             dims=("time",),
             coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+            attrs={"history": "Mosquito bytes per minute"},
         )
         expected = d.ppf(per)
 

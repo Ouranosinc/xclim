@@ -16,9 +16,8 @@ New features and enhancements
 * xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves
   maintainability and reduces the size of a "vanilla" xclim installation considerably.
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
-* New `generic.pwm_fit` function estimating statistical distribution parameters using probability
-  weighted moments. Requires the `lmoments3` package, which is not included in dependencies because this
-  functionality is still experimental.
+* Add support for using probability weighted moments method in `generic.fit` function. Requires the
+  `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
 
 Bug fixes
 ~~~~~~~~~
@@ -52,7 +51,7 @@ New features and enhancements
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
-* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and testdata.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access modules and testdata.
 
 Bug fixes
 ~~~~~~~~~

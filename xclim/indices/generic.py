@@ -14,6 +14,8 @@ import dask.array
 import numpy as np
 import xarray as xr
 
+from xclim.core.formatting import update_history
+
 # Map the scipy distribution name to the lmoments3 name. Distributions with mismatched parameters are excluded.
 _lm3_dist_map = {
     "expon": "exp",
@@ -103,7 +105,7 @@ def doymin(da: xr.DataArray):
     return out
 
 
-def fit(da: xr.DataArray, dist: str = "norm"):
+def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -112,20 +114,29 @@ def fit(da: xr.DataArray, dist: str = "norm"):
       Time series to be fitted along the time dimension.
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats).
+      (see scipy.stats for full list). If the PWM method is used, only the following distributions are
+      currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
+    method : {"ML", "PWM"}
+      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+      The PWM method is usually more robust to outliers.
 
     Returns
     -------
     xr.DataArray
-      An array of distribution parameters fitted using the method of Maximum Likelihood.
+      An array of fitted distribution parameters.
 
     Notes
     -----
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
     still contains NaNs, the distribution parameters will be returned as NaNs.
     """
+    method_name = {"ML": "maximum likelihood", "PWM": "probability weighted moments"}
+
     # Get the distribution
     dc = get_dist(dist)
+    if method == "PWM":
+        lm3dc = get_lm3_dist(dist)
+
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
@@ -139,8 +150,13 @@ def fit(da: xr.DataArray, dist: str = "norm"):
         if len(x) <= 1:
             return [np.nan] * len(dist_params)
 
+        # Estimate parameters
+        if method == "ML":
+            params = dc.fit(x)
+        elif method == "PWM":
+            params = list(lm3dc.lmom_fit(x).values())
+
         # Fill with NaNs if one of the parameters is NaN
-        params = dc.fit(x)
         if np.isnan(params).any():
             params[:] = np.nan
 
@@ -149,9 +165,6 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
     duck = dask.array if isinstance(da.data, dask.array.Array) else np
     data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
-
-    # Count the number of values used for the fit.
-    # n = da.notnull().count(dim='time')
 
     # Coordinates for the distribution parameters
     coords = dict(da.coords.items())
@@ -168,88 +181,15 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     out.attrs[
         "description"
     ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
-    out.attrs["estimator"] = "Maximum likelihood"
+    out.attrs["method"] = method
+    out.attrs["estimator"] = method_name[method].capitalize()
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
-
-    return out
-
-
-def pwm_fit(da: xr.DataArray, dist: str = "norm"):
-    """Fit an array to a univariate distribution along the time dimension using Probability Weighted Moments.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      Time series to be fitted along the time dimension.
-
-    Returns
-    -------
-    xr.DataArray
-      An array of distribution parameters fitted using the method of Maximum Likelihood.
-    dist : {'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'}
-      Name of the univariate distribution. Subset of scipy distributions supported by the `lmoments3` package.
-
-    Notes
-    -----
-    Probability Weighted Moments are also known as L-moments. This function uses an implementation from the
-    `lmoments3` package, which is not actively maintained. Ideally, parameter estimation from probability
-    weighted moments would be implemented directly into Scipy.
-
-    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
-    still contains NaNs, the distribution parameters will be returned as NaNs.
-    """
-    import dask
-
-    dc = get_dist(dist)
-    lm3dc = get_lm3_dist(dist)
-
-    shape_params = [] if dc.shapes is None else dc.shapes.split(",")
-    dist_params = shape_params + ["loc", "scale"]
-
-    # Fit the parameters.
-    # This would also be the place to impose constraints on the series minimum length if needed.
-    def fitfunc(arr):
-        """Fit distribution parameters."""
-        x = np.ma.masked_invalid(arr).compressed()
-
-        # Return NaNs if array is empty.
-        if len(x) <= 1:
-            return [np.nan] * len(dist_params)
-
-        # Fill with NaNs if one of the parameters is NaN
-        params = list(lm3dc.lmom_fit(x).values())
-        if np.isnan(params).any():
-            params[:] = np.nan
-
-        return params
-
-    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    duck = dask.array if isinstance(da.data, dask.array.Array) else np
-    data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
-
-    # Count the number of values used for the fit.
-    # n = da.notnull().count(dim='time')
-
-    # Coordinates for the distribution parameters
-    coords = dict(da.coords.items())
-    coords.pop("time")
-    coords["dparams"] = dist_params
-
-    # Dimensions for the distribution parameters
-    dims = [d if d != "time" else "dparams" for d in da.dims]
-
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
-    out.attrs = da.attrs
-    out.attrs["original_name"] = da.attrs.get("standard_name", "")
-    out.attrs["original_units"] = da.attrs.get("units", "")
-    out.attrs[
-        "description"
-    ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
-    out.attrs["estimator"] = "Probability Weighted Moments"
-    out.attrs["scipy_dist"] = dist
-    out.attrs["units"] = ""
-
+    out.attrs["history"] = update_history(
+        f"Estimate distribution parameters by {method_name[method]} method.",
+        new_name="fit",
+        data=da,
+    )
     return out
 
 
@@ -290,7 +230,8 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
         def func(x):
             return dc.ppf(q, *x)
 
-    data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
+    duck = dask.array if isinstance(p.data, dask.array.Array) else np
+    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
     # Create coordinate for the return periods
     coords = dict(p.coords.items())
@@ -310,10 +251,11 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     ).strip()
     out.attrs["units"] = p.attrs["original_units"]
 
-    out.attrs["history"] = (
-        out.attrs.get("history", "") + "Compute values corresponding to return periods."
+    out.attrs["history"] = update_history(
+        "Compute parametric quantiles from distribution parameters",
+        new_name="parametric_quantile",
+        parameters=p,
     )
-
     return out
 
 
