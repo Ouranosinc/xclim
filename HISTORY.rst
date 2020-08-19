@@ -49,7 +49,7 @@ New features and enhancements
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
-* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and testdata.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access modules and testdata.
 
 Bug fixes
 ~~~~~~~~~
