@@ -11,15 +11,18 @@ import xarray as xr
 try:
     import clisops.core.subset as subset
     import geopandas as gpd
-except ImportError as e:
-    pytestmarkskip_gis = pytest.mark.skip(reason=str(e))
+except ImportError:
+    subset = False
+    gpd = False
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
 class TestSubsetRaises:
-    @pytestmarkskip_gis
+    @pytest.mark.skipif(
+        subset is False, reason="`clisops` subset utilities are not installed."
+    )
     def test_raises_deprecation_warning(self):
         with pytest.deprecated_call():
             from xclim import subset
