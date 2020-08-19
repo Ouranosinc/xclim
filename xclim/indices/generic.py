@@ -14,6 +14,8 @@ import dask.array
 import numpy as np
 import xarray as xr
 
+from xclim.core.formatting import update_history
+
 
 def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
@@ -147,14 +149,85 @@ def fit(da: xr.DataArray, dist: str = "norm"):
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = da.attrs
-    out.attrs["original_name"] = getattr(da, "standard_name", "")
+    out.attrs["original_name"] = da.attrs.get("standard_name", "")
+    out.attrs["original_units"] = da.attrs.get("units", "")
     out.attrs[
         "description"
-    ] = f"Parameters of the {dist} distribution fitted over {getattr(da, 'standard_name', '')}"
+    ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
     out.attrs["estimator"] = "Maximum likelihood"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
-    # out.name = 'params'
+    out.attrs["history"] = update_history(
+        "Estimate distribution parameters by maximum likelihood.",
+        new_name="fit",
+        data=da,
+    )
+    return out
+
+
+def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
+    """Return the value corresponding to the given distribution parameters and quantile.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+      Distribution parameters returned by the `fit` function. The array should have dimension `dparams` storing the
+      distribution parameters, and attribute `scipy_dist`, storing the name of the distribution.
+    q : Union[float, Sequence]
+      Quantile to compute, which must be between 0 and 1 inclusive.
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of parametric quantiles estimated from the distribution parameters.
+
+    Notes
+    -----
+    When all quantiles are above 0.5, the `isf` method is used instead of `ppf` because accuracy is sometimes better.
+    """
+    q = np.atleast_1d(q)
+
+    # Get the distribution
+    dist = p.attrs["scipy_dist"]
+    dc = get_dist(dist)
+
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
+    if np.all(q > 0.5):
+
+        def func(x):
+            return dc.isf(1 - q, *x)
+
+    else:
+
+        def func(x):
+            return dc.ppf(q, *x)
+
+    duck = dask.array if isinstance(p.data, dask.array.Array) else np
+    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
+
+    # Create coordinate for the return periods
+    coords = dict(p.coords.items())
+    coords.pop("dparams")
+    coords["quantile"] = q
+    # Create dimensions
+    dims = [d if d != "dparams" else "quantile" for d in p.dims]
+
+    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out.attrs = p.attrs
+    out.attrs["standard_name"] = f"{dist} quantile"
+    out.attrs[
+        "long_name"
+    ] = f"{dist} return period values for {p.attrs.get('standard_name', '')}"
+    out.attrs["cell_methods"] = (
+        out.attrs.get("cell_methods", "") + " dparams: ppf"
+    ).strip()
+    out.attrs["units"] = p.attrs["original_units"]
+
+    out.attrs["history"] = update_history(
+        "Compute parametric quantiles from distribution parameters",
+        new_name="parametric_quantile",
+        parameters=p,
+    )
     return out
 
 
@@ -181,60 +254,26 @@ def fa(
     xarray.DataArray
       An array of values with a 1/t probability of exceedance (if mode=='max').
     """
-    t = np.atleast_1d(t)
-
-    # Get the distribution
-    dc = get_dist(dist)
-
     # Fit the parameters of the distribution
     p = fit(da, dist)
+    t = np.atleast_1d(t)
 
-    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
     if mode in ["max", "high"]:
-
-        def func(x):
-            return dc.isf(1.0 / t, *x)
+        q = 1 - 1.0 / t
 
     elif mode in ["min", "low"]:
-
-        def func(x):
-            return dc.ppf(1.0 / t, *x)
+        q = 1.0 / t
 
     else:
         raise ValueError(f"Mode `{mode}` should be either 'max' or 'min'.")
 
-    data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
-
-    # Create coordinate for the return periods
-    coords = dict(p.coords.items())
-    coords.pop("dparams")
-    coords["return_period"] = t
-
-    # Create dimensions
-    dims = list(p.dims)
-    dims.remove("dparams")
-    dims.insert(0, "return_period")
-
-    # TODO: add time and time_bnds coordinates (Low will work on this)
-    # time.attrs['climatology'] = 'climatology_bounds'
-    # coords['time'] =
-    # coords['climatology_bounds'] =
-
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
-    out.attrs = p.attrs
-    out.attrs["standard_name"] = f"{dist} quantiles"
-    out.attrs[
-        "long_name"
-    ] = f"{dist} return period values for {getattr(da, 'standard_name', '')}"
-    out.attrs["cell_methods"] = (
-        out.attrs.get("cell_methods", "") + " dparams: ppf"
-    ).strip()
-    out.attrs["units"] = da.attrs.get("units", "")
-    out.attrs["mode"] = mode
-    out.attrs["history"] = (
-        out.attrs.get("history", "") + "Compute values corresponding to return periods."
+    # Compute the quantiles
+    out = (
+        parametric_quantile(p, q)
+        .rename({"quantile": "return_period"})
+        .assign_coords(return_period=t)
     )
-
+    out.attrs["mode"] = mode
     return out
 
 
