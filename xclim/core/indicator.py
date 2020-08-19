@@ -630,7 +630,7 @@ class Indicator2D(Indicator):
 
 
 class Daily(Indicator):
-    """Indicator at Daily frequency."""
+    """Indicator defined for inputs at daily frequency."""
 
     @staticmethod
     def datacheck(**das):  # noqa
@@ -639,6 +639,15 @@ class Daily(Indicator):
 
 
 class Daily2D(Daily):
-    """Indicator using two dimensions at Daily frequency."""
+    """Indicator using two dimensions at daily frequency."""
 
     _nvar = 2
+
+
+class Hourly(Indicator):
+    """Indicator defined for inputs at strict hourly frequency, meaning 3-hourly inputs would raise an error."""
+
+    @staticmethod
+    def datacheck(**das):  # noqa
+        for key, da in das.items():
+            datachecks.check_freq(da, "H")
