@@ -97,6 +97,7 @@ class TestParametricQuantile:
             d.rvs(n),
             dims=("time",),
             coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+            attrs={"history": "Mosquito bytes per minute"},
         )
         expected = d.ppf(per)
 

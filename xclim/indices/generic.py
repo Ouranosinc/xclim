@@ -14,6 +14,8 @@ import dask.array
 import numpy as np
 import xarray as xr
 
+from xclim.core.formatting import update_history
+
 
 def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
@@ -155,7 +157,11 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     out.attrs["estimator"] = "Maximum likelihood"
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
-
+    out.attrs["history"] = update_history(
+        "Estimate distribution parameters by maximum likelihood.",
+        new_name="fit",
+        data=da,
+    )
     return out
 
 
@@ -196,7 +202,8 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
         def func(x):
             return dc.ppf(q, *x)
 
-    data = dask.array.apply_along_axis(func, p.get_axis_num("dparams"), p)
+    duck = dask.array if isinstance(p.data, dask.array.Array) else np
+    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
 
     # Create coordinate for the return periods
     coords = dict(p.coords.items())
@@ -216,10 +223,11 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     ).strip()
     out.attrs["units"] = p.attrs["original_units"]
 
-    out.attrs["history"] = (
-        out.attrs.get("history", "") + "Compute values corresponding to return periods."
+    out.attrs["history"] = update_history(
+        "Compute parametric quantiles from distribution parameters",
+        new_name="parametric_quantile",
+        parameters=p,
     )
-
     return out
 
 
