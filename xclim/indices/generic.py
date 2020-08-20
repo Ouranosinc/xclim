@@ -16,6 +16,21 @@ import xarray as xr
 
 from xclim.core.formatting import update_history
 
+# Map the scipy distribution name to the lmoments3 name. Distributions with mismatched parameters are excluded.
+_lm3_dist_map = {
+    "expon": "exp",
+    "gamma": "gam",
+    "genextreme": "gev",
+    # "genlogistic": "glo",
+    # "gennorm": "gno",
+    "genpareto": "gpa",
+    "gumbel_r": "gum",
+    # "kappa4": "kap",
+    "norm": "nor",
+    "pearson3": "pe3",
+    "weibull_min": "wei",
+}
+
 
 def select_time(da: xr.DataArray, **indexer):
     """Select entries according to a time period.
@@ -90,7 +105,7 @@ def doymin(da: xr.DataArray):
     return out
 
 
-def fit(da: xr.DataArray, dist: str = "norm"):
+def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -99,20 +114,29 @@ def fit(da: xr.DataArray, dist: str = "norm"):
       Time series to be fitted along the time dimension.
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats).
+      (see scipy.stats for full list). If the PWM method is used, only the following distributions are
+      currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
+    method : {"ML", "PWM"}
+      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+      The PWM method is usually more robust to outliers.
 
     Returns
     -------
     xr.DataArray
-      An array of distribution parameters fitted using the method of Maximum Likelihood.
+      An array of fitted distribution parameters.
 
     Notes
     -----
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
     still contains NaNs, the distribution parameters will be returned as NaNs.
     """
+    method_name = {"ML": "maximum likelihood", "PWM": "probability weighted moments"}
+
     # Get the distribution
     dc = get_dist(dist)
+    if method == "PWM":
+        lm3dc = get_lm3_dist(dist)
+
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
@@ -126,18 +150,21 @@ def fit(da: xr.DataArray, dist: str = "norm"):
         if len(x) <= 1:
             return [np.nan] * len(dist_params)
 
+        # Estimate parameters
+        if method == "ML":
+            params = dc.fit(x)
+        elif method == "PWM":
+            params = list(lm3dc.lmom_fit(x).values())
+
         # Fill with NaNs if one of the parameters is NaN
-        params = dc.fit(x)
         if np.isnan(params).any():
             params[:] = np.nan
 
         return params
 
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    data = dask.array.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
-
-    # Count the number of values used for the fit.
-    # n = da.notnull().count(dim='time')
+    duck = dask.array if isinstance(da.data, dask.array.Array) else np
+    data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
 
     # Coordinates for the distribution parameters
     coords = dict(da.coords.items())
@@ -154,11 +181,12 @@ def fit(da: xr.DataArray, dist: str = "norm"):
     out.attrs[
         "description"
     ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
-    out.attrs["estimator"] = "Maximum likelihood"
+    out.attrs["method"] = method
+    out.attrs["estimator"] = method_name[method].capitalize()
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
     out.attrs["history"] = update_history(
-        "Estimate distribution parameters by maximum likelihood.",
+        f"Estimate distribution parameters by {method_name[method]} method.",
         new_name="fit",
         data=da,
     )
@@ -338,7 +366,7 @@ def default_freq(**indexer):
 
 
 def get_dist(dist):
-    """Return a distribution object from scipy.stats."""
+    """Return a distribution object from `scipy.stats`."""
     from scipy import stats
 
     dc = getattr(stats, dist, None)
@@ -346,6 +374,21 @@ def get_dist(dist):
         e = f"Statistical distribution `{dist}` is not found in scipy.stats."
         raise ValueError(e)
     return dc
+
+
+def get_lm3_dist(dist):
+    """Return a distribution object from `lmoments3.distr`."""
+    # fmt: off
+    import lmoments3.distr  # isort: skip
+    # The lmoments3 library has to be installed from the `develop` branch.
+    # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
+    # fmt: on
+    if dist not in _lm3_dist_map:
+        raise ValueError(
+            f"The {dist} distribution is not supported by `lmoments3` or `xclim`."
+        )
+
+    return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
