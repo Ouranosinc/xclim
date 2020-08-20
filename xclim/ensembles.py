@@ -260,7 +260,7 @@ def ensemble_percentiles(
                 perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
             )
             out[p] = perc
-            out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
+            out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})  # type: ignore
 
     out.attrs["history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",

@@ -90,7 +90,7 @@ def convert_calendar(
     target: Union[xr.DataArray, str],
     align_on: Optional[str] = None,
     dim: str = "time",
-) -> xr.DataArray:
+) -> Union[xr.DataArray, xr.Dataset]:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
@@ -219,7 +219,7 @@ def convert_calendar(
 
 def interp_calendar(
     source: Union[xr.DataArray, xr.Dataset], target: xr.DataArray, dim: str = "time",
-) -> xr.DataArray:
+) -> Union[xr.DataArray, xr.Dataset]:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
     Each timestamp in source and target are first converted to their decimal year equivalent

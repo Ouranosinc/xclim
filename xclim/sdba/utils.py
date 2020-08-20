@@ -334,8 +334,8 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
 
 def add_endpoints(
     da: xr.DataArray,
-    left: List[Union[int, float, xr.DataArray, List[Union[int, float]]]],
-    right: List[Union[int, float, xr.DataArray, List[Union[int, float]]]],
+    left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
+    right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
     dim: str = "quantiles",
 ):
     """Add left and right endpoints to a DataArray.

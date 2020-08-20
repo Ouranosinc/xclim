@@ -1,6 +1,7 @@
 """Global or contextual options for xclim, similar to xarray.set_options."""
 import logging
 from inspect import signature
+from typing import Callable, Dict
 from warnings import warn
 
 from boltons.funcutils import wraps
@@ -14,7 +15,7 @@ CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
 
-MISSING_METHODS = {}
+MISSING_METHODS: Dict[str, Callable] = dict()
 
 OPTIONS = {
     METADATA_LOCALES: [],

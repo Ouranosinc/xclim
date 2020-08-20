@@ -8,7 +8,7 @@ Computation of statistics on runs of True values in boolean arrays.
 """
 from datetime import datetime
 from functools import partial
-from typing import Optional, Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -209,7 +209,7 @@ def first_run(
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
     ufunc_1dim: Union[str, bool] = "auto",
-):
+) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
     Parameters
@@ -276,7 +276,7 @@ def last_run(
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
     ufunc_1dim: Union[str, bool] = "auto",
-):
+) -> xr.DataArray:
     """Return the index of the last item of the last run of at least a given length.
 
     Parameters
@@ -409,7 +409,7 @@ def first_run_after_date(
     date: str = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
-):
+) -> xr.DataArray:
     """Return the index of the first item of the first run after a given date.
 
     Parameters
@@ -429,7 +429,7 @@ def first_run_after_date(
 
     Returns
     -------
-    out : xr.DataArray
+    xr.DataArray
       Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
     """
     after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
@@ -602,7 +602,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int):
     return (v * rl >= window).sum()
 
 
-def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
+def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> Callable:
     """Dask-parallel version of windowed_run_count_1d, ie: the number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
@@ -629,7 +629,7 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
     )
 
 
-def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
+def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> Callable:
     """Dask-parallel version of windowed_run_events_1d, ie: the number of runs at least as long as given duration.
 
     Parameters
@@ -656,7 +656,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.apply_ufunc:
     )
 
 
-def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
+def longest_run_ufunc(x: Sequence[bool]) -> Callable:
     """Dask-parallel version of longest_run_1d, ie: the maximum number of consecutive true values in array.
 
     Parameters
@@ -680,7 +680,7 @@ def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
     )
 
 
-def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.apply_ufunc:
+def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> Callable:
     """Dask-parallel version of first_run_1d, ie: the first entry in array of consecutive true values.
 
     Parameters

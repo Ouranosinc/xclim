@@ -348,7 +348,7 @@ def relative_humidity(
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
-        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))  # type: ignore
     elif dtas is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=dtas, ice_thresh=ice_thresh, method=method
@@ -356,7 +356,7 @@ def relative_humidity(
         e_sat_t = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method
         )
-        rh = 100 * e_sat_dt / e_sat_t
+        rh = 100 * e_sat_dt / e_sat_t  # type: ignore
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -365,7 +365,7 @@ def relative_humidity(
         e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
         w = huss / (1 - huss)
-        w_sat = 0.62198 * e_sat / (ps - e_sat)
+        w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
         rh = 100 * w / w_sat
 
     if invalid_values == "clip":

@@ -66,7 +66,7 @@ import re
 import warnings
 from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Mapping, Sequence, Union
+from typing import Dict, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
