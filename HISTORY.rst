@@ -16,6 +16,8 @@ New features and enhancements
 * xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves
   maintainability and reduces the size of a "vanilla" xclim installation considerably.
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
+* Add support for using probability weighted moments method in `generic.fit` function. Requires the
+  `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
 * Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`
   returning hourly precipitation intensity.
 
