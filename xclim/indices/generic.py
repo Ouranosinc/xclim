@@ -379,7 +379,6 @@ def get_dist(dist):
 def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
     import lmoments3.distr
-
     # The lmoments3 library has to be installed from master.
     # pip install git+https://github.com/OpenHydrology/lmoments3.git
 
