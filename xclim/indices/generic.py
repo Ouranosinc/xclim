@@ -380,8 +380,8 @@ def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
     # fmt: off
     import lmoments3.distr  # isort: skip
-    # The lmoments3 library has to be installed from master.
-    # pip install git+https://github.com/OpenHydrology/lmoments3.git
+    # The lmoments3 library has to be installed from the `develop` branch.
+    # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
     # fmt: on
     if dist not in _lm3_dist_map:
         raise ValueError(
