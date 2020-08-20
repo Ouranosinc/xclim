@@ -489,7 +489,7 @@ class Indicator:
             return attrs
 
         # Translate global attrs
-        attrid = self.identifier.upper()
+        attrid = str(self.identifier).upper()
         attrs = _translate(
             attrid,
             self.__dict__,
@@ -500,7 +500,7 @@ class Indicator:
         attrs["outputs"] = []
         for var_attrs in self.cf_attrs:  # Translate for each variable
             if len(self.cf_attrs) > 1:
-                attrid = f"{self.identifier.upper()}.{var_attrs['var_name']}"
+                attrid = f"{str(self.identifier).upper()}.{var_attrs['var_name']}"
             attrs["outputs"].append(_translate(attrid, var_attrs, TRANSLATABLE_ATTRS))
         return attrs
 

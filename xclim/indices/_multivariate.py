@@ -708,8 +708,8 @@ def heat_wave_total_length(
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
 def liquid_precip_ratio(
     pr: xarray.DataArray,
-    prsn: xarray.DataArray = None,
-    tas: xarray.DataArray = None,
+    prsn: Optional[xarray.DataArray] = None,
+    tas: Optional[xarray.DataArray] = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     r"""Ratio of rainfall to total precipitation.
@@ -721,9 +721,9 @@ def liquid_precip_ratio(
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-    prsn : xarray.DataArray
+    prsn : Optional[xarray.DataArray]
       Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
-    tas : xarray.DataArray
+    tas : Optional[xarray.DataArray]
       Mean daily temperature [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "QS-DEC".
@@ -748,13 +748,15 @@ def liquid_precip_ratio(
     --------
     winter_rain_ratio
     """
-    if prsn is None:
+    if prsn is None and tas is not None:
         tu = units.parse_units(tas.attrs["units"].replace("-", "**-"))
         fu = "degC"
         frz = 0
         if fu != tu:
             frz = units.convert(frz, fu, tu)
         prsn = pr.where(tas < frz, 0)
+    else:
+        raise KeyError("prsn or tas must be supplied.")
 
     tot = pr.resample(time=freq).sum(dim="time")
     rain = tot - prsn.resample(time=freq).sum(dim="time")

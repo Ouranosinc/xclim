@@ -394,9 +394,7 @@ def get_lm3_dist(dist):
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
 
 
-def threshold_count(
-    da: xr.DataArray, op: str, thresh: float, freq: str
-) -> xr.DataArray:
+def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
@@ -405,7 +403,7 @@ def threshold_count(
       Input data.
     op : str
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
-    thresh : float
+    thresh : str
       Threshold value.
     freq : str
       Resampling frequency defining the periods

@@ -1,5 +1,5 @@
 """SDBA utilities module."""
-from typing import Mapping, Optional, Sequence, Union
+from typing import List, Mapping, Optional, Union
 from warnings import warn
 
 import bottleneck as bn
@@ -334,8 +334,8 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
 
 def add_endpoints(
     da: xr.DataArray,
-    left: Sequence[Union[int, float]],
-    right: Sequence[Union[int, float]],
+    left: List[Union[int, float, xr.DataArray, List[Union[int, float]]]],
+    right: List[Union[int, float, xr.DataArray, List[Union[int, float]]]],
     dim: str = "quantiles",
 ):
     """Add left and right endpoints to a DataArray.
