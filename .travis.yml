@@ -62,8 +62,8 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py36-nosubset
-      name: "Python3.6 (Linux) (No Subset)"
+    - env: TOXENV=py36-nosubset-lm3
+      name: "Python3.6 (Linux + lmoments3@master) (no subsetting)"
       python: 3.6
     - env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
