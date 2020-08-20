@@ -135,6 +135,8 @@ max_pr_intensity = HrPr(
     description="{freq} maximum precipitation intensity over rolling {window}h window.",
     cell_methods="time: max",
     compute=indices.max_pr_intensity,
+    duration="{window}",
+    keywords="IDF curves",
 )
 
 precip_accumulation = Pr(
