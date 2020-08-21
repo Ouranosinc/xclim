@@ -8,7 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 
 import datetime as pydt
-from typing import Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 from warnings import warn
 
 import cftime
@@ -71,11 +71,11 @@ def get_calendar(arr: Union[xr.DataArray, xr.Dataset], dim: str = "time") -> str
     Returns
     -------
     str
-      The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64.
+      The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64).
     """
     if arr[dim].dtype == "O":  # Assume cftime, if it fails, not our fault
         non_na_item = arr[dim].where(arr[dim].notnull(), drop=True)[0].item()
-        cal = non_na_item.calendar
+        cal = str(non_na_item.calendar)
     elif "datetime64" in arr[dim].dtype.name:
         cal = "default"
     else:
@@ -318,9 +318,7 @@ def ensure_cftime_array(time: Sequence):
     raise ValueError("Unable to cast array to cftime dtype")
 
 
-def datetime_to_decimal_year(
-    times: xr.DataArray, calendar: Optional[str] = None
-) -> xr.DataArray:
+def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
     """Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
 
     Decimal years are the number of years since 0001-01-01 00:00:00 AD.
@@ -330,7 +328,7 @@ def datetime_to_decimal_year(
     if calendar == "default":
         calendar = "standard"
 
-    def _make_index(time):
+    def _make_index(time) -> xr.DataArray:
         year = int(time.dt.year[0])
         doys = cftime.date2num(
             ensure_cftime_array(time), f"days since {year:04d}-01-01", calendar=calendar

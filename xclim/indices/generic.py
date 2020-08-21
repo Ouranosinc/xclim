@@ -274,7 +274,7 @@ def fa(
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
       (see scipy.stats).
-    mode : {'min', 'max}
+    mode : {'min', 'max', 'low', 'high'}
       Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
 
     Returns
@@ -401,7 +401,7 @@ def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.Dat
     ----------
     da : xr.DataArray
       Input data.
-    op : str
+    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
     thresh : str
       Threshold value.
@@ -439,15 +439,24 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     ----------
     da : xr.DataArray
     da_value : float
-    operator : str
-
+    operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
+      Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
 
     Returns
     -------
     xr.DataArray
-
     """
-    events = operator(da, da_value) * 1
+    from xarray.core.ops import get_op
+
+    if operator in binary_ops:
+        op = binary_ops[operator]
+    elif operator in binary_ops.values():
+        op = operator
+    else:
+        raise ValueError(f"Operation `{operator}` not recognized.")
+
+    func = getattr(da, "_binary_op")(get_op(op))
+    events = func(da, da_value) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events

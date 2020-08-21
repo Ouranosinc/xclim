@@ -1,4 +1,6 @@
 # noqa: D100
+from typing import Optional, Tuple
+
 import numpy as np
 import xarray as xr
 
@@ -40,8 +42,8 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(None, check_output=False, uas="[speed]", vas="[speed]")
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray = None, vas: xr.DataArray = None, return_direction: bool = True
-):
+    *, uas: xr.DataArray, vas: xr.DataArray, return_direction: bool = True
+) -> Tuple[xr.DataArray, Optional[xr.DataArray]]:
     """Convert eastward and northward wind components to wind speed and direction.
 
     Parameters
@@ -57,7 +59,7 @@ def uas_vas_2_sfcwind(
     -------
     wind : xr.DataArray
       Wind velocity (m s-1)
-    windfromdir : xr.DataArray
+    windfromdir : xr.DataArray, Optional
       Direction from which the wind blows, following the meteorological convention where 360 stands for North.
 
     Notes
@@ -74,7 +76,7 @@ def uas_vas_2_sfcwind(
 
     if not return_direction:
         wind.attrs["units"] = "m s-1"
-        return wind
+        return wind, None
 
     # TODO Attributes should be set by the indicator, but there are no multi-output indicators, so we set them anyway if return_direction is True,
     # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
@@ -106,7 +108,9 @@ def uas_vas_2_sfcwind(
 
 
 @declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")
-def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
+def sfcwind_2_uas_vas(
+    *, wind: xr.DataArray, windfromdir: xr.DataArray
+) -> Tuple[xr.DataArray, xr.DataArray]:
     """Convert wind speed and direction to eastward and northward wind components.
 
     Parameters
