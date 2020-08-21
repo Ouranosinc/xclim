@@ -1,5 +1,5 @@
 """SDBA utilities module."""
-from typing import List, Mapping, Optional, Union
+from typing import Callable, List, Mapping, Optional, Union
 from warnings import warn
 
 import bottleneck as bn
@@ -95,7 +95,7 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
 
-def ensure_longest_doy(func):
+def ensure_longest_doy(func: Callable) -> Callable:
     """Ensure that selected day is the longest day of year for x and y dims."""
 
     @wraps(func)

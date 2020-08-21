@@ -10,7 +10,7 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from functools import partial
 from types import FunctionType
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 import xarray as xr
