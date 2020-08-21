@@ -59,7 +59,7 @@ def _set_missing_options(mopts):
 _SETTERS = {MISSING_OPTIONS: _set_missing_options}
 
 
-def register_missing_method(name):
+def register_missing_method(name: str) -> Callable:
     """Register missing method."""
 
     def _register_missing_method(cls):
@@ -90,7 +90,7 @@ def _run_check(func, option, *args, **kwargs):
             raise err
 
 
-def datacheck(func):
+def datacheck(func: Callable) -> Callable:
     """Decorate functions checking data inputs validity."""
 
     @wraps(func)
@@ -100,7 +100,7 @@ def datacheck(func):
     return run_check
 
 
-def cfcheck(func):
+def cfcheck(func: Callable) -> Callable:
     """Decorate functions checking CF-compliance of DataArray attributes.
 
     Functions should raise ValidationError exceptions whenever attributes are non-conformant.
@@ -137,12 +137,13 @@ class set_options:
         missing method and values must be mappings from option names to values.
 
     You can use ``set_options`` either as a context manager:
-    >>> import xclim  # doctest: +SKIP
-    >>> with xclim.set_options(metadata_locales=['fr'])  # doctest: +SKIP
-    ...     out = xclim.atmos.tg_mean(tas)  # doctest: +SKIP
+    >>> import xclim
+    >>> import xarray
+    >>> ds  = xarray.open_dataset("path_to_tas_file").tas
+    >>> with xclim.set_options(metadata_locales=['fr'])
+    ...     out = xclim.atmos.tg_mean(ds)
 
     Or to set global options:
-
     >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})  # doctest: +SKIP
     <xclim.core.options.set_options object at ...>
     """

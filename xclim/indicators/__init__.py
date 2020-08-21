@@ -10,10 +10,16 @@ and metadata handling. Indicator objects are split into realms : atmos, land and
 seaIce. The module also defines an additional virtual module : ICCLIM.
 """
 from functools import wraps
+from types import ModuleType
+from typing import Callable
 
 
 def build_module(
-    name: str, objs: dict, doc: str = "", source=None, mode: str = "ignore"
+    name: str,
+    objs: dict,
+    doc: str = "",
+    source: ModuleType = None,
+    mode: str = "ignore",
 ):
     """Create a module from imported objects.
 
@@ -79,7 +85,7 @@ def build_module(
     return out
 
 
-def __build_icclim(mode="warn"):
+def __build_icclim(mode: str = "warn"):
     from xclim import indices
     from xclim.core.utils import wrapped_partial
 
@@ -164,7 +170,7 @@ def __build_icclim(mode="warn"):
     return mod
 
 
-def ensure_annual(func):
+def ensure_annual(func: Callable) -> Callable:
     """Ensure that supplied frequency keyword denotes annual time step."""
 
     @wraps(func)
@@ -181,7 +187,7 @@ def ensure_annual(func):
     return _wrapper
 
 
-def __build_anuclim(mode="warn"):
+def __build_anuclim(mode: str = "warn"):
     from xclim import indices
     from xclim.core.utils import wrapped_partial
 

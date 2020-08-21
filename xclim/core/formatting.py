@@ -7,7 +7,7 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
-from typing import Mapping, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
@@ -20,7 +20,7 @@ class AttrFormatter(string.Formatter):
 
     def __init__(
         self, mapping: Mapping[str, Sequence[str]], modifiers: Sequence[str],
-    ):
+    ) -> None:
         """Initialize the formatter.
 
         Parameters
@@ -92,7 +92,7 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc):
+def parse_doc(doc: str) -> Dict[str, str]:
     """Crude regex parsing."""
     if doc is None:
         return {}

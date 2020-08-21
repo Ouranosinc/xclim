@@ -334,7 +334,7 @@ class AtLeastNValid(MissingBase):
         return nvalid < n
 
     @staticmethod
-    def validate(n):
+    def validate(n: int) -> bool:
         return n > 0
 
 

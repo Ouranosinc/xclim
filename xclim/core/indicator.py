@@ -66,7 +66,7 @@ import re
 import warnings
 from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Dict, Mapping, Sequence, Union
+from typing import Callable, Dict, List, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
@@ -235,7 +235,9 @@ class Indicator:
         return super().__new__(new)
 
     @classmethod
-    def _parse_cf_attrs(cls, kwds):
+    def _parse_cf_attrs(
+        cls, kwds: Dict[str, Union[str, Callable, int, bool, List[str]]]
+    ) -> Union[List[Dict[str, str]], List[Dict[str, Union[str, Callable]]]]:
         """CF-compliant metadata attributes for all output variables."""
         # Get number of outputs
         n_outs = (
@@ -453,7 +455,7 @@ class Indicator:
         return attrs
 
     @staticmethod
-    def check_identifier(identifier):
+    def check_identifier(identifier: str) -> None:
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
