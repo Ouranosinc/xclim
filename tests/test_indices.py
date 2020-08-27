@@ -23,6 +23,7 @@ import xarray as xr
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
+from xclim.core.units import ValidationError
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
@@ -246,6 +247,23 @@ class TestDailyPrIntensity:
         pr.attrs["units"] = "mm/d"
         out = xci.daily_pr_intensity(pr, thresh="1 mm/day")
         np.testing.assert_array_almost_equal(out[0], 2.5)
+
+
+class TestMaxPrIntensity:
+    # Hourly indicator
+    def test_simple(self, pr_hr_series):
+        pr = pr_hr_series(np.zeros(24 * 36))
+        pr[10:22] += np.arange(12)  # kg / m2 / s
+
+        out = xci.max_pr_intensity(pr, window=1, freq="Y")
+        np.testing.assert_array_almost_equal(out[0], 11 * 3600)
+
+        out = xci.max_pr_intensity(pr, window=12, freq="Y")
+        np.testing.assert_array_almost_equal(out[0], 5.5 * 3600)
+
+        pr.attrs["units"] = "mm"
+        with pytest.raises(ValidationError):
+            xci.max_pr_intensity(pr, window=1, freq="Y")
 
 
 class TestLastSpringFrost:

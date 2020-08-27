@@ -140,6 +140,8 @@ class Indicator:
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    freq: {"D", "H", None}
+      The expected frequency of the input data. Use None if irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     context: str
@@ -176,6 +178,7 @@ class Indicator:
     missing = "from_context"
     missing_options = None
     context = "none"
+    freq = None
 
     # Variable metadata (_cf_names, those that can be lists or strings)
     # A developper should access those through _var_attrs on instances
@@ -588,7 +591,7 @@ class Indicator:
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
         # We flag periods according to the missing method.
-        miss = (self._missing(da, freq, options, indexer) for da in args)
+        miss = (self._missing(da, freq, self.freq, options, indexer) for da in args)
 
         return reduce(np.logical_or, miss)
 
@@ -632,6 +635,8 @@ class Indicator2D(Indicator):
 class Daily(Indicator):
     """Indicator defined for inputs at daily frequency."""
 
+    freq = "D"
+
     @staticmethod
     def datacheck(**das):  # noqa
         for key, da in das.items():
@@ -646,6 +651,8 @@ class Daily2D(Daily):
 
 class Hourly(Indicator):
     """Indicator defined for inputs at strict hourly frequency, meaning 3-hourly inputs would raise an error."""
+
+    freq = "H"
 
     @staticmethod
     def datacheck(**das):  # noqa

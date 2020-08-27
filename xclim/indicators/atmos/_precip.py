@@ -14,6 +14,7 @@ __all__ = [
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
+    "max_pr_intensity",
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",

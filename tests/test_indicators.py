@@ -15,14 +15,14 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Indicator, registry
+from xclim.core.indicator import Daily, Daily2D, Indicator, registry
 from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
 
 
-class UniIndTemp(Indicator):
+class UniIndTemp(Daily):
     identifier = "tmin"
     var_name = "tmin{thresh}"
     units = "K"
@@ -38,7 +38,7 @@ class UniIndTemp(Indicator):
         return out.resample(time=freq).mean(keep_attrs=True)
 
 
-class UniIndPr(Indicator):
+class UniIndPr(Daily):
     identifier = "prmax"
     units = "mm/s"
     context = "hydro"
@@ -49,7 +49,7 @@ class UniIndPr(Indicator):
         return da.resample(time=freq).mean(keep_attrs=True)
 
 
-class UniClim(Indicator):
+class UniClim(Daily):
     identifier = "clim"
     units = "K"
 
@@ -59,7 +59,7 @@ class UniClim(Indicator):
         return select.mean(dim="time", keep_attrs=True)
 
 
-class MultiTemp(Indicator):
+class MultiTemp(Daily):
     identifier = "minmaxtemp"
     var_name = ["tmin", "tmax"]
     units = "K"
