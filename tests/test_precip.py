@@ -197,11 +197,11 @@ class TestMaxPrIntensity:
     def test_simple(self, pr_hr_series):
         pr1 = pr_hr_series(np.zeros(366 * 24))
         pr1[10:20] += np.arange(10)
-        pr2 = pr_hr_series(np.ones(365 * 24))
+        pr2 = pr_hr_series(np.ones(366 * 24))
 
         pr = xr.concat([pr1, pr2], dim="site")
         out = atmos.max_pr_intensity(pr, window=2, freq="Y")
-        np.testing.assert_array_almost_equal(out, [8.5 * 3600, 3600])
+        np.testing.assert_array_almost_equal(out.isel(time=0), [8.5 * 3600, 3600])
 
 
 class TestMax1Day:
