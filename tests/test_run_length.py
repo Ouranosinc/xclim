@@ -79,7 +79,12 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[0:10,] = da3d[0:10,] + 1
+        da3d[0:10,] = (
+            da3d[
+                0:10,
+            ]
+            + 1
+        )
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
@@ -102,7 +107,12 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[-10:,] = da3d[-10:,] + 1
+        da3d[-10:,] = (
+            da3d[
+                -10:,
+            ]
+            + 1
+        )
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -144,7 +154,12 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
-        da3d[35,] = da3d[35,] + 1
+        da3d[35,] = (
+            da3d[
+                35,
+            ]
+            + 1
+        )
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -269,7 +284,12 @@ class TestRunsWithDates:
         if use_dask:
             runs = runs.chunk({"time": 10, "dim0": 1})
 
-        out = rl.run_length_with_date(runs, window=1, dim="time", date=date,)
+        out = rl.run_length_with_date(
+            runs,
+            window=1,
+            dim="time",
+            date=date,
+        )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(

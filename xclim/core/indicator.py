@@ -480,7 +480,10 @@ class Indicator:
 
         def _translate(var_id, var_attrs, names):
             attrs = get_local_attrs(
-                var_id, locale, names=names, append_locale_name=False,
+                var_id,
+                locale,
+                names=names,
+                append_locale_name=False,
             )
             if fill_missing:
                 for name in names:
