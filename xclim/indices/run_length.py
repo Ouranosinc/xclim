@@ -31,12 +31,7 @@ def get_npts(da: xr.DataArray) -> int:
     int
       Product of input DataArray coordinate sizes excluding the dimension 'time'
     """
-    coords = list(da.coords)
-    coords.remove("time")
-    npts = 1
-    for c in coords:
-        npts *= da[c].size
-    return npts
+    return da.size // da.time.size
 
 
 def rle(
