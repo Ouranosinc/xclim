@@ -79,12 +79,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[0:10,] = (
-            da3d[
-                0:10,
-            ]
-            + 1
-        )
+        da3d[0:10] = da3d[0:10] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
@@ -107,12 +102,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[-10:,] = (
-            da3d[
-                -10:,
-            ]
-            + 1
-        )
+        da3d[-10:] = da3d[-10:] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -154,12 +144,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
-        da3d[35,] = (
-            da3d[
-                35,
-            ]
-            + 1
-        )
+        da3d[35] = da3d[35] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
