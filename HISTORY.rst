@@ -26,6 +26,7 @@ Nothing yet.
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
+* Code styling now conforms to the latest release of black (v0.20.8).
 
 
 0.19.0 (2020-08-18)
