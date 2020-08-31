@@ -9,6 +9,8 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatio-temporal subsetting.
   Install with `pip install xclim[gis]` in order to retain the same functionality.
+* The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
+  version of `pandoc` binaries installed at system-level.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
