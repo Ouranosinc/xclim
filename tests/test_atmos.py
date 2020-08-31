@@ -41,7 +41,9 @@ def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]
     e_sat = atmos.saturation_vapor_pressure(
-        tas=tas, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
     assert e_sat.name == "e_sat"
@@ -54,7 +56,11 @@ def test_relative_humidity(tas_series, rh_series, huss_series, ps_series):
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 
     rh = atmos.relative_humidity(
-        tas=tas, huss=huss, ps=ps, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        huss=huss,
+        ps=ps,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(rh, rh_exp, atol=0.5, rtol=0.005)
     assert rh.name == "rh"
@@ -69,7 +75,11 @@ def test_specific_humidity(tas_series, rh_series, huss_series, ps_series):
     )
 
     huss = atmos.specific_humidity(
-        tas=tas, rh=rh, ps=ps, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        rh=rh,
+        ps=ps,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
     assert huss.name == "huss"

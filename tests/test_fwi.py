@@ -156,13 +156,22 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
     # Test invalid combination
     with pytest.raises(TypeError):
         fire_weather_ufunc(
-            tas=tas, pr=pr, rh=rh, ws=ws, lat=lat, dc0=DC0, indexes=["DC", "ISI"],
+            tas=tas,
+            pr=pr,
+            rh=rh,
+            ws=ws,
+            lat=lat,
+            dc0=DC0,
+            indexes=["DC", "ISI"],
         )
 
     # Test missing arguments
     with pytest.raises(TypeError):
         fire_weather_ufunc(
-            tas=tas, pr=pr, dc0=DC0, indexes=["DC"],  # lat=lat,
+            tas=tas,
+            pr=pr,
+            dc0=DC0,
+            indexes=["DC"],  # lat=lat,
         )
 
     with pytest.raises(TypeError):
@@ -190,7 +199,12 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
 
     # Test output is complete
     out = fire_weather_ufunc(
-        tas=tas, pr=pr, lat=lat, dc0=DC0, indexes=["DC"], start_date="2017-03-03",
+        tas=tas,
+        pr=pr,
+        lat=lat,
+        dc0=DC0,
+        indexes=["DC"],
+        start_date="2017-03-03",
     )
 
     assert len(out.keys()) == 1

@@ -113,7 +113,11 @@ class TestDQM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        DQM = DetrendedQuantileMapping(kind=kind, group="time", nquantiles=50,)
+        DQM = DetrendedQuantileMapping(
+            kind=kind,
+            group="time",
+            nquantiles=50,
+        )
         DQM.train(ref, hist)
         p = DQM.adjust(sim, interp="linear")
 
@@ -227,7 +231,11 @@ class TestQDM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        QDM = QuantileDeltaMapping(kind=kind, group="time", nquantiles=10,)
+        QDM = QuantileDeltaMapping(
+            kind=kind,
+            group="time",
+            nquantiles=10,
+        )
         QDM.train(ref, hist)
         p = QDM.adjust(sim, interp="linear")
 
@@ -342,7 +350,11 @@ class TestQM:
         # Test train
         hist = sim = series(x, name)
         ref = series(y, name)
-        QM = EmpiricalQuantileMapping(kind=kind, group="time", nquantiles=50,)
+        QM = EmpiricalQuantileMapping(
+            kind=kind,
+            group="time",
+            nquantiles=50,
+        )
         QM.train(ref, hist)
         p = QM.adjust(sim, interp="linear")
 
