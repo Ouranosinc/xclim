@@ -453,7 +453,10 @@ def growing_season_length(
     cond = tas >= thresh
 
     return cond.resample(time=freq).map(
-        rl.run_length_with_date, window=window, date=mid_date, dim="time",
+        rl.run_length_with_date,
+        window=window,
+        date=mid_date,
+        dim="time",
     )
 
 
@@ -616,7 +619,9 @@ def heating_degree_days(
 
 
 @declare_units(
-    "days", tasmax="[temperature]", thresh_tasmax="[temperature]",
+    "days",
+    tasmax="[temperature]",
+    thresh_tasmax="[temperature]",
 )
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
@@ -676,7 +681,9 @@ def hot_spell_max_length(
 
 
 @declare_units(
-    "", tasmax="[temperature]", thresh_tasmax="[temperature]",
+    "",
+    tasmax="[temperature]",
+    thresh_tasmax="[temperature]",
 )
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
@@ -1107,7 +1114,9 @@ def sea_ice_extent(sic, area, thresh: str = "15 pct"):
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
 def tropical_nights(
-    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS",
+    tasmin: xarray.DataArray,
+    thresh: str = "20.0 degC",
+    freq: str = "YS",
 ):
     r"""Tropical nights.
 

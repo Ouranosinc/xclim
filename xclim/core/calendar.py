@@ -218,7 +218,9 @@ def convert_calendar(
 
 
 def interp_calendar(
-    source: Union[xr.DataArray, xr.Dataset], target: xr.DataArray, dim: str = "time",
+    source: Union[xr.DataArray, xr.Dataset],
+    target: xr.DataArray,
+    dim: str = "time",
 ) -> xr.DataArray:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
