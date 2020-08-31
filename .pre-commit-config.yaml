@@ -8,7 +8,7 @@ repos:
     -   id: pyupgrade
         language_version: python3
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.3.7
+    rev: 0.3.9
     hooks:
     -   id: nbstripout
         language_version: python3
@@ -25,7 +25,7 @@ repos:
     -   id: debug-statements
         language_version: python3
 -   repo: https://github.com/ambv/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
     -   id: black
         language_version: python3
@@ -42,13 +42,13 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.2.2
+    rev: 5.4.2
     hooks:
     -   id: isort
         language_version: python3
         args: ['--profile', 'black']
 -   repo: https://github.com/pycqa/pydocstyle
-    rev: 5.0.2
+    rev: 5.1.0
     hooks:
     -   id: pydocstyle
         args: ['--convention=numpy', '--match="(?!test_).*\.py"']
