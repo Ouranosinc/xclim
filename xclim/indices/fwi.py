@@ -673,7 +673,8 @@ def fire_weather_ufunc(
     if "ISI" in indexes:
         indexes.update({"FFMC"})
     indexes = sorted(
-        list(indexes), key=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index,
+        list(indexes),
+        key=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index,
     )
 
     if start_date is not None:

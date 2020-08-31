@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.19.2-beta"
+VERSION = "0.19.3-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -42,7 +42,6 @@ docs_requirements = [
     "sphinx",
     "sphinx-rtd-theme",
     "nbsphinx",
-    "pandoc",
     "ipython",
     "ipykernel",
     "jupyter_client",

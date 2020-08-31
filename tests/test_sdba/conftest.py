@@ -80,7 +80,10 @@ def make_qm():
             a = a[0]
 
         return xr.DataArray(
-            a, dims=dims, coords=coords, attrs={"group": group, "window": 1},
+            a,
+            dims=dims,
+            coords=coords,
+            attrs={"group": group, "window": 1},
         )
 
     return _make_qm

@@ -52,7 +52,9 @@ class BaseAdjustment(Parametrizable):
         super().__init__(**kwargs)
 
     def train(
-        self, ref: DataArray, hist: DataArray,
+        self,
+        ref: DataArray,
+        hist: DataArray,
     ):
         """Train the adjustment object. Refer to the class documentation for the algorithm details.
 
@@ -186,7 +188,9 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         group: Union[str, Grouper] = "time",
     ):
         super().__init__(
-            nquantiles=nquantiles, kind=kind, group=group,
+            nquantiles=nquantiles,
+            kind=kind,
+            group=group,
         )
 
     def _train(self, ref, hist):
@@ -281,7 +285,9 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         norm_window: int = 1,
     ):
         super().__init__(
-            nquantiles=nquantiles, kind=kind, group=group,
+            nquantiles=nquantiles,
+            kind=kind,
+            group=group,
         )
         self["norm_group"] = Grouper("time.dayofyear", window=norm_window)
 
