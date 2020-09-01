@@ -9,6 +9,8 @@ from click.testing import CliRunner
 import xclim as xc
 from xclim.cli import cli
 
+xc.set_options(cf_compliance="warn")
+
 
 @pytest.mark.parametrize(
     "indicators,indnames",
