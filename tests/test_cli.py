@@ -66,26 +66,9 @@ def test_indicator_help(indicator, indname):
 def test_normal_computation(
     tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected
 ):
-    tasmin = tasmin_series(
-        np.ones(
-            366,
-        )
-        + 270.15,
-        start="1/1/2000",
-    )
-    tasmax = tasmax_series(
-        np.ones(
-            366,
-        )
-        + 272.15,
-        start="1/1/2000",
-    )
-    pr = pr_series(
-        np.ones(
-            366,
-        ),
-        start="1/1/2000",
-    )
+    tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
+    tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
+    pr = pr_series(np.ones(366), start="1/1/2000")
     ds = xr.Dataset(
         data_vars={
             "tasmin": tasmin,
@@ -120,15 +103,7 @@ def test_renaming_variable(tas_series, tmp_path):
     runner = CliRunner()
     results = runner.invoke(
         cli,
-        [
-            "-i",
-            str(input_file),
-            "-o",
-            str(output_file),
-            "tn_mean",
-            "--tasmin",
-            "tas",
-        ],
+        ["-i", str(input_file), "-o", str(output_file), "tn_mean", "--tasmin", "tas"],
     )
     assert "Processing : tn_mean" in results.output
     assert "100% Completed" in results.output
@@ -138,12 +113,7 @@ def test_renaming_variable(tas_series, tmp_path):
 
 
 def test_indicator_chain(tas_series, tmp_path):
-    tas = tas_series(
-        np.ones(
-            366,
-        ),
-        start="1/1/2000",
-    )
+    tas = tas_series(np.ones(366), start="1/1/2000")
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
@@ -172,12 +142,7 @@ def test_indicator_chain(tas_series, tmp_path):
 
 
 def test_missing_variable(tas_series, tmp_path):
-    tas = tas_series(
-        np.ones(
-            366,
-        ),
-        start="1/1/2000",
-    )
+    tas = tas_series(np.ones(366), start="1/1/2000")
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
@@ -201,12 +166,7 @@ def test_missing_variable(tas_series, tmp_path):
     ],
 )
 def test_global_options(tas_series, tmp_path, options, output):
-    tas = tas_series(
-        np.ones(
-            366,
-        ),
-        start="1/1/2000",
-    )
+    tas = tas_series(np.ones(366), start="1/1/2000")
     tas = xr.concat([tas] * 10, dim="lat")
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
