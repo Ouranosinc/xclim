@@ -9,8 +9,6 @@ from click.testing import CliRunner
 import xclim as xc
 from xclim.cli import cli
 
-xc.set_options(cf_compliance="warn")
-
 
 @pytest.mark.parametrize(
     "indicators,indnames",
@@ -99,14 +97,22 @@ def test_renaming_variable(tas_series, tmp_path):
     output_file = tmp_path / "out.nc"
     tas.name = "tas"
     tas.to_netcdf(input_file)
-
-    runner = CliRunner()
-    results = runner.invoke(
-        cli,
-        ["-i", str(input_file), "-o", str(output_file), "tn_mean", "--tasmin", "tas"],
-    )
-    assert "Processing : tn_mean" in results.output
-    assert "100% Completed" in results.output
+    with xc.set_options(cf_compliance="warn"):
+        runner = CliRunner()
+        results = runner.invoke(
+            cli,
+            [
+                "-i",
+                str(input_file),
+                "-o",
+                str(output_file),
+                "tn_mean",
+                "--tasmin",
+                "tas",
+            ],
+        )
+        assert "Processing : tn_mean" in results.output
+        assert "100% Completed" in results.output
 
     out = xr.open_dataset(output_file)
     assert out.tn_mean[0] == 1.0
