@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-xclim command line interface module
-"""
+"""xclim command line interface module."""
 import inspect
 import warnings
 
@@ -11,16 +9,10 @@ from dask.diagnostics import ProgressBar
 
 import xclim as xc
 
-xcmodules = {
-    "atmos": xc.indicators.atmos,
-    "land": xc.indicators.land,
-    "seaIce": xc.indicators.seaIce,
-}
-
 
 def _get_indicator(indname):
     try:
-        indcls = xc.core.indicators.registry[indname]
+        indcls = xc.core.indicator.registry[indname.upper()]
     except KeyError:
         raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
 
@@ -68,8 +60,8 @@ def _get_output(ctx):
 
 
 def _process_indicator(indicator, ctx, **params):
-    """Add given climate indicator to the output dataset
-    from variables in the input one.
+    """Add given climate indicator to the output dataset from variables in the input dataset.
+
     Cmputation is not triggered here if dask is enabled.
     """
     click.echo(f"Processing : {indicator.identifier}")
@@ -82,17 +74,14 @@ def _process_indicator(indicator, ctx, **params):
             params[key] = None
         # A DataArray is expected, it has to come from the input dataset
         # All other parameters are passed as is.
-        # TODO:  Find a better way to test this.
         elif indicator.parameters[key]["annotation"] is xr.DataArray:
             # Either a variable name was given or the key is the name
             var = val or key
             if var in dsin:
                 params[key] = dsin[var]
-            elif var in dsout:
-                params[key] = dsout[var]
             else:
                 raise click.BadArgumentUsage(
-                    f"Variable {var} absent from input and output datasets. "
+                    f"Variable {var} absent from input dataset. "
                     f"You should provide a name with --{key}",
                     ctx,
                 )
@@ -162,7 +151,7 @@ def indices(info):
 @click.argument("indicator", nargs=-1)
 @click.pass_context
 def info(ctx, indicator):
-    """Gives information about INDICATOR."""
+    """Give information about INDICATOR."""
     for indname in indicator:
         ind = _get_indicator(indname)
         command = _create_command(indname)
@@ -198,10 +187,14 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
 
 
 class XclimCli(click.MultiCommand):
+    """Main cli class."""
+
     def list_commands(self, ctx):
+        """Return the available commands (other than the indicators)."""
         return "indices", "info"
 
     def get_command(self, ctx, name):
+        """Return the requested command."""
         command = {"indices": indices, "info": info}.get(name)
         if command is None:
             command = _create_command(name)
@@ -211,7 +204,7 @@ class XclimCli(click.MultiCommand):
 @click.command(
     cls=XclimCli,
     chain=True,
-    help="Command line tool to compute indices on netCDF datasets",
+    help="Command line tool to compute indices on netCDF datasets. Indicators are reffered to by their (case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",
 )
@@ -223,13 +216,6 @@ class XclimCli(click.MultiCommand):
 )
 @click.option("-o", "--output", help="Output filepath. A new file will be created")
 @click.option("-v", "--verbose", help="Make it more verbose", count=True)
-@click.option(
-    "--tas-from",
-    nargs=2,
-    help="Variable names in the input dataset for 'tasmin' and 'tasmax', "
-    "used when 'tas' is needed but absent from the dataset",
-    default=("tasmax", "tasmin"),
-)
 @click.option("--version", is_flag=True, help="Prints xclim's version number and exits")
 @click.option(
     "--dask-nthreads",
@@ -247,6 +233,7 @@ class XclimCli(click.MultiCommand):
 @click.pass_context
 def cli(ctx, **kwargs):
     """Entry point for the command line interface.
+
     Manages the global options.
     """
     if kwargs["version"]:
@@ -290,6 +277,7 @@ def cli(ctx, **kwargs):
 @cli.resultcallback()
 @click.pass_context
 def write_file(ctx, *args, **kwargs):
+    """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         click.echo(f"Writing everything to file {ctx.obj['output']}")
         with ProgressBar():

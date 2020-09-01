@@ -94,7 +94,7 @@ def cold_spell_days(
 def daily_pr_intensity(
     pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
 ):
-    r"""Average daily precipitation intensity
+    r"""Average daily precipitation intensity.
 
     Return the average precipitation over wet days.
 
