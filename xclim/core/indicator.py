@@ -219,7 +219,7 @@ class Indicator:
         # The input parameters' name
         kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
         # Fill default values and annotation in parameter doc
-        params = kwds.get("parameters", cls.parameters)
+        params = kwds.get("parameters", cls.parameters or {})
         for name, param in kwds["_sig"].parameters.items():
             param_doc = params.setdefault(name, {"type": "", "description": ""})
             param_doc["default"] = param.default

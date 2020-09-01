@@ -109,15 +109,10 @@ def test_normal_computation(
 
 
 def test_renaming_variable(tas_series, tmp_path):
-    tas = tas_series(
-        np.ones(
-            366,
-        ),
-        start="1/1/2000",
-    )
+    tas = tas_series(np.ones(366), start="1/1/2000")
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
-
+    tas.name = "tas"
     tas.to_netcdf(input_file)
 
     runner = CliRunner()
