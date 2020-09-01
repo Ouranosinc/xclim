@@ -2,8 +2,37 @@
 History
 =======
 
-0.19.x
+0.20.x
 ------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatio-temporal subsetting.
+  Install with `pip install xclim[gis]` in order to retain the same functionality.
+* The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
+  version of `pandoc` binaries installed at system-level.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `sdba.loess` submodule implementing LOESS smoothing tools used in `sdba.detrending.LoessDetrend`.
+* xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves
+  maintainability and reduces the size of a "vanilla" xclim installation considerably.
+* New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
+* Add support for using probability weighted moments method in `generic.fit` function. Requires the
+  `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
+
+Bug fixes
+~~~~~~~~~
+Nothing yet.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
+* Code styling now conforms to the latest release of black (v0.20.8).
+
+
+0.19.0 (2020-08-18)
+-------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -25,12 +54,11 @@ New features and enhancements
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
 * The `Indicator` class now supports outputing multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
-* Doctests now make use of the `xdoctest_namespace` in order to more easily access mdoules and tesdata.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access modules and testdata.
 
 Bug fixes
 ~~~~~~~~~
 * Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
-
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -41,7 +69,7 @@ Internal changes
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
-* Major refactoring of the internal marchinery of `Indicator` to support multiple outputs.
+* Major refactoring of the internal machinery of `Indicator` to support multiple outputs.
 
 0.18.0 (2020-06-26)
 -------------------

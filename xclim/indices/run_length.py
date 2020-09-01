@@ -31,12 +31,7 @@ def get_npts(da: xr.DataArray) -> int:
     int
       Product of input DataArray coordinate sizes excluding the dimension 'time'
     """
-    coords = list(da.coords)
-    coords.remove("time")
-    npts = 1
-    for c in coords:
-        npts *= da[c].size
-    return npts
+    return da.size // da.time.size
 
 
 def rle(
@@ -311,7 +306,10 @@ def last_run(
 
 
 def run_length_with_date(
-    da: xr.DataArray, window: int, date: str = "07-01", dim: str = "time",
+    da: xr.DataArray,
+    window: int,
+    date: str = "07-01",
+    dim: str = "time",
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values found to be semi-continuous before and after a given date.
 
@@ -342,7 +340,9 @@ def run_length_with_date(
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
     end = first_run(
-        (~da).where(da.time >= da.time[mid_index][0]), window=window, dim=dim,
+        (~da).where(da.time >= da.time[mid_index][0]),
+        window=window,
+        dim=dim,
     )
     beg = first_run(da, window=window, dim=dim)
     sl = end - beg
@@ -439,7 +439,10 @@ def first_run_after_date(
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
     return first_run(
-        da.where(da.time >= da.time[mid_idx][0]), window=window, dim=dim, coord=coord,
+        da.where(da.time >= da.time[mid_idx][0]),
+        window=window,
+        dim=dim,
+        coord=coord,
     )
 
 
@@ -680,7 +683,11 @@ def longest_run_ufunc(x: Sequence[bool]) -> xr.apply_ufunc:
     )
 
 
-def first_run_ufunc(x: xr.DataArray, window: int, dim: str = "time",) -> xr.apply_ufunc:
+def first_run_ufunc(
+    x: xr.DataArray,
+    window: int,
+    dim: str = "time",
+) -> xr.apply_ufunc:
     """Dask-parallel version of first_run_1d, ie: the first entry in array of consecutive true values.
 
     Parameters

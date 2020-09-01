@@ -68,7 +68,10 @@ def map_cdf(
         )
 
     return group.apply(
-        _map_cdf_group, {"x": x, "y": y}, y_value=np.atleast_1d(y_value), skipna=skipna,
+        _map_cdf_group,
+        {"x": x, "y": y},
+        y_value=np.atleast_1d(y_value),
+        skipna=skipna,
     )
 
 

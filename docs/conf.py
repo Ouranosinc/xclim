@@ -88,6 +88,7 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.todo",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -97,6 +98,8 @@ napoleon_numpy_docstring = True
 napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
+
+intersphinx_mapping = {"clisops": ("https://clisops.readthedocs.io/en/latest/", None)}
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""

@@ -84,31 +84,18 @@ def _process_indicator(indicator, ctx, **params):
         # All other parameters are passed as is.
         # TODO:  Find a better way to test this.
         elif indicator.parameters[key]["annotation"] is xr.DataArray:
-
-            if key == "tas" and val == "tas" and key not in dsin.data_vars:
-                # Special case for tas.
-                try:
-                    params["tas"] = xc.atmos.tg(
-                        dsin[ctx.obj["tas_from"][0]], dsin[ctx.obj["tas_from"][1]]
-                    )
-                except KeyError:
-                    raise click.UsageError(
-                        f"Dataset neither provides needed variable {key} nor the pair "
-                        f"{ctx.obj['tas_from']} that could be used to construct it. "
-                        "Set the '--tas-from' global option or directly give a name with the '--tas' indicator option.",
-                        ctx,
-                    )
+            # Either a variable name was given or the key is the name
+            var = val or key
+            if var in dsin:
+                params[key] = dsin[var]
+            elif var in dsout:
+                params[key] = dsout[var]
             else:
-                # Either a variable name was given or the key is the name
-                try:
-                    params[key] = dsin[val or key]
-                    click.echo(params[key])
-                except KeyError:
-                    raise click.BadArgumentUsage(
-                        f"Variable {val or key} absent from input dataset. "
-                        f"You should provide a name with --{key}",
-                        ctx,
-                    )
+                raise click.BadArgumentUsage(
+                    f"Variable {var} absent from input and output datasets. "
+                    f"You should provide a name with --{key}",
+                    ctx,
+                )
     out = indicator(**params)
     if isinstance(out, tuple):
         dsout = dsout.assign(**{var.name: var for var in out})

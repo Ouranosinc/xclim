@@ -210,7 +210,10 @@ def rh_series():
             coords=[coords],
             dims="time",
             name="rh",
-            attrs={"standard_name": "relative humidity", "units": "%",},
+            attrs={
+                "standard_name": "relative humidity",
+                "units": "%",
+            },
         )
 
     return _rh_series
@@ -225,7 +228,10 @@ def ws_series():
             coords=[coords],
             dims="time",
             name="ws",
-            attrs={"standard_name": "wind speed", "units": "km h-1",},
+            attrs={
+                "standard_name": "wind speed",
+                "units": "km h-1",
+            },
         )
 
     return _ws_series
@@ -240,7 +246,10 @@ def huss_series():
             coords=[coords],
             dims="time",
             name="huss",
-            attrs={"standard_name": "specific_humidity", "units": "",},
+            attrs={
+                "standard_name": "specific_humidity",
+                "units": "",
+            },
         )
 
     return _huss_series
