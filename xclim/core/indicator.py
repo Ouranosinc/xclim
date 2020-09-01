@@ -39,7 +39,8 @@ Another mechanism to create subclasses is to call Indicator with all the attribu
 
 Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
 compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
-In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name` attribute must be a list and have
+In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name`
+attribute must be a list and have the same length as the number of outputs.
 
 One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
 are common to indicators, then call this subclass with the custom attributes. See for example in
@@ -51,22 +52,22 @@ Subclass registries
 All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
 example::
 
->>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
->>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
->>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
+>>> from xclim.core.indicator import Daily, registry
+>>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())
+>>> assert "MY_INDICATOR" in registry
 
 This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
 a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
 
 >>> from xclim.core.indicator import registry
->>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
+>>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")
 
 """
 import re
 import warnings
 from collections import OrderedDict, defaultdict
 from inspect import signature
-from typing import Mapping, Sequence, Union
+from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
