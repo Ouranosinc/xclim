@@ -88,13 +88,12 @@ from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
 
 # Indicators registry
-registry = {}
+registry = {}  # Main class registry
+_indicators_registry = defaultdict(list)  # Private instance registry
 
 
 class IndicatorRegistrar:
     """Climate Indicator registering object."""
-
-    __refs__ = defaultdict(list)
 
     def __new__(cls):
         """Add subclass to registry."""
@@ -105,12 +104,15 @@ class IndicatorRegistrar:
         return super().__new__(cls)
 
     def __init__(self):
-        self.__refs__[self.__class__].append(weakref.ref(self))
+        _indicators_registry[self.__class__].append(weakref.ref(self))
 
     @classmethod
     def get_instance(cls):
-        """Return first non-destroyed instance."""
-        for inst_ref in cls.__refs__[cls]:
+        """Return first found instance.
+
+        Raises ValueError is no instance exist (anymore).
+        """
+        for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
             if inst is not None:
                 return inst
@@ -136,6 +138,8 @@ class Indicator(IndicatorRegistrar):
     ----------
     identifier: str
       Unique ID for class registry, should be a valid slug.
+    realm : {'atmos', 'seaIce', 'land', 'ocean'}
+      General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
     compute: func
       The function computing the indicators. It should return one or more DataArray.
     var_name: str or Sequence[str]
