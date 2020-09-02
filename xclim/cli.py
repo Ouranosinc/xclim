@@ -6,6 +6,7 @@ import warnings
 import click
 import xarray as xr
 from dask.diagnostics import ProgressBar
+from dask.distributed import Client, progress
 
 import xclim as xc
 
@@ -69,7 +70,6 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        click.echo(f"Parsing {key} = {val}")
         if val == "None":
             params[key] = None
         # A DataArray is expected, it has to come from the input dataset
@@ -79,12 +79,17 @@ def _process_indicator(indicator, ctx, **params):
             var = val or key
             if var in dsin:
                 params[key] = dsin[var]
+                if ctx.obj["verbose"]:
+                    click.echo(f"Parsed {key} = dsin.{var}")
             else:
                 raise click.BadArgumentUsage(
                     f"Variable {var} absent from input dataset. "
                     f"You should provide a name with --{key}",
                     ctx,
                 )
+        elif ctx.obj["verbose"]:
+            click.echo(f"Parsed {key} = {val}")
+
     out = indicator(**params)
     if isinstance(out, tuple):
         dsout = dsout.assign(**{var.name: var for var in out})
@@ -143,6 +148,7 @@ def indices(info):
         if info:
             right += "\n" + indcls.abstract
         rows.append((left, right))
+    rows.sort(key=lambda row: row[0])
     formatter.write_dl(rows)
     click.echo(formatter.getvalue())
 
@@ -254,8 +260,6 @@ def cli(ctx, **kwargs):
                 ctx,
             )
 
-        from dask.distributed import Client
-
         client = Client(
             n_workers=1,
             threads_per_worker=kwargs["dask_nthreads"],
@@ -279,9 +283,14 @@ def cli(ctx, **kwargs):
 def write_file(ctx, *args, **kwargs):
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
-        click.echo(f"Writing everything to file {ctx.obj['output']}")
+        click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
-            ctx.obj["ds_out"].to_netcdf(ctx.obj["output"])
+            r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], compute=False)
+            if ctx.obj["dask_nthreads"] is not None:
+                progress(r.data)
+            r.compute()
+        if ctx.obj["dask_nthreads"] is not None:
+            click.echo("")  # Distributed's progress doesn't print a final \n.
 
 
 if __name__ == "__main__":
