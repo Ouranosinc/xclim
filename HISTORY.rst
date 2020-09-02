@@ -22,6 +22,7 @@ New features and enhancements
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
 * Indicator instances can be retrieved through their class with the `get_instance()` class method.
   This allows the use of `xclim.core.indicator.registry` as an instance registry.
+* Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
 
 Bug fixes
 ~~~~~~~~~
