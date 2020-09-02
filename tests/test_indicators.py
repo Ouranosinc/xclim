@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
+import gc
+
 import dask
 import numpy as np
 import pytest
@@ -107,12 +109,22 @@ def test_registering():
     class IndicatorNew(Indicator):
         _nvar = 2
 
-    with pytest.raises(AttributeError):
+    # Identifier must be given
+    with pytest.raises(AttributeError, match="has not been set."):
+        IndicatorNew()
+
+    # Realm must be given
+    with pytest.raises(AttributeError, match="realm must be given"):
         IndicatorNew(identifier="i2d")
 
     indnew = IndicatorNew(identifier="i2d", realm="atmos")
     assert "I2D" in registry
     assert registry["I2D"].get_instance() is indnew
+
+    del indnew
+    gc.collect()
+    with pytest.raises(ValueError, match="There is no existing instance"):
+        registry["I2D"].get_instance()
 
 
 def test_module():
@@ -148,6 +160,11 @@ def test_missing(tas_series):
 
     # By default, missing is set to "from_context", and the default missing option is "any"
     ind = UniIndTemp()
+
+    # Cannot set missing_options with "from_context"
+    with pytest.raises(ValueError, match="Cannot set `missing_options`"):
+        UniClim(missing_options={"tolerance": 0.01})
+
     clim = UniClim()
 
     # Null value
