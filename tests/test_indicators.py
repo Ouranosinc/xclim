@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
+from inspect import _empty
+
 import dask
 import numpy as np
 import pytest
@@ -253,9 +255,43 @@ def test_formatting(pr_series):
     ]
 
 
-# TODO Add a meaningful test
 def test_parse_doc():
-    parse_doc(tg_mean.__doc__)
+    doc = parse_doc(tg_mean.__doc__)
+    assert doc["title"] == "Mean of daily average temperature."
+    assert (
+        doc["abstract"]
+        == "Resample the original daily mean temperature series by taking the mean over each period."
+    )
+    assert (
+        doc["parameters"]["tas"]["description"] == "Mean daily temperature [℃] or [K]"
+    )
+    assert (
+        doc["parameters"]["freq"]["description"]
+        == 'Resampling frequency; Defaults to "YS" (yearly).'
+    )
+    assert doc["notes"].startswith("Let")
+    assert "math::" in doc["notes"]
+    assert "references" not in doc
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+
+    doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
+    assert (
+        doc["parameters"]["ice_thresh"]["description"]
+        == "Threshold temperature under which to switch to equations in reference to ice instead of water. If None (default) everything is computed with reference to water."
+    )
+    assert "Goff, J. A., and S. Gratch (1946)" in doc["references"]
+
+
+def test_parsed_doc():
+    assert "tas" in xclim.atmos.liquid_precip_accumulation.parameters
+    assert "tas" not in xclim.atmos.precip_accumulation.parameters
+
+    params = xclim.atmos.drought_code.parameters
+    assert params["tas"]["description"] == "Noon temperature."
+    assert params["tas"]["annotation"] is xr.DataArray
+    assert params["tas"]["default"] is _empty
+    assert params["snd"]["default"] is None
+    assert params["shut_down_mode"]["annotation"] is str
 
 
 def test_default_formatter():

@@ -132,7 +132,8 @@ def _parse_parameters(section):
     for line in section.split("\n"):
         if line.strip():
             if line.startswith(" " * 6):  # description
-                params[curr_key]["description"] += line.strip() + " "
+                s = " " if params[curr_key]["description"] else ""
+                params[curr_key]["description"] += s + line.strip()
             elif line.startswith(" " * 4):  # param title
                 name, annot = line.split(":", maxsplit=1)
                 curr_key = name.strip()
