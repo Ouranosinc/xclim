@@ -6,9 +6,17 @@ import warnings
 import click
 import xarray as xr
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client, progress
 
 import xclim as xc
+
+try:
+    from dask.distributed import Client, progress
+except ImportError:
+    # Distributed is not a dependency of xclim
+    Client = None
+
+    def progress(data):
+        pass
 
 
 def _get_indicator(indname):
@@ -253,6 +261,12 @@ def cli(ctx, **kwargs):
         kwargs["input"] = kwargs["input"][0]
 
     if kwargs["dask_nthreads"] is not None:
+        if Client is None:
+            raise click.BadOptionUsage(
+                "dask_nthreads",
+                "Dask's distributed scheduler is not installed, only the local scheduler (non-customizable) can be used.",
+                ctx,
+            )
         if kwargs["dask_maxmem"] is None:
             raise click.BadOptionUsage(
                 "dask_nthreads",

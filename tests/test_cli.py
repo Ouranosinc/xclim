@@ -172,6 +172,8 @@ def test_missing_variable(tas_series, tmp_path):
     ],
 )
 def test_global_options(tas_series, tmp_path, options, output):
+    if "dask" in options[0]:
+        pytest.importorskip("dask.distributed")
     tas = tas_series(np.ones(366), start="1/1/2000")
     tas = xr.concat([tas] * 10, dim="lat")
     input_file = tmp_path / "tas.nc"
