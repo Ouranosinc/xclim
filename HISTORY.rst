@@ -20,6 +20,8 @@ New features and enhancements
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 * Add support for using probability weighted moments method in `generic.fit` function. Requires the
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
+* Indicator instances can be retrieved through their class with the `get_instance()` class method.
+  This allows the use of `xclim.core.indicator.registry` as an instance registry.
 
 Bug fixes
 ~~~~~~~~~
@@ -29,6 +31,8 @@ Internal changes
 ~~~~~~~~~~~~~~~~
 * `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
 * Code styling now conforms to the latest release of black (v0.20.8).
+* New `IndicatorRegistrar` class that takes care of adding indicator classes and instances to the
+  appropriate registries. `Indicator` now inherits from it.
 
 
 0.19.0 (2020-08-18)
