@@ -64,6 +64,7 @@ a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could 
 """
 import re
 import warnings
+import weakref
 from collections import OrderedDict, defaultdict
 from inspect import signature
 from typing import Mapping, Sequence, Union
@@ -90,7 +91,35 @@ from .units import convert_units_to, units
 registry = {}
 
 
-class Indicator:
+class IndicatorRegistrar:
+    """Climate Indicator registering object."""
+
+    __refs__ = defaultdict(list)
+
+    def __new__(cls):
+        """Add subclass to registry."""
+        name = cls.__name__
+        if name in registry:
+            warnings.warn(f"Class {name} already exists and will be overwritten.")
+        registry[name] = cls
+        return super().__new__(cls)
+
+    def __init__(self):
+        self.__refs__[self.__class__].append(weakref.ref(self))
+
+    @classmethod
+    def get_instance(cls):
+        """Return first non-destroyed instance."""
+        for inst_ref in cls.__refs__[cls]:
+            inst = inst_ref()
+            if inst is not None:
+                return inst
+        raise ValueError(
+            f"There is no existing instance of {cls.__name__}. Either none were created or they were all garbage-collected."
+        )
+
+
+class Indicator(IndicatorRegistrar):
     r"""Climate indicator base class.
 
     Climate indicator object that, when called, computes an indicator and assigns its output a number of
@@ -170,7 +199,7 @@ class Indicator:
 
     _funcs = ["compute", "cfcheck", "datacheck"]
 
-    # Will become the classe's name
+    # Will become the class's name
     identifier = None
 
     missing = "from_context"
@@ -178,7 +207,7 @@ class Indicator:
     context = "none"
 
     # Variable metadata (_cf_names, those that can be lists or strings)
-    # A developper should access those through _var_attrs on instances
+    # A developper should access those through cf_attrs on instances
     var_name = None
     standard_name = ""
     long_name = ""
@@ -188,6 +217,7 @@ class Indicator:
     comment = ""
 
     # Global metadata (must be strings, not attributed to the output)
+    realm = None
     title = ""
     abstract = ""
     keywords = ""
@@ -222,6 +252,18 @@ class Indicator:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
+        # Infer realm for official instances
+        if cls.__module__.startswith(__package__.split(".")[0]):
+            xclim_realm = cls.__module__.split(".")[2]
+        else:
+            xclim_realm = None
+        # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
+        kwds.setdefault("realm", cls.realm or xclim_realm)
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean"]:
+            raise AttributeError(
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
+            )
+
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
@@ -229,8 +271,6 @@ class Indicator:
         new.__module__ = cls.__module__
 
         #  Add the created class to the registry
-        cls.register(new)
-
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
 
@@ -242,7 +282,7 @@ class Indicator:
             len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
         )
 
-        # Populate _var_attrs from attribute set during class creation and __new__
+        # Populate cf_attrs from attribute set during class creation and __new__
         cf_attrs = [{} for i in range(n_outs)]
         for name in cls._cf_names:
             values = kwds.get(name, getattr(cls, name))
@@ -257,19 +297,10 @@ class Indicator:
                     attrs[name] = value
         return cf_attrs
 
-    @classmethod
-    def register(cls, obj):
-        """Add subclass to registry."""
-        name = obj.__name__
-        if name in registry:
-            warnings.warn(f"Class {name} already exists and will be overwritten.")
-        registry[name] = obj
-
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
         self.check_identifier(self.identifier)
-
         if self.missing == "from_context" and self.missing_options is not None:
             raise ValueError(
                 "Cannot set `missing_options` with `missing` method being from context."
@@ -280,6 +311,9 @@ class Indicator:
         self._missing = kls.execute
         if self.missing_options:
             kls.validate(**self.missing_options)
+
+        # Validation is done : register the instance.
+        super().__init__()
 
         # The `compute` signature
         self._sig = signature(self.compute)

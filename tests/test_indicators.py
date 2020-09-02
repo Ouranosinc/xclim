@@ -23,6 +23,7 @@ from xclim.indices.generic import select_time
 
 
 class UniIndTemp(Indicator):
+    realm = "atmos"
     identifier = "tmin"
     var_name = "tmin{thresh}"
     units = "K"
@@ -39,6 +40,7 @@ class UniIndTemp(Indicator):
 
 
 class UniIndPr(Indicator):
+    realm = "atmos"
     identifier = "prmax"
     units = "mm/s"
     context = "hydro"
@@ -50,6 +52,7 @@ class UniIndPr(Indicator):
 
 
 class UniClim(Indicator):
+    realm = "atmos"
     identifier = "clim"
     units = "K"
 
@@ -60,6 +63,7 @@ class UniClim(Indicator):
 
 
 class MultiTemp(Indicator):
+    realm = "atmos"
     identifier = "minmaxtemp"
     var_name = ["tmin", "tmax"]
     units = "K"
@@ -86,6 +90,9 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
+
+def test_registering():
+    UniIndTemp()
     assert "TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
@@ -100,8 +107,12 @@ def test_attrs(tas_series):
     class IndicatorNew(Indicator):
         _nvar = 2
 
-    IndicatorNew(identifier="i2d")
+    with pytest.raises(AttributeError):
+        IndicatorNew(identifier="i2d")
+
+    indnew = IndicatorNew(identifier="i2d", realm="atmos")
     assert "I2D" in registry
+    assert registry["I2D"].get_instance() is indnew
 
 
 def test_module():
