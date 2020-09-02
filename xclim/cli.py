@@ -15,9 +15,6 @@ except ImportError:
     # Distributed is not a dependency of xclim
     Client = None
 
-    def progress(data):
-        pass
-
 
 def _get_indicator(indname):
     try:
