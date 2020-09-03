@@ -19,7 +19,9 @@ class AttrFormatter(string.Formatter):
     """
 
     def __init__(
-        self, mapping: Mapping[str, Sequence[str]], modifiers: Sequence[str],
+        self,
+        mapping: Mapping[str, Sequence[str]],
+        modifiers: Sequence[str],
     ) -> None:
         """Initialize the formatter.
 

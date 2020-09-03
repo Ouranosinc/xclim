@@ -103,14 +103,17 @@ def adapt_freq(
 
         # Get the percentile rank of each value in sim.
         # da.rank() doesn't work with dask arrays.
-        rank = xr.apply_ufunc(
-            lambda da: np.argsort(np.argsort(da, axis=-1), axis=-1),
-            sim,
-            input_core_dims=[dim],
-            output_core_dims=[dim],
-            dask="parallelized",
-            output_dtypes=[sim.dtype],
-        ) / sim.notnull().sum(dim=dim)
+        rank = (
+            xr.apply_ufunc(
+                lambda da: np.argsort(np.argsort(da, axis=-1), axis=-1),
+                sim,
+                input_core_dims=[dim],
+                output_core_dims=[dim],
+                dask="parallelized",
+                output_dtypes=[sim.dtype],
+            )
+            / sim.notnull().sum(dim=dim)
+        )
 
         # Frequency-adapted sim
         sim_ad = sim.where(
@@ -210,5 +213,7 @@ def normalize(
         return group.apply(_normalize_group, x)
 
     return apply_correction(
-        x, broadcast(invert(norm, kind), x, group=group, interp="nearest"), kind,
+        x,
+        broadcast(invert(norm, kind), x, group=group, interp="nearest"),
+        kind,
     )

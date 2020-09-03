@@ -1533,7 +1533,9 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0):
     e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
 
     e_sat = xci.saturation_vapor_pressure(
-        tas=tas, method=method, ice_thresh=ice_thresh,
+        tas=tas,
+        method=method,
+        ice_thresh=ice_thresh,
     )
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
 

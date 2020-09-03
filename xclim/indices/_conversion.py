@@ -381,7 +381,11 @@ def relative_humidity(
 
 
 @declare_units(
-    "", tas="[temperature]", rh="[]", ps="[pressure]", ice_thresh="[temperature]",
+    "",
+    tas="[temperature]",
+    rh="[]",
+    ps="[pressure]",
+    ice_thresh="[temperature]",
 )
 def specific_humidity(
     tas: xr.DataArray,

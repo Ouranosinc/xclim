@@ -95,7 +95,9 @@ class TestSubsetTime:
 
         with pytest.warns(None) as record:
             subset.subset_time(
-                da, start_date=2050, end_date=2055,
+                da,
+                start_date=2050,
+                end_date=2055,
             )
         assert (
             'start_date and end_date require dates in (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'

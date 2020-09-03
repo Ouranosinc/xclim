@@ -331,7 +331,9 @@ def _ens_align_datasets(
 
             cal = get_calendar(time)
             ds = convert_calendar(
-                ds, calendar, align_on="date" if "360_day" in [cal, calendar] else None,
+                ds,
+                calendar,
+                align_on="date" if "360_day" in [cal, calendar] else None,
             )
 
         ds_all.append(ds)

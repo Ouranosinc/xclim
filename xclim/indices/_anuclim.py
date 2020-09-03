@@ -138,7 +138,9 @@ def temperature_seasonality(tas: xarray.DataArray):
 
 
 @declare_units("percent", pr="[precipitation]")
-def precip_seasonality(pr: xarray.DataArray) -> xarray.DataArray:
+def precip_seasonality(
+    pr: xarray.DataArray,
+) -> xarray.DataArray:
     r"""ANUCLIM Precipitation Seasonality (C of V).
 
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
@@ -191,7 +193,11 @@ def precip_seasonality(pr: xarray.DataArray) -> xarray.DataArray:
 
 @declare_units("[temperature]", tas="[temperature]")
 def tg_mean_warmcold_quarter(
-    tas: xarray.DataArray, *, op: str, input_freq: str, freq: str = "YS",
+    tas: xarray.DataArray,
+    *,
+    op: str = None,
+    input_freq: str = None,
+    freq: str = "YS",
 ):
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 

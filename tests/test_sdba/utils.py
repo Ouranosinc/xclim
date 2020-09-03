@@ -32,7 +32,11 @@ def series(values, name, start="2000-01-01"):
         }
 
     return xr.DataArray(
-        values, coords=coords, dims=list(coords.keys()), name=name, attrs=attrs,
+        values,
+        coords=coords,
+        dims=list(coords.keys()),
+        name=name,
+        attrs=attrs,
     )
 
 
