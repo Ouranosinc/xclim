@@ -213,22 +213,22 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     -----
     When all quantiles are above 0.5, the `isf` method is used instead of `ppf` because accuracy is sometimes better.
     """
-    q = np.atleast_1d(q)
+    npq = np.atleast_1d(q)
 
     # Get the distribution
     dist = p.attrs["scipy_dist"]
     dc = get_dist(dist)
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    if np.all(q > 0.5):
+    if np.all(npq > 0.5):
 
         def func(x):
-            return dc.isf(1 - q, *x)
+            return dc.isf(1 - npq, *x)
 
     else:
 
         def func(x):
-            return dc.ppf(q, *x)
+            return dc.ppf(npq, *x)
 
     duck = dask.array if isinstance(p.data, dask.array.Array) else np
     data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
@@ -236,7 +236,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     # Create coordinate for the return periods
     coords = dict(p.coords.items())
     coords.pop("dparams")
-    coords["quantile"] = q
+    coords["quantile"] = npq
     # Create dimensions
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
 

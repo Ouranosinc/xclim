@@ -97,18 +97,18 @@ default_formatter = AttrFormatter(
 def parse_doc(doc: str) -> Dict[str, str]:
     """Crude regex parsing."""
     if doc is None:
-        return {}
+        return dict()
 
-    out = {}
+    out = dict()
 
     sections = re.split(r"(\w+)\n\s+-{4,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
-        content = list(map(str.strip, intro.strip().split("\n\n")))
-        if len(content) == 1:
-            out["title"] = content[0]
-        elif len(content) == 2:
-            out["title"], out["abstract"] = content
+        intro_content = list(map(str.strip, intro.strip().split("\n\n")))
+        if len(intro_content) == 1:
+            out["title"] = intro_content[0]
+        elif len(intro_content) == 2:
+            out["title"], out["abstract"] = intro_content
 
     for i in range(0, len(sections), 2):
         header, content = sections[i : i + 2]

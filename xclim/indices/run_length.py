@@ -70,7 +70,7 @@ def rle(
     chunk_dim = b[dim].size
     # divide extra dims into equal size
     # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-    chunksize_ex_dims = None
+    chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
     if ndims > 1:
         chunksize_ex_dims = np.round(np.power(max_chunk / chunk_dim, 1 / (ndims - 1)))
     chunks = dict()
@@ -659,7 +659,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> Callable:
     )
 
 
-def longest_run_ufunc(x: Sequence[bool]) -> Callable:
+def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> Callable:
     """Dask-parallel version of longest_run_1d, ie: the maximum number of consecutive true values in array.
 
     Parameters
@@ -684,7 +684,7 @@ def longest_run_ufunc(x: Sequence[bool]) -> Callable:
 
 
 def first_run_ufunc(
-    x: xr.DataArray,
+    x: Union[xr.DataArray, Sequence[bool]],
     window: int,
     dim: str = "time",
 ) -> xr.apply_ufunc:
@@ -692,7 +692,7 @@ def first_run_ufunc(
 
     Parameters
     ----------
-    x : xr.DataArray
+    x : Union[xr.DataArray, Sequence[bool]]
       Input array (bool)
     window : int
     dim: Optional[str]
@@ -716,7 +716,7 @@ def first_run_ufunc(
     return ind
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim=None):
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = None):
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
     The algorithm differs whether da is 1D or not.

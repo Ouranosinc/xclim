@@ -1,4 +1,6 @@
 # noqa: D100
+from typing import Optional
+
 import numpy as np
 import xarray
 
@@ -195,8 +197,8 @@ def precip_seasonality(
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
     *,
-    op: str = None,
-    input_freq: str = None,
+    op: str,
+    input_freq: str,
     freq: str = "YS",
 ):
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
@@ -239,16 +241,17 @@ def tg_mean_warmcold_quarter(
     """
     out = _to_quarter(input_freq, tas=tas)
 
-    op = _np_ops[op]
-    return select_resample_op(out, op, freq)
+    oper = _np_ops[op]
+    return select_resample_op(out, oper, freq)
 
 
 @declare_units("[temperature]", tas="[temperature]", pr="[precipitation]")
 def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    op: str = None,
-    input_freq: str = None,
+    *,
+    op: str,
+    input_freq: str,
     freq: str = "YS",
 ):
     r"""ANUCLIM Mean temperature of wettest/driest quarter.
@@ -293,7 +296,7 @@ def tg_mean_wetdry_quarter(
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
+    pr: xarray.DataArray, *, op: str, input_freq: str, freq: str = "YS"
 ):
     r"""ANUCLIM Total precipitation of wettest/driest quarter.
 
@@ -335,21 +338,22 @@ def prcptot_wetdry_quarter(
     out = _to_quarter(input_freq, pr=pr)
 
     try:
-        op = _np_ops[op]
+        oper = _np_ops[op]
     except KeyError:
         raise NotImplementedError(
             f'Unknown operation "{op}" ; not one of "wettest" or "driest"'
         )
 
-    return select_resample_op(out, op, freq)
+    return select_resample_op(out, oper, freq)
 
 
 @declare_units("mm", pr="[precipitation]", tas="[temperature]")
 def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    op: str = None,
-    input_freq: str = None,
+    *,
+    op: str,
+    input_freq: str,
     freq="YS",
 ):
     r"""ANUCLIM Total precipitation of warmest/coldest quarter.
@@ -395,7 +399,7 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units("mm", pr="[precipitation]")
-def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
+def prcptot(pr: xarray.DataArray, *, input_freq: str, freq: str = "YS"):
     r"""ANUCLIM Accumulated total precipitation.
 
     Parameters
@@ -519,7 +523,11 @@ def _from_other_arg(criteria, output, op, freq):
     return ds.resample(time=freq).map(get_other_op)
 
 
-def _to_quarter(freq, pr=None, tas=None):
+def _to_quarter(
+    freq: str,
+    pr: Optional[xarray.DataArray] = None,
+    tas: Optional[xarray.DataArray] = None,
+) -> xarray.DataArray:
     """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
     if freq.upper().startswith("D"):
         if tas is not None:

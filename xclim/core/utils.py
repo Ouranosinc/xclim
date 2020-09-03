@@ -18,7 +18,9 @@ from boltons.funcutils import update_wrapper
 from dask import array as dsk
 
 
-def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed) -> Callable:
+def wrapped_partial(
+    func: FunctionType, suggested: Optional[dict] = None, **fixed
+) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
     Parameters

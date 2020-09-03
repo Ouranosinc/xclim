@@ -78,7 +78,7 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
     Allow computation of DC/DMC/FFMC independently,
 """
 from collections import OrderedDict
-from typing import Sequence
+from typing import Optional, Sequence
 from warnings import warn
 
 import numpy as np
@@ -600,15 +600,16 @@ def _fire_weather_calc(
 
 
 def fire_weather_ufunc(
-    tas: xr.DataArray = None,
-    pr: xr.DataArray = None,
-    rh: xr.DataArray = None,
-    ws: xr.DataArray = None,
-    snd: xr.DataArray = None,
-    lat: xr.DataArray = None,
-    dc0: xr.DataArray = None,
-    dmc0: xr.DataArray = None,
-    ffmc0: xr.DataArray = None,
+    *,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    rh: Optional[xr.DataArray] = None,
+    ws: Optional[xr.DataArray] = None,
+    snd: Optional[xr.DataArray] = None,
+    lat: Optional[xr.DataArray] = None,
+    dc0: Optional[xr.DataArray] = None,
+    dmc0: Optional[xr.DataArray] = None,
+    ffmc0: Optional[xr.DataArray] = None,
     indexes: Sequence[str] = None,
     start_date: str = None,
     start_up_mode: str = None,
