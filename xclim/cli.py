@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
 import inspect
+import warnings
 
 import click
 import xarray as xr
@@ -69,11 +70,9 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        if val == "None" or val is None:
-            params[key] = None
         # A DataArray is expected, it has to come from the input dataset
-        # All other parameters are passed as is.
-        elif indicator.parameters[key]["annotation"] is xr.DataArray:
+        # All other parameters are passed as is or almost
+        if indicator.parameters[key]["annotation"] is xr.DataArray:
             # Default value is the var name (val == key)
             if val in dsin:
                 params[key] = dsin[val]
@@ -85,6 +84,8 @@ def _process_indicator(indicator, ctx, **params):
                     f"You should provide a name with --{key}",
                     ctx,
                 )
+        elif val == "None" or val is None:
+            params[key] = None
         elif ctx.obj["verbose"]:
             click.echo(f"Parsed {key} = {val}")
 
@@ -101,13 +102,17 @@ def _create_command(indname):
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator.parameters.items():
-        # if param.kind != param.VAR_KEYWORD:
+        if param["default"] is inspect._empty:
+            default = name if param["annotation"] is xr.DataArray else None
+            # Required DataArray -> default is a variable name
+            # Required param not a DataArray -> no default
+        else:
+            # Not required but stored default or "None"
+            default = param["default"] or "None"
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=param["default"] or "None"
-                if param["default"] != inspect._empty
-                else name,
+                default=default,
                 show_default=True,
                 help=param["description"],
                 metavar="VAR_NAME" if param["annotation"] is xr.DataArray else "TEXT",
@@ -244,6 +249,9 @@ def cli(ctx, **kwargs):
 
     Manages the global options.
     """
+    if not kwargs["verbose"]:
+        warnings.simplefilter("ignore")
+
     if kwargs["version"]:
         click.echo(f"xclim {xc.__version__}")
     elif ctx.invoked_subcommand is None:
@@ -291,7 +299,8 @@ def cli(ctx, **kwargs):
 def write_file(ctx, *args, **kwargs):
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
-        click.echo(f"Writing to file {ctx.obj['output']}")
+        if ctx.obj["verbose"]:
+            click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
             r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], compute=False)
             if ctx.obj["dask_nthreads"] is not None:

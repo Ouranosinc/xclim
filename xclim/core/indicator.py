@@ -66,6 +66,7 @@ import re
 import warnings
 import weakref
 from collections import OrderedDict, defaultdict
+from copy import deepcopy
 from inspect import _empty, signature
 from typing import Sequence, Union
 
@@ -288,7 +289,8 @@ class Indicator(IndicatorRegistrar):
         # The input parameters' name
         kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
         # Fill default values and annotation in parameter doc
-        params = kwds.get("parameters", cls.parameters or {})
+        # params is a multilayer dict, we want to use a brand new one so deepcopy
+        params = deepcopy(kwds.get("parameters", cls.parameters or {}))
         for name, param in kwds["_sig"].parameters.items():
             param_doc = params.setdefault(name, {"type": "", "description": ""})
             param_doc["default"] = param.default
@@ -580,10 +582,10 @@ class Indicator(IndicatorRegistrar):
         out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
         out["notes"] = self.notes
-
-        out["parameters"] = self.parameters.copy()
+        # We need to deepcopy, otherwise empty defaults get overwritten!
+        out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
-            if param["default"] == _empty:
+            if param["default"] is _empty:
                 param["default"] = "none"
         return out
 

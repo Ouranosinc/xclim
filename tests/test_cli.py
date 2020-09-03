@@ -217,8 +217,8 @@ def test_missing_variable(tas_series, tmp_path):
     "options,output",
     [
         (["--dask-nthreads", "2"], "Error: '--dask-maxmem' must be given"),
-        (["--chunks", "time:90"], "Writing to file"),
-        (["--chunks", "time:90,lat:5"], "Writing to file"),
+        (["--chunks", "time:90"], "100% Complete"),
+        (["--chunks", "time:90,lat:5"], "100% Completed"),
         (["--version"], xc.__version__),
     ],
 )
