@@ -14,6 +14,7 @@
 # serve to show the default.
 import os
 import sys
+import warnings
 
 import xarray as xr
 
@@ -50,7 +51,7 @@ def _get_indicators(module):
 
 def _indicator_table(realm):
     """Return a sequence of dicts storing metadata about all available indices."""
-    import inspect
+    # import inspect
 
     inds = _get_indicators(getattr(xclim, realm))
     table = {}
@@ -63,7 +64,9 @@ def _indicator_table(realm):
         try:
             table[indname] = ind.json()  # args)
         except KeyError as err:
-            print(f"{ind.identifier} could not be documented.({err})")
+            warnings.warn(
+                f"{ind.identifier} could not be documented.({err})", UserWarning
+            )
         else:
             table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table

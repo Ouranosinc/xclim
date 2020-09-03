@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
 import inspect
-import warnings
 
 import click
 import xarray as xr
@@ -18,15 +17,9 @@ except ImportError:
 
 def _get_indicator(indname):
     try:
-        indcls = xc.core.indicator.registry[indname.upper()]
+        return xc.core.indicator.registry[indname.upper()].get_instance()
     except KeyError:
         raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=UserWarning)
-        indicator = indcls()
-
-    return indicator
 
 
 def _get_input(ctx):
@@ -226,8 +219,12 @@ class XclimCli(click.MultiCommand):
     multiple=True,
 )
 @click.option("-o", "--output", help="Output filepath. A new file will be created")
-@click.option("-v", "--verbose", help="Print details about context and progress.", count=True)
-@click.option("-V", "--version", is_flag=True, help="Prints xclim's version number and exits")
+@click.option(
+    "-v", "--verbose", help="Print details about context and progress.", count=True
+)
+@click.option(
+    "-V", "--version", is_flag=True, help="Prints xclim's version number and exits"
+)
 @click.option(
     "--dask-nthreads",
     type=int,

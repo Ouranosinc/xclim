@@ -171,6 +171,7 @@ drought_code = PrTas(
 fire_weather_indexes = Daily(
     _nvar=4,
     identifier="FWI",
+    realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
     standard_name=[
         "drought_code",
