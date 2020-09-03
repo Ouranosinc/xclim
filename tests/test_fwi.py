@@ -4,28 +4,45 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.indices.fwi import _shut_down_and_start_ups
-from xclim.indices.fwi import build_up_index
-from xclim.indices.fwi import day_length
-from xclim.indices.fwi import day_length_factor
-from xclim.indices.fwi import drought_code
-from xclim.indices.fwi import duff_moisture_code
-from xclim.indices.fwi import fine_fuel_moisture_code
-from xclim.indices.fwi import fire_weather_index
-from xclim.indices.fwi import fire_weather_ufunc
-from xclim.indices.fwi import initial_spread_index
-
+from xclim import atmos
+from xclim.indices.fwi import (
+    _shut_down_and_start_ups,
+    build_up_index,
+    day_length,
+    day_length_factor,
+    drought_code,
+    duff_moisture_code,
+    fine_fuel_moisture_code,
+    fire_weather_index,
+    fire_weather_ufunc,
+    initial_spread_index,
+)
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
-def get_data():
+def get_data(as_xr=False):
     import io
+
     import pandas as pd
 
     f = io.StringIO(CFS_data)
-    return pd.read_table(f, sep=" ", header=0)
+    d = pd.read_table(f, sep=" ", header=0)
+    if as_xr:
+        ds = d.to_xarray()
+        ds["index"] = pd.date_range("2000-04-13", periods=ds.index.size, freq="D")
+        ds = ds.rename(index="time")
+        ds.temp.attrs["units"] = "degC"
+        ds.pr.attrs["units"] = "mm d-1"
+        ds.rh.attrs["units"] = "%"
+        ds.ws.attrs["units"] = "km h-1"
+        return (
+            ds.drop_vars(["mth", "day", "lat"])
+            .expand_dims(lat=[44])
+            .transpose("time", "lat")
+        )
+    return d
 
 
 def test_fine_fuel_moisture_code():
@@ -100,6 +117,22 @@ def test_fire_weather_index():
     np.testing.assert_allclose(fwi, d["fwi"], rtol=0.4)
 
 
+def test_fire_weather_indicator():
+    ds = get_data(as_xr=True)
+    dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
+        tas=ds.temp,
+        pr=ds.pr,
+        rh=ds.rh,
+        ws=ds.ws,
+        lat=ds.lat,
+        ffmc0=ds.ffmc[1],
+        dmc0=ds.dmc[1],
+        dc0=ds.dc[1],
+    )
+    xr.testing.assert_allclose(dc.T[10:], ds.dc[10:], rtol=0.01)
+    xr.testing.assert_allclose(fwi.T[10:], ds.fwi[10:], rtol=0.05, atol=0.05)
+
+
 def test_day_length():
     assert day_length(44, 1) == 6.5
 
@@ -123,13 +156,22 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
     # Test invalid combination
     with pytest.raises(TypeError):
         fire_weather_ufunc(
-            tas=tas, pr=pr, rh=rh, ws=ws, lat=lat, dc0=DC0, indexes=["DC", "ISI"],
+            tas=tas,
+            pr=pr,
+            rh=rh,
+            ws=ws,
+            lat=lat,
+            dc0=DC0,
+            indexes=["DC", "ISI"],
         )
 
     # Test missing arguments
     with pytest.raises(TypeError):
         fire_weather_ufunc(
-            tas=tas, pr=pr, dc0=DC0, indexes=["DC"],  # lat=lat,
+            tas=tas,
+            pr=pr,
+            dc0=DC0,
+            indexes=["DC"],  # lat=lat,
         )
 
     with pytest.raises(TypeError):
@@ -157,7 +199,12 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
 
     # Test output is complete
     out = fire_weather_ufunc(
-        tas=tas, pr=pr, lat=lat, dc0=DC0, indexes=["DC"], start_date="2017-03-03",
+        tas=tas,
+        pr=pr,
+        lat=lat,
+        dc0=DC0,
+        indexes=["DC"],
+        start_date="2017-03-03",
     )
 
     assert len(out.keys()) == 1

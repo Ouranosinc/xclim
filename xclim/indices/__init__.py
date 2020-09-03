@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 ===============
 Indices library
@@ -21,6 +22,7 @@ the implementation of the indices.
     :mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
+from ._anuclim import *
 from ._conversion import *
 from ._multivariate import *
 from ._simple import *

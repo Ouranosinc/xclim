@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Indicators module
 =================
 
-Indicators are then main tool xclim provides to compute climate indices. In contrast
-to the function defined in `xclim.indices`, Indicators add a layer of heatlh checks
+Indicators are the main tool xclim provides to compute climate indices. In contrast
+to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into realms : atmos, land and
-seaIce. The module also defines an additionnal virtual module : ICCLIM.
+seaIce. The module also defines an additional virtual module : ICCLIM.
 """
+from functools import wraps
 
 
-def build_module(name, objs, doc="", source=None, mode="ignore"):
+def build_module(
+    name: str, objs: dict, doc: str = "", source=None, mode: str = "ignore"
+):
     """Create a module from imported objects.
 
     Parameters
@@ -34,12 +38,10 @@ def build_module(name, objs, doc="", source=None, mode="ignore"):
       A module built from a list of objects' name.
 
     """
+    import logging
     import sys
     import types
     import warnings
-    import logging
-
-    logging.captureWarnings(capture=True)
 
     try:
         out = types.ModuleType(name, doc)
@@ -82,7 +84,6 @@ def __build_icclim(mode="warn"):
     from xclim.core.utils import wrapped_partial
 
     #  ['SD', 'SD1', 'SD5cm', 'SD50cm',
-
     # TODO : Complete mappings for ICCLIM indices
     mapping = {
         "TG": indices.tg_mean,
@@ -149,8 +150,8 @@ def __build_icclim(mode="warn"):
             ICCLIM indices
             ==============
             The European Climate Assessment & Dataset project (`ECAD`_) defines
-            a set of 26 core climate indides. Those have been made accessible
-            directly in xclim through their ECAD name for compatibility. Hoewever,
+            a set of 26 core climate indices. Those have been made accessible
+            directly in xclim through their ECAD name for compatibility. However,
             the methods in this module are only wrappers around the corresponding
             methods of  `xclim.indices`. Note that none of the checks performed by
             the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
@@ -163,4 +164,93 @@ def __build_icclim(mode="warn"):
     return mod
 
 
+def ensure_annual(func):
+    """Ensure that supplied frequency keyword denotes annual time step."""
+
+    @wraps(func)
+    def _wrapper(*args, **kwargs):
+        if "freq" not in kwargs:
+            raise ValueError(
+                "Frequency must be provided as a keyword argument (freq='Y[S]' or freq='A[S][-month]')"
+            )
+        freq = kwargs["freq"]
+        if freq[0] not in ["Y", "A"]:
+            raise ValueError("Frequency must be annual ('Y[S]' or 'A[S][-month]')")
+        return func(*args, **kwargs)
+
+    return _wrapper
+
+
+def __build_anuclim(mode="warn"):
+    from xclim import indices
+    from xclim.core.utils import wrapped_partial
+
+    mapping = {
+        "P1_AnnMeanTemp": ensure_annual(indices.tg_mean),
+        "P2_MeanDiurnalRange": ensure_annual(indices.daily_temperature_range),
+        "P3_Isothermality": ensure_annual(indices.isothermality),
+        "P4_TempSeasonality": indices.temperature_seasonality,
+        "P5_MaxTempWarmestPeriod": ensure_annual(indices.tx_max),
+        "P6_MinTempColdestPeriod": ensure_annual(indices.tn_min),
+        "P7_TempAnnualRange": ensure_annual(indices.extreme_temperature_range),
+        "P8_MeanTempWettestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_wetdry_quarter, op="wettest")
+        ),
+        "P9_MeanTempDriestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_wetdry_quarter, op="driest")
+        ),
+        "P10_MeanTempWarmestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_warmcold_quarter, op="warmest")
+        ),
+        "P11_MeanTempColdestQuarter": ensure_annual(
+            wrapped_partial(indices.tg_mean_warmcold_quarter, op="coldest")
+        ),
+        "P12_AnnualPrecip": ensure_annual(indices.prcptot),
+        "P13_PrecipWettestPeriod": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_period, op="wettest")
+        ),
+        "P14_PrecipDriestPeriod": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_period, op="driest")
+        ),
+        "P15_PrecipSeasonality": indices.precip_seasonality,
+        "P16_PrecipWettestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_quarter, op="wettest")
+        ),
+        "P17_PrecipDriestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_wetdry_quarter, op="driest")
+        ),
+        "P18_PrecipWarmestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_warmcold_quarter, op="warmest")
+        ),
+        "P19_PrecipColdestQuarter": ensure_annual(
+            wrapped_partial(indices.prcptot_warmcold_quarter, op="coldest")
+        ),
+    }
+
+    mod = build_module(
+        "xclim.anuclim",
+        mapping,
+        doc="""
+                ==============
+                ANUCLIM indices
+                ==============
+
+                The ANUCLIM (v6.1) software package' BIOCLIM sub-module produces a set of Bioclimatic
+                parameters derived values of temperature and precipitation. The methods in this module
+                are wrappers around a subset of corresponding methods of `xclim.indices`. Note that none
+                of the checks performed by the `xclim.utils.Indicator` class (like with `xclim.atmos`
+                indicators) are performed in this module.
+
+                Futhermore, according to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6),
+                input values should be at a weekly (or monthly) frequency.  However, the xclim.indices
+                implementation here will calculate the result with input data of any frequency.
+
+                .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
+                """,
+        mode=mode,
+    )
+    return mod
+
+
 ICCLIM = __build_icclim("ignore")
+anuclim = __build_anuclim()

@@ -2,16 +2,124 @@
 History
 =======
 
-0.16.x
+0.20.x
 ------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` has been deprecated and now relies on `clisops` to perform specialized spatio-temporal subsetting.
+  Install with `pip install xclim[gis]` in order to retain the same functionality.
+* The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
+  version of `pandoc` binaries installed at system-level.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `sdba.loess` submodule implementing LOESS smoothing tools used in `sdba.detrending.LoessDetrend`.
+* xclim now depends on clisops for subsetting, offloading several heavy GIS dependencies. This improves
+  maintainability and reduces the size of a "vanilla" xclim installation considerably.
+* New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
+* Add support for using probability weighted moments method in `generic.fit` function. Requires the
+  `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
+* Indicator instances can be retrieved through their class with the `get_instance()` class method.
+  This allows the use of `xclim.core.indicator.registry` as an instance registry.
+* Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
+
+Bug fixes
+~~~~~~~~~
+Nothing yet.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
+* Code styling now conforms to the latest release of black (v0.20.8).
+* New `IndicatorRegistrar` class that takes care of adding indicator classes and instances to the
+  appropriate registries. `Indicator` now inherits from it.
+
+
+0.19.0 (2020-08-18)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Refactoring of the `Indicator` class. The `cfprobe` method has been renamed to `cfcheck` and the `validate`
+  method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
+  the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
+  missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
+* xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
+* The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
+* `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no
+  longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
+* `Indicator.cf_attrs` is now a list of dictionaries. `Indicator.json` puts all the metadata attributes in the key "outputs" (a list of dicts).
+  All variable metadata (names in `Indicator._cf_names`) might be strings or lists of strings when accessed as object attributes.
+* Passing doctests are now strictly enforced as a build requirement in the Travis CI testing ensemble.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
+* Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
+* The `Indicator` class now supports outputing multiple indices for the same inputs.
+* `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
+* Doctests now make use of the `xdoctest_namespace` in order to more easily access modules and testdata.
+
+Bug fixes
+~~~~~~~~~
+* Fix `generic.fit` dimension ordering. This caused errors when "time" was not the first dimension in a DataArray.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `datachecks.check_daily` now uses `xr.infer_freq`.
+* Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
+* Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
+* Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
+* Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
+* Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
+* Indicators definitions without an accompanying translation (presently French) will cause build failures.
+* Major refactoring of the internal machinery of `Indicator` to support multiple outputs.
+
+0.18.0 (2020-06-26)
+-------------------
+* Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
+* `xclim.sdba.detrending` objects can now act on groups.
+* Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
+* `xclim.core.locales` now supported in Windows build environments.
+* `ensembles.ensemble_percentiles` modified to compute along a `percentiles` dimension by default, instead of creating different variables.
+* Added indicator `first_day_below` and run length helper `first_run_after_date`.
+* Added ANUCLIM model climate indices mappings.
+* Renamed `areacella` to `areacello` in sea ice tests.
+* Sea ice extent and area outputs now have units of m2 to comply with CF-Convention.
+* Split `checks.py` into `cfchecks.py`, `datachecks.py` and `missing.py`. This change will only affect users creating custom indices using utilities previously located in `checks.py`.
+* Changed signature of `daily_freeze_thaw_cycles`, `daily_temperature_range`, `daily_temperature_range_variability` and `extreme_temperature_range` to take (tasmin, tasmax) instead of (tasmax, tasmin) and match signature of other similar multivariate indices.
+* Added `FromContext` subclass of `MissingBase` to have a uniform API for missing value operations.
+* Remove logging commands that captured all xclim warnings. Remove deprecated xr.set_options calls.
+
+0.17.0 (2020-05-15)
+-------------------
+* Added support for operations on dimensionless variables (`units = '1'`).
+* Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
+* Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
+* New `xclim.set_options` context to control the missing checks, input validation and locales.
+* New `xclim.sdba` module for statistical downscaling and bias-adjustment of climate data.
+* Added `convert_calendar` and `interp_calendar` to help in the conversion between calendars.
+* Added `at_least_n_valid` function, identifying null calculations based on minimum threshold.
+* Added support for `freq=None` in missing calculations.
+* Fixed outdated code examples in the docs and docstrings.
+* Doctests are now run as part of the test suite.
+
+0.16.0 (2020-04-23)
+-------------------
+* Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
+* Removed `start_yr` and `end_yr` flags from subsetting functions.
+* Add multi gridpoints support in `subset.subset_gridpoint`.
 * Better `wrapped_partial` for more meaningful inspection.
 * Add indices for relative humidity, specific humidity and saturation vapor pressure with a few choices of method.
-* Allow lazy units conversion
-* CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards
-* Add utilities to merge attributes and update history in xclim.core.formatting
-* Ensembles : Allow alignment of datasets with same frequency but different offsets
+* Allow lazy units conversion.
+* CRS definitions of projected DataSets are now written to file according to Climate and Forecast-convention standards.
+* Add utilities to merge attributes and update history in xclim.core.formatting.
+* Ensembles : Allow alignment of datasets with same frequency but different offsets.
 * Bug fixes in run_length for run-with-dates methods when the date is not found in the run.
 * Remove deepcopy from subset.subset_shape to improve memory usage.
+* Add `missing_wmo` function, identifying null calculations based on criteria from WMO.
+* Add `missing_pct` function, identifying null calculations based on percentage of missing values.
 
 0.15.x (2020-03-12)
 -------------------

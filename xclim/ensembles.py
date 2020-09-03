@@ -1,22 +1,21 @@
+"""Ensembles Module."""
 import logging
 import warnings
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import scipy.stats
 import xarray as xr
+from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
+from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
 
 # Avoid having to include matplotlib in xclim requirements
 try:
-    import matplotlib.pyplot as plt
+    from matplotlib import pyplot as plt
 
     logging.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
@@ -30,16 +29,17 @@ def create_ensemble(
     datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     resample_freq: Optional[str] = None,
+    calendar: str = "default",
     **xr_kwargs,
 ) -> xr.Dataset:
-    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files. Input data is
-    concatenated along a newly created data dimension ('realization')
+    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
-    Returns an xarray dataset object containing input data from the list of netcdf files concatenated along
-    a new dimension (name:'realization'). In the case where input files have unequal time dimensions, the output
-    ensemble Dataset is created for maximum time-step interval of all input files.  Before concatenation, datasets not
-    covering the entire time span have their data padded with NaN values.
-    Dataset and variable attributes of the first dataset are copied to the resulting dataset.
+    Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
+    containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
+    In the case where input files have unequal time dimensions, the output ensemble Dataset is created for maximum
+    time-step interval of all input files.  Before concatenation, datasets not covering the entire time span have
+    their data padded with NaN values. Dataset and variable attributes of the first dataset are copied to the
+    resulting dataset.
 
     Parameters
     ----------
@@ -56,6 +56,10 @@ def create_ensemble(
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
 
+    calendar : str
+      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
+      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
+
     xr_kwargs :
       Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
 
@@ -71,19 +75,20 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from xclim import ensembles
-    >>> import glob
-    >>> datasets = glob.glob('/*.nc')
-    >>> ens = ensembles.create_ensemble(datasets)
-    >>> print(ens)
-    # Using multifile datasets:
-    # simulation 1 is a list of .nc files (e.g. separated by time)
-    >>> datasets = glob.glob('/dir/*.nc')
-    # simulation 2 is also a list of .nc files
-    >>> datasets.append(glob.glob('/dir2/*.nc'))
-    >>> ens = ensembles.create_ensemble(datasets, mf_flag=True)
+    >>> from xclim.ensembles import create_ensemble  # doctest: +SKIP
+    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
+
+    Using multifile datasets:
+    Simulation 1 is a list of .nc files (e.g. separated by time)
+    >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
+
+    Simulation 2 is also a list of .nc files
+    >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
+    >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
-    ds = _ens_align_datasets(datasets, mf_flag, resample_freq, **xr_kwargs)
+    ds = _ens_align_datasets(
+        datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
+    )
 
     dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
 
@@ -96,7 +101,7 @@ def create_ensemble(
 
 
 def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations
+    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
     simulations.
@@ -113,14 +118,13 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
     Examples
     --------
-    >>> from xclim import ensembles
-    >>> from pathlib import Path
-    >>> ncfiles = Path().rglob('*tas*.nc')
-    Create ensemble dataset
-    >>> ens = ensembles.create_ensemble(ncfiles)
-    Calculate ensemble statistics
-    >>> ens_mean_std = ensembles.ensemble_mean_std_max_min(ens)
-    >>> print(ens_mean_std['tas_mean'])
+    >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
+
+    # Create ensemble dataset
+    >>> ens = create_ensemble(temperature_datasets)
+
+    # Calculate ensemble statistics
+    >>> ens_mean_std = ensemble_mean_std_max_min(ens)
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
@@ -146,9 +150,10 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: xr.Dataset,
-    values: Tuple[int, int, int] = (10, 50, 90),
+    ens: Union[xr.Dataset, xr.DataArray],
+    values: Sequence[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
+    split: bool = True,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -156,8 +161,8 @@ def ensemble_percentiles(
 
     Parameters
     ----------
-    ens: xr.Dataset
-      Ensemble dataset (see xclim.ensembles.create_ensemble).
+    ens: Union[xr.Dataset, xr.DataArray]
+      Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
     values : Tuple[int, int, int]
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : Optional[bool]
@@ -165,88 +170,111 @@ def ensemble_percentiles(
       If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
       If False, no shrinking is performed, resulting in much larger chunks
       If not defined, the function decides which is best
+    split : bool
+      Whether to split each percentile into a new variable of concatenate the ouput along a new
+      "percentiles" dimension.
 
     Returns
     -------
-    xr.Dataset
-      Dataset with containing data variables of requested ensemble statistics
+    Union[xr.Dataset, xr.DataArray]
+      If split is True, same type as ens; dataset otherwise,
+      containing data variable(s) of requested ensemble statistics
 
     Examples
     --------
-    >>> from xclim import ensembles
-    >>> import glob
-    >>> ncfiles = glob.glob('/*tas*.nc')
-    Create ensemble dataset
-    >>> ens = ensembles.create_ensemble(ncfiles)
-    Calculate default ensemble percentiles
-    >>> ens_percs = ensembles.ensemble_percentiles(ens)
-    >>> print(ens_percs['tas_p10'])
-    Calculate non-default percentiles (25th and 75th)
-    >>> ens_percs = ensembles.ensemble_percentiles(ens, values=(25, 50, 75))
-    >>> print(ens_percs['tas_p25'])
-    If the original array has many small chunks, it might be more efficient to do:
-    >>> ens_percs = ensembles.ensemble_percentiles(ens, keep_chunk_size=False)
-    >>> print(ens_percs['tas_p25'])
+    >>> from xclim.ensembles import create_ensemble, ensemble_percentiles
+
+    # Create ensemble dataset
+    >>> ens = create_ensemble(temperature_datasets)
+
+    # Calculate default ensemble percentiles
+    >>> ens_percs = ensemble_percentiles(ens)
+
+    # Calculate non-default percentiles (25th and 75th)
+    >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
+
+    # If the original array has many small chunks, it might be more efficient to do:
+    >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
+    if isinstance(ens, xr.Dataset):
+        out = xr.merge(
+            [
+                ensemble_percentiles(
+                    da, values, keep_chunk_size=keep_chunk_size, split=split
+                )
+                for da in ens.data_vars.values()
+                if "realization" in da.dims
+            ]
+        )
+        out.attrs.update(ens.attrs)
+        out.attrs["history"] = update_history(
+            f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+            ens,
+        )
 
-    ds_out = xr.Dataset(attrs=ens.attrs)
-    for v in ens.data_vars:
-        # Percentile calculation forbids any chunks along realization
-        if len(ens.chunks.get("realization", [])) > 1:
-            if keep_chunk_size is None:
-                # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
-                keep_chunk_size = (
-                    np.prod(ens[v].isel(realization=0).data.chunksize)
-                    * ens.realization.size
-                    > 2e8
-                )
-            if keep_chunk_size:
-                # Smart rechunk on dimension where chunks are the largest
-                chkDim, chks = max(
-                    ens.chunks.items(),
-                    key=lambda kv: 0 if kv[0] == "realization" else max(kv[1]),
-                )
-                var = ens[v].chunk(
-                    {"realization": -1, chkDim: len(chks) * ens.realization.size}
-                )
-            else:
-                var = ens[v].chunk({"realization": -1})
-        else:
-            var = ens[v]
+        return out
 
-        for p in values:
-            perc = xr.apply_ufunc(
-                _calc_perc,
-                var,
-                input_core_dims=[["realization"]],
-                output_core_dims=[[]],
-                keep_attrs=True,
-                kwargs=dict(p=p),
-                dask="parallelized",
-                output_dtypes=[ens[v].dtype],
+    # Percentile calculation forbids any chunks along realization
+    if ens.chunks and len(ens.chunks[ens.get_axis_num("realization")]) > 1:
+        if keep_chunk_size is None:
+            # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
+            keep_chunk_size = (
+                np.prod(ens.isel(realization=0).data.chunksize) * ens.realization.size
+                > 2e8
             )
+        if keep_chunk_size:
+            # Smart rechunk on dimension where chunks are the largest
+            chkDim, chks = max(
+                enumerate(ens.chunks),
+                key=lambda kv: 0
+                if kv[0] == ens.get_axis_num("realization")
+                else max(kv[1]),
+            )
+            ens = ens.chunk(
+                {"realization": -1, ens.dims[chkDim]: len(chks) * ens.realization.size}
+            )
+        else:
+            ens = ens.chunk({"realization": -1})
 
-            perc.name = f"{v}_p{p:02d}"
-            ds_out[perc.name] = perc
-
-            if "description" in ds_out[perc.name].attrs:
-                ds_out[perc.name].attrs[
-                    "description"
-                ] = f"{ds_out[perc.name].attrs['description']} : {p}th percentile of ensemble"
-            else:
-                ds_out[perc.name].attrs["description"] = f"{p}th percentile of ensemble"
-
-    ds_out.attrs["history"] = update_history(
-        f"Computation of the percentiles on {ens.realization.size} ensemble members.",
-        ds_out,
+    out = xr.apply_ufunc(
+        _calc_perc,
+        ens,
+        input_core_dims=[["realization"]],
+        output_core_dims=[["percentiles"]],
+        keep_attrs=True,
+        kwargs=dict(p=values),
+        dask="parallelized",
+        output_dtypes=[ens.dtype],
+        output_sizes={"percentiles": len(values)},
     )
-    return ds_out
+
+    out = out.assign_coords(
+        percentiles=xr.DataArray(list(values), dims=("percentiles",))
+    )
+
+    if split:
+        out = out.to_dataset(dim="percentiles")
+        for p, perc in out.data_vars.items():
+            perc.attrs.update(ens.attrs)
+            perc.attrs["description"] = (
+                perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
+            )
+            out[p] = perc
+            out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
+
+    out.attrs["history"] = update_history(
+        f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+        ens,
+    )
+
+    return out
 
 
 def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     resample_freq: str = None,
+    calendar: str = "default",
     **xr_kwargs,
 ) -> List[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
@@ -262,6 +290,9 @@ def _ens_align_datasets(
     resample_freq : Optional[str]
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
+    calendar : str
+      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
+      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.
 
@@ -296,16 +327,21 @@ def _ens_align_datasets(
                     )
                 time = counts.time
 
-            ds["time"] = pd.to_datetime(
-                {"year": time.dt.year, "month": time.dt.month, "day": time.dt.day}
-            ).values
+            ds["time"] = time
+
+            cal = get_calendar(time)
+            ds = convert_calendar(
+                ds,
+                calendar,
+                align_on="date" if "360_day" in [cal, calendar] else None,
+            )
 
         ds_all.append(ds)
 
     return ds_all
 
 
-def _calc_perc(arr, p=50):
+def _calc_perc(arr, p=[50]):
     """Ufunc-like computing a percentile over the last axis of the array.
 
     Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
@@ -322,17 +358,87 @@ def _calc_perc(arr, p=50):
     np.array
     """
     nan_count = np.isnan(arr).sum(axis=-1)
-    out = np.percentile(arr, p, axis=-1)
+    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
     nans = (nan_count > 0) & (nan_count < arr.shape[-1])
     if np.any(nans):
-        arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
+        out_mask = np.stack([nans] * len(p), axis=-1)
+        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
         # only use nanpercentile where we need it (slow performance compared to standard) :
-        nan_index = np.where(nans)
-        t = np.ravel_multi_index(nan_index, nan_count.shape)
-        out[np.unravel_index(t, nan_count.shape)] = np.nanpercentile(
-            arr1[t, :], p, axis=-1
-        )
+        out[out_mask] = np.moveaxis(
+            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
+        ).ravel()
     return out
+
+
+def kkz_reduce_ensemble(
+    data: xr.DataArray,
+    num_select: int,
+    *,
+    dist_method: str = "euclidean",
+    standardize: bool = True,
+    **cdist_kwargs,
+) -> list:
+    """Return a sample of ensemble members using KKZ selection.
+
+    The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
+    The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
+    The first selected member is the one nearest to the centroid of the ensemble, all subsequent members
+    are selected in a way maximizing the phase-space coverage of the group. Algorithm taken from [CannonKKZ]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+      ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    num_select : int
+      The number of members to select.
+    dist_method : str
+      Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+    standardize : bool
+      Whether to standardize the input before running the selection or not.
+      Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
+    **cdist_kwargs
+      All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
+
+    Returns
+    -------
+    list
+        Selected model indices along the `realization` dimension.
+
+    References
+    ----------
+    .. [CannonKKZ] Cannon, Alex J. (2015). Selecting GCM Scenarios that Span the Range of Changes in a Multimodel Ensemble: Application to CMIP5 Climate Extremes Indices. Journal of Climate, (28)3, 1260-1267. https://doi.org/10.1175/JCLI-D-14-00636.1
+    .. Kastsavounidis, I, Kuo, C.-C. Jay, Zhang, Zhen (1994). A new initialization technique for generalized Lloyd iteration. IEEE Signal Processing Letters, 1(10), 144-146. https://doi.org/10.1109/97.329844
+    """
+    if standardize:
+        data = (data - data.mean("realization")) / data.std("realization")
+
+    data = data.transpose("realization", "criteria")
+    data["realization"] = np.arange(data.realization.size)
+
+    unselected = list(data.realization.values)
+    selected = []
+
+    dist0 = cdist(
+        data.mean("realization").expand_dims("realization"),
+        data,
+        metric=dist_method,
+        **cdist_kwargs,
+    )
+    selected.append(unselected.pop(dist0.argmin()))
+
+    for i in range(1, num_select):
+        dist = cdist(
+            data.isel(realization=selected),
+            data.isel(realization=unselected),
+            metric=dist_method,
+            **cdist_kwargs,
+        )
+        dist = dist.min(axis=0)
+        selected.append(unselected.pop(dist.argmax()))
+
+    return selected
 
 
 def kmeans_reduce_ensemble(
@@ -346,12 +452,12 @@ def kmeans_reduce_ensemble(
     sample_weights: Optional[np.ndarray] = None,
     random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> Tuple[list, np.ndarray, dict]:
-    """Return a sample of ensemble members using k-means clustering. The algorithm attempts to
-    reduce the total number of ensemble members while maintaining adequate coverage of the ensemble
-    uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    """Return a sample of ensemble members using k-means clustering.
+
+    The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
+    the ensemble uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
     Subsequently a single representative simulation is retained from each group.
-
 
     Parameters
     ----------
@@ -419,35 +525,36 @@ def kmeans_reduce_ensemble(
       Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
-    -----
+    ----------
     Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
-
 
     Examples
     --------
-    >>> from xclim import ensembles
-    >>> from glob import glob
-    # Start with ensemble datasets for temperature and precipitation
-    >>> temperature_datasets, precip_datasets = glob("/path/to/temp_data/*.nc"), glob("/path/to/precip_data/*.nc")
-    >>> ensTas = ensembles.create_ensemble(temperature_datasets)
-    >>> ensPr = ensembles.create_ensemble(precip_datasets)
+    >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
+    >>> from xclim.indicators.atmos import tg_mean, hot_spell_frequency
+
+    # Start with ensemble datasets for temperature
+    >>> ensTas = create_ensemble(temperature_datasets)
+
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
-    # Total annual precipation
-    >>> HistPr = ensPr.pr.sel(time=slice('1981','2010')).sum(dim='time').mean(dim=['lat','lon'])
-    >>> FutPr = ensPr.pr.sel(time=slice('2071','2100')).sum(dim='time').mean(dim=['lat','lon'])
-    >>> dPr = 100*((FutPr / HistPr) - 1)  # expressed in percent change
     # Average annual temperature
-    >>> HistTas = ensTas.tas.sel(time=slice('1981','2010')).mean(dim=['time','lat','lon'])
-    >>> FutTas = ensTas.tas.sel(time=slice('2071','2100')).mean(dim=['time','lat','lon'])
-    >>> dTas = FutTas - HistTas
+    >>> tg = tg_mean(tas=ensTas.tas)
+    >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dtg = fut_tg - his_tg
+
+    # Hotspell frequency as second indicator
+    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
+    >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> dhs = fut_hs - his_hs
+
     # Create selection criteria xr.DataArray
-    >>> crit = xr.concat((dTas,dPr), dim='criteria')
-    >>> crit = crit.criteria
+    >>> crit = xr.concat((dtg, dhs), dim='criteria')
+
     # Create clusters and select realization ids of reduced ensemble
-    >>> ids, cluster, fig_data = \
-    ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
-    >>> ids, cluster, fig_data = \
-    ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
     if make_graph:
         fig_data = {}
@@ -576,7 +683,6 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
-
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
         # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
@@ -607,18 +713,19 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
 
 
 def plot_rsqprofile(fig_data):
-    """Create an R² profile plot using kmeans_reduce_ensemble output. The R² plot allows evaluation of the proportion
-    of total uncertainty in the original ensemble that is provided by the reduced selected.
+    """Create an R² profile plot using kmeans_reduce_ensemble output.
+
+    The R² plot allows evaluation of the proportion of total uncertainty in the original ensemble that is provided
+    by the reduced selected.
 
     Examples
     --------
-    >>> import xarray as xr
-    >>> from xclim import ensembles
-    >>> crit = xr.open_dataset("/path/to/file.nc").criteria
-    >>> ids, cluster, fig_data = ensembles.kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42)
+    >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
+    >>> is_matplotlib_installed()
+    >>> crit = xr.open_dataset(path_to_ensemble_file).data
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
     >>> plot_rsqprofile(fig_data)
     """
-
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
     n_clusters = fig_data["n_clusters"]

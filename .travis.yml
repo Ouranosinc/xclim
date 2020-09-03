@@ -1,6 +1,7 @@
 language: python
 
 os: linux
+dist: xenial
 
 branches:
   only:
@@ -12,7 +13,6 @@ jobs:
   include:
     - env:
         - TOXENV=docs
-        - READTHEDOCS=true
       name: "Documentation"
       python: 3.6
       addons:
@@ -20,7 +20,10 @@ jobs:
           packages:
             - pandoc
     - env: TOXENV=black
-      name: "Black and flake8 compliance"
+      name: "Black, Flake8, and Numpy-like Docstring compliance"
+      python: 3.6
+    - env: TOXENV=doctests
+      name: "Linting suggestions and Doctests"
       python: 3.6
       addons:
         apt:
@@ -29,31 +32,14 @@ jobs:
     - env: TOXENV=py38
       name: "Python3.8 (Linux)"
       python: 3.8
-      dist: xenial
       addons:
         apt:
           packages:
             - libspatialindex-dev
             - libnetcdf-dev
             - libhdf5-dev
-    - env:
-        - TOXENV=py37-windows
-        - PROJ_DIR=/c/OSGeo4W64
-        - GDAL_VERSION=3.0.0
-        - GDAL_DATA=/c/OSGeo4W64/share/gdal
-      name: "Python3.7 (Windows)"
-      os: windows
-      language: shell
-      before_install:
-        - wget --directory-prefix=/c/temp/ https://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe
-        - /c/temp/osgeo4w-setup-x86_64.exe -b -q -k -r -A -s http://download.osgeo.org/osgeo4w/ -a x86_64 -P proj,gdal,libspatialindex,geos
-        - choco install python --version=3.7.5
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - export PATH="/c/OSGeo4W64/include:/c/OSGeo4W64/bin:$PATH"
-        - printenv
-        - python -m pip install --upgrade pip wheel
-    - env: TOXENV=py37-macOS
-      name: "Python3.7 (macOS)"
+    - env: TOXENV=py38-macOS
+      name: "Python3.8 (macOS)"
       os: osx
       language: shell
       addons:
@@ -62,28 +48,32 @@ jobs:
           packages:
             - netcdf
             - spatialindex
+            - python@3.8
       before_install:
         - printenv
-        - brew link --overwrite python
-        - python3 -m pip install --upgrade setuptools  # Disabled until homebrew updates python links
-        - python3 -m pip install --upgrade pip  # Disabled until homebrew updates python links
+#        - /usr/local/lib/python3.8/bin/pip3 install --upgrade setuptools
+#        - /usr/local/lib/python3.8/bin/pip3 install --upgrade pip
+      install:
+        - /usr/local/opt/python@3.8/bin/pip3 install -U tox-travis
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
-      dist: xenial
       addons:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py36
-      name: "Python3.6 (Linux)"
+    - env: TOXENV=py36-nosubset-lm3
+      name: "Python3.6 (Linux + lmoments3@master) (no subsetting)"
+      python: 3.6
+    - env: TOXENV=py36-xarray
+      name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
       addons:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py36-xarray
-      name: "Python3.6 (Linux + xarray@master + cftime@master)"
+    - env: TOXENV=py36-bottleneck
+      name: "Python3.6 (Linux + bottleneck@master)"
       python: 3.6
       addons:
         apt:
@@ -104,25 +94,49 @@ jobs:
           - conda create -n xclim -c conda-forge python=$TRAVIS_PYTHON_VERSION
           - source activate xclim
           - conda env update -f environment.yml
-          - conda install pytest coveralls pytest-cov
+          - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
           - conda install pip
-          - pip install -e .
+          - pip install -e .[dev]
       script:
-          - py.test --cov xclim
+          - py.test --cov=xclim
+    - env:
+        - TOXENV=py37-windows
+        - DESIRED_PYTHON=3.7
+        - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
+      name: "Python3.7 (Windows + Anaconda via Chocolatey)"
+      os: windows
+      language: shell
+      before_install:
+        - printenv
+        - choco install miniconda3 --params="'/AddToPath:0 /D:$MINICONDA_PATH'"
+        - source /c/miniconda/Scripts/activate
+        - hash -r
+        - conda config --set always_yes yes --set changeps1 no
+        - conda install setuptools
+        - conda update -q conda
+        - conda create -n xclim -c conda-forge python=$DESIRED_PYTHON
+        - source activate xclim
+        - conda env update -f environment.yml
+        - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
+      install:
+        - conda install pip
+        - pip install -e .[dev]
+      script:
+        - py.test --cov=xclim
   allow_failures:
     - env: TOXENV=py38-anaconda
-    - env: TOXENV=py37-macOS
+    - env: TOXENV=py38-macOS
     - env:
       - TOXENV=py37-windows
-      - PROJ_DIR=/c/OSGeo4W64
-      - GDAL_VERSION=3.0.0
-      - GDAL_DATA=/c/OSGeo4W64/share/gdal
+      - DESIRED_PYTHON=3.7
+      - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
     - env: TOXENV=py36-xarray
+    - env: TOXENV=py36-bottleneck
 
 before_install:
     - printenv
-    - pip install --upgrade pip
+    - pip install --upgrade pip setuptools
 
 install:
     - pip install -U tox-travis

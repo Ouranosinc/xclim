@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Formatting utilities for indicators
 ===================================
@@ -6,10 +7,7 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
@@ -21,7 +19,9 @@ class AttrFormatter(string.Formatter):
     """
 
     def __init__(
-        self, mapping: Mapping[str, Sequence[str]], modifiers: Sequence[str],
+        self,
+        mapping: Mapping[str, Sequence[str]],
+        modifiers: Sequence[str],
     ):
         """Initialize the formatter.
 
@@ -43,17 +43,15 @@ class AttrFormatter(string.Formatter):
         of value is given. If `format_spec` is not specified but `value` is in the
         mapping, the first variation is returned.
 
-        Example
-        -------
+        Examples
+        --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
         to french and that we know that possible values of `adj` are `nice` and `evil`.
         In french, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
-        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']},
-                                ['m', 'f'])
-        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}",
-                       adj1='nice', adj2='evil')
+        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']}, ['m', 'f'])
+        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}", adj1='nice', adj2='evil')
         "Le chien est beau, l'oie est méchante"
         """
         if value in self.mapping and not format_spec:
@@ -130,35 +128,35 @@ def parse_doc(doc):
 def merge_attributes(
     attribute: str,
     *inputs_list: Union[xr.DataArray, xr.Dataset],
-    new_line="\n",
+    new_line: str = "\n",
     missing_str: Optional[str] = None,
     **inputs_kws: Union[xr.DataArray, xr.Dataset],
 ):
-    """Merge attributes from several DataArrays or Datasets
+    r"""
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
     Parameters
     ----------
     attribute : str
-        The attribute to merge.
-    *inputs_list : Union[xr.DataArray, xr.Dataset]
-        The datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixed by their "name" attribute if available.
-    new_line : str:
-        The character to put between each instance of the attributes. Usually, in CF-conventions,
-        the history attributes uses "\n" while cell_methods uses " ".
-    missing_str : str:
-        A string that is printed if an input doesn't have the attribute. Defaults to None, in which
-        case the input is simply skipped.
-    **inputs_kws : Union[xr.DataArray, xr.Dataset]
-        Mapping from names to the datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixes by the passed name.
+      The attribute to merge.
+    inputs_list : Union[xr.DataArray, xr.Dataset]
+      The datasets or variables that were used to produce the new object. Inputs given that way will be prefixed by their `name` attribute if available.
+    new_line : str
+      The character to put between each instance of the attributes. Usually, in CF-conventions,
+      the history attributes uses '\\n' while cell_methods uses ' '.
+    missing_str : str
+      A string that is printed if an input doesn't have the attribute. Defaults to None, in which
+      case the input is simply skipped.
+    inputs_kws : Union[xr.DataArray, xr.Dataset]
+      Mapping from names to the datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-        The new attribute made from the combination of the ones from all the inputs.
+      The new attribute made from the combination of the ones from all the inputs.
     """
     inputs = []
     for in_ds in inputs_list:
@@ -193,26 +191,26 @@ def update_history(
     Parameters
     ----------
     hist_str : str
-        The string describing what has been done on the data.
+      The string describing what has been done on the data.
     new_name : Optional[str]
-        The name of the newly created variable or dataset to prefix hist_msg.
+      The name of the newly created variable or dataset to prefix hist_msg.
     *inputs_list : Union[xr.DataArray, xr.Dataset]
-        The datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixed by their "name" attribute if available.
+      The datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixed by their "name" attribute if available.
     **inputs_kws : Union[xr.DataArray, xr.Dataset]
-        Mapping from names to the datasets or variables that were used to produce the new object.
-        Inputs given that way will be prefixes by the passed name.
+      Mapping from names to the datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-        The combine history of all inputs starting with `hist_str`.
+      The combine history of all inputs starting with `hist_str`.
 
-    See also
+    See Also
     --------
     merge_attributes
     """
-    from xclim import __version__
+    from xclim import __version__  # pylint: disable=cyclic-import
 
     merged_history = merge_attributes(
         "history",

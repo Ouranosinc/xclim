@@ -26,6 +26,22 @@ class TestRLE:
         np.testing.assert_array_equal(l, [1, 10, 354])
         np.testing.assert_array_equal(p, [0, 1, 11])
 
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_dataarray_nd(self, use_dask):
+        values = np.zeros((10, 365, 4, 4))
+        time = pd.date_range("2000-01-01", periods=365, freq="D")
+        values[:, 1:11, ...] = 1
+        da = xr.DataArray(values, coords={"time": time}, dims=("a", "time", "b", "c"))
+
+        if use_dask:
+            da = da.chunk({"a": 1, "b": 2})
+
+        out = rl.rle(da != 0).mean(["a", "b", "c"])
+        expected = np.zeros(366)
+        expected[1] = 10
+        expected[2:12] = np.nan
+        np.testing.assert_array_equal(out, expected)
+
 
 class TestLongestRun:
     nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
@@ -63,7 +79,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[0:10,] = da3d[0:10,] + 1
+        da3d[0:10] = da3d[0:10] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
@@ -86,7 +102,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
-        da3d[-10:,] = da3d[-10:,] + 1
+        da3d[-10:] = da3d[-10:] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -128,7 +144,7 @@ class TestLongestRun:
 
         # n-dim version versus ufunc
         da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
-        da3d[35,] = da3d[35,] + 1
+        da3d[35] = da3d[35] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -253,7 +269,12 @@ class TestRunsWithDates:
         if use_dask:
             runs = runs.chunk({"time": 10, "dim0": 1})
 
-        out = rl.run_length_with_date(runs, window=1, dim="time", date=date,)
+        out = rl.run_length_with_date(
+            runs,
+            window=1,
+            dim="time",
+            date=date,
+        )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(
@@ -277,6 +298,34 @@ class TestRunsWithDates:
             runs = runs.chunk({"time": 10, "dim0": 1})
 
         out = rl.run_end_after_date(runs, window=1, date=date, dim="time", coord=coord)
+        np.testing.assert_array_equal(np.mean(out.load()), expected)
+
+    @pytest.mark.parametrize(
+        "coord,date,beg,expected",
+        [
+            ("dayofyear", "07-01", 210, 211),
+            (False, "07-01", 190, 190),
+            ("dayofyear", "04-01", False, np.NaN),  # no run
+            ("dayofyear", "11-01", 150, 305),  # run already started
+        ],
+    )
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_first_run_after_date(
+        self, tas_series, coord, date, beg, expected, use_dask
+    ):
+        t = np.zeros(365)
+        if beg:
+            t[beg:] = 1
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+        runs = runs == 1
+
+        if use_dask:
+            runs = runs.chunk({"time": 10, "dim0": 1})
+
+        out = rl.first_run_after_date(
+            runs, window=1, date=date, dim="time", coord=coord
+        )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(
@@ -322,3 +371,21 @@ class TestRunsWithDates:
 
         out = runs.resample(time="MS").map(func, window=1, date="07-01", dim="time")
         assert out.isnull().all()
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_lazy_indexing_special_cases(use_dask):
+    a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
+    b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
+
+    if use_dask:
+        a = a.chunk({"y": 5, "z": 5})
+        b = b.chunk({"y": 5, "z": 1})
+
+    with pytest.raises(ValueError):
+        rl.lazy_indexing(a, b)
+
+    b = b.argmin("x").argmin("y")
+
+    with pytest.raises(ValueError, match="more than one dimension more than index"):
+        rl.lazy_indexing(a, b)

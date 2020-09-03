@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The setup script."""
-import os
-
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 NAME = "xclim"
 DESCRIPTION = "Derived climate variables built with xarray."
@@ -12,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.15.3-beta"
+VERSION = "0.19.3-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -23,27 +20,19 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.14.1",
+    "xarray>=0.16",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
     "cftime>=1.0.4",
     "netCDF4>=1.4",
-    "fiona>=1.8",
-    "geojson>=2.5.0",
-    "shapely>=1.6",
-    "geopandas>=0.7",
-    "dask[complete]>=2.6",
-    "pyproj>=2.5",
+    "dask[array]>=2.6",
     "pint>=0.9",
     "bottleneck~=1.3.1",
     "boltons>=20.1",
     "scikit-learn>=0.21.3",
     "packaging>=20.0",
 ]
-
-if not os.getenv("READTHEDOCS"):
-    requirements.append("rtree>=0.9")
 
 setup_requirements = ["pytest-runner"]
 
@@ -53,12 +42,15 @@ docs_requirements = [
     "sphinx",
     "sphinx-rtd-theme",
     "nbsphinx",
-    "pandoc",
     "ipython",
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "nc-time-axis",
+    "distributed>=2.0",
 ]
+
+gis_requirements = ["clisops>=0.3.1"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
@@ -96,7 +88,11 @@ setup(
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements},
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+        "gis": gis_requirements,
+    },
     url=URL,
     version=VERSION,
     zip_safe=False,

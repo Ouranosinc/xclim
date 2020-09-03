@@ -9,7 +9,6 @@ from xclim.core.calendar import percentile_doy
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
-
 K2C = 273.15
 
 
@@ -84,8 +83,8 @@ class TestDTR:
         # put a nan somewhere
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
-        dtr = atmos.daily_temperature_range(tasmax, tasmin, freq="MS")
-        dtrC = atmos.daily_temperature_range(tasmax_C, tasmin_C, freq="MS")
+        dtr = atmos.daily_temperature_range(tasmin, tasmax, freq="MS")
+        dtrC = atmos.daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
@@ -120,8 +119,8 @@ class TestDTRVar:
         # put a nan somewhere
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
-        dtr = atmos.daily_temperature_range_variability(tasmax, tasmin, freq="MS")
-        dtrC = atmos.daily_temperature_range_variability(tasmax_C, tasmin_C, freq="MS")
+        dtr = atmos.daily_temperature_range_variability(tasmin, tasmax, freq="MS")
+        dtrC = atmos.daily_temperature_range_variability(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
         assert dtr.attrs["units"] == "K"
@@ -158,8 +157,8 @@ class TestETR:
         tasmin.values[32, 1, 0] = np.nan
         tasmin_C.values[32, 1, 0] = np.nan
 
-        etr = atmos.extreme_temperature_range(tasmax, tasmin, freq="MS")
-        etrC = atmos.extreme_temperature_range(tasmax_C, tasmin_C, freq="MS")
+        etr = atmos.extreme_temperature_range(tasmin, tasmax, freq="MS")
+        etrC = atmos.extreme_temperature_range(tasmin_C, tasmax_C, freq="MS")
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
@@ -468,6 +467,7 @@ class TestCoolingDegreeDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tas = xr.open_dataset(self.nc_file).tasmax
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 
@@ -490,6 +490,7 @@ class TestCoolingDegreeDays:
         tas = xr.open_dataset(self.nc_file).tasmax
         tas.values -= K2C
         tas.attrs["units"] = "C"
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 
@@ -521,7 +522,7 @@ class TestHeatingDegreeDays:
         tas = xr.open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
-
+        tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17 + K2C
         hdd = atmos.heating_degree_days(tas, freq="YS")
@@ -543,6 +544,7 @@ class TestHeatingDegreeDays:
         tas.values[180, 1, 0] = np.nan
         tas.values -= K2C
         tas.attrs["units"] = "C"
+        tas.attrs["cell_methods"] = "time: mean within days"
         # compute with both skipna options
         thresh = 17
         hdd = atmos.heating_degree_days(tas, freq="YS")
@@ -566,6 +568,7 @@ class TestGrowingDegreeDays:
     def test_3d_data_with_nans(self):
         # test with 3d data
         tas = xr.open_dataset(self.nc_file).tasmax
+        tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
 
@@ -749,7 +752,7 @@ class TestDailyFreezeThaw:
         tasmin.values[180, 1, 0] = np.nan
 
         with pytest.warns(FutureWarning) as record:
-            frzthw = atmos.daily_freezethaw_cycles(tasmax, tasmin, freq="YS")
+            frzthw = atmos.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
@@ -779,8 +782,8 @@ class TestDailyFreezeThaw:
 
         with pytest.warns(None) as record:
             frzthw = atmos.daily_freezethaw_cycles(
-                tasmax,
                 tasmin,
+                tasmax,
                 thresh_tasmax="0 degC",
                 thresh_tasmin="0 degC",
                 freq="YS",

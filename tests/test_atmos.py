@@ -5,20 +5,24 @@ import xarray as xr
 
 from xclim import atmos
 
-
 K2C = 273.16
 
 
 def test_wind_speed_from_vectors():
-    uas = xr.DataArray(np.array([3, -3]), dims=["x"])
+    uas = xr.DataArray(np.array([3.0, -3.0]), dims=["x"])
     uas.attrs["units"] = "m s-1"
-    vas = xr.DataArray(np.array([4, -4]), dims=["x"])
+    vas = xr.DataArray(np.array([4.0, -4.0]), dims=["x"])
     vas.attrs["units"] = "m s-1"
-    exp_wind = xr.DataArray(np.array([5, 5]), dims=["x"])
+    exp_wind = xr.DataArray(np.array([5.0, 5.0]), dims=["x"])
     exp_wind.attrs["units"] = "m s-1"
 
     wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
     np.testing.assert_allclose(wind, exp_wind)
+
+    # missing values
+    uas[0] = np.nan
+    wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
+    np.testing.assert_array_equal(wind.isnull(), [True, False])
 
 
 def test_relative_humidity_dewpoint(tas_series, rh_series):
@@ -28,7 +32,7 @@ def test_relative_humidity_dewpoint(tas_series, rh_series):
             dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
         ),
         rh_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
-        rtol=0.01,
+        rtol=0.02,
         atol=1,
     )
 
@@ -37,7 +41,9 @@ def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]
     e_sat = atmos.saturation_vapor_pressure(
-        tas=tas, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
     assert e_sat.name == "e_sat"
@@ -50,7 +56,11 @@ def test_relative_humidity(tas_series, rh_series, huss_series, ps_series):
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 
     rh = atmos.relative_humidity(
-        tas=tas, huss=huss, ps=ps, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        huss=huss,
+        ps=ps,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(rh, rh_exp, atol=0.5, rtol=0.005)
     assert rh.name == "rh"
@@ -65,7 +75,11 @@ def test_specific_humidity(tas_series, rh_series, huss_series, ps_series):
     )
 
     huss = atmos.specific_humidity(
-        tas=tas, rh=rh, ps=ps, method="sonntag90", ice_thresh="0 degC",
+        tas=tas,
+        rh=rh,
+        ps=ps,
+        method="sonntag90",
+        ice_thresh="0 degC",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
     assert huss.name == "huss"

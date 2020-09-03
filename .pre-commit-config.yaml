@@ -2,8 +2,19 @@ default_language_version:
     python: python3.6
 
 repos:
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.7.2
+    hooks:
+    -   id: pyupgrade
+        language_version: python3
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.3.9
+    hooks:
+    -   id: nbstripout
+        language_version: python3
+        files: ".ipynb"
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
         language_version: python3
@@ -14,13 +25,13 @@ repos:
     -   id: debug-statements
         language_version: python3
 -   repo: https://github.com/ambv/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
     -   id: black
         language_version: python3
         args: ["--target-version", "py36"]
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 3.8.3
     hooks:
     -   id: flake8
         language_version: python3
@@ -30,23 +41,18 @@ repos:
 #    hooks:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.9.0
+-   repo: https://github.com/timothycrosley/isort
+    rev: 5.4.2
     hooks:
-    -   id: reorder-python-imports
+    -   id: isort
         language_version: python3
--   repo: https://github.com/asottile/pyupgrade
-    rev: v1.26.2
+        args: ['--profile', 'black']
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 5.1.0
     hooks:
-    -   id: pyupgrade
-        language_version: python3
+    -   id: pydocstyle
+        args: ['--convention=numpy', '--match="(?!test_).*\.py"']
 -   repo: meta
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
--   repo: https://github.com/kynan/nbstripout
-    rev: 0.3.7
-    hooks:
-    -   id: nbstripout
-        language_version: python3
-        files: ".ipynb"

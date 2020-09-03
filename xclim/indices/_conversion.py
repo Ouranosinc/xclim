@@ -1,9 +1,8 @@
+# noqa: D100
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-
+from xclim.core.units import convert_units_to, declare_units
 
 __all__ = [
     "tas",
@@ -41,9 +40,9 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(None, check_output=False, uas="[speed]", vas="[speed]")
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray = None, vas: xr.DataArray = None, return_direction=True
+    uas: xr.DataArray = None, vas: xr.DataArray = None, return_direction: bool = True
 ):
-    """Converts eastward and northward wind components to wind speed and direction.
+    """Convert eastward and northward wind components to wind speed and direction.
 
     Parameters
     ----------
@@ -51,6 +50,8 @@ def uas_vas_2_sfcwind(
       Eastward wind velocity (m s-1)
     vas : xr.DataArray
       Northward wind velocity (m s-1)
+    return_direction:: bool
+      If true, returns direction, else returns surface windspeed.
 
     Returns
     -------
@@ -106,7 +107,7 @@ def uas_vas_2_sfcwind(
 
 @declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")
 def sfcwind_2_uas_vas(wind: xr.DataArray = None, windfromdir: xr.DataArray = None):
-    """Converts wind speed and direction to eastward and northward wind components.
+    """Convert wind speed and direction to eastward and northward wind components.
 
     Parameters
     ----------
@@ -181,7 +182,7 @@ def saturation_vapor_pressure(
 
     - "goffgratch46" or "GG46", based on [goffgratch46]_, values and equation taken from [voemel]_.
     - "sonntag90" or "SO90", taken from [sonntag90]_.
-    - "tetens30" or "TE30", based on [tetens30], values and equation taken from [voemel]_.
+    - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
 
 
@@ -191,7 +192,7 @@ def saturation_vapor_pressure(
     .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
     .. [voemel] http://cires1.colorado.edu/~voemel/vp.html
-    .. [wmo2008] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -279,71 +280,83 @@ def relative_humidity(
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
-    """Compute relative humidity from temperature and either dewpoint temperature
-    or from specific humidity and pressure (through the saturation vapor pressure)
+    r"""
+    Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through the saturation vapor pressure.
 
     Parameters
     ----------
     tas : xr.DataArray
         Temperature array
     dtas : xr.DataArray
-        Dewpoint temperature, if specified, "method" must be set to "dewpoint".
+        Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
         Specific Humidity
     ps : xr.DataArray
         Air Pressure
     ice_thresh : str
         Threshold temperature under which to switch to equations in reference to ice instead of water.
-        If None (default) everything is computed with reference to water. Does nothing if 'method' is "dewpoint,"
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+        If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
+    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-        What to do with values outside the 0-100 range.
-        If "clip" (default), clips everything to 0 - 100,
-        if "mask", replaces values outside the range by np.nan,
-        if None, does nothing.
+        What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
+        if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
 
     Notes
     -----
-
     In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
-    **For the "dewpoint" method** : With :math:`L` the Enthalpy of vaporization of water
-    and :math:`R_w` the gas constant for water vapor, the relative humidity is computed as:
+    **For the "bohren98" method** : This method does not use the saturation vapor pressure directly,
+    but rather uses an approximation of the ratio of :math:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
+    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
+    the relative humidity is computed as:
 
     .. math::
 
-        RH = e^{\\frac{-L (T - T_d)}{R_wTT_d}}
+        RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
-    Formula taken from [Lawrence_2005]_.
+    From [BohrenAlbrecht1998]_, formula taken from [Lawrence2005]_. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure, relative humidity is computed as:
+    the saturation mixing ratio and the saturation vapor pressure.
+    If the dewpoint temperature is given, relative humidity is computed as:
 
-        ... math::
+    .. math::
 
-            RH = 100\\frac{w}{w_{sat}}
-            w = \\frac{q}{1-q}
-            w_{sat} = 0.622\\frac{e_{sat}}{P - e_{sat}}
+        RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
+    Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
+
+    .. math::
+
+        RH = 100\frac{w}{w_{sat}}
+        w = \frac{q}{1-q}
+        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+
+    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:meth:`xclim.core.utils.saturation_vapor_pressure`.
 
     References
     ----------
-    .. [Lawrence_2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [Lawrence2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
+    .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
     """
-    if dtas is not None and method != "dewpoint":
-        raise ValueError(
-            "If the dewpoint temperature (dtas) is passed, method must be set to 'dewpoint'"
-        )
-
-    if method == "dewpoint":
+    if method in ("bohren98", "BA90"):
+        if dtas is None:
+            raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
         dtas = convert_units_to(dtas, "degK")
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
         rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+    elif dtas is not None:
+        e_sat_dt = saturation_vapor_pressure(
+            tas=dtas, ice_thresh=ice_thresh, method=method
+        )
+        e_sat_t = saturation_vapor_pressure(
+            tas=tas, ice_thresh=ice_thresh, method=method
+        )
+        rh = 100 * e_sat_dt / e_sat_t
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -364,7 +377,11 @@ def relative_humidity(
 
 
 @declare_units(
-    "", tas="[temperature]", rh="[]", ps="[pressure]", ice_thresh="[temperature]",
+    "",
+    tas="[temperature]",
+    rh="[]",
+    ps="[pressure]",
+    ice_thresh="[temperature]",
 )
 def specific_humidity(
     tas: xr.DataArray,
@@ -374,7 +391,7 @@ def specific_humidity(
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
-    """Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure)
+    r"""Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure).
 
     Parameters
     ----------
@@ -386,7 +403,7 @@ def specific_humidity(
     ice_thresh : str
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
         What to do with values larger than the saturation specific humidity and lower than 0.
@@ -396,24 +413,23 @@ def specific_humidity(
 
     Notes
     -----
-
     In the following, let :math:`T`, :math:`rh` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
 
-        ... math::
+    .. math::
 
-            w_{sat} = 0.622\\frac{e_{sat}}{P - e_{sat}}
-            w = w_{sat} * rh / 100
-            q = w / (1 + w)
+        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+        w = w_{sat} * rh / 100
+        q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
 
     If `invalid_values` is not `None`, the saturation specific humidity :math:`q_{sat}` is computed as:
 
-        ... math::
+    .. math::
 
-            q_{sat} = w_{sat} / (1 + w_{sat})
+        q_{sat} = w_{sat} / (1 + w_{sat})
     """
     ps = convert_units_to(ps, "Pa")
     rh = convert_units_to(rh, "")

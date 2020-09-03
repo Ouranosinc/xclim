@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# noqa: D205,D400
 """
 Units handling submodule
 ========================
@@ -9,9 +10,7 @@ most unit handling methods.
 import re
 import warnings
 from inspect import signature
-from typing import Any
-from typing import Optional
-from typing import Union
+from typing import Any, Optional, Union
 
 import pint.converters
 import pint.unit
@@ -19,6 +18,8 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
+from .options import datacheck
+from .utils import ValidationError
 
 __all__ = [
     "convert_units_to",
@@ -140,6 +141,9 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
     unit = unit.replace("%", "pct")
+    if unit == "1":
+        unit = ""
+
     try:  # Pint compatible
         return units.parse_expression(unit).units
     except (
@@ -275,7 +279,8 @@ def convert_units_to(
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
+@datacheck
+def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
         return
 
@@ -309,13 +314,15 @@ def _check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> N
         tu = "cms"
     elif dim == "[length]":
         tu = "m"
+    elif dim == "[speed]":
+        tu = "m s-1"
     else:
         raise NotImplementedError(f"Dimension `{dim}` is not supported.")
 
     try:
         (1 * units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
-        raise AttributeError(
+        raise ValidationError(
             f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
         )
 
@@ -324,6 +331,16 @@ def declare_units(out_units, check_output=True, **units_by_name):
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
+
+    Parameters
+    ----------
+    out_units : str or Sequence[str]
+      The units of the output(s). If the indice outputs multiple DataArray, a sequence of string of the same length must be given.
+      Pass "" for unitless quantities.
+    check_output : bool
+      Set to False to skip the output units check.
+    units_by_name : Mapping[str, str]
+      Mapping from the input parameter names to their units or dimensionality ("[...]").
 
     Examples
     --------
@@ -349,14 +366,15 @@ def declare_units(out_units, check_output=True, **units_by_name):
             # Match all passed in value to their proper arguments so we can check units
             bound_args = sig.bind(*args, **kwargs)
             for name, val in bound_args.arguments.items():
-                _check_units(val, bound_units.arguments.get(name, None))
+                check_units(val, bound_units.arguments.get(name, None))
 
             out = func(*args, **kwargs)
-            if check_output:
+
+            def _check_out_units(out, out_units):
                 if "units" in out.attrs:
                     # Check that output units dimensions match expectations, e.g. [temperature]
                     if "[" in out_units:
-                        _check_units(out, out_units)
+                        check_units(out, out_units)
                     # Explicitly convert units if units are declared, e.g K
                     else:
                         out = convert_units_to(out, out_units)
@@ -369,6 +387,15 @@ def declare_units(out_units, check_output=True, **units_by_name):
                     raise ValueError(
                         "Output units are not propagated by computation nor specified by decorator."
                     )
+                return out
+
+            if check_output:
+                if isinstance(out, tuple):
+                    out = tuple(
+                        _check_out_units(o, o_u) for o, o_u in zip(out, out_units)
+                    )
+                else:
+                    out = _check_out_units(out, out_units)
 
             return out
 

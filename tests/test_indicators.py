@@ -1,24 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
+import gc
+
 import dask
 import numpy as np
 import pytest
 import xarray as xr
 
-from xclim import __version__
-from xclim import atmos
-from xclim.core.formatting import AttrFormatter
-from xclim.core.formatting import default_formatter
-from xclim.core.formatting import merge_attributes
-from xclim.core.formatting import parse_doc
-from xclim.core.formatting import update_history
-from xclim.core.indicator import Indicator
+import xclim
+from xclim import __version__, atmos
+from xclim.core.formatting import (
+    AttrFormatter,
+    default_formatter,
+    merge_attributes,
+    parse_doc,
+    update_history,
+)
+from xclim.core.indicator import Indicator, registry
+from xclim.core.missing import missing_pct
 from xclim.core.units import units
 from xclim.indices import tg_mean
+from xclim.indices.generic import select_time
 
 
 class UniIndTemp(Indicator):
+    realm = "atmos"
     identifier = "tmin"
     var_name = "tmin{thresh}"
     units = "K"
@@ -35,6 +42,7 @@ class UniIndTemp(Indicator):
 
 
 class UniIndPr(Indicator):
+    realm = "atmos"
     identifier = "prmax"
     units = "mm/s"
     context = "hydro"
@@ -43,6 +51,33 @@ class UniIndPr(Indicator):
     def compute(da, freq):
         """Docstring"""
         return da.resample(time=freq).mean(keep_attrs=True)
+
+
+class UniClim(Indicator):
+    realm = "atmos"
+    identifier = "clim"
+    units = "K"
+
+    @staticmethod
+    def compute(da, **indexer):
+        select = select_time(da, **indexer)
+        return select.mean(dim="time", keep_attrs=True)
+
+
+class MultiTemp(Indicator):
+    realm = "atmos"
+    identifier = "minmaxtemp"
+    var_name = ["tmin", "tmax"]
+    units = "K"
+    standard_name = ["Min temp", ""]
+    description = "Grouped computation of tmax and tmin"
+
+    @staticmethod
+    def compute(tas, freq):
+        return (
+            tas.resample(time=freq).min(keep_attrs=True),
+            tas.resample(time=freq).max(keep_attrs=True),
+        )
 
 
 def test_attrs(tas_series):
@@ -58,6 +93,45 @@ def test_attrs(tas_series):
     assert txm.name == "tmin5"
 
 
+def test_registering():
+    UniIndTemp()
+    assert "TMIN" in registry
+
+    # Because this has not been instantiated, it's not in any registry.
+    class Test123(registry["TMIN"]):
+        identifier = "test123"
+
+    assert "TEST123" not in registry
+    Test123()
+    assert "TEST123" in registry
+
+    # Confirm registries live in subclasses.
+    class IndicatorNew(Indicator):
+        _nvar = 2
+
+    # Identifier must be given
+    with pytest.raises(AttributeError, match="has not been set."):
+        IndicatorNew()
+
+    # Realm must be given
+    with pytest.raises(AttributeError, match="realm must be given"):
+        IndicatorNew(identifier="i2d")
+
+    indnew = IndicatorNew(identifier="i2d", realm="atmos")
+    assert "I2D" in registry
+    assert registry["I2D"].get_instance() is indnew
+
+    del indnew
+    gc.collect()
+    with pytest.raises(ValueError, match="There is no existing instance"):
+        registry["I2D"].get_instance()
+
+
+def test_module():
+    """Translations are keyed according to the module where the indicators are defined."""
+    assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
+
+
 def test_temp_unit_conversion(tas_series):
     a = tas_series(np.arange(360.0))
     ind = UniIndTemp()
@@ -69,28 +143,94 @@ def test_temp_unit_conversion(tas_series):
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
+def test_multiindicator(tas_series):
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    ind = MultiTemp()
+
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+
+
+def test_missing(tas_series):
+    a = tas_series(np.ones(360, float), start="1/1/2000")
+
+    # By default, missing is set to "from_context", and the default missing option is "any"
+    ind = UniIndTemp()
+
+    # Cannot set missing_options with "from_context"
+    with pytest.raises(ValueError, match="Cannot set `missing_options`"):
+        UniClim(missing_options={"tolerance": 0.01})
+
+    clim = UniClim()
+
+    # Null value
+    a[5] = np.nan
+
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
+
+    with xclim.set_options(
+        check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}
+    ):
+        m = ind(a, freq="MS")
+        assert not m[0].isnull()
+
+    # With freq=None
+    c = clim(a)
+    assert c.isnull()
+
+    # With indexer
+    ci = clim(a, month=[2])
+    assert not ci.isnull()
+
+    out = clim(a, month=[1])
+    assert out.isnull()
+
+
+def test_missing_from_context(tas_series):
+    a = tas_series(np.ones(360, float), start="1/1/2000")
+    # Null value
+    a[5] = np.nan
+
+    ind = UniIndTemp(missing="from_context")
+
+    m = ind(a, freq="MS")
+    assert m[0].isnull()
+
+
 def test_json(pr_series):
     ind = UniIndPr()
     meta = ind.json()
 
     expected = {
         "identifier",
+        "title",
+        "keywords",
+        "abstract",
+        "parameters",
+        "history",
+        "references",
+        "notes",
+        "outputs",
+    }
+
+    output_exp = {
         "var_name",
         "units",
         "long_name",
         "standard_name",
         "cell_methods",
-        "keywords",
-        "abstract",
-        "parameters",
         "description",
-        "history",
-        "references",
         "comment",
-        "notes",
     }
 
     assert set(meta.keys()).issubset(expected)
+    for output in meta["outputs"]:
+        assert set(output.keys()).issubset(output_exp)
 
 
 def test_signature():

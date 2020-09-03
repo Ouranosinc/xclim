@@ -1,8 +1,9 @@
 import cftime
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
-from scipy.stats import lognorm
+from scipy.stats import lognorm, norm
 
 from xclim.indices import generic
 
@@ -39,7 +40,7 @@ class TestFA(object):
     def test_fa(self):
         T = 10
         q = generic.fa(self.da, T, "lognorm")
-
+        assert "return_period" in q.coords
         p0 = lognorm.fit(self.da.values[:, 0, 0])
         q0 = lognorm.ppf(1 - 1.0 / T, *p0)
         np.testing.assert_array_equal(q[0, 0, 0], q0)
@@ -59,6 +60,64 @@ class TestFA(object):
         out = generic.fit(da, "lognorm").values
         assert np.isnan(out[:, 0, 0]).all()
 
+    def test_dims_order(self):
+        da = self.da.transpose()
+        p = generic.fit(da)
+        assert p.dims[-1] == "dparams"
+
+
+class TestPWMFit:
+    params = {
+        "expon": {"loc": 0.9527273, "scale": 2.2836364},
+        "gamma": {"a": 2.295206, "loc": 0, "scale": 1.410054},
+        "genextreme": {"c": -0.1555609, "loc": 2.1792884, "scale": 1.3956404},
+        "genlogistic": {"k": -0.2738854, "loc": 2.7406580, "scale": 1.0060517},
+        "gennorm": {"k": -0.5707506, "loc": 2.6888917, "scale": 1.7664322},
+        "genpareto": {"c": -0.1400000, "loc": 0.7928727, "scale": 2.7855796},
+        "gumbel_r": {"loc": 2.285519, "scale": 1.647295},
+        "kappa4": {
+            "h": 2.4727933,
+            "k": 0.9719618,
+            "loc": -9.0633543,
+            "scale": 17.0127900,
+        },
+        "norm": {"loc": 3.236364, "scale": 2.023820},
+        "pearson3": {"skew": 1.646184, "loc": 3.236364, "scale": 2.199489},
+        "weibull_min": {"c": 1.1750218, "loc": 0.6740393, "scale": 2.7087887},
+    }
+    inputs_pdf = [4, 5, 6, 7]
+
+    @pytest.mark.parametrize("dist", generic._lm3_dist_map.keys())
+    def test_get_lm3_dist(self, dist):
+        """Check that parameterization for lmoments3 and scipy is identical."""
+        pytest.importorskip("lmoments3")
+        dc = generic.get_dist(dist)
+        lm3dc = generic.get_lm3_dist(dist)
+        par = self.params[dist]
+        expected = dc(**par).pdf(self.inputs_pdf)
+        values = lm3dc(**par).pdf(self.inputs_pdf)
+        np.testing.assert_array_almost_equal(values, expected)
+
+    @pytest.mark.parametrize("dist", generic._lm3_dist_map.keys())
+    def test_pwm_fit(self, dist):
+        """Test that the fitted parameters match parameters used to generate a random sample."""
+        pytest.importorskip("lmoments3")
+        n = 500
+        dc = generic.get_dist(dist)
+        par = self.params[dist]
+        da = xr.DataArray(
+            dc(**par).rvs(size=n),
+            dims=("time",),
+            coords={"time": xr.cftime_range("1980-01-01", periods=n)},
+        )
+        out = generic.fit(da, dist=dist, method="PWM").compute()
+
+        # Check that values are identical to lmoments3's output dict
+        l3dc = generic.get_lm3_dist(dist)
+        expected = l3dc.lmom_fit(da.values)
+        for key, val in expected.items():
+            np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
+
 
 class TestFrequencyAnalysis:
     def test_simple(self, ndq_series):
@@ -73,6 +132,34 @@ class TestFrequencyAnalysis:
         assert v.shape == (1, 2, 3)
         assert np.isnan(v[:, 0, 0])
         assert ~np.isnan(v[:, 1, 1])
+        assert out.units == "m^3 s-1"
+
+        # smoke test when time is not the first dimension
+        generic.frequency_analysis(
+            q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+
+
+class TestParametricQuantile:
+    def test_synth(self):
+        mu = 23
+        sigma = 2
+        n = 10000
+        per = 0.9
+        d = norm(loc=mu, scale=sigma)
+        r = xr.DataArray(
+            d.rvs(n),
+            dims=("time",),
+            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+            attrs={"history": "Mosquito bytes per minute"},
+        )
+        expected = d.ppf(per)
+
+        p = generic.fit(r, dist="norm")
+        q = generic.parametric_quantile(p=p, q=per)
+
+        np.testing.assert_array_almost_equal(q, expected, 1)
+        assert "quantile" in q.coords
 
 
 class TestSelectResampleOp:
@@ -186,3 +273,17 @@ class TestDailyDownsampler:
                 freq
             ]
             assert np.allclose(x2.values, target)
+
+
+def test_doyminmax(q_series):
+    a = np.ones(365)
+    a[9] = 2
+    a[19] = -2
+    a[39] = 4
+    a[49] = -4
+    q = q_series(a)
+    dmx = generic.doymax(q)
+    dmn = generic.doymin(q)
+    assert dmx.values == [40]
+    assert dmn.values == [50]
+    assert dmx.units == ""
