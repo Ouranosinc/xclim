@@ -68,7 +68,7 @@ def _get_output(ctx):
 def _process_indicator(indicator, ctx, **params):
     """Add given climate indicator to the output dataset from variables in the input dataset.
 
-    Cmputation is not triggered here if dask is enabled.
+    Computation is not triggered here if dask is enabled.
     """
     if ctx.obj["verbose"]:
         click.echo(f"Processing : {indicator.identifier}")
@@ -185,7 +185,7 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
         if isinstance(val, list):
             for isub, sub in enumerate(val):
                 formatter.write_text(
-                    click.style(" " * spaces + f"{attr} (#{isub})", fg=key_fg)
+                    click.style(" " * spaces + f"{attr} (#{isub + 1})", fg=key_fg)
                 )
                 _format_dict(sub, formatter, key_fg=key_fg, spaces=spaces + 2)
         elif isinstance(val, dict):
@@ -215,7 +215,7 @@ class XclimCli(click.MultiCommand):
 @click.command(
     cls=XclimCli,
     chain=True,
-    help="Command line tool to compute indices on netCDF datasets. Indicators are reffered to by their (case-insensitive) identifier, as in xclim.core.indicator.registry.",
+    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their (case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",
 )
@@ -226,8 +226,8 @@ class XclimCli(click.MultiCommand):
     multiple=True,
 )
 @click.option("-o", "--output", help="Output filepath. A new file will be created")
-@click.option("-v", "--verbose", help="Make it more verbose", count=True)
-@click.option("--version", is_flag=True, help="Prints xclim's version number and exits")
+@click.option("-v", "--verbose", help="Print details about context and progress.", count=True)
+@click.option("-V", "--version", is_flag=True, help="Prints xclim's version number and exits")
 @click.option(
     "--dask-nthreads",
     type=int,
