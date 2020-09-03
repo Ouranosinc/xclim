@@ -70,25 +70,25 @@ def _process_indicator(indicator, ctx, **params):
 
     Cmputation is not triggered here if dask is enabled.
     """
-    click.echo(f"Processing : {indicator.identifier}")
+    if ctx.obj["verbose"]:
+        click.echo(f"Processing : {indicator.identifier}")
     dsin = _get_input(ctx)
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        if val == "None":
+        if val == "None" or val is None:
             params[key] = None
         # A DataArray is expected, it has to come from the input dataset
         # All other parameters are passed as is.
         elif indicator.parameters[key]["annotation"] is xr.DataArray:
-            # Either a variable name was given or the key is the name
-            var = val or key
-            if var in dsin:
-                params[key] = dsin[var]
+            # Default value is the var name (val == key)
+            if val in dsin:
+                params[key] = dsin[val]
                 if ctx.obj["verbose"]:
-                    click.echo(f"Parsed {key} = dsin.{var}")
+                    click.echo(f"Parsed {key} = dsin.{val}")
             else:
                 raise click.BadArgumentUsage(
-                    f"Variable {var} absent from input dataset. "
+                    f"Variable {val} absent from input dataset. "
                     f"You should provide a name with --{key}",
                     ctx,
                 )
@@ -112,9 +112,9 @@ def _create_command(indname):
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=param["default"]
+                default=param["default"] or "None"
                 if param["default"] != inspect._empty
-                else None,
+                else name,
                 show_default=True,
                 help=param["description"],
                 metavar="VAR_NAME" if param["annotation"] is xr.DataArray else "TEXT",

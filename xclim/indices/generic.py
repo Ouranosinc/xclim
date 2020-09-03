@@ -8,7 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 """
 # Note: scipy.stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 import dask.array
 import numpy as np
@@ -310,8 +310,8 @@ def frequency_analysis(
     mode: str,
     t: Union[int, Sequence[int]],
     dist: str,
-    window=1,
-    freq=None,
+    window: int = 1,
+    freq: Optional[str] = None,
     **indexer,
 ):
     """Return the value corresponding to a return period.

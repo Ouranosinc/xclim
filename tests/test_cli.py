@@ -112,7 +112,14 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     runner = CliRunner()
     results = runner.invoke(
         cli,
-        ["-i", str(tmp_path / "multi_*_in.nc"), "-o", str(output_file), "solidprcptot"],
+        [
+            "-i",
+            str(tmp_path / "multi_*_in.nc"),
+            "-o",
+            str(output_file),
+            "-v",
+            "solidprcptot",
+        ],
     )
     assert "Processing : solidprcptot" in results.output
 
@@ -127,7 +134,9 @@ def test_multi_output(tmp_path):
     ds.to_netcdf(input_file)
 
     runner = CliRunner()
-    results = runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "fwi"])
+    results = runner.invoke(
+        cli, ["-i", str(input_file), "-o", str(output_file), "-v", "fwi"]
+    )
     assert "Processing : FWI" in results.output
 
 
@@ -146,6 +155,7 @@ def test_renaming_variable(tas_series, tmp_path):
                 str(input_file),
                 "-o",
                 str(output_file),
+                "-v",
                 "tn_mean",
                 "--tasmin",
                 "tas",
@@ -173,6 +183,7 @@ def test_indicator_chain(tas_series, tmp_path):
             str(input_file),
             "-o",
             str(output_file),
+            "-v",
             "tg_mean",
             "growing_degree_days",
         ],

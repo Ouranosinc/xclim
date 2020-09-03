@@ -127,6 +127,7 @@ def parse_doc(doc):
 
 
 def _parse_parameters(section):
+    """Parse the parameters section of a docstring into a dictionary mapping the parameter name to its description."""
     curr_key = None
     params = {}
     for line in section.split("\n"):
