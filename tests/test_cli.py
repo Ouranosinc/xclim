@@ -5,9 +5,15 @@ import numpy as np
 import pytest
 import xarray as xr
 from click.testing import CliRunner
+from test_fwi import get_data as fwi_get_data
 
 import xclim as xc
 from xclim.cli import cli
+
+try:
+    from dask.distributed import Client
+except ImportError:
+    Client = None
 
 
 @pytest.mark.parametrize(
@@ -53,16 +59,16 @@ def test_indicator_help(indicator, indname):
 
 
 @pytest.mark.parametrize(
-    "indicator,expected",
+    "indicator,expected,varnames",
     [
-        ("tg_mean", 272.15),
-        ("dtrvar", 0.0),
-        ("heating_degree_days", 6588.0),
-        ("solidprcptot", 31622400.0),
+        ("tg_mean", 272.15, ["tas"]),
+        ("dtrvar", 0.0, ["tasmin", "tasmax"]),
+        ("heating_degree_days", 6588.0, ["tas"]),
+        ("solidprcptot", 31622400.0, ["tas", "pr"]),
     ],
 )
 def test_normal_computation(
-    tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected
+    tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, varnames
 ):
     tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
     tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
@@ -80,15 +86,49 @@ def test_normal_computation(
 
     ds.to_netcdf(input_file)
 
-    args = ["-i", str(input_file), "-o", str(output_file), indicator]
+    args = ["-i", str(input_file), "-o", str(output_file), "-v", indicator]
     runner = CliRunner()
     results = runner.invoke(cli, args)
+    for varname in varnames:
+        assert f"Parsed {varname} = dsin.{varname}" in results.output
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
     out = xr.open_dataset(output_file)
     outvar = list(out.data_vars.values())[0]
     np.testing.assert_allclose(outvar[0], expected)
+
+
+def test_multi_input(tas_series, pr_series, tmp_path):
+    tas = tas_series(np.ones(366) + 272.15, start="1/1/2000")
+    pr = pr_series(np.ones(366), start="1/1/2000")
+    tas_file = tmp_path / "multi_tas_in.nc"
+    pr_file = tmp_path / "multi_pr_in.nc"
+    output_file = tmp_path / "out.nc"
+
+    tas.to_dataset().to_netcdf(tas_file)
+    pr.to_dataset().to_netcdf(pr_file)
+
+    runner = CliRunner()
+    results = runner.invoke(
+        cli,
+        ["-i", str(tmp_path / "multi_*_in.nc"), "-o", str(output_file), "solidprcptot"],
+    )
+    assert "Processing : solidprcptot" in results.output
+
+    out = xr.open_dataset(output_file)
+    assert out.solidprcptot.sum() == 0
+
+
+def test_multi_output(tmp_path):
+    ds = fwi_get_data(as_xr=True).rename(temp="tas")
+    input_file = tmp_path / "fwi_in.nc"
+    output_file = tmp_path / "out.nc"
+    ds.to_netcdf(input_file)
+
+    runner = CliRunner()
+    results = runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "fwi"])
+    assert "Processing : FWI" in results.output
 
 
 def test_renaming_variable(tas_series, tmp_path):
@@ -188,3 +228,46 @@ def test_global_options(tas_series, tmp_path, options, output):
     )
 
     assert output in results.output
+
+
+def test_bad_usage(tas_series, tmp_path):
+    tas = tas_series(np.ones(366), start="1/1/2000")
+    input_file = tmp_path / "tas.nc"
+    output_file = tmp_path / "out.nc"
+
+    tas.to_netcdf(input_file)
+
+    runner = CliRunner()
+
+    # No command
+    results = runner.invoke(cli, ["-i", str(input_file)])
+    assert "Missing command" in results.output
+
+    # Indicator not found:
+    results = runner.invoke(cli, ["info", "mean_ether_velocity"])
+    assert "Indicator 'mean_ether_velocity' not found in xclim" in results.output
+
+    # No input file given
+    results = runner.invoke(cli, ["-o", str(output_file), "base_flow_index"])
+    assert "No input file name given" in results.output
+
+    # No output file given
+    results = runner.invoke(cli, ["-i", str(input_file), "tg_mean"])
+    assert "No output file name given" in results.output
+
+    results = runner.invoke(
+        cli,
+        [
+            "-i",
+            str(input_file),
+            "-o",
+            str(output_file),
+            "--dask-nthreads",
+            "2",
+            "tg_mean",
+        ],
+    )
+    if Client is None:  # dask.distributed not installed
+        assert "distributed scheduler is not installed" in results.output
+    else:
+        assert "'--dask-maxmem' must be given" in results.output

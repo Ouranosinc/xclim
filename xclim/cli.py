@@ -302,7 +302,3 @@ def write_file(ctx, *args, **kwargs):
             r.compute()
         if ctx.obj["dask_nthreads"] is not None:
             click.echo("")  # Distributed's progress doesn't print a final \n.
-
-
-if __name__ == "__main__":
-    cli()
