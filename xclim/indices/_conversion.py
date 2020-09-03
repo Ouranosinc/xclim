@@ -42,8 +42,10 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(None, check_output=False, uas="[speed]", vas="[speed]")
 def uas_vas_2_sfcwind(
-    *, uas: xr.DataArray, vas: xr.DataArray, return_direction: bool = True
-) -> Tuple[xr.DataArray, Optional[xr.DataArray]]:
+    uas: xr.DataArray, vas: xr.DataArray, return_direction: bool = True
+) -> Tuple[
+    xr.DataArray, Optional[xr.DataArray]
+]:  # FIXME: uas and vas should not be positional args, this is asking for trouble.
     """Convert eastward and northward wind components to wind speed and direction.
 
     Parameters
@@ -109,8 +111,10 @@ def uas_vas_2_sfcwind(
 
 @declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")
 def sfcwind_2_uas_vas(
-    *, wind: xr.DataArray, windfromdir: xr.DataArray
-) -> Tuple[xr.DataArray, xr.DataArray]:
+    wind: xr.DataArray, windfromdir: xr.DataArray
+) -> Tuple[
+    xr.DataArray, xr.DataArray
+]:  # FIXME: uas and vas should not be positional args, this is asking for trouble.
     """Convert wind speed and direction to eastward and northward wind components.
 
     Parameters
