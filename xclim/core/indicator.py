@@ -110,7 +110,7 @@ class IndicatorRegistrar:
     def get_instance(cls):
         """Return first found instance.
 
-        Raises ValueError is no instance exist (anymore).
+        Raises `ValueError` if no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
@@ -256,7 +256,7 @@ class Indicator(IndicatorRegistrar):
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
-        # Infer realm for official instances
+        # Infer realm for built-in xclim instances
         if cls.__module__.startswith(__package__.split(".")[0]):
             xclim_realm = cls.__module__.split(".")[2]
         else:
