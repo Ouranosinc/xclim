@@ -28,6 +28,7 @@ __all__ = [
     "ice_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
+    "max_pr_intensity",
 ]
 
 
@@ -551,3 +552,40 @@ def max_n_day_precipitation_amount(
     out.attrs["units"] = pr.units
     # Adjust values and units to make sure they are daily
     return pint_multiply(out, 1 * units.day, "mm")
+
+
+@declare_units("mm/h", pr="[precipitation]")
+def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
+    r"""Highest precipitation intensity over a n-hour moving window.
+
+    Calculate the n-hour rolling average of the original hourly total precipitation series
+    and determine the maximum value over each period.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Hourly precipitation values [Kg m-2 s-1] or [mm]
+    window : int
+      Window size in hours.
+    freq : str
+      Resampling frequency; Defaults to "YS" (yearly).
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated n-hour precipitation intensity (mm/h) at the given time frequency.
+
+    Examples
+    --------
+    >>> from xclim.indices import max_pr_intensity
+
+    # The following would compute the maximum 6-hour precipitation intensity.
+    # at an annual frequency:
+    # TODO
+    """
+    # Rolling sum of the values
+    arr = pr.rolling(time=window).mean(allow_lazy=True, skipna=False)
+    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
+
+    out.attrs["units"] = pr.units
+    return out

@@ -112,6 +112,14 @@
     "comment": "",
     "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
   },
+  "MAX_PR_INTENSITY": {
+      "long_name": "Intensité maximale de précipitation sur une durée de {window} h",
+      "description": "Intensité maximale {freq:f} de précipitation sur une fenêtre mobile de {window} h.",
+      "title": "Intensité de précipitation maximale sur une durée et période donnée.",
+      "comment": "",
+      "keywords": "courbes IDF",
+      "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
+  },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",

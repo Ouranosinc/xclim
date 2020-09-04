@@ -93,6 +93,27 @@ def pr_series():
 
 
 @pytest.fixture
+def pr_hr_series():
+    """Return hourly time series."""
+
+    def _pr_hr_series(values, start="1/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(hours=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="pr",
+            attrs={
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: sum over hour",
+                "units": "kg m-2 s-1",
+            },
+        )
+
+    return _pr_hr_series
+
+
+@pytest.fixture
 def pr_ndseries():
     def _pr_series(values, start="1/1/2000"):
         nt, nx, ny = np.atleast_3d(values).shape

@@ -59,7 +59,14 @@ import pkg_resources
 
 from .formatting import AttrFormatter
 
-TRANSLATABLE_ATTRS = ["long_name", "description", "comment", "title", "abstract"]
+TRANSLATABLE_ATTRS = [
+    "long_name",
+    "description",
+    "comment",
+    "title",
+    "abstract",
+    "keywords",
+]
 
 
 def list_locales():
