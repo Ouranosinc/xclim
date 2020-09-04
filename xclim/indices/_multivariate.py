@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import xarray
@@ -454,7 +454,7 @@ def drought_code(
     start_date: str = None,
     start_up_mode: str = None,
     shut_down_mode: str = "snow_depth",
-    **params,
+    **params: Union[int, float],
 ):
     r"""Compute the daily drought code (FWI component).
 
@@ -494,7 +494,6 @@ def drought_code(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
-    # TODO: shut_down_mode not implemented.
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     if snd is not None:
@@ -503,11 +502,17 @@ def drought_code(
     if dc0 is None:
         dc0 = xarray.full_like(tas.isel(time=0), np.nan)
 
-    params["start_date"] = start_date
-    params["start_up_mode"] = start_up_mode
-
     out = fwi.fire_weather_ufunc(
-        tas=tas, pr=pr, lat=lat, dc0=dc0, snd=snd, indexes=["DC"], **params
+        tas=tas,
+        pr=pr,
+        lat=lat,
+        dc0=dc0,
+        snd=snd,
+        indexes=["DC"],
+        start_date=start_date,
+        shut_down_mode=shut_down_mode,
+        start_up_mode=start_up_mode,
+        **params,
     )
     return out["DC"]
 

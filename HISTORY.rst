@@ -23,6 +23,8 @@ New features and enhancements
 * Indicator instances can be retrieved through their class with the `get_instance()` class method.
   This allows the use of `xclim.core.indicator.registry` as an instance registry.
 * Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
+* Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
+* New command line interface `xclim` for simple indicator computing tasks.
 
 Bug fixes
 ~~~~~~~~~

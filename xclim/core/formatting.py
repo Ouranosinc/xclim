@@ -101,28 +101,45 @@ def parse_doc(doc: str) -> Dict[str, str]:
 
     out = dict()
 
-    sections = re.split(r"(\w+)\n\s+-{4,50}", doc)  # obj.__doc__.split('\n\n')
+    sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
         intro_content = list(map(str.strip, intro.strip().split("\n\n")))
         if len(intro_content) == 1:
             out["title"] = intro_content[0]
         elif len(intro_content) == 2:
-            out["title"], out["abstract"] = intro_content
+            out["title"], abstract = intro_content
+            out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):
         header, content = sections[i : i + 2]
 
         if header in ["Notes", "References"]:
-            out[header.lower()] = content.replace("\n    ", "\n")
+            out[header.lower()] = content.replace("\n    ", "\n").strip()
         elif header == "Parameters":
-            pass
+            out["parameters"] = _parse_parameters(content)
         elif header == "Returns":
             match = re.search(r"xarray\.DataArray\s*(.*)", content)
             if match:
                 out["long_name"] = match.groups()[0]
 
     return out
+
+
+def _parse_parameters(section):
+    """Parse the parameters section of a docstring into a dictionary mapping the parameter name to its description."""
+    curr_key = None
+    params = {}
+    for line in section.split("\n"):
+        if line.strip():
+            if line.startswith(" " * 6):  # description
+                s = " " if params[curr_key]["description"] else ""
+                params[curr_key]["description"] += s + line.strip()
+            elif line.startswith(" " * 4):  # param title
+                name, annot = line.split(":", maxsplit=1)
+                curr_key = name.strip()
+                params[curr_key] = {"description": ""}
+    return params
 
 
 def merge_attributes(
