@@ -58,15 +58,15 @@ class MissingBase:
     to the registry before using them in an Indicator.
     """
 
-    def __init__(self, da, freq, input_freq, **indexer):
-        if input_freq is None:
-            raise ValueError("`input_freq` must be either 'D' or 'H'.")
-        self.null, self.count = self.prepare(da, freq, input_freq, **indexer)
+    def __init__(self, da, freq, src_timestep, **indexer):
+        if src_timestep is None:
+            raise ValueError("`src_timestep` must be either 'D' or 'H'.")
+        self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
-    def execute(cls, da, freq, input_freq, options, indexer):
+    def execute(cls, da, freq, src_timestep, options, indexer):
         """Create the instance and call it in one operation."""
-        obj = cls(da, freq, input_freq, **indexer)
+        obj = cls(da, freq, src_timestep, **indexer)
         return obj(**options)
 
     @staticmethod
@@ -92,7 +92,7 @@ class MissingBase:
 
         return null
 
-    def prepare(self, da, freq, input_freq, **indexer):
+    def prepare(self, da, freq, src_timestep, **indexer):
         """Prepare arrays to be fed to the `is_missing` function.
 
         Parameters
@@ -102,7 +102,7 @@ class MissingBase:
         freq : str
           Resampling frequency defining the periods defined in
           http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
-        input_freq : {"D", "H"}
+        src_timestep : {"D", "H"}
           Expected input frequency.
         **indexer : {dim: indexer, }, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -144,9 +144,9 @@ class MissingBase:
             t1 = str(end_time[-1].date())
             if isinstance(da.indexes["time"], xr.CFTimeIndex):
                 cal = da.time.encoding.get("calendar")
-                t = xr.cftime_range(t0, t1, freq=input_freq, calendar=cal)
+                t = xr.cftime_range(t0, t1, freq=src_timestep, calendar=cal)
             else:
-                t = pd.date_range(t0, t1, freq=input_freq)
+                t = pd.date_range(t0, t1, freq=src_timestep)
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
             st = generic.select_time(sda, **indexer)
@@ -157,7 +157,7 @@ class MissingBase:
 
         else:
             delta = end_time - start_time
-            n = delta.astype(_np_timedelta64[input_freq])
+            n = delta.astype(_np_timedelta64[src_timestep])
 
             if freq:
                 count = xr.DataArray(n.values, coords={"time": c.time}, dims="time")
@@ -196,7 +196,7 @@ class MissingAny(MissingBase):
       Input array.
     freq : str
       Resampling frequency.
-    input_freq : {"D", "H"}
+    src_timestep : {"D", "H"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -239,7 +239,7 @@ class MissingWMO(MissingAny):
       Number of missing values per month that should not be exceeded.
     nc : int
       Number of consecutive missing values per month that should not be exceeded.
-    input_freq : {"D"}
+    src_timestep : {"D"}
       Expected input frequency. Only daily values are supported.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -254,9 +254,9 @@ class MissingWMO(MissingAny):
       A boolean array set to True if period has missing values.
     """
 
-    def __init__(self, da, freq, input_freq, **indexer):
+    def __init__(self, da, freq, src_timestep, **indexer):
         # Force computation on monthly frequency
-        if input_freq != "D":
+        if src_timestep != "D":
             raise ValueError(
                 "WMO method to estimate missing data is only defined for daily series."
             )
@@ -264,7 +264,7 @@ class MissingWMO(MissingAny):
         if not freq.startswith("M"):
             raise ValueError
 
-        super().__init__(da, freq, input_freq, **indexer)
+        super().__init__(da, freq, src_timestep, **indexer)
 
     def is_missing(self, null, count, nm=11, nc=5):
         from xclim.indices import run_length as rl
@@ -297,7 +297,7 @@ class MissingPct(MissingBase):
       Resampling frequency.
     tolerance : float
       Fraction of missing values that is tolerated.
-    input_freq : {"D", "H"}
+    src_timestep : {"D", "H"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -335,7 +335,7 @@ class AtLeastNValid(MissingBase):
       Resampling frequency.
     n : int
       Minimum of valid values required.
-    input_freq : {"D", "H"}
+    src_timestep : {"D", "H"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -363,7 +363,7 @@ class AtLeastNValid(MissingBase):
 
 @register_missing_method("skip")
 class Skip(MissingBase):
-    def __init__(self, da, freq=None, input_freq=None, **indexer):
+    def __init__(self, da, freq=None, src_timestep=None, **indexer):
         pass
 
     def is_missing(self, null, count):
@@ -382,13 +382,13 @@ class FromContext(MissingBase):
     """
 
     @classmethod
-    def execute(cls, da, freq, input_freq, options, indexer):
+    def execute(cls, da, freq, src_timestep, options, indexer):
 
         name = OPTIONS[CHECK_MISSING]
         kls = MISSING_METHODS[name]
         opts = OPTIONS[MISSING_OPTIONS][name]
 
-        return kls(da, freq, input_freq, **indexer)(**opts)
+        return kls(da, freq, src_timestep, **indexer)(**opts)
 
 
 # --------------------------
@@ -398,30 +398,30 @@ class FromContext(MissingBase):
 # user-friendly. This can also be useful for testing.
 
 
-def missing_any(da, freq, input_freq=None, **indexer):  # noqa: D103
-    input_freq = input_freq or xr.infer_freq(da.time)
-    return MissingAny(da, freq, input_freq, **indexer)()
+def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
+    src_timestep = src_timestep or xr.infer_freq(da.time)
+    return MissingAny(da, freq, src_timestep, **indexer)()
 
 
-def missing_wmo(da, freq, nm=11, nc=5, input_freq=None, **indexer):  # noqa: D103
-    input_freq = input_freq or xr.infer_freq(da.time)
-    missing = MissingWMO(da, "M", input_freq, **indexer)(nm=nm, nc=nc)
+def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
+    src_timestep = src_timestep or xr.infer_freq(da.time)
+    missing = MissingWMO(da, "M", src_timestep, **indexer)(nm=nm, nc=nc)
     return missing.resample(time=freq).any()
 
 
-def missing_pct(da, freq, tolerance, input_freq=None, **indexer):  # noqa: D103
-    input_freq = input_freq or xr.infer_freq(da.time)
-    return MissingPct(da, freq, input_freq, **indexer)(tolerance=tolerance)
+def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103
+    src_timestep = src_timestep or xr.infer_freq(da.time)
+    return MissingPct(da, freq, src_timestep, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(da, freq, n=1, input_freq=None, **indexer):  # noqa: D103
-    input_freq = input_freq or xr.infer_freq(da.time)
-    return AtLeastNValid(da, freq, input_freq, **indexer)(n=n)
+def at_least_n_valid(da, freq, n=1, src_timestep=None, **indexer):  # noqa: D103
+    src_timestep = src_timestep or xr.infer_freq(da.time)
+    return AtLeastNValid(da, freq, src_timestep, **indexer)(n=n)
 
 
-def missing_from_context(da, freq, input_freq=None, **indexer):  # noqa: D103
-    input_freq = input_freq or xr.infer_freq(da.time)
-    return FromContext.execute(da, freq, input_freq, options={}, indexer=indexer)
+def missing_from_context(da, freq, src_timestep=None, **indexer):  # noqa: D103
+    src_timestep = src_timestep or xr.infer_freq(da.time)
+    return FromContext.execute(da, freq, src_timestep, options={}, indexer=indexer)
 
 
 missing_any.__doc__ = MissingAny.__doc__

@@ -514,7 +514,9 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units("mm", pr="[precipitation]")
-def max_n_day_precipitation_amount(pr, window: int = 1, freq: str = "YS"):
+def max_n_day_precipitation_amount(
+    pr: xarray.DataArray, window: int = 1, freq: str = "YS"
+):
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series

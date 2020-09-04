@@ -64,9 +64,11 @@ a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could 
 """
 import re
 import warnings
+import weakref
 from collections import OrderedDict, defaultdict
-from inspect import signature
-from typing import Mapping, Sequence, Union
+from copy import deepcopy
+from inspect import _empty, signature
+from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
@@ -87,10 +89,40 @@ from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
 
 # Indicators registry
-registry = {}
+registry = {}  # Main class registry
+_indicators_registry = defaultdict(list)  # Private instance registry
 
 
-class Indicator:
+class IndicatorRegistrar:
+    """Climate Indicator registering object."""
+
+    def __new__(cls):
+        """Add subclass to registry."""
+        name = cls.__name__
+        if name in registry:
+            warnings.warn(f"Class {name} already exists and will be overwritten.")
+        registry[name] = cls
+        return super().__new__(cls)
+
+    def __init__(self):
+        _indicators_registry[self.__class__].append(weakref.ref(self))
+
+    @classmethod
+    def get_instance(cls):
+        """Return first found instance.
+
+        Raises `ValueError` if no instance exists.
+        """
+        for inst_ref in _indicators_registry[cls]:
+            inst = inst_ref()
+            if inst is not None:
+                return inst
+        raise ValueError(
+            f"There is no existing instance of {cls.__name__}. Either none were created or they were all garbage-collected."
+        )
+
+
+class Indicator(IndicatorRegistrar):
     r"""Climate indicator base class.
 
     Climate indicator object that, when called, computes an indicator and assigns its output a number of
@@ -107,6 +139,8 @@ class Indicator:
     ----------
     identifier: str
       Unique ID for class registry, should be a valid slug.
+    realm : {'atmos', 'seaIce', 'land', 'ocean'}
+      General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
     compute: func
       The function computing the indicators. It should return one or more DataArray.
     var_name: str or Sequence[str]
@@ -172,7 +206,7 @@ class Indicator:
 
     _funcs = ["compute", "cfcheck", "datacheck"]
 
-    # Will become the classe's name
+    # Will become the class's name
     identifier = None
 
     missing = "from_context"
@@ -181,7 +215,7 @@ class Indicator:
     freq = None
 
     # Variable metadata (_cf_names, those that can be lists or strings)
-    # A developper should access those through _var_attrs on instances
+    # A developper should access those through cf_attrs on instances
     var_name = None
     standard_name = ""
     long_name = ""
@@ -191,11 +225,13 @@ class Indicator:
     comment = ""
 
     # Global metadata (must be strings, not attributed to the output)
+    realm = None
     title = ""
     abstract = ""
     keywords = ""
     references = ""
     notes = ""
+    parameters = None
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
@@ -205,15 +241,8 @@ class Indicator:
 
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
-        # Parse `compute` docstring to extract missing attributes
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-        func = kwds.get("compute", None) or cls.compute
-        parsed = parse_doc(func.__doc__)
-
-        for name, value in parsed.copy().items():
-            if not getattr(cls, name):
-                # Set if neither the class attr is set nor the kwds attr
-                kwds.setdefault(name, value)
+        # Parse docstring of the compute function, its signature and its parameters
+        kwds = cls._parse_docstring(kwds)
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -225,6 +254,18 @@ class Indicator:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
+        # Infer realm for built-in xclim instances
+        if cls.__module__.startswith(__package__.split(".")[0]):
+            xclim_realm = cls.__module__.split(".")[2]
+        else:
+            xclim_realm = None
+        # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
+        kwds.setdefault("realm", cls.realm or xclim_realm)
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean"]:
+            raise AttributeError(
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
+            )
+
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
@@ -232,10 +273,36 @@ class Indicator:
         new.__module__ = cls.__module__
 
         #  Add the created class to the registry
-        cls.register(new)
-
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
+
+    @classmethod
+    def _parse_docstring(cls, kwds):
+        """Parse `compute` docstring to extract missing attributes and parameters' doc."""
+        # Priority: explicit arguments > super class attributes > `compute` docstring info
+        func = kwds.get("compute", None) or cls.compute
+        parsed = parse_doc(func.__doc__)
+
+        for name, value in parsed.copy().items():
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
+        # The `compute` signature
+        kwds["_sig"] = signature(func)
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+        # Fill default values and annotation in parameter doc
+        # params is a multilayer dict, we want to use a brand new one so deepcopy
+        params = deepcopy(kwds.get("parameters", cls.parameters or {}))
+        for name, param in kwds["_sig"].parameters.items():
+            param_doc = params.setdefault(name, {"type": "", "description": ""})
+            param_doc["default"] = param.default
+            param_doc["annotation"] = param.annotation
+        for name in list(params.keys()):
+            if name not in kwds["_parameters"]:
+                params.pop(name)
+        kwds["parameters"] = params
+        return kwds
 
     @classmethod
     def _parse_cf_attrs(cls, kwds):
@@ -245,7 +312,7 @@ class Indicator:
             len(kwds["var_name"]) if isinstance(kwds["var_name"], (list, tuple)) else 1
         )
 
-        # Populate _var_attrs from attribute set during class creation and __new__
+        # Populate cf_attrs from attribute set during class creation and __new__
         cf_attrs = [{} for i in range(n_outs)]
         for name in cls._cf_names:
             values = kwds.get(name, getattr(cls, name))
@@ -260,19 +327,10 @@ class Indicator:
                     attrs[name] = value
         return cf_attrs
 
-    @classmethod
-    def register(cls, obj):
-        """Add subclass to registry."""
-        name = obj.__name__
-        if name in registry:
-            warnings.warn(f"Class {name} already exists and will be overwritten.")
-        registry[name] = obj
-
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
         self.check_identifier(self.identifier)
-
         if self.missing == "from_context" and self.missing_options is not None:
             raise ValueError(
                 "Cannot set `missing_options` with `missing` method being from context."
@@ -283,6 +341,9 @@ class Indicator:
         self._missing = kls.execute
         if self.missing_options:
             kls.validate(**self.missing_options)
+
+        # Validation is done : register the instance.
+        super().__init__()
 
         # The `compute` signature
         self._sig = signature(self.compute)
@@ -524,16 +585,11 @@ class Indicator:
         out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
         out["notes"] = self.notes
-
-        out["parameters"] = str(
-            {
-                key: {
-                    "default": p.default if p.default != p.empty else None,
-                    "desc": "",
-                }
-                for (key, p) in self._sig.parameters.items()
-            }
-        )
+        # We need to deepcopy, otherwise empty defaults get overwritten!
+        out["parameters"] = deepcopy(self.parameters)
+        for param in out["parameters"].values():
+            if param["default"] is _empty:
+                param["default"] = "none"
         return out
 
     @classmethod

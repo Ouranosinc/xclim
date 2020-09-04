@@ -95,14 +95,14 @@ class TestMissingAnyFills:
         t = list(range(31))
         t.pop(5)
         ts2 = ts.isel(time=t)
-        miss = missing.missing_any(ts2, freq=None, input_freq="H")
+        miss = missing.missing_any(ts2, freq=None, src_timestep="H")
         np.testing.assert_array_equal(miss, True)
 
         # With indexer
         miss = missing.missing_any(ts, freq=None, month=[7])
         np.testing.assert_array_equal(miss, False)
 
-        miss = missing.missing_any(ts2, freq=None, month=[7], input_freq="H")
+        miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="H")
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self):

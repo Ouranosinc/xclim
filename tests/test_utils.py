@@ -51,12 +51,15 @@ def test_wrapped_indicator(tas_series):
         return out
 
     ind1 = Daily(
+        realm="atmos",
         identifier="test_ind1",
         _nvar=1,
         units="days",
         compute=wrapped_partial(indice, tas2=None),
     )
+
     ind2 = Daily(
+        realm="atmos",
         identifier="test_ind2",
         _nvar=2,
         units="days",

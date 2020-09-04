@@ -50,7 +50,7 @@ def uas_vas_2_sfcwind(
       Eastward wind velocity (m s-1)
     vas : xr.DataArray
       Northward wind velocity (m s-1)
-    return_direction:: bool
+    return_direction: bool
       If true, returns direction, else returns surface windspeed.
 
     Returns

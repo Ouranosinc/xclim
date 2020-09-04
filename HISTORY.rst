@@ -11,6 +11,7 @@ Breaking changes
   Install with `pip install xclim[gis]` in order to retain the same functionality.
 * The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
   version of `pandoc` binaries installed at system-level.
+* ANUCLIM indices have seen their `input_freq` parameter renamed to `src_timestep` for clarity.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,17 +21,24 @@ New features and enhancements
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 * Add support for using probability weighted moments method in `generic.fit` function. Requires the
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
-* Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`
+* Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`.
   returning hourly precipitation intensity.
+* Indicator instances can be retrieved through their class with the `get_instance()` class method.
+  This allows the use of `xclim.core.indicator.registry` as an instance registry.
+* Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
+* Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
+* New command line interface `xclim` for simple indicator computing tasks.
 
 Bug fixes
 ~~~~~~~~~
-Nothing yet.
+None
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
 * Code styling now conforms to the latest release of black (v0.20.8).
+* New `IndicatorRegistrar` class that takes care of adding indicator classes and instances to the
+  appropriate registries. `Indicator` now inherits from it.
 
 
 0.19.0 (2020-08-18)
