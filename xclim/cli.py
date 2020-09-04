@@ -250,7 +250,8 @@ def cli(ctx, **kwargs):
     Manages the global options.
     """
     if not kwargs["verbose"]:
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("ignore", DeprecationWarning)
 
     if kwargs["version"]:
         click.echo(f"xclim {xc.__version__}")
