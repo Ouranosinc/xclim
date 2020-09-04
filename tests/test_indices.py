@@ -1263,7 +1263,9 @@ class TestPrecipWettestDriestPeriod:
         freq, src_timestep = freq
         pr = xci.precip_accumulation(pr, freq=freq)
         pr.attrs["units"] = units
-        out = xci.prcptot_wetdry_period(pr=pr, op=op, freq="YS", src_timestep=src_timestep)
+        out = xci.prcptot_wetdry_period(
+            pr=pr, op=op, freq="YS", src_timestep=src_timestep
+        )
         np.testing.assert_array_almost_equal(out, expected)
 
 
