@@ -66,8 +66,9 @@ import re
 import warnings
 import weakref
 from collections import OrderedDict, defaultdict
-from inspect import signature
-from typing import Mapping, Sequence, Union
+from copy import deepcopy
+from inspect import _empty, signature
+from typing import Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
@@ -227,6 +228,7 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
+    parameters = None
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
@@ -236,15 +238,8 @@ class Indicator(IndicatorRegistrar):
 
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
-        # Parse `compute` docstring to extract missing attributes
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-        func = kwds.get("compute", None) or cls.compute
-        parsed = parse_doc(func.__doc__)
-
-        for name, value in parsed.copy().items():
-            if not getattr(cls, name):
-                # Set if neither the class attr is set nor the kwds attr
-                kwds.setdefault(name, value)
+        # Parse docstring of the compute function, its signature and its parameters
+        kwds = cls._parse_docstring(kwds)
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -277,6 +272,34 @@ class Indicator(IndicatorRegistrar):
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
+
+    @classmethod
+    def _parse_docstring(cls, kwds):
+        """Parse `compute` docstring to extract missing attributes and parameters' doc."""
+        # Priority: explicit arguments > super class attributes > `compute` docstring info
+        func = kwds.get("compute", None) or cls.compute
+        parsed = parse_doc(func.__doc__)
+
+        for name, value in parsed.copy().items():
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
+        # The `compute` signature
+        kwds["_sig"] = signature(func)
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+        # Fill default values and annotation in parameter doc
+        # params is a multilayer dict, we want to use a brand new one so deepcopy
+        params = deepcopy(kwds.get("parameters", cls.parameters or {}))
+        for name, param in kwds["_sig"].parameters.items():
+            param_doc = params.setdefault(name, {"type": "", "description": ""})
+            param_doc["default"] = param.default
+            param_doc["annotation"] = param.annotation
+        for name in list(params.keys()):
+            if name not in kwds["_parameters"]:
+                params.pop(name)
+        kwds["parameters"] = params
+        return kwds
 
     @classmethod
     def _parse_cf_attrs(cls, kwds):
@@ -559,16 +582,11 @@ class Indicator(IndicatorRegistrar):
         out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
         out["notes"] = self.notes
-
-        out["parameters"] = str(
-            {
-                key: {
-                    "default": p.default if p.default != p.empty else None,
-                    "desc": "",
-                }
-                for (key, p) in self._sig.parameters.items()
-            }
-        )
+        # We need to deepcopy, otherwise empty defaults get overwritten!
+        out["parameters"] = deepcopy(self.parameters)
+        for param in out["parameters"].values():
+            if param["default"] is _empty:
+                param["default"] = "none"
         return out
 
     @classmethod

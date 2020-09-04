@@ -31,6 +31,7 @@ requirements = [
     "bottleneck~=1.3.1",
     "boltons>=20.1",
     "scikit-learn>=0.21.3",
+    "Click",
     "packaging>=20.0",
 ]
 
@@ -88,6 +89,10 @@ setup(
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
+    entry_points="""
+        [console_scripts]
+        xclim=xclim.cli:cli
+    """,
     extras_require={
         "docs": docs_requirements,
         "dev": dev_requirements,

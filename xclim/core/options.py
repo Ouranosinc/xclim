@@ -84,7 +84,7 @@ def _run_check(func, option, *args, **kwargs):
         if OPTIONS[option] == "log":
             logging.info(err.msg)
         elif OPTIONS[option] == "warn":
-            warn(err.msg, UserWarning, stacklevel=3)
+            warn(err.msg, UserWarning, stacklevel=4)
         else:
             raise err
 

@@ -16,4 +16,5 @@ dependencies:
  - pint>=0.9
  - boltons>=20.1
  - scikit-learn>=0.21.3
+ - Click
  - clisops>=0.3.1

@@ -45,7 +45,10 @@ __all__ = [
 
 @declare_units("days", tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
-    tas, thresh: str = "-10 degC", window: int = 5, freq: str = "AS-JUL"
+    tas: xarray.DataArray,
+    thresh: str = "-10 degC",
+    window: int = 5,
+    freq: str = "AS-JUL",
 ):
     r"""Cold spell days.
 
@@ -88,7 +91,9 @@ def cold_spell_days(
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
-def daily_pr_intensity(pr, thresh: str = "1 mm/day", freq: str = "YS"):
+def daily_pr_intensity(
+    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+):
     r"""Average daily precipitation intensity.
 
     Return the average precipitation over wet days.
@@ -1041,7 +1046,7 @@ def maximum_consecutive_tx_days(
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_area(sic, area, thresh: str = "15 pct"):
+def sea_ice_area(sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"):
     """Return the total sea ice area.
 
     Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
@@ -1078,7 +1083,9 @@ def sea_ice_area(sic, area, thresh: str = "15 pct"):
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
-def sea_ice_extent(sic, area, thresh: str = "15 pct"):
+def sea_ice_extent(
+    sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"
+):
     """Return the total sea ice extent.
 
     Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice
