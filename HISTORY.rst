@@ -25,6 +25,7 @@ New features and enhancements
 * Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
 * Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
 * New command line interface `xclim` for simple indicator computing tasks.
+* New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 
 Bug fixes
 ~~~~~~~~~
