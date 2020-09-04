@@ -547,11 +547,29 @@
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
-  "SFCWIND": {
+  "WIND_SPEED_FROM_VECTOR": {
+    "title": "Vitesse et direction du vent à partir du vecteur vent.",
+    "abstract": "Calcul de la magnitude et la direction de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWind": {
     "long_name": "Vitesse du vent de surface",
-    "description": "Magnitude de la vitesse vent calculée à partir des deux composantes uas et vas.",
-    "title": "Magnitude de la vitesse du vent",
-    "abstract": "Calcul de la magnitude de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
+    "description": "Magnitude de la vitesse vent calculée à partir des deux composantes uas et vas."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
+    "long_name": "Direction de provenance du vent de surface",
+    "description": "Direction de provenance du vent calculée à partir des deux composantes uas et vas. Les vents du nord ont une direction de 360° et les vents de moins de {calm_wind_thresh} ont une direction de 0°."
+  },
+  "WIND_VECTOR_FROM_SPEED": {
+    "title": "Vitesse cartésienne du vent à partir de la magnitude et direction de provenance.",
+    "abstract": "Calcul des deux composantes ouest-est et nord-sud du vent à partir de la magnitude et la direction de provenance de sa vitesse."
+  },
+  "WIND_VECTOR_FROM_SPEED.uas": {
+    "long_name": "Vent d'ouest de surface",
+    "description": "Vitesse d'ouest du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
+  },
+  "WIND_VECTOR_FROM_SPEED.vas": {
+    "long_name": "Vent du sud de surface",
+    "description": "Vitesse du sud du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
   },
   "E_SAT": {
     "long_name": "Pression de vapeur saturante",
