@@ -561,7 +561,7 @@
   },
   "WIND_SPEED_FROM_VECTOR.sfcWind": {
     "long_name": "Vitesse du vent de surface",
-    "description": "Magnitude de la vitesse vent calculée à partir des deux composantes uas et vas."
+    "description": "Magnitude de la vitesse du vent calculée à partir des deux composantes uas et vas."
   },
   "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
     "long_name": "Direction de provenance du vent de surface",

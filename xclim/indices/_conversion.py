@@ -65,7 +65,7 @@ def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.
     Notes
     -----
     Winds with a velocity less than `calm_wind_thresh` are given a wind direction of 0°,
-    while stronger notherly winds are set to 360°.
+    while stronger northerly winds are set to 360°.
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
