@@ -8,60 +8,7 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-Defining new indicators
-=======================
-
-The key ingredients to create a new indicator are the `identifier`, the `compute` function, the name of the missing
-value algorithm, and the `datacheck` and `cfcheck` functions, which respectively assess the validity of data and
-metadata. The `indicators` module contains over 50 examples of indicators to draw inspiration from.
-
-New indicators can be created using standard Python subclasses::
-
-    class NewIndicator(xclim.core.indicator.Indicator):
-        identifier = "new_indicator"
-        missing = "any"
-
-        @staticmethod
-        def compute(tas):
-            return tas.mean(dim="time")
-
-        @staticmethod
-        def cfcheck(tas):
-            xclim.core.cfchecks.check_valid(tas, "standard_name", "air_temperature")
-
-        @staticmethod
-        def datacheck(tas):
-            xclim.core.datachecks.check_daily(tas)
-
-Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
-
-    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_name='tmean', units="K")
-
-Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
-compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
-In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name`
-attribute must be a list and have the same length as the number of outputs.
-
-One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
-are common to indicators, then call this subclass with the custom attributes. See for example in
-`xclim.indicators.atmos` how indicators based on daily mean temperatures are created from the :class:`Tas` subclass
-of the :class:`Daily` subclass.
-
-Subclass registries
--------------------
-All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
-example::
-
->>> from xclim.core.indicator import Daily, registry
->>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())
->>> assert "MY_INDICATOR" in registry
-
-This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
-a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-
->>> from xclim.core.indicator import registry
->>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")
-
+For more info on how to define new indicators see `here <notebooks/options.ipynb#Defining-new-indicators>`_.
 """
 import re
 import warnings
