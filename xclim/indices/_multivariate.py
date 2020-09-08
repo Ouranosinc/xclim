@@ -411,7 +411,6 @@ def fire_weather_indexes(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
-    # TODO: start_up_mode and shut_down_mode not implemented.
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     ws = convert_units_to(ws, "km/h")
