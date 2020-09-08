@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Precipitation indicator definitions."""
+from inspect import _empty
 
 from xclim import indices
-from xclim.core.indicator import Daily, Daily2D
+from xclim.core.indicator import Daily, Daily2D, Hourly
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
+    "max_pr_intensity",
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
@@ -23,6 +25,10 @@ __all__ = [
 
 
 class Pr(Daily):
+    context = "hydro"
+
+
+class HrPr(Hourly):
     context = "hydro"
 
 
@@ -123,6 +129,18 @@ daily_pr_intensity = Pr(
     compute=indices.daily_pr_intensity,
 )
 
+max_pr_intensity = HrPr(
+    identifier="max_pr_intensity",
+    units="mm/h",
+    standard_name="precipitation",
+    long_name="Maximum precipitation intensity over {window}h duration",
+    description="{freq} maximum precipitation intensity over rolling {window}h window.",
+    cell_methods="time: max",
+    compute=indices.max_pr_intensity,
+    duration="{window}",
+    keywords="IDF curves",
+)
+
 precip_accumulation = Pr(
     identifier="prcptot",
     units="mm",
@@ -130,7 +148,7 @@ precip_accumulation = Pr(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase=None),
+    compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
 )
 
 liquid_precip_accumulation = Pr(
@@ -140,7 +158,9 @@ liquid_precip_accumulation = Pr(
     long_name="Total liquid precipitation",
     description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase="liquid"),
+    compute=wrapped_partial(
+        indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
+    ),  # _empty is added to un-optionalize the argument.
 )
 
 solid_precip_accumulation = Pr(
@@ -150,7 +170,9 @@ solid_precip_accumulation = Pr(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, phase="solid"),
+    compute=wrapped_partial(
+        indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"
+    ),
 )
 
 drought_code = PrTas(

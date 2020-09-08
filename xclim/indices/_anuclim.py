@@ -195,13 +195,13 @@ def precip_seasonality(
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
     op: str = None,
-    input_freq: str = None,
+    src_timestep: str = None,
     freq: str = "YS",
 ):
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
-    calculated.  If the input data frequency is "daily" or "weekly", quarters are defined as 13 week periods,
+    calculated.  If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13 week periods,
     otherwise as 3 months.
 
     Parameters
@@ -210,8 +210,8 @@ def tg_mean_warmcold_quarter(
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     op : str
       Operation to perform:  'warmest' calculate warmest quarter; 'coldest' calculate coldest quarter.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -227,7 +227,7 @@ def tg_mean_warmcold_quarter(
 
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset(path_to_tas_file)
-    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op='warmest', input_freq='daily')
+    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op='warmest', src_timestep='daily')
 
     Notes
     -----
@@ -236,7 +236,7 @@ def tg_mean_warmcold_quarter(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
-    out = _to_quarter(input_freq, tas=tas)
+    out = _to_quarter(src_timestep, tas=tas)
 
     op = _np_ops[op]
     return select_resample_op(out, op, freq)
@@ -247,13 +247,13 @@ def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
     op: str = None,
-    input_freq: str = None,
+    src_timestep: str = None,
     freq: str = "YS",
 ):
     r"""ANUCLIM Mean temperature of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
-    If the input data frequency is "daily" or "weekly" quarters are defined as 13 week periods, otherwise are 3 months.
+    If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
     ----------
@@ -263,8 +263,8 @@ def tg_mean_wetdry_quarter(
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : str {'wettest', 'driest'}
       Operation to perform: 'wettest' calculate for the wettest quarter; 'driest' calculate for the driest quarter.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -280,8 +280,8 @@ def tg_mean_wetdry_quarter(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
-    tas_qrt = _to_quarter(input_freq, tas=tas)
-    pr_qrt = _to_quarter(input_freq, pr=pr)
+    tas_qrt = _to_quarter(src_timestep, tas=tas)
+    pr_qrt = _to_quarter(src_timestep, pr=pr)
 
     xr_op = _xr_argops[op]
     with xarray.set_options(keep_attrs=True):
@@ -292,12 +292,12 @@ def tg_mean_wetdry_quarter(
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
+    pr: xarray.DataArray, op: str = None, src_timestep: str = None, freq: str = "YS"
 ):
     r"""ANUCLIM Total precipitation of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this
-    period is calculated. If the input data frequency is "daily" or "weekly" quarters
+    period is calculated. If the input data frequency is daily ("D") or weekly ("W") quarters
     are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
@@ -306,8 +306,8 @@ def prcptot_wetdry_quarter(
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : str
       Operation to perform :  'wettest' calculate wettest quarter ; 'driest' calculate driest quarter.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -322,7 +322,7 @@ def prcptot_wetdry_quarter(
 
     >>> from xclim.indices import prcptot_wetdry_quarter
     >>> p = xr.open_dataset(path_to_pr_file)
-    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op='wettest', input_freq='daily')
+    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op='wettest', src_timestep='D')
 
     Notes
     -----
@@ -331,7 +331,7 @@ def prcptot_wetdry_quarter(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
-    out = _to_quarter(input_freq, pr=pr)
+    out = _to_quarter(src_timestep, pr=pr)
 
     try:
         op = _np_ops[op]
@@ -348,13 +348,13 @@ def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
     op: str = None,
-    input_freq: str = None,
+    src_timestep: str = None,
     freq="YS",
 ):
     r"""ANUCLIM Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total
-    precipitation of this period is calculated.  If the input data frequency is "daily" or "weekly" quarters
+    precipitation of this period is calculated.  If the input data frequency is daily ("D) or weekly ("W"), quarters
     are defined as 13 week periods, otherwise are 3 months.
 
     Parameters
@@ -365,8 +365,8 @@ def prcptot_warmcold_quarter(
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     op : str
       Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -383,8 +383,8 @@ def prcptot_warmcold_quarter(
     should be calculated prior to calling the function.
     """
     # determine input data frequency
-    tas_qrt = _to_quarter(input_freq, tas=tas)
-    pr_qrt = _to_quarter(input_freq, pr=pr)
+    tas_qrt = _to_quarter(src_timestep, tas=tas)
+    pr_qrt = _to_quarter(src_timestep, pr=pr)
 
     xr_op = _xr_argops[op]
     with xarray.set_options(keep_attrs=True):
@@ -394,15 +394,15 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units("mm", pr="[precipitation]")
-def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
+def prcptot(pr: xarray.DataArray, src_timestep: str = None, freq: str = "YS"):
     r"""ANUCLIM Accumulated total precipitation.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -417,23 +417,23 @@ def prcptot(pr: xarray.DataArray, input_freq: str = None, freq: str = "YS"):
     values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
     the result with input data with daily frequency as well.
     """
-    if input_freq == "monthly":
+    if src_timestep == "M":
         pr = pint_multiply(pr, 1 * units.month, "mm")
-    elif input_freq == "weekly":
+    elif src_timestep == "W":
         pr = pint_multiply(pr, 1 * units.week, "mm")
-    elif input_freq == "daily":
+    elif src_timestep == "D":
         pr = pint_multiply(pr, 1 * units.day, "mm")
     else:
         raise NotImplementedError(
-            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
-            f'one of "daily", "weekly" or "monthly"'
+            f'Unknown input time frequency "{src_timestep}" : src_timestep parameter must be '
+            f'one of "D", "W" or "M"'
         )
     return pr.resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_period(
-    pr: xarray.DataArray, op: str = None, input_freq: str = None, freq: str = "YS"
+    pr: xarray.DataArray, op: str = None, src_timestep: str = None, freq: str = "YS"
 ):
     r"""ANUCLIM precipitation of the wettest/driest day, week, or month, depending on the time step.
 
@@ -443,8 +443,8 @@ def prcptot_wetdry_period(
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
     op : str
       Operation to perform :  'wettest' calculate wettest period ; 'driest' calculate driest period.
-    input_freq : str
-      Input data time frequency - One of 'daily', 'weekly' or 'monthly'.
+    src_timestep : {'D', 'W', 'M'}
+      Input data time frequency - One of daily, weekly or monthly.
     freq : str
       Resampling frequency; Defaults to "YS".
 
@@ -460,16 +460,16 @@ def prcptot_wetdry_period(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
-    if input_freq == "monthly":
+    if src_timestep == "M":
         pr = pint_multiply(pr, 1 * units.month, "mm")
-    elif input_freq == "weekly":
+    elif src_timestep == "W":
         pr = pint_multiply(pr, 1 * units.week, "mm")
-    elif input_freq == "daily":
+    elif src_timestep == "D":
         pr = pint_multiply(pr, 1 * units.day, "mm")
     else:
         raise NotImplementedError(
-            f'Unknown input time frequency "{input_freq}" : input_freq parameter must be '
-            f'one of "daily", "weekly" or "monthly"'
+            f'Unknown input time frequency "{src_timestep}" : src_timestep parameter must be '
+            f'one of "D", "W" or "M"'
         )
 
     if op == "wettest":
@@ -540,7 +540,7 @@ def _to_quarter(freq, pr=None, tas=None):
 
     else:
         raise NotImplementedError(
-            f'Unknown input time frequency "{freq}": must be one of "daily", "weekly" or "monthly".'
+            f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".'
         )
 
     if tas is not None:

@@ -42,13 +42,13 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.4.2
+    rev: 5.5.1
     hooks:
     -   id: isort
         language_version: python3
         args: ['--profile', 'black']
 -   repo: https://github.com/pycqa/pydocstyle
-    rev: 5.1.0
+    rev: 5.1.1
     hooks:
     -   id: pydocstyle
         args: ['--convention=numpy', '--match="(?!test_).*\.py"']

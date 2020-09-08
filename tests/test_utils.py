@@ -6,7 +6,7 @@ from inspect import signature
 import numpy as np
 import xarray as xr
 
-from xclim.core.indicator import Indicator
+from xclim.core.indicator import Daily
 from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
 
 
@@ -50,14 +50,15 @@ def test_wrapped_indicator(tas_series):
         out.attrs["units"] = "days"
         return out
 
-    ind1 = Indicator(
+    ind1 = Daily(
         realm="atmos",
         identifier="test_ind1",
         _nvar=1,
         units="days",
         compute=wrapped_partial(indice, tas2=None),
     )
-    ind2 = Indicator(
+
+    ind2 = Daily(
         realm="atmos",
         identifier="test_ind2",
         _nvar=2,

@@ -8,7 +8,7 @@ import pytest
 import xarray as xr
 
 from xclim import set_options
-from xclim.core import cfchecks
+from xclim.core import cfchecks, datachecks
 from xclim.core.utils import ValidationError
 from xclim.indicators.atmos import tg_mean
 
@@ -115,3 +115,23 @@ def test_cf_compliance_options(tas_series, caplog):
     ):
         with set_options(cf_compliance="raise"):
             cfchecks.check_valid_temperature(tas, "degK")
+
+
+class TestDataCheck:
+    def test_check_hourly(self, date_range):
+        tas_attrs = {
+            "units": "K",
+            "standard_name": "air_temperature",
+        }
+
+        n = 100
+        time = date_range("2000-01-01", freq="H", periods=n)
+        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        datachecks.check_freq(da, "H")
+
+        time = date_range("2000-01-01", freq="3H", periods=n)
+        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        with pytest.raises(ValidationError):
+            datachecks.check_freq(da, "H")
+
+        datachecks.check_freq(da, "H", strict=False)
