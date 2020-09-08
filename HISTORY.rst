@@ -12,6 +12,7 @@ Breaking changes
 * The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
   version of `pandoc` binaries installed at system-level.
 * ANUCLIM indices have seen their `input_freq` parameter renamed to `src_timestep` for clarity.
+* A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
