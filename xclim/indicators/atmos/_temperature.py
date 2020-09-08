@@ -319,8 +319,7 @@ cold_spell_duration_index = Tasmin(
     var_name="csdi_{window}",
     units="days",
     standard_name="cold_spell_duration_index",
-    long_name="Cold Spell Duration Index, count of days with at "
-    "least {window} consecutive days when Tmin < 10th percentile",
+    long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days "
     "where the daily minimum temperature is below the 10th "
     "percentile. The 10th percentile should be computed for "
@@ -333,7 +332,7 @@ cold_spell_days = Tas(
     identifier="cold_spell_days",
     units="days",
     standard_name="cold_spell_days",
-    long_name="cold spell index",
+    long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
     "temperature below  {thresh}.",

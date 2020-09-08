@@ -55,6 +55,7 @@ freq_analysis = FA(
     long_name="N-year return period {mode} {indexer} {window}-day flow",
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
     "estimated using the {dist} distribution.",
+    title="Flow values for given return periods.",
     compute=generic.frequency_analysis,
 )
 
@@ -64,6 +65,7 @@ stats = Stats(
     var_name="q{indexer}{op}",
     long_name="{freq} {op} of {indexer} daily flow ",
     description="{freq} {op} of {indexer} daily flow",
+    title="Statistic of the daily flow on a given period.",
     compute=generic.select_resample_op,
 )
 
@@ -75,6 +77,7 @@ fit = Fit(
     standard_name="{dist} parameters",
     long_name="{dist} distribution parameters",
     description="Parameters of the {dist} distribution",
+    title="Distribution parameters fitted over the time dimension.",
     cell_methods="time: fit",
     compute=generic.fit,
 )
@@ -85,6 +88,7 @@ doy_qmax = Streamflow(
     var_name="q{indexer}_doy_qmax",
     long_name="Day of the year of the maximum over {indexer}",
     description="Day of the year of the maximum over {indexer}",
+    title="Day of year of the maximum.",
     units="",
     _partial=True,
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymax),
@@ -96,6 +100,7 @@ doy_qmin = Streamflow(
     var_name="q{indexer}_doy_qmin",
     long_name="Day of the year of the minimum over {indexer}",
     description="Day of the year of the minimum over {indexer}",
+    title="Day of year of the minimum.",
     units="",
     _partial=True,
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymin),
