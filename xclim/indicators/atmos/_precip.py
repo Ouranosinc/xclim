@@ -3,7 +3,7 @@
 from inspect import _empty
 
 from xclim import indices
-from xclim.core.indicator import Daily, Daily2D
+from xclim.core.indicator import Daily, Daily2D, Hourly
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -15,6 +15,7 @@ __all__ = [
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
+    "max_pr_intensity",
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
@@ -24,6 +25,10 @@ __all__ = [
 
 
 class Pr(Daily):
+    context = "hydro"
+
+
+class HrPr(Hourly):
     context = "hydro"
 
 
@@ -122,6 +127,18 @@ daily_pr_intensity = Pr(
     "Intensity Index' (SDII).",
     cell_methods="",
     compute=indices.daily_pr_intensity,
+)
+
+max_pr_intensity = HrPr(
+    identifier="max_pr_intensity",
+    units="mm/h",
+    standard_name="precipitation",
+    long_name="Maximum precipitation intensity over {window}h duration",
+    description="{freq} maximum precipitation intensity over rolling {window}h window.",
+    cell_methods="time: max",
+    compute=indices.max_pr_intensity,
+    duration="{window}",
+    keywords="IDF curves",
 )
 
 precip_accumulation = Pr(
