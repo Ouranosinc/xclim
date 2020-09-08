@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
+import gc
+from inspect import _empty
+
 import dask
 import numpy as np
 import pytest
@@ -15,14 +18,15 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Indicator, registry
-from xclim.core.missing import missing_pct
+
+from xclim.core.indicator import Daily, Indicator, registry
 from xclim.core.units import units
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
 
 
-class UniIndTemp(Indicator):
+class UniIndTemp(Daily):
+    realm = "atmos"
     identifier = "tmin"
     var_name = "tmin{thresh}"
     units = "K"
@@ -38,7 +42,8 @@ class UniIndTemp(Indicator):
         return out.resample(time=freq).mean(keep_attrs=True)
 
 
-class UniIndPr(Indicator):
+class UniIndPr(Daily):
+    realm = "atmos"
     identifier = "prmax"
     units = "mm/s"
     context = "hydro"
@@ -49,7 +54,8 @@ class UniIndPr(Indicator):
         return da.resample(time=freq).mean(keep_attrs=True)
 
 
-class UniClim(Indicator):
+class UniClim(Daily):
+    realm = "atmos"
     identifier = "clim"
     units = "K"
 
@@ -59,7 +65,8 @@ class UniClim(Indicator):
         return select.mean(dim="time", keep_attrs=True)
 
 
-class MultiTemp(Indicator):
+class MultiTemp(Daily):
+    realm = "atmos"
     identifier = "minmaxtemp"
     var_name = ["tmin", "tmax"]
     units = "K"
@@ -86,6 +93,9 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
+
+def test_registering():
+    UniIndTemp()
     assert "TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
@@ -100,8 +110,22 @@ def test_attrs(tas_series):
     class IndicatorNew(Indicator):
         _nvar = 2
 
-    IndicatorNew(identifier="i2d")
+    # Identifier must be given
+    with pytest.raises(AttributeError, match="has not been set."):
+        IndicatorNew()
+
+    # Realm must be given
+    with pytest.raises(AttributeError, match="realm must be given"):
+        IndicatorNew(identifier="i2d")
+
+    indnew = IndicatorNew(identifier="i2d", realm="atmos")
     assert "I2D" in registry
+    assert registry["I2D"].get_instance() is indnew
+
+    del indnew
+    gc.collect()
+    with pytest.raises(ValueError, match="There is no existing instance"):
+        registry["I2D"].get_instance()
 
 
 def test_module():
@@ -137,6 +161,11 @@ def test_missing(tas_series):
 
     # By default, missing is set to "from_context", and the default missing option is "any"
     ind = UniIndTemp()
+
+    # Cannot set missing_options with "from_context"
+    with pytest.raises(ValueError, match="Cannot set `missing_options`"):
+        UniClim(missing_options={"tolerance": 0.01})
+
     clim = UniClim()
 
     # Null value
@@ -253,9 +282,43 @@ def test_formatting(pr_series):
     ]
 
 
-# TODO Add a meaningful test
 def test_parse_doc():
-    parse_doc(tg_mean.__doc__)
+    doc = parse_doc(tg_mean.__doc__)
+    assert doc["title"] == "Mean of daily average temperature."
+    assert (
+        doc["abstract"]
+        == "Resample the original daily mean temperature series by taking the mean over each period."
+    )
+    assert (
+        doc["parameters"]["tas"]["description"] == "Mean daily temperature [℃] or [K]"
+    )
+    assert (
+        doc["parameters"]["freq"]["description"]
+        == 'Resampling frequency; Defaults to "YS" (yearly).'
+    )
+    assert doc["notes"].startswith("Let")
+    assert "math::" in doc["notes"]
+    assert "references" not in doc
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+
+    doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
+    assert (
+        doc["parameters"]["ice_thresh"]["description"]
+        == "Threshold temperature under which to switch to equations in reference to ice instead of water. If None (default) everything is computed with reference to water."
+    )
+    assert "Goff, J. A., and S. Gratch (1946)" in doc["references"]
+
+
+def test_parsed_doc():
+    assert "tas" in xclim.atmos.liquid_precip_accumulation.parameters
+    assert "tas" not in xclim.atmos.precip_accumulation.parameters
+
+    params = xclim.atmos.drought_code.parameters
+    assert params["tas"]["description"] == "Noon temperature."
+    assert params["tas"]["annotation"] is xr.DataArray
+    assert params["tas"]["default"] is _empty
+    assert params["snd"]["default"] is None
+    assert params["shut_down_mode"]["annotation"] is str
 
 
 def test_default_formatter():

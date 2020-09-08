@@ -95,14 +95,14 @@ class TestMissingAnyFills:
         t = list(range(31))
         t.pop(5)
         ts2 = ts.isel(time=t)
-        miss = missing.missing_any(ts2, freq=None)
+        miss = missing.missing_any(ts2, freq=None, src_timestep="H")
         np.testing.assert_array_equal(miss, True)
 
         # With indexer
         miss = missing.missing_any(ts, freq=None, month=[7])
         np.testing.assert_array_equal(miss, False)
 
-        miss = missing.missing_any(ts2, freq=None, month=[7])
+        miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="H")
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self):
@@ -114,6 +114,13 @@ class TestMissingAnyFills:
 
         miss = missing.missing_any(ds.q_sim, freq="YS", season="JJA")
         np.testing.assert_array_equal(miss, False)
+
+    def test_hourly(self, pr_hr_series):
+        a = np.arange(2.0 * 32 * 24)
+        a[5:10] = np.nan
+        pr = pr_hr_series(a)
+        out = missing.missing_any(pr, freq="MS")
+        np.testing.assert_array_equal(out, [True, False, True])
 
 
 class TestMissingWMO:
@@ -135,6 +142,12 @@ class TestMissingWMO:
         out = missing.missing_wmo(ts, freq="QS-JAN")
         np.testing.assert_array_equal(out, [True, False, False, True])
 
+    def test_hourly(self, pr_hr_series):
+        pr = pr_hr_series(np.zeros(30))
+
+        with pytest.raises(ValueError):
+            missing.missing_wmo(pr, freq="MS")
+
 
 class TestMissingPct:
     def test_missing_days(self, tas_series):
@@ -146,6 +159,13 @@ class TestMissingPct:
         assert not out[0]
         assert out[1]
 
+    def test_hourly(self, pr_hr_series):
+        a = np.arange(2.0 * 32 * 24)
+        a[5:50] = np.nan
+        pr = pr_hr_series(a)
+        out = missing.missing_pct(pr, freq="MS", tolerance=0.01)
+        np.testing.assert_array_equal(out, [True, False, True])
+
 
 class TestAtLeastNValid:
     def test_at_least_n_valid(self, tas_series):
@@ -155,3 +175,10 @@ class TestAtLeastNValid:
         ts = tas_series(a)
         out = missing.at_least_n_valid(ts, freq="MS", n=20)
         np.testing.assert_array_equal(out[:2], [False, True])
+
+    def test_hourly(self, pr_hr_series):
+        a = np.arange(2.0 * 32 * 24)
+        a[0:240] = np.nan
+        pr = pr_hr_series(a)
+        out = missing.at_least_n_valid(pr, freq="MS", n=25 * 24)
+        np.testing.assert_array_equal(out, [True, False, True])
