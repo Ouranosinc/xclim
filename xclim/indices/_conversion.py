@@ -45,7 +45,7 @@ def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.
     """Wind speed and direction from the eastward and northward wind components.
 
     Computes the magnitude and angle of the wind vector from its northward and eastward components,
-    following the meterological convection that sets calm wind to a direction of 0° and northerly wind to 360°.
+    following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
 
     Parameters
     ----------
