@@ -30,6 +30,7 @@ New features and enhancements
 * Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
 * New command line interface `xclim` for simple indicator computing tasks.
 * New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
+* New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
 
 Bug fixes
 ~~~~~~~~~
