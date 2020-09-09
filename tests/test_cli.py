@@ -137,7 +137,7 @@ def test_multi_output(tmp_path):
     results = runner.invoke(
         cli, ["-i", str(input_file), "-o", str(output_file), "-v", "fwi"]
     )
-    assert "Processing : FWI" in results.output
+    assert "Processing : fwi" in results.output
 
 
 def test_renaming_variable(tas_series, tmp_path):

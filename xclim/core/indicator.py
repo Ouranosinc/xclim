@@ -8,7 +8,7 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-For more info on how to define new indicators see `here <notebooks/options.ipynb#Defining-new-indicators>`_.
+For more info on how to define new indicators see `here <notebooks/customize.ipynb#Defining-new-indicators>`_.
 """
 import re
 import warnings

@@ -2,7 +2,7 @@
 Climate indicators
 ==================
 
-:class:`xclim.core.indicator.Indicator` instances essentially perform the same computations as the functions
+:py:class:`xclim.core.indicator.Indicator` instances essentially perform the same computations as the functions
 found in the :mod:`xclim.indices` library, but also run a number of health checks on input data
 and assign attributes to the output arrays. So for example, if there are missing values in
 a time series, indices won't notice, but indicators will return NaNs for periods with missing
