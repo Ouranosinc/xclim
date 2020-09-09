@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 from xclim.sdba.base import Grouper
-from xclim.sdba.processing import adapt_freq, jitter_under_thresh, jitter_over_thresh
+from xclim.sdba.processing import adapt_freq, jitter_over_thresh, jitter_under_thresh
 
 
 def test_jitter_under_thresh():
@@ -24,7 +24,7 @@ def test_jitter_over_thresh():
     assert da[1] != out[1]
     assert da[1] < 3
     assert da[1] > 2
-    np.testing.assert_allclose(da[[0,2]], out[[0,2]])
+    np.testing.assert_allclose(da[[0, 2]], out[[0, 2]])
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
