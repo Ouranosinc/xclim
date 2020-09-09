@@ -175,7 +175,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     return x.where(~((x < thresh) & (x.notnull())), jitter)
 
 
-def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd:float):
+def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
     """Replace values greater than threshold by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
