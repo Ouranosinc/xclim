@@ -364,7 +364,7 @@ def fire_weather_indexes(
     shut_down_mode: str = "temperature",
     **params,
 ):
-    r"""Return the six daily fire weather indexes.
+    r"""Fire weather indexes.
 
     Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
     the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
@@ -411,7 +411,6 @@ def fire_weather_indexes(
     ----------
     Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
     """
-    # TODO: start_up_mode and shut_down_mode not implemented.
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     ws = convert_units_to(ws, "km/h")
@@ -456,7 +455,7 @@ def drought_code(
     shut_down_mode: str = "snow_depth",
     **params: Union[int, float],
 ):
-    r"""Compute the daily drought code (FWI component).
+    r"""Drought code (FWI component).
 
     The drought code is part of the Canadian Forest Fire Weather Index System.
     It is a numeric rating of the average moisture content of organic layers.
@@ -600,7 +599,6 @@ def heat_wave_max_length(
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    # Dev note : we should decide if it is deg K or C
     r"""Heat wave max length.
 
     Maximum length of heat waves over a given period. A heat wave is defined as an event
