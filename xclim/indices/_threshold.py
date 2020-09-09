@@ -52,7 +52,7 @@ def cold_spell_days(
 ):
     r"""Cold spell days.
 
-    The number of days that are part of a cold spell, defined as five or more consecutive days with mean daily
+    The number of days that are part of a cold spell, defined as a minimum number of consecutive days with mean daily
     temperature below a threshold in °C.
 
     Parameters
@@ -355,10 +355,10 @@ def growing_season_end(
     window: int = 5,
     freq: str = "YS",
 ):
-    r"""Day of the year of the start of a sequence of days with a temperature consistently below a threshold, after a period with temperatures consistently above the same threshold.
+    r"""End of the growing season.
 
-    Returns the first day of period where a temperature is inferior to a threshold
-    over a given run of days.
+    Day of the year of the start of a sequence of days with a temperature consistently
+    below a threshold, after a period with temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -402,11 +402,11 @@ def growing_season_length(
 ):
     r"""Growing season length.
 
-    The number of days between the first occurrence of at least
-    six consecutive days with mean daily temperature over a threshold (default: 5℃) and
-    the first occurrence of at least six consecutive days with mean daily temperature
-    below the same threshold after a certain date. (Usually July 1st in the northern
-    hemisphere and January 1st in the southern hemisphere.)
+    The number of days between the first occurrence of at least six consecutive days
+    with mean daily temperature over a threshold (default: 5℃) and the first occurrence
+    of at least six consecutive days with mean daily temperature below the same threshold
+    after a certain date.
+    (Usually July 1st in the northern emisphere and January 1st in the southern hemisphere.)
 
     WARNING: The default calendar values are only valid for the northern hemisphere.
 
@@ -1047,7 +1047,7 @@ def maximum_consecutive_tx_days(
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
 def sea_ice_area(sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"):
-    """Return the total sea ice area.
+    """Total sea ice area.
 
     Sea ice area measures the total sea ice covered area where sea ice concentration is above a threshold,
     usually set to 15%.
@@ -1086,7 +1086,7 @@ def sea_ice_area(sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "1
 def sea_ice_extent(
     sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"
 ):
-    """Return the total sea ice extent.
+    """Total sea ice extent.
 
     Sea ice extent measures the *ice-covered* area, where a region is considered ice-covered if its sea ice
     concentration is above a threshold usually set to 15%.

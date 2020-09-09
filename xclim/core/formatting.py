@@ -107,8 +107,8 @@ def parse_doc(doc):
         content = list(map(str.strip, intro.strip().split("\n\n")))
         if len(content) == 1:
             out["title"] = content[0]
-        elif len(content) == 2:
-            out["title"], abstract = content
+        elif len(content) >= 2:
+            out["title"], abstract = content[:2]
             out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):

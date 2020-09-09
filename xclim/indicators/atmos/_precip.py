@@ -176,7 +176,7 @@ solid_precip_accumulation = Pr(
 )
 
 drought_code = PrTas(
-    identifier="DC",
+    identifier="dc",
     units="",
     standard_name="drought_code",
     long_name="Drought Code",
@@ -187,7 +187,7 @@ drought_code = PrTas(
 
 fire_weather_indexes = Daily(
     _nvar=4,
-    identifier="FWI",
+    identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
     standard_name=[

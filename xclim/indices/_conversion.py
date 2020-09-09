@@ -42,7 +42,10 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     ["m/s", "degree"], uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]"
 )
 def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.5 m/s"):
-    """Convert eastward and northward wind components to wind speed and direction.
+    """Wind speed and direction from the eastward and northward wind components.
+
+    Computes the magnitude and angle of the wind vector from its northward and eastward components,
+    following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
 
     Parameters
     ----------
@@ -92,7 +95,9 @@ def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.
 
 @declare_units(["m s-1", "m s-1"], sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_2_uas_vas(sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray):
-    """Convert wind speed and direction to eastward and northward wind components.
+    """Eastward and northward wind components from the wind speed and direction.
+
+    Compute the eastward and northward wind components from the wind speed and direction.
 
     Parameters
     ----------
@@ -135,7 +140,7 @@ def sfcwind_2_uas_vas(sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray):
 def saturation_vapor_pressure(
     tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
 ) -> xr.DataArray:
-    """Compute saturation vapor pressure (e_sat) from the temperature.
+    """Saturation vapor pressure from temperature.
 
     Parameters
     ----------
@@ -253,6 +258,8 @@ def relative_humidity(
     invalid_values: str = "clip",
 ) -> xr.DataArray:
     r"""
+    Relative humidity.
+
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through the saturation vapor pressure.
 
     Parameters
@@ -363,7 +370,7 @@ def specific_humidity(
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
-    r"""Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure).
+    r"""Specific humidity from temperature, relative humidity and pressure.
 
     Parameters
     ----------

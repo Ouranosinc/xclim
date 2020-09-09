@@ -89,6 +89,7 @@ relative_humidity_from_dewpoint = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
+    title="Relative humidity from temperature and dewpoint temperature.",
     description=lambda **kws: (
         "Computed from temperature, and dew point temperature through the "
         "saturation vapor pressures, which were calculated "
@@ -114,6 +115,7 @@ relative_humidity = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
+    title="Relative humidity from temperature, pressure and specific humidity.",
     description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the "
         "saturation vapor pressure, which was calculated from temperature "
