@@ -234,14 +234,14 @@
   },
   "TG_MIN": {
     "long_name": "Minimum de la température journalière moyenne",
-    "description": "Minimum {freq:f} de la température journalière moyenne",
+    "description": "Minimum {freq:m} de la température journalière moyenne",
     "title": "Minimum de la température journalière moyenne",
     "comment": "",
     "abstract": "Minimum de la température journalière moyenne."
   },
   "TG_MAX": {
     "long_name": "Maximum de la température journalière moyenne",
-    "description": "Maximum {freq:f} de la température journalière moyenne",
+    "description": "Maximum {freq:m} de la température journalière moyenne",
     "title": "Maximum de la température journalière moyenne",
     "comment": "",
     "abstract": "Maximum de la température journalière moyenne."
