@@ -231,7 +231,7 @@ tg_max = Tas(
 )
 
 tg_min = Tas(
-    identifier="tg_max",
+    identifier="tg_min",
     units="K",
     standard_name="air_temperature",
     long_name="Minimum daily mean temperature",
