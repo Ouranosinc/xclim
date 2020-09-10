@@ -175,6 +175,36 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     return x.where(~((x < thresh) & (x.notnull())), jitter)
 
 
+def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
+    """Replace values greater than threshold by a uniform random noise.
+
+    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Values.
+    thresh : float
+      Threshold over which to add uniform random noise to values.
+    upper_bnd : float
+      Maximum possible value for the random noise
+    Returns
+    -------
+    array
+
+    Notes
+    -----
+    If thresh is low, this will change the mean value of x.
+    """
+    if isinstance(x.data, dsk.Array):
+        jitter = dsk.random.uniform(
+            low=thresh, high=upper_bnd, size=x.shape, chunks=x.chunks
+        )
+    else:
+        jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
+    return x.where(~((x > thresh) & (x.notnull())), jitter)
+
+
 @parse_group
 def normalize(
     x: xr.DataArray,

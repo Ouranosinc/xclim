@@ -18,7 +18,6 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-
 from xclim.core.indicator import Daily, Indicator, registry
 from xclim.core.units import units
 from xclim.indices import tg_mean
