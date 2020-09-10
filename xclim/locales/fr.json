@@ -232,6 +232,20 @@
     "comment": "",
     "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
   },
+  "TG_MIN": {
+    "long_name": "Minimum de la température journalière moyenne",
+    "description": "Minimum {freq:m} de la température journalière moyenne",
+    "title": "Minimum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Minimum de la température journalière moyenne."
+  },
+  "TG_MAX": {
+    "long_name": "Maximum de la température journalière moyenne",
+    "description": "Maximum {freq:m} de la température journalière moyenne",
+    "title": "Maximum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Maximum de la température journalière moyenne."
+  },
   "TG_MEAN": {
     "long_name": "Moyenne de la température journalière moyenne",
     "description": "Moyenne {freq:f} de la température journalière moyenne",

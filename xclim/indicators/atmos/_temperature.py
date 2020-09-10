@@ -220,6 +220,26 @@ tg_mean = Tas(
     compute=indices.tg_mean,
 )
 
+tg_max = Tas(
+    identifier="tg_max",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum daily mean temperature",
+    description="{freq} maximum of daily mean temperature.",
+    cell_methods="time: mean within days time: maximum over days",
+    compute=indices.tg_max,
+)
+
+tg_min = Tas(
+    identifier="tg_min",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Minimum daily mean temperature",
+    description="{freq} minimum of daily mean temperature.",
+    cell_methods="time: mean within days time: minimum over days",
+    compute=indices.tg_min,
+)
+
 tx_mean = Tasmax(
     identifier="tx_mean",
     units="K",
