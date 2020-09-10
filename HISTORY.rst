@@ -31,6 +31,7 @@ New features and enhancements
 * New command line interface `xclim` for simple indicator computing tasks.
 * New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 * New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
+* Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
 
 Bug fixes
 ~~~~~~~~~
