@@ -227,7 +227,7 @@ def daily_freezethaw_cycles(
 def daily_temperature_range(
     tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS", op: str = "mean"
 ) -> xarray.DataArray:
-    r"""Mean of daily temperature range.
+    r"""Statistics of daily temperature range.
 
     The mean difference between the daily maximum temperature and the daily minimum temperature.
 
