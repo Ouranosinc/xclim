@@ -34,15 +34,6 @@ K2C = 273.15
 # PLEASE MAINTAIN ALPHABETICAL ORDER
 
 
-class TestBaseFlowIndex:
-    def test_simple(self, q_series):
-        a = np.zeros(365) + 10
-        a[10:17] = 1
-        q = q_series(a)
-        out = xci.base_flow_index(q)
-        np.testing.assert_array_equal(out, 1.0 / a.mean())
-
-
 class TestMaxNDayPrecipitationAmount:
 
     # test 2 day max precip

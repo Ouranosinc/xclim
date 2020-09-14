@@ -10,6 +10,12 @@ def test_base_flow_index(ndq_series):
     assert isinstance(out, xr.DataArray)
 
 
+def test_rb_flashiness_index(ndq_series):
+    out = land.base_flow_index(ndq_series, freq="YS")
+    assert out.attrs["units"] == ""
+    assert isinstance(out, xr.DataArray)
+
+
 class Test_FA:
     def test_simple(self, ndq_series):
         out = land.freq_analysis(

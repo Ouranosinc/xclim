@@ -33,6 +33,7 @@ New features and enhancements
 * New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 * New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
 * Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
+* Added Richards-Baker flow flashiness indicator.
 
 Bug fixes
 ~~~~~~~~~

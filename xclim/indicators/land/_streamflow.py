@@ -3,7 +3,7 @@
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
-from xclim.indices import base_flow_index, generic
+from xclim.indices import base_flow_index, generic, rb_flashiness_index
 
 __all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
 
@@ -59,6 +59,13 @@ freq_analysis = FA(
     compute=generic.frequency_analysis,
 )
 
+rb_flashiness_index = Streamflow(
+    identifier="rb_flashiness_index",
+    var_name="rbi",
+    long_name="Richards-Baker flashiness index",
+    description="{freq} R-B Index, an index measuring the flashiness of flow.",
+    compute=rb_flashiness_index,
+)
 
 stats = Stats(
     identifier="stats",
