@@ -426,7 +426,7 @@ def _fit_start(x, dist):
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
 
-    elif dist in ("weibull_min"):
+    if dist in ("weibull_min"):
         s = x.std()
         loc = x.min() - 0.01 * s
         chat = np.pi / np.sqrt(6) / (np.log(x - loc)).std()
