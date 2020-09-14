@@ -53,7 +53,7 @@ def cold_spell_days(
 ):
     r"""Cold spell days.
 
-    The number of days that are part of a cold spell, defined as a minimum number of consecutive days with mean daily
+    The number of days that are part of cold spell events, defined as a sequence of consecutive days with mean daily
     temperature below a threshold in °C.
 
     Parameters
@@ -100,7 +100,7 @@ def cold_spell_frequency(
 ):
     r"""Cold spell frequency.
 
-    The number of cold spell events, defined as a minimum number of consecutive days with mean daily
+    The number of cold spell events, defined as a sequence of consecutive days with mean daily
     temperature below a threshold in °C.
 
     Parameters
