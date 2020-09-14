@@ -33,6 +33,7 @@ New features and enhancements
 * New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 * New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
 * Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
+* `core.formatting.AttrFormatter` (and thus, locale dictionaries) can now use glob-like pattern for matching values to translate.
 
 Bug fixes
 ~~~~~~~~~
