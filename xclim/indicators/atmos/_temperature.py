@@ -304,6 +304,7 @@ tn_min = Tasmin(
 )
 
 daily_temperature_range = TasminTasmax(
+    title="Mean of daily temperature range.",
     identifier="dtr",
     units="K",
     standard_name="air_temperature",
@@ -314,6 +315,7 @@ daily_temperature_range = TasminTasmax(
 )
 
 max_daily_temperature_range = TasminTasmax(
+    title="Maximum of daily temperature range.",
     identifier="dtrmax",
     units="K",
     standard_name="air_temperature",
