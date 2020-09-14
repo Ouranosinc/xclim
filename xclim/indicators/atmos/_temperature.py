@@ -36,6 +36,7 @@ __all__ = [
     "extreme_temperature_range",
     "cold_spell_duration_index",
     "cold_spell_days",
+    "cold_spell_frequency",
     "daily_freezethaw_cycles",
     "cooling_degree_days",
     "heating_degree_days",
