@@ -372,6 +372,19 @@ cold_spell_days = Tas(
     compute=indices.cold_spell_days,
 )
 
+cold_spell_frequency = Tas(
+    identifier="cold_spell_frequency",
+    units="",
+    standard_name="cold_spell_frequency",
+    long_name="Number of cold spell events",
+    description="{freq} number cold spell events, defined as {window} "
+    "or more consecutive days with mean daily "
+    "temperature below  {thresh}.",
+    cell_methods="",
+    compute=indices.cold_spell_frequency,
+)
+
+
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",
     units="days",
