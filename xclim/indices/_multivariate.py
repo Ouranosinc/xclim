@@ -239,7 +239,7 @@ def daily_temperature_range(
       Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
-    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
+    op : str {'min', 'max', 'mean', 'std'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
