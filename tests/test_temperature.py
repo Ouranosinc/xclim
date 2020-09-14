@@ -98,6 +98,14 @@ class TestDTR:
 
         assert np.isnan(dtr.values[0, -1, -1])
 
+        dtr = atmos.max_daily_temperature_range(tasmin, tasmax, freq="MS")
+        dtrC = atmos.max_daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
+        np.testing.assert_array_equal(dtr, dtrC)
+        assert dtr.attrs["units"] == "K"
+        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.isnan(dtr.values[1, 1, 0])
+        assert np.isnan(dtr.values[0, -1, -1])
+
 
 class TestDTRVar:
     nc_tasmax = os.path.join(
