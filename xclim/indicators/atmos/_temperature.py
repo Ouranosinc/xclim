@@ -31,6 +31,7 @@ __all__ = [
     "tx10p",
     "tx90p",
     "daily_temperature_range",
+    "max_daily_temperature_range",
     "daily_temperature_range_variability",
     "extreme_temperature_range",
     "cold_spell_duration_index",
