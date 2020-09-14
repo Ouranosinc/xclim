@@ -40,7 +40,7 @@ class AttrFormatter(string.Formatter):
     def format_field(self, value, format_spec):
         """Format a value given a formatting spec.
 
-        If `format_spec` is in this Formatter's modifiers, the correspong variation
+        If `format_spec` is in this Formatter's modifiers, the corresponding variation
         of value is given. If `format_spec` is not specified but `value` is in the
         mapping, the first variation is returned.
 
@@ -54,6 +54,11 @@ class AttrFormatter(string.Formatter):
         >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']}, ['m', 'f'])
         >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}", adj1='nice', adj2='evil')
         "Le chien est beau, l'oie est méchante"
+
+        The base values may be given using unix shell-like patterns:
+        >>> fmt = AttrFormatter({'AS-*': ['annuel', 'annuelle'], 'MS' : ['mensuel', 'mensuelle']}, ['m', 'f'])
+        >>> fmt.format("La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}", freq='AS-JUL', src_timestep='MS')
+        "La moyenne annuelle est faite sur un échantillon mensuel"
         """
         baseval = self._match_value(value)
         if baseval is not None and not format_spec:
