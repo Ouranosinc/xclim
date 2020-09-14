@@ -5,7 +5,7 @@ from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 
-__all__ = ["base_flow_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
+__all__ = ["base_flow_index", "rb_flashiness_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
 
 
 class Streamflow(Daily):
