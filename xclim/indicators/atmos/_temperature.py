@@ -312,7 +312,7 @@ daily_temperature_range = TasminTasmax(
 )
 
 max_daily_temperature_range = TasminTasmax(
-    identifier="dtr",
+    identifier="dtrmax",
     units="K",
     standard_name="air_temperature",
     long_name="Maximum Diurnal Temperature Range",
