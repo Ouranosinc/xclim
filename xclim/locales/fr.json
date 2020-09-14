@@ -4,55 +4,70 @@
       "m",
       "f",
       "mpl",
-      "fpl"
+      "fpl",
+      "nom",
     ],
     "YS": [
       "annuel",
       "annuelle",
       "annuels",
-      "annuelles"
+      "annuelles",
+      "années",
+    ],
+    "AS-*": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles",
+      "années",
     ],
     "MS": [
       "mensuel",
       "mensuelle",
       "mensuels",
-      "mensuelles"
+      "mensuelles",
+      "mois",
     ],
-    "QS-DEC": [
+    "QS-*": [
       "saisonnier",
       "saisonnière",
       "saisonniers",
-      "saisonnières"
+      "saisonnières",
+      "saisons",
     ],
     "DJF": [
       "hivernal",
       "hivernale",
       "hivernaux",
-      "hivernales"
+      "hivernales",
+      "hivers",
     ],
     "MAM": [
       "printanier",
       "printanière",
       "printaniers",
-      "printanières"
+      "printanières",
+      "printemps",
     ],
     "JJA": [
       "estival",
       "estivale",
       "estivaux",
-      "estivales"
+      "estivales",
+      "étés",
     ],
     "SON": [
       "automnal",
       "automnale",
       "automnaux",
-      "automnales"
+      "automnales",
+      "automnes",
     ],
     "norm": [
       "normal",
       "normale",
       "normaux",
-      "normales"
+      "normales",
     ],
     "m1": [
       "janvier"
