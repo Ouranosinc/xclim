@@ -152,7 +152,8 @@ def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
 
         # Estimate parameters
         if method == "ML":
-            params = dc.fit(x)
+            args, kwargs = _fit_start(x, dist)
+            params = dc.fit(x, *args, **kwargs)
         elif method == "PWM":
             params = list(lm3dc.lmom_fit(x).values())
 
@@ -397,6 +398,42 @@ def get_lm3_dist(dist):
         )
 
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
+
+
+def _fit_start(x, dist):
+    """Return initial values for distribution parameters.
+
+    Providing the ML fit method initial values can help the optimizer find the global optimum.
+
+    Parameters
+    ----------
+    x : array-like
+      Input data.
+    dist : str
+      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+
+    References
+    ----------
+    Coles, S., 2001. An Introduction to Statistical Modeling of Extreme Values. Springer-Verlag, London, U.K., 208pp
+    Cohen & Whittle, (1988) "Parameter Estimation in Reliability and Life Span Models", p. 25 ff, Marcel Dekker.
+    """
+    x = np.asarray(x)
+    m = x.mean()
+    v = x.var()
+
+    if dist == "genextreme":
+        s = np.sqrt(6 * v) / np.pi
+        return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
+
+    if dist in ("weibull_min"):
+        s = x.std()
+        loc = x.min() - 0.01 * s
+        chat = np.pi / np.sqrt(6) / (np.log(x - loc)).std()
+        scale = ((x - loc) ** chat).mean() ** (1 / chat)
+        return (chat,), {"loc": loc, "scale": scale}
+
+    return (), {}
 
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}

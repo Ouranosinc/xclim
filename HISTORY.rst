@@ -22,6 +22,7 @@ New features and enhancements
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 * Add support for using probability weighted moments method in `generic.fit` function. Requires the
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
+* Implemented `_fit_start` utility function providing initial conditions for statistical distribution parameters estimation, reducing the likelihood of poor fits.
 * Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`.
   returning hourly precipitation intensity.
 * Indicator instances can be retrieved through their class with the `get_instance()` class method.
