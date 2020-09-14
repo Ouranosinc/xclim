@@ -42,7 +42,7 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.5.1
+    rev: 5.5.2
     hooks:
     -   id: isort
         language_version: python3
