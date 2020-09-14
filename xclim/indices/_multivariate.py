@@ -12,9 +12,10 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from .generic import select_resample_op
+
 from . import fwi
 from . import run_length as rl
+from .generic import select_resample_op
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -225,7 +226,10 @@ def daily_freezethaw_cycles(
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS", op: str = "mean"
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    freq: str = "YS",
+    op: str = "mean",
 ) -> xarray.DataArray:
     r"""Statistics of daily temperature range.
 
