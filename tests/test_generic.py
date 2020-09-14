@@ -24,6 +24,80 @@ class TestFA(object):
             coords={"time": time, "x": cx, "y": cy},
         )
 
+        self.weibull_min = xr.DataArray(
+            [
+                4836.6,
+                823.6,
+                3131.7,
+                1343.4,
+                709.7,
+                610.6,
+                3034.2,
+                1973,
+                7358.5,
+                265,
+                4590.5,
+                5440.4,
+                4613.7,
+                4763.1,
+                115.3,
+                5385.1,
+                6398.1,
+                8444.6,
+                2397.1,
+                3259.7,
+                307.5,
+                4607.4,
+                6523.7,
+                600.3,
+                2813.5,
+                6119.8,
+                6438.8,
+                2799.1,
+                2849.8,
+                5309.6,
+                3182.4,
+                705.5,
+                5673.3,
+                2939.9,
+                2631.8,
+                5002.1,
+                1967.3,
+                2810.4,
+                2948,
+                6904.8,
+            ],
+            dims=("time",),
+            coords={"time": xr.IndexVariable("time", np.arange(40))},
+        )
+
+        self.genextreme = xr.DataArray(
+            [
+                279,
+                302,
+                450,
+                272,
+                401,
+                222,
+                311,
+                327,
+                294,
+                299,
+                348,
+                286,
+                492,
+                296,
+                227,
+                437,
+                340,
+                376,
+                444,
+                177,
+            ],
+            dims=("time",),
+            coords={"time": xr.IndexVariable("time", np.arange(20))},
+        )
+
     def test_fit(self):
         p = generic.fit(self.da, "lognorm")
 
@@ -36,6 +110,16 @@ class TestFA(object):
         cdf = lognorm.cdf(0.99, *p.values)
         assert cdf.shape == (self.nx, self.ny)
         assert p.attrs["estimator"] == "Maximum likelihood"
+
+    def test_weibull_min_fit(self):
+        """Check ML fit with a series that leads to poor values without good initial conditions."""
+        p = generic.fit(self.weibull_min, "weibull_min")
+        np.testing.assert_allclose(p, (1.7760067, -322.092552, 4355.262679), 1e-5)
+
+    def test_genextreme_fit(self):
+        """Check ML fit with a series that leads to poor values without good initial conditions."""
+        p = generic.fit(self.genextreme, "genextreme")
+        np.testing.assert_allclose(p, (0.20949, 297.954091, 75.7911863), 1e-5)
 
     def test_fa(self):
         T = 10
