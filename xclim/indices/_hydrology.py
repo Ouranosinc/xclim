@@ -1,6 +1,5 @@
 import numpy as np
 import xarray
-import xarray as xr
 
 from xclim.core.units import declare_units
 
@@ -57,7 +56,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
 
 
 @declare_units("", q="[discharge]")
-def rb_flashiness_index(q: xr.DataArray, freq: str = "YS"):  # noqa: D401
+def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
@@ -65,7 +64,7 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS"):  # noqa: D401
 
     Parameters
     ----------
-    q : xr.DataArray
+    q : xarray.DataArray
       Rate of river discharge [m³/s]
     freq : str
       Resampling frequency; Defaults to "YS" (yearly).
