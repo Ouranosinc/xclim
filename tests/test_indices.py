@@ -944,7 +944,7 @@ class TestTgMaxTgMinIndices:
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op)
         assert dtr.units == "K"
         # output = np.max(tasmax - tasmin)
-        if type(op) == str:
+        if isinstance(op, str):
             output = getattr(np, op)(tasmax - tasmin)
         else:
             output = op(tasmax - tasmin)
