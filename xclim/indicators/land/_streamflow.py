@@ -5,7 +5,15 @@ from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 
-__all__ = ["base_flow_index", "rb_flashiness_index", "freq_analysis", "stats", "fit", "doy_qmax", "doy_qmin"]
+__all__ = [
+    "base_flow_index",
+    "rb_flashiness_index",
+    "freq_analysis",
+    "stats",
+    "fit",
+    "doy_qmax",
+    "doy_qmin",
+]
 
 
 class Streamflow(Daily):
@@ -61,6 +69,7 @@ freq_analysis = FA(
 
 rb_flashiness_index = Streamflow(
     identifier="rb_flashiness_index",
+    units="",
     var_name="rbi",
     long_name="Richards-Baker flashiness index",
     description="{freq} R-B Index, an index measuring the flashiness of flow.",
