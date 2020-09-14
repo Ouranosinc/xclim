@@ -12,7 +12,7 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-
+from .generic import select_resample_op
 from . import fwi
 from . import run_length as rl
 
@@ -225,7 +225,7 @@ def daily_freezethaw_cycles(
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS", op: str = "mean"
 ) -> xarray.DataArray:
     r"""Mean of daily temperature range.
 
@@ -239,6 +239,8 @@ def daily_temperature_range(
       Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
+    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
+      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
     -------
@@ -256,7 +258,8 @@ def daily_temperature_range(
     """
     q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
     dtr = tasmax - tasmin
-    out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
+    out = select_resample_op(dtr, op=op, freq=freq)
+
     out.attrs["units"] = f"{q.units}"
     return out
 

@@ -908,6 +908,28 @@ class TestTgMaxTgMinIndices:
     #
     #     np.testing.assert_array_less(-dtr, [0, 0])
     #     np.testing.assert_allclose([dtr.mean()], [20], atol=10)
+    @pytest.mark.parametrize(
+        "op,expected",
+        [
+            ("max", 12.5),
+            (np.max, 12.5),
+            ("min", 4.0),
+            (np.min, 4.0),
+            ("std", 2.72913233),
+            (np.std, 2.72913233)
+
+        ],
+    )
+    def test_static_max_daily_temperature_range(self, tasmin_series, tasmax_series, op, expected):
+        tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op)
+        assert dtr.units == "K"
+        # output = np.max(tasmax - tasmin)
+        if type(op) == str:
+            output = getattr(np, op)(tasmax - tasmin)
+        else:
+            output = op(tasmax - tasmin)
+        np.testing.assert_equal(dtr, output)
 
     def test_static_daily_temperature_range(self, tasmin_series, tasmax_series):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
