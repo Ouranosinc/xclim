@@ -5,6 +5,7 @@ from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
 from xclim.core.units import check_units
+from xclim.core.utils import wrapped_partial
 
 __all__ = [
     "tn_days_below",
@@ -307,7 +308,17 @@ daily_temperature_range = TasminTasmax(
     long_name="Mean Diurnal Temperature Range",
     description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
-    compute=indices.daily_temperature_range,
+    compute=wrapped_partial(indices.daily_temperature_range, op="mean"),
+)
+
+max_daily_temperature_range = TasminTasmax(
+    identifier="dtr",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum Diurnal Temperature Range",
+    description="{freq} maximum diurnal temperature range.",
+    cell_methods="time range within days time: max over days",
+    compute=wrapped_partial(indices.daily_temperature_range, op="max"),
 )
 
 daily_temperature_range_variability = TasminTasmax(
