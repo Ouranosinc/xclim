@@ -937,17 +937,18 @@ class TestTgMaxTgMinIndices:
             (np.std, 2.72913233),
         ],
     )
-    def test_static_max_daily_temperature_range(
+    def test_static_reduce_daily_temperature_range(
         self, tasmin_series, tasmax_series, op, expected
     ):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op)
         assert dtr.units == "K"
-        # output = np.max(tasmax - tasmin)
+
         if isinstance(op, str):
             output = getattr(np, op)(tasmax - tasmin)
         else:
             output = op(tasmax - tasmin)
+        np.testing.assert_array_almost_equal(dtr, expected)
         np.testing.assert_equal(dtr, output)
 
     def test_static_daily_temperature_range(self, tasmin_series, tasmax_series):
