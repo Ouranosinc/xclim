@@ -11,14 +11,14 @@ branches:
 jobs:
   fast_finish: true
   include:
-    - env:
-        - TOXENV=docs
-      name: "Documentation"
-      python: 3.6
-      addons:
-        apt:
-          packages:
-            - pandoc
+#    - env:
+#        - TOXENV=docs
+#      name: "Documentation"
+#      python: 3.6
+#      addons:
+#        apt:
+#          packages:
+#            - pandoc
     - env: TOXENV=black
       name: "Black, Flake8, Numpy-like Docstring compliance, and linting"
       python: 3.6
@@ -31,7 +31,7 @@ jobs:
             - libspatialindex-dev
             - libnetcdf-dev
             - libhdf5-dev
-    - if: branch = master
+    - if: type = push
       env: TOXENV=py38-macOS
       name: "Python3.8 (macOS)"
       os: osx
@@ -66,7 +66,7 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
-    - if: branch = master
+    - if: type = push
       env: TOXENV=py36-bottleneck
       name: "Python3.6 (Linux + bottleneck@master)"
       python: 3.6
@@ -74,7 +74,7 @@ jobs:
         apt:
           packages:
             - libspatialindex-dev
-    - if: branch = master
+    - if: type = push
       env: TOXENV=py38-anaconda
       name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
@@ -96,7 +96,7 @@ jobs:
           - pip install -e .[dev]
       script:
           - py.test --cov=xclim
-    - if: branch = master
+    - if: type = push
       env:
         - TOXENV=py37-windows
         - DESIRED_PYTHON=3.7
