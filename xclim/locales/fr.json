@@ -376,7 +376,7 @@
 
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de froid",
-    "description": "Nombre {freq:m} de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Jours de vague de froid",
     "comment": "",
     "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
