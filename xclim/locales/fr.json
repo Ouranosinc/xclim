@@ -340,10 +340,10 @@
   },
   "DTRMAX": {
     "long_name": "Amplitude maximale de la température diurne",
-    "description": "Maximum {freq:f} de l'amplitude diurne de température",
+    "description": "Maximum {freq:m} de l'amplitude diurne de température",
     "comment": "",
     "title": "Amplitude maxmimale de la température diurne",
-    "abstract": "La différence moyenne entre la température journalière maximale et la température journalière minimale."
+    "abstract": "La différence maximale entre la température journalière maximale et la température journalière minimale."
   },
   "DTR": {
     "long_name": "Amplitude de la température diurne",
@@ -376,8 +376,8 @@
 
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de froid",
-    "description": "Nombre {freq:m} de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
-    "title": "Jours de vague de froid",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Nombre de vagues de froid",
     "comment": "",
     "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
