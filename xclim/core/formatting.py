@@ -107,8 +107,8 @@ def parse_doc(doc: str) -> Dict[str, str]:
         intro_content = list(map(str.strip, intro.strip().split("\n\n")))
         if len(intro_content) == 1:
             out["title"] = intro_content[0]
-        elif len(intro_content) == 2:
-            out["title"], abstract = intro_content
+        elif len(intro_content) >= 2:
+            out["title"], abstract = intro_content[:2]
             out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):

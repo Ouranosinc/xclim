@@ -8,59 +8,7 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-Defining new indicators
-=======================
-
-The key ingredients to create a new indicator are the `identifier`, the `compute` function, the name of the missing
-value algorithm, and the `datacheck` and `cfcheck` functions, which respectively assess the validity of data and
-metadata. The `indicators` module contains over 50 examples of indicators to draw inspiration from.
-
-New indicators can be created using standard Python subclasses::
-
-    class NewIndicator(xclim.core.indicator.Indicator):
-        identifier = "new_indicator"
-        missing = "any"
-
-        @staticmethod
-        def compute(tas):
-            return tas.mean(dim="time")
-
-        @staticmethod
-        def cfcheck(tas):
-            xclim.core.cfchecks.check_valid(tas, "standard_name", "air_temperature")
-
-        @staticmethod
-        def datacheck(tas):
-            xclim.core.datachecks.check_daily(tas)
-
-Another mechanism to create subclasses is to call Indicator with all the attributes passed as arguments::
-
-    Indicator(identifier="new_indicator", compute=xclim.core.indices.tg_mean, var_name='tmean', units="K")
-
-Behind the scene, this will create a `NEW_INDICATOR` subclass and return an instance. Note that in the case of
-compute functions returning multiple outputs, metadata attributes may be given as lists of strings or strings.
-In the latter case, the string is assumed to be identical for all variables. Note however that the `var_name` attribute must be a list and have
-
-One pattern to create multiple indicators is to write a standard subclass that declares all the attributes that
-are common to indicators, then call this subclass with the custom attributes. See for example in
-`xclim.indicators.atmos` how indicators based on daily mean temperatures are created from the :class:`Tas` subclass
-of the :class:`Daily` subclass.
-
-Subclass registries
--------------------
-All subclasses that are created from :class:`Indicator` are stored in a *registry*. So for
-example::
-
->>> from xclim.core.indicator import Daily, registry  # doctest: +SKIP
->>> my_indicator = Daily(identifier="my_indicator", compute=lambda x: x.mean())  # doctest: +SKIP
->>> assert "MY_INDICATOR" in registry  # doctest: +SKIP
-
-This registry is meant to facilitate user customization of existing indicators. So for example, it you'd like
-a `tg_mean` indicator returning values in Celsius instead of Kelvins, you could simply do::
-
->>> from xclim.core.indicator import registry
->>> tg_mean_c = registry["TG_MEAN"](identifier="tg_mean_c", units="C")  # doctest: +SKIP
-
+For more info on how to define new indicators see `here <notebooks/customize.ipynb#Defining-new-indicators>`_.
 """
 import re
 import warnings
@@ -174,6 +122,8 @@ class Indicator(IndicatorRegistrar):
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    freq: {"D", "H", None}
+      The expected frequency of the input data. Use None if irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     context: str
@@ -210,6 +160,7 @@ class Indicator(IndicatorRegistrar):
     missing = "from_context"
     missing_options = None
     context = "none"
+    freq = None
 
     # Variable metadata (_cf_names, those that can be lists or strings)
     # A developper should access those through cf_attrs on instances
@@ -649,7 +600,7 @@ class Indicator(IndicatorRegistrar):
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
         # We flag periods according to the missing method.
-        miss = (self._missing(da, freq, options, indexer) for da in args)
+        miss = (self._missing(da, freq, self.freq, options, indexer) for da in args)
 
         return reduce(np.logical_or, miss)
 
@@ -691,7 +642,9 @@ class Indicator2D(Indicator):
 
 
 class Daily(Indicator):
-    """Indicator at Daily frequency."""
+    """Indicator defined for inputs at daily frequency."""
+
+    freq = "D"
 
     @staticmethod
     def datacheck(**das):  # noqa
@@ -700,6 +653,17 @@ class Daily(Indicator):
 
 
 class Daily2D(Daily):
-    """Indicator using two dimensions at Daily frequency."""
+    """Indicator using two dimensions at daily frequency."""
 
     _nvar = 2
+
+
+class Hourly(Indicator):
+    """Indicator defined for inputs at strict hourly frequency, meaning 3-hourly inputs would raise an error."""
+
+    freq = "H"
+
+    @staticmethod
+    def datacheck(**das):  # noqa
+        for key, da in das.items():
+            datachecks.check_freq(da, "H")

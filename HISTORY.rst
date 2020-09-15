@@ -11,6 +11,8 @@ Breaking changes
   Install with `pip install xclim[gis]` in order to retain the same functionality.
 * The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
   version of `pandoc` binaries installed at system-level.
+* ANUCLIM indices have seen their `input_freq` parameter renamed to `src_timestep` for clarity.
+* A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles. `xclim.atmos.drought_code` and `fire_weather_indexes` now have indentifiers "dc" and "fwi" (lowercase version of the previous identifiers).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,15 +22,26 @@ New features and enhancements
 * New `generic.parametric_quantile` function taking parameters estimated by `generic.fit` as an input.
 * Add support for using probability weighted moments method in `generic.fit` function. Requires the
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
+* Implemented `_fit_start` utility function providing initial conditions for statistical distribution parameters estimation, reducing the likelihood of poor fits.
+* Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`.
+  returning hourly precipitation intensity.
 * Indicator instances can be retrieved through their class with the `get_instance()` class method.
   This allows the use of `xclim.core.indicator.registry` as an instance registry.
 * Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
 * Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
 * New command line interface `xclim` for simple indicator computing tasks.
+* New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
+* New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
+* Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
+* Added Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`)
+* Added `op` parameter to `xclim.indices.daily_temperature_range` to allow resample reduce operations other than mean
+* New `atmos.max_daily_temperature_range` indicator
+* New `cold_spell_frequency` indicator
+
 
 Bug fixes
 ~~~~~~~~~
-Nothing yet.
+None
 
 Internal changes
 ~~~~~~~~~~~~~~~~

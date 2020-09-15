@@ -22,12 +22,12 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "base_flow_index",
     "consecutive_frost_days",
     "frost_days",
     "ice_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
+    "max_pr_intensity",
 ]
 
 
@@ -313,52 +313,6 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
     return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units("", q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
-    r"""Base flow index.
-
-    Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
-
-    Parameters
-    ----------
-    q : xarray.DataArray
-      Rate of river discharge [m³/s]
-    freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
-
-    Returns
-    -------
-    xarray.DataArray
-      Base flow index.
-
-    Notes
-    -----
-    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
-    the mean flow over the period. The base flow index is given by:
-
-    .. math::
-
-       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
-
-
-    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
-
-    .. math::
-
-       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
-    """
-    m7 = (
-        q.rolling(time=7, center=True)
-        .mean(allow_lazy=True, skipna=False)
-        .resample(time=freq)
-    )
-    mq = q.resample(time=freq)
-
-    m7m = m7.min(dim="time")
-    return m7m / mq.mean(dim="time")
-
-
 @declare_units("days", tasmin="[temperature]")
 def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
     r"""Maximum number of consecutive frost days (Tmin < 0℃).
@@ -551,3 +505,40 @@ def max_n_day_precipitation_amount(
     out.attrs["units"] = pr.units
     # Adjust values and units to make sure they are daily
     return pint_multiply(out, 1 * units.day, "mm")
+
+
+@declare_units("mm/h", pr="[precipitation]")
+def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
+    r"""Highest precipitation intensity over a n-hour moving window.
+
+    Calculate the n-hour rolling average of the original hourly total precipitation series
+    and determine the maximum value over each period.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Hourly precipitation values [Kg m-2 s-1] or [mm]
+    window : int
+      Window size in hours.
+    freq : str
+      Resampling frequency; Defaults to "YS" (yearly).
+
+    Returns
+    -------
+    xarray.DataArray
+      The highest cumulated n-hour precipitation intensity (mm/h) at the given time frequency.
+
+    Examples
+    --------
+    >>> from xclim.indices import max_pr_intensity
+
+    # The following would compute the maximum 6-hour precipitation intensity.
+    # at an annual frequency:
+    # TODO
+    """
+    # Rolling sum of the values
+    arr = pr.rolling(time=window).mean(allow_lazy=True, skipna=False)
+    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
+
+    out.attrs["units"] = pr.units
+    return out

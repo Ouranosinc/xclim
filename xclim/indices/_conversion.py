@@ -40,13 +40,16 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     return tas
 
 
-@declare_units(None, check_output=False, uas="[speed]", vas="[speed]")
+@declare_units(
+    ["m/s", "degree"], uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]"
+)
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray, vas: xr.DataArray, return_direction: bool = True
-) -> Tuple[
-    xr.DataArray, Optional[xr.DataArray]
-]:  # FIXME: uas and vas should not be positional args, this is asking for trouble.
-    """Convert eastward and northward wind components to wind speed and direction.
+    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
+) -> Tuple[xr.DataArray, xr.DataArray]:
+    """Wind speed and direction from the eastward and northward wind components.
+
+    Computes the magnitude and angle of the wind vector from its northward and eastward components,
+    following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
 
     Parameters
     ----------
@@ -54,39 +57,31 @@ def uas_vas_2_sfcwind(
       Eastward wind velocity (m s-1)
     vas : xr.DataArray
       Northward wind velocity (m s-1)
-    return_direction: bool
-      If true, returns direction, else returns surface windspeed.
+    calm_wind_thresh : str
+      The threshold under which winds are considered "calm" and for which the direction
+      is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
 
     Returns
     -------
     wind : xr.DataArray
       Wind velocity (m s-1)
-    windfromdir : xr.DataArray, Optional
-      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+    windfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention where
+      360 stands for North and 0 for calm winds.
 
     Notes
     -----
-    Northerly winds with a velocity less than 0.5 m/s are given a wind direction of 0°,
-    while stronger winds are set to 360°.
+    Winds with a velocity less than `calm_wind_thresh` are given a wind direction of 0°,
+    while stronger northerly winds are set to 360°.
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
     vas = convert_units_to(vas, "m/s")
+    wind_thresh = convert_units_to(calm_wind_thresh, "m/s")
 
     # Wind speed is the hypotenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
 
-    if not return_direction:
-        wind.attrs["units"] = "m s-1"
-        return wind, None
-
-    # TODO Attributes should be set by the indicator, but there are no multi-output indicators, so we set them anyway if return_direction is True,
-    # Add attributes to wind. This is done by copying uas' attributes and overwriting a few of them
-    wind.attrs = uas.attrs
-    wind.name = "sfcWind"
-    wind.attrs["units"] = "m s-1"
-    wind.attrs["standard_name"] = "wind_speed"
-    wind.attrs["long_name"] = "Near-Surface Wind Speed"
     # Calculate the angle
     windfromdir_math = np.degrees(np.arctan2(vas, uas))
 
@@ -96,33 +91,27 @@ def uas_vas_2_sfcwind(
     # According to the meteorological standard, calm winds must have a direction of 0°
     # while northerly winds have a direction of 360°
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
-    windfromdir = xr.where((windfromdir.round() == 0) & (wind >= 0.5), 360, windfromdir)
-    windfromdir = xr.where(wind < 0.5, 0, windfromdir)
-
-    # Add attributes to winddir. This is done by copying uas' attributes and overwriting a few of them
-    windfromdir.attrs = uas.attrs
-    windfromdir.name = "sfcWindfromdir"
-    windfromdir.attrs["standard_name"] = "wind_from_direction"
-    windfromdir.attrs["long_name"] = "Near-Surface Wind from Direction"
-    windfromdir.attrs["units"] = "degree"
+    windfromdir = xr.where(windfromdir.round() == 0, 360, windfromdir)
+    windfromdir = xr.where(wind < wind_thresh, 0, windfromdir)
 
     return wind, windfromdir
 
 
-@declare_units(None, check_output=False, wind="[speed]", windfromdir="[]")
+@declare_units(["m s-1", "m s-1"], sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_2_uas_vas(
-    wind: xr.DataArray, windfromdir: xr.DataArray
-) -> Tuple[
-    xr.DataArray, xr.DataArray
-]:  # FIXME: uas and vas should not be positional args, this is asking for trouble.
-    """Convert wind speed and direction to eastward and northward wind components.
+    sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray
+) -> Tuple[xr.DataArray, xr.DataArray]:
+    """Eastward and northward wind components from the wind speed and direction.
+
+    Compute the eastward and northward wind components from the wind speed and direction.
 
     Parameters
     ----------
-    wind : xr.DataArray
+    sfcWind : xr.DataArray
       Wind velocity (m s-1)
-    windfromdir : xr.DataArray
-      Direction from which the wind blows, following the meteorological convention where 360 stands for North.
+    sfcWindfromdir : xr.DataArray
+      Direction from which the wind blows, following the meteorological convention
+      where 360 stands for North.
 
     Returns
     -------
@@ -133,10 +122,10 @@ def sfcwind_2_uas_vas(
 
     """
     # Converts the wind speed to m s-1
-    wind = convert_units_to(wind, "m/s")
+    sfcWind = convert_units_to(sfcWind, "m/s")
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
-    windfromdir_math = (-windfromdir + 270) % 360.0
+    windfromdir_math = (-sfcWindfromdir + 270) % 360.0
 
     # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere
     # if resample is not None:
@@ -148,22 +137,8 @@ def sfcwind_2_uas_vas(
     #     windfromdir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
     #                                       for angles in windfromdir_math_per_day])
 
-    uas = wind * np.cos(np.radians(windfromdir_math))
-    vas = wind * np.sin(np.radians(windfromdir_math))
-
-    # Add attributes to uas and vas. This is done by copying wind' attributes and overwriting a few of them
-    uas.attrs = wind.attrs
-    uas.name = "uas"
-    uas.attrs["standard_name"] = "eastward_wind"
-    uas.attrs["long_name"] = "Near-Surface Eastward Wind"
-    wind.attrs["units"] = "m s-1"
-
-    vas.attrs = wind.attrs
-    vas.name = "vas"
-    vas.attrs["standard_name"] = "northward_wind"
-    vas.attrs["long_name"] = "Near-Surface Northward Wind"
-    wind.attrs["units"] = "m s-1"
-
+    uas = sfcWind * np.cos(np.radians(windfromdir_math))
+    vas = sfcWind * np.sin(np.radians(windfromdir_math))
     return uas, vas
 
 
@@ -171,7 +146,7 @@ def sfcwind_2_uas_vas(
 def saturation_vapor_pressure(
     tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
 ) -> xr.DataArray:
-    """Compute saturation vapor pressure (e_sat) from the temperature.
+    """Saturation vapor pressure from temperature.
 
     Parameters
     ----------
@@ -289,6 +264,8 @@ def relative_humidity(
     invalid_values: str = "clip",
 ) -> xr.DataArray:
     r"""
+    Relative humidity.
+
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through the saturation vapor pressure.
 
     Parameters
@@ -399,7 +376,7 @@ def specific_humidity(
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
-    r"""Compute specific humidity from temperature, relative humidity and pressure (through the saturation vapor pressure).
+    r"""Specific humidity from temperature, relative humidity and pressure.
 
     Parameters
     ----------

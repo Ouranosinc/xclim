@@ -7,7 +7,7 @@ Examples
 
    example
    ensembles
-   options
+   customize
    mappings
    sdba
    sdba-advanced

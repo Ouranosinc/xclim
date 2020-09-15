@@ -13,16 +13,48 @@ def test_wind_speed_from_vectors():
     uas.attrs["units"] = "m s-1"
     vas = xr.DataArray(np.array([4.0, -4.0]), dims=["x"])
     vas.attrs["units"] = "m s-1"
-    exp_wind = xr.DataArray(np.array([5.0, 5.0]), dims=["x"])
-    exp_wind.attrs["units"] = "m s-1"
 
-    wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
-    np.testing.assert_allclose(wind, exp_wind)
+    wind, winddir = atmos.wind_speed_from_vector(uas=uas, vas=vas)
+    np.testing.assert_allclose(wind, [5.0, 5.0])
+    np.testing.assert_allclose(winddir, [216.86989764584402, 36.86989764584402])
 
     # missing values
     uas[0] = np.nan
-    wind = atmos.wind_speed_from_vector(uas=uas, vas=vas)
+    wind, winddir = atmos.wind_speed_from_vector(uas=uas, vas=vas)
     np.testing.assert_array_equal(wind.isnull(), [True, False])
+    np.testing.assert_array_equal(winddir.isnull(), [True, False])
+
+    # Calm thresh and northerly
+    uas[:] = 0
+    vas[0] = 0.9
+    vas[1] = -1.1
+    wind, winddir = atmos.wind_speed_from_vector(
+        uas=uas, vas=vas, calm_wind_thresh="1 m/s"
+    )
+    np.testing.assert_array_equal(wind, [0.9, 1.1])
+    np.testing.assert_allclose(winddir, [0.0, 360.0])
+
+
+def test_wind_vector_from_speed():
+    sfcWind = xr.DataArray(np.array([3.0, 5.0, 0.2]), dims=["x"])
+    sfcWind.attrs["units"] = "m s-1"
+    sfcWindfromdir = xr.DataArray(np.array([360.0, 36.86989764584402, 0.0]), dims=["x"])
+    sfcWindfromdir.attrs["units"] = "degree"
+
+    uas, vas = atmos.wind_vector_from_speed(
+        sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir
+    )
+    np.testing.assert_allclose(uas, [0.0, -3.0, 0.0], atol=1e-14)
+    np.testing.assert_allclose(vas, [-3.0, -4.0, -0.2], atol=1e-14)
+
+    # missing values
+    sfcWind[0] = np.nan
+    sfcWindfromdir[1] = np.nan
+    uas, vas = atmos.wind_vector_from_speed(
+        sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir
+    )
+    np.testing.assert_array_equal(uas.isnull(), [True, True, False])
+    np.testing.assert_array_equal(vas.isnull(), [True, True, False])
 
 
 def test_relative_humidity_dewpoint(tas_series, rh_series):

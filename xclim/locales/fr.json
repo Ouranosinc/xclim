@@ -91,6 +91,7 @@
       "decembre"
     ]
   },
+
   "RAIN_FRZGR": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
@@ -111,6 +112,14 @@
     "title": "Précipitation maximale cumulée sur un nombre de jours donné.",
     "comment": "",
     "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
+  },
+  "MAX_PR_INTENSITY": {
+      "long_name": "Intensité maximale de précipitation sur une durée de {window} h",
+      "description": "Intensité maximale {freq:f} de précipitation sur une fenêtre mobile de {window} h.",
+      "title": "Intensité de précipitation maximale sur une durée et période donnée.",
+      "comment": "",
+      "keywords": "courbes IDF",
+      "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
@@ -224,6 +233,20 @@
     "comment": "",
     "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
   },
+  "TG_MIN": {
+    "long_name": "Minimum de la température journalière moyenne",
+    "description": "Minimum {freq:m} de la température journalière moyenne",
+    "title": "Minimum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Minimum de la température journalière moyenne."
+  },
+  "TG_MAX": {
+    "long_name": "Maximum de la température journalière moyenne",
+    "description": "Maximum {freq:m} de la température journalière moyenne",
+    "title": "Maximum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Maximum de la température journalière moyenne."
+  },
   "TG_MEAN": {
     "long_name": "Moyenne de la température journalière moyenne",
     "description": "Moyenne {freq:f} de la température journalière moyenne",
@@ -315,6 +338,13 @@
     "comment": "",
     "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
   },
+  "DTRMAX": {
+    "long_name": "Amplitude maximale de la température diurne",
+    "description": "Maximum {freq:m} de l'amplitude diurne de température",
+    "comment": "",
+    "title": "Amplitude maxmimale de la température diurne",
+    "abstract": "La différence maximale entre la température journalière maximale et la température journalière minimale."
+  },
   "DTR": {
     "long_name": "Amplitude de la température diurne",
     "description": "Moyenne {freq:f} de l'amplitude diurne de température",
@@ -342,6 +372,14 @@
     "title": "Indice de durée des vagues de froid",
     "comment": "",
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
+  },
+
+  "COLD_SPELL_FREQUENCY": {
+    "long_name": "Nombre de vagues de froid",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Nombre de vagues de froid",
+    "comment": "",
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Jours de vagues de froid",
@@ -427,6 +465,13 @@
     "comment": "",
     "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
   },
+    "RB_FLASHINESS_INDEX": {
+        "long_name": "Indice Richards-Baker de torrentialité",
+        "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+        "title": "Indice Richards-Baker de torrentialité",
+        "comment": "",
+        "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
+    },
   "FREQ_ANALYSIS": {
     "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
     "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}",
@@ -547,11 +592,29 @@
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
-  "SFCWIND": {
+  "WIND_SPEED_FROM_VECTOR": {
+    "title": "Vitesse et direction du vent à partir du vecteur vent.",
+    "abstract": "Calcul de la magnitude et la direction de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWind": {
     "long_name": "Vitesse du vent de surface",
-    "description": "Magnitude de la vitesse vent calculée à partir des deux composantes uas et vas.",
-    "title": "Magnitude de la vitesse du vent",
-    "abstract": "Calcul de la magnitude de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
+    "description": "Magnitude de la vitesse du vent calculée à partir des deux composantes uas et vas."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
+    "long_name": "Direction de provenance du vent de surface",
+    "description": "Direction de provenance du vent calculée à partir des deux composantes uas et vas. Les vents du nord ont une direction de 360° et les vents de moins de {calm_wind_thresh} ont une direction de 0°."
+  },
+  "WIND_VECTOR_FROM_SPEED": {
+    "title": "Vitesse cartésienne du vent à partir de la magnitude et direction de provenance.",
+    "abstract": "Calcul des deux composantes ouest-est et nord-sud du vent à partir de la magnitude et la direction de provenance de sa vitesse."
+  },
+  "WIND_VECTOR_FROM_SPEED.uas": {
+    "long_name": "Vent d'ouest de surface",
+    "description": "Vitesse d'ouest du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
+  },
+  "WIND_VECTOR_FROM_SPEED.vas": {
+    "long_name": "Vent du sud de surface",
+    "description": "Vitesse du sud du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
   },
   "E_SAT": {
     "long_name": "Pression de vapeur saturante",

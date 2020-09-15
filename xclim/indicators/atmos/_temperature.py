@@ -5,6 +5,7 @@ from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
 from xclim.core.units import check_units
+from xclim.core.utils import wrapped_partial
 
 __all__ = [
     "tn_days_below",
@@ -30,10 +31,12 @@ __all__ = [
     "tx10p",
     "tx90p",
     "daily_temperature_range",
+    "max_daily_temperature_range",
     "daily_temperature_range_variability",
     "extreme_temperature_range",
     "cold_spell_duration_index",
     "cold_spell_days",
+    "cold_spell_frequency",
     "daily_freezethaw_cycles",
     "cooling_degree_days",
     "heating_degree_days",
@@ -220,6 +223,26 @@ tg_mean = Tas(
     compute=indices.tg_mean,
 )
 
+tg_max = Tas(
+    identifier="tg_max",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum daily mean temperature",
+    description="{freq} maximum of daily mean temperature.",
+    cell_methods="time: mean within days time: maximum over days",
+    compute=indices.tg_max,
+)
+
+tg_min = Tas(
+    identifier="tg_min",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Minimum daily mean temperature",
+    description="{freq} minimum of daily mean temperature.",
+    cell_methods="time: mean within days time: minimum over days",
+    compute=indices.tg_min,
+)
+
 tx_mean = Tasmax(
     identifier="tx_mean",
     units="K",
@@ -281,13 +304,25 @@ tn_min = Tasmin(
 )
 
 daily_temperature_range = TasminTasmax(
+    title="Mean of daily temperature range.",
     identifier="dtr",
     units="K",
     standard_name="air_temperature",
     long_name="Mean Diurnal Temperature Range",
     description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
-    compute=indices.daily_temperature_range,
+    compute=wrapped_partial(indices.daily_temperature_range, op="mean"),
+)
+
+max_daily_temperature_range = TasminTasmax(
+    title="Maximum of daily temperature range.",
+    identifier="dtrmax",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum Diurnal Temperature Range",
+    description="{freq} maximum diurnal temperature range.",
+    cell_methods="time range within days time: max over days",
+    compute=wrapped_partial(indices.daily_temperature_range, op="max"),
 )
 
 daily_temperature_range_variability = TasminTasmax(
@@ -319,8 +354,7 @@ cold_spell_duration_index = Tasmin(
     var_name="csdi_{window}",
     units="days",
     standard_name="cold_spell_duration_index",
-    long_name="Cold Spell Duration Index, count of days with at "
-    "least {window} consecutive days when Tmin < 10th percentile",
+    long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days "
     "where the daily minimum temperature is below the 10th "
     "percentile. The 10th percentile should be computed for "
@@ -333,13 +367,26 @@ cold_spell_days = Tas(
     identifier="cold_spell_days",
     units="days",
     standard_name="cold_spell_days",
-    long_name="cold spell index",
+    long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
     "temperature below  {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
+
+cold_spell_frequency = Tas(
+    identifier="cold_spell_frequency",
+    units="",
+    standard_name="cold_spell_frequency",
+    long_name="Number of cold spell events",
+    description="{freq} number cold spell events, defined as {window} "
+    "or more consecutive days with mean daily "
+    "temperature below  {thresh}.",
+    cell_methods="",
+    compute=indices.cold_spell_frequency,
+)
+
 
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",

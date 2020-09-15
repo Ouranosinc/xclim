@@ -7,6 +7,7 @@ from xclim.core.utils import wrapped_partial
 __all__ = [
     "tg",
     "wind_speed_from_vector",
+    "wind_vector_from_speed",
     "saturation_vapor_pressure",
     "relative_humidity_from_dewpoint",
     "relative_humidity",
@@ -33,14 +34,34 @@ tg = Converter(
 
 
 wind_speed_from_vector = Converter(
-    identifier="sfcWind",
+    identifier="wind_speed_from_vector",
     _nvar=2,
-    units="m s-1",
-    standard_name="wind_speed",
-    description="Wind speed computed as the magnitude of the (uas, vas) vector.",
-    long_name="Near-Surface Wind Speed",
+    var_name=["sfcWind", "sfcWindfromdir"],
+    units=["m s-1", "degree"],
+    standard_name=["wind_speed", "wind_from_direction"],
+    description=[
+        "Wind speed computed as the magnitude of the (uas, vas) vector.",
+        "Wind direction computed as the angle of the (uas, vas) vector. A direction of 0° is attributed to winds with a speed under {calm_wind_thresh}.",
+    ],
+    long_name=["Near-Surface Wind Speed", "Near-Surface Wind from Direction"],
     cell_methods="",
-    compute=wrapped_partial(indices.uas_vas_2_sfcwind, return_direction=False),
+    compute=indices.uas_vas_2_sfcwind,
+)
+
+
+wind_vector_from_speed = Converter(
+    identifier="wind_vector_from_speed",
+    _nvar=2,
+    var_name=["uas", "vas"],
+    units=["m s-1", "m s-1"],
+    standard_name=["eastward_wind", "northward_wind"],
+    long_name=["Near-Surface Eastward Wind", "Near-Surface Northward Wind"],
+    description=[
+        "Eastward wind speed computed from its speed and direction of origin.",
+        "Northward wind speed computed from its speed and direction of origin.",
+    ],
+    cell_methods="",
+    compute=indices.sfcwind_2_uas_vas,
 )
 
 
@@ -68,6 +89,7 @@ relative_humidity_from_dewpoint = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
+    title="Relative humidity from temperature and dewpoint temperature.",
     description=lambda **kws: (
         "Computed from temperature, and dew point temperature through the "
         "saturation vapor pressures, which were calculated "
@@ -93,6 +115,7 @@ relative_humidity = Converter(
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
+    title="Relative humidity from temperature, pressure and specific humidity.",
     description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the "
         "saturation vapor pressure, which was calculated from temperature "

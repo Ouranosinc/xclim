@@ -15,8 +15,7 @@
 import os
 import sys
 import warnings
-
-import xarray as xr
+from collections import OrderedDict
 
 import xclim
 
@@ -28,16 +27,11 @@ import xclim
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
-# Hack to be able to parse sdba
-# sdba.__init__ fails if xarray doesn't have polyval as a test for the version.
-xr.__dict__["polyval"] = None
-
 
 def _get_indicators(module):
     """For all modules or classes listed, return the children that are instances of registered Indicator classes.
 
-    modules : sequence
-      Sequence of modules to inspect.
+    module : A xclim module.
     """
     from xclim.core.indicator import registry
 
@@ -46,13 +40,11 @@ def _get_indicators(module):
         if hasattr(val, "identifier") and val.identifier.upper() in registry:
             out[key] = val
 
-    return out
+    return OrderedDict(sorted(out.items()))
 
 
 def _indicator_table(realm):
-    """Return a sequence of dicts storing metadata about all available indices."""
-    # import inspect
-
+    """Return a sequence of dicts storing metadata about all available indices in xclim."""
     inds = _get_indicators(getattr(xclim, realm))
     table = {}
     for indname, ind in inds.items():
