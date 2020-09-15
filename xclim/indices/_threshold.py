@@ -15,6 +15,7 @@ from .generic import threshold_count
 
 __all__ = [
     "cold_spell_days",
+    "cold_spell_frequency",
     "daily_pr_intensity",
     "cooling_degree_days",
     "freshet_start",
@@ -52,7 +53,7 @@ def cold_spell_days(
 ):
     r"""Cold spell days.
 
-    The number of days that are part of a cold spell, defined as a minimum number of consecutive days with mean daily
+    The number of days that are part of cold spell events, defined as a sequence of consecutive days with mean daily
     temperature below a threshold in °C.
 
     Parameters
@@ -88,6 +89,43 @@ def cold_spell_days(
     group = over.resample(time=freq)
 
     return group.map(rl.windowed_run_count, window=window, dim="time")
+
+
+@declare_units("", tas="[temperature]", thresh="[temperature]")
+def cold_spell_frequency(
+    tas: xarray.DataArray,
+    thresh: str = "-10 degC",
+    window: int = 5,
+    freq: str = "AS-JUL",
+):
+    r"""Cold spell frequency.
+
+    The number of cold spell events, defined as a sequence of consecutive days with mean daily
+    temperature below a threshold in °C.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature [℃] or [K]
+    thresh : str
+      Threshold temperature below which a cold spell begins [℃] or [K]. Default: '-10 degC'
+    window : int
+      Minimum number of days with temperature below threshold to qualify as a cold spell.
+    freq : str
+      Resampling frequency; Defaults to "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      Cold spell frequency.
+
+
+    """
+    t = convert_units_to(thresh, tas)
+    over = tas < t
+    group = over.resample(time=freq)
+
+    return group.map(rl.windowed_run_events, window=window, dim="time")
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")

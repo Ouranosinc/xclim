@@ -33,7 +33,11 @@ New features and enhancements
 * New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 * New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
 * Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
-* Added Richards-Baker flow flashiness indicator.
+* Added Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`)
+* Added `op` parameter to `xclim.indices.daily_temperature_range` to allow resample reduce operations other than mean
+* New `atmos.max_daily_temperature_range` indicator
+* New `cold_spell_frequency` indicator
+
 
 Bug fixes
 ~~~~~~~~~
