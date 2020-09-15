@@ -15,6 +15,7 @@ from xclim.core.units import (
 
 from . import fwi
 from . import run_length as rl
+from .generic import select_resample_op
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -225,9 +226,12 @@ def daily_freezethaw_cycles(
 
 @declare_units("K", tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    freq: str = "YS",
+    op: str = "mean",
 ) -> xarray.DataArray:
-    r"""Mean of daily temperature range.
+    r"""Statistics of daily temperature range.
 
     The mean difference between the daily maximum temperature and the daily minimum temperature.
 
@@ -239,6 +243,8 @@ def daily_temperature_range(
       Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
+    op : str {'min', 'max', 'mean', 'std'} or func
+      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
     -------
@@ -247,6 +253,8 @@ def daily_temperature_range(
 
     Notes
     -----
+    For a default calculation using `op='mean'` :
+
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`i`
     of period :math:`j`. Then the mean diurnal temperature range in period :math:`j` is:
 
@@ -256,7 +264,8 @@ def daily_temperature_range(
     """
     q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
     dtr = tasmax - tasmin
-    out = dtr.resample(time=freq).mean(dim="time", keep_attrs=True)
+    out = select_resample_op(dtr, op=op, freq=freq)
+
     out.attrs["units"] = f"{q.units}"
     return out
 

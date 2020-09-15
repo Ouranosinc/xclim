@@ -7,7 +7,7 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
-from glob.fnmatch import fnmatch
+from fnmatch import fnmatch
 from typing import Mapping, Optional, Sequence, Union
 
 import xarray as xr

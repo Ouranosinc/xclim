@@ -106,6 +106,7 @@
       "decembre"
     ]
   },
+
   "RAIN_FRZGR": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
@@ -352,6 +353,13 @@
     "comment": "",
     "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
   },
+  "DTRMAX": {
+    "long_name": "Amplitude maximale de la température diurne",
+    "description": "Maximum {freq:m} de l'amplitude diurne de température",
+    "comment": "",
+    "title": "Amplitude maxmimale de la température diurne",
+    "abstract": "La différence maximale entre la température journalière maximale et la température journalière minimale."
+  },
   "DTR": {
     "long_name": "Amplitude de la température diurne",
     "description": "Moyenne {freq:f} de l'amplitude diurne de température",
@@ -379,6 +387,14 @@
     "title": "Indice de durée des vagues de froid",
     "comment": "",
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
+  },
+
+  "COLD_SPELL_FREQUENCY": {
+    "long_name": "Nombre de vagues de froid",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Nombre de vagues de froid",
+    "comment": "",
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Jours de vagues de froid",
