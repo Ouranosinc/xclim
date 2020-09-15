@@ -11,26 +11,19 @@ branches:
 jobs:
   fast_finish: true
   include:
-    - env:
-        - TOXENV=docs
-      name: "Documentation"
-      python: 3.6
-      addons:
-        apt:
-          packages:
-            - pandoc
+#    - env:
+#        - TOXENV=docs
+#      name: "Documentation"
+#      python: 3.6
+#      addons:
+#        apt:
+#          packages:
+#            - pandoc
     - env: TOXENV=black
-      name: "Black, Flake8, and Numpy-like Docstring compliance"
+      name: "Black, Flake8, Numpy-like Docstring compliance, and linting"
       python: 3.6
-    - env: TOXENV=doctests
-      name: "Linting suggestions and Doctests"
-      python: 3.6
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
-    - env: TOXENV=py38
-      name: "Python3.8 (Linux)"
+    - env: TOXENV=py38-doctest
+      name: "Python3.8 (Linux) + doctests"
       python: 3.8
       addons:
         apt:
@@ -38,7 +31,8 @@ jobs:
             - libspatialindex-dev
             - libnetcdf-dev
             - libhdf5-dev
-    - env: TOXENV=py38-macOS
+    - if: type = push
+      env: TOXENV=py38-macOS
       name: "Python3.8 (macOS)"
       os: osx
       language: shell
@@ -65,21 +59,24 @@ jobs:
     - env: TOXENV=py36-nosubset-lm3
       name: "Python3.6 (Linux + lmoments3@master) (no subsetting)"
       python: 3.6
-    - env: TOXENV=py36-xarray
+    - if: type = push
+      env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
       addons:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py36-bottleneck
+    - if: type = push
+      env: TOXENV=py36-bottleneck
       name: "Python3.6 (Linux + bottleneck@master)"
       python: 3.6
       addons:
         apt:
           packages:
             - libspatialindex-dev
-    - env: TOXENV=py38-anaconda
+    - if: type = push
+      env: TOXENV=py38-anaconda
       name: "Python3.8 (Linux + Anaconda)"
       python: 3.8
       before_install:
@@ -100,7 +97,8 @@ jobs:
           - pip install -e .[dev]
       script:
           - py.test --cov=xclim
-    - env:
+    - if: type = push
+      env:
         - TOXENV=py37-windows
         - DESIRED_PYTHON=3.7
         - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
