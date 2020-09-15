@@ -253,6 +253,8 @@ def daily_temperature_range(
 
     Notes
     -----
+    For a default calculation using `op='mean'` :
+
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`i`
     of period :math:`j`. Then the mean diurnal temperature range in period :math:`j` is:
 
