@@ -503,6 +503,52 @@ def growing_season_length(
     )
 
 
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def maximum_consecutive_frost_days(
+    tasmin: xarray.DataArray,
+    thresh: str = "0.0 degC",
+    freq: str = "AS-JUL",
+):
+    r"""Maximum number of consecutive frost days (Tn < 0℃).
+
+    The maximum number of consecutive days within the period where the
+    temperature is under a certain threshold (default: 0°C).
+    WARNING: The default freq value is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [K] or [°C].
+    thresh : str
+      Threshold temperature [K] or [°C].
+    freq : str
+      Resampling frequency; Defaults to "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive frost days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
+    below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive frost free days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+    """
+    t = convert_units_to(thresh, tasmin)
+    group = (tasmin < t).resample(time=freq)
+
+    return group.map(rl.longest_run, dim="time")
+
+
 @declare_units("", tas="[temperature]", thresh="[temperature]")
 def last_spring_frost(
     tas: xarray.DataArray,
@@ -576,7 +622,7 @@ def first_day_below(
     Returns
     -------
     xarray.DataArray
-      Day of the year when minimu temperature is inferior to a threshold over a given number of days for the first time.
+      Day of the year when minimum temperature is inferior to a threshold over a given number of days for the first time.
       If there is no such day, return np.nan.
     """
     thresh = convert_units_to(thresh, tasmin)
