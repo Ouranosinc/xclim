@@ -73,9 +73,10 @@ class AttrFormatter(string.Formatter):
         return super().format_field(value, format_spec)
 
     def _match_value(self, value):
-        for mapval in self.mapping.values():
-            if fnmatch(value, mapval):
-                return mapval
+        if isinstance(value, str):
+            for mapval in self.mapping.keys():
+                if fnmatch(value, mapval):
+                    return mapval
         return None
 
 
