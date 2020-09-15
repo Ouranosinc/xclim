@@ -22,7 +22,6 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "base_flow_index",
     "consecutive_frost_days",
     "frost_days",
     "ice_days",
@@ -312,52 +311,6 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
         TXn_j = min(TX_{ij})
     """
     return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
-
-
-@declare_units("", q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
-    r"""Base flow index.
-
-    Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
-
-    Parameters
-    ----------
-    q : xarray.DataArray
-      Rate of river discharge [m³/s]
-    freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
-
-    Returns
-    -------
-    xarray.DataArray
-      Base flow index.
-
-    Notes
-    -----
-    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
-    the mean flow over the period. The base flow index is given by:
-
-    .. math::
-
-       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
-
-
-    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
-
-    .. math::
-
-       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
-    """
-    m7 = (
-        q.rolling(time=7, center=True)
-        .mean(allow_lazy=True, skipna=False)
-        .resample(time=freq)
-    )
-    mq = q.resample(time=freq)
-
-    m7m = m7.min(dim="time")
-    return m7m / mq.mean(dim="time")
 
 
 @declare_units("days", tasmin="[temperature]")

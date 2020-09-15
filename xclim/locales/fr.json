@@ -465,6 +465,13 @@
     "comment": "",
     "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
   },
+    "RB_FLASHINESS_INDEX": {
+        "long_name": "Indice Richards-Baker de torrentialité",
+        "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+        "title": "Indice Richards-Baker de torrentialité",
+        "comment": "",
+        "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
+    },
   "FREQ_ANALYSIS": {
     "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
     "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}",
