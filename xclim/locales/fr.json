@@ -343,7 +343,7 @@
     "description": "Maximum {freq:m} de l'amplitude diurne de température",
     "comment": "",
     "title": "Amplitude maxmimale de la température diurne",
-    "abstract": "La différence moyenne entre la température journalière maximale et la température journalière minimale."
+    "abstract": "La différence maximale entre la température journalière maximale et la température journalière minimale."
   },
   "DTR": {
     "long_name": "Amplitude de la température diurne",
