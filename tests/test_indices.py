@@ -149,7 +149,7 @@ class TestColdSpellFreq:
         assert out.units == ""
 
 
-class TestConsecutiveFrostDays:
+class TestMaxConsecutiveFrostDays:
     def test_one_freeze_day(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
         cfd = xci.maximum_consecutive_frost_days(a)
