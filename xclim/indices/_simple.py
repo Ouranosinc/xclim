@@ -22,7 +22,6 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "consecutive_frost_days",
     "frost_days",
     "ice_days",
     "max_1day_precipitation_amount",
@@ -311,48 +310,6 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
         TXn_j = min(TX_{ij})
     """
     return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
-
-
-@declare_units("days", tasmin="[temperature]")
-def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
-    r"""Maximum number of consecutive frost days (Tmin < 0℃).
-
-    Resample the daily minimum temperature series by computing the maximum number
-    of days below the freezing point over each period.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
-    freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
-
-    Returns
-    -------
-    xarray.DataArray
-      The maximum number of consecutive days below the freezing point.
-
-    Notes
-    -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0^\circ C] \neq [p_{i+1} <
-    0^\circ C]`, that is, the days when the temperature crosses the freezing point.
-    Then the maximum number of consecutive frost days is given by
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
-    """
-    tu = units.parse_units(tasmin.attrs["units"].replace("-", "**-"))
-    fu = "degC"
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    group = (tasmin < frz).resample(time=freq)
-    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("days", tasmin="[temperature]")

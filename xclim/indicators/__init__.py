@@ -107,7 +107,7 @@ def __build_icclim(mode="warn"):
         "TR": indices.tropical_nights,
         "GD4": wrapped_partial(indices.growing_degree_days, thresh="4 degC"),
         "FD": indices.frost_days,
-        "CFD": indices.consecutive_frost_days,
+        "CFD": wrapped_partial(indices.maximum_consecutive_frost_days, thresh="0 degC"),
         "GSL": indices.growing_season_length,
         "ID": indices.ice_days,
         "HD17": wrapped_partial(indices.heating_degree_days, thresh="17 degC"),

@@ -152,18 +152,18 @@ class TestColdSpellFreq:
 class TestConsecutiveFrostDays:
     def test_one_freeze_day(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
-        cfd = xci.consecutive_frost_days(a)
+        cfd = xci.maximum_consecutive_frost_days(a)
         assert cfd == 1
         assert cfd.time.dt.year == 2000
 
     def test_no_freeze(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, 1, 3]) + K2C)
-        cfd = xci.consecutive_frost_days(a)
+        cfd = xci.maximum_consecutive_frost_days(a)
         assert cfd == 0
 
     def test_all_year_freeze(self, tasmin_series):
         a = tasmin_series(np.zeros(365) - 10 + K2C)
-        cfd = xci.consecutive_frost_days(a)
+        cfd = xci.maximum_consecutive_frost_days(a)
         assert cfd == 365
 
 
