@@ -37,6 +37,7 @@ New features and enhancements
 * Added `op` parameter to `xclim.indices.daily_temperature_range` to allow resample reduce operations other than mean
 * New `atmos.max_daily_temperature_range` indicator
 * New `cold_spell_frequency` indicator
+* `core.formatting.AttrFormatter` (and thus, locale dictionaries) can now use glob-like pattern for matching values to translate.
 
 
 Bug fixes

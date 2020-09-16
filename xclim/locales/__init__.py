@@ -1,7 +1,6 @@
 """Locales and language support module."""
 from xclim.core.formatting import default_formatter
 from xclim.core.locales import TRANSLATABLE_ATTRS, get_best_locale, get_local_dict
-from xclim.indicators.atmos import tg_mean
 
 
 def generate_local_dict(locale: str, init_english: bool = False):

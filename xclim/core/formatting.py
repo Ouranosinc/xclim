@@ -7,7 +7,9 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
+from fnmatch import fnmatch
 from typing import Dict, Mapping, Optional, Sequence, Union
+
 
 import xarray as xr
 
@@ -39,7 +41,7 @@ class AttrFormatter(string.Formatter):
     def format_field(self, value, format_spec):
         """Format a value given a formatting spec.
 
-        If `format_spec` is in this Formatter's modifiers, the correspong variation
+        If `format_spec` is in this Formatter's modifiers, the corresponding variation
         of value is given. If `format_spec` is not specified but `value` is in the
         mapping, the first variation is returned.
 
@@ -53,25 +55,39 @@ class AttrFormatter(string.Formatter):
         >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']}, ['m', 'f'])
         >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}", adj1='nice', adj2='evil')
         "Le chien est beau, l'oie est méchante"
+
+        The base values may be given using unix shell-like patterns:
+        >>> fmt = AttrFormatter({'AS-*': ['annuel', 'annuelle'], 'MS' : ['mensuel', 'mensuelle']}, ['m', 'f'])
+        >>> fmt.format("La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}", freq='AS-JUL', src_timestep='MS')
+        'La moyenne annuelle est faite sur un échantillon mensuel'
         """
-        if value in self.mapping and not format_spec:
-            return self.mapping[value][0]
+        baseval = self._match_value(value)
+        if baseval is not None and not format_spec:
+            return self.mapping[baseval][0]
 
         if format_spec in self.modifiers:
-            if value in self.mapping:
-                return self.mapping[value][self.modifiers.index(format_spec)]
+            if baseval is not None:
+                return self.mapping[baseval][self.modifiers.index(format_spec)]
             raise ValueError(
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
         return super().format_field(value, format_spec)
+
+    def _match_value(self, value):
+        if isinstance(value, str):
+            for mapval in self.mapping.keys():
+                if fnmatch(value, mapval):
+                    return mapval
+        return None
 
 
 # Tag mappings between keyword arguments and long-form text.
 default_formatter = AttrFormatter(
     {
         "YS": ["annual", "years"],
+        "AS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
-        "QS-DEC": ["seasonal", "seasons"],
+        "QS-*": ["seasonal", "seasons"],
         "DJF": ["winter"],
         "MAM": ["spring"],
         "JJA": ["summer"],
