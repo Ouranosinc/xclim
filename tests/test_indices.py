@@ -301,6 +301,25 @@ class TestFirstDayBelow:
         assert np.isnan(fdb)
 
 
+class TestFirstDayAbove:
+    def test_simple(self, tas_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tas = tas_series(a, start="2000/1/1")
+
+        fdb = xci.first_day_above(tas)
+        assert fdb == 1
+
+        fdb = xci.first_day_above(tas, after_date="07-01")
+        assert fdb == 271
+
+        a[:] = 270
+        tas = tas_series(a, start="2000/1/1")
+
+        fdb = xci.first_day_above(tas)
+        assert np.isnan(fdb)
+
+
 class TestDaysOverPrecipThresh:
     def test_simple(self, pr_series, per_doy):
         a = np.zeros(365)
@@ -425,6 +444,34 @@ class TestGrowingSeasonLength:
         tas = tas.where(~tas.time.isin(warm_period.time), 280)
         gsl = xci.growing_season_length(tas, mid_date="01-01", freq="AS-Jul")
         np.testing.assert_array_equal(gsl.sel(time="2000-07-01"), 121)
+
+
+class TestFrostSeasonLength:
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", 0),  # No frost season
+            ("2000-01-01", "2000-12-31", 365),  # All year frost season
+            ("2000-06-15", "2001-01-01", 199),  # No end
+            ("2000-06-15", "2000-07-15", 31),  # Normal case
+        ],
+    )
+    def test_simple(self, tas_series, d1, d2, expected):
+        # test for different growing length
+
+        # generate a year of data
+        tas = tas_series(np.zeros(365) + 300, start="2000/1/1")
+        cold_period = tas.sel(time=slice(d1, d2))
+        tas = tas.where(~tas.time.isin(cold_period.time), 270)
+        fsl = xci.frost_season_length(tas, freq="YS")
+        np.testing.assert_array_equal(fsl, expected)
+
+    def test_northhemisphere(self, tas_series):
+        tas = tas_series(np.zeros(2 * 365) + 300, start="2000/1/1")
+        cold_period = tas.sel(time=slice("2000-11-01", "2001-03-01"))
+        tas = tas.where(~tas.time.isin(cold_period.time), 270)
+        fsl = xci.frost_season_length(tas)
+        np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
 
 
 class TestHeatingDegreeDays:

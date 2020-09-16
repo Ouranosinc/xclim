@@ -511,7 +511,7 @@ def frost_season_length(
     tasmin: xarray.DataArray,
     thresh: str = "0.0 degC",
     window: int = 5,
-    freq: str = "YS",
+    freq: str = "AS-JUL",
 ):
     r"""Frost season length.
 
@@ -630,6 +630,8 @@ def first_day_below(
     Returns first day of period where a temperature is inferior to a threshold
     over a given number of days, limited to a starting calendar date.
 
+    WARNING: The default date and freq are valid for the northern hemisphere.
+
     Parameters
     ----------
     tasmin : xarray.DataArray
@@ -665,7 +667,7 @@ def first_day_below(
 def first_day_above(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
-    after_date: str = "07-01",
+    after_date: str = "01-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -673,6 +675,8 @@ def first_day_above(
 
     Returns first day of period where a temperature is superior to a threshold
     over a given number of days, limited to a starting calendar date.
+
+    WARNING: The default date and freq are valid for the northern hemisphere.
 
     Parameters
     ----------
