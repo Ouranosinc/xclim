@@ -1,4 +1,6 @@
 # noqa: D100
+from typing import Optional
+
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, pint_multiply, units
@@ -23,7 +25,9 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "last_spring_frost",
+    "frost_season_length",
     "first_day_below",
+    "first_day_above",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -35,6 +39,7 @@ __all__ = [
     "wetdays",
     "dry_days",
     "maximum_consecutive_dry_days",
+    "maximum_consecutive_frost_days",
     "maximum_consecutive_frost_free_days",
     "maximum_consecutive_tx_days",
     "maximum_consecutive_wet_days",
@@ -496,7 +501,79 @@ def growing_season_length(
     cond = tas >= thresh
 
     return cond.resample(time=freq).map(
-        rl.run_length_with_date,
+        rl.season_length,
+        window=window,
+        date=mid_date,
+        dim="time",
+    )
+
+
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def frost_season_length(
+    tasmin: xarray.DataArray,
+    window: int = 5,
+    mid_date: Optional[str] = "01-01",
+    thresh: str = "0.0 degC",
+    freq: str = "AS-JUL",
+):
+    r"""Frost season length.
+
+    The number of days between the first occurrence of at least N (def: 5) consecutive days
+    with minimum daily temperature under a threshold (default: 0℃) and the first occurrence
+    of at least N (def 5) consecutive days with minimum daily temperature above the same threshold
+    A mid date can be given to limit the earliest day the end of season can take.
+    WARNING: The default freq and mid_date values are valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K].
+    window : int
+      Minimum number of days with temperature below threshold to mark the beginning and end of frost season. Default: 5.
+    mid_date : str, optional
+      Date the must be included in the season. It is the earliest the end of the season can be.
+      If None, there is no limit.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0.0 degC'.
+    freq : str
+      Resampling frequency. Default: "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      Frost season length.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the minimum temperature at day :math:`i` of period :math:`j`. Then counted is
+    the number of days between the first occurrence of at least N consecutive days with:
+
+    .. math::
+
+        TN_{ij} > 0 ℃
+
+    and the first subsequent occurrence of at least N consecutive days with:
+
+    .. math::
+
+        TN_{ij} < 0 ℃
+
+    Examples
+    --------
+    >>> from xclim.indices import frost_season_length
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+
+    # For the Northern Hemisphere:
+    >>> fsl_nh = frost_season_length(tasmin, freq='AS-JUL')
+
+    # If working in the Southern Hemisphere, one can use:
+    >>> dsl_sh = frost_season_length(tasmin, freq='YS')
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    cond = tasmin < thresh
+
+    return cond.resample(time=freq).map(
+        rl.season_length,
         window=window,
         date=mid_date,
         dim="time",
@@ -560,6 +637,8 @@ def first_day_below(
     Returns first day of period where a temperature is inferior to a threshold
     over a given number of days, limited to a starting calendar date.
 
+    WARNING: The default date and freq are valid for the northern hemisphere.
+
     Parameters
     ----------
     tasmin : xarray.DataArray
@@ -576,11 +655,57 @@ def first_day_below(
     Returns
     -------
     xarray.DataArray
-      Day of the year when minimu temperature is inferior to a threshold over a given number of days for the first time.
+      Day of the year when minimum temperature is inferior to a threshold over a given number of days for the first time.
       If there is no such day, return np.nan.
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = tasmin < thresh
+
+    return cond.resample(time=freq).map(
+        rl.first_run_after_date,
+        window=window,
+        date=after_date,
+        dim="time",
+        coord="dayofyear",
+    )
+
+
+@declare_units("", tasmin="[temperature]", thresh="[temperature]")
+def first_day_above(
+    tasmin: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: str = "01-01",
+    window: int = 1,
+    freq: str = "YS",
+):
+    r"""First day of temperatures superior to a threshold temperature.
+
+    Returns first day of period where a temperature is superior to a threshold
+    over a given number of days, limited to a starting calendar date.
+
+    WARNING: The default date and freq are valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [℃] or [K].
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0 degC'.
+    after_date : str
+      Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+      Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+      Resampling frequency; Defaults to "YS".
+
+    Returns
+    -------
+    xarray.DataArray
+      Day of the year when minimum temperature is superior to a threshold over a given number of days for the first time.
+      If there is no such day, return np.nan.
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    cond = tasmin > thresh
 
     return cond.resample(time=freq).map(
         rl.first_run_after_date,
@@ -952,6 +1077,52 @@ def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
 
     wd = (pr >= thresh) * 1
     return wd.resample(time=freq).sum(dim="time")
+
+
+@declare_units("days", tasmin="[temperature]", thresh="[temperature]")
+def maximum_consecutive_frost_days(
+    tasmin: xarray.DataArray,
+    thresh: str = "0.0 degC",
+    freq: str = "AS-JUL",
+):
+    r"""Maximum number of consecutive frost days (Tn < 0℃).
+
+    The maximum number of consecutive days within the period where the
+    temperature is under a certain threshold (default: 0°C).
+    WARNING: The default freq value is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature [K] or [°C].
+    thresh : str
+      Threshold temperature [K] or [°C].
+    freq : str
+      Resampling frequency; Defaults to "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum number of consecutive frost days.
+
+    Notes
+    -----
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
+    below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    Then the maximum number of consecutive frost free days is given by
+
+    .. math::
+
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+
+    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
+    the start and end of the series, but the numerical algorithm does.
+    """
+    t = convert_units_to(thresh, tasmin)
+    group = (tasmin < t).resample(time=freq)
+
+    return group.map(rl.longest_run, dim="time")
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")

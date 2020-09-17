@@ -256,10 +256,11 @@ class TestRunsWithDates:
             ("07-01", 190, 50),
             ("04-01", 150, np.NaN),  # date falls early
             ("11-01", 150, 164),  # date ends late
+            (None, 150, 10),  # no date, real length
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_run_length_with_date(self, tas_series, date, end, expected, use_dask):
+    def test_season_length(self, tas_series, date, end, expected, use_dask):
         t = np.zeros(360)
         t[140:end] = 1
         tas = tas_series(t, start="2000-01-01")
@@ -269,7 +270,7 @@ class TestRunsWithDates:
         if use_dask:
             runs = runs.chunk({"time": 10, "dim0": 1})
 
-        out = rl.run_length_with_date(
+        out = rl.season_length(
             runs,
             window=1,
             dim="time",
@@ -357,7 +358,7 @@ class TestRunsWithDates:
 
     @pytest.mark.parametrize(
         "func",
-        [rl.last_run_before_date, rl.run_end_after_date, rl.run_length_with_date],
+        [rl.last_run_before_date, rl.run_end_after_date],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_run_with_dates_no_date(self, tas_series, use_dask, func):
