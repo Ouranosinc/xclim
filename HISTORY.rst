@@ -20,10 +20,10 @@ New indicators
 ~~~~~~~~~~~~~~
 * `atmos.max_pr_intensity` acting on hourly data.
 * `atmos.wind_vector_from_speed`, also the `wind_speed_from_vector` now also returns the "wind from direction".
-* Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`)
-* `atmos.max_daily_temperature_range`
-* `atmos.cold_spell_frequency`
-* `atmos.tg_min` and `atmos.tg_max`
+* Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`).
+* `atmos.max_daily_temperature_range`.
+* `atmos.cold_spell_frequency`.
+* `atmos.tg_min` and `atmos.tg_max`.
 * `atmos.frost_season_length`, `atmos.first_day_above`. Also, `atmos.consecutive_frost_days` now takes a `thresh` argument (default : 0 degC).
 
 New features and enhancements

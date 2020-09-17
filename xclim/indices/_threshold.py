@@ -528,9 +528,9 @@ def frost_season_length(
     thresh : str
       Threshold temperature on which to base evaluation [℃] or [K]. Default: '0.0 degC'.
     window : int
-      Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
+      Minimum number of days with temperature below threshold to mark the beginning and end of frost season. Default: 5.
     freq : str
-      Resampling frequency. Default: "YS".
+      Resampling frequency. Default: "AS-JUL".
 
     Returns
     -------
@@ -683,7 +683,7 @@ def first_day_above(
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K].
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0 degC'.
     after_date : str
       Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
