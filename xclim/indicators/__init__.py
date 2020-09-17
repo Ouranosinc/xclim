@@ -7,7 +7,10 @@ Indicators module
 Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into realms : atmos, land and
-seaIce. The module also defines an additional virtual module : ICCLIM.
+seaIce.
+
+The module also defines additional virtual modules : `icclim` and `anuclim`. For the moment, they hold indices
+instead of indicators, but in the future they'll be converted to indicators.
 """
 from functools import wraps
 
