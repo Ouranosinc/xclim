@@ -252,5 +252,5 @@ def __build_anuclim(mode="warn"):
     return mod
 
 
-ICCLIM = __build_icclim("ignore")
+ICCLIM = icclim = __build_icclim("ignore")
 anuclim = __build_anuclim()

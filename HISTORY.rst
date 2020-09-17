@@ -42,7 +42,8 @@ New features and enhancements
 
 Bug fixes
 ~~~~~~~~~
-None
+The ICCLIM module was identified as `icclim` in the documentation but the module available under `ICCLIM`. Now `icclim == ICCLIM` and `ICCLIM will be deprecated in a future release`.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~
