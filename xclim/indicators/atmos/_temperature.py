@@ -456,7 +456,10 @@ frost_season_length = Tasmin(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Length of the frost season",
-    description="{freq} length of quasi-consecutive runs of days with minimum daily temperature below 0℃. Breaks shorter than {window} days are included.",
+    description=lambda **kws: "{freq} number of days between the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature below {thresh} and "
+    "the first occurrence of at least {window} consecutive days with "
+    "minimuim daily temperature above {thresh} after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=wrapped_partial(indices.frost_season_length, thresh="0 degC"),
 )
@@ -528,7 +531,7 @@ growing_season_length = Tas(
     standard_name="growing_season_length",
     long_name="ETCCDI Growing Season Length (Tmean > {thresh})",
     description="{freq} number of days between the first occurrence of at least "
-    "six consecutive days with mean daily temperature over {thresh} and "
+    "{window} consecutive days with mean daily temperature over {thresh} and "
     "the first occurrence of at least {window} consecutive days with "
     "mean daily temperature below {thresh} after {mid_date}.",
     cell_methods="",

@@ -463,7 +463,7 @@ class TestFrostSeasonLength:
         tas = tas_series(np.zeros(365) + 300, start="2000/1/1")
         cold_period = tas.sel(time=slice(d1, d2))
         tas = tas.where(~tas.time.isin(cold_period.time), 270)
-        fsl = xci.frost_season_length(tas, freq="YS")
+        fsl = xci.frost_season_length(tas, freq="YS", mid_date="07-01")
         np.testing.assert_array_equal(fsl, expected)
 
     def test_northhemisphere(self, tas_series):

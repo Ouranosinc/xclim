@@ -1,4 +1,6 @@
 # noqa: D100
+from typing import Optional
+
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, pint_multiply, units
@@ -509,8 +511,9 @@ def growing_season_length(
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
 def frost_season_length(
     tasmin: xarray.DataArray,
-    thresh: str = "0.0 degC",
     window: int = 5,
+    mid_date: Optional[str] = "01-01",
+    thresh: str = "0.0 degC",
     freq: str = "AS-JUL",
 ):
     r"""Frost season length.
@@ -518,17 +521,20 @@ def frost_season_length(
     The number of days between the first occurrence of at least N (def: 5) consecutive days
     with minimum daily temperature under a threshold (default: 0℃) and the first occurrence
     of at least N (def 5) consecutive days with minimum daily temperature above the same threshold
-
-    WARNING: The default freq value is valid for the northern hemisphere.
+    A mid date can be given to limit the earliest day the end of season can take.
+    WARNING: The default freq and mid_date values are valid for the northern hemisphere.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature [℃] or [K].
-    thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0.0 degC'.
     window : int
       Minimum number of days with temperature below threshold to mark the beginning and end of frost season. Default: 5.
+    mid_date : str, optional
+      Date the must be included in the season. It is the earliest the end of the season can be.
+      If None, there is no limit.
+    thresh : str
+      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0.0 degC'.
     freq : str
       Resampling frequency. Default: "AS-JUL".
 
@@ -569,6 +575,7 @@ def frost_season_length(
     return cond.resample(time=freq).map(
         rl.season_length,
         window=window,
+        date=mid_date,
         dim="time",
     )
 
