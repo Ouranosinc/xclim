@@ -249,7 +249,7 @@ def update_history(
         "history",
         *inputs_list,
         new_line="\n",
-        missing_str="<No available history>",
+        missing_str="",
         **inputs_kws,
     )
     if len(merged_history) > 0 and not merged_history.endswith("\n"):

@@ -15,6 +15,7 @@ Breaking changes
 * A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles. `xclim.atmos.drought_code` and `fire_weather_indexes` now have indentifiers "dc" and "fwi" (lowercase version of the previous identifiers).
 * `xc.indices.run_length.run_length_with_dates` becomes `xc.indices.run_length.season_length`. Its argument `date` is now optional and the default changes from "07-01" to `None`.
 * `xc.indices.consecutive_frost_days` becomes `xc.indices.maximum_consecutive_frost_days`.
+* Changed the `history` indicator output attribute to `xclim_history` in order to respect CF conventions.
 
 New indicators
 ~~~~~~~~~~~~~~

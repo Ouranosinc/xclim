@@ -123,7 +123,7 @@ class BaseAdjustment(Parametrizable):
 
         scen = self._adjust(sim, **kwargs)
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
-        scen.attrs["history"] = update_history(
+        scen.attrs["xclim_history"] = update_history(
             f"Bias-adjusted with {str(self)}.adjust(sim, {params})", sim
         )
         return scen
