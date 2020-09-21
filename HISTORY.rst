@@ -2,6 +2,26 @@
 History
 =======
 
+0.21.0 (unreleased)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+
+New indicators
+~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+* Fixed a bug in the attributes of `frost_season_length`.
+
+Internal changes
+~~~~~~~~~~~~~~~~~
+
 0.20.0 (2020-09-18)
 -------------------
 
