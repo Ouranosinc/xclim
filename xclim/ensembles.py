@@ -143,7 +143,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
                     + vv.split("_")[-1]
                     + " of ensemble"
                 )
-    ds_out.attrs["history"] = update_history(
+    ds_out.attrs["xclim_history"] = update_history(
         f"Computation of statistics on {ens.realization.size} ensemble members.", ds_out
     )
     return ds_out
@@ -207,7 +207,7 @@ def ensemble_percentiles(
             ]
         )
         out.attrs.update(ens.attrs)
-        out.attrs["history"] = update_history(
+        out.attrs["xclim_history"] = update_history(
             f"Computation of the percentiles on {ens.realization.size} ensemble members.",
             ens,
         )
@@ -262,7 +262,7 @@ def ensemble_percentiles(
             out[p] = perc
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})  # type: ignore
 
-    out.attrs["history"] = update_history(
+    out.attrs["xclim_history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",
         ens,
     )

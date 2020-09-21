@@ -2,8 +2,28 @@
 History
 =======
 
-0.20.x
-------
+0.21.0 (unreleased)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+
+New indicators
+~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+* Fixed a bug in the attributes of `frost_season_length`.
+
+Internal changes
+~~~~~~~~~~~~~~~~~
+
+0.20.0 (2020-09-18)
+-------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -13,6 +33,19 @@ Breaking changes
   version of `pandoc` binaries installed at system-level.
 * ANUCLIM indices have seen their `input_freq` parameter renamed to `src_timestep` for clarity.
 * A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles. `xclim.atmos.drought_code` and `fire_weather_indexes` now have indentifiers "dc" and "fwi" (lowercase version of the previous identifiers).
+* `xc.indices.run_length.run_length_with_dates` becomes `xc.indices.run_length.season_length`. Its argument `date` is now optional and the default changes from "07-01" to `None`.
+* `xc.indices.consecutive_frost_days` becomes `xc.indices.maximum_consecutive_frost_days`.
+* Changed the `history` indicator output attribute to `xclim_history` in order to respect CF conventions.
+
+New indicators
+~~~~~~~~~~~~~~
+* `atmos.max_pr_intensity` acting on hourly data.
+* `atmos.wind_vector_from_speed`, also the `wind_speed_from_vector` now also returns the "wind from direction".
+* Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`).
+* `atmos.max_daily_temperature_range`.
+* `atmos.cold_spell_frequency`.
+* `atmos.tg_min` and `atmos.tg_max`.
+* `atmos.frost_season_length`, `atmos.first_day_above`. Also, `atmos.consecutive_frost_days` now takes a `thresh` argument (default : 0 degC).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,26 +56,21 @@ New features and enhancements
 * Add support for using probability weighted moments method in `generic.fit` function. Requires the
   `lmoments3` package, which is not included in dependencies because it is unmaintained. Install manually if needed.
 * Implemented `_fit_start` utility function providing initial conditions for statistical distribution parameters estimation, reducing the likelihood of poor fits.
-* Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`.
+* Added support for indicators based on hourly (1H) inputs, and a first hourly indicator called `max_pr_intensity`
   returning hourly precipitation intensity.
 * Indicator instances can be retrieved through their class with the `get_instance()` class method.
   This allows the use of `xclim.core.indicator.registry` as an instance registry.
 * Indicators now have a `realm` attribute. It must be given when creating indicators outside xclim.
 * Better docstring parsing for indicators: parameters description, annotation and default value are accessible in the json output and `Indicator.parameters`.
 * New command line interface `xclim` for simple indicator computing tasks.
-* New `wind_vector_from_speed` indicator. Also the `wind_speed_from_vector` now also returns the wind from direction.
 * New `sdba.processing.jitter_over_thresh` for variables with a upper bound.
-* Added `tg_min` and `tg_max` to the list of available `Indicators` under `atmos`.
-* Added Richards-Baker flow flashiness indicator (`xclim.land.rb_flashiness_index`)
 * Added `op` parameter to `xclim.indices.daily_temperature_range` to allow resample reduce operations other than mean
-* New `atmos.max_daily_temperature_range` indicator
-* New `cold_spell_frequency` indicator
 * `core.formatting.AttrFormatter` (and thus, locale dictionaries) can now use glob-like pattern for matching values to translate.
-
 
 Bug fixes
 ~~~~~~~~~
-None
+The ICCLIM module was identified as `icclim` in the documentation but the module available under `ICCLIM`. Now `icclim == ICCLIM` and `ICCLIM will be deprecated in a future release`.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~

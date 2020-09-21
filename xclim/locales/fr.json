@@ -438,6 +438,12 @@
     "comment": "",
     "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
   },
+  "FROST_SEASON_LENGTH": {
+    "long_name": "Durée de la saison de gel (Tmin < 0°C)",
+    "description": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus.",
+    "title": "Durée de la saison de gel",
+    "abstract": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus."
+  },
   "FROST_DAYS": {
     "long_name": "Nombre de jours de gel (Tmin < 0C)",
     "description": "Nombre {freq:m} de jours où la température journalière minimale est sous 0°C.",
@@ -660,5 +666,11 @@
     "description": "Premier jour de l'année avec une température sous {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures sous un seuil.",
     "abstract": "Calcule le premier jour d'une période où la température est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
+  },
+  "FIRST_DAY_ABOVE": {
+    "long_name": "Premier jour de l'année avec une température au-dessus de {thresh}",
+    "description": "Premier jour de l'année avec une température au-dessus de {thresh} pour au moins {window} jours.",
+    "title": "Premier jour de l'année de températures au-dessus d'un seuil.",
+    "abstract": "Calcule le premier jour d'une période où la température est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   }
 }

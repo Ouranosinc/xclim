@@ -7,7 +7,10 @@ Indicators module
 Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into realms : atmos, land and
-seaIce. The module also defines an additional virtual module : ICCLIM.
+seaIce.
+
+The module also defines additional virtual modules : `icclim` and `anuclim`. For the moment, they hold indices
+instead of indicators, but in the future they'll be converted to indicators.
 """
 from functools import wraps
 from types import ModuleType
@@ -113,7 +116,7 @@ def __build_icclim(mode: str = "warn"):
         "TR": indices.tropical_nights,
         "GD4": wrapped_partial(indices.growing_degree_days, thresh="4 degC"),
         "FD": indices.frost_days,
-        "CFD": indices.consecutive_frost_days,
+        "CFD": wrapped_partial(indices.maximum_consecutive_frost_days, thresh="0 degC"),
         "GSL": indices.growing_season_length,
         "ID": indices.ice_days,
         "HD17": wrapped_partial(indices.heating_degree_days, thresh="17 degC"),
@@ -258,5 +261,5 @@ def __build_anuclim(mode: str = "warn"):
     return mod
 
 
-ICCLIM = __build_icclim("ignore")
+ICCLIM = icclim = __build_icclim("ignore")
 anuclim = __build_anuclim()

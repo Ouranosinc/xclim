@@ -305,52 +305,73 @@ def last_run(
     return out
 
 
-def run_length_with_date(
+def season_length(
     da: xr.DataArray,
     window: int,
-    date: str = "07-01",
+    date: Optional[str] = None,
     dim: str = "time",
 ) -> xr.DataArray:
-    """Return the length of the longest consecutive run of True values found to be semi-continuous before and after a given date.
+    """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
+
+    A "season" is a run of True values that may include breaks under a given length (`window`).
+    The start is computed as the first run of `window` True values, then end as the first subsequent run
+    of  `window` False values. If a date is passed, it must be included in the season.
 
     Parameters
     ----------
     da : xr.DataArray
       Input N-dimensional DataArray (boolean)
     window : int
-      Minimum duration of consecutive run to accumulate values.
-    date:
-      The date that a run must include to be considered valid.
+      Minimum duration of consecutive values to start and end the season.
+    date: str, optional
+      The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
 
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along a given dimension inclusive of a given date.
+      Length of longest run of True values along a given dimension (inclusive of a given date) without breaks longer than a given length.
 
     Notes
     -----
     The run can include holes of False or NaN values, so long as they do not exceed the window size.
-    """
-    include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
 
-    mid_index = np.where(da.time.dt.dayofyear == include_date)[0]
-    if mid_index.size == 0:  # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+    If a date is given, the season end is forced to be later or equal to this date. This means that
+    even if the "real" season has been over for a long time, this is the date used in the length calculation.
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
+    the temperature is over 25 for all june, but july and august have very cold temperatures.
+    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    """
+    beg = first_run(da, window=window, dim=dim)
+    # Invert the condition and mask all values after beginning
+    # we fillna(0) as so to differentiate series with no runs and all-nan series
+    not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
+    if date is not None:
+        # Mask also values after "date"
+        include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+
+        mid_index = np.where(da.time.dt.dayofyear == include_date)[0]
+        if (
+            mid_index.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+        not_da = not_da.where(da.time >= da.time[mid_index][0])
 
     end = first_run(
-        (~da).where(da.time >= da.time[mid_index][0]),
+        not_da,
         window=window,
         dim=dim,
     )
-    beg = first_run(da, window=window, dim=dim)
+
     sl = end - beg
-    sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
     sl = xr.where(
         beg.notnull() & end.isnull(), da.time.size - beg, sl
     )  # If series is not ended by end of resample time frequency
-    return sl.where(sl >= 0)
+    if date is not None:
+        sl = sl.where(beg < mid_index.squeeze())
+    sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
+    return sl
 
 
 def run_end_after_date(

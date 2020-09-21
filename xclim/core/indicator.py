@@ -398,7 +398,7 @@ class Indicator(IndicatorRegistrar):
     def update_attrs(cls, ba, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
-        Cell methods and history attributes are updated, adding to existing values. The language of the string is
+        Cell methods and xclim_history attributes are updated, adding to existing values. The language of the string is
         taken from the `OPTIONS` configuration dictionary.
 
         Parameters
@@ -411,7 +411,7 @@ class Indicator(IndicatorRegistrar):
           The attributes to format and update.
         var_id : str
           The identifier to use when requesting the attributes translations.
-          Defaults to the class name (for the translations) or the `identifier` field of the class (for the history attribute).
+          Defaults to the class name (for the translations) or the `identifier` field of the class (for the xclim_history attribute).
           If given, the identifier will be converted to uppercase to get the translation attributes.
           This is meant for multi-outputs indicators.
         names : Sequence[str]
@@ -420,7 +420,7 @@ class Indicator(IndicatorRegistrar):
         Returns
         -------
         dict
-          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
+          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `xclim_history`.
           `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
         args = ba.arguments
@@ -457,7 +457,7 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        attrs["history"] = update_history(
+        attrs["xclim_history"] = update_history(
             f"{var_id or cls.identifier}{ba.signature.replace(parameters=cp.values())}",
             new_name=out.get("var_name"),
             **das,

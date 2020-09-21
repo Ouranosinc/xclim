@@ -57,6 +57,7 @@ class AttrFormatter(string.Formatter):
         "Le chien est beau, l'oie est méchante"
 
         The base values may be given using unix shell-like patterns:
+
         >>> fmt = AttrFormatter({'AS-*': ['annuel', 'annuelle'], 'MS' : ['mensuel', 'mensuelle']}, ['m', 'f'])
         >>> fmt.format("La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}", freq='AS-JUL', src_timestep='MS')
         'La moyenne annuelle est faite sur un échantillon mensuel'
@@ -249,7 +250,7 @@ def update_history(
         "history",
         *inputs_list,
         new_line="\n",
-        missing_str="<No available history>",
+        missing_str="",
         **inputs_kws,
     )
     if len(merged_history) > 0 and not merged_history.endswith("\n"):

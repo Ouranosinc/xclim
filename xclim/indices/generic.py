@@ -186,7 +186,7 @@ def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
     out.attrs["estimator"] = method_name[method].capitalize()
     out.attrs["scipy_dist"] = dist
     out.attrs["units"] = ""
-    out.attrs["history"] = update_history(
+    out.attrs["xclim_history"] = update_history(
         f"Estimate distribution parameters by {method_name[method]} method.",
         new_name="fit",
         data=da,
@@ -252,7 +252,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     ).strip()
     out.attrs["units"] = p.attrs["original_units"]
 
-    out.attrs["history"] = update_history(
+    out.attrs["xclim_history"] = update_history(
         "Compute parametric quantiles from distribution parameters",
         new_name="parametric_quantile",
         parameters=p,

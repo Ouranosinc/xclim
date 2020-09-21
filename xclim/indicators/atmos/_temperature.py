@@ -41,10 +41,12 @@ __all__ = [
     "cooling_degree_days",
     "heating_degree_days",
     "growing_degree_days",
+    "frost_season_length",
     "freshet_start",
     "frost_days",
     "last_spring_frost",
     "first_day_below",
+    "first_day_above",
     "ice_days",
     "consecutive_frost_days",
     "maximum_consecutive_frost_free_days",
@@ -449,6 +451,19 @@ frost_days = Tasmin(
     compute=indices.frost_days,
 )
 
+frost_season_length = Tasmin(
+    identifier="frost_season_length",
+    units="days",
+    standard_name="days_with_air_temperature_below_threshold",
+    long_name="Length of the frost season",
+    description="{freq} number of days between the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature below freezing and "
+    "the first occurrence of at least {window} consecutive days with "
+    "minimuim daily temperature above freezing after {mid_date}.",
+    cell_methods="time: minimum within days time: sum over days",
+    compute=wrapped_partial(indices.frost_season_length, thresh="0 degC"),
+)
+
 last_spring_frost = Tasmin(
     identifier="last_spring_frost",
     units="",
@@ -468,6 +483,16 @@ first_day_below = Tasmin(
     compute=indices.first_day_below,
 )
 
+first_day_above = Tasmin(
+    identifier="first_day_above",
+    units="",
+    standard_name="day_of_year",
+    long_name="First day of year with temperature above {thresh}",
+    description="First day of year with temperature above {thresh} for at least {window} days.",
+    compute=indices.first_day_above,
+)
+
+
 ice_days = Tasmax(
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -482,11 +507,11 @@ consecutive_frost_days = Tasmin(
     identifier="consecutive_frost_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
-    long_name="Maximum number of consecutive days with Tmin < 0C",
+    long_name="Maximum number of consecutive days with Tmin < {thresh}",
     description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature below 0℃",
+    "minimum daily temperature below {thresh}",
     cell_methods="time: min within days time: maximum over days",
-    compute=indices.consecutive_frost_days,
+    compute=indices.maximum_consecutive_frost_days,
 )
 
 maximum_consecutive_frost_free_days = Tasmin(
@@ -506,7 +531,7 @@ growing_season_length = Tas(
     standard_name="growing_season_length",
     long_name="ETCCDI Growing Season Length (Tmean > {thresh})",
     description="{freq} number of days between the first occurrence of at least "
-    "six consecutive days with mean daily temperature over {thresh} and "
+    "{window} consecutive days with mean daily temperature over {thresh} and "
     "the first occurrence of at least {window} consecutive days with "
     "mean daily temperature below {thresh} after {mid_date}.",
     cell_methods="",

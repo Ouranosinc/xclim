@@ -37,7 +37,7 @@ class TestBuildModules:
 
 class TestICCLIM:
     def test_exists(self):
-        from xclim import ICCLIM as icclim
+        from xclim import icclim
 
         assert getattr(icclim, "TG", None) is not None
 
