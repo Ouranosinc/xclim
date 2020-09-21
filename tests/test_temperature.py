@@ -369,6 +369,23 @@ class TestConsecutiveFrostDays:
         np.testing.assert_array_equal(out, [np.nan])
 
 
+class TestFrostSeasonLength:
+    def test_simple(self, tas_series):
+        a = np.zeros(730) + K2C + 15
+        a[300:400] = K2C - 5
+        a[404:407] = K2C - 5
+        tasmin = tas_series(a, start="2000-01-01")
+        # Default, window = 5, mid_date = 07-01, freq= AS-JUL
+        out = atmos.frost_season_length(tasmin=tasmin)
+        np.testing.assert_array_equal(out, [np.nan, 107, np.nan])
+
+        out = atmos.frost_season_length(tasmin=tasmin, window=3)
+        np.testing.assert_array_equal(out, [np.nan, 100, np.nan])
+
+        out = atmos.frost_season_length(tasmin=tasmin, mid_date="07-01", freq="YS")
+        np.testing.assert_array_equal(out, [np.nan, np.nan])
+
+
 class TestColdSpellDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C

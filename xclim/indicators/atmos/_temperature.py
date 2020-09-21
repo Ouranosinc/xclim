@@ -456,10 +456,10 @@ frost_season_length = Tasmin(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Length of the frost season",
-    description=lambda **kws: "{freq} number of days between the first occurrence of at least "
-    "{window} consecutive days with minimum daily temperature below {thresh} and "
+    description="{freq} number of days between the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature below freezing and "
     "the first occurrence of at least {window} consecutive days with "
-    "minimuim daily temperature above {thresh} after {mid_date}.",
+    "minimuim daily temperature above freezing after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=wrapped_partial(indices.frost_season_length, thresh="0 degC"),
 )
