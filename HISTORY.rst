@@ -18,6 +18,7 @@ New features and enhancements
 Bug fixes
 ~~~~~~~~~
 * Fixed a bug in the attributes of `frost_season_length`.
+* `indices.run_length` methods using dates now respect the array's calendar.
 * Worked around an xarray bug in sdba.QuantileDeltaMapping when multidimensionnal arrays are used with linear or cubic interpolation.
 
 Internal changes
