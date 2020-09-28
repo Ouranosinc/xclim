@@ -289,7 +289,7 @@ class TestQDM:
 
         QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
         QDM.train(ref, hist)
-        p = QDM.adjust(sim, interp='linear' if kind == '+' else 'nearest')
+        p = QDM.adjust(sim, interp="linear" if kind == "+" else "nearest")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
