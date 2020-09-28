@@ -392,7 +392,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
         sim_q = self.group.apply(rank, sim, main_only=True, pct=True)
         sel = {dim: sim_q[dim] for dim in set(af.dims).intersection(set(sim_q.dims))}
-        sel["quantiles"] =  sim_q
+        sel["quantiles"] = sim_q
         af = broadcast(af, sim, group=self.group, interp=interp, sel=sel)
 
         return apply_correction(sim, af, self.kind)
