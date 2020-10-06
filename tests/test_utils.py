@@ -91,5 +91,5 @@ def test_ensure_chunk_size():
 
 
 def test_open_testdata():
-    ds = open_dataset("cmip6/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
+    ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
     assert ds.lon.size == 128
