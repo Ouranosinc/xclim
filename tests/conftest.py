@@ -7,7 +7,6 @@ import xarray as xr
 
 import xclim
 from xclim.core.calendar import max_doy
-from xclim.testing import open_dataset
 
 
 @pytest.fixture
