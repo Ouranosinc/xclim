@@ -7,6 +7,7 @@ import xarray as xr
 
 import xclim
 from xclim.core.calendar import max_doy
+from xclim.testing import open_dataset
 
 
 @pytest.fixture
@@ -294,7 +295,7 @@ def add_imports(xdoctest_namespace):
     """Add these imports into the doctests scope."""
     ns = xdoctest_namespace
     ns["np"] = np
-    ns["xr"] = xr
+    ns["xr"] = xclim.testing
     ns["xclim"] = xclim
 
 
