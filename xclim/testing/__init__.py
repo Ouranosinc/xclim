@@ -12,10 +12,10 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 # idea copied from xarray that borrowed it from Seaborn
 def open_dataset(
     name,
-    cache=True,
-    cache_dir=_default_cache_dir,
-    github_url="https://github.com/Ouranosinc/xclim-testdata",
-    branch="main",
+    cache: bool = True,
+    cache_dir: Path = _default_cache_dir,
+    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
+    branch: str = "main",
     **kws,
 ):
     """
@@ -28,9 +28,9 @@ def open_dataset(
     name : str
         Name of the file containing the dataset. If no suffix is given, assumed
         to be netCDF ('.nc' is appended). The name may contain
-    cache_dir : str, optional
+    cache_dir : Path
         The directory in which to search for and write cached data.
-    cache : bool, optional
+    cache : bool
         If True, then cache data locally for use on subsequent calls
     github_url : str
         Github repository where the data is stored

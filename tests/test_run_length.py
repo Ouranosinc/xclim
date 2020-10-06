@@ -6,9 +6,8 @@ import pytest
 import xarray as xr
 
 from xclim.indices import run_length as rl
+from xclim.testing import open_dataset
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
@@ -44,7 +43,7 @@ class TestRLE:
 
 
 class TestLongestRun:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         values = np.zeros(365)
@@ -58,7 +57,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1:], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
         lt_Ndim = da3d.resample(time="M").map(
@@ -78,7 +77,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1:], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[0:10] = da3d[0:10] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -101,7 +100,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[:-1], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[-10:] = da3d[-10:] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -121,7 +120,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -143,7 +142,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1], 26)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d[35] = da3d[35] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -154,7 +153,7 @@ class TestLongestRun:
 
 
 class TestFirstRun:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_run_1d(self):
         a = np.zeros(100, bool)
@@ -164,7 +163,7 @@ class TestFirstRun:
 
     def test_real_data(self):
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.first_run_ufunc, window=5)
         lt_Ndim = da3d.resample(time="M").map(
             rl.first_run, window=5, dim="time", ufunc_1dim=False
@@ -192,7 +191,7 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         a = np.zeros(50, bool)
@@ -201,7 +200,7 @@ class TestWindowedRunEvents:
         assert rl.windowed_run_events_1d(a, 3) == 2
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.windowed_run_events_ufunc, window=4)
         lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_events, window=4, dim="time", ufunc_1dim=False
@@ -210,7 +209,7 @@ class TestWindowedRunEvents:
 
 
 class TestWindowedRunCount:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         a = np.zeros(50, bool)
@@ -219,7 +218,7 @@ class TestWindowedRunCount:
         assert rl.windowed_run_count_1d(a, 3) == len(a[4:7]) + len(a[34:45])
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.windowed_run_count_ufunc, window=4)
         lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_count, window=4, dim="time", ufunc_1dim=False

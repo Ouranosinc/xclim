@@ -6,11 +6,9 @@ import pytest
 import xarray as xr
 
 from xclim.core import missing
+from xclim.testing import open_dataset
 
 K2C = 273.15
-
-TESTS_HOME = Path(__file__).absolute().parent
-TESTS_DATA = Path(TESTS_HOME, "testdata")
 
 
 class TestMissingAnyFills:
@@ -106,8 +104,8 @@ class TestMissingAnyFills:
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self):
-        fn = Path(TESTS_DATA, "Raven", "q_sim.nc")
-        ds = xr.open_dataset(fn)
+        fn = Path("Raven", "q_sim.nc")
+        ds = open_dataset(fn)
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)

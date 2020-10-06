@@ -24,9 +24,8 @@ import xarray as xr
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
 from xclim.core.units import ValidationError
+from xclim.testing import open_dataset
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
@@ -830,20 +829,18 @@ class TestTGXN10p:
 
         # Just a smoke test
         fn_clim = os.path.join(
-            TESTS_DATA,
             "CanESM2_365day",
             "tasmin_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
         )
         fn = os.path.join(
-            TESTS_DATA,
             "HadGEM2-CC_360day",
             "tasmin_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
         )
 
-        with xr.open_dataset(fn_clim) as ds:
+        with open_dataset(fn_clim) as ds:
             t10 = percentile_doy(ds.tasmin.isel(lat=0, lon=0), per=0.1)
 
-        with xr.open_dataset(fn) as ds:
+        with open_dataset(fn) as ds:
             xci.tn10p(ds.tasmin.isel(lat=0, lon=0), t10, freq="MS")
 
 
@@ -1466,10 +1463,8 @@ class TestTG:
     @pytest.fixture(scope="session")
     def cmip3_day_tas():
         # xr.set_options(enable_cftimeindex=False)
-        ds = xr.open_dataset(
-            os.path.join(
-                TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-            )
+        ds = open_dataset(
+            os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
         )
         yield ds.tas
         ds.close()
@@ -1496,15 +1491,11 @@ class TestTG:
         np.testing.assert_array_equal(icclim, ind)
 
 
-@pytest.mark.skipif(
-    not os.path.exists(os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")),
-    reason="GFWED test data must be downloaded manually to test the Fire Weather indices.",
-)
 class TestFireWeatherIndex:
-    nc_gfwed = os.path.join(TESTS_DATA, "FWI", "FWITestData.nc")
+    nc_gfwed = os.path.join("FWI", " GFWED_sample_2017.nc")
 
     def test_fire_weather_indexes(self):
-        ds = xr.open_dataset(self.nc_gfwed)
+        ds = open_dataset(self.nc_gfwed)
         fwis = xci.fire_weather_indexes(
             ds.tas,
             ds.prbc,
@@ -1545,9 +1536,7 @@ class TestFireWeatherIndex:
 @pytest.fixture(scope="session")
 def cmip3_day_tas():
     # xr.set_options(enable_cftimeindex=False)
-    ds = xr.open_dataset(
-        os.path.join(TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
-    )
+    ds = open_dataset(os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"))
     yield ds.tas
     ds.close()
 
