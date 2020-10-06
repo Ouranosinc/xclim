@@ -71,8 +71,8 @@ class TestDTR:
         tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
-        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere

@@ -191,6 +191,9 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
 
+    @pytest.mark.skip(
+        "We don't have a way of performing open_mfdataset access at the moment."
+    )
     def test_dataset(self):
         da = xr.open_mfdataset(
             [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
@@ -241,7 +244,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
         # test_irregular transposed:
-        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
+        da1 = open_dataset(self.nc_2dlonlat).tasmax
         dims = list(da1.dims)
         dims.reverse()
         daT = xr.DataArray(np.transpose(da1.values), dims=dims)
@@ -313,7 +316,7 @@ class TestSubsetGridPoint:
             subset.subset_gridpoint(
                 da, lon=-72.4, lat=46.1, start_date="2055", end_date="2052"
             )
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
+        da = open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
@@ -339,6 +342,9 @@ class TestSubsetBbox:
     lonGCM = [-70.0, -60.0]
     latGCM = [43.0, 59.0]
 
+    @pytest.mark.skip(
+        "We don't have a way of performing open_mfdataset access at the moment."
+    )
     def test_dataset(self):
         da = xr.open_mfdataset(
             [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],

@@ -1492,7 +1492,7 @@ class TestTG:
 
 
 class TestFireWeatherIndex:
-    nc_gfwed = os.path.join("FWI", " GFWED_sample_2017.nc")
+    nc_gfwed = os.path.join("FWI", "GFWED_sample_2017.nc")
 
     def test_fire_weather_indexes(self):
         ds = open_dataset(self.nc_gfwed)
