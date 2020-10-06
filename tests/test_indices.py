@@ -1517,7 +1517,7 @@ class TestFireWeatherIndex:
             )
 
     def test_drought_code(self):
-        ds = xr.open_dataset(self.nc_gfwed)
+        ds = open_dataset(self.nc_gfwed)
         dc = xci.drought_code(
             ds.tas,
             ds.prbc,
