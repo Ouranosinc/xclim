@@ -6,6 +6,7 @@ import pytest
 import xarray as xr
 
 import xclim
+import xclim.testing
 from xclim.core.calendar import max_doy
 
 
