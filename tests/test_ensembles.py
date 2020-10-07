@@ -13,9 +13,9 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
-import glob
 import os
 import sys
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -26,13 +26,27 @@ from xclim import ensembles
 from xclim.testing import open_dataset
 
 
-@pytest.mark.skip(
-    "This test is presently borked. Needs a friendlier non-glob way of accessing data."
-)
 class TestEnsembleStats:
-    nc_files_simple = glob.glob(os.path.join("EnsembleStats", "*1950-2100*.nc"))
-    nc_files = glob.glob(os.path.join("EnsembleStats", "*.nc"))
+    BCCAQv2_files = [
+        "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+    ]
 
+    BCCAQv2_1970_2050 = (
+        "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
+    )
+
+    nc_files_simple = [
+        open_dataset(os.path.join("EnsembleStats", f)) for f in BCCAQv2_files
+    ]
+    nc_files = deepcopy(nc_files_simple)
+    nc_files.append(
+        open_dataset(os.path.join("EnsembleStats", BCCAQv2_1970_2050)).load()
+    )
+
+    @pytest.mark.skip("Needs to be rewritten so as to not reload existing objects.")
     def test_create_ensemble(self):
         ens = ensembles.create_ensemble(self.nc_files_simple)
         assert len(ens.realization) == len(self.nc_files_simple)
@@ -56,8 +70,8 @@ class TestEnsembleStats:
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
 
+    @pytest.mark.skip("Needs to be rewritten so as to not reload existing objects.")
     def test_no_time(self):
-
         # create again using xr.Dataset objects
         ds_all = []
         for n in self.nc_files_simple:
