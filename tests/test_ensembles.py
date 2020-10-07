@@ -13,9 +13,9 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
-import glob
 import os
 import sys
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -26,22 +26,33 @@ from xclim import ensembles
 from xclim.testing import open_dataset
 
 
-@pytest.mark.skip(
-    "This test is presently borked. Needs a friendlier non-glob way of accessing data."
-)
 class TestEnsembleStats:
-    nc_files_simple = glob.glob(os.path.join("EnsembleStats", "*1950-2100*.nc"))
-    nc_files = glob.glob(os.path.join("EnsembleStats", "*.nc"))
+    nc_files = [
+        "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+    ]
+
+    nc_file_extra = (
+        "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
+    )
+
+    nc_datasets_simple = [
+        open_dataset(os.path.join("EnsembleStats", f)) for f in nc_files
+    ]
+    nc_datasets = deepcopy(nc_datasets_simple)
+    nc_datasets.append(open_dataset(os.path.join("EnsembleStats", nc_file_extra)))
 
     def test_create_ensemble(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
-        assert len(ens.realization) == len(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
+        assert len(ens.realization) == len(self.nc_datasets_simple)
         assert len(ens.time) == 151
 
         # create again using xr.Dataset objects
         ds_all = []
-        for n in self.nc_files_simple:
-            ds = xr.open_dataset(n, decode_times=False)
+        for n in self.nc_files:
+            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
 
@@ -57,25 +68,24 @@ class TestEnsembleStats:
             )
 
     def test_no_time(self):
-
         # create again using xr.Dataset objects
         ds_all = []
-        for n in self.nc_files_simple:
-            ds = xr.open_dataset(n, decode_times=False)
+        for n in self.nc_files:
+            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
 
         ens = ensembles.create_ensemble(ds_all)
-        assert len(ens.realization) == len(self.nc_files_simple)
+        assert len(ens.realization) == len(self.nc_files)
 
     def test_create_unequal_times(self):
-        ens = ensembles.create_ensemble(self.nc_files)
-        assert len(ens.realization) == len(self.nc_files)
+        ens = ensembles.create_ensemble(self.nc_datasets)
+        assert len(ens.realization) == len(self.nc_datasets)
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
-        ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
+        ii = [i for i, s in enumerate(self.nc_datasets) if "1970-2050" in s]
         # assert padded with nans
         assert np.all(
             np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
@@ -118,7 +128,7 @@ class TestEnsembleStats:
 
     @pytest.mark.parametrize("transpose", [False, True])
     def test_calc_perc(self, transpose):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         if transpose:
             ens = ens.transpose()
 
@@ -149,7 +159,7 @@ class TestEnsembleStats:
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
     def test_calc_perc_dask(self, keep_chunk_size):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         out2 = ensembles.ensemble_percentiles(
             ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
@@ -157,7 +167,7 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
     def test_calc_perc_nans(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple).load()
+        ens = ensembles.create_ensemble(self.nc_datasets_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
@@ -180,7 +190,7 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
     def test_calc_mean_std_min_max(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].mean(dim="realization"),
