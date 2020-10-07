@@ -1508,12 +1508,14 @@ class TestFireWeatherIndex:
             dc0=ds.DC.sel(time="2017-03-02"),
             start_date="2017-03-03",
             start_up_mode="snow_depth",
+            shut_down_mode="snow_depth",
         )
         for ind, name in zip(fwis, ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]):
-            xr.testing.assert_allclose(
-                ind.sel(time=slice("2017-03-03", None)),
-                ds[name].sel(time=slice("2017-03-03", None)),
+            np.testing.assert_allclose(
+                ind.where(ds[name].notnull()).sel(time=slice("2017-06-01", None)),
+                ds[name].sel(time=slice("2017-06-01", None)),
                 rtol=1e-4,
+                atol=1e-4,
             )
 
     def test_drought_code(self):
@@ -1526,10 +1528,13 @@ class TestFireWeatherIndex:
             dc0=ds.DC.sel(time="2017-03-02"),
             start_date="2017-03-03",
             start_up_mode="snow_depth",
+            shut_down_mode="snow_depth",
         )
-        xr.testing.assert_allclose(
-            dc.sel(time=slice("2017-03-03", None)),
-            ds.DC.sel(time=slice("2017-03-03", None)),
+        np.testing.assert_allclose(
+            dc.where(ds.DC.notnull()).sel(time=slice("2017-06-01", None)),
+            ds.DC.sel(time=slice("2017-06-01", None)),
+            rtol=1e-4,
+            atol=1e-4,
         )
 
 
