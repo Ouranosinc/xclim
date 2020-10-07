@@ -56,9 +56,9 @@ def open_dataset(
         # We may want to add an option to remove it.
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
-        url = "/".join((github_url, "raw", branch, str(fullname)))
+        url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         urlretrieve(url, local_file)
-        url = "/".join((github_url, "raw", branch, str(md5name)))
+        url = "/".join((github_url, "raw", branch, md5name.as_posix()))
         urlretrieve(url, md5file)
 
         localmd5 = file_md5_checksum(local_file)
