@@ -14,8 +14,6 @@ from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15
 
-TESTS_HOME = Path(__file__).absolute().parent
-TESTS_DATA = Path(TESTS_HOME, "testdata")
 set_options(cf_compliance="raise", data_validation="raise")
 TestObj = namedtuple("TestObj", ["test"])
 

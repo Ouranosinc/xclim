@@ -89,6 +89,11 @@ ensembles module
    :undoc-members:
    :show-inheritance:
 
+testing module
+--------------
+
+.. automodule:: xclim.testing
+    :members:
 
 subset module
 -------------

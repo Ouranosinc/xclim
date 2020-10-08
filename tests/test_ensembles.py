@@ -13,9 +13,9 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
-import glob
 import os
 import sys
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -23,26 +23,36 @@ import pytest
 import xarray as xr
 
 from xclim import ensembles
-
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+from xclim.testing import open_dataset
 
 
 class TestEnsembleStats:
-    nc_files_simple = glob.glob(
-        os.path.join(TESTS_DATA, "EnsembleStats", "*1950-2100*.nc")
+    nc_files = [
+        "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+    ]
+
+    nc_file_extra = (
+        "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
     )
-    nc_files = glob.glob(os.path.join(TESTS_DATA, "EnsembleStats", "*.nc"))
+
+    nc_datasets_simple = [
+        open_dataset(os.path.join("EnsembleStats", f)) for f in nc_files
+    ]
+    nc_datasets = deepcopy(nc_datasets_simple)
+    nc_datasets.append(open_dataset(os.path.join("EnsembleStats", nc_file_extra)))
 
     def test_create_ensemble(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
-        assert len(ens.realization) == len(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
+        assert len(ens.realization) == len(self.nc_datasets_simple)
         assert len(ens.time) == 151
 
         # create again using xr.Dataset objects
         ds_all = []
-        for n in self.nc_files_simple:
-            ds = xr.open_dataset(n, decode_times=False)
+        for n in self.nc_files:
+            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
 
@@ -58,25 +68,24 @@ class TestEnsembleStats:
             )
 
     def test_no_time(self):
-
         # create again using xr.Dataset objects
         ds_all = []
-        for n in self.nc_files_simple:
-            ds = xr.open_dataset(n, decode_times=False)
+        for n in self.nc_files:
+            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
 
         ens = ensembles.create_ensemble(ds_all)
-        assert len(ens.realization) == len(self.nc_files_simple)
+        assert len(ens.realization) == len(self.nc_files)
 
     def test_create_unequal_times(self):
-        ens = ensembles.create_ensemble(self.nc_files)
-        assert len(ens.realization) == len(self.nc_files)
+        ens = ensembles.create_ensemble(self.nc_datasets)
+        assert len(ens.realization) == len(self.nc_datasets)
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
-        ii = [i for i, s in enumerate(self.nc_files) if "1970-2050" in s]
+        ii = [i for i, s in enumerate(self.nc_datasets) if "1970-2050" in s]
         # assert padded with nans
         assert np.all(
             np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
@@ -119,7 +128,7 @@ class TestEnsembleStats:
 
     @pytest.mark.parametrize("transpose", [False, True])
     def test_calc_perc(self, transpose):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         if transpose:
             ens = ens.transpose()
 
@@ -150,7 +159,7 @@ class TestEnsembleStats:
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
     def test_calc_perc_dask(self, keep_chunk_size):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         out2 = ensembles.ensemble_percentiles(
             ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
@@ -158,7 +167,7 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
     def test_calc_perc_nans(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple).load()
+        ens = ensembles.create_ensemble(self.nc_datasets_simple).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
@@ -181,7 +190,7 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
     def test_calc_mean_std_min_max(self):
-        ens = ensembles.create_ensemble(self.nc_files_simple)
+        ens = ensembles.create_ensemble(self.nc_datasets_simple)
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].mean(dim="realization"),
@@ -201,11 +210,11 @@ class TestEnsembleStats:
 
 
 class TestEnsembleReduction:
-    nc_file = os.path.join(TESTS_DATA, "EnsembleReduce", "TestEnsReduceCriteria.nc")
+    nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
     def test_kmeans_rsqcutoff(self):
         pytest.importorskip("sklearn", minversion="0.22")
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -228,7 +237,7 @@ class TestEnsembleReduction:
 
     def test_kmeans_rsqopt(self):
         pytest.importorskip("sklearn", minversion="0.22")
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
@@ -239,7 +248,7 @@ class TestEnsembleReduction:
         assert len(ids) == 7
 
     def test_kmeans_nclust(self):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data, method={"n_clusters": 4}, random_state=42, make_graph=False
@@ -254,7 +263,7 @@ class TestEnsembleReduction:
         assert len(ids) == 9
 
     def test_kmeans_sampleweights(self):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         # Test sample weights
         sample_weights = np.ones(ds.data.shape[0])
         # boost weights for some sims
@@ -301,7 +310,7 @@ class TestEnsembleReduction:
 
     def test_kmeans_variweights(self):
         pytest.importorskip("sklearn", minversion="0.22")
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         # Test sample weights
         var_weights = np.ones(ds.data.shape[1])
         # reduce weights for some variables
@@ -345,7 +354,7 @@ class TestEnsembleReduction:
         assert len(ids) == 5
 
     def test_kmeans_modelweights(self):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         # Test sample weights
         model_weights = np.ones(ds.data.shape[0])
         model_weights[[4, 7, 10, 23]] = 0
@@ -383,7 +392,7 @@ class TestEnsembleReduction:
     )
     def test_kmeans_rsqcutoff_with_graphs(self):
         pytest.importorskip("sklearn", minversion="0.22")
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -415,14 +424,14 @@ class TestEnsembleReduction:
         ],
     )
     def test_kkz_simple(self, crit, num_select, expected):
-        ens = xr.open_dataset(self.nc_file)
+        ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=crit)
 
         selected = ensembles.kkz_reduce_ensemble(data, num_select)
         assert selected == expected
 
     def test_kkz_standardize(self):
-        ens = xr.open_dataset(self.nc_file)
+        ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
 
         sel_std = ensembles.kkz_reduce_ensemble(data, 4, standardize=True)
@@ -432,7 +441,7 @@ class TestEnsembleReduction:
 
     def test_kkz_change_metric(self):
         # This test uses stupid values but is meant to test is kwargs are passed and if dist_method is used.
-        ens = xr.open_dataset(self.nc_file)
+        ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
 
         sel_euc = ensembles.kkz_reduce_ensemble(data, 4, dist_method="euclidean")
@@ -444,7 +453,7 @@ class TestEnsembleReduction:
 
     def test_standardize_seuclidean(self):
         # This test the odd choice of standardizing data for a standardized distance metric
-        ens = xr.open_dataset(self.nc_file)
+        ens = open_dataset(self.nc_file)
         data = ens.data
         for n in np.arange(1, len(data)):
             sel1 = ensembles.kkz_reduce_ensemble(

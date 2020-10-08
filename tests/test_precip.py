@@ -6,33 +6,28 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
+from xclim.testing import open_dataset
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
 class TestRainOnFrozenGround:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     @pytest.mark.parametrize("prunits,prfac", [("kg m-2 s-1", 1), ("mm/day", 86400)])
     @pytest.mark.parametrize(
         "tasunits,tasoffset,chunks", [(None, None, {"time": 73.0}), ("C", K2C, None)]
     )
     def test_3d_data_with_nans(self, prunits, prfac, tasunits, tasoffset, chunks):
-        pr = xr.open_dataset(self.nc_pr).pr
+        pr = open_dataset(self.nc_pr).pr
         pr2 = pr.copy()
         pr2.values *= prfac
         pr2.attrs["units"] = prunits
 
-        tasmax = xr.open_dataset(self.nc_tasmax, chunks=chunks).tasmax
-        tasmin = xr.open_dataset(self.nc_tasmin, chunks=chunks).tasmin
+        tasmax = open_dataset(self.nc_tasmax, chunks=chunks).tasmax
+        tasmin = open_dataset(self.nc_tasmin, chunks=chunks).tasmin
         tas = 0.5 * (tasmax + tasmin)
         tas.attrs = tasmax.attrs
         tas2 = tas.copy()
@@ -60,15 +55,13 @@ class TestRainOnFrozenGround:
 
 class TestPrecipAccumulation:
     # TODO: replace by fixture
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
-        prMM = xr.open_dataset(self.nc_pr).pr
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        prMM = open_dataset(self.nc_pr).pr
         prMM *= 86400
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -98,8 +91,8 @@ class TestPrecipAccumulation:
 
     def test_with_different_phases(self):
         # test with different phases
-        pr = xr.open_dataset(self.nc_pr).pr  # mm/s
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin  # K
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = open_dataset(self.nc_tasmin).tasmin  # K
 
         out_tot = atmos.precip_accumulation(pr, freq="MS")
         out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
@@ -114,12 +107,12 @@ class TestPrecipAccumulation:
 
 class TestWetDays:
     # TODO: replace by fixture
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -153,12 +146,12 @@ class TestWetDays:
 class TestDailyIntensity:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -207,12 +200,12 @@ class TestMaxPrIntensity:
 class TestMax1Day:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -243,7 +236,7 @@ class TestMax1Day:
 class TestMaxNDay:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     @pytest.mark.parametrize(
         "units,factor,chunks",
@@ -255,8 +248,8 @@ class TestMaxNDay:
     )
     def test_3d_data_with_nans(self, units, factor, chunks):
         # test with 3d data
-        pr1 = xr.open_dataset(self.nc_file).pr
-        pr2 = xr.open_dataset(self.nc_file, chunks=chunks).pr
+        pr1 = open_dataset(self.nc_file).pr
+        pr2 = open_dataset(self.nc_file, chunks=chunks).pr
         pr2.values *= factor
         pr2.attrs["units"] = units
         # put a nan somewhere
@@ -279,12 +272,12 @@ class TestMaxNDay:
 
 class TestMaxConsecWetDays:
     # TODO: replace by fixture
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -318,12 +311,12 @@ class TestMaxConsecWetDays:
 
 class TestMaxConsecDryDays:
     # TODO: replace by fixture
-    nc_file = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        pr = xr.open_dataset(self.nc_file).pr
-        prMM = xr.open_dataset(self.nc_file).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere

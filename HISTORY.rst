@@ -14,6 +14,7 @@ New indicators
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New xclim.testing.open_dataset method to read data from the remote testdata repo.
 
 Bug fixes
 ~~~~~~~~~
