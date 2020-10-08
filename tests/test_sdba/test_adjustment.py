@@ -289,7 +289,7 @@ class TestQDM:
 
         QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
         QDM.train(ref, hist)
-        p = QDM.adjust(sim)
+        p = QDM.adjust(sim, interp="linear" if kind == "+" else "nearest")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
@@ -302,7 +302,8 @@ class TestQDM:
         )
 
         # Test predict
-        np.testing.assert_array_almost_equal(p.isel(**sel), ref, 1)
+        np.testing.assert_allclose(p.isel(**sel), ref, rtol=0.1, atol=0.2)
+        # np.testing.assert_array_almost_equal(p.isel(**sel), ref, 1)
 
     def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)

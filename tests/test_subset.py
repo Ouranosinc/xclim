@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim.testing import open_dataset
+
 # class TestSubsetImport:
 #     subset = pytest.importorskip('clisops.core.subset', reason="`clisops` subset utilities are not installed.")
 #     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
@@ -43,12 +45,10 @@ class TestSubsetRaises:
     subset is False, reason="`clisops` subset utilities are not installed."
 )
 class TestSubsetTime:
-    nc_poslons = os.path.join(
-        TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-    )
+    nc_poslons = os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
 
     def test_simple(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -64,7 +64,7 @@ class TestSubsetTime:
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
 
     def test_time_dates_outofbounds(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         yr_st = "1776"
         yr_ed = "2077"
 
@@ -85,7 +85,7 @@ class TestSubsetTime:
         )
 
     def test_warnings(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
 
         with pytest.raises(ValueError) as record:
             subset.subset_time(da, start_date="2059", end_date="2050")
@@ -105,7 +105,7 @@ class TestSubsetTime:
         )
 
     def test_time_start_only(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         yr_st = "2050"
 
         # start date only
@@ -130,7 +130,7 @@ class TestSubsetTime:
         np.testing.assert_array_equal(out.time.max(), da.time.max())
 
     def test_time_end_only(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         yr_ed = "2059"
 
         # end date only
@@ -149,7 +149,7 @@ class TestSubsetTime:
         np.testing.assert_array_equal(out.time.min(), da.time.min())
 
     def test_time_incomplete_years(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         yr_st = "2050"
         yr_ed = "2059"
 
@@ -170,16 +170,12 @@ class TestSubsetTime:
     subset is False, reason="`clisops` subset utilities are not installed."
 )
 class TestSubsetGridPoint:
-    nc_poslons = os.path.join(
-        TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-    )
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
+    nc_poslons = os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_2dlonlat = os.path.join("CRCM5", "tasmax_bby_198406_se.nc")
 
     def test_time_simple(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         da = da.assign_coords(lon=(da.lon - 360))
         lon = -72.4
         lat = 46.1
@@ -195,6 +191,9 @@ class TestSubsetGridPoint:
         np.testing.assert_array_equal(out.time.dt.year.max(), int(yr_ed))
         np.testing.assert_array_equal(out.time.dt.year.min(), int(yr_st))
 
+    @pytest.mark.skip(
+        "We don't have a way of performing open_mfdataset access at the moment."
+    )
     def test_dataset(self):
         da = xr.open_mfdataset(
             [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
@@ -212,7 +211,7 @@ class TestSubsetGridPoint:
     )
     @pytest.mark.parametrize("add_distance", [True, False])
     def test_simple(self, lat, lon, add_distance):
-        da = xr.open_dataset(self.nc_file).tasmax
+        da = open_dataset(self.nc_file).tasmax
 
         out = subset.subset_gridpoint(da, lon=lon, lat=lat, add_distance=add_distance)
         np.testing.assert_almost_equal(out.lon, lon, 1)
@@ -222,7 +221,7 @@ class TestSubsetGridPoint:
         assert ("distance" in out.coords) ^ (not add_distance)
 
     def test_irregular(self):
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+        da = open_dataset(self.nc_2dlonlat).tasmax
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
@@ -245,7 +244,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
         # test_irregular transposed:
-        da1 = xr.open_dataset(self.nc_2dlonlat).tasmax
+        da1 = open_dataset(self.nc_2dlonlat).tasmax
         dims = list(da1.dims)
         dims.reverse()
         daT = xr.DataArray(np.transpose(da1.values), dims=dims)
@@ -297,7 +296,7 @@ class TestSubsetGridPoint:
         assert gp.site == 0
 
     def test_positive_lons(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         lon = -72.4
         lat = 46.1
         out = subset.subset_gridpoint(da, lon=lon, lat=lat)
@@ -309,7 +308,7 @@ class TestSubsetGridPoint:
         np.testing.assert_almost_equal(out.lat, lat, 1)
 
     def test_raise(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_gridpoint(
                 da, lon=-72.4, lat=46.1, start_date="2055-03-15", end_date="2055-03-14"
@@ -317,12 +316,12 @@ class TestSubsetGridPoint:
             subset.subset_gridpoint(
                 da, lon=-72.4, lat=46.1, start_date="2055", end_date="2052"
             )
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
+        da = open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_gridpoint(da, lon=-72.4, lat=46.1)
 
     def test_tolerance(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         lon = -72.5
         lat = 46.2
         out = subset.subset_gridpoint(da, lon=lon, lat=lat, tolerance=1)
@@ -335,18 +334,17 @@ class TestSubsetGridPoint:
     subset is False, reason="`clisops` subset utilities are not installed."
 )
 class TestSubsetBbox:
-    nc_poslons = os.path.join(
-        TESTS_DATA, "cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"
-    )
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_2dlonlat = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
+    nc_poslons = os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_2dlonlat = os.path.join("CRCM5", "tasmax_bby_198406_se.nc")
     lon = [-75.4, -68]
     lat = [44.1, 47.1]
     lonGCM = [-70.0, -60.0]
     latGCM = [43.0, 59.0]
 
+    @pytest.mark.skip(
+        "We don't have a way of performing open_mfdataset access at the moment."
+    )
     def test_dataset(self):
         da = xr.open_mfdataset(
             [self.nc_file, self.nc_file.replace("tasmax", "tasmin")],
@@ -360,7 +358,7 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.tasmin.shape, out.tasmax.shape)
 
     def test_simple(self):
-        da = xr.open_dataset(self.nc_file).tasmax
+        da = open_dataset(self.nc_file).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
         assert out.lon.values.size != 0
@@ -370,7 +368,7 @@ class TestSubsetBbox:
         assert np.all(out.lat.values >= np.min(self.lat))
         assert np.all(out.lat <= np.max(self.lat))
 
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         da = da.assign_coords(lon=(da.lon - 360))
         yr_st = 2050
         yr_ed = 2059
@@ -418,7 +416,7 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.dt.year.min(), da.time.dt.year.min())
 
     def test_irregular(self):
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+        da = open_dataset(self.nc_2dlonlat).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
@@ -434,7 +432,7 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1.values] <= np.max(self.lat))
 
     def test_irregular_dataset(self):
-        da = xr.open_dataset(self.nc_2dlonlat)
+        da = open_dataset(self.nc_2dlonlat)
         out = subset.subset_bbox(da, lon_bnds=[-150, 100], lat_bnds=[10, 60])
         variables = list(da.data_vars)
         variables.pop(variables.index("tasmax"))
@@ -473,7 +471,7 @@ class TestSubsetBbox:
         assert np.all(out.lat <= np.max(self.lat))
 
     def test_badly_named_latlons(self):
-        da = xr.open_dataset(self.nc_file)
+        da = open_dataset(self.nc_file)
         extended_latlons = {"lat": "latitude", "lon": "longitude"}
         da_extended_names = da.rename(extended_latlons)
         out = subset.subset_bbox(
@@ -492,7 +490,7 @@ class TestSubsetBbox:
         assert {"lons", "lats"}.issubset(out.dims)
 
     def test_single_bounds_rectilinear(self):
-        da = xr.open_dataset(self.nc_file).tasmax
+        da = open_dataset(self.nc_file).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon)
         assert out.lon.values.size != 0
@@ -509,7 +507,7 @@ class TestSubsetBbox:
         assert np.all(out.lat.values >= np.min(self.lat))
 
     def test_single_bounds_curvilinear(self):
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax
+        da = open_dataset(self.nc_2dlonlat).tasmax
 
         out = subset.subset_bbox(da, lon_bnds=self.lon)
         assert out.lon.values.size != 0
@@ -526,7 +524,7 @@ class TestSubsetBbox:
         assert np.all(out.lat.values[mask1.values] >= np.min(self.lat))
 
     def test_positive_lons(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
 
         out = subset.subset_bbox(da, lon_bnds=self.lonGCM, lat_bnds=self.latGCM)
         assert out.lon.values.size != 0
@@ -542,7 +540,7 @@ class TestSubsetBbox:
         assert np.all(out.lon >= np.min(np.asarray(self.lonGCM) + 360))
 
     def test_time(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         da = da.assign_coords(lon=(da.lon - 360))
 
         out = subset.subset_bbox(
@@ -586,7 +584,7 @@ class TestSubsetBbox:
         np.testing.assert_array_equal(out.time.max().dt.day, 15)
 
     def test_raise(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         with pytest.raises(ValueError):
             subset.subset_bbox(
                 da,
@@ -596,12 +594,12 @@ class TestSubsetBbox:
                 end_date="2055",
             )
 
-        da = xr.open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
+        da = open_dataset(self.nc_2dlonlat).tasmax.drop_vars(names=["lon", "lat"])
         with pytest.raises(Exception):
             subset.subset_bbox(da, lon_bnds=self.lon, lat_bnds=self.lat)
 
     def test_warnings(self):
-        da = xr.open_dataset(self.nc_poslons).tas
+        da = open_dataset(self.nc_poslons).tas
         da = da.assign_coords(lon=(da.lon - 360))
 
         with pytest.raises(TypeError):
@@ -627,20 +625,16 @@ class TestSubsetBbox:
     subset is False, reason="`clisops` subset utilities are not installed."
 )
 class TestSubsetShape:
-    nc_file = os.path.join(
-        TESTS_DATA, "cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"
-    )
-    lons_2d_nc_file = os.path.join(TESTS_DATA, "CRCM5", "tasmax_bby_198406_se.nc")
-    nc_file_neglons = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    meridian_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian.json")
-    meridian_multi_geojson = os.path.join(TESTS_DATA, "cmip5", "meridian_multi.json")
-    poslons_geojson = os.path.join(TESTS_DATA, "cmip5", "poslons.json")
-    eastern_canada_geojson = os.path.join(TESTS_DATA, "cmip5", "eastern_canada.json")
-    southern_qc_geojson = os.path.join(TESTS_DATA, "cmip5", "southern_qc_geojson.json")
-    small_geojson = os.path.join(TESTS_DATA, "cmip5", "small_geojson.json")
-    multi_regions_geojson = os.path.join(TESTS_DATA, "cmip5", "multi_regions.json")
+    nc_file = os.path.join("cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+    lons_2d_nc_file = os.path.join("CRCM5", "tasmax_bby_198406_se.nc")
+    nc_file_neglons = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    meridian_geojson = os.path.join(TESTS_DATA, "meridian.json")
+    meridian_multi_geojson = os.path.join(TESTS_DATA, "meridian_multi.json")
+    poslons_geojson = os.path.join(TESTS_DATA, "poslons.json")
+    eastern_canada_geojson = os.path.join(TESTS_DATA, "eastern_canada.json")
+    southern_qc_geojson = os.path.join(TESTS_DATA, "southern_qc_geojson.json")
+    small_geojson = os.path.join(TESTS_DATA, "small_geojson.json")
+    multi_regions_geojson = os.path.join(TESTS_DATA, "multi_regions.json")
 
     @staticmethod
     def compare_vals(ds, sub, vari, flag_2d=False):
@@ -669,7 +663,7 @@ class TestSubsetShape:
 
     @pytest.mark.parametrize("vectorize", [True, False])
     def test_wraps(self, tmp_netcdf_filename, vectorize):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
         with pytest.warns(UserWarning):
@@ -701,7 +695,7 @@ class TestSubsetShape:
 
     @pytest.mark.parametrize("vectorize", [True, False])
     def test_no_wraps(self, tmp_netcdf_filename, vectorize):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         with pytest.warns(None) as record:
             sub = subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
@@ -732,7 +726,7 @@ class TestSubsetShape:
             subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
 
     def test_all_neglons(self):
-        ds = xr.open_dataset(self.nc_file_neglons)
+        ds = open_dataset(self.nc_file_neglons)
 
         with pytest.warns(None) as record:
             sub = subset.subset_shape(ds, self.southern_qc_geojson)
@@ -751,7 +745,7 @@ class TestSubsetShape:
         )
 
     def test_rotated_pole_with_time(self):
-        ds = xr.open_dataset(self.lons_2d_nc_file)
+        ds = open_dataset(self.lons_2d_nc_file)
 
         with pytest.warns(None) as record:
             sub = subset.subset_shape(
@@ -777,7 +771,7 @@ class TestSubsetShape:
         )
 
     def test_small_poly_buffer(self, tmp_netcdf_filename):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
 
         with pytest.raises(ValueError):
             subset.subset_shape(ds, self.small_geojson)
@@ -799,7 +793,7 @@ class TestSubsetShape:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
 
     def test_mask_multiregions(self):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         regions = gpd.read_file(self.multi_regions_geojson)
         regions.set_index("id")
         mask = subset.create_mask(
@@ -810,7 +804,7 @@ class TestSubsetShape:
         assert all(counts == [58, 250, 22])
 
     def test_subset_multiregions(self):
-        ds = xr.open_dataset(self.nc_file)
+        ds = open_dataset(self.nc_file)
         regions = gpd.read_file(self.multi_regions_geojson)
         regions.set_index("id")
         ds_sub = subset.subset_shape(ds, shape=regions)

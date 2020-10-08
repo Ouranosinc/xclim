@@ -6,9 +6,8 @@ import xarray as xr
 
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
+from xclim.testing import open_dataset
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
@@ -64,20 +63,16 @@ class TestCSDI:
 
 
 class TestDTR:
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_DTR_3d_data_with_nans(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
-        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -108,20 +103,16 @@ class TestDTR:
 
 
 class TestDTRVar:
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_dtr_var_3d_data_with_nans(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
-        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -145,20 +136,16 @@ class TestDTRVar:
 
 
 class TestETR:
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_dtr_var_3d_data_with_nans(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmax_C = xr.open_dataset(self.nc_tasmax).tasmax
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
-        tasmin_C = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -182,13 +169,13 @@ class TestETR:
 
 class TestTmean:
     nc_files = (
-        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
-        os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
+        os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
+        os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
     def test_Tmean_3d_data(self):
-        ds_tmax = xr.open_dataset(self.nc_files[0])
-        ds_tmin = xr.open_dataset(self.nc_files[1])
+        ds_tmax = open_dataset(self.nc_files[0])
+        ds_tmin = open_dataset(self.nc_files[1])
         tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
@@ -213,13 +200,11 @@ class TestTmean:
 
 
 class TestTx:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_TX_3d_data(self):
-        tasmax = xr.open_dataset(self.nc_file).tasmax
-        tasmax_C = xr.open_dataset(self.nc_file).tasmax
+        tasmax = open_dataset(self.nc_file).tasmax
+        tasmax_C = open_dataset(self.nc_file).tasmax
         tasmax_C.values -= K2C
         tasmax_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -265,13 +250,11 @@ class TestTx:
 
 
 class TestTn:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_TN_3d_data(self):
-        tasmin = xr.open_dataset(self.nc_file).tasmin
-        tasmin_C = xr.open_dataset(self.nc_file).tasmin
+        tasmin = open_dataset(self.nc_file).tasmin
+        tasmin_C = open_dataset(self.nc_file).tasmin
         tasmin_C.values -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -425,14 +408,12 @@ class TestColdSpellDays:
 
 
 class TestFrostDays:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tasmin = xr.open_dataset(self.nc_file).tasmin
-        tasminC = xr.open_dataset(self.nc_file).tasmin
+        tasmin = open_dataset(self.nc_file).tasmin
+        tasminC = open_dataset(self.nc_file).tasmin
         tasminC -= K2C
         tasminC.attrs["units"] = "C"
         # put a nan somewhere
@@ -459,14 +440,12 @@ class TestFrostDays:
 
 
 class TestIceDays:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
-        tasC = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
+        tasC = open_dataset(self.nc_file).tasmax
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -491,13 +470,11 @@ class TestIceDays:
 
 
 class TestCoolingDegreeDays:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
@@ -518,7 +495,7 @@ class TestCoolingDegreeDays:
 
     def test_convert_units(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         tas.values -= K2C
         tas.attrs["units"] = "C"
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -544,13 +521,11 @@ class TestCoolingDegreeDays:
 
 
 class TestHeatingDegreeDays:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -570,7 +545,7 @@ class TestHeatingDegreeDays:
 
     def test_convert_units(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas.values -= K2C
@@ -592,13 +567,11 @@ class TestHeatingDegreeDays:
 
 
 class TestGrowingDegreeDays:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
@@ -768,16 +741,12 @@ class TestHeatWaveIndex:
 
 
 class TestDailyFreezeThaw:
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
 
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
@@ -802,8 +771,8 @@ class TestDailyFreezeThaw:
         assert np.isnan(frzthw.values[0, -1, -1])
 
     def test_convert_units(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
         tasmax.values -= K2C
         tasmax.attrs["units"] = "C"
         tasmin.values -= K2C
@@ -895,14 +864,12 @@ class TestGrowingSeasonLength:
 
 
 class TestTnDaysBelow:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmin
-        tasC = xr.open_dataset(self.nc_file).tasmin
+        tas = open_dataset(self.nc_file).tasmin
+        tasC = open_dataset(self.nc_file).tasmin
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -927,14 +894,12 @@ class TestTnDaysBelow:
 
 
 class TestTxDaysAbove:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmax
-        tasC = xr.open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.nc_file).tasmax
+        tasC = open_dataset(self.nc_file).tasmax
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -959,14 +924,12 @@ class TestTxDaysAbove:
 
 
 class TestTropicalNights:
-    nc_file = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
         # test with 3d data
-        tas = xr.open_dataset(self.nc_file).tasmin
-        tasC = xr.open_dataset(self.nc_file).tasmin
+        tas = open_dataset(self.nc_file).tasmin
+        tasC = open_dataset(self.nc_file).tasmin
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -992,19 +955,15 @@ class TestTropicalNights:
 
 
 class TestTxTnDaysAbove:
-    nc_tasmax = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"
-    )
-    nc_tasmin = os.path.join(
-        TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"
-    )
+    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self):
-        tasmax = xr.open_dataset(self.nc_tasmax).tasmax
-        tasmin = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
 
-        tasmaxC = xr.open_dataset(self.nc_tasmax).tasmax
-        tasminC = xr.open_dataset(self.nc_tasmin).tasmin
+        tasmaxC = open_dataset(self.nc_tasmax).tasmax
+        tasminC = open_dataset(self.nc_tasmin).tasmin
         tasmaxC -= K2C
         tasmaxC.attrs["units"] = "C"
         tasminC -= K2C

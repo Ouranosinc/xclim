@@ -447,6 +447,8 @@ def fire_weather_indexes(
         ffmc0=ffmc0,
         snd=snd,
         indices=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"],
+        shut_down_mode=shut_down_mode,
+        start_up_mode=start_up_mode,
         **params,
     )
     return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
