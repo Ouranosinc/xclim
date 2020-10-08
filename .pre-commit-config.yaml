@@ -13,6 +13,7 @@ repos:
     -   id: nbstripout
         language_version: python3
         files: ".ipynb"
+        args: ["--dry-run"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
