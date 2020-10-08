@@ -97,8 +97,8 @@ jobs:
           - pip install -e .[dev]
       script:
           - py.test --cov=xclim
-#    - if: type = push
-    - env:
+    - if: type = push
+      env:
         - TOXENV=py37-windows
         - DESIRED_PYTHON=3.7
         - MINICONDA_PATH=$(cygpath --windows /c/miniconda)
