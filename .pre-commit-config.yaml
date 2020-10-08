@@ -21,6 +21,7 @@ repos:
         language_version: python3
     -   id: end-of-file-fixer
         language_version: python3
+        exclude: ".ipynb"
     -   id: check-yaml
         language_version: python3
     -   id: debug-statements
