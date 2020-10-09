@@ -179,6 +179,10 @@ def test_missing(tas_series):
         m = ind(a, freq="MS")
         assert not m[0].isnull()
 
+    with xclim.set_options(check_missing="wmo"):
+        m = ind(a, freq="YS")
+        assert m[0].isnull()
+
     # With freq=None
     c = clim(a)
     assert c.isnull()

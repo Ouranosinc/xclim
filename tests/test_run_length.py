@@ -6,9 +6,8 @@ import pytest
 import xarray as xr
 
 from xclim.indices import run_length as rl
+from xclim.testing import open_dataset
 
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 K2C = 273.15
 
 
@@ -44,7 +43,7 @@ class TestRLE:
 
 
 class TestLongestRun:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         values = np.zeros(365)
@@ -58,7 +57,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1:], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         # override 'auto' usage of ufunc for small number of gridpoints
         lt_Ndim = da3d.resample(time="M").map(
@@ -78,7 +77,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1:], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[0:10] = da3d[0:10] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -101,7 +100,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[:-1], 0)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0
         da3d[-10:] = da3d[-10:] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -121,7 +120,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
         lt_Ndim = da3d.resample(time="M").map(
@@ -143,7 +142,7 @@ class TestLongestRun:
         np.testing.assert_array_equal(lt[1], 26)
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] * 0 + 1
         da3d[35] = da3d[35] + 1
         da3d = da3d == 1
         lt_orig = da3d.resample(time="M").map(rl.longest_run_ufunc)
@@ -154,7 +153,7 @@ class TestLongestRun:
 
 
 class TestFirstRun:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_run_1d(self):
         a = np.zeros(100, bool)
@@ -164,7 +163,7 @@ class TestFirstRun:
 
     def test_real_data(self):
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.first_run_ufunc, window=5)
         lt_Ndim = da3d.resample(time="M").map(
             rl.first_run, window=5, dim="time", ufunc_1dim=False
@@ -192,7 +191,7 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         a = np.zeros(50, bool)
@@ -201,7 +200,7 @@ class TestWindowedRunEvents:
         assert rl.windowed_run_events_1d(a, 3) == 2
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.windowed_run_events_ufunc, window=4)
         lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_events, window=4, dim="time", ufunc_1dim=False
@@ -210,7 +209,7 @@ class TestWindowedRunEvents:
 
 
 class TestWindowedRunCount:
-    nc_pr = os.path.join(TESTS_DATA, "NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
         a = np.zeros(50, bool)
@@ -219,7 +218,7 @@ class TestWindowedRunCount:
         assert rl.windowed_run_count_1d(a, 3) == len(a[4:7]) + len(a[34:45])
 
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         lt_orig = da3d.resample(time="M").map(rl.windowed_run_count_ufunc, window=4)
         lt_Ndim = da3d.resample(time="M").map(
             rl.windowed_run_count, window=4, dim="time", ufunc_1dim=False
@@ -255,7 +254,7 @@ class TestRunsWithDates:
             ("07-01", 210, 70),
             ("07-01", 190, 50),
             ("04-01", 150, np.NaN),  # date falls early
-            ("11-01", 150, 164),  # date ends late
+            ("11-01", 150, 165),  # date ends late
             (None, 150, 10),  # no date, real length
         ],
     )
@@ -284,7 +283,7 @@ class TestRunsWithDates:
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
             ("dayofyear", "04-01", 150, np.NaN),  # date falls early
-            ("dayofyear", "11-01", 150, 305),  # date ends late
+            ("dayofyear", "11-01", 150, 306),  # date ends late
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
@@ -307,7 +306,7 @@ class TestRunsWithDates:
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
             ("dayofyear", "04-01", False, np.NaN),  # no run
-            ("dayofyear", "11-01", 150, 305),  # run already started
+            ("dayofyear", "11-01", 150, 306),  # run already started
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
@@ -332,8 +331,8 @@ class TestRunsWithDates:
     @pytest.mark.parametrize(
         "coord,date,end,expected",
         [
-            ("dayofyear", "07-01", 210, 182),
-            (False, "07-01", 190, 181),
+            ("dayofyear", "07-01", 210, 183),
+            (False, "07-01", 190, 182),
             ("dayofyear", "04-01", 150, np.NaN),  # date falls early
             ("dayofyear", "11-01", 150, 150),  # date ends late
         ],
@@ -372,6 +371,55 @@ class TestRunsWithDates:
 
         out = runs.resample(time="MS").map(func, window=1, date="07-01", dim="time")
         assert out.isnull().all()
+
+    @pytest.mark.parametrize(
+        "calendar,expected",
+        [("standard", [61, 60]), ("365_day", [60, 60]), ("366_day", [61, 61])],
+    )
+    def test_run_with_dates_different_calendars(self, calendar, expected):
+        time = xr.cftime_range(
+            "2004-01-01", end="2005-12-31", freq="D", calendar=calendar
+        )
+        tas = np.zeros(time.size)
+        start = np.where((time.day == 1) & (time.month == 3))[0]
+        tas[start[0] : start[0] + 250] = 5
+        tas[start[1] : start[1] + 250] = 5
+        tas = xr.DataArray(tas, coords={"time": time}, dims=("time",))
+        out = (
+            (tas > 0)
+            .resample(time="AS-MAR")
+            .map(rl.first_run_after_date, date="03-01", window=2)
+        )
+        np.testing.assert_array_equal(out.values[1:], expected)
+
+        out = (
+            (tas > 0)
+            .resample(time="AS-MAR")
+            .map(rl.season_length, date="03-02", window=2)
+        )
+        np.testing.assert_array_equal(out.values[1:], [250, 250])
+
+        out = (
+            (tas > 0)
+            .resample(time="AS-MAR")
+            .map(rl.run_end_after_date, date="03-03", window=2)
+        )
+        np.testing.assert_array_equal(out.values[1:], np.array(expected) + 250)
+
+        out = (
+            (tas > 0)
+            .resample(time="AS-MAR")
+            .map(rl.last_run_before_date, date="03-02", window=2)
+        )
+        np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
+
+    @pytest.mark.parametrize(
+        "func", [rl.first_run_after_date, rl.season_length, rl.run_end_after_date]
+    )
+    def test_too_many_dates(self, func, tas_series):
+        tas = tas_series(np.zeros(730), start="2000-01-01")
+        with pytest.raises(ValueError, match="More than 1 instance of date"):
+            func((tas == 0), date="03-01", window=5)
 
 
 @pytest.mark.parametrize("use_dask", [True, False])

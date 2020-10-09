@@ -266,6 +266,16 @@ class MissingWMO(MissingAny):
 
         super().__init__(da, freq, src_timestep, **indexer)
 
+    @classmethod
+    def execute(cls, da, freq, src_timestep, options, indexer):
+        """Create the instance and call it in one operation."""
+        if freq[0] not in ["Y", "A", "Q", "M"]:
+            raise ValueError(
+                "MissingWMO can only be used with Monthly or longer frequencies."
+            )
+        obj = cls(da, "MS", src_timestep, **indexer)
+        return obj(**options).resample(time=freq).any()
+
     def is_missing(self, null, count, nm=11, nc=5):
         from xclim.indices import run_length as rl
 
@@ -315,7 +325,7 @@ class MissingPct(MissingBase):
         if tolerance < 0 or tolerance > 1:
             raise ValueError("tolerance should be between 0 and 1.")
 
-        n = count - null.count(dim="time") + null.sum(dim="time")
+        n = count - null.count(dim="time").fillna(0) + null.sum(dim="time").fillna(0)
         return n / count >= tolerance
 
     @staticmethod
@@ -353,7 +363,7 @@ class AtLeastNValid(MissingBase):
 
         The result of a reduction operation is considered missing if less than `n` values are valid.
         """
-        nvalid = null.count(dim="time") - null.sum(dim="time")
+        nvalid = null.count(dim="time").fillna(0) - null.sum(dim="time").fillna(0)
         return nvalid < n
 
     @staticmethod
@@ -388,7 +398,7 @@ class FromContext(MissingBase):
         kls = MISSING_METHODS[name]
         opts = OPTIONS[MISSING_OPTIONS][name]
 
-        return kls(da, freq, src_timestep, **indexer)(**opts)
+        return kls.execute(da, freq, src_timestep, opts, indexer)
 
 
 # --------------------------

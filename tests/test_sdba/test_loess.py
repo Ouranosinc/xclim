@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim.sdba.loess import (
     _constant_regression,
@@ -12,9 +11,7 @@ from xclim.sdba.loess import (
     _tricube_weighting,
     loess_smoothing,
 )
-
-TESTS_HOME = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+from xclim.testing import open_dataset
 
 
 @pytest.mark.parametrize(
@@ -39,8 +36,8 @@ def test_loess_nb(d, f, w, n, exp):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_loess_smoothing(use_dask):
-    tas = xr.open_dataset(
-        os.path.join(TESTS_DATA, "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc"),
+    tas = open_dataset(
+        os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"),
         chunks={"lat": 1} if use_dask else None,
     ).tas.isel(lon=0, time=slice(0, 730))
 

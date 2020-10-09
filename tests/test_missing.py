@@ -6,11 +6,9 @@ import pytest
 import xarray as xr
 
 from xclim.core import missing
+from xclim.testing import open_dataset
 
 K2C = 273.15
-
-TESTS_HOME = Path(__file__).absolute().parent
-TESTS_DATA = Path(TESTS_HOME, "testdata")
 
 
 class TestMissingAnyFills:
@@ -106,8 +104,8 @@ class TestMissingAnyFills:
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self):
-        fn = Path(TESTS_DATA, "Raven", "q_sim.nc")
-        ds = xr.open_dataset(fn)
+        fn = Path("Raven", "q_sim.nc")
+        ds = open_dataset(fn)
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)
@@ -166,6 +164,12 @@ class TestMissingPct:
         out = missing.missing_pct(pr, freq="MS", tolerance=0.01)
         np.testing.assert_array_equal(out, [True, False, True])
 
+    def test_missing_period(self, tas_series):
+        tas = tas_series(np.ones(366), start="2000-01-01")
+        tas = tas.sel(time=tas.time.dt.month.isin([1, 2, 3, 4, 12]))
+        out = missing.missing_pct(tas, freq="MS", tolerance=0.9, src_timestep="D")
+        np.testing.assert_array_equal(out, [False] * 4 + [True] * 7 + [False])
+
 
 class TestAtLeastNValid:
     def test_at_least_n_valid(self, tas_series):
@@ -182,3 +186,9 @@ class TestAtLeastNValid:
         pr = pr_hr_series(a)
         out = missing.at_least_n_valid(pr, freq="MS", n=25 * 24)
         np.testing.assert_array_equal(out, [True, False, True])
+
+    def test_missing_period(self, tas_series):
+        tas = tas_series(np.ones(366), start="2000-01-01")
+        tas = tas.sel(time=tas.time.dt.month.isin([1, 2, 3, 4, 12]))
+        out = missing.missing_pct(tas, freq="MS", tolerance=0.9, src_timestep="D")
+        np.testing.assert_array_equal(out, [False] * 4 + [True] * 7 + [False])

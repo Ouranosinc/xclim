@@ -349,14 +349,11 @@ def season_length(
     not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
     if date is not None:
         # Mask also values after "date"
-        include_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
-
-        mid_index = np.where(da.time.dt.dayofyear == include_date)[0]
-        if (
-            mid_index.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
+        mid_idx = index_of_date(da.time, date, max_idxs=1)
+        if mid_idx.size == 0:
+            # The date is not within the group. Happens at boundaries.
             return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
-        not_da = not_da.where(da.time >= da.time[mid_index][0])
+        not_da = not_da.where(da.time >= da.time[mid_idx][0])
 
     end = first_run(
         not_da,
@@ -369,7 +366,7 @@ def season_length(
         beg.notnull() & end.isnull(), da.time.size - beg, sl
     )  # If series is not ended by end of resample time frequency
     if date is not None:
-        sl = sl.where(beg < mid_index.squeeze())
+        sl = sl.where(beg < mid_idx.squeeze())
     sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
     return sl
 
@@ -405,9 +402,7 @@ def run_end_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
-
-    mid_idx = np.where(da.time.dt.dayofyear == after_date)[0]
+    mid_idx = index_of_date(da.time, date, max_idxs=1)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -421,7 +416,7 @@ def run_end_after_date(
     end = xr.where(
         end.isnull() & beg.notnull(), da.time.isel(time=-1).dt.dayofyear, end
     )
-    return end.where(beg.notnull())
+    return end.where(beg.notnull()).drop_vars("time")
 
 
 def first_run_after_date(
@@ -453,9 +448,7 @@ def first_run_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
     """
-    after_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
-
-    mid_idx = np.where(da.time.dt.dayofyear == after_date)[0]
+    mid_idx = index_of_date(da.time, date, max_idxs=1)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -496,9 +489,8 @@ def last_run_before_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    before_date = datetime.strptime(date, "%m-%d").timetuple().tm_yday
+    mid_idx = index_of_date(da.time, date)
 
-    mid_idx = np.where(da.time.dt.dayofyear == before_date)[0]
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -797,3 +789,35 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = No
         dask="parallelized",
         output_dtypes=[da.dtype],
     )
+
+
+def index_of_date(time: xr.DataArray, date: str, max_idxs: Optional[int] = None):
+    """Get the index of a date in a time array.
+
+    Parameters
+    ----------
+    time : xr.DataArray
+      An array of datetime values, any calendar.
+    date : str
+      A string in the "yyyy-mm-dd" or "mm-dd" format.
+
+    Returns
+    -------
+    ndarray
+      1D array of integers, indexes of `date` in `time`.
+    """
+    try:
+        date = datetime.strptime(date, "%Y-%m-%d")
+        year_cond = time.dt.year == date.year
+    except ValueError:
+        date = datetime.strptime(date, "%m-%d")
+        year_cond = True
+
+    idxs = np.where(
+        year_cond & (time.dt.month == date.month) & (time.dt.day == date.day)
+    )[0]
+    if max_idxs is not None and idxs.size > max_idxs:
+        raise ValueError(
+            f"More than {max_idxs} instance of date {date} found in the coordinate array."
+        )
+    return idxs

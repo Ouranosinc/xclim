@@ -19,9 +19,7 @@ from xclim.core.calendar import (
     percentile_doy,
     time_bnds,
 )
-
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+from xclim.testing import open_dataset
 
 
 @pytest.fixture(
@@ -117,7 +115,7 @@ def test_adjust_doy_360_to_366():
     ],
 )
 def test_get_calendar(file, cal, maxdoy):
-    with xr.open_dataset(os.path.join(TESTS_DATA, *file)) as ds:
+    with open_dataset(os.path.join(*file)) as ds:
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy
