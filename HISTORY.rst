@@ -7,7 +7,7 @@ History
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-
+* Statistical functions (`frequency_analysis`, `fa`, `fit`, `parametric_quantile`) moved from `indices.generic` to `indices.stats` to make them more visible.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -15,6 +15,7 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New xclim.testing.open_dataset method to read data from the remote testdata repo.
+* New notebook on frequency analysis.
 
 Bug fixes
 ~~~~~~~~~
