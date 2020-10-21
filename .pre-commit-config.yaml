@@ -13,13 +13,12 @@ repos:
     -   id: nbstripout
         language_version: python3
         files: ".ipynb"
-#        args: ["--dry-run"]
+        args: ["--dry-run"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
         language_version: python3
-        exclude: ".ipynb"
     -   id: end-of-file-fixer
         language_version: python3
         exclude: ".ipynb"
