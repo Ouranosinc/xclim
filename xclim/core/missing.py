@@ -306,7 +306,7 @@ class MissingPct(MissingBase):
     freq : str
       Resampling frequency.
     tolerance : float
-      Fraction of missing values that is tolerated.
+      Fraction of missing values that is tolerated [0,1].
     src_timestep : {"D", "H"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
