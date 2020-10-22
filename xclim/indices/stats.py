@@ -1,3 +1,5 @@
+"""Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+
 from typing import Optional, Sequence, Union
 
 import dask.array
