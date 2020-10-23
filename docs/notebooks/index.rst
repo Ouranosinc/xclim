@@ -8,6 +8,7 @@ Examples
    example
    ensembles
    ensembles-advanced
+   frequency_analysis
    customize
    mappings
    sdba

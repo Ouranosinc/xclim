@@ -4,6 +4,8 @@ from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
 from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
+from xclim.indices.stats import fit as _fit
+from xclim.indices.stats import frequency_analysis
 
 __all__ = [
     "base_flow_index",
@@ -64,7 +66,7 @@ freq_analysis = FA(
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
     "estimated using the {dist} distribution.",
     title="Flow values for given return periods.",
-    compute=generic.frequency_analysis,
+    compute=frequency_analysis,
 )
 
 rb_flashiness_index = Streamflow(
@@ -95,7 +97,7 @@ fit = Fit(
     description="Parameters of the {dist} distribution",
     title="Distribution parameters fitted over the time dimension.",
     cell_methods="time: fit",
-    compute=generic.fit,
+    compute=_fit,
 )
 
 
