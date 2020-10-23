@@ -16,7 +16,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New xclim.testing.open_dataset method to read data from the remote testdata repo.
 * Added a notebook, `ensembles-advanced.ipynb`, to the documentation detailing ensemble reduction techniques and showing how to make use of built-in figure-generating commands.
-* Added a notebook, `frequency_analysis.ipynb`, with examples showcasing on frequency analysis.
+* Added a notebook, `frequency_analysis.ipynb`, with examples showcasing frequency analysis capabilities.
 
 Bug fixes
 ~~~~~~~~~
