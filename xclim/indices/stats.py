@@ -8,7 +8,19 @@ import xarray as xr
 
 from xclim.core.formatting import update_history
 
-from .generic import default_freq, select_resample_op
+from . import generic
+
+__all__ = [
+    "fit",
+    "parametric_quantile",
+    "fa",
+    "frequency_analysis",
+    "get_dist",
+    "get_lm3_dist",
+    "_fit_start",
+    "_lm3_dist_map",
+]
+
 
 # Map the scipy distribution name to the lmoments3 name. Distributions with mismatched parameters are excluded.
 _lm3_dist_map = {
@@ -273,10 +285,10 @@ def frequency_analysis(
         da.attrs.update(attrs)
 
     # Assign default resampling frequency if not provided
-    freq = freq or default_freq(**indexer)
+    freq = freq or generic.default_freq(**indexer)
 
     # Extract the time series of min or max over the period
-    sel = select_resample_op(da, op=mode, freq=freq, **indexer)
+    sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
 
     # Frequency analysis
     return fa(sel, t, dist, mode)

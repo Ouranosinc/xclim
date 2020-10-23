@@ -6,10 +6,38 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+import warnings
+
 # Note: scipy.stats.dist.shapes: comma separated names of shape parameters
 # The other parameters, common to all distribution, are loc and scale.
 import numpy as np
 import xarray as xr
+
+from .stats import __all__
+
+__all__ = [x for x in __all__]
+
+warnings.warn(
+    f"xclim.indices.generic has been refactored in xclim v0.21.0 and has moved several functions to 'xclim.indices.stats'. "
+    f"The affected functions are as follows: `{'`, `'.join(__all__)}`. "
+    f"They have been made available here for your convenience. This functionality will change in xclim v0.22.0. "
+    f"Please update your scripts accordingly.",
+    UserWarning,
+    stacklevel=2,
+)
+
+__all__.extend(
+    [
+        "select_time",
+        "select_resample_op",
+        "doymax",
+        "doymin",
+        "default_freq",
+        "threshold_count",
+        "get_daily_events",
+        "daily_downsampler",
+    ]
+)
 
 
 def select_time(da: xr.DataArray, **indexer):
