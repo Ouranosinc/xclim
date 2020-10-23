@@ -15,13 +15,14 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New xclim.testing.open_dataset method to read data from the remote testdata repo.
-* New notebook on frequency analysis.
+* Added a notebook, `ensembles-advanced.ipynb`, to the documentation detailing ensemble reduction techniques and showing how to make use of built-in figure-generating commands.
+* Added a notebook, `frequency_analysis.ipynb`, with examples showcasing on frequency analysis.
 
 Bug fixes
 ~~~~~~~~~
 * Fixed a bug in the attributes of `frost_season_length`.
 * `indices.run_length` methods using dates now respect the array's calendar.
-* Worked around an xarray bug in sdba.QuantileDeltaMapping when multidimensionnal arrays are used with linear or cubic interpolation.
+* Worked around an xarray bug in sdba.QuantileDeltaMapping when multidimensional arrays are used with linear or cubic interpolation.
 
 Internal changes
 ~~~~~~~~~~~~~~~~~

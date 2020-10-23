@@ -8,11 +8,12 @@ repos:
     -   id: pyupgrade
         language_version: python3
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.3.9
+    rev: master
     hooks:
     -   id: nbstripout
         language_version: python3
         files: ".ipynb"
+        args: ["--dry-run"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
@@ -20,6 +21,7 @@ repos:
         language_version: python3
     -   id: end-of-file-fixer
         language_version: python3
+        exclude: ".ipynb"
     -   id: check-yaml
         language_version: python3
     -   id: debug-statements
