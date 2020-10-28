@@ -90,7 +90,7 @@ def test_normal_computation(
     runner = CliRunner()
     results = runner.invoke(cli, args)
     for varname in varnames:
-        assert f"Parsed {varname} = dsin.{varname}" in results.output
+        assert f"Parsed {varname} = {varname}" in results.output
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
@@ -210,7 +210,7 @@ def test_missing_variable(tas_series, tmp_path):
         cli, ["-i", str(input_file), "-o", str(output_file), "tn_mean"]
     )
     assert results.exit_code == 2
-    assert "tasmin absent from input dataset." in results.output
+    assert "'tasmin' was not found in the input dataset." in results.output
 
 
 @pytest.mark.parametrize(

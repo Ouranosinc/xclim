@@ -82,11 +82,17 @@ def walk_map(d: dict, func: FunctionType):
 
 
 class ValidationError(ValueError):
-    """Xclim ValidationError class."""
+    """xclim ValidationError class."""
 
     @property
     def msg(self):  # noqa
         return self.args[0]
+
+
+class MissingVariableError(ValueError):
+    """xclim Variable missing from dataset error"""
+
+    pass
 
 
 def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):

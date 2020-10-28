@@ -15,12 +15,12 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from inspect import _empty, signature
-from typing import Sequence, Union
+from inspect import Parameter, _empty, signature
+from typing import Optional, Sequence, Union
 
 import numpy as np
-from boltons.funcutils import wraps
-from xarray import DataArray
+from boltons.funcutils import copy_function, wraps
+from xarray import DataArray, Dataset
 
 from xclim.indices.generic import default_freq
 
@@ -35,6 +35,7 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
+from .utils import MissingVariableError
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -189,8 +190,10 @@ class Indicator(IndicatorRegistrar):
 
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
+        # Parse and update compute's signature.
+        # Updated to allow string variable names and the ds_in arg.
         # Parse docstring of the compute function, its signature and its parameters
-        kwds = cls._parse_docstring(kwds)
+        kwds = cls._parse_compute_and_docstring(kwds)
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -225,20 +228,66 @@ class Indicator(IndicatorRegistrar):
         return super().__new__(new)
 
     @classmethod
-    def _parse_docstring(cls, kwds):
-        """Parse `compute` docstring to extract missing attributes and parameters' doc."""
+    def _parse_compute_and_docstring(cls, kwds):
+        """
+        Parse the signature of the compute function, change the annotation,
+        defaults where needed and possible and add the 'ds_in' argument.
+        Parse `compute` docstring to extract missing attributes and parameters' doc.
+        """
         # Priority: explicit arguments > super class attributes > `compute` docstring info
-        func = kwds.get("compute", None) or cls.compute
-        parsed = parse_doc(func.__doc__)
+        kwds["compute"] = compute = kwds.get("compute", None) or cls.compute
+
+        sig = signature(compute)
+        # True if any of non-dataarray arguments are default.
+        # In this case, we can't patch the variable names as default values.
+        has_def = any(
+            [
+                p.annotation is not DataArray and p.default is _empty
+                for p in sig.parameters.values()
+            ]
+        )
+
+        def _upd_param(param):
+            if param.annotation is DataArray:
+                if not has_def and param.default is _empty:
+                    default = param.name
+                else:
+                    default = param.default
+                return Parameter(
+                    param.name,
+                    param.kind,
+                    default=default,
+                    annotation=Union[str, DataArray],
+                )
+            return param
+
+        # Parse all parameters, replacing annotations and default where needed and possible.
+        new_params = list(map(_upd_param, sig.parameters.values()))
+        # ds_in argunent
+        dsparam = Parameter(
+            "ds_in", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
+        )
+        if new_params[-1].kind == Parameter.VAR_KEYWORD:
+            new_params.insert(-1, dsparam)
+        else:
+            new_params.append(dsparam)
+
+        new_compute = copy_function(compute)
+        kwds["_sig"] = new_compute.__signature__ = sig.replace(parameters=new_params)
+        new_compute.__doc__ = compute.__doc__
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+        # The *indicator* compute function that will be wrapped by __call__
+        kwds["_indcompute"] = new_compute
+
+        # Docstring parsing
+        parsed = parse_doc(compute.__doc__)
 
         for name, value in parsed.copy().items():
             if not getattr(cls, name):
                 # Set if neither the class attr is set nor the kwds attr
                 kwds.setdefault(name, value)
-        # The `compute` signature
-        kwds["_sig"] = signature(func)
-        # The input parameters' name
-        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+
         # Fill default values and annotation in parameter doc
         # params is a multilayer dict, we want to use a brand new one so deepcopy
         params = deepcopy(kwds.get("parameters", cls.parameters or {}))
@@ -293,14 +342,8 @@ class Indicator(IndicatorRegistrar):
         # Validation is done : register the instance.
         super().__init__()
 
-        # The `compute` signature
-        self._sig = signature(self.compute)
-
-        # The input parameters' name
-        self._parameters = tuple(self._sig.parameters.keys())
-
-        # Copy the docstring and signature
-        self.__call__ = wraps(self.compute)(self.__call__)
+        # Update call signature
+        self.__call__ = wraps(self._indcompute)(self.__call__)
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
@@ -311,10 +354,29 @@ class Indicator(IndicatorRegistrar):
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
+        # Get inputs passed as strings from ds_in
+        ds_in = ba.arguments.pop("ds_in")
+        for name, param in self._sig.parameters.items():
+            if param.annotation is Union[str, DataArray] and isinstance(
+                ba.arguments[name], str
+            ):
+                if ds_in is not None:
+                    try:
+                        ba.arguments[name] = ds_in[ba.arguments[name]]
+                    except KeyError:
+                        raise MissingVariableError(
+                            f"For input '{name}', variable '{ba.arguments[name]}' was not found in the input dataset."
+                        )
+                else:
+                    raise ValueError(
+                        f"Passing variable names as string requires giving the `ds_in` dataset (got {name}='{ba.arguments[name]}')"
+                    )
+
         # Assume the first arguments are always the DataArrays.
+        # Only the first nvar inputs are checked (data + cf checks)
         das = OrderedDict()
-        for i in range(self._nvar):
-            das[self._parameters[i]] = ba.arguments.pop(self._parameters[i])
+        for name in self._parameters[: self._nvar]:
+            das[name] = ba.arguments.pop(name)
 
         # Metadata attributes from templates
         var_id = None
@@ -438,13 +500,19 @@ class Indicator(IndicatorRegistrar):
                 )
             )
 
-        # Update the signature with the values of the actual call.
-        cp = OrderedDict()
-        for (k, v) in ba.signature.parameters.items():
-            if v.default is not None and isinstance(v.default, (float, int, str)):
-                cp[k] = v.replace(default=ba.arguments[k])
+        # Generate a signature string for the history attribute
+        # We remove annotations, replace default float/int/str by values
+        # and replace others by type
+        callstr = []
+        for (k, v) in das.items():
+            callstr.append(f"{k}=<array>")
+        for (k, v) in ba.arguments.items():
+            if isinstance(v, (float, int, str)):
+                callstr.append(f"{k}={v!r}")  # repr so strings have ' '
             else:
-                cp[k] = v
+                callstr.append(
+                    f"{k}={type(v)}"
+                )  # don't take chance of having unprintable values
 
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
@@ -456,7 +524,7 @@ class Indicator(IndicatorRegistrar):
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         attrs["xclim_history"] = update_history(
-            f"{var_id or cls.identifier}{ba.signature.replace(parameters=cp.values())}",
+            f"{var_id or cls.identifier}({', '.join(callstr)})",
             new_name=out.get("var_name"),
             **das,
         )
