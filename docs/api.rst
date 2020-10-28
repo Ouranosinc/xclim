@@ -44,6 +44,8 @@ Unit handling module
    :undoc-members:
    :show-inheritance:
 
+Statistical Downscaling and Bias Adjustment
+===========================================
 
 .. toctree::
 
@@ -81,7 +83,7 @@ Other utilities
 Other xclim modules
 ===================
 
-ensembles module
+Ensembles module
 ----------------
 
 .. automodule:: xclim.ensembles
@@ -89,13 +91,13 @@ ensembles module
    :undoc-members:
    :show-inheritance:
 
-testing module
+Testing module
 --------------
 
 .. automodule:: xclim.testing
     :members:
 
-subset module
+Subset module
 -------------
 .. warning::
     Subsetting is now offered via `clisops`. The functions offered by clisops
