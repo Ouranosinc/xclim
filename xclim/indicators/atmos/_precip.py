@@ -142,6 +142,7 @@ max_pr_intensity = HrPr(
 )
 
 precip_accumulation = Pr(
+    title="Accumulated total precipitation (solid and liquid)",
     identifier="prcptot",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
@@ -152,6 +153,7 @@ precip_accumulation = Pr(
 )
 
 liquid_precip_accumulation = Pr(
+    title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_liquid_precipitation_amount",
@@ -164,6 +166,7 @@ liquid_precip_accumulation = Pr(
 )
 
 solid_precip_accumulation = Pr(
+    title="Accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_snowfall_amount",
