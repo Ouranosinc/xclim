@@ -395,7 +395,10 @@ def test_input_dataset():
     out = xclim.atmos.daily_temperature_range(freq="YS", ds_in=ds)
 
     # Use non-defaults (inverted on purpose)
-    out = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds_in=ds)
+    with xclim.set_options(cf_compliance="log"):
+        out = xclim.atmos.daily_temperature_range(
+            "tasmax", "tasmin", freq="YS", ds_in=ds
+        )
 
     # Use a mix
     out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds_in=ds)

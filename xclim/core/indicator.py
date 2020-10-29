@@ -143,6 +143,7 @@ class Indicator(IndicatorRegistrar):
     """
 
     # Number of input DataArray variables. Should be updated by subclasses if needed.
+    # This number sets which inputs are passed to the tests.
     _nvar = 1
 
     # Allowed metadata attributes on the output variables
