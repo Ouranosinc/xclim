@@ -90,9 +90,7 @@ class ValidationError(ValueError):
 
 
 class MissingVariableError(ValueError):
-    """xclim Variable missing from dataset error"""
-
-    pass
+    """xclim Variable missing from dataset error."""
 
 
 def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):

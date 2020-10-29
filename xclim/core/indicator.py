@@ -237,8 +237,9 @@ class Indicator(IndicatorRegistrar):
     @classmethod
     def _parse_compute_and_docstring(cls, kwds):
         """
-        Parse the signature of the compute function, change the annotation,
-        defaults where needed and possible and add the 'ds_in' argument.
+        Parse the signature of the compute function.
+
+        Change the annotation, change defaults where needed (and possible) and add the 'ds_in' argument.
         Parse `compute` docstring to extract missing attributes and parameters' doc.
         """
         # Priority: explicit arguments > super class attributes > `compute` docstring info
