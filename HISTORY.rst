@@ -1,6 +1,23 @@
 =======
 History
 =======
+0.22.0 (unreleased)
+-------------------
+Breaking changes
+~~~~~~~~~~~~~~~~
+
+New indicators
+~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* add unique titles to atmos calculations employing wrapped_partials
+
+Bug fixes
+~~~~~~~~~
+
+Internal changes
+~~~~~~~~~~~~~~~~~
 
 0.21.0 (2020-10-23)
 -------------------
