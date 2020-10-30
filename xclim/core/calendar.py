@@ -8,7 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 
 import datetime as pydt
-from typing import Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 from warnings import warn
 
 import cftime
@@ -35,10 +35,11 @@ datetime_classes = {
     "proleptic_gregorian": cftime.DatetimeProlepticGregorian,
     "julian": cftime.DatetimeJulian,
     "noleap": cftime.DatetimeNoLeap,
+    "365_day": cftime.DatetimeNoLeap,
     "all_leap": cftime.DatetimeAllLeap,
+    "366_day": cftime.DatetimeAllLeap,
     "360_day": cftime.Datetime360Day,
 }
-
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -48,7 +49,9 @@ max_doy = {
     "proleptic_gregorian": 366,
     "julian": 366,
     "noleap": 365,
+    "365_day": 365,
     "all_leap": 366,
+    "366_day": 366,
     "360_day": 360,
 }
 
@@ -66,18 +69,21 @@ def get_calendar(arr: Union[xr.DataArray, xr.Dataset], dim: str = "time") -> str
     Raises
     ------
     ValueError
-        If `arr` doesn't have a datetime64 or cftime dtype.
+        If `arr` doesn't have a datetime64 or gitcftime dtype.
 
     Returns
     -------
     str
       The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64.
     """
+    attrcal = arr[dim].attrs.get("calendar", None)
     if arr[dim].dtype == "O":  # Assume cftime, if it fails, not our fault
         non_na_item = arr[dim].where(arr[dim].notnull(), drop=True)[0].item()
         cal = non_na_item.calendar
     elif "datetime64" in arr[dim].dtype.name:
         cal = "default"
+    elif attrcal is not None:
+        return attrcal
     else:
         raise ValueError(
             f"Cannot infer calendars from timeseries of type {arr[dim][0].dtype}"
@@ -89,6 +95,7 @@ def convert_calendar(
     source: Union[xr.DataArray, xr.Dataset],
     target: Union[xr.DataArray, str],
     align_on: Optional[str] = None,
+    missing: Optional[Any] = None,
     dim: str = "time",
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
@@ -97,7 +104,8 @@ def convert_calendar(
 
     If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
     When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
-    In the other direction and if `target` is a string, the 29th of February will be missing in the output.
+    In the other direction and if `target` is a string, the 29th of February will be missing in the output,
+    unless `missing` is specified.
 
     For conversions involving `360_day` calendars, see Notes.
 
@@ -113,6 +121,9 @@ def convert_calendar(
       that are missing in the converted `source` are filled by NaNs.
     align_on : {None, 'date', 'year'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
+    missing : Optional[any]
+      A value to use for filling in dates in the target that were missing in the source.
+      If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
     dim : str
       Name of the time coordinate.
 
@@ -120,8 +131,10 @@ def convert_calendar(
     -------
     Union[xr.DataArray, xr.Dataset]
       Copy of source with the time coordinate converted to the target calendar.
-      The length of the array is the same as `target` if an array was given, otherwise it stays the same as `source`.
-      Except if source is a `360_day` calendar and `align_on='date'`: then a daily source will be output with 358 dates
+      If `target` is given as an array, the output is reindex to it.
+      If `target` was a string and `missing` was None (default) it stays the same as `source`.
+      If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are inferred.
+      Exception if source is a `360_day` calendar and `align_on='date'`: then a daily source will be output with 358 dates
       per year on a non leap year, 359 on a leap year, see Notes.
 
     Notes
@@ -170,11 +183,7 @@ def convert_calendar(
             "Argument `align_on` must be specified with either 'date' or "
             "'year' when converting to or from a '360_day' calendar."
         )
-    if (cal_src != "360_day" and cal_tgt != "360_day") and align_on is not None:
-        warn(
-            "Argument `align_on` was specified, but none of the source or "
-            "target calendars is '360_day'. `align_on` will be ignored."
-        )
+    if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
     # TODO Maybe the 5-6 days to remove could be given by the user?
@@ -212,8 +221,41 @@ def convert_calendar(
         # Remove NaN that where put on invalid dates in target calendar
         out = out.where(out[dim].notnull(), drop=True)
 
+    if isinstance(target, str) and missing is not None:
+        # Infer the target array to fill in missing values
+        freq = xr.infer_freq(source.time)
+        if freq is None:
+            raise ValueError(
+                "Missing days cannot be filled if source's frequency cannot be inferred (xr.infer_freq(source) is None and missing is not None)."
+            )
+
+        end = out.indexes[dim][-1]
+        if (
+            cal_src == "360_day"
+            and freq == "D"
+            and end.day == 30
+            and end.daysinmonth == 31
+        ):
+            # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
+            end = (
+                end + np.timedelta64(1, "D")
+                if cal_tgt == "default"
+                else end.replace(day=31)
+            )
+
+        target = xr.DataArray(
+            date_range(out.indexes[dim][0], end, freq=freq, calendar=cal_tgt),
+            dims=("time",),
+            name="time",
+        )
+
     if isinstance(target, xr.DataArray):
-        out = out.reindex({dim: target})
+        out = out.reindex({dim: target}, fill_value=missing or np.nan)
+
+    # Copy attrs but change.
+    out[dim].attrs.update(source[dim].attrs)
+    if "calendar" in out[dim].attrs:
+        del out[dim].attrs["calendar"]
     return out
 
 
@@ -254,6 +296,13 @@ def interp_calendar(
     out = out.interp(time=target_idx)
     out[dim] = target
     return out
+
+
+def date_range(*args, calendar="default", **kwargs):
+    """Wrapper of pd.date_range (if calendar == 'default') and xr.cftime_range (otherwise)."""
+    if calendar == "default":
+        return pd.date_range(*args, **kwargs)
+    return xr.cftime_range(*args, calendar=calendar, **kwargs)
 
 
 def _convert_datetime(

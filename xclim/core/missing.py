@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from xclim.core.calendar import date_range, get_calendar
 from xclim.core.options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -140,13 +141,12 @@ class MissingBase:
 
         if indexer:
             # Create a full synthetic time series and compare the number of days with the original series.
-            t0 = str(start_time[0].date())
-            t1 = str(end_time[-1].date())
-            if isinstance(da.indexes["time"], xr.CFTimeIndex):
-                cal = da.time.encoding.get("calendar")
-                t = xr.cftime_range(t0, t1, freq=src_timestep, calendar=cal)
-            else:
-                t = pd.date_range(t0, t1, freq=src_timestep)
+            t = date_range(
+                start_time[0],
+                end_time[-1],
+                freq=src_timestep,
+                calendar=get_calendar(da),
+            )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
             st = generic.select_time(sda, **indexer)
