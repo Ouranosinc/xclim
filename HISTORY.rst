@@ -12,19 +12,13 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * add unique titles to atmos calculations employing wrapped_partials
+* Indicators can now accept dataset in their new `ds_in` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
 
 Bug fixes
 ~~~~~~~~~
 
 Internal changes
 ~~~~~~~~~~~~~~~~~
-
-0.22.0 (unreleased)
--------------------
-
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Indicators can now accept dataset in their new `ds_in` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
 
 0.21.0 (2020-10-23)
 -------------------
