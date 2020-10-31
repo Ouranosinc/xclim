@@ -15,6 +15,7 @@ New features and enhancements
 * add unique titles to atmos calculations employing wrapped_partials
 * `xclim.core.calendar.convert_calendar` now accepts a `missing` argument.
 * Added `xclim.core.calendar.date_range` wrapping pandas' `date_range` and xarray's `cftime_range`.
+* `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
 
 Bug fixes
 ~~~~~~~~~

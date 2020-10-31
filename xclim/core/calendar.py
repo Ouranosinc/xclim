@@ -7,6 +7,7 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 
+import datetime
 import datetime as pydt
 from typing import Any, Optional, Sequence, Union
 from warnings import warn
@@ -56,39 +57,44 @@ max_doy = {
 }
 
 
-def get_calendar(arr: Union[xr.DataArray, xr.Dataset], dim: str = "time") -> str:
-    """Return the calendar of the time coord of the DataArray.
+def get_calendar(obj: Any, dim: str = "time") -> str:
+    """Return the calendar of an object.
 
     Parameters
     ----------
-    arr : Union[xr.DataArray, xr.Dataset]
-      Array/dataset with a datetime coordinate. Values must either be of datetime64 dtype or have a dt.calendar attribute.
+    obj : Any
+      An object defining some date and time.
+      If an array/dataset with a datetime coordinate, use `dim` to specify its name.
+            Values must either be of datetime64 dtype or have a dt.calendar attribute.
+      Can also be a python datetime.datetime, a cftime object or a pandas Timestamp.
     dim : str
-      Name of the coordinate to check.
+      Name of the coordinate to check (if obj is a DataArray or Dataset).
 
     Raises
     ------
     ValueError
-        If `arr` doesn't have a datetime64 or gitcftime dtype.
+      If no calendar was inferred.
 
     Returns
     -------
     str
-      The cftime calendar name or "default" when the data is using numpy's datetime type (numpy.datetime64.
+      The cftime calendar name or "default" when the data is using numpy's or python's datetime types.
     """
-    attrcal = arr[dim].attrs.get("calendar", None)
-    if arr[dim].dtype == "O":  # Assume cftime, if it fails, not our fault
-        non_na_item = arr[dim].where(arr[dim].notnull(), drop=True)[0].item()
-        cal = non_na_item.calendar
-    elif "datetime64" in arr[dim].dtype.name:
-        cal = "default"
-    elif attrcal is not None:
-        return attrcal
-    else:
-        raise ValueError(
-            f"Cannot infer calendars from timeseries of type {arr[dim][0].dtype}"
-        )
-    return cal
+    if isinstance(obj, (xr.DataArray, xr.Dataset)):
+        if obj[dim].dtype == "O":
+            obj = obj[dim].where(obj[dim].notnull(), drop=True)[0].item()
+        elif "datetime64" in obj[dim].dtype.name:
+            return "default"
+
+    obj = np.take(
+        obj, 0
+    )  # Take zeroth element, overcome cases when arrays or lists are passed.
+    if isinstance(obj, datetime.datetime):  # Also covers pandas Timestamp
+        return "default"
+    if isinstance(obj, cftime.datetime):
+        return obj.calendar
+
+    raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
 
 
 def convert_calendar(

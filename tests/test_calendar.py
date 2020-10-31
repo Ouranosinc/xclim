@@ -1,5 +1,6 @@
 import os
 
+import cftime
 import numpy as np
 import pandas as pd
 import pytest
@@ -114,6 +115,19 @@ def test_get_calendar(file, cal, maxdoy):
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy
+
+
+@pytest.mark.parametrize(
+    "obj,cal",
+    [
+        ([pd.Timestamp.now()], "default"),
+        (pd.Timestamp.now(), "default"),
+        (cftime.DatetimeAllLeap(2000, 1, 1), "all_leap"),
+        (np.array([cftime.DatetimeNoLeap(2000, 1, 1)]), "noleap"),
+    ],
+)
+def test_get_calendar_nonxr(obj, cal):
+    assert get_calendar(obj) == cal
 
 
 @pytest.mark.parametrize(
