@@ -29,18 +29,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
 # cftime and datetime classes to use for each calendar name
-datetime_classes = {
-    "default": pydt.datetime,
-    "standard": cftime.DatetimeGregorian,
-    "gregorian": cftime.DatetimeGregorian,
-    "proleptic_gregorian": cftime.DatetimeProlepticGregorian,
-    "julian": cftime.DatetimeJulian,
-    "noleap": cftime.DatetimeNoLeap,
-    "365_day": cftime.DatetimeNoLeap,
-    "all_leap": cftime.DatetimeAllLeap,
-    "366_day": cftime.DatetimeAllLeap,
-    "360_day": cftime.Datetime360Day,
-}
+datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -183,7 +172,6 @@ def convert_calendar(
     if cal_src == cal_tgt:
         return source
 
-    out = source.copy()
     if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
         raise ValueError(
             "Argument `align_on` must be specified with either 'date' or "
@@ -192,6 +180,7 @@ def convert_calendar(
     if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
+    out = source.copy()
     # TODO Maybe the 5-6 days to remove could be given by the user?
     if align_on == "year":
 
@@ -228,32 +217,7 @@ def convert_calendar(
         out = out.where(out[dim].notnull(), drop=True)
 
     if isinstance(target, str) and missing is not None:
-        # Infer the target array to fill in missing values
-        freq = xr.infer_freq(source.time)
-        if freq is None:
-            raise ValueError(
-                "Missing days cannot be filled if source's frequency cannot be inferred (xr.infer_freq(source) is None and missing is not None)."
-            )
-
-        end = out.indexes[dim][-1]
-        if (
-            cal_src == "360_day"
-            and freq == "D"
-            and end.day == 30
-            and end.daysinmonth == 31
-        ):
-            # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
-            end = (
-                end + np.timedelta64(1, "D")
-                if cal_tgt == "default"
-                else end.replace(day=31)
-            )
-
-        target = xr.DataArray(
-            date_range(out.indexes[dim][0], end, freq=freq, calendar=cal_tgt),
-            dims=("time",),
-            name="time",
-        )
+        target = date_range_like(source[dim], cal_tgt)
 
     if isinstance(target, xr.DataArray):
         out = out.reindex({dim: target}, fill_value=missing or np.nan)
@@ -308,6 +272,65 @@ def date_range(*args, calendar="default", **kwargs):
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
+
+
+def date_range_like(source, calendar):
+    """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+      1D datetime coordinate DataArray
+    calendar : str
+      New calendar name.
+
+    Raises
+    ------
+    ValueError
+      If the source's frequency was not found.
+
+    Returns
+    -------
+    xr.DataArray
+      1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
+        The start date is assumed to exist in the target calendar.
+        If the end date doesn't exist, the code tries 1 and 2 calendar days before.
+        Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
+        then the 31st is appended to the range.
+    """
+    freq = xr.infer_freq(source)
+    if freq is None:
+        raise ValueError(
+            "`date_range_like` was unable to generate a range as the source frequency was not inferrable."
+        )
+
+    src_cal = get_calendar(source)
+    if src_cal == calendar:
+        return source
+
+    index = source.indexes[source.dims[0]]
+    end_src = index[-1]
+    end = _convert_datetime(end_src, calendar=calendar)
+    if end is np.nan:  # Day is invalid, happens at the end of months.
+        end = _convert_datetime(end_src.replace(day=end_src.day - 1), calendar=calendar)
+        if end is np.nan:  # Still invalid : 360_day to non-leap february.
+            end = _convert_datetime(
+                end_src.replace(day=end_src.day - 2), calendar=calendar
+            )
+    if src_cal == "360_day" and end_src.day == 30 and end.daysinmonth == 31:
+        # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
+        end = end.replace(day=31)
+
+    return xr.DataArray(
+        date_range(
+            _convert_datetime(index[0], calendar=calendar),
+            end,
+            freq=freq,
+            calendar=calendar,
+        ),
+        dims=source.dims,
+        name=source.dims[0],
+    )
 
 
 def _convert_datetime(
