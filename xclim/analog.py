@@ -57,13 +57,11 @@ a single float.
 .. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. `<doi:10.1007/s10584-017-1960-x>`_
 .. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
 """
+# Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from typing import Sequence, Union
 
 import numpy as np
 import xarray as xr
-
-# Code adapted from flyingpigeon.dissimilarity, Nov 2020.
-from numba import jit
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
@@ -187,7 +185,6 @@ def register_metric(func):
 
 
 @register_metric
-@jit
 def seuclidean(x, y):
     """
     Compute the Euclidean distance between the mean of a multivariate
@@ -224,7 +221,6 @@ def seuclidean(x, y):
 
 
 @register_metric
-@jit
 def nearest_neighbor(x, y):
     """
     Compute a dissimilarity metric based on the number of points in the
@@ -263,7 +259,6 @@ def nearest_neighbor(x, y):
 
 
 @register_metric
-@jit
 def zech_aslan(x, y):
     """
     Compute the Zech-Aslan energy distance dissimimilarity metric based on an
@@ -347,7 +342,6 @@ def skezely_rizzo(x, y):
 
 
 @register_metric
-@jit
 def friedman_rafsky(x, y):
     """
     Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
@@ -395,7 +389,6 @@ def friedman_rafsky(x, y):
 
 
 @register_metric
-@jit
 def kolmogorov_smirnov(x, y):
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate
@@ -447,7 +440,6 @@ def kolmogorov_smirnov(x, y):
 
 
 @register_metric
-@jit
 def kldiv(x, y, k=1):
     """
     Compute the Kullback-Leibler divergence between two multivariate samples.
