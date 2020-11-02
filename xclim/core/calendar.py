@@ -63,17 +63,18 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date and time.
-      If an array/dataset with a datetime coordinate, use `dim` to specify its name.
-            Values must either be of datetime64 dtype or have a dt.calendar attribute.
-      Can also be a python datetime.datetime, a cftime object or a pandas Timestamp.
+      An object defining some date..
+      If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
+        Values must have either a datetime64 dtype or a cftime dtype.
+      `obj`can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+        or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
-      Name of the coordinate to check (if obj is a DataArray or Dataset).
+      Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
     Raises
     ------
     ValueError
-      If no calendar was inferred.
+      If no calendar could be inferred.
 
     Returns
     -------
@@ -106,12 +107,12 @@ def convert_calendar(
 ) -> xr.DataArray:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
-    Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates.
+    Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
 
     If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
     When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
     In the other direction and if `target` is a string, the 29th of February will be missing in the output,
-    unless `missing` is specified.
+    unless `missing` is specified, in which case that value is inserted.
 
     For conversions involving `360_day` calendars, see Notes.
 
@@ -120,11 +121,11 @@ def convert_calendar(
     Parameters
     ----------
     source : xr.DataArray
-      Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime)
+      Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
     target : Union[xr.DataArray, str]
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
-      that are missing in the converted `source` are filled by NaNs.
+      that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
     align_on : {None, 'date', 'year'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
     missing : Optional[any]
@@ -137,11 +138,10 @@ def convert_calendar(
     -------
     Union[xr.DataArray, xr.Dataset]
       Copy of source with the time coordinate converted to the target calendar.
-      If `target` is given as an array, the output is reindex to it.
-      If `target` was a string and `missing` was None (default) it stays the same as `source`.
-      If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are inferred.
-      Exception if source is a `360_day` calendar and `align_on='date'`: then a daily source will be output with 358 dates
-      per year on a non leap year, 359 on a leap year, see Notes.
+      If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
+      If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped, but missing dates are not inserted.
+      If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are inferred and
+         the output is reindexed to that a new array.
 
     Notes
     -----
@@ -258,10 +258,9 @@ def convert_calendar(
     if isinstance(target, xr.DataArray):
         out = out.reindex({dim: target}, fill_value=missing or np.nan)
 
-    # Copy attrs but change.
+    # Copy attrs but change remove `calendar` is still present.
     out[dim].attrs.update(source[dim].attrs)
-    if "calendar" in out[dim].attrs:
-        del out[dim].attrs["calendar"]
+    out[dim].attrs.pop("calendar", None)
     return out
 
 
