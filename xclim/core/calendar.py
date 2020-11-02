@@ -266,7 +266,7 @@ def interp_calendar(
 
 
 def date_range(*args, calendar="default", **kwargs):
-    """Wrapper of pd.date_range (if calendar == 'default') and xr.cftime_range (otherwise)."""
+    """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
