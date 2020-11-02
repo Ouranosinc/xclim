@@ -6,8 +6,6 @@ Calendar handling utilities
 
 Helper function to handle dates, times and different calendars with xarray.
 """
-
-import datetime
 import datetime as pydt
 from typing import Any, Optional, Sequence, Union
 from warnings import warn
@@ -79,7 +77,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     obj = np.take(
         obj, 0
     )  # Take zeroth element, overcome cases when arrays or lists are passed.
-    if isinstance(obj, datetime.datetime):  # Also covers pandas Timestamp
+    if isinstance(obj, pydt.datetime):  # Also covers pandas Timestamp
         return "default"
     if isinstance(obj, cftime.datetime):
         return obj.calendar
