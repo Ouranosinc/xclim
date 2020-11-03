@@ -1,6 +1,6 @@
 # -*- encoding: utf8 -*-
+# noqa: D205,D400
 """
-===============
 Spatial analogs
 ===============
 
@@ -62,6 +62,7 @@ from typing import Sequence, Union
 
 import numpy as np
 import xarray as xr
+from boltons.funcutils import wraps
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
@@ -145,7 +146,8 @@ def spatial_analogs(
     )
     diss.name = "dissimilarity"
     diss.attrs.update(
-        long_name=f"Dissimilarity between target and candidates, using metric {method}."
+        long_name=f"Dissimilarity between target and candidates, using metric {method}.",
+        indices=",".join(target.indices.values),
     )
 
     return diss
@@ -174,9 +176,58 @@ def standardize(x, y):
     return x / s, y / s
 
 
+def reshape_sample(x, y):
+    """
+    Reshape the input arrays to conform to the conventions used in the
+    dissimilarity metrics.
+
+    Parameters
+    ----------
+    x, y : array_like
+      Arrays to be compared.
+
+    Returns
+    -------
+    x, y : array_like
+      Arrays of shape (n,d) and (m,d), where `n` and `m` are the number of
+      samples and `d` is the dimension.
+
+    Raises
+    ------
+    AssertionError
+        If x and y have different dimensions.
+    """
+    x = np.atleast_2d(x)
+    y = np.atleast_2d(y)
+
+    # If array is 1D, flip it.
+    if x.shape[0] == 1:
+        x = x.T
+    if y.shape[0] == 1:
+        y = y.T
+
+    if x.shape[1] != y.shape[1]:
+        raise AttributeError("Shape mismatch")
+
+    return x, y
+
+
 def register_metric(func):
+    """Register a metric function in the `metrics` mapping."""
     metrics[func.__name__] = func
     return func
+
+
+def drop_when_nan(func):
+    """Return NaN if any value in the two inputs is NaN."""
+
+    @wraps(func)
+    def _drop_when_nan(x, y, **kwargs):
+        if np.any(np.isnan(x)) or np.any(np.isnan(y)):
+            return np.NaN
+        return func(x, y, **kwargs)
+
+    return _drop_when_nan
 
 
 # ---------------------------------------------------------------------------- #
@@ -185,10 +236,10 @@ def register_metric(func):
 
 
 @register_metric
+@drop_when_nan
 def seuclidean(x, y):
     """
-    Compute the Euclidean distance between the mean of a multivariate
-    candidate sample with respect to the mean of a reference sample.
+    Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
     Parameters
     ----------
@@ -214,6 +265,7 @@ def seuclidean(x, y):
     21st-century climate-change scenarios. Climatic Change,
     DOI 10.1007/s10584-011-0261-z.
     """
+    x, y = reshape_sample(x, y)
     mx = x.mean(axis=0)
     my = y.mean(axis=0)
 
@@ -223,8 +275,7 @@ def seuclidean(x, y):
 @register_metric
 def nearest_neighbor(x, y):
     """
-    Compute a dissimilarity metric based on the number of points in the
-    pooled sample whose nearest neighbor belongs to the same distribution.
+    Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
     Parameters
     ----------
@@ -243,6 +294,7 @@ def nearest_neighbor(x, y):
     Henze N. (1988) A Multivariate two-sample test based on the number of
     nearest neighbor type coincidences. Ann. of Stat., Vol. 16, No.2, 772-783.
     """
+    x, y = reshape_sample(x, y)
     x, y = standardize(x, y)
 
     nx, _ = x.shape
@@ -261,8 +313,7 @@ def nearest_neighbor(x, y):
 @register_metric
 def zech_aslan(x, y):
     """
-    Compute the Zech-Aslan energy distance dissimimilarity metric based on an
-    analogy with the energy of a cloud of electrical charges.
+    Compute the Zech-Aslan energy distance dissimimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
@@ -283,6 +334,7 @@ def zech_aslan(x, y):
     Aslan B. and Zech G. (2008) A new class of binning-free, multivariate
     goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010v5.
     """
+    x, y = reshape_sample(x, y)
     nx, d = x.shape
     ny, d = y.shape
 
@@ -301,8 +353,7 @@ def zech_aslan(x, y):
 @register_metric
 def skezely_rizzo(x, y):
     """
-    Compute the Skezely-Rizzo energy distance dissimimilarity metric
-    based on an analogy with the energy of a cloud of electrical charges.
+    Compute the Skezely-Rizzo energy distance dissimimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
@@ -342,6 +393,7 @@ def skezely_rizzo(x, y):
 
 
 @register_metric
+@drop_when_nan
 def friedman_rafsky(x, y):
     """
     Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
@@ -371,6 +423,7 @@ def friedman_rafsky(x, y):
     from scipy.sparse.csgraph import minimum_spanning_tree
     from sklearn import neighbors
 
+    x, y = reshape_sample(x, y)
     nx, _ = x.shape
     ny, _ = y.shape
     n = nx + ny
@@ -391,8 +444,7 @@ def friedman_rafsky(x, y):
 @register_metric
 def kolmogorov_smirnov(x, y):
     """
-    Compute the Kolmogorov-Smirnov statistic applied to two multivariate
-    samples as described by Fasano and Franceschini.
+    Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
     Parameters
     ----------
@@ -412,6 +464,7 @@ def kolmogorov_smirnov(x, y):
     of the Kolmogorov-Smirnov test. Monthly Notices of the Royal
     Astronomical Society, vol. 225, pp. 155-170.
     """
+    x, y = reshape_sample(x, y)
 
     def pivot(x, y):
         nx, d = x.shape
@@ -441,7 +494,7 @@ def kolmogorov_smirnov(x, y):
 
 @register_metric
 def kldiv(x, y, k=1):
-    """
+    r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
     .. math
@@ -495,7 +548,7 @@ def kldiv(x, y, k=1):
     Kullback-Leibler Divergence Estimation of Continuous Distributions (2008).
     Fernando Pérez-Cruz.
     """
-
+    x, y = reshape_sample(x, y)
     mk = np.iterable(k)
     ka = np.atleast_1d(k)
 
@@ -508,7 +561,7 @@ def kldiv(x, y, k=1):
 
     # Not enough data to draw conclusions.
     if nx < 5 or ny < 5:
-        return np.nan
+        return np.nan if not mk else [np.nan] * len(k)
 
     # Build a KD tree representation of the samples.
     xtree = KDTree(x)
@@ -533,5 +586,4 @@ def kldiv(x, y, k=1):
 
     if mk:
         return out
-    else:
-        return out[0]
+    return out[0]
