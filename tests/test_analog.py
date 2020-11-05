@@ -54,8 +54,8 @@ def test_randn():
 def test_spatial_analogs(method):
     if method == "skezely_rizzo":
         pytest.skip("Method not implemented.")
-    diss = open_dataset("SpatialAnalogs/dissimilarity", branch="spatial_analogs")
-    data = open_dataset("SpatialAnalogs/indicators", branch="spatial_analogs")
+    diss = open_dataset("SpatialAnalogs/dissimilarity")
+    data = open_dataset("SpatialAnalogs/indicators")
 
     target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
     candidates = data.sel(time=slice("1970", "1990"))
@@ -66,8 +66,8 @@ def test_spatial_analogs(method):
 
 
 def test_spatial_analogs_multidim():
-    diss = open_dataset("SpatialAnalogs/dissimilarity", branch="spatial_analogs")
-    data = open_dataset("SpatialAnalogs/indicators", branch="spatial_analogs")
+    diss = open_dataset("SpatialAnalogs/dissimilarity")
+    data = open_dataset("SpatialAnalogs/indicators")
 
     targets = data.sel(
         lat=slice(46, 47), lon=slice(-73, -72), time=slice("1970", "1990")
