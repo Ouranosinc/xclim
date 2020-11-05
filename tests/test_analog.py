@@ -15,8 +15,16 @@ def matlab_sample(n=30):
     Climate Analogs" to compare against the functions here. The sample
     created here is identical to the sample used to drive the Matlab code.
 
-    :param n:
-    :return:
+    
+    Parameters
+    ----------
+    n : int
+      Sample size.
+      
+    Returns
+    -------
+    2D array, 2D array
+       Synthetic samples (3, n)
     """
 
     z = 1.0 * (np.arange(n) + 1) / n - 0.5

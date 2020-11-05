@@ -46,8 +46,8 @@ Methods available
  * Kolmogorov-Smirnov statistic
  * Kullback-Leibler divergence
 
-All methods accept arrays, the first is the reference (shape (n, D)) and
-the second is the candidate (shape (m, D)). Where the climate indicators
+All methods accept arrays, the first is the reference (n, D) and
+the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
 a single float.
 
