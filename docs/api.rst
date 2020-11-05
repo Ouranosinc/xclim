@@ -89,6 +89,12 @@ ensembles module
    :undoc-members:
    :show-inheritance:
 
+spatial analogs module
+----------------------
+
+.. automodule:: xclim.analog
+   :members:
+
 testing module
 --------------
 

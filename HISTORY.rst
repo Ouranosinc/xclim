@@ -16,6 +16,7 @@ New features and enhancements
 * `xclim.core.calendar.convert_calendar` now accepts a `missing` argument.
 * Added `xclim.core.calendar.date_range` and `xclim.core.calendar.date_range_like` wrapping pandas' `date_range` and xarray's `cftime_range`.
 * `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
+* New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
 
 Bug fixes
 ~~~~~~~~~
