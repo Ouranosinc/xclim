@@ -15,12 +15,12 @@ def matlab_sample(n=30):
     Climate Analogs" to compare against the functions here. The sample
     created here is identical to the sample used to drive the Matlab code.
 
-    
+
     Parameters
     ----------
     n : int
       Sample size.
-      
+
     Returns
     -------
     2D array, 2D array
@@ -247,7 +247,7 @@ class TestKLDIV:
 
         out = []
         for i in range(trials):
-            out.append(xca.kldiv(p.rvs(n), q.rvs(n), k))
+            out.append(xca.kldiv(p.rvs(n), q.rvs(n), k=k))
         out = np.array(out)
 
         # Compare with analytical value

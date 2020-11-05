@@ -183,7 +183,6 @@ def metric(func):
     All metric functions accept 2D inputs. This reshape 1D inputs to (n, 1) and (m, 1).
     All metric functions are invalid when any non-finite values are present in the inputs.
     """
-    metrics[func.__name__] = func
 
     @wraps(func)
     def _metric_overhead(x, y, **kwargs):
@@ -204,6 +203,7 @@ def metric(func):
 
         return func(x, y, **kwargs)
 
+    metrics[func.__name__] = _metric_overhead
     return _metric_overhead
 
 
@@ -400,7 +400,6 @@ def friedman_rafsky(x, y):
     n = nx + ny
 
     xy = np.vstack([x, y])
-
     # Compute the NNs and the minimum spanning tree
     g = neighbors.kneighbors_graph(xy, n_neighbors=n - 1, mode="distance")
     mst = minimum_spanning_tree(g, overwrite=True)
@@ -463,7 +462,7 @@ def kolmogorov_smirnov(x, y):
 
 
 @metric
-def kldiv(x, y, k=1):
+def kldiv(x, y, *, k=1):
     r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
