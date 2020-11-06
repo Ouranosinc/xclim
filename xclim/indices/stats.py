@@ -6,7 +6,12 @@ import dask.array
 import numpy as np
 import xarray as xr
 
-from xclim.core.formatting import update_history
+from xclim.core.formatting import (
+    prefix_attrs,
+    unprefix_attrs,
+    update_cell_methods,
+    update_history,
+)
 
 from . import generic
 
@@ -109,21 +114,23 @@ def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
     dims = [d if d != "time" else "dparams" for d in da.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
-    out.attrs = da.attrs
-    out.attrs["original_name"] = da.attrs.get("standard_name", "")
-    out.attrs["original_units"] = da.attrs.get("units", "")
-    out.attrs[
-        "description"
-    ] = f"Parameters of the {dist} distribution fitted over {out.attrs['original_name']}"
-    out.attrs["method"] = method
-    out.attrs["estimator"] = method_name[method].capitalize()
-    out.attrs["scipy_dist"] = dist
-    out.attrs["units"] = ""
-    out.attrs["xclim_history"] = update_history(
-        f"Estimate distribution parameters by {method_name[method]} method.",
-        new_name="fit",
-        data=da,
+    out.attrs = prefix_attrs(
+        da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
+    attrs = dict(
+        long_name=f"{dist} parameters",
+        description=f"Parameters of the {dist} distribution",
+        method=method,
+        estimator=method_name[method].capitalize(),
+        scipy_dist=dist,
+        units="",
+        xclim_history=update_history(
+            f"Estimate distribution parameters by {method_name[method]} method.",
+            new_name="fit",
+            data=da,
+        ),
+    )
+    out.attrs.update(attrs)
     return out
 
 
@@ -175,26 +182,24 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
-    out.attrs = p.attrs
-    out.attrs["standard_name"] = f"{dist} quantile"
-    out.attrs[
-        "long_name"
-    ] = f"{dist} return period values for {p.attrs.get('standard_name', '')}"
-    out.attrs["cell_methods"] = (
-        out.attrs.get("cell_methods", "") + " dparams: ppf"
-    ).strip()
-    out.attrs["units"] = p.attrs["original_units"]
 
-    out.attrs["xclim_history"] = update_history(
-        "Compute parametric quantiles from distribution parameters",
-        new_name="parametric_quantile",
-        parameters=p,
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+    attrs = dict(
+        long_name=f"{dist} quantiles",
+        description=f"Quantiles estimated by the {dist} distribution",
+        cell_methods=update_cell_methods(out.attrs, "dparams: ppf"),
+        xclim_history=update_history(
+            "Compute parametric quantiles from distribution parameters",
+            new_name="parametric_quantile",
+            parameters=p,
+        ),
     )
+    out.attrs.update(attrs)
     return out
 
 
 def fa(
-    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "high"
+    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "max"
 ):
     """Return the value corresponding to the given return period.
 
