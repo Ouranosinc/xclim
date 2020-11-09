@@ -3,6 +3,7 @@ History
 =======
 0.22.0 (unreleased)
 -------------------
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
@@ -12,13 +13,19 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * add unique titles to atmos calculations employing wrapped_partials
+* `xclim.core.calendar.convert_calendar` now accepts a `missing` argument.
+* Added `xclim.core.calendar.date_range` and `xclim.core.calendar.date_range_like` wrapping pandas' `date_range` and xarray's `cftime_range`.
+* `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
+* New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
 * Indicators can now accept dataset in their new `ds_in` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
 
 Bug fixes
 ~~~~~~~~~
+* Fixed bug that prevented the use of `xclim.core.missing.MissingBase` and subclasses with an indexer and a cftime datetime coordinate.
 
 Internal changes
 ~~~~~~~~~~~~~~~~~
+* Passing `align_on` to `xclim.core.calendar.convert_calendar` without using '360_day' calendars will not raise a warning anymore.
 
 0.21.0 (2020-10-23)
 -------------------

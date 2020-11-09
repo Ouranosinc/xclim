@@ -1,5 +1,6 @@
 import os
 
+import cftime
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,6 +11,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xclim.core.calendar import (
     adjust_doy_calendar,
     convert_calendar,
+    date_range,
     datetime_to_decimal_year,
     days_in_year,
     ensure_cftime_array,
@@ -43,12 +45,6 @@ def da(index):
     return xr.DataArray(
         np.arange(100.0, 100.0 + index.size), coords=[index], dims=["time"]
     )
-
-
-def date_range(*args, calendar="default", **kwargs):
-    if calendar == "default":
-        return pd.date_range(*args, **kwargs)
-    return xr.cftime_range(*args, calendar=calendar, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -119,6 +115,19 @@ def test_get_calendar(file, cal, maxdoy):
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy
+
+
+@pytest.mark.parametrize(
+    "obj,cal",
+    [
+        ([pd.Timestamp.now()], "default"),
+        (pd.Timestamp.now(), "default"),
+        (cftime.DatetimeAllLeap(2000, 1, 1), "all_leap"),
+        (np.array([cftime.DatetimeNoLeap(2000, 1, 1)]), "noleap"),
+    ],
+)
+def test_get_calendar_nonxr(obj, cal):
+    assert get_calendar(obj) == cal
 
 
 @pytest.mark.parametrize(
@@ -200,6 +209,36 @@ def test_convert_calendar_360_days(source, target, freq, align_on):
         assert conv.size == 360 if freq == "D" else 360 * 4
     else:
         assert conv.size == 359 if freq == "D" else 359 * 4
+
+
+@pytest.mark.parametrize(
+    "source,target,freq",
+    [
+        ("standard", "noleap", "D"),
+        ("noleap", "default", "4H"),
+        ("noleap", "all_leap", "M"),
+        ("360_day", "noleap", "D"),
+        ("noleap", "360_day", "D"),
+    ],
+)
+def test_convert_calendar_missing(source, target, freq):
+    src = xr.DataArray(
+        date_range(
+            "2004-01-01",
+            "2004-12-31" if source != "360_day" else "2004-12-30",
+            freq=freq,
+            calendar=source,
+        ),
+        dims=("time",),
+        name="time",
+    )
+    da_src = xr.DataArray(
+        np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
+    )
+    out = convert_calendar(da_src, target, missing=np.nan, align_on="date")
+    assert xr.infer_freq(out.time) == freq
+    if source == "360_day":
+        assert out.time[-1].dt.day == 31
 
 
 @pytest.mark.parametrize(
