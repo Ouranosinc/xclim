@@ -182,8 +182,8 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
-
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",

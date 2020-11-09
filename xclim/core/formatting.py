@@ -322,8 +322,9 @@ def unprefix_attrs(source, keys, prefix):
     out = {}
     n = len(prefix)
     for key, val in source.items():
-        if key in keys and key.startswith(prefix):
-            out[key[n:]] = val
-        else:
+        k = key[n:]
+        if (k in keys) and key.startswith(prefix):
+            out[k] = val
+        elif key not in out:
             out[key] = val
     return out
