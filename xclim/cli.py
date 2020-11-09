@@ -74,7 +74,7 @@ def _process_indicator(indicator, ctx, **params):
             params[key] = None
         elif ctx.obj["verbose"]:
             click.echo(f"Parsed {key} = {val}")
-    params["ds_in"] = dsin
+    params["ds"] = dsin
 
     try:
         out = indicator(**params)

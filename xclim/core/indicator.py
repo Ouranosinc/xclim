@@ -85,9 +85,9 @@ class Indicator(IndicatorRegistrar):
     In the latter case, the same value is used on all variables.
 
     Compared to their base compute function, indicators add the possibility of using dataset as input,
-    with the injected argument `ds_in` in the call signature. All arguments that were indicated by the compute function
+    with the injected argument `ds` in the call signature. All arguments that were indicated by the compute function
     to be DataArrays through annotations will be promoted to also accept strings that correspond to variable names
-    in the `ds_in` dataset.
+    in the `ds` dataset.
 
     Parameters
     ----------
@@ -198,7 +198,7 @@ class Indicator(IndicatorRegistrar):
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
         # Parse and update compute's signature.
-        # Updated to allow string variable names and the ds_in arg.
+        # Updated to allow string variable names and the ds arg.
         # Parse docstring of the compute function, its signature and its parameters
         kwds = cls._parse_compute_and_docstring(kwds)
 
@@ -239,7 +239,7 @@ class Indicator(IndicatorRegistrar):
         """
         Parse the signature of the compute function.
 
-        Change the annotation, change defaults where needed (and possible) and add the 'ds_in' argument.
+        Change the annotation, change defaults where needed (and possible) and add the 'ds' argument.
         Parse `compute` docstring to extract missing attributes and parameters' doc.
         """
         # Priority: explicit arguments > super class attributes > `compute` docstring info
@@ -271,9 +271,9 @@ class Indicator(IndicatorRegistrar):
 
         # Parse all parameters, replacing annotations and default where needed and possible.
         new_params = list(map(_upd_param, sig.parameters.values()))
-        # ds_in argunent
+        # ds argunent
         dsparam = Parameter(
-            "ds_in", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
+            "ds", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
         )
         if new_params[-1].kind == Parameter.VAR_KEYWORD:
             new_params.insert(-1, dsparam)
@@ -362,22 +362,22 @@ class Indicator(IndicatorRegistrar):
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
-        # Get inputs passed as strings from ds_in
-        ds_in = ba.arguments.pop("ds_in")
+        # Get inputs passed as strings from ds
+        ds = ba.arguments.pop("ds")
         for name, param in self._sig.parameters.items():
             if param.annotation is Union[str, DataArray] and isinstance(
                 ba.arguments[name], str
             ):
-                if ds_in is not None:
+                if ds is not None:
                     try:
-                        ba.arguments[name] = ds_in[ba.arguments[name]]
+                        ba.arguments[name] = ds[ba.arguments[name]]
                     except KeyError:
                         raise MissingVariableError(
                             f"For input '{name}', variable '{ba.arguments[name]}' was not found in the input dataset."
                         )
                 else:
                     raise ValueError(
-                        f"Passing variable names as string requires giving the `ds_in` dataset (got {name}='{ba.arguments[name]}')"
+                        f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
                     )
 
         # Assume the first arguments are always the DataArrays.

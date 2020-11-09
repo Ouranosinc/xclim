@@ -249,8 +249,8 @@ def test_signature():
 
     compsig = signature(ind.compute)
     assert compsig.parameters["da"].annotation is xr.DataArray
-    assert "ds_in" not in compsig.parameters
-    assert "ds_in" in ind._sig.parameters
+    assert "ds" not in compsig.parameters
+    assert "ds" in ind._sig.parameters
 
 
 def test_doc():
@@ -392,17 +392,15 @@ def test_input_dataset():
     ds = xr.merge([dsx, dsn])
 
     # Use defaults
-    out = xclim.atmos.daily_temperature_range(freq="YS", ds_in=ds)
+    out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
 
     # Use non-defaults (inverted on purpose)
     with xclim.set_options(cf_compliance="log"):
-        out = xclim.atmos.daily_temperature_range(
-            "tasmax", "tasmin", freq="YS", ds_in=ds
-        )
+        out = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
 
     # Use a mix
-    out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds_in=ds)
+    out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
 
     # Inexistent variable:
     with pytest.raises(MissingVariableError):
-        out = xclim.atmos.daily_temperature_range(freq="YS", ds_in=dsx)  # noqa
+        out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
