@@ -6,6 +6,7 @@ import pytest
 import xarray as xr
 
 from xclim.core import missing
+from xclim.core.calendar import convert_calendar
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -73,8 +74,11 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ts, freq="YS", month=[7, 8])
         np.testing.assert_equal(miss, [False])
 
-    def test_season(self, tasmin_series):
+    @pytest.mark.parametrize("calendar", ("default", "noleap", "360_day"))
+    def test_season(self, tasmin_series, calendar):
         ts = tasmin_series(np.zeros(360))
+        ts = convert_calendar(ts, calendar, missing=0, align_on="date")
+
         miss = missing.missing_any(ts, freq="YS", season="MAM")
         np.testing.assert_equal(miss, [False])
 

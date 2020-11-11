@@ -1,13 +1,41 @@
 =======
 History
 =======
-
-0.21.0 (unreleased)
+0.22.0 (unreleased)
 -------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 
+New indicators
+~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* add unique titles to atmos calculations employing wrapped_partials
+* `xclim.core.calendar.convert_calendar` now accepts a `missing` argument.
+* Added `xclim.core.calendar.date_range` and `xclim.core.calendar.date_range_like` wrapping pandas' `date_range` and xarray's `cftime_range`.
+* `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
+* New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
+* Clarification to `frequency_analysis` notebook
+
+Bug fixes
+~~~~~~~~~
+* Fixed bug that prevented the use of `xclim.core.missing.MissingBase` and subclasses with an indexer and a cftime datetime coordinate.
+* Fixed issues with metadata handling in statistical indices.
+
+Internal changes
+~~~~~~~~~~~~~~~~~
+* Passing `align_on` to `xclim.core.calendar.convert_calendar` without using '360_day' calendars will not raise a warning anymore.
+* Added formatting utilities for metadata attributes (`update_cell_methods`, `prefix_attrs` and `unprefix_attrs`).
+
+
+0.21.0 (2020-10-23)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Statistical functions (`frequency_analysis`, `fa`, `fit`, `parametric_quantile`) moved from `indices.generic` to `indices.stats` to make them more visible.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -15,12 +43,14 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New xclim.testing.open_dataset method to read data from the remote testdata repo.
+* Added a notebook, `ensembles-advanced.ipynb`, to the documentation detailing ensemble reduction techniques and showing how to make use of built-in figure-generating commands.
+* Added a notebook, `frequency_analysis.ipynb`, with examples showcasing frequency analysis capabilities.
 
 Bug fixes
 ~~~~~~~~~
 * Fixed a bug in the attributes of `frost_season_length`.
 * `indices.run_length` methods using dates now respect the array's calendar.
-* Worked around an xarray bug in sdba.QuantileDeltaMapping when multidimensionnal arrays are used with linear or cubic interpolation.
+* Worked around an xarray bug in sdba.QuantileDeltaMapping when multidimensional arrays are used with linear or cubic interpolation.
 
 Internal changes
 ~~~~~~~~~~~~~~~~~
