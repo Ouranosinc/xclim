@@ -180,17 +180,18 @@ def knutti_sedlacek(hist, sims):
 def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.05):
     """Robustness categories from Tebaldi et al. (2011).
 
-    Compares the historical mean to the projected values for each model.
-    Category 0 is if less than X% of the models show significant change.
-    Category 1 is if models show significant change but less then Y% agree on its sign.
-    Category 2 is if models show significant change and agree on its sign.
+    Compare the historical mean to the projected values for each model.
+    Categories: 
+      - 0 : less than X% of the models show significant change.
+      - 1 : models show significant change, but less then Y% agree on sign of change.
+      - 2 : models show significant change and agree on sign of change.
 
     Parameters
     ----------
     hists : ndarray
-      1D Array, multi-model historical mean along 'realization'.
+      Multi-model historical mean along 'realization' (nr).
     sims : ndarray
-      2D Array, simulated values along 'realization' and 'time'.
+      Simulated values along 'realization' and 'time' (nr, nt).
     X : float, 0 .. 1
       Threshold fraction of models agreeing on significant change.
     Y : float, 0 .. 1
