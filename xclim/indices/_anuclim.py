@@ -59,7 +59,9 @@ _np_ops = {
 
 
 @declare_units("%", tasmin="[temperature]", tasmax="[temperature]")
-def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"):
+def isothermality(
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Isothermality.
 
     The mean diurnal range divided by the annual temperature range.
@@ -94,7 +96,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
 
 
 @declare_units("%", tas="[temperature]")
-def temperature_seasonality(tas: xarray.DataArray):
+def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     r"""ANUCLIM temperature seasonality (coefficient of variation).
 
     The annual temperature coefficient of variation expressed in percent. Calculated as the standard deviation
@@ -196,11 +198,10 @@ def precip_seasonality(
 @declare_units("[temperature]", tas="[temperature]")
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
-    *,
-    op: str,
-    src_timestep: str,
+    op: str = None,
+    src_timestep: str = None,
     freq: str = "YS",
-):
+) -> xarray.DataArray:
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
@@ -249,11 +250,10 @@ def tg_mean_warmcold_quarter(
 def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    *,
-    op: str,
-    src_timestep: str,
+    op: str = None,
+    src_timestep: str = None,
     freq: str = "YS",
-):
+) -> xarray.DataArray:
     r"""ANUCLIM Mean temperature of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
@@ -296,8 +296,8 @@ def tg_mean_wetdry_quarter(
 
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, *, op: str, src_timestep: str, freq: str = "YS"
-):
+    pr: xarray.DataArray, op: str = None, src_timestep: str = None, freq: str = "YS"
+) -> xarray.DataArray:
     r"""ANUCLIM Total precipitation of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this
@@ -351,11 +351,10 @@ def prcptot_wetdry_quarter(
 def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    *,
-    op: str,
-    src_timestep: str,
-    freq="YS",
-):
+    op: str = None,
+    src_timestep: str = None,
+    freq: str = "YS",
+) -> xarray.DataArray:
     r"""ANUCLIM Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total
@@ -399,7 +398,9 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units("mm", pr="[precipitation]")
-def prcptot(pr: xarray.DataArray, *, src_timestep: str, freq: str = "YS"):
+def prcptot(
+    pr: xarray.DataArray, src_timestep: str = None, freq: str = "YS"
+) -> xarray.DataArray:
     r"""ANUCLIM Accumulated total precipitation.
 
     Parameters
@@ -439,7 +440,7 @@ def prcptot(pr: xarray.DataArray, *, src_timestep: str, freq: str = "YS"):
 @declare_units("mm", pr="[precipitation]")
 def prcptot_wetdry_period(
     pr: xarray.DataArray, *, op: str, src_timestep: str, freq: str = "YS"
-):
+) -> xarray.DataArray:
     r"""ANUCLIM precipitation of the wettest/driest day, week, or month, depending on the time step.
 
     Parameters
@@ -486,14 +487,16 @@ def prcptot_wetdry_period(
     )
 
 
-def _anuclim_coeff_var(arr: xarray.DataArray):
+def _anuclim_coeff_var(arr: xarray.DataArray) -> xarray.DataArray:
     r"""Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time="YS").std(dim="time")
     mu = arr.resample(time="YS").mean(dim="time")
     return std / mu
 
 
-def _from_other_arg(criteria, output, op, freq):
+def _from_other_arg(
+    criteria: xarray.DataArray, output: xarray.DataArray, op, freq
+) -> xarray.DataArray:
     """Pick values from output based on operation returning an index from criteria.
 
     Parameters

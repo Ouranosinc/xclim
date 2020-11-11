@@ -148,7 +148,7 @@ def day_length(lat: Union[int, float], mth: int):  # pragma: no cover
 
 
 @jit
-def day_length_factor(lat: Union[int, float], mth: int):  # pragma: no cover
+def day_length_factor(lat: float, mth: int):  # pragma: no cover
     """Return the day length factor."""
     if -15 > lat >= -90:
         dlf = DAY_LENGTH_FACTORS[0, :]
@@ -244,9 +244,7 @@ def fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
 
 @vectorize
-def duff_moisture_code(
-    t, p, h, mth: int, lat: Union[int, float], dmc0: float
-):  # pragma: no cover
+def duff_moisture_code(t, p, h, mth: int, lat: float, dmc0: float):  # pragma: no cover
     """Compute the Duff moisture code over one time step.
 
     Parameters

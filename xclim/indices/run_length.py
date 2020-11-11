@@ -618,7 +618,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int):
     return (v * rl >= window).sum()
 
 
-def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> Callable:
+def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     """Dask-parallel version of windowed_run_count_1d, ie: the number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
@@ -645,7 +645,7 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> Callable:
     )
 
 
-def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> Callable:
+def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     """Dask-parallel version of windowed_run_events_1d, ie: the number of runs at least as long as given duration.
 
     Parameters
@@ -672,7 +672,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> Callable:
     )
 
 
-def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> Callable:
+def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> xr.DataArray:
     """Dask-parallel version of longest_run_1d, ie: the maximum number of consecutive true values in array.
 
     Parameters
@@ -700,7 +700,7 @@ def first_run_ufunc(
     x: Union[xr.DataArray, Sequence[bool]],
     window: int,
     dim: str = "time",
-) -> xr.apply_ufunc:
+) -> xr.DataArray:
     """Dask-parallel version of first_run_1d, ie: the first entry in array of consecutive true values.
 
     Parameters
@@ -729,7 +729,9 @@ def first_run_ufunc(
     return ind
 
 
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = None):
+def lazy_indexing(
+    da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = None
+) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
     The algorithm differs whether da is 1D or not.
@@ -791,7 +793,9 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = No
     )
 
 
-def index_of_date(time: xr.DataArray, date: str, max_idxs: Optional[int] = None):
+def index_of_date(
+    time: xr.DataArray, date: str, max_idxs: Optional[int] = None
+) -> np.ndarray:
     """Get the index of a date in a time array.
 
     Parameters
@@ -800,6 +804,7 @@ def index_of_date(time: xr.DataArray, date: str, max_idxs: Optional[int] = None)
       An array of datetime values, any calendar.
     date : str
       A string in the "yyyy-mm-dd" or "mm-dd" format.
+    max_idxs: int, optional
 
     Returns
     -------

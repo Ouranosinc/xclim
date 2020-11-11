@@ -254,7 +254,7 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _parse_cf_attrs(
-        cls, kwds: Dict[str, Union[str, Callable, int, bool, List[str]]]
+        cls, kwds: Dict[str, Union[str, Callable, int, bool, List[str, Callable]]]
     ) -> Union[List[Dict[str, str]], List[Dict[str, Union[str, Callable]]]]:
         """CF-compliant metadata attributes for all output variables."""
         # Get number of outputs
