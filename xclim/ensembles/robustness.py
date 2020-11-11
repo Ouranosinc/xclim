@@ -20,7 +20,7 @@ norm = xcstats.get_dist("norm")
 Metric = namedtuple("Metric", ["func", "mapping", "dtype", "hist_dims"])
 
 
-def robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **params):
+def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **params):
     """Compute the robustness of an ensemble for a given indicator and change.
 
     Parameters
@@ -90,7 +90,7 @@ def metric(
 
     def _metric(func):
         @wraps(func)
-        def _metric_overhead(hist, sims, **kwargs):
+        def _metric_overhead(hist, sims, *args, **kwargs):
             if np.any(np.isnan(hist)) or np.any(np.isnan(sims)):
                 return na_value
 
@@ -101,7 +101,7 @@ def metric(
             ):
                 raise AttributeError("Shape mismatch")
 
-            return func(hist, sims, **kwargs)
+            return func(hist, sims, *args, **kwargs)
 
         if mapping is not None:
             mapping.setdefault(na_value, "Invalid values - no metric.")
@@ -114,7 +114,7 @@ def metric(
 
 
 @metric(na_value=np.nan, hist_dims=["time"])
-def _knutti_sedlacek(hist, sims):
+def knutti_sedlacek(hist, sims):
     """Robustness metric from Knutti and Sedlacek (2013).
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
@@ -144,16 +144,27 @@ def _knutti_sedlacek(hist, sims):
     .. [knnuti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
     """
 
-    def diff_cdf_area(x, l1, s1, l2, s2, norm):
+    def cum_cdf(x, ls):  # Cumulative CDF renormalized
+        return sum([norm.cdf(x, loc=loc, scale=sc) for loc, sc in ls]) / len(ls)
+
+    def diff_cum_cdf_area_sq(
+        x, sims_ls, l2, s2
+    ):  # Squared difference between cumcdf and cdf
+        return (cum_cdf(x, sims_ls) - norm.cdf(x, loc=l2, scale=s2)) ** 2
+
+    def diff_cdf_area_sq(x, l1, s1, l2, s2):  # Squared difference between 2 cdfs
         return (norm.cdf(x, loc=l1, scale=s1) - norm.cdf(x, loc=l2, scale=s2)) ** 2
 
-    l1, s1 = norm.fit(sims.flatten())
-    l2, s2 = norm.fit(sims.mean(axis=-1).flatten())
-    lh, sh = norm.fit(hist.flatten())
+    # Get gaussian parameters
+    sims_ls = []
+    for r in range(sims.shape[0]):  # For each model
+        sims_ls.append(norm.fit(sims[r, ...]))
+    ls, ss = norm.fit(sims.mean(axis=-1).flatten())  # For the multi-model mean
+    lh, sh = norm.fit(hist.flatten())  # For the historical mean
 
-    int_bnds = norm.ppf(0.0001, loc=l1, scale=s1), norm.ppf(0.9999, loc=l1, scale=s1)
-    A1 = quad(diff_cdf_area, *int_bnds, args=(l1, s1, l2, s2, norm))[0]
-    A2 = quad(diff_cdf_area, *int_bnds, args=(lh, sh, l2, s2, norm))[0]
+    int_bnds = norm.ppf(0.0001, loc=ls, scale=ss), norm.ppf(0.9999, loc=ls, scale=ss)
+    A1 = quad(diff_cum_cdf_area_sq, *int_bnds, args=(sims_ls, ls, ss))[0]
+    A2 = quad(diff_cdf_area_sq, *int_bnds, args=(lh, sh, ls, ss))[0]
 
     return 1 - A1 / A2
 
@@ -200,13 +211,14 @@ def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.05):
     """
     # Test hypothesis of no significant change
     t, p = spstats.ttest_1samp(sims, hist, axis=1)
+
     # When p < p_change, the hypothesis of no significant change is rejected.
     # We need at least X % models showing significant change
-    if (p < p_change).sum() / hist.size < X:
+    if (p < p_change).sum() / hist.size <= X:
         return 0  # No significant change
 
     # Test that models agree on the sign of the change
-    change_sign = np.sign(sims.mean(axis=1) - hist)
-    if (1 - Y) < change_sign.sum() / hist.size < Y:
+    change_sign = np.sign(sims.mean(axis=1) - hist).clip(0, 1)
+    if (1 - Y) <= change_sign.sum() / hist.size <= Y:
         return 1  # Significant change but no agreement on sign of change
     return 2  # Significant change and agreement on sign of change

@@ -23,6 +23,7 @@ import pytest
 import xarray as xr
 
 from xclim import ensembles
+from xclim.indices.stats import get_dist
 from xclim.testing import open_dataset
 
 
@@ -467,3 +468,81 @@ class TestEnsembleReduction:
             )
             assert sel1 == sel2
             assert sel1 == sel3
+
+
+# ## Tests for Robustness ##
+@pytest.fixture(params=[True, False])
+def robust_data(request):
+    norm = get_dist("norm")
+    hist = np.tile(
+        np.array([norm.rvs(loc=274, scale=1, size=(30,)) for i in range(4)]), (4, 1, 1)
+    )
+    sims = np.array(
+        [
+            [norm.rvs(loc=loc, scale=sc, size=(30,)) for loc, sc in shps]
+            for shps in (
+                [
+                    (274.0, 0.8),
+                    (274.0, 0.9),
+                    (275.5, 0.8),
+                    (275.6, 1.1),
+                ],  # 2 no change, 2 positive change
+                [
+                    (273.2, 1.2),
+                    (273.3, 0.8),
+                    (275.5, 0.8),
+                    (275.6, 1.1),
+                ],  # 2 neg change
+                [
+                    (274.6, 0.8),
+                    (274.8, 1.2),
+                    (275.5, 0.8),
+                    (275.6, 1.1),
+                ],  # All pos change
+                [(274.6, 0.8), (np.nan, 1.2), (275.5, 0.8), (275.6, 1.1)],
+            )
+        ]  # One NaN
+    )
+    hist = xr.DataArray(hist, dims=("lon", "realization", "time"))
+    sims = xr.DataArray(sims, dims=("lon", "realization", "time"))
+    if request.param:
+        hist = hist.chunk({"lon": 1})
+        sims = sims.chunk({"lon": 1})
+    return hist, sims
+
+
+@pytest.mark.parametrize(
+    "method,exp,mdim",
+    [("tebaldi_et_al", [0, 1, 2, 999], "time")],
+)
+def test_ensemble_robustness(robust_data, method, exp, mdim):
+    hist, sims = robust_data
+    cat, mapp = ensembles.ensemble_robustness(hist.mean(mdim), sims, method)
+    np.testing.assert_array_equal(cat, exp)
+    assert cat.attrs["method"] == method
+
+
+def test_knutti_sedlacek():
+    norm = get_dist("norm")
+    # High
+    hist = xr.DataArray(norm.rvs(loc=274, scale=1, size=(100,)), dims=("time",))
+    sims = xr.DataArray(
+        [
+            norm.rvs(loc=277, scale=2, size=(100,)),
+            norm.rvs(loc=280, scale=2, size=(100,)),
+        ],
+        dims=("realization", "time"),
+    )
+    R, mapp = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    np.testing.assert_allclose(R, 0.975, atol=0.015)
+
+    hist = xr.DataArray(norm.rvs(loc=274, scale=0.5, size=(100,)), dims=("time",))
+    sims = xr.DataArray(
+        [
+            norm.rvs(loc=272, scale=0.1, size=(100,)),
+            norm.rvs(loc=274, scale=0.1, size=(100,)),
+        ],
+        dims=("realization", "time"),
+    )
+    R, mapp = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    np.testing.assert_allclose(R, 0.80, atol=0.05)
