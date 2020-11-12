@@ -1,8 +1,8 @@
 # -*- encoding: utf8 -*-
 # noqa: D205,D400
 """
-Robustness metrics
-==================
+Robustness metrics.
+===================
 """
 from collections import namedtuple
 from typing import Mapping, Sequence, Union
@@ -11,17 +11,13 @@ import numpy as np
 import scipy.stats as spstats
 import xarray as xr
 from boltons.funcutils import wraps
-from scipy.integrate import quad
-
-import xclim.indices.stats as xcstats
 
 metrics = {}
-norm = xcstats.get_dist("norm")
 Metric = namedtuple("Metric", ["func", "mapping", "dtype", "hist_dims"])
 
 
 def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **params):
-    """Compute the robustness of an ensemble for a given indicator and change.
+    """Compute the robustness of an ensemble for a given indicator and its change.
 
     Parameters
     ----------
@@ -41,7 +37,6 @@ def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **p
     mapping : dict or None
       A mapping from values in `metric` to their signification. None for `knutti_sedlacek`.
     """
-
     try:
         metric = metrics[method]
     except KeyError:
@@ -144,27 +139,38 @@ def knutti_sedlacek(hist, sims):
     .. [knnuti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
     """
 
-    def cum_cdf(x, ls):  # Cumulative CDF renormalized
-        return sum([norm.cdf(x, loc=loc, scale=sc) for loc, sc in ls]) / len(ls)
+    def diff_cdf_sq_area_int(x1, x2):
+        """Exact integral of the squared area between the non-parametric CDFs of 2 vectors."""
+        y1 = (
+            np.arange(x1.size) + 1
+        ) / x1.size  # Non-parametric CDF on points x1 and x2
+        y2 = (
+            np.arange(x2.size) + 1
+        ) / x2.size  # i.e. y1(x) is the proportion of x1 <= x
 
-    def diff_cum_cdf_area_sq(
-        x, sims_ls, l2, s2
-    ):  # Squared difference between cumcdf and cdf
-        return (cum_cdf(x, sims_ls) - norm.cdf(x, loc=l2, scale=s2)) ** 2
+        x2_in_1 = np.searchsorted(x1, x2, side="right")  # Where to insert x2 in x1
+        x1_in_2 = np.searchsorted(x2, x1, side="right")  # Where to insert x1 in x2
 
-    def diff_cdf_area_sq(x, l1, s1, l2, s2):  # Squared difference between 2 cdfs
-        return (norm.cdf(x, loc=l1, scale=s1) - norm.cdf(x, loc=l2, scale=s2)) ** 2
+        x = np.insert(
+            x1, x2_in_1, x2
+        )  # Merge to get all "discontinuities" of the CDF difference
+        y1_f = np.insert(
+            y1, x2_in_1, np.r_[0, y1][x2_in_1]
+        )  # y1 with repeated value (to the right) where x2 is inserted
+        y2_f = np.insert(
+            y2, x1_in_2, np.r_[0, y2][x1_in_2]
+        )  # Same for y2. 0s are prepended where needed.
 
-    # Get gaussian parameters
-    sims_ls = []
-    for r in range(sims.shape[0]):  # For each model
-        sims_ls.append(norm.fit(sims[r, ...]))
-    ls, ss = norm.fit(sims.mean(axis=-1).flatten())  # For the multi-model mean
-    lh, sh = norm.fit(hist.flatten())  # For the historical mean
+        # Discrete integral of the squared difference (distance) between the two CDFs.
+        return np.sum(np.diff(x) * (y1_f - y2_f)[:-1] ** 2)
 
-    int_bnds = norm.ppf(0.0001, loc=ls, scale=ss), norm.ppf(0.9999, loc=ls, scale=ss)
-    A1 = quad(diff_cum_cdf_area_sq, *int_bnds, args=(sims_ls, ls, ss))[0]
-    A2 = quad(diff_cdf_area_sq, *int_bnds, args=(lh, sh, ls, ss))[0]
+    # Get sorted vectors
+    v_sims = np.sort(sims.flatten())  # "cumulative" models distribution
+    v_means = np.sort(sims.mean(axis=-1))  # Multi-model mean
+    v_hist = np.sort(hist)  # Historical values
+
+    A1 = diff_cdf_sq_area_int(v_sims, v_means)
+    A2 = diff_cdf_sq_area_int(v_hist, v_means)
 
     return 1 - A1 / A2
 
@@ -181,7 +187,7 @@ def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.05):
     """Robustness categories from Tebaldi et al. (2011).
 
     Compare the historical mean to the projected values for each model.
-    Categories: 
+    Categories:
       - 0 : less than X% of the models show significant change.
       - 1 : models show significant change, but less then Y% agree on sign of change.
       - 2 : models show significant change and agree on sign of change.

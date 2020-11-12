@@ -523,26 +523,24 @@ def test_ensemble_robustness(robust_data, method, exp, mdim):
 
 
 def test_knutti_sedlacek():
-    norm = get_dist("norm")
     # High
-    hist = xr.DataArray(norm.rvs(loc=274, scale=1, size=(100,)), dims=("time",))
+    hist = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",))
     sims = xr.DataArray(
         [
-            norm.rvs(loc=277, scale=2, size=(100,)),
-            norm.rvs(loc=280, scale=2, size=(100,)),
+            [277, 277.1, 278, 278.4, 278.1, 276.9],
+            [275, 275.8, 276, 275.2, 276.2, 275.7],
         ],
         dims=("realization", "time"),
     )
-    R, mapp = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
-    np.testing.assert_allclose(R, 0.975, atol=0.015)
+    R, _ = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    np.testing.assert_almost_equal(R, 0.91972477)
 
-    hist = xr.DataArray(norm.rvs(loc=274, scale=0.5, size=(100,)), dims=("time",))
     sims = xr.DataArray(
         [
-            norm.rvs(loc=272, scale=0.1, size=(100,)),
-            norm.rvs(loc=274, scale=0.1, size=(100,)),
+            [277, 277.1, 278, 278.4, 278.1, 276.9],
+            [274, 274.8, 273.7, 274.2, 273.9, 274.5],
         ],
         dims=("realization", "time"),
     )
-    R, mapp = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
-    np.testing.assert_allclose(R, 0.80, atol=0.05)
+    R, _ = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    np.testing.assert_almost_equal(R, 0.83743842)
