@@ -1,5 +1,5 @@
 """LOESS smoothing module."""
-from typing import Union
+from typing import Callable, Union
 
 import numba
 import numpy as np
@@ -98,7 +98,7 @@ def loess_smoothing(
     d: int = 1,
     f: float = 0.5,
     niter: int = 2,
-    weights: Union[str, callable] = "tricube",
+    weights: Union[str, Callable] = "tricube",
 ):
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
 

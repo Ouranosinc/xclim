@@ -1,5 +1,5 @@
 """SDBA utilities module."""
-from typing import Mapping, Optional, Sequence, Union
+from typing import Callable, List, Mapping, Optional, Union
 from warnings import warn
 
 import bottleneck as bn
@@ -98,7 +98,7 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
 
-def ensure_longest_doy(func):
+def ensure_longest_doy(func: Callable) -> Callable:
     """Ensure that selected day is the longest day of year for x and y dims."""
 
     @wraps(func)
@@ -337,8 +337,8 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
 
 def add_endpoints(
     da: xr.DataArray,
-    left: Sequence[Union[int, float]],
-    right: Sequence[Union[int, float]],
+    left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
+    right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
     dim: str = "quantiles",
 ):
     """Add left and right endpoints to a DataArray.
