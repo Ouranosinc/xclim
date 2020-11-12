@@ -16,7 +16,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from inspect import _empty, signature
-from typing import Callable, Dict, List, Mapping, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import wraps
@@ -254,7 +254,7 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _parse_cf_attrs(
-        cls, kwds: Dict[str, Union[str, Callable, int, bool, List[str, Callable]]]
+        cls, kwds: Dict[str, Any]
     ) -> Union[List[Dict[str, str]], List[Dict[str, Union[str, Callable]]]]:
         """CF-compliant metadata attributes for all output variables."""
         # Get number of outputs
