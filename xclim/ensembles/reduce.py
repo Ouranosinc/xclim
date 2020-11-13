@@ -1,4 +1,4 @@
-"""Ensemble Reducing Methods"""
+"""Ensemble Reducing Methods."""
 import logging
 import warnings
 from typing import Optional, Tuple, Union
