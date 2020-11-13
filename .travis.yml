@@ -26,7 +26,7 @@ jobs:
       name: "Python3.8 (Linux) + doctests"
       python: 3.8
       addons:
-
+        apt:
           packages:
             - libspatialindex-dev
             - libnetcdf-dev
