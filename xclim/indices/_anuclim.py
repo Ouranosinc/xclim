@@ -568,9 +568,7 @@ def _to_quarter(
             out.attrs["units"] = "mm"
 
         if tas is not None:
-            out = tas.rolling(time=window, center=False).mean(
-                allow_lazy=True, skipna=False
-            )
+            out = tas.rolling(time=window, center=False).mean(skipna=False)
             out.attrs = tas.attrs
 
     out = ensure_chunk_size(out, time=-1)
