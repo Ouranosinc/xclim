@@ -25,6 +25,35 @@ Indices submodules
    :undoc-members:
    :show-inheritance:
 
+
+Ensembles module
+================
+
+.. automodule:: xclim.ensembles
+   :members:
+   :imported-members:
+   :exclude-members: ensemble_robustness, kmeans_reduce_ensemble, kkz_reduce_ensemble, plot_rsqprofile
+   :show-inheritance:
+
+
+Ensemble reduction
+------------------
+
+.. automodule:: xclim.ensembles._reduce
+
+.. autofunction:: xclim.ensembles.kkz_reduce_ensemble
+.. autofunction:: kmeans_reduce_ensemble
+.. autofunction:: plot_rsqprofile
+
+Ensemble robustness
+-------------------
+
+.. autofunction:: xclim.ensembles.ensemble_robustness
+
+.. automodule:: xclim.ensembles._robustness
+   :members: knutti_sedlacek, tebaldi_et_al
+
+
 Indicator tools
 ===============
 
@@ -80,14 +109,6 @@ Other utilities
 
 Other xclim modules
 ===================
-
-ensembles module
-----------------
-
-.. automodule:: xclim.ensembles
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 spatial analogs module
 ----------------------
