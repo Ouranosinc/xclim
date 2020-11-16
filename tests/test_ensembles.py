@@ -475,31 +475,45 @@ class TestEnsembleReduction:
 def robust_data(request):
     norm = get_dist("norm")
     hist = np.tile(
-        np.array([norm.rvs(loc=274, scale=1, size=(30,)) for i in range(4)]), (4, 1, 1)
+        np.array(
+            [
+                norm.rvs(loc=274, scale=0.8, size=(40,), random_state=r)
+                for r in [101083, 19377, 473820, 483625]
+            ]
+        ),
+        (4, 1, 1),
     )
     sims = np.array(
         [
-            [norm.rvs(loc=loc, scale=sc, size=(30,)) for loc, sc in shps]
+            [
+                norm.rvs(loc=loc, scale=sc, size=(40,), random_state=r)
+                for loc, sc, r in shps
+            ]
             for shps in (
                 [
-                    (274.0, 0.8),
-                    (274.0, 0.9),
-                    (275.5, 0.8),
-                    (275.6, 1.1),
-                ],  # 2 no change, 2 positive change
+                    (274.0, 0.7, 176378),
+                    (274.0, 0.6, 839789),
+                    (274.0, 0.7, 393239),
+                    (275.6, 1.1, 747390),
+                ],  # 3 no change, 1 positive change
                 [
-                    (273.2, 1.2),
-                    (273.3, 0.8),
-                    (275.5, 0.8),
-                    (275.6, 1.1),
+                    (272.5, 1.2, 743920),
+                    (272.4, 0.8, 138489),
+                    (275.5, 0.8, 673683),
+                    (275.6, 1.1, 969383),
                 ],  # 2 neg change
                 [
-                    (274.6, 0.8),
-                    (274.8, 1.2),
-                    (275.5, 0.8),
-                    (275.6, 1.1),
+                    (275.6, 0.8, 696857),
+                    (275.8, 1.2, 379949),
+                    (276.5, 0.8, 268395),
+                    (277.6, 1.1, 456544),
                 ],  # All pos change
-                [(274.6, 0.8), (np.nan, 1.2), (275.5, 0.8), (275.6, 1.1)],
+                [
+                    (274.6, 0.8, 746323),
+                    (np.nan, 1.2, 5643723),
+                    (275.5, 0.8, 118294),
+                    (275.6, 1.1, 574732),
+                ],
             )
         ]  # One NaN
     )

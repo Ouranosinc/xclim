@@ -193,7 +193,7 @@ def knutti_sedlacek(hist, sims):
     },
     hist_dims=["realization"],
 )
-def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.05):
+def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.01):
     """Robustness categories from Tebaldi et al. (2011).
 
     Compare the historical mean to the projected values for each model.
