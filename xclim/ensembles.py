@@ -721,8 +721,9 @@ def plot_rsqprofile(fig_data):
     Examples
     --------
     >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
+    >>> from xclim.testing import open_dataset
     >>> is_matplotlib_installed()
-    >>> crit = xr.open_dataset(path_to_ensemble_file).data
+    >>> crit = open_dataset(path_to_ensemble_file).data
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
     >>> plot_rsqprofile(fig_data)
     """
