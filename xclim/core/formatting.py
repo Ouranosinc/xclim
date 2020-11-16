@@ -8,7 +8,7 @@ import datetime as dt
 import re
 import string
 from fnmatch import fnmatch
-from typing import Mapping, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
@@ -23,7 +23,7 @@ class AttrFormatter(string.Formatter):
         self,
         mapping: Mapping[str, Sequence[str]],
         modifiers: Sequence[str],
-    ):
+    ) -> None:
         """Initialize the formatter.
 
         Parameters
@@ -110,21 +110,21 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc):
+def parse_doc(doc: str) -> Dict[str, str]:
     """Crude regex parsing."""
     if doc is None:
-        return {}
+        return dict()
 
-    out = {}
+    out = dict()
 
     sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
-        content = list(map(str.strip, intro.strip().split("\n\n")))
-        if len(content) == 1:
-            out["title"] = content[0]
-        elif len(content) >= 2:
-            out["title"], abstract = content[:2]
+        intro_content = list(map(str.strip, intro.strip().split("\n\n")))
+        if len(intro_content) == 1:
+            out["title"] = intro_content[0]
+        elif len(intro_content) >= 2:
+            out["title"], abstract = intro_content[:2]
             out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):

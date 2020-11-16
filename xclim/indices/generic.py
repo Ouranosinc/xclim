@@ -129,18 +129,16 @@ def default_freq(**indexer):
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
 
 
-def threshold_count(
-    da: xr.DataArray, op: str, thresh: float, freq: str
-) -> xr.DataArray:
+def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
     ----------
     da : xr.DataArray
       Input data.
-    op : str
+    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
-    thresh : float
+    thresh : str
       Threshold value.
     freq : str
       Resampling frequency defining the periods
@@ -176,15 +174,24 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     ----------
     da : xr.DataArray
     da_value : float
-    operator : str
-
+    operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
+      Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
 
     Returns
     -------
     xr.DataArray
-
     """
-    events = operator(da, da_value) * 1
+    from xarray.core.ops import get_op
+
+    if operator in binary_ops:
+        op = binary_ops[operator]
+    elif operator in binary_ops.values():
+        op = operator
+    else:
+        raise ValueError(f"Operation `{operator}` not recognized.")
+
+    func = getattr(da, "_binary_op")(get_op(op))
+    events = func(da, da_value) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
