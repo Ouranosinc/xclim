@@ -91,7 +91,7 @@ def convert_calendar(
     align_on: Optional[str] = None,
     missing: Optional[Any] = None,
     dim: str = "time",
-) -> xr.DataArray:
+) -> Union[xr.DataArray, xr.Dataset]:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
@@ -230,7 +230,7 @@ def interp_calendar(
     source: Union[xr.DataArray, xr.Dataset],
     target: xr.DataArray,
     dim: str = "time",
-) -> xr.DataArray:
+) -> Union[xr.DataArray, xr.Dataset]:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
     Each timestamp in source and target are first converted to their decimal year equivalent
@@ -395,9 +395,7 @@ def ensure_cftime_array(time: Sequence):
     raise ValueError("Unable to cast array to cftime dtype")
 
 
-def datetime_to_decimal_year(
-    times: xr.DataArray, calendar: Optional[str] = None
-) -> xr.DataArray:
+def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
     """Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
 
     Decimal years are the number of years since 0001-01-01 00:00:00 AD.
@@ -407,7 +405,7 @@ def datetime_to_decimal_year(
     if calendar == "default":
         calendar = "standard"
 
-    def _make_index(time):
+    def _make_index(time) -> xr.DataArray:
         year = int(time.dt.year[0])
         doys = cftime.date2num(
             ensure_cftime_array(time), f"days since {year:04d}-01-01", calendar=calendar

@@ -16,7 +16,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from inspect import Parameter, _empty, signature
-from typing import Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -310,7 +310,9 @@ class Indicator(IndicatorRegistrar):
         return kwds
 
     @classmethod
-    def _parse_cf_attrs(cls, kwds):
+    def _parse_cf_attrs(
+        cls, kwds: Dict[str, Any]
+    ) -> Union[List[Dict[str, str]], List[Dict[str, Union[str, Callable]]]]:
         """CF-compliant metadata attributes for all output variables."""
         # Get number of outputs
         n_outs = (
@@ -541,7 +543,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @staticmethod
-    def check_identifier(identifier):
+    def check_identifier(identifier: str) -> None:
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
@@ -580,7 +582,7 @@ class Indicator(IndicatorRegistrar):
             return attrs
 
         # Translate global attrs
-        attrid = self.identifier.upper()
+        attrid = str(self.identifier).upper()
         attrs = _translate(
             attrid,
             self.__dict__,
@@ -591,7 +593,7 @@ class Indicator(IndicatorRegistrar):
         attrs["outputs"] = []
         for var_attrs in self.cf_attrs:  # Translate for each variable
             if len(self.cf_attrs) > 1:
-                attrid = f"{self.identifier.upper()}.{var_attrs['var_name']}"
+                attrid = f"{str(self.identifier).upper()}.{var_attrs['var_name']}"
             attrs["outputs"].append(_translate(attrid, var_attrs, TRANSLATABLE_ATTRS))
         return attrs
 

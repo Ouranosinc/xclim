@@ -10,7 +10,7 @@ most unit handling methods.
 import re
 import warnings
 from inspect import signature
-from typing import Any, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 import pint.converters
 import pint.unit
@@ -327,7 +327,11 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         )
 
 
-def declare_units(out_units, check_output=True, **units_by_name):
+def declare_units(
+    out_units: Optional[Union[str, List[str]]],
+    check_output: bool = True,
+    **units_by_name,
+) -> Callable:
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.

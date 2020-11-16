@@ -8,7 +8,7 @@ import datetime as dt
 import re
 import string
 from fnmatch import fnmatch
-from typing import Mapping, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
@@ -23,7 +23,7 @@ class AttrFormatter(string.Formatter):
         self,
         mapping: Mapping[str, Sequence[str]],
         modifiers: Sequence[str],
-    ):
+    ) -> None:
         """Initialize the formatter.
 
         Parameters
@@ -110,21 +110,21 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc):
+def parse_doc(doc: str) -> Dict[str, str]:
     """Crude regex parsing."""
     if doc is None:
-        return {}
+        return dict()
 
-    out = {}
+    out = dict()
 
     sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
-        content = list(map(str.strip, intro.strip().split("\n\n")))
-        if len(content) == 1:
-            out["title"] = content[0]
-        elif len(content) >= 2:
-            out["title"], abstract = content[:2]
+        intro_content = list(map(str.strip, intro.strip().split("\n\n")))
+        if len(intro_content) == 1:
+            out["title"] = intro_content[0]
+        elif len(intro_content) >= 2:
+            out["title"], abstract = intro_content[:2]
             out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):
@@ -256,3 +256,75 @@ def update_history(
         merged_history += "\n"
     merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}."
     return merged_history
+
+
+def update_cell_methods(attrs, new):
+    """Update cell methods attributes.
+
+    attrs : dict
+      Original data attributes.
+    new : str
+      Cell method to append to the original cell methods.
+
+
+    Returns
+    -------
+    str
+      Updated cell method.
+    """
+    cm = attrs.get("cell_methods", "")
+    return (cm + " " + new).strip()
+
+
+def prefix_attrs(source, keys, prefix):
+    """Rename some of the keys of a dictionary by adding a prefix.
+
+    Parameters
+    ----------
+    source : dict
+      Source dictionary, for example data attributes.
+    keys : sequence
+      Names of keys to prefix.
+    prefix : str
+      Prefix to prepend to keys.
+
+    Returns
+    -------
+    dict
+      Dictionary of attributes with some keys prefixed.
+    """
+    out = {}
+    for key, val in source.items():
+        if key in keys:
+            out[f"{prefix}{key}"] = val
+        else:
+            out[key] = val
+    return out
+
+
+def unprefix_attrs(source, keys, prefix):
+    """Remove prefix from keys in a dictionary.
+
+    Parameters
+    ----------
+    source : dict
+      Source dictionary, for example data attributes.
+    keys : sequence
+      Names of original keys for which prefix should be removed.
+    prefix : str
+      Prefix to remove from keys.
+
+    Returns
+    -------
+    dict
+      Dictionary of attributes whose keys were prefixed, with prefix removed.
+    """
+    out = {}
+    n = len(prefix)
+    for key, val in source.items():
+        k = key[n:]
+        if (k in keys) and key.startswith(prefix):
+            out[k] = val
+        elif key not in out:
+            out[key] = val
+    return out

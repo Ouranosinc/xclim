@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.21.2-beta"
+VERSION = "0.21.3-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -51,7 +51,7 @@ docs_requirements = [
     "distributed>=2.0",
 ]
 
-gis_requirements = ["clisops>=0.3.1"]
+gis_requirements = ["clisops<0.4.0"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:

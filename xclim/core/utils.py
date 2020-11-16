@@ -10,6 +10,7 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from functools import partial
 from types import FunctionType
+from typing import Callable, Mapping, Optional
 
 import numpy as np
 import xarray as xr
@@ -17,7 +18,9 @@ from boltons.funcutils import update_wrapper
 from dask import array as dsk
 
 
-def wrapped_partial(func: FunctionType, suggested: dict = None, **fixed):
+def wrapped_partial(
+    func: FunctionType, suggested: Optional[dict] = None, **fixed
+) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
     Parameters
@@ -93,7 +96,7 @@ class MissingVariableError(ValueError):
     """xclim Variable missing from dataset error."""
 
 
-def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
+def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -103,7 +106,7 @@ def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
     ----------
     da : xr.DataArray
       The input dataarray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : int
+    **minchunks : Mapping[str, int]
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
     """
@@ -111,7 +114,7 @@ def ensure_chunk_size(da: xr.DataArray, max_iter=10, **minchunks):
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
-    chunking = {}
+    chunking = dict()
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:

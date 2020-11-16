@@ -17,4 +17,4 @@ dependencies:
  - boltons>=20.1
  - scikit-learn>=0.21.3
  - Click
- - clisops>=0.3.1
+ - clisops<0.4.0

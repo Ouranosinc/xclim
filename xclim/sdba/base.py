@@ -1,7 +1,7 @@
 """Base classes."""
 from inspect import signature
 from types import FunctionType
-from typing import Mapping, Optional, Sequence, Union
+from typing import Callable, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -313,7 +313,7 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func):
+def parse_group(func: Callable) -> Callable:
     """Parse the "group" argument of a function and return a Grouper object.
 
     Adds the possiblity to pass a window argument and a list of dimensions in group.

@@ -78,7 +78,7 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
     Allow computation of DC/DMC/FFMC independently,
 """
 from collections import OrderedDict
-from typing import Sequence
+from typing import Optional, Sequence, Union
 from warnings import warn
 
 import numpy as np
@@ -128,7 +128,7 @@ DAY_LENGTH_FACTORS = np.array(
 
 
 @jit
-def day_length(lat, mth):  # pragma: no cover
+def day_length(lat: Union[int, float], mth: int):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
         dl = DAY_LENGTHS[0, :]
@@ -140,11 +140,15 @@ def day_length(lat, mth):  # pragma: no cover
         dl = DAY_LENGTHS[3, :]
     elif 90 >= lat >= 30:
         dl = DAY_LENGTHS[4, :]
+    elif lat > 90 or lat < -90:
+        raise ValueError("Invalid lat specified.")
+    else:
+        raise ValueError
     return dl[mth - 1]
 
 
 @jit
-def day_length_factor(lat, mth):  # pragma: no cover
+def day_length_factor(lat: float, mth: int):  # pragma: no cover
     """Return the day length factor."""
     if -15 > lat >= -90:
         dlf = DAY_LENGTH_FACTORS[0, :]
@@ -152,6 +156,10 @@ def day_length_factor(lat, mth):  # pragma: no cover
         return 1.39
     elif 90 >= lat >= 15:
         dlf = DAY_LENGTH_FACTORS[2, :]
+    elif lat > 90 or lat < -90:
+        raise ValueError("Invalid lat specified.")
+    else:
+        raise ValueError
     return dlf[mth - 1]
 
 
@@ -236,7 +244,7 @@ def fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
 
 @vectorize
-def duff_moisture_code(t, p, h, mth, lat, dmc0):  # pragma: no cover
+def duff_moisture_code(t, p, h, mth: int, lat: float, dmc0: float):  # pragma: no cover
     """Compute the Duff moisture code over one time step.
 
     Parameters
@@ -600,15 +608,16 @@ def _fire_weather_calc(
 
 
 def fire_weather_ufunc(
-    tas: xr.DataArray = None,
-    pr: xr.DataArray = None,
-    rh: xr.DataArray = None,
-    ws: xr.DataArray = None,
-    snd: xr.DataArray = None,
-    lat: xr.DataArray = None,
-    dc0: xr.DataArray = None,
-    dmc0: xr.DataArray = None,
-    ffmc0: xr.DataArray = None,
+    *,
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    rh: Optional[xr.DataArray] = None,
+    ws: Optional[xr.DataArray] = None,
+    snd: Optional[xr.DataArray] = None,
+    lat: Optional[xr.DataArray] = None,
+    dc0: Optional[xr.DataArray] = None,
+    dmc0: Optional[xr.DataArray] = None,
+    ffmc0: Optional[xr.DataArray] = None,
     indexes: Sequence[str] = None,
     start_date: str = None,
     start_up_mode: str = None,

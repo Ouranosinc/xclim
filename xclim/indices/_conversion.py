@@ -1,4 +1,6 @@
 # noqa: D100
+from typing import Optional, Tuple
+
 import numpy as np
 import xarray as xr
 
@@ -41,7 +43,9 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 @declare_units(
     ["m/s", "degree"], uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]"
 )
-def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.5 m/s"):
+def uas_vas_2_sfcwind(
+    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
+) -> Tuple[xr.DataArray, xr.DataArray]:
     """Wind speed and direction from the eastward and northward wind components.
 
     Computes the magnitude and angle of the wind vector from its northward and eastward components,
@@ -94,7 +98,9 @@ def uas_vas_2_sfcwind(uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh="0.
 
 
 @declare_units(["m s-1", "m s-1"], sfcWind="[speed]", sfcWindfromdir="[]")
-def sfcwind_2_uas_vas(sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray):
+def sfcwind_2_uas_vas(
+    sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray
+) -> Tuple[xr.DataArray, xr.DataArray]:
     """Eastward and northward wind components from the wind speed and direction.
 
     Compute the eastward and northward wind components from the wind speed and direction.
@@ -327,7 +333,7 @@ def relative_humidity(
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
-        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))
+        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))  # type: ignore
     elif dtas is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=dtas, ice_thresh=ice_thresh, method=method
@@ -335,7 +341,7 @@ def relative_humidity(
         e_sat_t = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method
         )
-        rh = 100 * e_sat_dt / e_sat_t
+        rh = 100 * e_sat_dt / e_sat_t  # type: ignore
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -344,7 +350,7 @@ def relative_humidity(
         e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
         w = huss / (1 - huss)
-        w_sat = 0.62198 * e_sat / (ps - e_sat)
+        w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
         rh = 100 * w / w_sat
 
     if invalid_values == "clip":
