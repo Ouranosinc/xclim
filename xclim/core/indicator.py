@@ -16,7 +16,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from inspect import Parameter, _empty, signature
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -364,23 +364,8 @@ class Indicator(IndicatorRegistrar):
         ba = self._sig.bind(*args, **kwds)
         ba.apply_defaults()
 
-        # Get inputs passed as strings from ds
-        ds = ba.arguments.pop("ds")
-        for name, param in self._sig.parameters.items():
-            if param.annotation is Union[str, DataArray] and isinstance(
-                ba.arguments[name], str
-            ):
-                if ds is not None:
-                    try:
-                        ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError:
-                        raise MissingVariableError(
-                            f"For input '{name}', variable '{ba.arguments[name]}' was not found in the input dataset."
-                        )
-                else:
-                    raise ValueError(
-                        f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
-                    )
+        # Assign inputs passed as strings from ds.
+        self._assign_named_args(ba)
 
         # Assume the first arguments are always the DataArrays.
         # Only the first nvar inputs are checked (data + cf checks)
@@ -432,6 +417,25 @@ class Indicator(IndicatorRegistrar):
         if n_outs == 1:
             return outs[0]
         return tuple(outs)
+
+    def _assign_named_args(self, ba):
+        """Assign inputs passed as strings from ds."""
+        ds = ba.arguments.pop("ds")
+        for name, param in self._sig.parameters.items():
+            if param.annotation is Union[str, DataArray] and isinstance(
+                ba.arguments[name], str
+            ):
+                if ds is not None:
+                    try:
+                        ba.arguments[name] = ds[ba.arguments[name]]
+                    except KeyError:
+                        raise MissingVariableError(
+                            f"For input '{name}', variable '{ba.arguments[name]}' was not found in the input dataset."
+                        )
+                else:
+                    raise ValueError(
+                        f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
+                    )
 
     def bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
