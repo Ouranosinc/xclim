@@ -896,7 +896,7 @@ def rain_on_frozen_ground_days(
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
         return frozen.all(axis=axis)
 
-    tcond = (tas > frz).rolling(time=8).reduce(func, allow_lazy=True)
+    tcond = (tas > frz).rolling(time=8).reduce(func)
     pcond = pr > t
 
     return (tcond * pcond * 1).resample(time=freq).sum(dim="time")

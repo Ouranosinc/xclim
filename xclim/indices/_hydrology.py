@@ -44,11 +44,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
 
     """
-    m7 = (
-        q.rolling(time=7, center=True)
-        .mean(allow_lazy=True, skipna=False)
-        .resample(time=freq)
-    )
+    m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim="time")
