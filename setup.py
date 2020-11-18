@@ -24,7 +24,7 @@ requirements = [
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
-    "cftime>=1.1.0",
+    "cftime>=1.2.0",
     "netCDF4>=1.4",
     "dask[array]>=2.6",
     "pint>=0.9",
