@@ -84,7 +84,7 @@ class Indicator(IndicatorRegistrar):
     if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
     In the latter case, the same value is used on all variables.
 
-    Compared to their base compute function, indicators add the possibility of using dataset as input,
+    Compared to their base `compute` function, indicators add the possibility of using dataset as input,
     with the injected argument `ds` in the call signature. All arguments that were indicated by the compute function
     to be DataArrays through annotations will be promoted to also accept strings that correspond to variable names
     in the `ds` dataset.

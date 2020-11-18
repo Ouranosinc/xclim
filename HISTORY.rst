@@ -18,7 +18,7 @@ New features and enhancements
 * Added `xclim.core.calendar.date_range` and `xclim.core.calendar.date_range_like` wrapping pandas' `date_range` and xarray's `cftime_range`.
 * `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
 * New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
-* Indicators can now accept dataset in their new `ds_in` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
+* Indicators can now accept dataset in their new `ds` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
 * Clarification to `frequency_analysis` notebook
 
 Bug fixes

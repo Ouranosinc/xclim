@@ -13,9 +13,7 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create indices and indicator in external packages that can easily
-plug into its process. However, there is always room for new common indicators. In both case, please
-refer to the :ref:`Customizing and controlling xclim` page.
+xclim's structure makes it easy to create and register new user-defined indices and indicators. Refer to the :ref:`Customizing and controlling xclim` page for more information.
 
 Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.
