@@ -16,7 +16,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from inspect import Parameter, _empty, signature
-from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
