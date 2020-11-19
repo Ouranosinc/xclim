@@ -10,6 +10,20 @@ You can contribute in many ways:
 Types of Contributions
 ----------------------
 
+Implement Features, Indices or Indicators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+xclim's structure makes it easy to create and register new user-defined indices and indicators. Refer to the :ref:`Customizing and controlling xclim` page for more information.
+
+Look through the GitHub issues for features. Anything tagged with "enhancement"
+and "help wanted" is open to whoever wants to implement it.
+
+.. warning::
+     If you plan to implement new indicators into xclim, be aware that metadata translations
+     for all official xclim languages (for now only French) must be provided, or else the tests
+     will fail and the PR will not be mergeable. See :ref:`Internationalization` for more details.
+     Don't hesitate to ask for help in your PR for this task!
+
 Report Bugs
 ~~~~~~~~~~~
 
@@ -26,18 +40,6 @@ Fix Bugs
 
 Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
 wanted" is open to whoever wants to implement it.
-
-Implement Features
-~~~~~~~~~~~~~~~~~~
-
-Look through the GitHub issues for features. Anything tagged with "enhancement"
-and "help wanted" is open to whoever wants to implement it.
-
-.. warning::
-     If you plan to implement new indicators into xclim, be aware that metadata translations
-     for all official xclim languages (for now only French) must be provided, or else the tests
-     will fail and the PR will not be mergeable. See :ref:`Internationalization` for more details.
-     Don't hesitate to ask for help in your PR for this task!
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
