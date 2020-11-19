@@ -3,6 +3,7 @@
 # Tests for the Indicator objects
 import gc
 from inspect import _empty
+from typing import Union
 
 import dask
 import numpy as np
@@ -20,8 +21,10 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, registry
 from xclim.core.units import units
+from xclim.core.utils import MissingVariableError
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
+from xclim.testing import open_dataset
 
 
 class UniIndTemp(Daily):
@@ -34,7 +37,7 @@ class UniIndTemp(Daily):
     cell_methods = "time: mean within {freq:noun}"
 
     @staticmethod
-    def compute(da, thresh=0.0, freq="YS"):
+    def compute(da: xr.DataArray, thresh=0.0, freq="YS"):
         """Docstring"""
         out = da
         out -= thresh
@@ -48,7 +51,7 @@ class UniIndPr(Daily):
     context = "hydro"
 
     @staticmethod
-    def compute(da, freq):
+    def compute(da: xr.DataArray, freq):
         """Docstring"""
         return da.resample(time=freq).mean(keep_attrs=True)
 
@@ -59,7 +62,7 @@ class UniClim(Daily):
     units = "K"
 
     @staticmethod
-    def compute(da, **indexer):
+    def compute(da: xr.DataArray, **indexer):
         select = select_time(da, **indexer)
         return select.mean(dim="time", keep_attrs=True)
 
@@ -73,7 +76,7 @@ class MultiTemp(Daily):
     description = "Grouped computation of tmax and tmin"
 
     @staticmethod
-    def compute(tas, freq):
+    def compute(tas: xr.DataArray, freq):
         return (
             tas.resample(time=freq).min(keep_attrs=True),
             tas.resample(time=freq).max(keep_attrs=True),
@@ -88,7 +91,7 @@ def test_attrs(tas_series):
     txm = ind(a, thresh=5, freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["xclim_history"]
-    assert "tmin(da, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
+    assert "tmin(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
     assert f"xclim version: {__version__}." in txm.attrs["xclim_history"]
     assert txm.name == "tmin5"
 
@@ -241,7 +244,13 @@ def test_signature():
     from inspect import signature
 
     ind = UniIndTemp()
-    assert signature(ind.compute) == signature(ind.__call__)
+    assert ind._sig == signature(ind.__call__)
+    assert ind._sig.parameters["da"].annotation is Union[str, xr.DataArray]
+
+    compsig = signature(ind.compute)
+    assert compsig.parameters["da"].annotation is xr.DataArray
+    assert "ds" not in compsig.parameters
+    assert "ds" in ind._sig.parameters
 
 
 def test_doc():
@@ -318,7 +327,7 @@ def test_parsed_doc():
 
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
-    assert params["tas"]["annotation"] is xr.DataArray
+    assert params["tas"]["annotation"] is Union[str, xr.DataArray]
     assert params["tas"]["default"] is _empty
     assert params["snd"]["default"] is None
     assert params["shut_down_mode"]["annotation"] is str
@@ -375,3 +384,23 @@ def test_update_history():
 
     assert "d: text" in merged.split("\n")[-1]
     assert merged.startswith("a: Text1")
+
+
+def test_input_dataset():
+    dsx = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990")
+    dsn = open_dataset("NRCANdaily/nrcan_canada_daily_tasmin_1990")
+    ds = xr.merge([dsx, dsn])
+
+    # Use defaults
+    out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
+
+    # Use non-defaults (inverted on purpose)
+    with xclim.set_options(cf_compliance="log"):
+        out = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
+
+    # Use a mix
+    out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
+
+    # Inexistent variable:
+    with pytest.raises(MissingVariableError):
+        out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa

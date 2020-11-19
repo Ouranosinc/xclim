@@ -286,7 +286,7 @@ def frequency_analysis(
     # Apply rolling average
     attrs = da.attrs.copy()
     if window > 1:
-        da = da.rolling(time=window).mean(allow_lazy=True, skipna=False)
+        da = da.rolling(time=window).mean(skipna=False)
         da.attrs.update(attrs)
 
     # Assign default resampling frequency if not provided

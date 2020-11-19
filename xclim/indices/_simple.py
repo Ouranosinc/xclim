@@ -456,7 +456,7 @@ def max_n_day_precipitation_amount(
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
-    arr = pr.rolling(time=window).sum(allow_lazy=True, skipna=False)
+    arr = pr.rolling(time=window).sum(skipna=False)
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
     out.attrs["units"] = pr.units
@@ -494,7 +494,7 @@ def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
     # TODO
     """
     # Rolling sum of the values
-    arr = pr.rolling(time=window).mean(allow_lazy=True, skipna=False)
+    arr = pr.rolling(time=window).mean(skipna=False)
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
     out.attrs["units"] = pr.units

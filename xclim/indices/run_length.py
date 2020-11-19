@@ -247,7 +247,7 @@ def first_run(
         ind = xr.broadcast(i, da)[0].transpose(*da.dims)
         if isinstance(da.data, dsk.Array):
             ind = ind.chunk(da.chunks)
-        wind_sum = da.rolling(time=window).sum(allow_lazy=True, skipna=False)
+        wind_sum = da.rolling(time=window).sum(skipna=False)
         out = ind.where(wind_sum >= window).min(dim=dim) - (
             window - 1
         )  # remove window -1 as rolling result index is last element of the moving window
