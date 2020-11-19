@@ -70,26 +70,17 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        # A DataArray is expected, it has to come from the input dataset
-        # All other parameters are passed as is or almost
-        if indicator.parameters[key]["annotation"] is xr.DataArray:
-            # Default value is the var name (val == key)
-            if val in dsin:
-                params[key] = dsin[val]
-                if ctx.obj["verbose"]:
-                    click.echo(f"Parsed {key} = dsin.{val}")
-            else:
-                raise click.BadArgumentUsage(
-                    f"Variable {val} absent from input dataset. "
-                    f"You should provide a name with --{key}",
-                    ctx,
-                )
-        elif val == "None" or val is None:
+        if val == "None" or val is None:
             params[key] = None
         elif ctx.obj["verbose"]:
             click.echo(f"Parsed {key} = {val}")
+    params["ds"] = dsin
 
-    out = indicator(**params)
+    try:
+        out = indicator(**params)
+    except xc.core.utils.MissingVariableError as err:
+        raise click.BadArgumentUsage(err.args[0])
+
     if isinstance(out, tuple):
         dsout = dsout.assign(**{var.name: var for var in out})
     else:

@@ -323,7 +323,7 @@ def extreme_temperature_range(
       Minimum daily temperature values [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature values [℃] or [K]
-    freq : Optional[str[
+    freq : str
       Resampling frequency; Defaults to "YS".
 
     Returns
