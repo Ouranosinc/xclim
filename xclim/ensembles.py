@@ -6,7 +6,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import scipy.stats
-import xarray as xr
+import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
@@ -26,12 +26,14 @@ except ImportError:
 
 
 def create_ensemble(
-    datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
+    datasets: List[
+        Union[xarray.Dataset, xarray.DataArray, Path, str, List[Union[Path, str]]]
+    ],
     mf_flag: bool = False,
     resample_freq: Optional[str] = None,
     calendar: str = "default",
     **xr_kwargs,
-) -> xr.Dataset:
+) -> xarray.Dataset:
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
     Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
@@ -43,7 +45,7 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
+    datasets : List[Union[xarray.Dataset, Path, str, List[Path, str]]]
       List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
       each sublist contains input .nc files of an xarray multifile Dataset.
       If DataArray object are passed, they should have a name in order to be transformed into Datasets.
@@ -75,8 +77,8 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble  # doctest: +SKIP
-    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
+    >>> from xclim.ensembles import create_ensemble
+    >>> ens = create_ensemble(temperature_datasets)
 
     Using multifile datasets:
     Simulation 1 is a list of .nc files (e.g. separated by time)
@@ -90,9 +92,9 @@ def create_ensemble(
         datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
     )
 
-    dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
+    dim = xarray.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
 
-    ens = xr.concat(ds, dim)
+    ens = xarray.concat(ds, dim)
     for vname, var in ds[0].variables.items():
         ens[vname].attrs.update(**var.attrs)
     ens.attrs.update(**ds[0].attrs)
@@ -100,7 +102,7 @@ def create_ensemble(
     return ens
 
 
-def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
+def ensemble_mean_std_max_min(ens: xarray.Dataset) -> xarray.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
@@ -126,7 +128,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     # Calculate ensemble statistics
     >>> ens_mean_std = ensemble_mean_std_max_min(ens)
     """
-    ds_out = xr.Dataset(attrs=ens.attrs)
+    ds_out = xarray.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
 
         ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
@@ -150,11 +152,11 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: Union[xr.Dataset, xr.DataArray],
+    ens: Union[xarray.Dataset, xarray.DataArray],
     values: Sequence[int] = (10, 50, 90),
     keep_chunk_size: Optional[bool] = None,
     split: bool = True,
-) -> xr.Dataset:
+) -> xarray.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns a Dataset containing ensemble percentiles for input climate simulations.
@@ -196,8 +198,8 @@ def ensemble_percentiles(
     # If the original array has many small chunks, it might be more efficient to do:
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
-    if isinstance(ens, xr.Dataset):
-        out = xr.merge(
+    if isinstance(ens, xarray.Dataset):
+        out = xarray.merge(
             [
                 ensemble_percentiles(
                     da, values, keep_chunk_size=keep_chunk_size, split=split
@@ -236,7 +238,7 @@ def ensemble_percentiles(
         else:
             ens = ens.chunk({"realization": -1})
 
-    out = xr.apply_ufunc(
+    out = xarray.apply_ufunc(
         _calc_perc,
         ens,
         input_core_dims=[["realization"]],
@@ -249,7 +251,7 @@ def ensemble_percentiles(
     )
 
     out = out.assign_coords(
-        percentiles=xr.DataArray(list(values), dims=("percentiles",))
+        percentiles=xarray.DataArray(list(values), dims=("percentiles",))
     )
 
     if split:
@@ -271,12 +273,12 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    datasets: List[Union[xarray.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
     resample_freq: str = None,
     calendar: str = "default",
     **xr_kwargs,
-) -> List[xr.Dataset]:
+) -> List[xarray.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
@@ -307,17 +309,17 @@ def _ens_align_datasets(
     for i, n in enumerate(datasets):
         logging.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
-            ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
+            ds = xarray.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
-            if isinstance(n, xr.Dataset):
+            if isinstance(n, xarray.Dataset):
                 ds = n
-            elif isinstance(n, xr.DataArray):
+            elif isinstance(n, xarray.DataArray):
                 ds = n.to_dataset()
             else:
-                ds = xr.open_dataset(n, **xr_kwargs)
+                ds = xarray.open_dataset(n, **xr_kwargs)
 
         if "time" in ds.coords:
-            time = xr.decode_cf(ds).time
+            time = xarray.decode_cf(ds).time
 
             if resample_freq is not None:
                 counts = time.resample(time=resample_freq).count()
@@ -371,7 +373,7 @@ def _calc_perc(arr, p=[50]):
 
 
 def kkz_reduce_ensemble(
-    data: xr.DataArray,
+    data: xarray.DataArray,
     num_select: int,
     *,
     dist_method: str = "euclidean",
@@ -442,7 +444,7 @@ def kkz_reduce_ensemble(
 
 
 def kmeans_reduce_ensemble(
-    data: xr.DataArray,
+    data: xarray.DataArray,
     *,
     method: dict = None,
     make_graph: bool = MPL_INSTALLED,
@@ -531,26 +533,26 @@ def kmeans_reduce_ensemble(
     Examples
     --------
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
-    >>> from xclim.indicators.atmos import tg_mean, hot_spell_frequency
 
     # Start with ensemble datasets for temperature
     >>> ensTas = create_ensemble(temperature_datasets)
 
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
     # Average annual temperature
-    >>> tg = tg_mean(tas=ensTas.tas)
+    >>> tg = xclim.atmos.tg_mean(tas=ensTas.tas)
     >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dtg = fut_tg - his_tg
 
     # Hotspell frequency as second indicator
-    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> hs = xclim.atmos.hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
     >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dhs = fut_hs - his_hs
 
     # Create selection criteria xr.DataArray
-    >>> crit = xr.concat((dtg, dhs), dim='criteria')
+    >>> from xarray import concat
+    >>> crit = concat((dtg, dhs), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
@@ -569,7 +571,7 @@ def kmeans_reduce_ensemble(
     n_idx = np.shape(data)[1]  # number of indicators
 
     # normalize the data matrix
-    z = xr.DataArray(
+    z = xarray.DataArray(
         scipy.stats.zscore(data, axis=0, ddof=1), coords=data.coords
     )  # ddof=1 to be the same as Matlab's zscore
 
