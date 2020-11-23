@@ -10,7 +10,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import scipy.stats
-import xarray as xr
+import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
@@ -27,7 +27,7 @@ except ImportError:
 
 
 def kkz_reduce_ensemble(
-    data: xr.DataArray,
+    data: xarray.DataArray,
     num_select: int,
     *,
     dist_method: str = "euclidean",
@@ -98,7 +98,7 @@ def kkz_reduce_ensemble(
 
 
 def kmeans_reduce_ensemble(
-    data: xr.DataArray,
+    data: xarray.DataArray,
     *,
     method: dict = None,
     make_graph: bool = MPL_INSTALLED,
@@ -187,26 +187,26 @@ def kmeans_reduce_ensemble(
     Examples
     --------
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
-    >>> from xclim.indicators.atmos import tg_mean, hot_spell_frequency
 
     # Start with ensemble datasets for temperature
     >>> ensTas = create_ensemble(temperature_datasets)
 
     # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
     # Average annual temperature
-    >>> tg = tg_mean(tas=ensTas.tas)
+    >>> tg = xclim.atmos.tg_mean(tas=ensTas.tas)
     >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dtg = fut_tg - his_tg
 
     # Hotspell frequency as second indicator
-    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> hs = xclim.atmos.hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
     >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dhs = fut_hs - his_hs
 
     # Create selection criteria xr.DataArray
-    >>> crit = xr.concat((dtg, dhs), dim='criteria')
+    >>> from xarray import concat
+    >>> crit = concat((dtg, dhs), dim='criteria')
 
     # Create clusters and select realization ids of reduced ensemble
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
@@ -225,7 +225,7 @@ def kmeans_reduce_ensemble(
     n_idx = np.shape(data)[1]  # number of indicators
 
     # normalize the data matrix
-    z = xr.DataArray(
+    z = xarray.DataArray(
         scipy.stats.zscore(data, axis=0, ddof=1), coords=data.coords
     )  # ddof=1 to be the same as Matlab's zscore
 

@@ -9,11 +9,13 @@ import scipy.stats as spstats
 import xarray as xr
 from boltons.funcutils import wraps
 
+from xclim.core.formatting import update_history
+
 metrics = {}
 Metric = namedtuple("Metric", ["func", "mapping", "dtype", "hist_dims"])
 
 
-def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **params):
+def robustness_map(stats, method: str, **params):
     """Compute the robustness of an ensemble for a given indicator and its change.
 
     The method offered here are implementations of a subset of the "Methods to Quantify
@@ -27,10 +29,8 @@ def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **p
 
     Parameters
     ----------
-    hist : xr.DataArray
-      The indicator for the reference period. Shape and source depends on the metric.
-    sims : xr.DataArray
-      The simulated projected values of the indicator (along `time`) for different models ('realization`).
+    stats : xr.Dataset
+      Dataset with the two robustness statistics as calculated with ensemble_robustness.
     method : {'knutti_sedlacek', 'tebaldi_et_al'}
       The metric to compute.
     **params:
@@ -47,78 +47,9 @@ def ensemble_robustness(hist: xr.DataArray, sims: xr.DataArray, method: str, **p
     ----------
     .. [AR5WG1C12] Collins, M., et al., 2013: Long-term Climate Change: Projections, Commitments and Irreversibility. In: Climate Change 2013: The Physical Science Basis. Contribution of Working Group I to the Fifth Assessment Report of the Intergovernmental Panel on Climate Change [Stocker, T.F. et al. (eds.)]. Cambridge University Press, Cambridge, United Kingdom and New York, NY, USA.
     """
-    try:
-        metric = metrics[method]
-    except KeyError:
-        raise ValueError(
-            f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
-        )
-
-    out = xr.apply_ufunc(
-        metric.func,
-        hist,
-        sims,
-        input_core_dims=[metric.hist_dims, ("realization", "time")],
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[metric.dtype],
-        kwargs=params,
-    )
-
-    out.name = "robustness"
-    out.attrs.update(
-        long_name=f"Ensemble robustness according to method {method}",
-        method=method,
-    )
-    return out, metric.mapping
+    pass
 
 
-def metric(
-    mapping: Mapping[int, str] = None,
-    na_value: Union[int, float] = 999,
-    hist_dims: Sequence[str] = ["realization", "time"],
-):
-    """Register a metric function in the `metrics` mapping and add some preparation/checking code.
-
-    Parameters
-    ----------
-    mapping : Mapping[int, str], optional
-      A mapping from a robustness category to a short english description.
-    na_value : Union[int, float]
-      The value returned when any input value is NaN. It is added (if not present),
-      to the mapping with the description "Invalid values - no metric."
-    hist_dims : {['realization'], ['time'], ['realization', 'time']}
-      The dimension(s) expected on hist, used in the shape check.
-
-    All metric functions are invalid when any non-finite values are present in the inputs.
-    """
-
-    def _metric(func):
-        @wraps(func)
-        def _metric_overhead(hist, sims, *args, **kwargs):
-            if np.any(np.isnan(hist)) or np.any(np.isnan(sims)):
-                return na_value
-
-            if (
-                (hist_dims == ["realization"] and hist.shape[0] != sims.shape[0])
-                or (hist_dims == ["time"] and hist.shape[0] != sims.shape[1])
-                or (hist_dims == ["realization", "time"] and hist.shape != sims.shape)
-            ):
-                raise AttributeError("Shape mismatch")
-
-            return func(hist, sims, *args, **kwargs)
-
-        if mapping is not None:
-            mapping.setdefault(na_value, "Invalid values - no metric.")
-        metrics[func.__name__] = Metric(
-            _metric_overhead, mapping, type(na_value), hist_dims
-        )
-        return _metric_overhead
-
-    return _metric
-
-
-@metric(na_value=np.nan, hist_dims=["time"])
 def knutti_sedlacek(hist, sims):
     """Robustness metric from Knutti and Sedlacek (2013).
 
@@ -185,59 +116,90 @@ def knutti_sedlacek(hist, sims):
     return 1 - A1 / A2
 
 
-@metric(
-    {
-        0: "No significant change",
-        1: "No agreement on sign of change",
-        2: "Agreement on sign of change",
-    },
-    hist_dims=["realization"],
-)
-def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.01):
-    """Robustness categories from Tebaldi et al. (2011).
-
-    Compare the historical mean to the projected values for each model.
-    Categories:
-      - 0 : less than X% of the models show significant change.
-      - 1 : models show significant change, but less then Y% agree on sign of change.
-      - 2 : models show significant change and agree on sign of change.
+def ensemble_robustness(
+    ref: xr.DataArray, fut: xr.DataArray, stat: str = "ttest", **kwargs
+):
+    """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
-    hists : ndarray
-      Multi-model historical mean along 'realization' (nr).
-    sims : ndarray
-      Simulated values along 'realization' and 'time' (nr, nt).
-    X : float, 0 .. 1
-      Threshold fraction of models agreeing on significant change.
-    Y : float, 0 .. 1
-      Threshold fraction of models agreeing on the sign of the change.
-    p_change : float
-      p-value threshold for rejecting the hypothesis of no significant
-      change in the t-test.
+    ref : xr.DataArray
+      Reference period values along 'time' and 'realization'  (nt, nr).
+    fut : xr.DataArray
+      Future period values along 'time' and 'realization' (nt, nr).
+    stat : {'ttest'}
+      Name of the statistical test used to determine if there was significant change.
+    **kwargs
+      Other arguments specific to the statistical test.
+
+      For 'ttest':
+        p_change : float (default : 0.05)
+          p-value threshold for rejecting the hypothesis of no significant change.
 
     Returns
     -------
-    int
-        Categories of agreement on the change and its sign.
+    xr.Dataset
+        Dataset with the following variables:
+            change_frac: The proportion of members that show significant change. (0..1)
+            sign_frac : The proportion of member showing significant change that agree on its sign. (0..1)
+
 
     References
     ----------
     Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
     """
-    # Test hypothesis of no significant change
-    t, p = spstats.ttest_1samp(sims, hist, axis=1)
+    test_params = {"ttest": ["p_change"]}
+    if stat == "ttest":
+        p_change = kwargs.set_default("p_change", 0.05)
 
-    # When p < p_change, the hypothesis of no significant change is rejected.
-    # We need at least X % models showing significant change
-    sims_chng = sims[p < p_change, :]
-    hist_chng = hist[p < p_change]
+        # Test hypothesis of no significant change
+        pvals = xr.apply_ufunc(
+            lambda f, r: spstats.ttest_1samp(f, r)[1],
+            fut,
+            ref.mean("time"),
+            input_core_dims=[["realization", "time"], ["realization"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
 
-    if hist_chng.size / hist.size <= X:
-        return 0  # No significant change
+        # When p < p_change, the hypothesis of no significant change is rejected.
+        changed = pvals > p_change
+        fut_chng = fut.where(changed)
+        ref_chng = ref.where(changed)
+    else:
+        raise ValueError(
+            f"Statistical test {stat} must be one of {', '.join(test_params.keys())}."
+        )
+    change_frac = changed.sum("realization") / fut.realization.size
 
     # Test that models agree on the sign of the change
-    change_sign = np.sign(sims_chng.mean(axis=1) - hist_chng).clip(0, 1)
-    if (1 - Y) <= change_sign.sum() / hist_chng.size <= Y:
-        return 1  # Significant change but no agreement on sign of change
-    return 2  # Significant change and agreement on sign of change
+    pos_frac = ((fut_chng.mean("time") - ref_chng.mean("time")) > 0).sum(
+        "realization"
+    ) / fut.realization.size
+    sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
+
+    # Metadata
+    kwargs_str = ", ".join(
+        [f"{k}: {v}" for k, v in kwargs.items() if k in test_params[stat]]
+    )
+    test_str = (
+        f"Significant change was tested with test {stat} with parameters {kwargs_str}."
+    )
+    sign_frac.attrs.update(
+        description="Fraction of members showing significant change that agree on the sign of change. "
+        + test_str,
+        units="",
+    )
+    change_frac.attrs.update(
+        description="Fraction of members showing significant change. " + test_str,
+        units="",
+    )
+    return xr.Dataset(
+        data_vars={"sign_frac": sign_frac, "change_frac": change_frac},
+        attrs={
+            "history": update_history(
+                f"ensemble_robustness with test {stat}, {kwargs_str}", ref, fut
+            )
+        },
+    )

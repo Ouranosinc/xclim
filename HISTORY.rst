@@ -31,8 +31,9 @@ Internal changes
 ~~~~~~~~~~~~~~~~~
 * Passing `align_on` to `xclim.core.calendar.convert_calendar` without using '360_day' calendars will not raise a warning anymore.
 * Added formatting utilities for metadata attributes (`update_cell_methods`, `prefix_attrs` and `unprefix_attrs`).
-* With the help of the `mypy` library, added several typing fixes to better identify inputs/outputs, and reduce object type mutations
 * `xclim/ensembles.py` moved to `xclim/ensembles/*.py`, splitting stats/creation, reduction  and robustness methods.
+* With the help of the `mypy` library, added several typing fixes to better identify inputs/outputs, and reduce object type mutations.
+* Fixed some doctests in `ensembles` and `set_options`.
 
 
 0.21.0 (2020-10-23)
