@@ -230,11 +230,14 @@ def tebaldi_et_al(hist, sims, X=0.5, Y=0.8, p_change=0.01):
 
     # When p < p_change, the hypothesis of no significant change is rejected.
     # We need at least X % models showing significant change
-    if (p < p_change).sum() / hist.size <= X:
+    sims_chng = sims[p < p_change, :]
+    hist_chng = hist[p < p_change]
+
+    if hist_chng.size / hist.size <= X:
         return 0  # No significant change
 
     # Test that models agree on the sign of the change
-    change_sign = np.sign(sims.mean(axis=1) - hist).clip(0, 1)
-    if (1 - Y) <= change_sign.sum() / hist.size <= Y:
+    change_sign = np.sign(sims_chng.mean(axis=1) - hist_chng).clip(0, 1)
+    if (1 - Y) <= change_sign.sum() / hist_chng.size <= Y:
         return 1  # Significant change but no agreement on sign of change
     return 2  # Significant change and agreement on sign of change
