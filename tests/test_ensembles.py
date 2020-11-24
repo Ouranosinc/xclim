@@ -474,7 +474,7 @@ class TestEnsembleReduction:
 @pytest.fixture(params=[True, False])
 def robust_data(request):
     norm = get_dist("norm")
-    hist = np.tile(
+    ref = np.tile(
         np.array(
             [
                 norm.rvs(loc=274, scale=0.8, size=(40,), random_state=r)
@@ -483,7 +483,7 @@ def robust_data(request):
         ),
         (4, 1, 1),
     )
-    sims = np.array(
+    fut = np.array(
         [
             [
                 norm.rvs(loc=loc, scale=sc, size=(40,), random_state=r)
@@ -517,44 +517,49 @@ def robust_data(request):
             )
         ]  # One NaN
     )
-    hist = xr.DataArray(hist, dims=("lon", "realization", "time"))
-    sims = xr.DataArray(sims, dims=("lon", "realization", "time"))
+    ref = xr.DataArray(ref, dims=("lon", "realization", "time"))
+    fut = xr.DataArray(fut, dims=("lon", "realization", "time"))
     if request.param:
-        hist = hist.chunk({"lon": 1})
-        sims = sims.chunk({"lon": 1})
-    return hist, sims
+        ref = ref.chunk({"lon": 1})
+        fut = fut.chunk({"lon": 1})
+    return ref, fut
 
 
 @pytest.mark.parametrize(
-    "method,exp,mdim",
-    [("tebaldi_et_al", [0, 1, 2, 999], "time")],
+    "test,exp_chng,exp_sign",
+    [
+        ("ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan]),
+        ("welch-ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan]),
+        (None, [1, 1, 1, np.nan], [0.5, 0.5, 1, np.nan]),
+    ],
 )
-def test_ensemble_robustness(robust_data, method, exp, mdim):
-    hist, sims = robust_data
-    cat, mapp = ensembles.ensemble_robustness(hist.mean(mdim), sims, method)
-    np.testing.assert_array_equal(cat, exp)
-    assert cat.attrs["method"] == method
+def test_change_significance(robust_data, test, exp_chng, exp_sign):
+    ref, fut = robust_data
+    chng, sign = ensembles.change_significance(ref, fut, test=test)
+    np.testing.assert_array_equal(chng, exp_chng)
+    np.testing.assert_array_equal(sign, exp_sign)
+    assert chng.attrs["test"] == test
 
 
 def test_knutti_sedlacek():
     # High
-    hist = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",))
-    sims = xr.DataArray(
+    ref = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",))
+    fut = xr.DataArray(
         [
             [277, 277.1, 278, 278.4, 278.1, 276.9],
             [275, 275.8, 276, 275.2, 276.2, 275.7],
         ],
         dims=("realization", "time"),
     )
-    R, _ = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    R = ensembles.knutti_sedlacek(ref, fut)
     np.testing.assert_almost_equal(R, 0.91972477)
 
-    sims = xr.DataArray(
+    fut = xr.DataArray(
         [
             [277, 277.1, 278, 278.4, 278.1, 276.9],
             [274, 274.8, 273.7, 274.2, 273.9, 274.5],
         ],
         dims=("realization", "time"),
     )
-    R, _ = ensembles.ensemble_robustness(hist, sims, "knutti_sedlacek")
+    R = ensembles.knutti_sedlacek(ref, fut)
     np.testing.assert_almost_equal(R, 0.83743842)

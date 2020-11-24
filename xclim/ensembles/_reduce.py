@@ -186,6 +186,7 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
+    >>> import xclim
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
 
     # Start with ensemble datasets for temperature
