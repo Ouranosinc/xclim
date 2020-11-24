@@ -33,10 +33,11 @@ def change_significance(
     Returns
     -------
     change_frac: DataArray
-      The fraction of members that show significant change. (0..1)
-      Passing `test=None` yields change_frac = 1 everywhere.
+      The fraction of members that show significant change [0, 1].
+      Passing `test=None` yields change_frac = 1 everywhere,
+      or NaN where any of `ref` or `fut` was NaN.
     sign_frac : DataArray
-      The fraction of members showing significant change that agree on its sign. (0..1)
+      The fraction of members showing significant change that agree on its sign [0, 1].
 
     Notes
     -----
@@ -179,25 +180,20 @@ def knutti_sedlacek(ref: xr.DataArray, fut: xr.DataArray) -> xr.Dataset:
     def _knutti_sedlacek(ref, fut):
         def diff_cdf_sq_area_int(x1, x2):
             """Exact integral of the squared area between the non-parametric CDFs of 2 vectors."""
-            y1 = (
-                np.arange(x1.size) + 1
-            ) / x1.size  # Non-parametric CDF on points x1 and x2
-            y2 = (
-                np.arange(x2.size) + 1
-            ) / x2.size  # i.e. y1(x) is the proportion of x1 <= x
+            # Non-parametric CDF on points x1 and x2
+            # i.e. y1(x) is the proportion of x1 <= x
+            y1 = (np.arange(x1.size) + 1) / x1.size
+            y2 = (np.arange(x2.size) + 1) / x2.size
 
             x2_in_1 = np.searchsorted(x1, x2, side="right")  # Where to insert x2 in x1
             x1_in_2 = np.searchsorted(x2, x1, side="right")  # Where to insert x1 in x2
 
-            x = np.insert(
-                x1, x2_in_1, x2
-            )  # Merge to get all "discontinuities" of the CDF difference
-            y1_f = np.insert(
-                y1, x2_in_1, np.r_[0, y1][x2_in_1]
-            )  # y1 with repeated value (to the right) where x2 is inserted
-            y2_f = np.insert(
-                y2, x1_in_2, np.r_[0, y2][x1_in_2]
-            )  # Same for y2. 0s are prepended where needed.
+            # Merge to get all "discontinuities" of the CDF difference
+            # y1 with repeated value (to the right) where x2 is inserted
+            # Same for y2. 0s are prepended where needed.
+            x = np.insert(x1, x2_in_1, x2)
+            y1_f = np.insert(y1, x2_in_1, np.r_[0, y1][x2_in_1])
+            y2_f = np.insert(y2, x1_in_2, np.r_[0, y2][x1_in_2])
 
             # Discrete integral of the squared difference (distance) between the two CDFs.
             return np.sum(np.diff(x) * (y1_f - y2_f)[:-1] ** 2)
