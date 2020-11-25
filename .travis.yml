@@ -22,27 +22,23 @@ jobs:
     - env: TOXENV=black
       name: "Black, Flake8, Numpy-like Docstring compliance, and linting"
       python: 3.6
+    - env: TOXENV=py39
+      name: "Python3.9 (Linux)"
+      python: 3.9
     - env: TOXENV=py38-doctest
       name: "Python3.8 (Linux) + doctests"
       python: 3.8
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
-            - libnetcdf-dev
-            - libhdf5-dev
     - if: type = push
-      env: TOXENV=py38-macOS
-      name: "Python3.8 (macOS)"
+      env: TOXENV=macOS
+      name: "Python3.x (macOS)"
       os: osx
       language: shell
       addons:
         homebrew:
-          update: true
+#          update: true
           packages:
             - netcdf
-            - spatialindex
-            - python@3.8
+            - python@3.x
       before_install:
         - printenv
 #        - /usr/local/lib/python3.8/bin/pip3 install --upgrade setuptools
@@ -52,28 +48,16 @@ jobs:
     - env: TOXENV=py37
       name: "Python3.7 (Linux)"
       python: 3.7
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
     - env: TOXENV=py36-nosubset-lm3
       name: "Python3.6 (Linux + lmoments3@master) (no subsetting)"
       python: 3.6
     - env: TOXENV=py36-xarray
       name: "Python3.6 (Linux + xarray@master + cftime@master)"
       python: 3.6
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
     - if: type = push
       env: TOXENV=py36-bottleneck
       name: "Python3.6 (Linux + bottleneck@master)"
       python: 3.6
-      addons:
-        apt:
-          packages:
-            - libspatialindex-dev
     - if: type = push
       env: TOXENV=py38-anaconda
       name: "Python3.8 (Linux + Anaconda)"
@@ -114,6 +98,7 @@ jobs:
         - conda update -q conda
         - conda create -n xclim -c conda-forge python=$DESIRED_PYTHON
         - source activate xclim
+        - sed -i -e 's/clisops>=0.4.0/clisops<0.4.0/g' environment.yml # clisops >0.4.0 not supported for Windows
         - conda env update -f environment.yml
         - conda install -c conda-forge pytest coveralls pytest-cov xdoctest
       install:
@@ -123,7 +108,7 @@ jobs:
         - py.test --cov=xclim
   allow_failures:
     - env: TOXENV=py38-anaconda
-    - env: TOXENV=py38-macOS
+    - env: TOXENV=macOS
     - env:
       - TOXENV=py37-windows
       - DESIRED_PYTHON=3.7
