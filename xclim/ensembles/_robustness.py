@@ -1,6 +1,18 @@
 # -*- encoding: utf8 -*-
 # noqa: D205,D400
-"""Ensemble Robustness metrics."""
+"""
+Ensemble Robustness metrics.
+============================
+
+Robustness metrics are used to estimate the confidence of the climate change signal
+of an ensemble. This submodule is inspired by and tries to follow the guidelines of
+the IPCC, more specifically the 12th chapter of the Working Group 1's contribution to
+the AR5 [AR5WG1C12]_ (see box 12.1).
+
+References
+----------
+.. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
+"""
 import numpy as np
 import scipy.stats as spstats
 import xarray as xr
@@ -43,19 +55,21 @@ def change_significance(
     -----
     Available statistical tests are :
 
-    'ttest' : Single sample T-test. Same test as used by [tebaldi2011]_. The future
-      values are compared against the reference mean (over 'time'). Change is qualified
-      as 'significant' when the test's p-value is below the user-provided `p_change`
-      value.
-    'welch-ttest' : Two-sided T-test, without assuming equal population variance. Same
-      significance criterion as 'ttest'.
-    None : Significant change is not tested and, thus, members showing no change are
-      included in the `sign_frac` output.
-
+      'ttest' :
+        Single sample T-test. Same test as used by [tebaldi2011]_. The future
+        values are compared against the reference mean (over 'time'). Change is qualified
+        as 'significant' when the test's p-value is below the user-provided `p_change`
+        value.
+      'welch-ttest' :
+         Two-sided T-test, without assuming equal population variance. Same
+        significance criterion as 'ttest'.
+      None :
+        Significant change is not tested and, thus, members showing no change are
+        included in the `sign_frac` output.
 
     References
     ----------
-    .. [tebaldi2011]_ Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
+    .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
     """
     test_params = {"ttest": ["p_change"], "welch-ttest": ["p_change"]}
     if test == "ttest":

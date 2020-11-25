@@ -20,7 +20,7 @@ New features and enhancements
 * New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
 * Indicators can now accept dataset in their new `ds` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
 * Clarification to `frequency_analysis` notebook
-* New method `xclim.ensembles.ensemble_robustness` to qualify climate change agreement among members of an ensemble.
+* New methods `xclim.ensembles.change_significance` and `xclim.ensembles.knutti_sedlacek` to qualify climate change agreement among members of an ensemble.
 
 Bug fixes
 ~~~~~~~~~

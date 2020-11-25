@@ -30,29 +30,19 @@ Ensembles module
 ================
 
 .. automodule:: xclim.ensembles
-   :members:
-   :imported-members:
-   :exclude-members: ensemble_robustness, kmeans_reduce_ensemble, kkz_reduce_ensemble, plot_rsqprofile
-   :show-inheritance:
-
-
-Ensemble reduction
-------------------
+   :members: create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
 
 .. automodule:: xclim.ensembles._reduce
 
+.. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
-.. autofunction:: kmeans_reduce_ensemble
-.. autofunction:: plot_rsqprofile
-
-Ensemble robustness
--------------------
-
-.. autofunction:: xclim.ensembles.ensemble_robustness
+.. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
+.. autofunction:: xclim.ensembles.plot_rsqprofile
 
 .. automodule:: xclim.ensembles._robustness
-   :members: knutti_sedlacek, tebaldi_et_al
 
+.. autofunction:: xclim.ensembles.change_significance
+.. autofunction:: xclim.ensembles.knutti_sedlacek
 
 Indicator tools
 ===============
@@ -111,15 +101,6 @@ Other utilities
 
 Other xclim modules
 ===================
-
-
-Ensembles module
-----------------
-
-.. automodule:: xclim.ensembles
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 Spatial Analogs module
 ----------------------

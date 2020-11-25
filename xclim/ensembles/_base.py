@@ -60,14 +60,16 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble  # doctest: +SKIP
-    >>> ens = create_ensemble(temperature_datasets)  # doctest: +SKIP
+    >>> from xclim.ensembles import create_ensemble
+    >>> ens = create_ensemble(temperature_datasets)
 
-    Using multifile datasets:
-    Simulation 1 is a list of .nc files (e.g. separated by time)
+    Using multifile datasets, through glob patterns.
+    Simulation 1 is a list of .nc files (e.g. separated by time):
+
     >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
 
-    Simulation 2 is also a list of .nc files
+    Simulation 2 is also a list of .nc files:
+
     >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
@@ -105,10 +107,12 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     --------
     >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
 
-    # Create ensemble dataset
+    Create the ensemble dataset:
+
     >>> ens = create_ensemble(temperature_datasets)
 
-    # Calculate ensemble statistics
+    Calculate ensemble statistics:
+
     >>> ens_mean_std = ensemble_mean_std_max_min(ens)
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
@@ -169,16 +173,20 @@ def ensemble_percentiles(
     --------
     >>> from xclim.ensembles import create_ensemble, ensemble_percentiles
 
-    # Create ensemble dataset
+    Create ensemble dataset:
+
     >>> ens = create_ensemble(temperature_datasets)
 
-    # Calculate default ensemble percentiles
+    Calculate default ensemble percentiles:
+
     >>> ens_percs = ensemble_percentiles(ens)
 
-    # Calculate non-default percentiles (25th and 75th)
+    Calculate non-default percentiles (25th and 75th)
+
     >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
 
-    # If the original array has many small chunks, it might be more efficient to do:
+    If the original array has many small chunks, it might be more efficient to do:
+
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
     if isinstance(ens, xr.Dataset):

@@ -1,5 +1,7 @@
 # noqa: D205,D400
 """
+Ensemble reduction.
+===================
 Ensemble reduction is the process of selecting a subset of members from an ensemble in
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.
@@ -189,27 +191,32 @@ def kmeans_reduce_ensemble(
     >>> import xclim
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
 
-    # Start with ensemble datasets for temperature
+    Start with ensemble datasets for temperature:
+
     >>> ensTas = create_ensemble(temperature_datasets)
 
-    # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals
-    # Average annual temperature
+    Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals.
+    First, average annual temperature:
+
     >>> tg = xclim.atmos.tg_mean(tas=ensTas.tas)
     >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dtg = fut_tg - his_tg
 
-    # Hotspell frequency as second indicator
+    Then, Hotspell frequency as second indicator:
+
     >>> hs = xclim.atmos.hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
     >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dhs = fut_hs - his_hs
 
-    # Create selection criteria xr.DataArray
+    Create a selection criteria xr.DataArray:
+
     >>> from xarray import concat
     >>> crit = concat((dtg, dhs), dim='criteria')
 
-    # Create clusters and select realization ids of reduced ensemble
+    Finally, create clusters and select realization ids of reduced ensemble:
+
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
     >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
