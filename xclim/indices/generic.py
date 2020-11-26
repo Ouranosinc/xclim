@@ -6,8 +6,6 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-# Note: scipy.stats.dist.shapes: comma separated names of shape parameters
-# The other parameters, common to all distribution, are loc and scale.
 import numpy as np
 import xarray as xr
 
