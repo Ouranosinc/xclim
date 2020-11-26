@@ -21,19 +21,25 @@ from xclim.core.formatting import update_history
 
 
 def change_significance(
-    ref: xr.DataArray, fut: xr.DataArray, test: str = "ttest", **kwargs
+    fut: xr.DataArray, ref: xr.DataArray = None, test: str = "ttest", **kwargs
 ) -> xr.Dataset:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
+    Warning: This method propagates all NaNs. For a given point, if any of the members
+    have null values, the returned statistic is null.
+
     Parameters
     ----------
-    ref : xr.DataArray
-      Reference period values along 'time' and 'realization'  (nt1, nr).
     fut : xr.DataArray
-      Future period values along 'time' and 'realization' (nt2, nr). The size of the
-      'time' axis does not need to match the one of `ref`. But their 'realization' axes
-      must be identical.
-    test : {'ttest', 'welch-ttest', None}
+      Future period values along 'realization' and 'time' (..., nr, nt1)
+      or if `ref` is None, Delta values along `realization` (..., nr).
+    ref : xr.DataArray, optional
+      Reference period values along realization' and 'time'  (..., nt2, nr).
+      The size of the 'time' axis does not need to match the one of `fut`.
+      But their 'realization' axes must be identical.
+      If `None` (default), values of `fut` are assumed to be deltas instead of
+      a distribution across the future period.
+    test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
     **kwargs
       Other arguments specific to the statistical test.
@@ -41,15 +47,22 @@ def change_significance(
       For 'ttest' and 'welch-ttest':
         p_change : float (default : 0.05)
           p-value threshold for rejecting the hypothesis of no significant change.
+      For 'threshold': (Only one of those must be given.)
+        abs_thresh : float (no default)
+          Threshold for the (absolute) change to be considered significative.
+        rel_thresh : float (no default, in [0, 1])
+          Threshold for the relative change (in reference to ref) to be significative.
+          Only valid if `ref` is given.
 
     Returns
     -------
     change_frac: DataArray
       The fraction of members that show significant change [0, 1].
-      Passing `test=None` yields change_frac = 1 everywhere,
-      or NaN where any of `ref` or `fut` was NaN.
+      Passing `test=None` yields change_frac = 1 everywhere
+      except where any of `ref` or `fut` was NaN.
     sign_frac : DataArray
-      The fraction of members showing significant change that agree on its sign [0, 1].
+      The fraction of members showing significant change that agree on its sign [0.5, 1].
+      Null values are returned where no members show significant change.
 
     Notes
     -----
@@ -61,8 +74,11 @@ def change_significance(
         as 'significant' when the test's p-value is below the user-provided `p_change`
         value.
       'welch-ttest' :
-         Two-sided T-test, without assuming equal population variance. Same
+        Two-sided T-test, without assuming equal population variance. Same
         significance criterion as 'ttest'.
+      'threshold' :
+        Change is considered significative if the absolute delta exceeds a given
+        threshold (absolute or relative).
       None :
         Significant change is not tested and, thus, members showing no change are
         included in the `sign_frac` output.
@@ -70,8 +86,40 @@ def change_significance(
     References
     ----------
     .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
+
+
+    Example:
+    --------
+    This example computes the mean temperature in an ensemble and compares two time
+    periods, qualifying significant change through a single sample T-test.
+
+    >>> from xclim import ensembles
+    >>> ens = ensembles.create_ensemble(temperature_datasets)
+    >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq='YS')
+    >>> fut = tgmean.sel(time=slice('2020', '2050'))
+    >>> ref = tgmean.sel(time=slice('1990', '2020'))
+    >>> chng_f, sign_f = ensembles.change_significance(fut, ref, test='ttest')
+
+    If the deltas were already computed beforehand, the 'threshold' test can still
+    be used, here with a 2 K threshold.
+
+    >>> delta = fut.mean('time') - ref.mean('time')
+    >>> chng_f, sign_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
     """
-    test_params = {"ttest": ["p_change"], "welch-ttest": ["p_change"]}
+    test_params = {
+        "ttest": ["p_change"],
+        "welch-ttest": ["p_change"],
+        "threshold": ["abs_thresh", "rel_thresh"],
+    }
+    if ref is None:
+        delta = fut
+        if test not in ["threshold", None]:
+            raise ValueError(
+                "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
+            )
+    else:
+        delta = fut.mean("time", skipna=False) - ref.mean("time", skipna=False)
+
     if test == "ttest":
         p_change = kwargs.setdefault("p_change", 0.05)
 
@@ -108,26 +156,33 @@ def change_significance(
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
         mask = pvals.isnull().any("realization")
+    elif test == "threshold":
+        if "abs_thresh" in kwargs and "rel_thresh" not in kwargs:
+            changed = abs(delta) > kwargs["abs_thresh"]
+        elif "rel_thresh" in kwargs and "abs_thresh" not in kwargs and ref is not None:
+            changed = abs(delta / ref.mean("time")) > kwargs["rel_thresh"]
+        else:
+            raise ValueError("Invalid argument combination for test='threshold'.")
+        mask = delta.isnull().any("realization")
     elif test is not None:
         raise ValueError(
             f"Statistical test {test} must be one of {', '.join(test_params.keys())}."
         )
 
     if test is not None:
-        fut_chng = fut.where(changed & ~mask)
-        ref_chng = ref.where(changed & ~mask)
+        delta_chng = delta.where(changed & ~mask)
         change_frac = (changed.sum("realization") / fut.realization.size).where(~mask)
     else:
-        fut_chng = fut
-        ref_chng = ref
-        change_frac = xr.ones_like(ref.isel(time=0, realization=0)).where(
-            fut.notnull().all(["time", "realization"])
+        delta_chng = delta
+        change_frac = xr.ones_like(delta.isel(realization=0)).where(
+            delta.notnull().all(["realization"])
         )
 
     # Test that models agree on the sign of the change
-    pos_frac = ((fut_chng.mean("time") - ref_chng.mean("time")) > 0).sum(
-        "realization"
-    ) / (change_frac * fut.realization.size)
+    # This returns NaN (cause 0 / 0) where no model show significant change.
+    pos_frac = (delta_chng > 0).sum("realization") / (
+        change_frac * fut.realization.size
+    )
     sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
 
     # Metadata
@@ -137,15 +192,15 @@ def change_significance(
     test_str = (
         f"Significant change was tested with test {test} with parameters {kwargs_str}."
     )
+    das = {"fut": fut} if ref is None else {"fut": fut, "ref": ref}
     sign_frac.attrs.update(
         description="Fraction of members showing significant change that agree on the sign of change. "
         + test_str,
         units="",
         test=test,
         xclim_history=update_history(
-            f"sign_frac from change_significance(ref=ref, fut=fut, test={test}, {kwargs_str})",
-            ref=ref,
-            fut=fut,
+            f"sign_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+            **das,
         ),
     )
     change_frac.attrs.update(
@@ -153,9 +208,8 @@ def change_significance(
         units="",
         test=test,
         xclim_history=update_history(
-            f"change_frac from change_significance(ref=ref, fut=fut, test={test}, {kwargs_str})",
-            ref=ref,
-            fut=fut,
+            f"change_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+            **das,
         ),
     )
     return change_frac, sign_frac

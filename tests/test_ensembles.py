@@ -526,19 +526,34 @@ def robust_data(request):
 
 
 @pytest.mark.parametrize(
-    "test,exp_chng,exp_sign",
+    "test,exp_chng,exp_sign,kws",
     [
-        ("ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan]),
-        ("welch-ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan]),
-        (None, [1, 1, 1, np.nan], [0.5, 0.5, 1, np.nan]),
+        ("ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {}),
+        ("welch-ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {}),
+        ("threshold", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {"rel_thresh": 0.002}),
+        (
+            "threshold",
+            [0, 0, 0.5, np.nan],
+            [np.nan, np.nan, 1, np.nan],
+            {"abs_thresh": 2},
+        ),
+        (None, [1, 1, 1, np.nan], [0.5, 0.5, 1, np.nan], {}),
     ],
 )
-def test_change_significance(robust_data, test, exp_chng, exp_sign):
+def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
     ref, fut = robust_data
-    chng, sign = ensembles.change_significance(ref, fut, test=test)
+    chng, sign = ensembles.change_significance(fut, ref, test=test, **kws)
     np.testing.assert_array_equal(chng, exp_chng)
     np.testing.assert_array_equal(sign, exp_sign)
     assert chng.attrs["test"] == test
+
+
+def test_change_significance_delta(robust_data):
+    ref, fut = robust_data
+    delta = fut.mean("time") - ref.mean("time")
+    chng, sign = ensembles.change_significance(delta, test="threshold", abs_thresh=2)
+    np.testing.assert_array_equal(chng, [0, 0, 0.5, np.nan])
+    np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
 
 def test_knutti_sedlacek():
