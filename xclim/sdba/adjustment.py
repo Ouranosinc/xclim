@@ -506,3 +506,30 @@ class Scaling(BaseAdjustment):
     def _adjust(self, sim, interp="nearest"):
         factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
         return apply_correction(sim, factor, self.kind)
+
+
+class PrincipalComponentAdjustment(BaseAdjustment):
+    """Principal Component adjustment.
+
+    Method remapping simulation values to the observation through principal component analysis.
+
+    Parameters
+    ----------
+    At instantiation:
+
+    dims : Sequence of str, optional
+      The dimensions to flatten into the "coordinates" dimensions. Default is `None` in
+      which case all dimensions except "time" are used.
+
+    In adjustment:
+
+    """
+
+    def __init_(self, *, dims=None):
+        super().__init__(dims=dims)
+
+    def _train(self, ref, hist):
+        dims = self.dims or (set(ref.dims) - {"time"})
+
+        ref = ref.stack(coordinates=dims)
+        hist = hist.stack(coordinates=dims)
