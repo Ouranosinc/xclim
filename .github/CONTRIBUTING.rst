@@ -119,7 +119,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ git commit -m "Your detailed description of your changes."
     # `pre-commit` will run checks at this point:
     # if no errors are found, changes will be committed.
-    # if errors are found, modifications will be mades. Simply `git commit` again.
+    # if errors are found, modifications will be made. Simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
 
@@ -149,7 +149,7 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
-5. The pull request should work for Python 3.6, 3.7, and 3.8 as well as raise test coverage.
+5. The pull request should work for Python 3.6, 3.7, 3.8, and 3.9 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
