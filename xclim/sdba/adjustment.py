@@ -2,6 +2,7 @@
 from typing import Union
 from warnings import warn
 
+import dask.array as dsk
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
@@ -16,12 +17,14 @@ from .utils import (
     ADDITIVE,
     MULTIPLICATIVE,
     apply_correction,
+    best_pc_orientation,
     broadcast,
     equally_spaced_nodes,
     extrapolate_qm,
     get_correction,
     interp_on_quantiles,
     map_cdf,
+    pc_matrix,
     rank,
 )
 
@@ -531,5 +534,55 @@ class PrincipalComponentAdjustment(BaseAdjustment):
     def _train(self, ref, hist):
         dims = self.dims or (set(ref.dims) - {"time"})
 
-        ref = ref.stack(coordinates=dims)
-        hist = hist.stack(coordinates=dims)
+        ref = ref.stack(crd1=dims)
+        hist = hist.stack(crd1=dims)
+
+        ref_mean = ref.mean("time")
+        hist_mean = hist.mean("time")
+
+        # Get appropriate math module
+        mod = (
+            dsk
+            if isinstance(ref.data, dsk.Array) or isinstance(hist.data, dsk.Array)
+            else np
+        )
+
+        # Get PC transform matrices
+        # R is O from article and H is M..
+        R = xr.apply_ufunc(
+            pc_matrix,
+            ref,
+            input_core_dims=[["crd1", "time"]],
+            output_core_dims=[["crd1", "crd2"]],
+            dask="allowed",
+        )
+
+        H = xr.apply_ufunc(
+            pc_matrix,
+            hist,
+            input_core_dims=[["crd1", "time"]],
+            output_core_dims=[["crd2", "crd3"]],
+            dask="allowed",
+        )
+        Hinv = H.copy(data=mod.linalg.inv(H))
+
+        orient = xr.apply_ufunc(
+            best_pc_orientation,
+            R,
+            Hinv,
+            input_core_dims=[["crd1", "crd2"], ["crd2", "crd3"]],
+            output_core_dims=[["crd1"]],
+            dask="allowed",
+        )
+
+        # Transformation matrix, from model coords to ref coords.
+        trans = (R * orient) @ Hinv
+
+        # Attrs
+        ref_mean.attrs.update(long_name="Centroid point of target.")
+        hist_mean.attrs.update(long_name="Centroid point of training.")
+        trans.attrs.update(
+            long_name="Transformation from training coords to target coords."
+        )
+
+        self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
