@@ -13,13 +13,14 @@ New indicators
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* add unique titles to atmos calculations employing wrapped_partials
+* Added unique titles to `atmos` calculations employing wrapped_partials.
 * `xclim.core.calendar.convert_calendar` now accepts a `missing` argument.
 * Added `xclim.core.calendar.date_range` and `xclim.core.calendar.date_range_like` wrapping pandas' `date_range` and xarray's `cftime_range`.
 * `xclim.core.calendar.get_calendar` now accepts many different types of data, including datetime object directly.
 * New module `xclim.analog` and method `xclim.analog.spatial_analogs` to compute spatial analogs.
 * Indicators can now accept dataset in their new `ds` call argument. Variable arguments (that use the `DataArray` annotation) can now be given with strings that correspond to variable names in the dataset, and default to their own name.
-* Clarification to `frequency_analysis` notebook
+* Clarification to `frequency_analysis` notebook.
+* Now officially supporting PEP596 (Python3.9).
 * New methods `xclim.ensembles.change_significance` and `xclim.ensembles.knutti_sedlacek` to qualify climate change agreement among members of an ensemble.
 
 Bug fixes
@@ -34,6 +35,7 @@ Internal changes
 * `xclim/ensembles.py` moved to `xclim/ensembles/*.py`, splitting stats/creation, reduction  and robustness methods.
 * With the help of the `mypy` library, added several typing fixes to better identify inputs/outputs, and reduce object type mutations.
 * Fixed some doctests in `ensembles` and `set_options`.
+* `clisops` v0.4.0+ is now an optional requirements for non-Windows builds.
 
 
 0.21.0 (2020-10-23)
