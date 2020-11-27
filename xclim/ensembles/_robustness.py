@@ -25,9 +25,6 @@ def change_significance(
 ) -> xr.Dataset:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
-    Warning: This method propagates all NaNs. For a given point, if any of the members
-    have null values, the returned statistic is null.
-
     Parameters
     ----------
     fut : xr.DataArray
@@ -118,14 +115,14 @@ def change_significance(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
             )
     else:
-        delta = fut.mean("time", skipna=False) - ref.mean("time", skipna=False)
+        delta = fut.mean("time") - ref.mean("time")
 
     if test == "ttest":
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_1samp(f, r, axis=-1)[1],
+            lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy='omit')[1],
             fut,
             ref.mean("time"),
             input_core_dims=[["realization", "time"], ["realization"]],
@@ -136,14 +133,13 @@ def change_significance(
         )
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
-        mask = pvals.isnull().any("realization")
     elif test == "welch-ttest":
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
         # equal_var=False -> Welch's T-test
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_ind(f, r, axis=-1, equal_var=False)[1],
+            lambda f, r: spstats.ttest_ind(f, r, axis=-1, equal_var=False, nan_policy='omit')[1],
             fut,
             ref,
             input_core_dims=[["realization", "time"], ["realization", "time"]],
@@ -155,7 +151,6 @@ def change_significance(
 
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
-        mask = pvals.isnull().any("realization")
     elif test == "threshold":
         if "abs_thresh" in kwargs and "rel_thresh" not in kwargs:
             changed = abs(delta) > kwargs["abs_thresh"]
@@ -163,25 +158,22 @@ def change_significance(
             changed = abs(delta / ref.mean("time")) > kwargs["rel_thresh"]
         else:
             raise ValueError("Invalid argument combination for test='threshold'.")
-        mask = delta.isnull().any("realization")
     elif test is not None:
         raise ValueError(
             f"Statistical test {test} must be one of {', '.join(test_params.keys())}."
         )
 
     if test is not None:
-        delta_chng = delta.where(changed & ~mask)
-        change_frac = (changed.sum("realization") / fut.realization.size).where(~mask)
+        delta_chng = delta.where(changed)
+        change_frac = changed.sum("realization") / fut.notnull().sum("realization")
     else:
         delta_chng = delta
-        change_frac = xr.ones_like(delta.isel(realization=0)).where(
-            delta.notnull().all(["realization"])
-        )
+        change_frac = xr.ones_like(delta.isel(realization=0))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
     pos_frac = (delta_chng > 0).sum("realization") / (
-        change_frac * fut.realization.size
+        change_frac * fut.notnull().sum("realization")
     )
     sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
 
