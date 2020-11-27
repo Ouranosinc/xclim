@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.21.4-beta"
+VERSION = "0.21.5-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -51,7 +51,7 @@ docs_requirements = [
     "distributed>=2.0",
 ]
 
-gis_requirements = ["clisops<0.4.0"]
+gis_requirements = ["clisops>=0.4.0"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
@@ -74,6 +74,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
     description=DESCRIPTION,
