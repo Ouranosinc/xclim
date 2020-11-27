@@ -189,7 +189,7 @@ def change_significance(
         description="Fraction of members showing significant change that agree on the sign of change. "
         + test_str,
         units="",
-        test=test,
+        test=str(test),
         xclim_history=update_history(
             f"sign_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
@@ -198,7 +198,7 @@ def change_significance(
     change_frac.attrs.update(
         description="Fraction of members showing significant change. " + test_str,
         units="",
-        test=test,
+        test=str(test),
         xclim_history=update_history(
             f"change_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
