@@ -509,49 +509,55 @@ def robust_data(request):
                     (277.6, 1.1, 456544),
                 ],  # All pos change
                 [
-                    (274.6, 0.8, 746323),
+                    (np.nan, 0.3, 746323),
                     (np.nan, 1.2, 5643723),
                     (275.5, 0.8, 118294),
                     (275.6, 1.1, 574732),
-                ],
+                ],  # Some NaN
             )
-        ]  # One NaN
+        ]
     )
-    ref = xr.DataArray(ref, dims=("lon", "realization", "time"))
-    fut = xr.DataArray(fut, dims=("lon", "realization", "time"))
+    ref = xr.DataArray(ref, dims=("lon", "realization", "time"), name="tas")
+    fut = xr.DataArray(fut, dims=("lon", "realization", "time"), name="tas")
     if request.param:
-        ref = ref.chunk({"lon": 1})
-        fut = fut.chunk({"lon": 1})
+        ref = ref.chunk({"lon": 1}).to_dataset()
+        fut = fut.chunk({"lon": 1}).to_dataset()
     return ref, fut
 
 
 @pytest.mark.parametrize(
     "test,exp_chng,exp_sign,kws",
     [
-        ("ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {}),
-        ("welch-ttest", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {}),
-        ("threshold", [0.25, 1, 1, np.nan], [1, 0.5, 1, np.nan], {"rel_thresh": 0.002}),
+        ("ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
+        ("welch-ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
+        ("threshold", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {"rel_thresh": 0.002}),
         (
             "threshold",
-            [0, 0, 0.5, np.nan],
+            [0, 0, 0.5, 0],
             [np.nan, np.nan, 1, np.nan],
             {"abs_thresh": 2},
         ),
-        (None, [1, 1, 1, np.nan], [0.5, 0.5, 1, np.nan], {}),
+        (None, [1, 1, 1, 1], [0.5, 0.5, 1, 1], {}),
     ],
 )
 def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
     ref, fut = robust_data
     chng, sign = ensembles.change_significance(fut, ref, test=test, **kws)
-    np.testing.assert_array_equal(chng, exp_chng)
-    np.testing.assert_array_equal(sign, exp_sign)
-    assert chng.attrs["test"] == test
+    assert chng.attrs["test"] == str(test)
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
+    np.testing.assert_array_almost_equal(chng, exp_chng)
+    np.testing.assert_array_almost_equal(sign, exp_sign)
 
 
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
     chng, sign = ensembles.change_significance(delta, test="threshold", abs_thresh=2)
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
     np.testing.assert_array_equal(chng, [0, 0, 0.5, np.nan])
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 

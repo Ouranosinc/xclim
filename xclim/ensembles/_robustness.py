@@ -13,6 +13,8 @@ References
 ----------
 .. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
 """
+from typing import Tuple, Union
+
 import numpy as np
 import scipy.stats as spstats
 import xarray as xr
@@ -21,21 +23,26 @@ from xclim.core.formatting import update_history
 
 
 def change_significance(
-    fut: xr.DataArray, ref: xr.DataArray = None, test: str = "ttest", **kwargs
-) -> xr.Dataset:
+    fut: Union[xr.DataArray, xr.Dataset],
+    ref: Union[xr.DataArray, xr.Dataset] = None,
+    test: str = "ttest",
+    **kwargs,
+) -> Tuple[Union[xr.DataArray, xr.Dataset], Union[xr.DataArray, xr.Dataset]]:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
-    fut : xr.DataArray
+    fut : Union[xr.DataArray, xr.Dataset]
       Future period values along 'realization' and 'time' (..., nr, nt1)
       or if `ref` is None, Delta values along `realization` (..., nr).
-    ref : xr.DataArray, optional
+    ref : Union[xr.DataArray, xr.Dataset], optional
       Reference period values along realization' and 'time'  (..., nt2, nr).
       The size of the 'time' axis does not need to match the one of `fut`.
       But their 'realization' axes must be identical.
       If `None` (default), values of `fut` are assumed to be deltas instead of
       a distribution across the future period.
+      `fut` and `ref` must be of the same type (Dataset or DataArray). If they are
+      Dataset, they must have the same variables (name and coords).
     test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
     **kwargs
@@ -110,19 +117,21 @@ def change_significance(
     }
     if ref is None:
         delta = fut
+        n_valid_real = delta.notnull().sum("realization")
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
             )
     else:
         delta = fut.mean("time") - ref.mean("time")
+        n_valid_real = fut.notnull().all("time").sum("realization")
 
     if test == "ttest":
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy='omit')[1],
+            lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1],
             fut,
             ref.mean("time"),
             input_core_dims=[["realization", "time"], ["realization"]],
@@ -139,7 +148,9 @@ def change_significance(
         # Test hypothesis of no significant change
         # equal_var=False -> Welch's T-test
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_ind(f, r, axis=-1, equal_var=False, nan_policy='omit')[1],
+            lambda f, r: spstats.ttest_ind(
+                f, r, axis=-1, equal_var=False, nan_policy="omit"
+            )[1],
             fut,
             ref,
             input_core_dims=[["realization", "time"], ["realization", "time"]],
@@ -165,16 +176,14 @@ def change_significance(
 
     if test is not None:
         delta_chng = delta.where(changed)
-        change_frac = changed.sum("realization") / fut.notnull().sum("realization")
+        change_frac = changed.sum("realization") / n_valid_real
     else:
         delta_chng = delta
         change_frac = xr.ones_like(delta.isel(realization=0))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
-    pos_frac = (delta_chng > 0).sum("realization") / (
-        change_frac * fut.notnull().sum("realization")
-    )
+    pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
     sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
 
     # Metadata
