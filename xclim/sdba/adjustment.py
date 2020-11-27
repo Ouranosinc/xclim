@@ -31,9 +31,10 @@ from .utils import (
 __all__ = [
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
+    "LOCI",
+    "PrincipalComponent",
     "QuantileDeltaMapping",
     "Scaling",
-    "LOCI",
 ]
 
 
@@ -387,7 +388,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     References
     ----------
-    .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
@@ -511,10 +512,11 @@ class Scaling(BaseAdjustment):
         return apply_correction(sim, factor, self.kind)
 
 
-class PrincipalComponentAdjustment(BaseAdjustment):
-    """Principal Component adjustment.
+class PrincipalComponent(BaseAdjustment):
+    r"""Principal Component adjustment.
 
-    Method remapping simulation values to the observation through principal component analysis.
+    Method remapping simulation values to the observation through principal component
+    analysis ([hnilica2017]_)
 
     Parameters
     ----------
@@ -522,67 +524,119 @@ class PrincipalComponentAdjustment(BaseAdjustment):
 
     dims : Sequence of str, optional
       The dimensions to flatten into the "coordinates" dimensions. Default is `None` in
-      which case all dimensions except "time" are used.
+      which case all dimensions except "time" are used. The dask version of the
+      training algorithm currently doesn't support any chunking along the coordinates
+      and the time dimensions.
+
 
     In adjustment:
 
+    norm_to : {'hist', 'sim'}
+      Before the transformation, sim values are normalized by subtracting the mean of
+      hist if norm_to == 'hist' (default) and its own mean if norm_to == 'sim'.
+
+    Notes
+    -----
+    The input data is transformed of N points in a :math:`M`-dimensional space.
+    Where :math:`N` is taken along the 'time' coordinates, but :math:`M` can be the
+    concatenation of any number of pre-existing dimensions (the default being all
+    except 'time'). Thus, the adjustment is equivalent to a linear transformation
+    of these :math:`N` points in a the :math:`M`-dimensional space.
+
+    The principal components (PC) of `hist` and `ref` are used to defined new
+    coordinate systems, centered on their respective means. The training step creates a
+    matrix defining the transformation from `hist` to `ref`:
+
+    .. math::
+
+      scen = e_{R} + \mathrm{\mathbf{T}}(sim - e_{H})
+
+    Where:
+
+    .. math::
+
+      \mathrm{\mathbf{T}} = \mathrm{\mathbf{R}}\mathrm{\mathbf{H}}^{-1}
+
+    :math:`\mathrm{\mathbf{R}}` is the matrix transforming from the PC coordinates
+    computed on `ref` to the data coordinates. Similarly, :math:`\mathrm{\mathbf{H}}`
+    is transform from the `hist` PC to the data coordinates
+    (:math:`\mathrm{\mathbf{H}}` is the inverse transformation). :math:`e_R` and
+    :math:`e_H` are the centroids of the `ref` and `hist` distributions respectively.
+    Upon running the  `adjust` step, one may decide to use :math:`e_S`, the centroid
+    of the `sim` distribution, instead of :math:`e_H`.
+
+    References
+    ----------
+    .. [hnilica2017] Hnilica, J., Hanel, M. and Puš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
     """
 
-    def __init_(self, *, dims=None):
+    def __init__(self, *, dims=None):
         super().__init__(dims=dims)
+
+    @staticmethod
+    def _manage_chunking(ds, dim):
+        if isinstance(ds.data, dsk.Array):
+            if len(ds.chunks[ds.get_axis_num(dim)]) > 1:
+                warn("Merging chunks along coordinate dimensions for PC computation.")
+                return ds.chunk({dim: -1})
+        return ds
 
     def _train(self, ref, hist):
         dims = self.dims or (set(ref.dims) - {"time"})
 
+        # The multiple PC-space dimensions are along "coordinate"
+        # Matrix multiplication in xarray behaves as a dot product across
+        # same-name dimensions, instead of reducing according to the dimension order,
+        # as in numpy or normal maths. So crdX all refer to the same dimension,
+        # but with names assuring correct matrix multiplication even if they are out of order.
         ref = ref.stack(crd1=dims)
-        hist = hist.stack(crd1=dims)
+        hist = hist.stack(crd3=dims)
 
         ref_mean = ref.mean("time")
         hist_mean = hist.mean("time")
 
-        # Get appropriate math module
-        mod = (
-            dsk
-            if isinstance(ref.data, dsk.Array) or isinstance(hist.data, dsk.Array)
-            else np
-        )
+        def _compute_transform_matrix(ref, hist):
+            R = pc_matrix(ref)
+            H = pc_matrix(hist)
+            Hinv = np.linalg.inv(
+                H
+            )  # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
+            orient = best_pc_orientation(R, Hinv)
 
-        # Get PC transform matrices
-        # R is O from article and H is M..
-        R = xr.apply_ufunc(
-            pc_matrix,
-            ref,
-            input_core_dims=[["crd1", "time"]],
-            output_core_dims=[["crd1", "crd2"]],
-            dask="allowed",
-        )
-
-        H = xr.apply_ufunc(
-            pc_matrix,
-            hist,
-            input_core_dims=[["crd1", "time"]],
-            output_core_dims=[["crd2", "crd3"]],
-            dask="allowed",
-        )
-        Hinv = H.copy(data=mod.linalg.inv(H))
-
-        orient = xr.apply_ufunc(
-            best_pc_orientation,
-            R,
-            Hinv,
-            input_core_dims=[["crd1", "crd2"], ["crd2", "crd3"]],
-            output_core_dims=[["crd1"]],
-            dask="allowed",
-        )
+            return (R * orient) @ Hinv
 
         # Transformation matrix, from model coords to ref coords.
-        trans = (R * orient) @ Hinv
+        trans = xr.apply_ufunc(
+            _compute_transform_matrix,
+            ref,
+            hist,
+            input_core_dims=[["crd1", "time"], ["crd3", "time"]],
+            output_core_dims=[["crd1", "crd3"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
 
         # Attrs
         ref_mean.attrs.update(long_name="Centroid point of target.")
         hist_mean.attrs.update(long_name="Centroid point of training.")
-        trans.attrs.update(
-            long_name="Transformation from training coords to target coords."
-        )
-
+        trans.attrs.update(long_name="Transformation from training to target spaces.")
+        # Datasets do not like conflicting multiindex level names.
+        crd1 = trans.indexes["crd1"]
+        trans["crd1"] = crd1.rename([f"{name}_out" for name in crd1.names], crd1.names)
+        ref_mean["crd1"] = trans.crd1
         self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
+
+    def _adjust(self, sim, norm_to="hist"):
+        dims = self.ds.indexes["crd3"].names
+
+        sim = sim.stack(crd3=dims)
+
+        if norm_to == "hist":
+            vmean = self.ds.hist_mean
+        elif norm_to == "sim":
+            vmean = sim.mean("time")
+        scen = self.ds.ref_mean + self.ds.trans @ (sim - vmean)
+
+        scen["crd1"] = sim.indexes["crd3"]
+        return scen.unstack("crd1")

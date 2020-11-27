@@ -548,7 +548,7 @@ def best_pc_orientation(A, Binv, val=1000):
     Given an inverse transform Binv and a transform A, this returns the orientation
     minimizing the projected distance for a test point far from the origin.
 
-    This trick is explained in [hnilica2016]_. See documentation of
+    This trick is explained in [hnilica2017]_. See documentation of
     `sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters

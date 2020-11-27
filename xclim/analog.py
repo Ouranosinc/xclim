@@ -25,13 +25,13 @@ The climate indices chosen to compute the spatial analogues are usually annual v
 indices relevant to the intended audience of these maps. For example, in the case of the
 wine grape industry, the climate indices examined could include the length of the frost-free
 season, growing degree-days, annual winter minimum temperature andand annual number of
-very cold days [Roy2017].
+very cold days [Roy2017]_.
 
 
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 
-This module implements five of the six methods described in [Grenier20131]_ to measure
+This module implements five of the six methods described in [Grenier2013]_ to measure
 the dissimilarity between two samples. Some of these algorithms can be used to
 test whether or not two samples have been drawn from the same distribution.
 Here, they are used to find areas with analog climate conditions to a target
