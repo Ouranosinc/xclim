@@ -65,10 +65,11 @@ def change_significance(
       Passing `test=None` yields change_frac = 1 everywhere
       except where any of `ref` or `fut` was NaN.
       Same type as `fut`.
-    sign_frac
-      The fraction of members showing significant change that agree on its sign [0.5, 1].
+    pos_frac
+      The fraction of members showing significant change that show a positive change ]0, 1].
       Null values are returned where no members show significant change.
-      Same type as  `fut`.
+      The number of members agreeing on significant change and its sign is
+      thus max(pos_frac, 1 - pos_frac). Same type as  `fut`.
 
     Notes
     -----
@@ -104,13 +105,13 @@ def change_significance(
     >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq='YS')
     >>> fut = tgmean.sel(time=slice('2020', '2050'))
     >>> ref = tgmean.sel(time=slice('1990', '2020'))
-    >>> chng_f, sign_f = ensembles.change_significance(fut, ref, test='ttest')
+    >>> chng_f, pos_f = ensembles.change_significance(fut, ref, test='ttest')
 
     If the deltas were already computed beforehand, the 'threshold' test can still
     be used, here with a 2 K threshold.
 
     >>> delta = fut.mean('time') - ref.mean('time')
-    >>> chng_f, sign_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
+    >>> chng_f, pos_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
     """
     test_params = {
         "ttest": ["p_change"],
@@ -187,7 +188,6 @@ def change_significance(
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
     pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
-    sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
 
     # Metadata
     kwargs_str = ", ".join(
@@ -197,13 +197,13 @@ def change_significance(
         f"Significant change was tested with test {test} with parameters {kwargs_str}."
     )
     das = {"fut": fut} if ref is None else {"fut": fut, "ref": ref}
-    sign_frac.attrs.update(
-        description="Fraction of members showing significant change that agree on the sign of change. "
+    pos_frac.attrs.update(
+        description="Fraction of members showing significant change that agree on a positive change. "
         + test_str,
         units="",
         test=str(test),
         xclim_history=update_history(
-            f"sign_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+            f"pos_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
         ),
     )
@@ -216,7 +216,7 @@ def change_significance(
             **das,
         ),
     )
-    return change_frac, sign_frac
+    return change_frac, pos_frac
 
 
 def robustness_coefficient(
