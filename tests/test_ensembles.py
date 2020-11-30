@@ -558,7 +558,7 @@ def test_change_significance_delta(robust_data):
     if isinstance(ref, xr.Dataset):
         chng = chng.tas
         sign = sign.tas
-    np.testing.assert_array_equal(chng, [0, 0, 0.5, np.nan])
+    np.testing.assert_array_equal(chng, [0, 0, 0.5, 0])
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
 
