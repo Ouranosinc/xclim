@@ -22,6 +22,7 @@ New features and enhancements
 * Clarification to `frequency_analysis` notebook.
 * Now officially supporting PEP596 (Python3.9).
 * New methods `xclim.ensembles.change_significance` and `xclim.ensembles.knutti_sedlacek` to qualify climate change agreement among members of an ensemble.
+* New bias-adjustment method : `PrincipalComponent`.
 
 Bug fixes
 ~~~~~~~~~
