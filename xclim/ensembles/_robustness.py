@@ -298,7 +298,7 @@ def robustness_coefficient(
     R.attrs.update(
         name="R",
         long_name="Ensemble robustness coefficient",
-        description="Ensemble robustness coeffcient as defined by Knutti and Sedláček (2013).",
+        description="Ensemble robustness coefficient as defined by Knutti and Sedláček (2013).",
         reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change.",
         units="",
         xclim_history=update_history("knutti_sedlacek(fut, ref)", ref=ref, fut=fut),
