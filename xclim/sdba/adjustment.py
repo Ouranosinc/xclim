@@ -535,7 +535,7 @@ class PrincipalComponent(BaseAdjustment):
 
         Notes
         -----
-        The input data is transformed of N points in a :math:`M`-dimensional space.
+        The input data is understood as a set of N points in a :math:`M`-dimensional space.
         Where :math:`N` is taken along the 'time' coordinates, but :math:`M` can be the
         concatenation of any number of pre-existing dimensions (the default being all
         except 'time'). Thus, the adjustment is equivalent to a linear transformation
@@ -580,13 +580,16 @@ class PrincipalComponent(BaseAdjustment):
     def _train(self, ref, hist):
         dims = self.dims or (set(ref.dims) - {"time"})
 
+        all_dims = set(ref.dims).union(hist.dims)
+        crdR = xr.core.utils.get_temp_dimname(all_dims, "crdR")
+        crdM = xr.core.utils.get_temp_dimname(all_dims, "crdM")
         # The multiple PC-space dimensions are along "coordinate"
         # Matrix multiplication in xarray behaves as a dot product across
         # same-name dimensions, instead of reducing according to the dimension order,
         # as in numpy or normal maths. So crdX all refer to the same dimension,
         # but with names assuring correct matrix multiplication even if they are out of order.
-        ref = ref.stack(crd1=dims)
-        hist = hist.stack(crd3=dims)
+        ref = ref.stack({crdR: dims})
+        hist = hist.stack({crdM: dims})
 
         ref_mean = ref.mean("time")
         hist_mean = hist.mean("time")
@@ -606,8 +609,8 @@ class PrincipalComponent(BaseAdjustment):
             _compute_transform_matrix,
             ref,
             hist,
-            input_core_dims=[["crd1", "time"], ["crd3", "time"]],
-            output_core_dims=[["crd1", "crd3"]],
+            input_core_dims=[[crdR, "time"], [crdM, "time"]],
+            output_core_dims=[[crdR, crdM]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
@@ -618,15 +621,21 @@ class PrincipalComponent(BaseAdjustment):
         hist_mean.attrs.update(long_name="Centroid point of training.")
         trans.attrs.update(long_name="Transformation from training to target spaces.")
         # Datasets do not like conflicting multiindex level names.
-        crd1 = trans.indexes["crd1"]
-        trans["crd1"] = crd1.rename([f"{name}_out" for name in crd1.names], crd1.names)
-        ref_mean["crd1"] = trans.crd1
+        crdR_idx = trans.indexes[crdR]
+        trans[crdR] = crdR_idx.rename(
+            [f"{name}_out" for name in crdR_idx.names], crdR_idx.names
+        )
+        ref_mean[crdR] = trans[crdR]
         self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
+        self.ds.attrs["_reference_coord"] = crdR
+        self.ds.attrs["_model_coord"] = crdM
 
     def _adjust(self, sim, norm_to="hist"):
-        dims = self.ds.indexes["crd3"].names
+        crdR = self.ds.attrs["_reference_coord"]
+        crdM = self.ds.attrs["_model_coord"]
+        dims = self.ds.indexes[crdR].names
 
-        sim = sim.stack(crd3=dims)
+        sim = sim.stack({crdM: dims})
 
         if norm_to == "hist":
             vmean = self.ds.hist_mean
@@ -634,5 +643,5 @@ class PrincipalComponent(BaseAdjustment):
             vmean = sim.mean("time")
         scen = self.ds.ref_mean + self.ds.trans @ (sim - vmean)
 
-        scen["crd1"] = sim.indexes["crd3"]
-        return scen.unstack("crd1")
+        scen[crdR] = sim.indexes[crdM]
+        return scen.unstack(crdR)
