@@ -633,7 +633,7 @@ class PrincipalComponent(BaseAdjustment):
     def _adjust(self, sim, norm_to="hist"):
         crdR = self.ds.attrs["_reference_coord"]
         crdM = self.ds.attrs["_model_coord"]
-        dims = self.ds.indexes[crdR].names
+        dims = self.ds.indexes[crdM].names
 
         sim = sim.stack({crdM: dims})
 
@@ -641,7 +641,7 @@ class PrincipalComponent(BaseAdjustment):
             vmean = self.ds.hist_mean
         elif norm_to == "sim":
             vmean = sim.mean("time")
-        scen = self.ds.ref_mean + self.ds.trans @ (sim - vmean)
+        scen = self.ds.ref_mean + self.ds.trans.dot((sim - vmean), [crdM])
 
         scen[crdR] = sim.indexes[crdM]
         return scen.unstack(crdR)

@@ -8,6 +8,7 @@ from xclim.sdba.adjustment import (
     BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
+    PrincipalComponent,
     QuantileDeltaMapping,
     Scaling,
 )
@@ -403,6 +404,40 @@ class TestQM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, ref, 2)
+
+
+class TestPrincipalComponents:
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_simple(self, use_dask):
+        n = 10 * 365
+        m = 2  # A dummy dimension to test vectorizing.
+        ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
+        ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
+        sim_x = norm.rvs(loc=4, scale=2, size=(m, n))
+        sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n))
+
+        ref = xr.DataArray([ref_x, ref_y], dims=("crd", "lon", "time"))
+        ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+        sim = xr.DataArray([sim_x, sim_y], dims=("crd", "lon", "time"))
+        sim["time"] = ref["time"]
+
+        if use_dask:
+            ref = ref.chunk({"lon": 1})
+            sim = sim.chunk({"lon": 1})
+
+        PCA = PrincipalComponent(dims=["crd"])
+        PCA.train(ref, sim)
+        scen = PCA.adjust(sim)
+
+        for i in range(m):
+            cov_ref = np.cov(ref.isel(lon=i).transpose("crd", "time"))
+            cov_sim = np.cov(sim.isel(lon=i).transpose("crd", "time"))
+            cov_scen = np.cov(scen.isel(lon=i).transpose("crd", "time"))
+
+            # PC adjustment makes the covariance of scen match the one of ref.
+            np.testing.assert_allclose(cov_ref - cov_scen, 0, atol=1e-6)
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(cov_ref - cov_sim, 0, atol=1e-6)
 
 
 def test_raise_on_multiple_chunks(tas_series):
