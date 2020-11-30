@@ -68,8 +68,8 @@ def change_significance(
     pos_frac
       The fraction of members showing significant change that show a positive change ]0, 1].
       Null values are returned where no members show significant change.
-      The number of members agreeing on significant change and its sign is
-      thus max(pos_frac, 1 - pos_frac). Same type as  `fut`.
+      The fraction of members agreeing on both significant change and its sign is
+      thus max(pos_frac, 1 - pos_frac) * change_frac. Same type as  `fut`.
 
     Notes
     -----
