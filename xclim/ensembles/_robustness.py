@@ -60,13 +60,15 @@ def change_significance(
 
     Returns
     -------
-    change_frac: DataArray
+    change_frac
       The fraction of members that show significant change [0, 1].
       Passing `test=None` yields change_frac = 1 everywhere
       except where any of `ref` or `fut` was NaN.
-    sign_frac : DataArray
+      Same type as `fut`.
+    sign_frac
       The fraction of members showing significant change that agree on its sign [0.5, 1].
       Null values are returned where no members show significant change.
+      Same type as  `fut`.
 
     Notes
     -----
@@ -155,6 +157,7 @@ def change_significance(
             ref,
             input_core_dims=[["realization", "time"], ["realization", "time"]],
             output_core_dims=[["realization"]],
+            exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
@@ -216,8 +219,12 @@ def change_significance(
     return change_frac, sign_frac
 
 
-def knutti_sedlacek(ref: xr.DataArray, fut: xr.DataArray) -> xr.Dataset:
-    """Robustness metric from Knutti and Sedlacek (2013).
+def robustness_coefficient(
+    fut: Union[xr.DataArray, xr.Dataset], ref: Union[xr.DataArray, xr.Dataset]
+) -> Union[xr.DataArray, xr.Dataset]:
+    """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
+
+    Taken from Knutti and Sedlacek (2013).
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
     as the integral of the squared area between two cumulative density functions
@@ -231,15 +238,16 @@ def knutti_sedlacek(ref: xr.DataArray, fut: xr.DataArray) -> xr.Dataset:
 
     Parameters
     ----------
-    ref : DataArray
-      Reference period values along 'time' (nt).
-    fut : DataArray
-      Future ensemble values along 'realization' and 'time' (nr, nt).
+    fut : Union[xr.DataArray, xr.Dataset]
+      Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
+      in which case the coeffcient is computed on each variables.
+    ref : Union[xr.DataArray, xr.Dataset]
+      Reference period values along 'time' (nt). Same type as `fut`.
 
     Returns
     -------
-    R, float
-      The robustness metric.
+    R
+      The robustness coeffcient, ]-inf, 1], float. Same type as `fut` or `ref`.
 
     References
     ----------
@@ -282,16 +290,17 @@ def knutti_sedlacek(ref: xr.DataArray, fut: xr.DataArray) -> xr.Dataset:
         ref,
         fut,
         input_core_dims=[["time"], ["realization", "time"]],
+        exclude_dims={"time"},
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
     )
     R.attrs.update(
         name="R",
-        long_name="Ensemble robustness metric",
-        description="Ensemble robustness metric as defined by Knutti and Sedláček (2013).",
+        long_name="Ensemble robustness coefficient",
+        description="Ensemble robustness coeffcient as defined by Knutti and Sedláček (2013).",
         reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change.",
         units="",
-        xclim_history=update_history("knutti_sedlacek(ref, fut)", ref=ref, fut=fut),
+        xclim_history=update_history("knutti_sedlacek(fut, ref)", ref=ref, fut=fut),
     )
     return R
