@@ -139,7 +139,7 @@ class set_options:
     Examples
     --------
     # You can use ``set_options`` either as a context manager:
-    >>> import xclim as xc
+    >>> import xclim
     >>> ds  = xr.open_dataset(path_to_tas_file).tas
     >>> with xclim.set_options(metadata_locales=['fr']):
     ...     out = xclim.atmos.tg_mean(ds)
