@@ -569,14 +569,6 @@ class PrincipalComponent(BaseAdjustment):
         """
         super().__init__(dims=dims)
 
-    @staticmethod
-    def _manage_chunking(ds, dim):
-        if isinstance(ds.data, dsk.Array):
-            if len(ds.chunks[ds.get_axis_num(dim)]) > 1:
-                warn("Merging chunks along coordinate dimensions for PC computation.")
-                return ds.chunk({dim: -1})
-        return ds
-
     def _train(self, ref, hist):
         dims = self.dims or (set(ref.dims) - {"time"})
 
