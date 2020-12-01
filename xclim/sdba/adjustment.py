@@ -583,17 +583,19 @@ class PrincipalComponent(BaseAdjustment):
         ref = ref.stack({crdR: dims})
         hist = hist.stack({crdM: dims})
 
-        ref_mean = ref.mean("time")
-        hist_mean = hist.mean("time")
+        ref_mean = ref.mean("time")  # Centroid of ref
+        hist_mean = hist.mean("time")  # Centroid of hist
 
         def _compute_transform_matrix(ref, hist):
-            R = pc_matrix(ref)
-            H = pc_matrix(hist)
-            Hinv = np.linalg.inv(
-                H
-            )  # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
+            R = pc_matrix(ref)  # Get transformation matrix from PC coords to ref
+            H = pc_matrix(hist)  # Get transformation matrix from PC coords to hist
+            # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
+            # Invert to get transformation matrix from hist to PC coords.
+            Hinv = np.linalg.inv(H)
+            # Fancy trick to choose best orientation on each axes
+            # (using eigenvectors, the output axes orientation is undefined)
             orient = best_pc_orientation(R, Hinv)
-
+            # Get transformation matrix
             return (R * orient) @ Hinv
 
         # Transformation matrix, from model coords to ref coords.
@@ -608,7 +610,7 @@ class PrincipalComponent(BaseAdjustment):
             output_dtypes=[float],
         )
 
-        # Attrs
+        # Metadata
         ref_mean.attrs.update(long_name="Centroid point of target.")
         hist_mean.attrs.update(long_name="Centroid point of training.")
         trans.attrs.update(long_name="Transformation from training to target spaces.")

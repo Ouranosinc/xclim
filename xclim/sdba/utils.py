@@ -534,8 +534,9 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
     # There are no such method yet in dask, but we are lucky:
     # the SVD decomposition of a symmetric matrix gives the eigen stuff.
     # And covariance matrices are by definition symmetric!
-    eig_vec, eig_vals, _ = mod.linalg.svd(cov)
     # Numpy has a hermitian=True option to accelerate, but not dask...
+    kwargs = {} if mod is dsk else {"hermitian": True}
+    eig_vec, eig_vals, _ = mod.linalg.svd(cov, **kwargs)
 
     # The PC matrix is the eigen vectors matrix scaled by the square root of the eigen values
     return eig_vec * mod.sqrt(eig_vals)
@@ -564,7 +565,7 @@ def best_pc_orientation(A, Binv, val=1000):
     Returns
     -------
     orient :
-      Mx1 vector of orientation correction (1 or -1).=
+      Mx1 vector of orientation correction (1 or -1).
     """
     m = A.shape[0]
     orient = np.ones(m)
