@@ -62,13 +62,24 @@ def change_significance(
     -------
     change_frac
       The fraction of members that show significant change [0, 1].
-      Passing `test=None` yields change_frac = 1 everywhere
-      except where any of `ref` or `fut` was NaN.
-      Same type as `fut`.
-    sign_frac
-      The fraction of members showing significant change that agree on its sign [0.5, 1].
+      Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
+    pos_frac
+      The fraction of members showing significant change that show a positive change ]0, 1].
       Null values are returned where no members show significant change.
-      Same type as  `fut`.
+
+      The table below shows the coefficient needed to retrieve the number of members
+      that have the indicated characteristics, by multiplying it to the total
+      number of members (`fut.realization.size`).
+
+      +-----------------+------------------------------+------------------------+
+      |                 | Significant change           | Non significant change |
+      +-----------------+------------------------------+------------------------+
+      | Any direction   | change_frac                  | 1 - change_frac        |
+      +-----------------+------------------------------+------------------------+
+      | Positive change | pos_frac * change_frac       | N.A.                   |
+      +-----------------+------------------------------+                        |
+      | Negative change | (1 - pos_frac) * change_frac |                        |
+      +-----------------+------------------------------+------------------------+
 
     Notes
     -----
@@ -94,8 +105,8 @@ def change_significance(
     .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
 
 
-    Example:
-    --------
+    Example
+    -------
     This example computes the mean temperature in an ensemble and compares two time
     periods, qualifying significant change through a single sample T-test.
 
@@ -104,13 +115,13 @@ def change_significance(
     >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq='YS')
     >>> fut = tgmean.sel(time=slice('2020', '2050'))
     >>> ref = tgmean.sel(time=slice('1990', '2020'))
-    >>> chng_f, sign_f = ensembles.change_significance(fut, ref, test='ttest')
+    >>> chng_f, pos_f = ensembles.change_significance(fut, ref, test='ttest')
 
     If the deltas were already computed beforehand, the 'threshold' test can still
     be used, here with a 2 K threshold.
 
     >>> delta = fut.mean('time') - ref.mean('time')
-    >>> chng_f, sign_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
+    >>> chng_f, pos_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
     """
     test_params = {
         "ttest": ["p_change"],
@@ -187,7 +198,6 @@ def change_significance(
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
     pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
-    sign_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
 
     # Metadata
     kwargs_str = ", ".join(
@@ -197,13 +207,13 @@ def change_significance(
         f"Significant change was tested with test {test} with parameters {kwargs_str}."
     )
     das = {"fut": fut} if ref is None else {"fut": fut, "ref": ref}
-    sign_frac.attrs.update(
-        description="Fraction of members showing significant change that agree on the sign of change. "
+    pos_frac.attrs.update(
+        description="Fraction of members showing significant change that agree on a positive change. "
         + test_str,
         units="",
         test=str(test),
         xclim_history=update_history(
-            f"sign_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+            f"pos_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
         ),
     )
@@ -216,7 +226,7 @@ def change_significance(
             **das,
         ),
     )
-    return change_frac, sign_frac
+    return change_frac, pos_frac
 
 
 def robustness_coefficient(
