@@ -32,7 +32,7 @@ __all__ = [
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
     "LOCI",
-    "PrincipalComponent",
+    "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
 ]
@@ -509,8 +509,9 @@ class Scaling(BaseAdjustment):
         return apply_correction(sim, factor, self.kind)
 
 
-class PrincipalComponent(BaseAdjustment):
-    def __init__(self, *, dims=None):
+class PrincipalComponents(BaseAdjustment):
+    @parse_group
+    def __init__(self, *, group="time", dims=None):
         r"""Principal Component adjustment.
 
         Method remapping simulation values to the observation through principal component
@@ -522,9 +523,15 @@ class PrincipalComponent(BaseAdjustment):
 
         dims : Sequence of str, optional
           The dimensions to flatten into the "coordinates" dimensions. Default is `None` in
-          which case all dimensions except "time" are used. The dask version of the
-          training algorithm currently doesn't support any chunking along the coordinates
-          and the time dimensions.
+          which case all dimensions except "time" are used. This information can also
+          be given through the `add_dims` property of `group`.
+          The training algorithm currently doesn't support any chunking along the
+          coordinates and the time dimensions.
+        group : Union[str, Grouper]
+          The grouping information. Additional dims can also be given through the
+          `dims` argument. The window option of `Grouper` can not be used with this
+          adjustment method. See :py:class:`xclim.sdba.base.Grouper` for details.
+          The adjustment will be performed on each group independently.
 
 
         In adjustment:
@@ -567,25 +574,27 @@ class PrincipalComponent(BaseAdjustment):
         ----------
         .. [hnilica2017] Hnilica, J., Hanel, M. and Puš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
         """
-        super().__init__(dims=dims)
+        if len(group.add_dims) == 0 and dims is not None:
+            group.add_dims = dims
+        elif "window" in group.add_dims:
+            raise ValueError(
+                f"Grouping with a window is not accepted for {self.__class__.__name__}. Received {group}."
+            )
+        elif dims is not None or len(group.add_dims) == 0:
+            raise ValueError(
+                f"Coordinate dimensions must be given through either `group` or `dims`, but not both. Received {group} and {dims}"
+            )
+        super().__init__(group=group)
 
     def _train(self, ref, hist):
-        dims = self.dims or (set(ref.dims) - {"time"})
-
         all_dims = set(ref.dims).union(hist.dims)
         crdR = xr.core.utils.get_temp_dimname(all_dims, "crdR")
         crdM = xr.core.utils.get_temp_dimname(all_dims, "crdM")
-        # The multiple PC-space dimensions are along "coordinate"
-        # Matrix multiplication in xarray behaves as a dot product across
-        # same-name dimensions, instead of reducing according to the dimension order,
-        # as in numpy or normal maths. So crdX all refer to the same dimension,
-        # but with names assuring correct matrix multiplication even if they are out of order.
-        ref = ref.stack({crdR: dims})
-        hist = hist.stack({crdM: dims})
 
-        ref_mean = ref.mean("time")  # Centroid of ref
-        hist_mean = hist.mean("time")  # Centroid of hist
+        ref_mean = self.group.apply("mean", ref)  # Centroids of ref
+        hist_mean = self.group.apply("mean", hist)  # Centroids of hist
 
+        # The real thing, acting on 2D numpy arrays
         def _compute_transform_matrix(ref, hist):
             R = pc_matrix(ref)  # Get transformation matrix from PC coords to ref
             H = pc_matrix(hist)  # Get transformation matrix from PC coords to hist
@@ -598,16 +607,31 @@ class PrincipalComponent(BaseAdjustment):
             # Get transformation matrix
             return (R * orient) @ Hinv
 
+        # The group wrapper
+        def _compute_transform_matrices(ds, dims):
+            dims.pop("time")
+            # The multiple PC-space dimensions are along "coordinate"
+            # Matrix multiplication in xarray behaves as a dot product across
+            # same-name dimensions, instead of reducing according to the dimension order,
+            # as in numpy or normal maths. So crdX all refer to the same dimension,
+            # but with names assuring correct matrix multiplication even if they are out of order.
+            ref = ds.ref.stack({crdR: dims})
+            hist = ds.hist.stack({crdM: dims})
+            trans = xr.apply_ufunc(
+                _compute_transform_matrix,
+                ref,
+                hist,
+                input_core_dims=[[crdR, "time"], [crdM, "time"]],
+                output_core_dims=[[crdR, crdM]],
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[float],
+            )
+            return trans
+
         # Transformation matrix, from model coords to ref coords.
-        trans = xr.apply_ufunc(
-            _compute_transform_matrix,
-            ref,
-            hist,
-            input_core_dims=[[crdR, "time"], [crdM, "time"]],
-            output_core_dims=[[crdR, crdM]],
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[float],
+        trans = self.group.apply(
+            _compute_transform_matrices, {"ref": ref, "hist": hist}
         )
 
         # Metadata
