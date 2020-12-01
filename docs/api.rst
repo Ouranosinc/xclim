@@ -43,6 +43,7 @@ Ensembles module
 
 .. autofunction:: xclim.ensembles.change_significance
 .. autofunction:: xclim.ensembles.robustness_coefficient
+
 Indicator tools
 ===============
 

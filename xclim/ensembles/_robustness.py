@@ -62,14 +62,24 @@ def change_significance(
     -------
     change_frac
       The fraction of members that show significant change [0, 1].
-      Passing `test=None` yields change_frac = 1 everywhere
-      except where any of `ref` or `fut` was NaN.
-      Same type as `fut`.
+      Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
     pos_frac
       The fraction of members showing significant change that show a positive change ]0, 1].
       Null values are returned where no members show significant change.
-      The fraction of members agreeing on both significant change and its sign is
-      thus max(pos_frac, 1 - pos_frac) * change_frac. Same type as  `fut`.
+
+      The table below shows the coefficient needed to retrieve the number of members
+      that have the indicated characteristics, by multiplying it to the total
+      number of members (`fut.realization.size`).
+
+      +-----------------+------------------------------+------------------------+
+      |                 | Significant change           | Non significant change |
+      +-----------------+------------------------------+------------------------+
+      | Any direction   | change_frac                  | 1 - change_frac        |
+      +-----------------+------------------------------+------------------------+
+      | Positive change | pos_frac * change_frac       | N.A.                   |
+      +-----------------+------------------------------+                        |
+      | Negative change | (1 - pos_frac) * change_frac |                        |
+      +-----------------+------------------------------+------------------------+
 
     Notes
     -----
@@ -95,8 +105,8 @@ def change_significance(
     .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
 
 
-    Example:
-    --------
+    Example
+    -------
     This example computes the mean temperature in an ensemble and compares two time
     periods, qualifying significant change through a single sample T-test.
 
