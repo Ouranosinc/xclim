@@ -276,10 +276,10 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
           The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
         normalize_sim : bool
           If True, scaled sim is normalized by its "dayofyear" mean and then detrended using `group`.
-            The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
+          The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
           If False, scaled sim is detrended per "dayofyear".
           This is useful on large datasets using dask, in which case "dayofyear" is a very small division,
-            because normalization is a more efficient operation than detrending for similarly sized groups.
+          because normalization is a more efficient operation than detrending for similarly sized groups.
 
         References
         ----------
@@ -547,11 +547,9 @@ class PrincipalComponents(BaseAdjustment):
         -----
         The input data is understood as a set of N points in a :math:`M`-dimensional space.
 
-        - :math:`N` is taken along the data coordinates listed in `pts_dims` and the
-        `group` (the main `dim` but also the `add_dims`).
+        - :math:`N` is taken along the data coordinates listed in `pts_dims` and the `group` (the main `dim` but also the `add_dims`).
 
-        - :math:`M` is taken along the data coordinates listed in `crd_dims`, the default
-        being all except those in `pts_dims`.
+        - :math:`M` is taken along the data coordinates listed in `crd_dims`, the default being all except those in `pts_dims`.
 
         Thus, the adjustment is equivalent to a linear transformation
         of these :math:`N` points in a :math:`M`-dimensional space.

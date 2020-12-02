@@ -10,6 +10,7 @@ Available methods
 
 .. automodule:: xclim.sdba.adjustment
    :members:
+   :special-members:
    :show-inheritance:
 
 

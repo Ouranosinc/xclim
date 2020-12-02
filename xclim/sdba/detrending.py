@@ -46,7 +46,7 @@ class BaseDetrend(Parametrizable):
 
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
-        new = self.copy()
+        new = self.__class__(**self.parameters)
         new._set_ds(new.group.apply(new._fit, da, main_only=True))
         new.__fitted = True
         return new
