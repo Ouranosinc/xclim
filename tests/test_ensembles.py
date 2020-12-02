@@ -518,7 +518,9 @@ def robust_data(request):
         ]
     )
     ref = xr.DataArray(ref, dims=("lon", "realization", "time"), name="tas")
+    ref["time"] = xr.cftime_range("2000-01-01", periods=40, freq="YS")
     fut = xr.DataArray(fut, dims=("lon", "realization", "time"), name="tas")
+    fut["time"] = xr.cftime_range("2040-01-01", periods=40, freq="YS")
     if request.param:
         ref = ref.chunk({"lon": 1}).to_dataset()
         fut = fut.chunk({"lon": 1}).to_dataset()
@@ -562,17 +564,18 @@ def test_change_significance_delta(robust_data):
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
 
-def test_knutti_sedlacek():
+def test_robustness_coefficient():
     # High
-    ref = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",))
+    ref = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",), name="tas")
     fut = xr.DataArray(
         [
             [277, 277.1, 278, 278.4, 278.1, 276.9],
             [275, 275.8, 276, 275.2, 276.2, 275.7],
         ],
         dims=("realization", "time"),
+        name="tas",
     )
-    R = ensembles.knutti_sedlacek(ref, fut)
+    R = ensembles.robustness_coefficient(fut, ref)
     np.testing.assert_almost_equal(R, 0.91972477)
 
     fut = xr.DataArray(
@@ -581,6 +584,10 @@ def test_knutti_sedlacek():
             [274, 274.8, 273.7, 274.2, 273.9, 274.5],
         ],
         dims=("realization", "time"),
+        name="tas",
     )
-    R = ensembles.knutti_sedlacek(ref, fut)
+    R = ensembles.robustness_coefficient(fut, ref)
     np.testing.assert_almost_equal(R, 0.83743842)
+
+    R = ensembles.robustness_coefficient(fut.to_dataset(), ref.to_dataset())
+    np.testing.assert_almost_equal(R.tas, 0.83743842)

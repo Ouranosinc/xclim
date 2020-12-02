@@ -42,7 +42,7 @@ Ensembles module
 .. automodule:: xclim.ensembles._robustness
 
 .. autofunction:: xclim.ensembles.change_significance
-.. autofunction:: xclim.ensembles.knutti_sedlacek
+.. autofunction:: xclim.ensembles.robustness_coefficient
 
 Indicator tools
 ===============
