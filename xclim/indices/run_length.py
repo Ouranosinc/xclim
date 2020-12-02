@@ -347,13 +347,13 @@ def season_length(
     # Invert the condition and mask all values after beginning
     # we fillna(0) as so to differentiate series with no runs and all-nan series
     not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
-    if date is not None:
-        # Mask also values after "date"
-        mid_idx = index_of_date(da.time, date, max_idxs=1)
-        if mid_idx.size == 0:
-            # The date is not within the group. Happens at boundaries.
-            return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
-        not_da = not_da.where(da.time >= da.time[mid_idx][0])
+
+    # Mask also values after "date"
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    if mid_idx.size == 0:
+        # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+    not_da = not_da.where(da.time >= da.time[mid_idx][0])
 
     end = first_run(
         not_da,
@@ -402,7 +402,7 @@ def run_end_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1)
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -448,7 +448,7 @@ def first_run_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1)
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -489,7 +489,7 @@ def last_run_before_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date)
+    mid_idx = index_of_date(da.time, date, default=-1)
 
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
@@ -794,7 +794,10 @@ def lazy_indexing(
 
 
 def index_of_date(
-    time: xr.DataArray, date: str, max_idxs: Optional[int] = None
+    time: xr.DataArray,
+    date: Optional[str],
+    max_idxs: Optional[int] = None,
+    default: int = 0,
 ) -> np.ndarray:
     """Get the index of a date in a time array.
 
@@ -802,15 +805,26 @@ def index_of_date(
     ----------
     time : xr.DataArray
       An array of datetime values, any calendar.
-    date : str
+    date : str or None
       A string in the "yyyy-mm-dd" or "mm-dd" format.
+      If None, returns default.
     max_idxs: int, optional
+      Maximum number of returned indexes.
+    default: int
+      Index to return if date is None.
+
+    Raises
+    ------
+    ValueError
+      If there are most instances of `date` in `time` than `max_idxs`.
 
     Returns
     -------
     ndarray
       1D array of integers, indexes of `date` in `time`.
     """
+    if date is None:
+        return np.array([default])
     try:
         date = datetime.strptime(date, "%Y-%m-%d")
         year_cond = time.dt.year == date.year

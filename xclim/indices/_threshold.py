@@ -19,6 +19,7 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
+    "degree_day_depassment_date",
     "cooling_degree_days",
     "freshet_start",
     "growing_degree_days",
@@ -1365,3 +1366,31 @@ def tropical_nights(
     return (
         tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
     )
+
+
+@declare_units("", tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
+def degree_day_depassment_date(
+    tas: xarray.DataArray,
+    thresh: str,
+    sum_thresh: str,
+    op: str = ">",
+    after_date: str = None,
+    freq: str = "YS",
+):
+    thresh = convert_units_to(thresh, "K")
+    tas = convert_units_to(tas, "K")
+    sum_thresh = convert_units_to(sum_thresh, "K days")
+    print(sum_thresh, thresh)
+    if op in ["<", "<=", "lt", "le"]:
+        c = thresh - tas
+    elif op in [">", ">=", "gt", "ge"]:
+        c = tas - thresh
+
+    def _depassment_date(grp):
+        return rl.first_run_after_date(
+            grp.cumsum("time") > sum_thresh,
+            window=1,
+            date=after_date,
+        )
+
+    return c.clip(0).resample(time=freq).map(_depassment_date)
