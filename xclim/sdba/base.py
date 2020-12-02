@@ -29,10 +29,6 @@ class Parametrizable(dict):
         """All parameters as a dictionary."""
         return dict(**self)
 
-    def copy(self):
-        """Return a copy of this instance."""
-        return self.__class__(**self.parameters)
-
     def __repr__(self):
         """Return a string representation that allows eval to recreate it."""
         params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])

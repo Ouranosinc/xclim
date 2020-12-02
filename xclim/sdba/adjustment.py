@@ -511,7 +511,7 @@ class Scaling(BaseAdjustment):
 
 class PrincipalComponents(BaseAdjustment):
     @parse_group
-    def __init__(self, *, group="time", dims=None):
+    def __init__(self, *, group="time", crd_dims=None, pts_dims=None):
         r"""Principal Component adjustment.
 
         Method remapping simulation values to the observation through principal component
@@ -521,18 +521,21 @@ class PrincipalComponents(BaseAdjustment):
         ----------
         At instantiation:
 
-        dims : Sequence of str, optional
-          The dimensions to flatten into the "coordinates" dimensions. Default is `None` in
-          which case all dimensions except "time" are used. This information can also
-          be given through the `add_dims` property of `group`.
-          The training algorithm currently doesn't support any chunking along the
-          coordinates and the time dimensions.
         group : Union[str, Grouper]
-          The grouping information. Additional dims can also be given through the
-          `dims` argument. The window option of `Grouper` can not be used with this
-          adjustment method. See :py:class:`xclim.sdba.base.Grouper` for details.
+          The grouping information. `pts_dims` can also be given through Grouper's
+          `add_dims` argument. See Notes.
+          See :py:class:`xclim.sdba.base.Grouper` for details.
           The adjustment will be performed on each group independently.
-
+        crd_dims : Sequence of str, optional
+          The data dimensions to flatten into the "coordinate" dimension, see Notes.
+          Default is `None` in which case all dimensions shared by `ref` and `hist`,
+          except those in `pts_dims` are used.
+          The training algorithm currently doesn't support any chunking
+          along the coordinate and point dimensions.
+        pts_dims : Sequence of str, optional
+          The data dimensions to flatten into the "points" dimension, see Notes.
+          They will be merged with those given through the `add_dims` property
+          of `group`.
 
         In adjustment:
 
@@ -543,10 +546,15 @@ class PrincipalComponents(BaseAdjustment):
         Notes
         -----
         The input data is understood as a set of N points in a :math:`M`-dimensional space.
-        Where :math:`N` is taken along the 'time' coordinates, but :math:`M` can be the
-        concatenation of any number of pre-existing dimensions (the default being all
-        except 'time'). Thus, the adjustment is equivalent to a linear transformation
-        of these :math:`N` points in a the :math:`M`-dimensional space.
+
+        - :math:`N` is taken along the data coordinates listed in `pts_dims` and the
+        `group` (the main `dim` but also the `add_dims`).
+
+        - :math:`M` is taken along the data coordinates listed in `crd_dims`, the default
+        being all except those in `pts_dims`.
+
+        Thus, the adjustment is equivalent to a linear transformation
+        of these :math:`N` points in a :math:`M`-dimensional space.
 
         The principal components (PC) of `hist` and `ref` are used to defined new
         coordinate systems, centered on their respective means. The training step creates a
@@ -574,30 +582,42 @@ class PrincipalComponents(BaseAdjustment):
         ----------
         .. [hnilica2017] Hnilica, J., Hanel, M. and Puš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
         """
-        if len(group.add_dims) == 0 and dims is not None:
-            group.add_dims = dims
-        elif "window" in group.add_dims:
-            raise ValueError(
-                f"Grouping with a window is not accepted for {self.__class__.__name__}. Received {group}."
-            )
-        elif dims is not None or len(group.add_dims) == 0:
-            raise ValueError(
-                f"Coordinate dimensions must be given through either `group` or `dims`, but not both. Received {group} and {dims}"
-            )
-        super().__init__(group=group)
+        pts_dims = set(pts_dims or []).intersection(set(group.add_dims) - {"window"})
+
+        # Grouper used in the training part
+        train_group = Grouper(group.name, window=group.window, add_dims=pts_dims)
+        # Groupe used in the adjust part : no window, no add_dims
+        adj_group = Grouper(group.name)
+
+        super().__init__(
+            train_group=train_group, adj_group=adj_group, crd_dims=crd_dims
+        )
 
     def _train(self, ref, hist):
-        all_dims = set(ref.dims).union(hist.dims)
-        crdR = xr.core.utils.get_temp_dimname(all_dims, "crdR")
-        crdM = xr.core.utils.get_temp_dimname(all_dims, "crdM")
+        all_dims = set(ref.dims).intersection(hist.dims)
+        lbl_R = xr.core.utils.get_temp_dimname(all_dims, "crdR")
+        lbl_M = xr.core.utils.get_temp_dimname(all_dims, "crdM")
+        lbl_P = xr.core.utils.get_temp_dimname(all_dims, "points")
 
-        ref_mean = self.group.apply("mean", ref)  # Centroids of ref
-        hist_mean = self.group.apply("mean", hist)  # Centroids of hist
+        # Dimensions that represent different points
+        pts_dims = set(self.train_group.add_dims)
+        pts_dims.update({self.train_group.dim})
+        # Dimensions that represents different dimensions.
+        crds_M = self.crd_dims or (set(ref.dims).union(hist.dims) - pts_dims)
+        # Rename coords on ref, multiindex do not like conflicting coordinates names
+        crds_R = [f"{name}_out" for name in crds_M]
+        # Stack, so that we have a single "coordinate" axis
+        ref = ref.rename(dict(zip(crds_M, crds_R))).stack({lbl_R: crds_R})
+        hist = hist.stack({lbl_M: crds_M})
 
         # The real thing, acting on 2D numpy arrays
         def _compute_transform_matrix(ref, hist):
-            R = pc_matrix(ref)  # Get transformation matrix from PC coords to ref
-            H = pc_matrix(hist)  # Get transformation matrix from PC coords to hist
+            # Get transformation matrix from PC coords to ref, dropping points with a NaN coord.
+            ref_na = np.isnan(ref).any(axis=0)
+            R = pc_matrix(ref[:, ~ref_na])
+            # Get transformation matrix from PC coords to hist, dropping points with a NaN coord.
+            hist_na = np.isnan(hist).any(axis=0)
+            H = pc_matrix(hist[:, ~hist_na])
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
@@ -608,21 +628,20 @@ class PrincipalComponents(BaseAdjustment):
             return (R * orient) @ Hinv
 
         # The group wrapper
-        def _compute_transform_matrices(ds, dims):
-            dims.pop("time")
+        def _compute_transform_matrices(ds, dim):
             # The multiple PC-space dimensions are along "coordinate"
             # Matrix multiplication in xarray behaves as a dot product across
             # same-name dimensions, instead of reducing according to the dimension order,
             # as in numpy or normal maths. So crdX all refer to the same dimension,
             # but with names assuring correct matrix multiplication even if they are out of order.
-            ref = ds.ref.stack({crdR: dims})
-            hist = ds.hist.stack({crdM: dims})
+            ref = ds.ref.stack({lbl_P: dim})
+            hist = ds.hist.stack({lbl_P: dim})
             trans = xr.apply_ufunc(
                 _compute_transform_matrix,
                 ref,
                 hist,
-                input_core_dims=[[crdR, "time"], [crdM, "time"]],
-                output_core_dims=[[crdR, crdM]],
+                input_core_dims=[[lbl_R, lbl_P], [lbl_M, lbl_P]],
+                output_core_dims=[[lbl_R, lbl_M]],
                 vectorize=True,
                 dask="parallelized",
                 output_dtypes=[float],
@@ -630,36 +649,45 @@ class PrincipalComponents(BaseAdjustment):
             return trans
 
         # Transformation matrix, from model coords to ref coords.
-        trans = self.group.apply(
+        trans = self.train_group.apply(
             _compute_transform_matrices, {"ref": ref, "hist": hist}
         )
-
-        # Metadata
-        ref_mean.attrs.update(long_name="Centroid point of target.")
-        hist_mean.attrs.update(long_name="Centroid point of training.")
         trans.attrs.update(long_name="Transformation from training to target spaces.")
-        # Datasets do not like conflicting multiindex level names.
-        crdR_idx = trans.indexes[crdR]
-        trans[crdR] = crdR_idx.rename(
-            [f"{name}_out" for name in crdR_idx.names], crdR_idx.names
-        )
-        ref_mean[crdR] = trans[crdR]
+
+        ref_mean = self.train_group.apply("mean", ref)  # Centroids of ref
+        ref_mean.attrs.update(long_name="Centroid point of target.")
+
+        hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
+        hist_mean.attrs.update(long_name="Centroid point of training.")
+
         self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
-        self.ds.attrs["_reference_coord"] = crdR
-        self.ds.attrs["_model_coord"] = crdM
+        self.ds.attrs["_reference_coord"] = lbl_R
+        self.ds.attrs["_model_coord"] = lbl_M
 
     def _adjust(self, sim, norm_to="hist"):
-        crdR = self.ds.attrs["_reference_coord"]
-        crdM = self.ds.attrs["_model_coord"]
-        dims = self.ds.indexes[crdM].names
-
-        sim = sim.stack({crdM: dims})
+        lbl_R = self.ds.attrs["_reference_coord"]
+        lbl_M = self.ds.attrs["_model_coord"]
+        crds_M = self.ds.indexes[lbl_M].names
 
         if norm_to == "hist":
             vmean = self.ds.hist_mean
         elif norm_to == "sim":
-            vmean = sim.mean("time")
-        scen = self.ds.ref_mean + self.ds.trans.dot((sim - vmean), [crdM])
+            vmean = self.train_group.apply("mean", sim).stack({lbl_M: crds_M})
 
-        scen[crdR] = sim.indexes[crdM]
-        return scen.unstack(crdR)
+        sim = sim.stack({lbl_M: crds_M})
+
+        def _compute_adjust(ds, dim):
+            scen = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
+            return scen
+
+        scen = self.adj_group.apply(
+            _compute_adjust,
+            {
+                "ref_mean": self.ds.ref_mean,
+                "trans": self.ds.trans,
+                "sim": sim,
+                "vmean": vmean,
+            },
+        )
+        scen[lbl_R] = sim.indexes[lbl_M]
+        return scen.unstack(lbl_R)

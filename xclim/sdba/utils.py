@@ -512,7 +512,8 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
     """Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
-    coordinates.
+    coordinates. No NaN management : if a single observation is null, all elements
+    of the transformation matrix involving that variable will be NaN.
 
     Parameters
     ----------
