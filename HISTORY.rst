@@ -10,6 +10,7 @@ Breaking changes
 
 New indicators
 ~~~~~~~~~~~~~~
+* `atmos.degree_days_depassment_date`, the day of year when the degree days sum exceeds a threshold.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
