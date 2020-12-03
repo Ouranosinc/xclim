@@ -1186,3 +1186,23 @@ def test_freshet_start(tas_series):
         tas_series(np.arange(-50, 350) + 274, start="1/1/2000"), freq="YS"
     )
     assert out[0] == 51
+
+
+def test_degree_days_depassment_date(tas_series):
+    tas = tas_series(np.ones(366) + K2C, start="2000-01-01")
+
+    out = atmos.degree_days_depassment_date(
+        tas, thresh="0 degC", op=">", sum_thresh="150 K days"
+    )
+    assert out[0] == 151
+    assert "tmean > 0 degc" in out.attrs["description"]
+
+    out = atmos.degree_days_depassment_date(
+        tas, thresh="2 degC", op="<", sum_thresh="150 K days"
+    )
+    assert out[0] == 151
+
+    out = atmos.degree_days_depassment_date(
+        tas, thresh="2 degC", op="<", sum_thresh="150 K days", after_date="07-01"
+    )
+    assert out[0] == 183

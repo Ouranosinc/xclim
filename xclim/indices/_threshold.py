@@ -19,7 +19,7 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
-    "degree_day_depassment_date",
+    "degree_days_depassment_date",
     "cooling_degree_days",
     "freshet_start",
     "growing_degree_days",
@@ -1369,7 +1369,7 @@ def tropical_nights(
 
 
 @declare_units("", tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
-def degree_day_depassment_date(
+def degree_days_depassment_date(
     tas: xarray.DataArray,
     thresh: str,
     sum_thresh: str,
@@ -1380,7 +1380,7 @@ def degree_day_depassment_date(
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")
     sum_thresh = convert_units_to(sum_thresh, "K days")
-    print(sum_thresh, thresh)
+
     if op in ["<", "<=", "lt", "le"]:
         c = thresh - tas
     elif op in [">", ">=", "gt", "ge"]:
