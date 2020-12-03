@@ -1691,7 +1691,6 @@ def test_degree_days_depassment_date(tas_series):
         tas, thresh="0 degC", op=">", sum_thresh="150 K days"
     )
     assert out[0] == 151
-    assert "tmean > 0 degc" in out.attrs["description"]
 
     out = xci.degree_days_depassment_date(
         tas, thresh="2 degC", op="<", sum_thresh="150 degC days"
