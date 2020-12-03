@@ -639,7 +639,7 @@ degree_days_depassment_date = Tas(
     identifier="degree_days_depassment_date",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year when the cumulative degree days exceeds {sum_thresh}.",
+    long_name="Day of year when cumulative degree days exceed {sum_thresh}.",
     description="Day of year when the integral of degee days (when tmean {op} {thresh})"
     " exceeds {sum_thresh}, with an earliest limit at {after_date}.",
     cell_methods="",

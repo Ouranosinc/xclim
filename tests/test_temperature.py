@@ -6,6 +6,7 @@ import xarray as xr
 
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
+from xclim.core.options import set_options
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -1188,21 +1189,21 @@ def test_freshet_start(tas_series):
     assert out[0] == 51
 
 
-def test_degree_days_depassment_date(tas_series):
-    tas = tas_series(np.ones(366) + K2C, start="2000-01-01")
+def test_degree_days_depassment_date():
+    tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
 
     out = atmos.degree_days_depassment_date(
-        tas, thresh="0 degC", op=">", sum_thresh="150 K days"
+        tas=tas,
+        thresh="4 degC",
+        op=">",
+        sum_thresh="200 K days",
     )
-    assert out[0] == 151
-    assert "tmean > 0 degc" in out.attrs["description"]
+    np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
 
-    out = atmos.degree_days_depassment_date(
-        tas, thresh="2 degC", op="<", sum_thresh="150 K days"
-    )
-    assert out[0] == 151
-
-    out = atmos.degree_days_depassment_date(
-        tas, thresh="2 degC", op="<", sum_thresh="150 K days", after_date="07-01"
-    )
-    assert out[0] == 183
+    with set_options(check_missing="skip"):
+        out = atmos.degree_days_depassment_date(
+            tas=tas, thresh="4 degC", op=">", sum_thresh="1500 K days", freq="AS-JUL"
+        )
+        np.testing.assert_array_equal(
+            out, np.array([[np.nan, np.nan, 62, 48], [np.nan, 278, 240, 243]]).T
+        )
