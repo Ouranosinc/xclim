@@ -1191,7 +1191,9 @@ def test_freshet_start(tas_series):
 
 def test_degree_days_depassment_date():
     tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
-    tas.attrs["cell_methods"] = "time: mean within days"
+    tas.attrs.update(
+        cell_methods="time: mean within days", standard_name="air_temperature"
+    )
 
     out = atmos.degree_days_depassment_date(
         tas=tas,
@@ -1200,7 +1202,7 @@ def test_degree_days_depassment_date():
         sum_thresh="200 K days",
     )
     np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
-    assert "tmean > 0 degc" in out.attrs["description"]
+    assert "tmean > 4 degc" in out.attrs["description"]
 
     with set_options(check_missing="skip"):
         out = atmos.degree_days_depassment_date(

@@ -1377,7 +1377,7 @@ def degree_days_depassment_date(
     after_date: str = None,
     freq: str = "YS",
 ):
-    r"""Degree days depassment date
+    r"""Degree days depassment date.
 
     Day of year when the sum of degree days exceeds a threshold. Degree days are
     computed above or below a given temperature threshold.
