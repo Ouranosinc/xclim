@@ -640,8 +640,8 @@ degree_days_depassment_date = Tas(
     units="",
     standard_name="day_of_year",
     long_name="Day of year when cumulative degree days exceed {sum_thresh}.",
-    description="Day of year when the integral of degee days (when tmean {op} {thresh})"
-    " exceeds {sum_thresh}, with an earliest limit at {after_date}.",
+    description="Day of year when the integral of degree days (tmean {op} {thresh})"
+    " exceeds {sum_thresh}, the cumulative sum starts on {start_date}.",
     cell_methods="",
     compute=indices.degree_days_depassment_date,
 )

@@ -1206,8 +1206,11 @@ def test_degree_days_depassment_date():
 
     with set_options(check_missing="skip"):
         out = atmos.degree_days_depassment_date(
-            tas=tas, thresh="4 degC", op=">", sum_thresh="1500 K days", freq="AS-JUL"
+            tas=tas,
+            thresh="4 degC",
+            op=">",
+            sum_thresh="1500 K days",
+            start_date="07-02",
+            freq="YS",
         )
-        np.testing.assert_array_equal(
-            out, np.array([[np.nan, np.nan, 62, 48], [np.nan, 278, 240, 243]]).T
-        )
+        np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
