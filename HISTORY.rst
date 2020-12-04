@@ -37,6 +37,7 @@ Internal changes
 * With the help of the `mypy` library, added several typing fixes to better identify inputs/outputs, and reduce object type mutations.
 * Fixed some doctests in `ensembles` and `set_options`.
 * `clisops` v0.4.0+ is now an optional requirements for non-Windows builds.
+* New `xclim.core.units.str2pint` method to convert quantity strings to quantity objects. Main improvement is to make "3 degC days" a valid string that converts to "3 K days".
 
 
 0.21.0 (2020-10-23)
