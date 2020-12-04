@@ -45,8 +45,10 @@ def _raise_on_multiple_chunk(da, main_dim):
 
 
 class BaseAdjustment(Parametrizable):
+    """Base class for adjustment objects."""
+
     def __init__(self, **kwargs):
-        """Base object for adjustment algorithms.
+        """Initialize base object for adjustment algorithms.
 
         Subclasses should implement the `_train` and `_adjust` methods.
         """
@@ -147,6 +149,8 @@ class BaseAdjustment(Parametrizable):
 
 
 class EmpiricalQuantileMapping(BaseAdjustment):
+    """Coventionnal quantile mapping adjustment."""
+
     @parse_group
     def __init__(
         self,
@@ -223,6 +227,8 @@ class EmpiricalQuantileMapping(BaseAdjustment):
 
 
 class DetrendedQuantileMapping(EmpiricalQuantileMapping):
+    """Quantile mapping using normalized and detrended data."""
+
     @parse_group
     def __init__(
         self,
@@ -352,6 +358,8 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
+    """Quantile mapping with sim's quantiles computed independently."""
+
     def __init__(self, **kwargs):
         r"""Quantile Delta Mapping bias-adjustment.
 
@@ -401,6 +409,8 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
 
 class LOCI(BaseAdjustment):
+    """Local intensity scaling adjustment intended for daily precipitation."""
+
     @parse_group
     def __init__(self, *, group: Union[str, Grouper] = "time", thresh: float = None):
         r"""Local Intensity Scaling (LOCI) bias-adjustment.
@@ -473,6 +483,8 @@ class LOCI(BaseAdjustment):
 
 
 class Scaling(BaseAdjustment):
+    """Simple scaling adjustment."""
+
     @parse_group
     def __init__(self, *, group="time", kind=ADDITIVE):
         """Scaling bias-adjustment.
@@ -509,6 +521,8 @@ class Scaling(BaseAdjustment):
 
 
 class PrincipalComponents(BaseAdjustment):
+    """Principal components inspired adjustment."""
+
     @parse_group
     def __init__(self, *, group="time", crd_dims=None, pts_dims=None):
         r"""Principal Component adjustment.
