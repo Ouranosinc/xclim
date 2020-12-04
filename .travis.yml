@@ -108,6 +108,7 @@ jobs:
       script:
         - py.test --cov=xclim
   allow_failures:
+    - env: TOXENV=py38-doctest
     - env: TOXENV=py38-anaconda
 #    - env: TOXENV=macOS
     - env:
