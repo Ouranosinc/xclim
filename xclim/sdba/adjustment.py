@@ -2,7 +2,6 @@
 from typing import Union
 from warnings import warn
 
-import dask.array as dsk
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
