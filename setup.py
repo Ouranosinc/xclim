@@ -35,7 +35,7 @@ requirements = [
     "packaging>=20.0",
 ]
 
-setup_requirements = ["pytest-runner"]
+setup_requirements = ["pytest-runner", "wheel"]
 
 test_requirements = ["pytest", "tox"]
 
