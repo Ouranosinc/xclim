@@ -2,11 +2,12 @@
 History
 =======
 
-0.22.0 (unreleased)
+0.22.0 (2020-12-07)
 -------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
+* Statistical functions (`frequency_analysis`, `fa`, `fit`, `parametric_quantile`) are now solely accessible via `indices.stats`.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -28,6 +29,7 @@ Bug fixes
 ~~~~~~~~~
 * Fixed bug that prevented the use of `xclim.core.missing.MissingBase` and subclasses with an indexer and a cftime datetime coordinate.
 * Fixed issues with metadata handling in statistical indices.
+* Various small fixes to the documentation (re-establishment of some internally and externally linked documents).
 
 Internal changes
 ~~~~~~~~~~~~~~~~~
