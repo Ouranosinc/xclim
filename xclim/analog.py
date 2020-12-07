@@ -31,7 +31,7 @@ very cold days [Roy2017].
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 
-This module implements five of the six methods described in [Grenier20131]_ to measure
+This module implements five of the six methods described in [Grenier2013]_ to measure
 the dissimilarity between two samples. Some of these algorithms can be used to
 test whether or not two samples have been drawn from the same distribution.
 Here, they are used to find areas with analog climate conditions to a target
