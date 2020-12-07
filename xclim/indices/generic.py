@@ -6,6 +6,8 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+from typing import Union
+
 import numpy as np
 import xarray as xr
 
