@@ -110,8 +110,8 @@ def default_freq(**indexer):
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
 
 
-def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.DataArray:
-    """Count number of days above or below threshold.
+def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArray:
+    """Compare a dataArray to a threshold using given operator.
 
     Parameters
     ----------
@@ -119,16 +119,13 @@ def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.Dat
       Input data.
     op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
-    thresh : str
+    thresh : Union[float, int]
       Threshold value.
-    freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
 
     Returns
     -------
     xr.DataArray
-      The number of days meeting the constraints for each period.
+        Boolean mask of the comparison.
     """
     from xarray.core.ops import get_op
 
@@ -140,7 +137,32 @@ def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.Dat
         raise ValueError(f"Operation `{op}` not recognized.")
 
     func = getattr(da, "_binary_op")(get_op(op))
-    c = func(da, thresh) * 1
+    return func(da, thresh)
+
+
+def threshold_count(
+    da: xr.DataArray, op: str, thresh: Union[float, int], freq: str
+) -> xr.DataArray:
+    """Count number of days above or below threshold.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input data.
+    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
+      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
+    thresh : Union[float, int]
+      Threshold value.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xr.DataArray
+      The number of days meeting the constraints for each period.
+    """
+    c = compare(da, op, thresh) * 1
     return c.resample(time=freq).sum(dim="time")
 
 

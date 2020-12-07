@@ -115,7 +115,7 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
     Parameters
     ----------
     value : Union[xr.DataArray, str]
-      Input data array or expression.
+      Input data array or string representing a unit (with no magnitude).
 
     Returns
     -------
@@ -145,13 +145,14 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
         unit = ""
 
     try:  # Pint compatible
-        return units.parse_expression(unit).units
+        return units.parse_units(unit)
     except (
         pint.UndefinedUnitError,
         pint.DimensionalityError,
         AttributeError,
+        TypeError,
     ):  # Convert from CF-units to pint-compatible
-        return units.parse_expression(_transform(unit)).units
+        return units.parse_units(_transform(unit))
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
@@ -206,6 +207,29 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     return out
 
 
+def str2pint(val: str):
+    """Convert a string to a pint.Quantity, splitting the magnitude and the units.
+
+    Parameters
+    ----------
+    val : str
+      A quantity in the form "[{magnitude} ]{units}", where magnitude is castable to a float and
+      units is understood by `units2pint`.
+
+    Returns
+    -------
+    pint.Quantity
+      Magnitude is 1 if no magnitude was present in the string.
+    """
+    mstr, *ustr = val.split(" ", maxsplit=1)
+    try:
+        if ustr:
+            return units.Quantity(float(mstr), units=units2pint(ustr[0]))
+        return units.Quantity(float(mstr))
+    except ValueError:
+        return units.Quantity(1, units2pint(val))
+
+
 def convert_units_to(
     source: Union[str, xr.DataArray, Any],
     target: Union[str, xr.DataArray, Any],
@@ -236,8 +260,7 @@ def convert_units_to(
         raise NotImplementedError
 
     if isinstance(source, str):
-        q = units.parse_expression(source)
-
+        q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
         return q.to(tu).m
 
@@ -274,7 +297,7 @@ def convert_units_to(
             FutureWarning,
             stacklevel=3,
         )
-        return (source * fu).to(tu).m
+        return units.Quantity(source, units=fu).to(tu).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
@@ -297,7 +320,10 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         return
 
     expected = units.get_dimensionality(dim.replace("dimensionless", ""))
-    val_dim = units2pint(val).dimensionality
+    if isinstance(val, str):
+        val_dim = str2pint(val).dimensionality
+    else:  # a DataArray
+        val_dim = units2pint(val).dimensionality
     if val_dim == expected:
         return
 
@@ -320,7 +346,7 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         raise NotImplementedError(f"Dimension `{dim}` is not supported.")
 
     try:
-        (1 * units2pint(val)).to(tu, "hydro")
+        units.Quantity(1, units=units2pint(val)).to(tu, "hydro")
     except (pint.UndefinedUnitError, pint.DimensionalityError):
         raise ValidationError(
             f"Value's dimension `{val_dim}` does not match expected units `{expected}`."

@@ -1682,3 +1682,22 @@ def test_specific_humidity(
         ice_thresh="0 degC",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
+
+
+def test_degree_days_depassment_date(tas_series):
+    tas = tas_series(np.ones(366) + K2C, start="2000-01-01")
+
+    out = xci.degree_days_depassment_date(
+        tas, thresh="0 degC", op=">", sum_thresh="150 K days"
+    )
+    assert out[0] == 151
+
+    out = xci.degree_days_depassment_date(
+        tas, thresh="2 degC", op="<", sum_thresh="150 degC days"
+    )
+    assert out[0] == 151
+
+    out = xci.degree_days_depassment_date(
+        tas, thresh="2 degC", op="<", sum_thresh="150 K days", start_date="04-15"
+    )
+    assert out[0] == 256

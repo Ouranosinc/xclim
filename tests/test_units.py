@@ -9,6 +9,7 @@ from xclim.core.units import (
     convert_units_to,
     pint2cfunits,
     pint_multiply,
+    str2pint,
     units,
     units2pint,
 )
@@ -79,6 +80,10 @@ class TestConvertUnitsTo:
         out = convert_units_to(pr, "mm/day")
         assert isinstance(out.data, dsk.Array)
 
+    def test_offset_confusion(self):
+        out = convert_units_to("10 degC days", "K days")
+        assert out == 10
+
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
@@ -100,7 +105,7 @@ class TestUnitConversion:
         assert str(u) == "meter ** 3 / second"
         assert pint2cfunits(u) == "m^3 s-1"
 
-        u = units2pint("2 kg m-2 s-1")
+        u = units2pint("kg m-2 s-1")
         assert (str(u)) == "kilogram / meter ** 2 / second"
 
         u = units2pint("%")
@@ -117,6 +122,13 @@ class TestUnitConversion:
         out = pint_multiply(a, 1 * units.days)
         assert out[0] == 1 * 60 * 60 * 24
         assert out.units == "kg m-2"
+
+    def test_str2pint(self):
+        Q_ = units.Quantity
+        assert str2pint("-0.78 m") == Q_(-0.78, units="meter")
+        assert str2pint("m kg/s") == Q_(1, units="meter kilogram/second")
+        assert str2pint("11.8 degC days") == Q_(11.8, units="delta_degree_Celsius days")
+        assert str2pint("nan m^2 K^-3").units == Q_(1, units="m²/K³").units
 
 
 class TestCheckUnits:

@@ -1,6 +1,7 @@
 # noqa: D100
 from typing import Optional
 
+import numpy as np
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, pint_multiply, units
@@ -19,6 +20,7 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
+    "degree_days_depassment_date",
     "cooling_degree_days",
     "freshet_start",
     "growing_degree_days",
@@ -1365,3 +1367,80 @@ def tropical_nights(
     return (
         tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
     )
+
+
+@declare_units("", tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
+def degree_days_depassment_date(
+    tas: xarray.DataArray,
+    thresh: str,
+    sum_thresh: str,
+    op: str = ">",
+    start_date: str = None,
+    freq: str = "YS",
+):
+    r"""Degree days depassment date.
+
+    Day of year when the sum of degree days exceeds a threshold. Degree days are
+    computed above or below a given temperature threshold.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature.
+    thresh : str
+      Threshold temperature on which to base degree days evaluation.
+    sum_thresh : str
+      Threshold of the degree days sum, in "K days".
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+      If equivalent to '>', degree days are computed as `tas - thresh` and if
+      equivalent to '<', they are computed as `thresh - tas`.
+    start_date: str, optional
+      Date at which to start the cumulative sum. In "mm-dd" format, defaults to the
+      start of the sampling period.
+    freq : str
+      Resampling frequency; Defaults to "YS". If `start_date` is given, `freq` should
+      be annual.
+
+    Returns
+    -------
+    xarray.DataArray
+      Degree days depassment date
+
+    Notes
+    -----
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`,
+    :math:`T` is the reference threshold and :math:`ST` is the sum threshold. Then, starting
+    at day :math:i_0:, the degree days depassment date is the first day :math:`k` such that
+
+    .. math::
+
+        \begin{cases}
+        ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
+        ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
+        \end{cases}
+
+    The resulting :math:`k` is expressed as a day of year.
+    """
+    thresh = convert_units_to(thresh, "K")
+    tas = convert_units_to(tas, "K")
+    sum_thresh = convert_units_to(sum_thresh, "K days")
+
+    if op in ["<", "<=", "lt", "le"]:
+        c = thresh - tas
+    elif op in [">", ">=", "gt", "ge"]:
+        c = tas - thresh
+
+    def _depassment_date(grp):
+        strt_idx = rl.index_of_date(grp.time, start_date, max_idxs=1, default=0)
+        if (
+            strt_idx.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")
+
+        return rl.first_run_after_date(
+            grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time") > sum_thresh,
+            window=1,
+            date=None,
+        )
+
+    return c.clip(0).resample(time=freq).map(_depassment_date)
