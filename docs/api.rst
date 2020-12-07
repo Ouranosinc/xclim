@@ -120,8 +120,8 @@ Subset module
     Subsetting is now offered via `clisops.core.subset`. The subsetting functions offered by `clisops`
     are available at the following link:
 
-:ref: `clisops API <clisops:module-clisops.core.subset>`
+:doc:`CLISOPS API <clisops:api>`
 
 .. note::
     For more information about `clisops` refer to their documentation here:
-    :doc:`clisops documentation <clisops:readme>`
+    :doc:`CLISOPS documentation <clisops:readme>`
