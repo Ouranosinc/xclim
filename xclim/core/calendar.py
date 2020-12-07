@@ -8,7 +8,6 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 from typing import Any, Optional, Sequence, Union
-from warnings import warn
 
 import cftime
 import numpy as np
@@ -52,9 +51,9 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     obj : Any
       An object defining some date..
       If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
-        Values must have either a datetime64 dtype or a cftime dtype.
+      Values must have either a datetime64 dtype or a cftime dtype.
       `obj`can also be a python datetime.datetime, a cftime object or a pandas Timestamp
-        or an iterable of those, in which case the calendar is inferred from the first value.
+      or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
       Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
@@ -135,30 +134,30 @@ def convert_calendar(
     If one of the source or target calendars is `360_day`, `align_on` must be specified and two options are offered.
 
     "year"
-        The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
-        meaning that the missing/surplus days are added/removed at regular intervals.
+      The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
+      meaning that the missing/surplus days are added/removed at regular intervals.
 
-        From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
-            To a leap year:
-                January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
-            To a non-leap year:
-                February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
+      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
+        To a leap year:
+          January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
+        To a non-leap year:
+          February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
 
-        From standard calendar to a '360_day', the following dates in the source array will be dropped:
-            From a leap year:
-                January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
-            From a non-leap year:
-                February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
+      From standard calendar to a '360_day', the following dates in the source array will be dropped:
+        From a leap year:
+          January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
+        From a non-leap year:
+          February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
 
-        This option is best used on daily and subdaily data.
+      This option is best used on daily and subdaily data.
 
     "date"
-        The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
-        a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
-        dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
-        a standard calendar.
+      The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
+      a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
+      dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
+      a standard calendar.
 
-        This option is best used with data on a frequency coarser than daily.
+      This option is best used with data on a frequency coarser than daily.
     """
     cal_src = get_calendar(source, dim=dim)
 
