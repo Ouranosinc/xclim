@@ -117,7 +117,11 @@ Testing module
 Subset module
 -------------
 .. warning::
-    Subsetting is now offered via `clisops`. The functions offered by clisops
-    will be described here once the subsetting functions API is made available.
-    For now, refer to their documentation here:
-    :doc:`clisops subset examples <clisops:notebooks/subset>`
+    Subsetting is now offered via `clisops.core.subset`. The subsetting functions offered by `clisops`
+    are available at the following link:
+
+:doc:`CLISOPS API <clisops:api>`
+
+.. note::
+    For more information about `clisops` refer to their documentation here:
+    :doc:`CLISOPS documentation <clisops:readme>`
