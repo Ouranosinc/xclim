@@ -118,10 +118,10 @@ Subset module
 -------------
 .. warning::
     Subsetting is now offered via `clisops.core.subset`. The subsetting functions offered by clisops
-    are as follows:
+    are available at the following link:
 
-.. automodule:: <clisops:api>
+:ref: `clisops API <clisops:api>`
 
 .. note::
     For more information about `clisops` refer to their documentation here:
-    :doc:`clisops subset examples <clisops>`
+    :doc:`clisops documentation <clisops:readme>`
