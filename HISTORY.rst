@@ -2,6 +2,27 @@
 History
 =======
 
+0.23.0 (unreleased)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
+
+New indicators
+~~~~~~~~~~~~~~
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+* Fixed a bug in `indices.run_length.lazy_indexing` that occured with 1D coords and 0D indexes when using the dask backend.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+
+
 0.22.0 (2020-12-07)
 -------------------
 
@@ -32,7 +53,7 @@ Bug fixes
 * Various small fixes to the documentation (re-establishment of some internally and externally linked documents).
 
 Internal changes
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 * Passing `align_on` to `xclim.core.calendar.convert_calendar` without using '360_day' calendars will not raise a warning anymore.
 * Added formatting utilities for metadata attributes (`update_cell_methods`, `prefix_attrs` and `unprefix_attrs`).
 * `xclim/ensembles.py` moved to `xclim/ensembles/*.py`, splitting stats/creation, reduction  and robustness methods.
