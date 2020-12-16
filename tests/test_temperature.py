@@ -1189,13 +1189,13 @@ def test_freshet_start(tas_series):
     assert out[0] == 51
 
 
-def test_degree_days_depassment_date():
+def test_degree_days_exceedance_date():
     tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
     tas.attrs.update(
         cell_methods="time: mean within days", standard_name="air_temperature"
     )
 
-    out = atmos.degree_days_depassment_date(
+    out = atmos.degree_days_exceedance_date(
         tas=tas,
         thresh="4 degC",
         op=">",
@@ -1205,7 +1205,7 @@ def test_degree_days_depassment_date():
     assert "tmean > 4 degc" in out.attrs["description"]
 
     with set_options(check_missing="skip"):
-        out = atmos.degree_days_depassment_date(
+        out = atmos.degree_days_exceedance_date(
             tas=tas,
             thresh="4 degC",
             op=">",
