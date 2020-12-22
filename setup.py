@@ -37,7 +37,7 @@ requirements = [
 
 setup_requirements = ["pytest-runner", "wheel"]
 
-test_requirements = ["pytest", "tox"]
+test_requirements = ["pytest", "tox", "xdoctest"]
 
 docs_requirements = [
     "sphinx",
