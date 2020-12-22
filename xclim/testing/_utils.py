@@ -37,7 +37,6 @@ def _get(
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
-        print(url, local_file)
         urlretrieve(url, local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5name.as_posix()))
