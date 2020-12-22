@@ -16,6 +16,8 @@ from xclim.sdba.processing import adapt_freq
 
 from . import utils as tu
 
+__all__ = ["synth_rainfall", "cannon_2015_figure_2", "adapt_freq_graph"]
+
 
 def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
     """Return gamma distributed rainfall values for wet days.
