@@ -76,6 +76,7 @@ def open_dataset(
     """
     Open a dataset from the online GitHub-like repository.
     If a local copy is found then always use that to avoid network traffic.
+
     Parameters
     ----------
     name : str
@@ -94,9 +95,11 @@ def open_dataset(
         If True, then cache data locally for use on subsequent calls.
     kwds : dict, optional
         For NetCDF files, **kwds passed to xarray.open_dataset.
+
     Returns
     -------
     Union[Dataset, Path]
+
     See Also
     --------
     xarray.open_dataset
@@ -137,8 +140,7 @@ def open_dataset(
 def as_tuple(x):  # noqa: D103
     if isinstance(x, (list, tuple)):
         return x
-    else:
-        return (x,)
+    return (x,)  # noqa
 
 
 class TestFile:  # noqa: D101
