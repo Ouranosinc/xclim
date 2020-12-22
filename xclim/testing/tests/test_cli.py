@@ -5,10 +5,11 @@ import numpy as np
 import pytest
 import xarray as xr
 from click.testing import CliRunner
-from test_fwi import get_data as fwi_get_data
 
 import xclim as xc
 from xclim.cli import cli
+
+from .test_fwi import get_data as fwi_get_data
 
 try:
     from dask.distributed import Client
