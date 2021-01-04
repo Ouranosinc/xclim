@@ -248,9 +248,8 @@ def first_run(
         if isinstance(da.data, dsk.Array):
             ind = ind.chunk(da.chunks)
         wind_sum = da.rolling(time=window).sum(skipna=False)
-        out = ind.where(wind_sum >= window).min(dim=dim) - (
-            window - 1
-        )  # remove window -1 as rolling result index is last element of the moving window
+        out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
+        # remove window - 1 as rolling result index is last element of the moving window
 
     if coord:
         crd = da[dim]
@@ -734,16 +733,17 @@ def lazy_indexing(
 ) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
-    The algorithm differs whether da is 1D or not.
+    Two case
 
     Parameters
     ----------
     da : xr.DataArray
       Input array. If not 1D, `dim` must be given and must not appear in index.
     index : xr.DataArray
-      N-d integer indices, all dimensions of index must be in da
-    dim : Dimension along which to index,
-          unused if `da` is 1D, should not be present in `index`.
+      N-d integer indices, if da is not 1D, all dimensions of index must be in da
+    dim : str, optional
+      Dimension along which to index, unused if `da` is 1D,
+      should not be present in `index`.
 
     Returns
     -------
@@ -751,22 +751,32 @@ def lazy_indexing(
       Values of `da` at indices `index`
     """
     if da.ndim == 1:
-
+        # Case where da is 1D and index is N-D
+        # Slightly better performance using map_blocks, over an apply_ufunc
         def _index_from_1d_array(array, indices):
             return array[
                 indices,
             ]
 
-        invalid = index.isnull()
+        idx_ndim = index.ndim
+        if idx_ndim == 0:
+            # The 0-D index case, we add a dummy dimension to help dask
+            dim = xr.core.utils.get_temp_dimname(da.dims, "x")
+            index = index.expand_dims(dim)
+        invalid = index.isnull()  # Which indexes to mask
+        # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
+        # for each chunk of index, take corresponding values from da
         func = partial(_index_from_1d_array, da)
-
         out = index.map_blocks(func)
+        # mask where index was NaN
         out = out.where(~invalid)
-        if index.shape == ():
-            out = out.drop_vars(da.dims[0])
+        if idx_ndim == 0:
+            # 0-D case, drop useless coords and dummy dim
+            out = out.drop_vars(da.dims[0]).squeeze()
         return out
 
+    # Case where index.dims is a subset of da.dims.
     if dim is None:
         diff_dims = set(da.dims) - set(index.dims)
         if len(diff_dims) == 0:
@@ -785,7 +795,7 @@ def lazy_indexing(
     return xr.apply_ufunc(
         _index_from_nd_array,
         da,
-        index,
+        index.astype(int),
         input_core_dims=[[dim], []],
         output_core_dims=[[]],
         dask="parallelized",

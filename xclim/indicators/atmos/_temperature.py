@@ -53,7 +53,7 @@ __all__ = [
     "growing_season_length",
     "growing_season_end",
     "tropical_nights",
-    "degree_days_depassment_date",
+    "degree_days_exceedance_date",
 ]
 
 
@@ -635,13 +635,13 @@ tn10p = Tasmin(
 )
 
 
-degree_days_depassment_date = Tas(
-    identifier="degree_days_depassment_date",
+degree_days_exceedance_date = Tas(
+    identifier="degree_days_exceedance_date",
     units="",
     standard_name="day_of_year",
     long_name="Day of year when cumulative degree days exceed {sum_thresh}.",
     description="Day of year when the integral of degree days (tmean {op} {thresh})"
     " exceeds {sum_thresh}, the cumulative sum starts on {start_date}.",
     cell_methods="",
-    compute=indices.degree_days_depassment_date,
+    compute=indices.degree_days_exceedance_date,
 )

@@ -673,7 +673,7 @@
     "title": "Premier jour de l'année de températures au-dessus d'un seuil.",
     "abstract": "Calcule le premier jour d'une période où la température est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-  "DEGREE_DAYS_DEPASSMENT_DATE": {
+  "DEGREE_DAYS_EXCEEDANCE_DATE": {
     "long_name": "Premier jour de l'année où la somme des degrés-jours excède {sum_thresh}",
     "description": "Premier jour de l'année où la somme des degrés-jours (Tmoy {op} {thresh}) excède {sum_thresh}, la somme commençant le {start_date}.",
     "title": "Jour du dépassement des degrés-jours",
