@@ -44,6 +44,8 @@ _indicators_registry = defaultdict(list)  # Private instance registry
 
 
 class InputKind(IntEnum):
+    """Constants for input parameter kinds."""
+
     VARIABLE = 0
     OPTIONAL_VARIABLE = 1
     PARAMETER = 2

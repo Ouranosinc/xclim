@@ -14,6 +14,7 @@ New indicators
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `kind` entry in the `parameters` property of indicators, differenciating between [optional] variables and parameters.
 
 Bug fixes
 ~~~~~~~~~
