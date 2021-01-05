@@ -14,7 +14,7 @@ except ImportError:
     gpd = False
 
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+TESTS_DATA = os.path.join(TESTS_HOME, "data")
 
 
 class TestSubsetRaises:
