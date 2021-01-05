@@ -3,7 +3,6 @@ This module is meant to compare results with those expected from papers, or crea
 behavior of sdba methods and utilities.
 """
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde
 
@@ -15,6 +14,12 @@ from xclim.sdba.adjustment import (
 from xclim.sdba.processing import adapt_freq
 
 from . import utils as tu
+
+try:
+    from matplotlib import pyplot as plt
+except ModuleNotFoundError:
+    plt = False
+
 
 __all__ = ["synth_rainfall", "cannon_2015_figure_2", "adapt_freq_graph"]
 
