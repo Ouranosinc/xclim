@@ -19,7 +19,7 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Daily, Indicator, registry
+from xclim.core.indicator import Daily, Indicator, InputKind, registry
 from xclim.core.units import units
 from xclim.core.utils import MissingVariableError
 from xclim.indices import tg_mean
@@ -328,9 +328,12 @@ def test_parsed_doc():
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
     assert params["tas"]["annotation"] is Union[str, xr.DataArray]
-    assert params["tas"]["default"] is _empty
+    assert params["tas"]["kind"] is InputKind.VARIABLE
+    assert params["tas"]["default"] == "tas"
     assert params["snd"]["default"] is None
+    assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["shut_down_mode"]["annotation"] is str
+    assert params["shut_down_mode"]["kind"] is InputKind.PARAMETER
 
 
 def test_default_formatter():

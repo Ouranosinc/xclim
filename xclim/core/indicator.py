@@ -15,6 +15,7 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
+from enum import IntEnum
 from inspect import Parameter, _empty, signature
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
@@ -40,6 +41,14 @@ from .utils import MissingVariableError
 # Indicators registry
 registry = {}  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
+
+
+class InputKind(IntEnum):
+    """Constants for input parameter kinds."""
+
+    VARIABLE = 0
+    OPTIONAL_VARIABLE = 1
+    PARAMETER = 2
 
 
 class IndicatorRegistrar:
@@ -246,11 +255,13 @@ class Indicator(IndicatorRegistrar):
         kwds["compute"] = compute = kwds.get("compute", None) or cls.compute
 
         sig = signature(compute)
-        # True if any of non-dataarray arguments are default.
+        # True if any of non-dataarray arguments ("parameters") are default.
         # In this case, we can't patch the variable names as default values.
         has_def = any(
             [
-                p.annotation is not DataArray and p.default is _empty
+                p.annotation is not DataArray
+                and p.default is _empty
+                and p.kind is not p.VAR_KEYWORD
                 for p in sig.parameters.values()
             ]
         )
@@ -300,9 +311,19 @@ class Indicator(IndicatorRegistrar):
         # params is a multilayer dict, we want to use a brand new one so deepcopy
         params = deepcopy(kwds.get("parameters", cls.parameters or {}))
         for name, param in kwds["_sig"].parameters.items():
-            param_doc = params.setdefault(name, {"type": "", "description": ""})
+            if name == "ds":  # Don't add ds in the parameters list
+                continue
+            param_doc = params.setdefault(name, {"description": ""})
             param_doc["default"] = param.default
             param_doc["annotation"] = param.annotation
+            if param.annotation == Union[str, DataArray]:
+                if param.default == name:
+                    param_doc["kind"] = InputKind.VARIABLE
+                else:
+                    param_doc["kind"] = InputKind.OPTIONAL_VARIABLE
+            else:
+                param_doc["kind"] = InputKind.PARAMETER
+
         for name in list(params.keys()):
             if name not in kwds["_parameters"]:
                 params.pop(name)
