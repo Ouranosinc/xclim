@@ -778,27 +778,30 @@ def liquid_precip_ratio(
     return ratio
 
 
-@declare_units("mm", pr="[precipitation]", tas="[temperature]")
+@declare_units("mm", pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_accumulation(
     pr: xarray.DataArray,
     tas: xarray.DataArray = None,
     phase: Optional[str] = None,
+    thresh: str = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Accumulated total (liquid and/or solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
     If the daily mean temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
-    When the mean temperature is over 0 degC, precipitation is assumed to be liquid rain and snow otherwise.
+    When the mean temperature is under the provided threshold, precipitation is assumed to be snow, and liquid rain otherwise.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
     tas : xarray.DataArray, optional
-      Mean daily temperature [℃] or [K]
+      (Mean) daily temperature [℃] or [K]
     phase : str, optional,
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
+    thresh : str,
+      Threshold of `tas` under which the precipication is assumed to be liquid rain.
     freq : str
       Resampling frequency as defined in
       http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling. Defaults to "YS"
@@ -829,7 +832,7 @@ def precip_accumulation(
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
     if phase in ["liquid", "solid"]:
-        frz = convert_units_to("0 degC", tas)
+        frz = convert_units_to(thresh, tas)
 
         if phase == "liquid":
             pr = pr.where(tas >= frz, 0)

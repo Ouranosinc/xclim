@@ -152,7 +152,7 @@ precip_accumulation = Pr(
     compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
 )
 
-liquid_precip_accumulation = Pr(
+liquid_precip_accumulation = PrTas(
     title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
@@ -165,7 +165,7 @@ liquid_precip_accumulation = Pr(
     ),  # _empty is added to un-optionalize the argument.
 )
 
-solid_precip_accumulation = Pr(
+solid_precip_accumulation = PrTas(
     title="Accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
