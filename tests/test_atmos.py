@@ -115,3 +115,27 @@ def test_specific_humidity(tas_series, rh_series, huss_series, ps_series):
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
     assert huss.name == "huss"
+
+
+def test_snowfall_approximation(pr_series, tasmax_series):
+    pr = pr_series(np.ones(10))
+    tasmax = tasmax_series(np.arange(10) + K2C)
+
+    prsn = atmos.snowfall_approximation(
+        pr, tas=tasmax, thresh="5 degC", method="binary"
+    )
+
+    np.testing.assert_allclose(
+        prsn, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0], atol=1e-5, rtol=1e-3
+    )
+
+
+def test_rain_approximation(pr_series, tas_series):
+    pr = pr_series(np.ones(10))
+    tas = tas_series(np.arange(10) + K2C)
+
+    prlp = atmos.rain_approximation(pr, tas=tas, thresh="5 degC", method="binary")
+
+    np.testing.assert_allclose(
+        prlp, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3
+    )

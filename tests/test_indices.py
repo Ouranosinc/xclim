@@ -1706,3 +1706,23 @@ def test_degree_days_exceedance_date(tas_series):
         tas, thresh="2 degC", op="<", sum_thresh="150 K days", start_date="04-15"
     )
     assert out[0] == 256
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])])
+def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tasmax = tasmax_series(np.arange(10) + K2C)
+
+    prsn = xci.snowfall_approximation(pr, tas=tasmax, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 1, 1, 1, 1, 1])])
+def test_rain_approximation(pr_series, tas_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tas = tas_series(np.arange(10) + K2C)
+
+    prlp = xci.rain_approximation(pr, tas=tas, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)

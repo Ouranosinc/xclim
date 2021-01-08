@@ -15,6 +15,7 @@ from xclim.core.units import (
 
 from . import fwi
 from . import run_length as rl
+from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -719,17 +720,24 @@ def heat_wave_total_length(
     return group.map(rl.windowed_run_count, args=(window,), dim="time")
 
 
-@declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
+@declare_units(
+    "",
+    pr="[precipitation]",
+    prsn="[precipitation]",
+    tas="[temperature]",
+    thresh="[temperature]",
+)
 def liquid_precip_ratio(
     pr: xarray.DataArray,
     prsn: Optional[xarray.DataArray] = None,
     tas: Optional[xarray.DataArray] = None,
+    thresh: str = "0 degC",
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     r"""Ratio of rainfall to total precipitation.
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
-    then precipitation is assumed solid if the temperature is below 0°C.
+    then it is approximated with pr, tas and thresh, using the `snowfall_approximation` indice with method 'binary'.
 
     Parameters
     ----------
@@ -738,7 +746,9 @@ def liquid_precip_ratio(
     prsn : Optional[xarray.DataArray]
       Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
     tas : Optional[xarray.DataArray]
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
+    thresh : str
+      Threshold temperature under which precipitation is assumed to be solid.
     freq : str
       Resampling frequency; Defaults to "QS-DEC".
 
@@ -763,13 +773,8 @@ def liquid_precip_ratio(
     winter_rain_ratio
     """
     if prsn is None and tas is not None:
-        tu = units.parse_units(tas.attrs["units"].replace("-", "**-"))
-        fu = "degC"
-        frz = 0
-        if fu != tu:
-            frz = units.convert(frz, fu, tu)
-        prsn = pr.where(tas < frz, 0)
-    else:
+        prsn = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    elif prsn is None:
         raise KeyError("prsn or tas must be supplied.")
 
     tot = pr.resample(time=freq).sum(dim="time")
@@ -821,7 +826,8 @@ def precip_accumulation(
 
        PR_{ij} = \sum_{i=a}^{b} PR_i
 
-    If `phase` is "liquid", only times where the daily temperature :math:`T_i` is above or equal to a threshold are considered, inversely for "solid".
+    If tas and phase are given, the corresponding phase precipitation is estimated before computing the accumulation,
+    using one of `snowfall_approximation` or `rain_approximation` with the `binary` method.
 
     Examples
     --------
@@ -832,13 +838,10 @@ def precip_accumulation(
     >>> pr_day = xr.open_dataset(path_to_pr_file).pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
-    if phase in ["liquid", "solid"]:
-        frz = convert_units_to(thresh, tas)
-
-        if phase == "liquid":
-            pr = pr.where(tas >= frz, 0)
-        elif phase == "solid":
-            pr = pr.where(tas < frz, 0)
+    if phase == "liquid":
+        pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    elif phase == "solid":
+        pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
 
     out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
     return pint_multiply(out, 1 * units.day, "mm")

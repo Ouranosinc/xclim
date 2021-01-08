@@ -13,6 +13,8 @@ __all__ = [
     "saturation_vapor_pressure",
     "relative_humidity",
     "specific_humidity",
+    "snowfall_approximation",
+    "rain_approximation",
 ]
 
 
@@ -434,3 +436,77 @@ def specific_humidity(
             q = q.where((q <= q_sat) & (q >= 0))
 
     return q
+
+
+@declare_units(
+    "[precipitation]", pr="[precipitation]", tas="[temperature]", thresh="[temperature]"
+)
+def snowfall_approximation(
+    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+):
+    """Snowfall approximation from total precipitation and temperature.
+
+    Solid precipitation estimated from precipitation and temperature according to a given method.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    thresh : str,
+      Threshold temperature, used by method "binary".
+    method : {"binary"}
+      Which method to use when approximating snowfall from total precipitation. See notes.
+
+    Notes
+    -----
+    The following methods are available to approximate snowfall:
+
+    - "binary" : When the given temperature is under a given threshold, precipitation
+        is assumed to be solid. The method is agnostic to the type of temperature used
+        (mean, maximum or minimal).
+
+    """
+    thresh = convert_units_to(thresh, tas)
+    if method == "binary":
+        prsn = pr.where(tas < thresh, 0)
+    else:
+        raise ValueError(f"Method {method} not in ['binary'].")
+
+    prsn.attrs["units"] = pr.attrs["units"]
+    return prsn
+
+
+@declare_units(
+    "[precipitation]", pr="[precipitation]", tas="[temperature]", thresh="[temperature]"
+)
+def rain_approximation(
+    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+):
+    """Rainfall approximation from total precipitation and temperature.
+
+    Liquid precipitation estimated from precipitation and temperature according to a given method.
+    This is a convenience method based on `snowfall_approximation`, see the latter for details.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    thresh : str,
+      Threshold temperature, used by method "binary".
+    method : {"binary"}
+      Which method to use when approximating snowfall from total precipitation. See notes.
+
+    Notes
+    -----
+    See the documentation of `snowfall_approximation` for details. This method computes
+    the snowfall approximation and subtracts it from the total precipitation to estimate
+    the liquid rain precipitation.
+
+    """
+    prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+    prlp.attrs["units"] = pr.attrs["units"]
+    return prlp
