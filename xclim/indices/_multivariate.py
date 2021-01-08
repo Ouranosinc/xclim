@@ -831,7 +831,7 @@ def precip_accumulation(
 
     Examples
     --------
-    The following would compute, for each grid cell of dataset, the total
+    The following would compute, for each grid cell of a dataset, the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import precip_accumulation

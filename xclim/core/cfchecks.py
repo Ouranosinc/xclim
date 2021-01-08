@@ -16,7 +16,7 @@ from .utils import ValidationError
 
 @cfcheck
 def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
-    r"""Check that a variable's attribute has on of the expected values. Warn user otherwise."""
+    r"""Check that a variable's attribute has one of the expected values. Raise a ValidationError otherwise."""
     att = getattr(var, key, None)
     if att is None:
         raise ValidationError(f"Variable does not have a `{key}` attribute.")
