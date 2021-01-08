@@ -726,17 +726,22 @@ class TestPrecipAccumulation:
 
     def test_mixed_phases(self, pr_series, tas_series):
         pr = np.zeros(100)
-        pr[5:15] = 1
+        pr[5:20] = 1
         pr = pr_series(pr)
 
         tas = np.ones(100) * 280
         tas[5:10] = 270
+        tas[10:15] = 268
         tas = tas_series(tas)
 
         outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="M")
+        outsn2 = xci.precip_accumulation(
+            pr, tas=tas, phase="solid", thresh="269 K", freq="M"
+        )
         outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="M")
 
-        np.testing.assert_array_equal(outsn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
 

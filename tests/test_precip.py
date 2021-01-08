@@ -104,6 +104,16 @@ class TestPrecipAccumulation:
         assert "liquid" in out_liq.long_name
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
+        # With a non-default threshold
+        out_sol = atmos.solid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+        out_liq = atmos.liquid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
 
 class TestWetDays:
     # TODO: replace by fixture

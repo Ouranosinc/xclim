@@ -3,6 +3,7 @@
 from inspect import _empty
 
 from xclim import indices
+from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D, Hourly
 from xclim.core.utils import wrapped_partial
 
@@ -32,9 +33,28 @@ class HrPr(Hourly):
     context = "hydro"
 
 
+class PrTasx(Daily2D):
+    """Indicator involving pr and one of tas, tasmin or tasmax."""
+
+    _nvar = 2
+    context = "hydro"
+
+    @staticmethod
+    def cfcheck(pr, tas):
+        cfchecks.check_valid(tas, "cell_methods", "*time: * within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(pr, "standard_name", "precipitation_flux")
+
+
 class PrTas(Daily2D):
     _nvar = 2
     context = "hydro"
+
+    @staticmethod
+    def cfcheck(pr, tas):
+        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(pr, "standard_name", "precipitation_flux")
 
 
 rain_on_frozen_ground_days = PrTas(
@@ -152,26 +172,26 @@ precip_accumulation = Pr(
     compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
 )
 
-liquid_precip_accumulation = PrTas(
+liquid_precip_accumulation = PrTasx(
     title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_liquid_precipitation_amount",
     long_name="Total liquid precipitation",
-    description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
+    description="{freq} total liquid precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(
         indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
     ),  # _empty is added to un-optionalize the argument.
 )
 
-solid_precip_accumulation = PrTas(
+solid_precip_accumulation = PrTasx(
     title="Accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_snowfall_amount",
     long_name="Total solid precipitation",
-    description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
+    description="{freq} total solid precipitation, estimated as precipitation when temperature < {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(
         indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"

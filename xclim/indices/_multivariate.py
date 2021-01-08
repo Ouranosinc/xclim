@@ -789,19 +789,20 @@ def precip_accumulation(
     r"""Accumulated total (liquid and/or solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
-    If the daily mean temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
-    When the mean temperature is under the provided threshold, precipitation is assumed to be snow, and liquid rain otherwise.
+    If a daily temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
+    When the temperature is under the provided threshold, precipitation is assumed to be snow, and liquid rain otherwise.
+    This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
     tas : xarray.DataArray, optional
-      (Mean) daily temperature [℃] or [K]
+      Mean, maximum or minimum daily temperature.
     phase : str, optional,
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
     thresh : str,
-      Threshold of `tas` under which the precipication is assumed to be liquid rain.
+      Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
       Resampling frequency as defined in
       http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling. Defaults to "YS"
@@ -820,11 +821,11 @@ def precip_accumulation(
 
        PR_{ij} = \sum_{i=a}^{b} PR_i
 
-    If `phase` is "liquid", only times where the daily mean temperature :math:`T_i` is above or equal to 0 °C are considered, inversely for "solid".
+    If `phase` is "liquid", only times where the daily temperature :math:`T_i` is above or equal to a threshold are considered, inversely for "solid".
 
     Examples
     --------
-    The following would compute for each grid cell of file `pr_day.nc` the total
+    The following would compute, for each grid cell of dataset, the total
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import precip_accumulation
