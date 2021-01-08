@@ -739,7 +739,7 @@ def first_snowfall(
     thresh : str
       Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency; Defaults to "AS-JUL".
 
     Returns
     -------
@@ -777,7 +777,7 @@ def last_snowfall(
     thresh : str
       Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency; Defaults to "AS-JUL".
 
     Returns
     -------
