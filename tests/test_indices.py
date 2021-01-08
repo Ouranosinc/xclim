@@ -1726,3 +1726,15 @@ def test_rain_approximation(pr_series, tas_series, method, exp):
     prlp = xci.rain_approximation(pr, tas=tas, thresh="5 degC", method=method)
 
     np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
+
+
+def test_first_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 166
+
+
+def test_last_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.last_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 196

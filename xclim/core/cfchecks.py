@@ -6,6 +6,7 @@ CF-Convention checking
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
 import fnmatch
+from typing import Sequence, Union
 
 from .options import cfcheck
 from .utils import ValidationError
@@ -14,12 +15,17 @@ from .utils import ValidationError
 
 
 @cfcheck
-def check_valid(var, key, expected):
-    r"""Check that a variable's attribute has the expected value. Warn user otherwise."""
+def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
+    r"""Check that a variable's attribute has on of the expected values. Warn user otherwise."""
     att = getattr(var, key, None)
     if att is None:
         raise ValidationError(f"Variable does not have a `{key}` attribute.")
-    if not fnmatch.fnmatch(att, expected):
+    if isinstance(expected, str):
+        expected = [expected]
+    for exp in expected:
+        if fnmatch.fnmatch(att, exp):
+            break
+    else:
         raise ValidationError(
             f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
         )

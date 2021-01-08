@@ -22,6 +22,8 @@ __all__ = [
     "solid_precip_accumulation",
     "drought_code",
     "fire_weather_indexes",
+    "last_snowfall",
+    "first_snowfall",
 ]
 
 
@@ -43,10 +45,14 @@ class PrTasx(Daily2D):
     def cfcheck(pr, tas):
         cfchecks.check_valid(tas, "cell_methods", "*time: * within days*")
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
-        cfchecks.check_valid(pr, "standard_name", "precipitation_flux")
+        cfchecks.check_valid(
+            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
+        )
 
 
 class PrTas(Daily2D):
+    """Indicator involving pr and one of tas, tasmin or tasmax."""
+
     _nvar = 2
     context = "hydro"
 
@@ -54,10 +60,20 @@ class PrTas(Daily2D):
     def cfcheck(pr, tas):
         cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
-        cfchecks.check_valid(pr, "standard_name", "precipitation_flux")
+        cfchecks.check_valid(
+            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
+        )
 
 
-rain_on_frozen_ground_days = PrTas(
+class Prsn(Daily):
+    context = "hydro"
+
+    @staticmethod
+    def cfcheck(prsn):
+        cfchecks.check_valid(prsn, "standard_name", "solid_precipitation_flux")
+
+
+rain_on_frozen_ground_days = PrTasx(
     identifier="rain_frzgr",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -240,4 +256,23 @@ fire_weather_indexes = Daily(
     units="",
     compute=indices.fire_weather_indexes,
     missing="skip",
+)
+
+
+last_snowfall = Prsn(
+    identifier="last_snowfall",
+    standard_name="day_of_year",
+    long_name="Date of last snowfall",
+    description="{freq} last day where the solid precipitation flux exceeded {thresh}",
+    units="",
+    compute=indices.last_snowfall,
+)
+
+first_snowfall = Prsn(
+    identifier="first_snowfall",
+    standard_name="day_of_year",
+    long_name="Date of first snowfall",
+    description="{freq} first day where the solid precipitation flux exceeded {thresh}",
+    units="",
+    compute=indices.first_snowfall,
 )
