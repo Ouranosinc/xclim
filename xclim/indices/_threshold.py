@@ -730,7 +730,7 @@ def first_snowfall(
 
     Returns the first day of a period where the solid precipitation exceeds a threshold.
 
-    WARNING: The default freq is valid for the northern hemisphere.
+    WARNING: The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------

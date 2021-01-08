@@ -737,7 +737,7 @@ def liquid_precip_ratio(
     r"""Ratio of rainfall to total precipitation.
 
     The ratio of total liquid precipitation over the total precipitation. If solid precipitation is not provided,
-    then it is approximated with pr, tas and thresh, using the `snowfall_approximation` indice with method 'binary'.
+    it is approximated with pr, tas and thresh, using the `snowfall_approximation` function with method 'binary'.
 
     Parameters
     ----------
@@ -794,7 +794,7 @@ def precip_accumulation(
     r"""Accumulated total (liquid and/or solid) precipitation.
 
     Resample the original daily mean precipitation flux and accumulate over each period.
-    If a daily temperature is provided, the phase keyword can be used to only sum precipitation of a certain phase.
+    If a daily temperature is provided, the `phase` keyword can be used to sum precipitation of a given phase only.
     When the temperature is under the provided threshold, precipitation is assumed to be snow, and liquid rain otherwise.
     This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
 

@@ -451,7 +451,7 @@ def snowfall_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily precipitation flux [kg m-2 s-1] or [mm].
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
     thresh : str,
@@ -465,7 +465,7 @@ def snowfall_approximation(
 
     - "binary" : When the given temperature is under a given threshold, precipitation
         is assumed to be solid. The method is agnostic to the type of temperature used
-        (mean, maximum or minimal).
+        (mean, maximum or minimum).
 
     """
     thresh = convert_units_to(thresh, tas)
@@ -492,7 +492,7 @@ def rain_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily precipitation flux [kg m-2 s-1] or [mm].
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
     thresh : str,
