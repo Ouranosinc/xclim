@@ -726,17 +726,22 @@ class TestPrecipAccumulation:
 
     def test_mixed_phases(self, pr_series, tas_series):
         pr = np.zeros(100)
-        pr[5:15] = 1
+        pr[5:20] = 1
         pr = pr_series(pr)
 
         tas = np.ones(100) * 280
         tas[5:10] = 270
+        tas[10:15] = 268
         tas = tas_series(tas)
 
         outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="M")
+        outsn2 = xci.precip_accumulation(
+            pr, tas=tas, phase="solid", thresh="269 K", freq="M"
+        )
         outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="M")
 
-        np.testing.assert_array_equal(outsn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
 
@@ -1701,3 +1706,35 @@ def test_degree_days_exceedance_date(tas_series):
         tas, thresh="2 degC", op="<", sum_thresh="150 K days", start_date="04-15"
     )
     assert out[0] == 256
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])])
+def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tasmax = tasmax_series(np.arange(10) + K2C)
+
+    prsn = xci.snowfall_approximation(pr, tas=tasmax, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 1, 1, 1, 1, 1])])
+def test_rain_approximation(pr_series, tas_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tas = tas_series(np.arange(10) + K2C)
+
+    prlp = xci.rain_approximation(pr, tas=tas, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
+
+
+def test_first_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 166
+
+
+def test_last_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.last_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 196

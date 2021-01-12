@@ -8,9 +8,13 @@ History
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
+* Added cfchecks for Pr+Tas-based indicators.
 
 New indicators
 ~~~~~~~~~~~~~~
+* `rain_approximation` and `snowfall_approximation` for computing `prlp` and `prsn` from `pr` and `tas` (or `tasmin` or `tasmax`) according to some threshold and method.
+* `solid_precip_accumulation` and `liquid_precip_accumulation` now accept a `thresh` parameter to control the binary snow/rain temperature threshold.
+* `first_snowfall` and `last_snowfall` to compute the date of first/last snowfall exceeding a threshold in a period.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,6 +26,7 @@ Bug fixes
 
 Internal changes
 ~~~~~~~~~~~~~~~~
+* `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
 
 
 0.22.0 (2020-12-07)

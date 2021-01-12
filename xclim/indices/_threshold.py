@@ -30,6 +30,8 @@ __all__ = [
     "frost_season_length",
     "first_day_below",
     "first_day_above",
+    "first_snowfall",
+    "last_snowfall",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -713,6 +715,82 @@ def first_day_above(
         rl.first_run_after_date,
         window=window,
         date=after_date,
+        dim="time",
+        coord="dayofyear",
+    )
+
+
+@declare_units("", prsn="[precipitation]", thresh="[precipitation]")
+def first_snowfall(
+    prsn: xarray.DataArray,
+    thresh: str = "0.5 mm/day",
+    freq: str = "AS-JUL",
+):
+    r"""First day with solid precipitation above a threshold.
+
+    Returns the first day of a period where the solid precipitation exceeds a threshold.
+
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+      Solid precipitation flux.
+    thresh : str
+      Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
+    freq : str
+      Resampling frequency; Defaults to "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      First day of the year when the solid precipitation  is superior to a threshold,
+      If there is no such day, return np.nan.
+    """
+    thresh = convert_units_to(thresh, prsn)
+    cond = prsn >= thresh
+
+    return cond.resample(time=freq).map(
+        rl.first_run,
+        window=1,
+        dim="time",
+        coord="dayofyear",
+    )
+
+
+@declare_units("", prsn="[precipitation]", thresh="[precipitation]")
+def last_snowfall(
+    prsn: xarray.DataArray,
+    thresh: str = "0.5 mm/day",
+    freq: str = "AS-JUL",
+):
+    r"""Last day with solid precipitation above a threshold.
+
+    Returns the last day of a period where the solid precipitation exceeds a threshold.
+
+    WARNING: The default freq is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+      Solid precipitation flux.
+    thresh : str
+      Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
+    freq : str
+      Resampling frequency; Defaults to "AS-JUL".
+
+    Returns
+    -------
+    xarray.DataArray
+      Last day of the year when the solid precipitation is superior to a threshold,
+      If there is no such day, return np.nan.
+    """
+    thresh = convert_units_to(thresh, prsn)
+    cond = prsn >= thresh
+
+    return cond.resample(time=freq).map(
+        rl.last_run,
+        window=1,
         dim="time",
         coord="dayofyear",
     )
