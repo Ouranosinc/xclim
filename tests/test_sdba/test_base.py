@@ -50,7 +50,7 @@ def test_grouper_get_index(tas_series, group, interp, val90):
 
 @pytest.mark.parametrize(
     "group,n",
-    [("time", 1), ("time.month", 12), ("time.week", 52), ("mytime.dayofyear", 366)],
+    [("time", 1), ("time.month", 12), ("time.week", 52)],
 )
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_grouper_apply(tas_series, use_dask, group, n):

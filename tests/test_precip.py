@@ -12,45 +12,20 @@ K2C = 273.15
 
 
 class TestRainOnFrozenGround:
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    @pytest.mark.parametrize("chunks", [{"time": 366}, None])
+    def test_3d_data_with_nans(self, chunks):
+        ds = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-main-testdataset"
+        )
 
-    @pytest.mark.parametrize("prunits,prfac", [("kg m-2 s-1", 1), ("mm/day", 86400)])
-    @pytest.mark.parametrize(
-        "tasunits,tasoffset,chunks", [(None, None, {"time": 73.0}), ("C", K2C, None)]
-    )
-    def test_3d_data_with_nans(self, prunits, prfac, tasunits, tasoffset, chunks):
-        pr = open_dataset(self.nc_pr).pr
-        pr2 = pr.copy()
-        pr2.values *= prfac
-        pr2.attrs["units"] = prunits
+        pr = ds.pr.copy()
+        pr.values[1, 10] = np.nan
 
-        tasmax = open_dataset(self.nc_tasmax, chunks=chunks).tasmax
-        tasmin = open_dataset(self.nc_tasmin, chunks=chunks).tasmin
-        tas = 0.5 * (tasmax + tasmin)
-        tas.attrs = tasmax.attrs
-        tas2 = tas.copy()
         if chunks:
-            tas2 = tas2.chunk(chunks)
-        if tasunits:
-            tas2.values -= tasoffset
-            tas2.attrs["units"] = tasunits
+            ds = ds.chunk(chunks)
 
-        pr2.values[10, 1, 0] = np.nan
-        pr.values[10, 1, 0] = np.nan
-
-        outref = atmos.rain_on_frozen_ground_days(pr, tas, freq="MS")
-        out21 = atmos.rain_on_frozen_ground_days(pr2, tas, freq="MS")
-        out22 = atmos.rain_on_frozen_ground_days(pr2, tas2, freq="MS")
-        out12 = atmos.rain_on_frozen_ground_days(pr, tas2, freq="MS")
-
-        np.testing.assert_array_equal(outref, out21)
-        np.testing.assert_array_equal(outref, out22)
-        np.testing.assert_array_equal(outref, out12)
-
-        assert np.isnan(out22.values[0, 1, 0])
-        assert np.isnan(out22.values[0, -1, -1])
+        out = atmos.rain_on_frozen_ground_days(pr, ds.tas, freq="YS")
+        np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
 class TestPrecipAccumulation:

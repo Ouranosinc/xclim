@@ -296,19 +296,6 @@ class TestEnsembleReduction:
         assert ids == [4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 7
 
-        sample_weights = np.ones(ds.data.shape[0])
-        # try zero weights
-        sample_weights[[6, 18, 22]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            sample_weights=sample_weights,
-        )
-        assert ids == [4, 5, 7, 10, 12, 13]
-        assert len(ids) == 6
-
     def test_kmeans_variweights(self):
         pytest.importorskip("sklearn", minversion="0.22")
         ds = open_dataset(self.nc_file)
@@ -327,19 +314,7 @@ class TestEnsembleReduction:
         assert ids == [1, 3, 8, 10, 13, 14, 16, 19, 20]
         assert len(ids) == 9
 
-        # using RSQ optimize
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            variable_weights=var_weights,
-        )
-
-        assert ids == [2, 4, 8, 13, 14, 22]
-        assert len(ids) == 6
-
-        # try zero weights
+        # using RSQ optimize and try zero weights
         var_weights = np.ones(ds.data.shape[1])
         var_weights[[1, 4]] = 0
 
