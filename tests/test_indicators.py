@@ -389,9 +389,7 @@ def test_update_history():
 
 
 def test_input_dataset():
-    ds = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-main-testdataset"
-    )
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
     out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)

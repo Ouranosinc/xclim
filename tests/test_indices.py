@@ -831,9 +831,7 @@ class TestTGXN10p:
 
     def test_doy_interpolation(self):
         # Just a smoke test
-        with open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-main-testdataset"
-        ) as ds:
+        with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
             t10 = percentile_doy(ds.tasmin, per=0.1)
             xci.tn10p(ds.tasmin, t10, freq="MS")
 
@@ -1458,9 +1456,7 @@ class TestTG:
         [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
     )
     def test_simple(self, ind, exp):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-main-testdataset"
-        )
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         out = ind(ds.tas.sel(location="Victoria"))
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 

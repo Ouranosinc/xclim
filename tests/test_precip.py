@@ -14,9 +14,7 @@ K2C = 273.15
 class TestRainOnFrozenGround:
     @pytest.mark.parametrize("chunks", [{"time": 366}, None])
     def test_3d_data_with_nans(self, chunks):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-main-testdataset"
-        )
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         pr = ds.pr.copy()
         pr.values[1, 10] = np.nan
