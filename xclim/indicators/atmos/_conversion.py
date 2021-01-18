@@ -12,6 +12,8 @@ __all__ = [
     "relative_humidity_from_dewpoint",
     "relative_humidity",
     "specific_humidity",
+    "snowfall_approximation",
+    "rain_approximation",
 ]
 
 
@@ -149,4 +151,31 @@ specific_humidity = Converter(
         else ""
     ),
     compute=wrapped_partial(indices.specific_humidity, invalid_values="mask"),
+)
+
+
+snowfall_approximation = Converter(
+    identifier="prsn",
+    _nvar=2,
+    units="kg m-2 s-1",
+    standard_name="solid_precipitation_flux",
+    long_name="Solid precipitation",
+    description=(
+        "Solid precipitation estimated from total precipitation and temperature"
+        " with method {method} and threshold temperature {thresh}."
+    ),
+    compute=indices.snowfall_approximation,
+)
+
+rain_approximation = Converter(
+    identifier="prlp",
+    _nvar=2,
+    units="kg m-2 s-1",
+    standard_name="precipitation_flux",
+    long_name="Liquid precipitation",
+    description=(
+        "Liquid precipitation estimated from total precipitation and temperature"
+        " with method {method} and threshold temperature {thresh}."
+    ),
+    compute=indices.rain_approximation,
 )

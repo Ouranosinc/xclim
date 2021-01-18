@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import atmos
+from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -78,6 +78,16 @@ class TestPrecipAccumulation:
         assert "solid" in out_sol.long_name
         assert "liquid" in out_liq.long_name
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
+
+        # With a non-default threshold
+        out_sol = atmos.solid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+        out_liq = atmos.liquid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
 
 class TestWetDays:
@@ -321,3 +331,42 @@ class TestMaxConsecDryDays:
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
+
+
+class TestSnowfallDate:
+    tasmin_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+
+    def get_snowfall(self):
+        dnr = xr.merge((open_dataset(self.pr_file), open_dataset(self.tasmin_file)))
+        return atmos.snowfall_approximation(
+            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
+        )
+
+    def test_first_snowfall(self):
+        with set_options(check_missing="skip"):
+            fs = atmos.first_snowfall(prsn=self.get_snowfall(), thresh="0.5 mm/day")
+
+        np.testing.assert_array_equal(
+            fs[:, [0, 45, 82], [10, 105, 155]],
+            np.array(
+                [
+                    [[1, 1, 1], [1, 1, 1], [11, np.nan, np.nan]],
+                    [[254, 256, 277], [274, 292, 275], [300, np.nan, np.nan]],
+                ]
+            ),
+        )
+
+    def test_last_snowfall(self):
+        with set_options(check_missing="skip"):
+            ls = atmos.last_snowfall(prsn=self.get_snowfall(), thresh="0.5 mm/day")
+
+        np.testing.assert_array_equal(
+            ls[:, [0, 45, 82], [10, 105, 155]],
+            np.array(
+                [
+                    [[155, 151, 129], [127, 157, 110], [106, np.nan, np.nan]],
+                    [[365, 363, 363], [365.0, 364, 364], [362, np.nan, np.nan]],
+                ]
+            ),
+        )
