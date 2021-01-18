@@ -27,6 +27,7 @@ Bug fixes
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
+* Clean up in the tests to speed up testing. Addition of a marker to exclude slow tests when needed.
 
 
 0.22.0 (2020-12-07)
