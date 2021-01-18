@@ -48,6 +48,7 @@ def test_grouper_get_index(tas_series, group, interp, val90):
     assert indx[90] == val90
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "group,n",
     [("time", 1), ("time.month", 12), ("time.week", 52)],

@@ -14,6 +14,7 @@ from xclim.sdba.loess import (
 from xclim.testing import open_dataset
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "d,f,w,n,exp",
     [
@@ -34,6 +35,7 @@ def test_loess_nb(d, f, w, n, exp):
     assert np.isclose(ys[-1], exp[1])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_loess_smoothing(use_dask):
     tas = open_dataset(

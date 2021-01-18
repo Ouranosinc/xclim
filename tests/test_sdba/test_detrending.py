@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from xclim.sdba.detrending import LoessDetrend, PolyDetrend
 
@@ -18,6 +19,7 @@ def test_poly_detrend(series):
     np.testing.assert_array_almost_equal(xt, x)
 
 
+@pytest.mark.slow
 def test_loess_detrend(series):
     x = series(np.arange(12 * 365.25), "tas")
     det = LoessDetrend(group="time", d=0, niter=1, f=0.2)

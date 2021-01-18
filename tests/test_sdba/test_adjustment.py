@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import xarray as xr
 from scipy.stats import norm, uniform
 
 from xclim.sdba.adjustment import (
@@ -48,6 +47,7 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["xclim_history"]
 
 
+@pytest.mark.slow
 class TestScaling:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_time(self, kind, name, series):
@@ -89,6 +89,7 @@ class TestScaling:
         np.testing.assert_array_almost_equal(p, ref)
 
 
+@pytest.mark.slow
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
@@ -208,6 +209,7 @@ class TestDQM:
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
 
+@pytest.mark.slow
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
@@ -328,6 +330,7 @@ class TestQDM:
         np.testing.assert_almost_equal(bc_sim.std(), 16.7, 0)
 
 
+@pytest.mark.slow
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):

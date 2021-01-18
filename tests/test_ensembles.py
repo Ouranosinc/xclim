@@ -210,6 +210,7 @@ class TestEnsembleStats:
         assert "Computation of statistics on" in out1.attrs["xclim_history"]
 
 
+@pytest.mark.slow
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
