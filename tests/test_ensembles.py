@@ -349,20 +349,6 @@ class TestEnsembleReduction:
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
 
-        model_weights = np.ones(ds.data.shape[0])
-        model_weights[[0, 3, 4, 6, 7, 10, 11, 12, 13]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"n_clusters": 9},
-            random_state=42,
-            make_graph=False,
-            model_weights=model_weights,
-        )
-        for i in np.where(model_weights == 0)[0]:
-            # as long as the cluster has more than one member the models w/ weight==0 should not be present
-            if np.sum(cluster == cluster[i]) > 1:
-                assert i not in ids
-
     @pytest.mark.skipif(
         "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
     )
