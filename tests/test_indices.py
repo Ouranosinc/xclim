@@ -830,23 +830,10 @@ class TestTGXN10p:
         assert out[5] == 5
 
     def test_doy_interpolation(self):
-        pytest.importorskip("xarray", "0.11.4")
-
         # Just a smoke test
-        fn_clim = os.path.join(
-            "CanESM2_365day",
-            "tasmin_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-        )
-        fn = os.path.join(
-            "HadGEM2-CC_360day",
-            "tasmin_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-        )
-
-        with open_dataset(fn_clim) as ds:
-            t10 = percentile_doy(ds.tasmin.isel(lat=0, lon=0), per=0.1)
-
-        with open_dataset(fn) as ds:
-            xci.tn10p(ds.tasmin.isel(lat=0, lon=0), t10, freq="MS")
+        with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
+            t10 = percentile_doy(ds.tasmin, per=0.1)
+            xci.tn10p(ds.tasmin, t10, freq="MS")
 
 
 class TestTGXN90p:
@@ -1464,30 +1451,16 @@ class TestWinterRainRatio:
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def cmip3_day_tas():
-        # xr.set_options(enable_cftimeindex=False)
-        ds = open_dataset(
-            os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
-        )
-        yield ds.tas
-        ds.close()
-
-    def test_cmip3_tgmean(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_mean(cmip3_day_tas)
-
-    def test_cmip3_tgmin(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_min(cmip3_day_tas)
-
-    def test_cmip3_tgmax(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_max(cmip3_day_tas)
+    @pytest.mark.parametrize(
+        "ind,exp",
+        [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
+    )
+    def test_simple(self, ind, exp):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        out = ind(ds.tas.sel(location="Victoria"))
+        np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
         from xclim import icclim
 
         ind = xci.tg_mean(cmip3_day_tas)

@@ -14,12 +14,13 @@ from xclim.sdba.loess import (
 from xclim.testing import open_dataset
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "d,f,w,n,exp",
     [
         (0, 0.2, _tricube_weighting, 1, [-0.0698081, -0.3623449]),
-        (0, 0.2, _tricube_weighting, 2, [-0.0679962, -0.3426567]),
-        (1, 0.2, _tricube_weighting, 1, [-0.0698081, -0.8652001]),
+        # (0, 0.2, _tricube_weighting, 2, [-0.0679962, -0.3426567]),
+        # (1, 0.2, _tricube_weighting, 1, [-0.0698081, -0.8652001]),
         (1, 0.2, _tricube_weighting, 4, [-0.0691396, -0.9155697]),
         (1, 0.4, _gaussian_weighting, 2, [0.00287228, -0.4469015]),
     ],
@@ -34,6 +35,7 @@ def test_loess_nb(d, f, w, n, exp):
     assert np.isclose(ys[-1], exp[1])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_loess_smoothing(use_dask):
     tas = open_dataset(
