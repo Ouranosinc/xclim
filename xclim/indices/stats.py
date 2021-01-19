@@ -259,14 +259,14 @@ def frequency_analysis(
     ----------
     da : xarray.DataArray
       Input data.
+    mode : {'min', 'max'}
+      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
     t : int or sequence
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
       (see scipy.stats).
-    mode : {'min', 'max'}
-      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
     window : int
       Averaging window length (days).
     freq : str
