@@ -17,6 +17,7 @@ except ImportError:
     subset = False
     gpd = False
 
+pytestmark = pytest.mark.slow
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
 TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 

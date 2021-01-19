@@ -210,6 +210,7 @@ class TestEnsembleStats:
         assert "Computation of statistics on" in out1.attrs["xclim_history"]
 
 
+@pytest.mark.slow
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
@@ -296,19 +297,6 @@ class TestEnsembleReduction:
         assert ids == [4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 7
 
-        sample_weights = np.ones(ds.data.shape[0])
-        # try zero weights
-        sample_weights[[6, 18, 22]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            sample_weights=sample_weights,
-        )
-        assert ids == [4, 5, 7, 10, 12, 13]
-        assert len(ids) == 6
-
     def test_kmeans_variweights(self):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
@@ -327,19 +315,7 @@ class TestEnsembleReduction:
         assert ids == [1, 3, 8, 10, 13, 14, 16, 19, 20]
         assert len(ids) == 9
 
-        # using RSQ optimize
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            variable_weights=var_weights,
-        )
-
-        assert ids == [2, 4, 8, 13, 14, 22]
-        assert len(ids) == 6
-
-        # try zero weights
+        # using RSQ optimize and try zero weights
         var_weights = np.ones(ds.data.shape[1])
         var_weights[[1, 4]] = 0
 
@@ -369,20 +345,6 @@ class TestEnsembleReduction:
             model_weights=model_weights,
         )
 
-        for i in np.where(model_weights == 0)[0]:
-            # as long as the cluster has more than one member the models w/ weight==0 should not be present
-            if np.sum(cluster == cluster[i]) > 1:
-                assert i not in ids
-
-        model_weights = np.ones(ds.data.shape[0])
-        model_weights[[0, 3, 4, 6, 7, 10, 11, 12, 13]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"n_clusters": 9},
-            random_state=42,
-            make_graph=False,
-            model_weights=model_weights,
-        )
         for i in np.where(model_weights == 0)[0]:
             # as long as the cluster has more than one member the models w/ weight==0 should not be present
             if np.sum(cluster == cluster[i]) > 1:
