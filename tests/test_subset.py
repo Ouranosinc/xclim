@@ -662,8 +662,7 @@ class TestSubsetShape:
                     sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
                 )
 
-    @pytest.mark.parametrize("vectorize", [True, False])
-    def test_wraps(self, tmp_netcdf_filename, vectorize):
+    def test_wraps(self, tmp_netcdf_filename):
         ds = open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
@@ -680,7 +679,7 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
 
         poly = gpd.read_file(self.meridian_multi_geojson)
-        subtas = subset.subset_shape(ds.tas, poly, vectorize=vectorize)
+        subtas = subset.subset_shape(ds.tas, poly)
         np.testing.assert_array_almost_equal(
             float(np.mean(subtas.isel(time=0))), 281.091553
         )
@@ -692,14 +691,13 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
-            subset.subset_shape(ds, self.meridian_multi_geojson, vectorize=vectorize)
+            subset.subset_shape(ds, self.meridian_multi_geojson)
 
-    @pytest.mark.parametrize("vectorize", [True, False])
-    def test_no_wraps(self, tmp_netcdf_filename, vectorize):
+    def test_no_wraps(self, tmp_netcdf_filename):
         ds = open_dataset(self.nc_file)
 
         with pytest.warns(None) as record:
-            sub = subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
+            sub = subset.subset_shape(ds, self.poslons_geojson)
 
         self.compare_vals(ds, sub, "tas")
 
@@ -724,7 +722,7 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
-            subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
+            subset.subset_shape(ds, self.poslons_geojson)
 
     def test_all_neglons(self):
         ds = open_dataset(self.nc_file_neglons)
