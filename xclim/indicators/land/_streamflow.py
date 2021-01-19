@@ -58,7 +58,6 @@ base_flow_index = Streamflow(
     compute=base_flow_index,
 )
 
-
 freq_analysis = FA(
     identifier="freq_analysis",
     var_name="q{window}{mode}{indexer}",
