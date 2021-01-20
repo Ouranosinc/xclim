@@ -9,6 +9,8 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
 * Added cfchecks for Pr+Tas-based indicators.
+* Refactored test suite to now be available as part of the standard library installation (`xclim.testing.tests`).
+* Running `pytest` with `xdoctest` now requires the `rootdir` to point at `tests` location (`pytest --rootdir xclim/testing/tests/ --xdoctest xclim`).
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -18,17 +20,19 @@ New indicators
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* New `kind` entry in the `parameters` property of indicators, differenciating between [optional] variables and parameters.
+* New `kind` entry in the `parameters` property of indicators, differentiating between [optional] variables and parameters.
 
 Bug fixes
 ~~~~~~~~~
-* Fixed a bug in `indices.run_length.lazy_indexing` that occured with 1D coords and 0D indexes when using the dask backend.
+* Fixed a bug in `indices.run_length.lazy_indexing` that occurred with 1D coords and 0D indexes when using the dask backend.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
-* Clean up in the tests to speed up testing. Addition of a marker to exclude slow tests when needed.
-* Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master againt python 3.7.
+* Clean up in the tests to speed up testing. Addition of a marker to include "slow" tests when desired (`-m slow`).
+* Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master against python 3.7.
+* Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
+
 
 0.22.0 (2020-12-07)
 -------------------
