@@ -3,6 +3,7 @@
 from inspect import _empty
 
 from xclim import indices
+from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D, Hourly
 from xclim.core.utils import wrapped_partial
 
@@ -21,6 +22,8 @@ __all__ = [
     "solid_precip_accumulation",
     "drought_code",
     "fire_weather_indexes",
+    "last_snowfall",
+    "first_snowfall",
 ]
 
 
@@ -32,12 +35,45 @@ class HrPr(Hourly):
     context = "hydro"
 
 
-class PrTas(Daily2D):
+class PrTasx(Daily2D):
+    """Indicator involving pr and one of tas, tasmin or tasmax."""
+
     _nvar = 2
     context = "hydro"
 
+    @staticmethod
+    def cfcheck(pr, tas):
+        cfchecks.check_valid(tas, "cell_methods", "*time: * within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(
+            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
+        )
 
-rain_on_frozen_ground_days = PrTas(
+
+class PrTas(Daily2D):
+    """Indicator involving pr and one of tas, tasmin or tasmax."""
+
+    _nvar = 2
+    context = "hydro"
+
+    @staticmethod
+    def cfcheck(pr, tas):
+        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+        cfchecks.check_valid(
+            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
+        )
+
+
+class Prsn(Daily):
+    context = "hydro"
+
+    @staticmethod
+    def cfcheck(prsn):
+        cfchecks.check_valid(prsn, "standard_name", "solid_precipitation_flux")
+
+
+rain_on_frozen_ground_days = PrTasx(
     identifier="rain_frzgr",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -152,26 +188,26 @@ precip_accumulation = Pr(
     compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
 )
 
-liquid_precip_accumulation = Pr(
+liquid_precip_accumulation = PrTasx(
     title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_liquid_precipitation_amount",
     long_name="Total liquid precipitation",
-    description="{freq} total liquid precipitation, estimated as precipitation when daily average temperature >= 0°C",
+    description="{freq} total liquid precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(
         indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
     ),  # _empty is added to un-optionalize the argument.
 )
 
-solid_precip_accumulation = Pr(
+solid_precip_accumulation = PrTasx(
     title="Accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
     standard_name="lwe_thickness_of_snowfall_amount",
     long_name="Total solid precipitation",
-    description="{freq} total solid precipitation, estimated as precipitation when daily average temperature < 0°C",
+    description="{freq} total solid precipitation, estimated as precipitation when temperature < {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(
         indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"
@@ -220,4 +256,23 @@ fire_weather_indexes = Daily(
     units="",
     compute=indices.fire_weather_indexes,
     missing="skip",
+)
+
+
+last_snowfall = Prsn(
+    identifier="last_snowfall",
+    standard_name="day_of_year",
+    long_name="Date of last snowfall",
+    description="{freq} last day where the solid precipitation flux exceeded {thresh}",
+    units="",
+    compute=indices.last_snowfall,
+)
+
+first_snowfall = Prsn(
+    identifier="first_snowfall",
+    standard_name="day_of_year",
+    long_name="Date of first snowfall",
+    description="{freq} first day where the solid precipitation flux exceeded {thresh}",
+    units="",
+    compute=indices.first_snowfall,
 )

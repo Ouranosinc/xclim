@@ -726,17 +726,22 @@ class TestPrecipAccumulation:
 
     def test_mixed_phases(self, pr_series, tas_series):
         pr = np.zeros(100)
-        pr[5:15] = 1
+        pr[5:20] = 1
         pr = pr_series(pr)
 
         tas = np.ones(100) * 280
         tas[5:10] = 270
+        tas[10:15] = 268
         tas = tas_series(tas)
 
         outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="M")
+        outsn2 = xci.precip_accumulation(
+            pr, tas=tas, phase="solid", thresh="269 K", freq="M"
+        )
         outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="M")
 
-        np.testing.assert_array_equal(outsn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
 
@@ -825,23 +830,10 @@ class TestTGXN10p:
         assert out[5] == 5
 
     def test_doy_interpolation(self):
-        pytest.importorskip("xarray", "0.11.4")
-
         # Just a smoke test
-        fn_clim = os.path.join(
-            "CanESM2_365day",
-            "tasmin_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-        )
-        fn = os.path.join(
-            "HadGEM2-CC_360day",
-            "tasmin_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-        )
-
-        with open_dataset(fn_clim) as ds:
-            t10 = percentile_doy(ds.tasmin.isel(lat=0, lon=0), per=0.1)
-
-        with open_dataset(fn) as ds:
-            xci.tn10p(ds.tasmin.isel(lat=0, lon=0), t10, freq="MS")
+        with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
+            t10 = percentile_doy(ds.tasmin, per=0.1)
+            xci.tn10p(ds.tasmin, t10, freq="MS")
 
 
 class TestTGXN90p:
@@ -1459,30 +1451,16 @@ class TestWinterRainRatio:
 
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
-    @staticmethod
-    @pytest.fixture(scope="session")
-    def cmip3_day_tas():
-        # xr.set_options(enable_cftimeindex=False)
-        ds = open_dataset(
-            os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
-        )
-        yield ds.tas
-        ds.close()
-
-    def test_cmip3_tgmean(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_mean(cmip3_day_tas)
-
-    def test_cmip3_tgmin(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_min(cmip3_day_tas)
-
-    def test_cmip3_tgmax(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
-        xci.tg_max(cmip3_day_tas)
+    @pytest.mark.parametrize(
+        "ind,exp",
+        [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
+    )
+    def test_simple(self, ind, exp):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        out = ind(ds.tas.sel(location="Victoria"))
+        np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        pytest.importorskip("xarray", "0.11.4")
         from xclim import icclim
 
         ind = xci.tg_mean(cmip3_day_tas)
@@ -1701,3 +1679,35 @@ def test_degree_days_exceedance_date(tas_series):
         tas, thresh="2 degC", op="<", sum_thresh="150 K days", start_date="04-15"
     )
     assert out[0] == 256
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])])
+def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tasmax = tasmax_series(np.arange(10) + K2C)
+
+    prsn = xci.snowfall_approximation(pr, tas=tasmax, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
+
+
+@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 1, 1, 1, 1, 1])])
+def test_rain_approximation(pr_series, tas_series, method, exp):
+    pr = pr_series(np.ones(10))
+    tas = tas_series(np.arange(10) + K2C)
+
+    prlp = xci.rain_approximation(pr, tas=tas, thresh="5 degC", method=method)
+
+    np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
+
+
+def test_first_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 166
+
+
+def test_last_snowfall(prsn_series):
+    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="01-01-2000")
+    out = xci.last_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+    assert out[0] == 196

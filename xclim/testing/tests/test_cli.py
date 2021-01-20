@@ -55,7 +55,7 @@ def test_indicator_help(indicator, indname):
     runner = CliRunner()
     results = runner.invoke(cli, [indname, "--help"])
 
-    for name in indicator._sig.parameters.keys():
+    for name in indicator.parameters.keys():
         assert name in results.output
 
 

@@ -165,7 +165,10 @@ Tips
 
 To run a subset of tests::
 
-$ pytest tests.test_xclim
+# For running only a test file:
+$ pytest tests/test_xclim.py
+# or to skip all slow tests:
+$ pytest -m "not slow"
 
 To run all conventions tests at once::
 

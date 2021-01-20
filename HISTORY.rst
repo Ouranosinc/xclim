@@ -8,12 +8,17 @@ History
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
+* Added cfchecks for Pr+Tas-based indicators.
 
 New indicators
 ~~~~~~~~~~~~~~
+* `rain_approximation` and `snowfall_approximation` for computing `prlp` and `prsn` from `pr` and `tas` (or `tasmin` or `tasmax`) according to some threshold and method.
+* `solid_precip_accumulation` and `liquid_precip_accumulation` now accept a `thresh` parameter to control the binary snow/rain temperature threshold.
+* `first_snowfall` and `last_snowfall` to compute the date of first/last snowfall exceeding a threshold in a period.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `kind` entry in the `parameters` property of indicators, differenciating between [optional] variables and parameters.
 
 Bug fixes
 ~~~~~~~~~
@@ -21,7 +26,9 @@ Bug fixes
 
 Internal changes
 ~~~~~~~~~~~~~~~~
-
+* `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
+* Clean up in the tests to speed up testing. Addition of a marker to exclude slow tests when needed.
+* Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master againt python 3.7.
 
 0.22.0 (2020-12-07)
 -------------------
