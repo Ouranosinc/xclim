@@ -6,10 +6,6 @@ import xarray as xr
 
 from xclim.testing import open_dataset
 
-# class TestSubsetImport:
-#     subset = pytest.importorskip('clisops.core.subset', reason="`clisops` subset utilities are not installed.")
-#     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
-
 try:
     import clisops.core.subset as subset
     import geopandas as gpd
@@ -19,7 +15,7 @@ except ImportError:
 
 pytestmark = pytest.mark.slow
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+TESTS_DATA = os.path.join(TESTS_HOME, "data")
 
 
 class TestSubsetRaises:
@@ -88,7 +84,7 @@ class TestSubsetTime:
     def test_warnings(self):
         da = open_dataset(self.nc_poslons).tas
 
-        with pytest.raises(ValueError) as record:
+        with pytest.raises(ValueError):
             subset.subset_time(da, start_date="2059", end_date="2050")
 
         with pytest.raises(TypeError):
@@ -97,8 +93,8 @@ class TestSubsetTime:
         with pytest.warns(None) as record:
             subset.subset_time(
                 da,
-                start_date=2050,
-                end_date=2055,
+                start_date=2050,  # noqa
+                end_date=2055,  # noqa
             )
         assert (
             'start_date and end_date require dates in (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
@@ -657,7 +653,6 @@ class TestSubsetShape:
             else:
                 lat1 = sub.lat.isel(lat=i[0])
                 lon1 = sub.lon.isel(lon=i[1])
-                # print(lon1.values, lat1.values)
                 np.testing.assert_array_equal(
                     sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
                 )
