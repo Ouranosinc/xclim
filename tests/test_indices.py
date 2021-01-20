@@ -1676,7 +1676,7 @@ def test_degree_days_exceedance_date(tas_series):
     assert out[0] == 151
 
     out = xci.degree_days_exceedance_date(
-        tas, thresh="2 degC", op="<", sum_thresh="150 K days", start_date="04-15"
+        tas, thresh="2 degC", op="<", sum_thresh="150 K days", after_date="04-15"
     )
     assert out[0] == 256
 

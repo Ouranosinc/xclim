@@ -1210,7 +1210,7 @@ def test_degree_days_exceedance_date():
             thresh="4 degC",
             op=">",
             sum_thresh="1500 K days",
-            start_date="07-02",
+            after_date="07-02",
             freq="YS",
         )
         np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
