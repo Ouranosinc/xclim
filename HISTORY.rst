@@ -8,6 +8,7 @@ History
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
+* In `degree_days_exceedance_date` : renamed argument `start_date` to `after_date`.
 * Added cfchecks for Pr+Tas-based indicators.
 * Refactored test suite to now be available as part of the standard library installation (`xclim.testing.tests`).
 * Running `pytest` with `xdoctest` now requires the `rootdir` to point at `tests` location (`pytest --rootdir xclim/testing/tests/ --xdoctest xclim`).

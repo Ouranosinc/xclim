@@ -1453,7 +1453,7 @@ def degree_days_exceedance_date(
     thresh: str,
     sum_thresh: str,
     op: str = ">",
-    start_date: str = None,
+    after_date: str = None,
     freq: str = "YS",
 ):
     r"""Degree days exceedance date.
@@ -1472,7 +1472,7 @@ def degree_days_exceedance_date(
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
       If equivalent to '>', degree days are computed as `tas - thresh` and if
       equivalent to '<', they are computed as `thresh - tas`.
-    start_date: str, optional
+    after_date: str, optional
       Date at which to start the cumulative sum. In "mm-dd" format, defaults to the
       start of the sampling period.
     freq : str
@@ -1509,7 +1509,7 @@ def degree_days_exceedance_date(
         c = tas - thresh
 
     def _exceedance_date(grp):
-        strt_idx = rl.index_of_date(grp.time, start_date, max_idxs=1, default=0)
+        strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
         if (
             strt_idx.size == 0
         ):  # The date is not within the group. Happens at boundaries.
