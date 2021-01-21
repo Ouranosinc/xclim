@@ -691,12 +691,18 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
+    def default_freq(self, **indexer):
+        """Return default frequency."""
+        if self.freq in ["D", "H"]:
+            return default_freq(**indexer)
+        return None
+
     def mask(self, *args, **kwds):
         """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") if "freq" in kwds else default_freq(**indexer)
+        freq = kwds.get("freq") if "freq" in kwds else self.default_freq(**indexer)
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 

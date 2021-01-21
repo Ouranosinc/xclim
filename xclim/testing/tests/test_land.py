@@ -75,6 +75,11 @@ class TestFit:
         out = land.fit(q, dist="norm")
         assert np.isnan(out.values[0])
 
+    def test_ndim(self, ndq_series):
+        out = land.fit(ndq_series, dist="norm")
+        assert out.shape == (2, 2, 3)
+        np.testing.assert_array_equal(out.isnull(), False)
+
 
 def test_qdoy_max(ndq_series, q_series):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")

@@ -52,6 +52,7 @@ class FA(Streamflow):
 
 # Disable the daily checks because the inputs are period extremas.
 class Fit(Streamflow):
+    freq = None
     missing = "at_least_n"
     missing_options = {"n": 20}
 
