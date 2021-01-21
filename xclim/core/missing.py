@@ -172,7 +172,7 @@ class MissingBase:
 
     @staticmethod
     def validate(**kwargs):
-        """Return whether or not arguments are valid."""
+        """Return whether or not options arguments are valid."""
         return True
 
     def __call__(self, **kwargs):
@@ -357,6 +357,11 @@ class AtLeastNValid(MissingBase):
     out : DataArray
       A boolean array set to True if period has missing values.
     """
+
+    def __init__(self, da, freq, src_timestep, **indexer):
+        # No need to compute count, so no check required on `src_timestep`.
+        self.null = self.is_null(da, freq, **indexer)
+        self.count = None  # Not needed
 
     def is_missing(self, null, count, n: int = 20):
         """Check for missing results after a reduction operation.
