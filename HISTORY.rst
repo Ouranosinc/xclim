@@ -26,6 +26,8 @@ New features and enhancements
 Bug fixes
 ~~~~~~~~~
 * Fixed a bug in `indices.run_length.lazy_indexing` that occurred with 1D coords and 0D indexes when using the dask backend.
+* Fixed a bug with default frequency handling affecting `fit` indicator.
+* Set missing method to 'skip' for `freq_analysis` indicator.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -33,6 +35,7 @@ Internal changes
 * Clean up in the tests to speed up testing. Addition of a marker to include "slow" tests when desired (`-m slow`).
 * Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master against python 3.7.
 * Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
+* Indicator class now has a `default_freq` method.
 
 
 0.22.0 (2020-12-07)
