@@ -293,7 +293,7 @@ def _ens_align_datasets(
     -------
     List[xr.Dataset]
     """
-    xr_kwargs.setdefault("chunks", {"time": 10})
+    xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
     ds_all = []
