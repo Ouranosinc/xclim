@@ -12,6 +12,7 @@ Breaking changes
 * Added cfchecks for Pr+Tas-based indicators.
 * Refactored test suite to now be available as part of the standard library installation (`xclim.testing.tests`).
 * Running `pytest` with `xdoctest` now requires the `rootdir` to point at `tests` location (`pytest --rootdir xclim/testing/tests/ --xdoctest xclim`).
+* Development checks now require working jupyter notebooks (assessed via the `pytest --nbval` command).
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -22,6 +23,7 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `kind` entry in the `parameters` property of indicators, differentiating between [optional] variables and parameters.
+* The git pre-commit hooks (`pre-commit run --all`) now clean the jupyter notebooks with `nbstripout` call.
 
 Bug fixes
 ~~~~~~~~~
