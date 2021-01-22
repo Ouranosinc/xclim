@@ -13,4 +13,4 @@ pylint
 xdoctest
 pydocstyle
 nbval
-pre-commit
+pre-commit>=2.9
