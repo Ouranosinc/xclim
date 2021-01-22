@@ -190,6 +190,7 @@ def kmeans_reduce_ensemble(
     --------
     >>> import xclim
     >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
+    >>> from xclim.indices import hot_spell_frequency
 
     Start with ensemble datasets for temperature:
 
@@ -205,7 +206,7 @@ def kmeans_reduce_ensemble(
 
     Then, Hotspell frequency as second indicator:
 
-    >>> hs = xclim.atmos.hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
+    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
     >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
     >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
     >>> dhs = fut_hs - his_hs

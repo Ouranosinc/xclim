@@ -90,13 +90,14 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     # For virtualenv environments:
-    $ pip install black pytest pydocstyle xdoctest tox
+    $ pip install black pytest nbval xdoctest pydocstyle tox
 
     # For Anaconda/Miniconda environments:
     $ conda install -c conda-forge black pytest pydocstyle xdoctest tox
 
     $ black --check --target-version py36 xclim tests
     $ flake8 xclim tests
+    $ pytest --nbval docs/notebooks
     $ pytest --root-dir xclim/testing/tests/ --xdoctest xclim
     $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
     $ tox
@@ -109,6 +110,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # For Anaconda/Miniconda environments:
     $ conda install -c conda-forge pre-commit
 
+    # To install the necessary pre-commit hooks:
     $ pre-commit install
 
 7. Commit your changes and push your branch to GitHub::
@@ -164,15 +166,15 @@ Tips
 
 To run a subset of tests, we suggest a few approaches. For running only a test file::
 
-$ pytest xclim/testing/tests/test_xclim.py
+    $ pytest xclim/testing/tests/test_xclim.py
 
-or to skip all slow tests::
+To skip all slow tests::
 
-$ pytest -m "not slow"
+    $ pytest -m "not slow"
 
 To run all conventions tests at once::
 
-$ pre-commit run --all-files
+    $ pre-commit run --all-files
 
 Versioning
 ----------

@@ -12,4 +12,5 @@ pytest-runner
 pylint
 xdoctest
 pydocstyle
-pre-commit
+nbval
+pre-commit>=2.9
