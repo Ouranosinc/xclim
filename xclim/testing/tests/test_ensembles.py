@@ -69,16 +69,17 @@ class TestEnsembleStats:
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
 
-    def test_no_time(self, tmpdir):
+    def test_no_time(self, tmp_path):
         # create again using xr.Dataset objects
-        f1 = tmpdir.mkdir("notime")
+        f1 = Path(tmp_path / "notime")
+        f1.mkdir()
         ds_all = []
         for n in self.nc_files:
             ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                Path(f1).joinpath(n)
+                f1.joinpath(n)
             )
 
         ens = ensembles.create_ensemble(ds_all)
