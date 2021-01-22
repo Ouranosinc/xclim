@@ -16,6 +16,7 @@
 import os
 import sys
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -68,15 +69,23 @@ class TestEnsembleStats:
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
 
-    def test_no_time(self):
+    def test_no_time(self, tmpdir):
         # create again using xr.Dataset objects
+        f1 = tmpdir.mkdir("notime")
         ds_all = []
         for n in self.nc_files:
             ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
+            ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
+                Path(f1).joinpath(n)
+            )
 
         ens = ensembles.create_ensemble(ds_all)
+        assert len(ens.realization) == len(self.nc_files)
+
+        in_ncs = list(Path(f1).glob("*.nc"))
+        ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(self.nc_files)
 
     def test_create_unequal_times(self):
