@@ -2,7 +2,7 @@
 History
 =======
 
-0.23.0 (unreleased)
+0.23.0 (2021-01-22)
 -------------------
 
 Breaking changes
@@ -36,7 +36,7 @@ Internal changes
 ~~~~~~~~~~~~~~~~
 * `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
 * Clean up in the tests to speed up testing. Addition of a marker to include "slow" tests when desired (`-m slow`).
-* Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master against python 3.7.
+* Fixes in the tests to support `sklearn>=0.24`, `clisops>=0.5` and build xarray@master against python 3.7.
 * Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
 * Indicator class now has a `default_freq` method.
 
