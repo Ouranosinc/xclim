@@ -28,6 +28,7 @@ Bug fixes
 * Fixed a bug in `indices.run_length.lazy_indexing` that occurred with 1D coords and 0D indexes when using the dask backend.
 * Fixed a bug with default frequency handling affecting `fit` indicator.
 * Set missing method to 'skip' for `freq_analysis` indicator.
+* Fixed a bug in `ensembles._ens_align_datasets` when using .nc filepaths as inputs but files lack a time dimension
 
 Internal changes
 ~~~~~~~~~~~~~~~~
