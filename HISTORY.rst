@@ -2,6 +2,13 @@
 History
 =======
 
+0.24.0 (unreleased)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Removed the explicitly-installed netCDF4 library, as this is never explicitly used (managed by xarray).
+
 0.23.0 (2021-01-22)
 -------------------
 
