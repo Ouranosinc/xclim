@@ -105,7 +105,7 @@ nbsphinx_prolog = r"""
     `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
 """
 nbsphinx_timeout = 300
-nbsphinx_allow_errors = True
+nbsphinx_allow_errors = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

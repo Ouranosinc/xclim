@@ -46,6 +46,7 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "netCDF4",
     "nc-time-axis",
     "distributed>=2.0",
 ]
