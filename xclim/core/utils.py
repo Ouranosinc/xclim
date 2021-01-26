@@ -10,12 +10,14 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from functools import partial
 from types import FunctionType
-from typing import Callable, Mapping, Optional
+from typing import Callable, NewType, Optional
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+
+UnitStr = NewType("UnitStr", str)
 
 
 def wrapped_partial(

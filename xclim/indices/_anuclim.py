@@ -212,7 +212,7 @@ def tg_mean_warmcold_quarter(
     ----------
     tas : xarray.DataArray
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
-    op : str
+    op : str {'warmest', 'coldest'}
       Operation to perform:  'warmest' calculate warmest quarter; 'coldest' calculate coldest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
@@ -265,7 +265,7 @@ def tg_mean_wetdry_quarter(
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
-    op : str {'wettest', 'driest'}
+    op : {'wettest', 'driest'}
       Operation to perform: 'wettest' calculate for the wettest quarter; 'driest' calculate for the driest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
@@ -308,7 +308,7 @@ def prcptot_wetdry_quarter(
     ----------
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
-    op : str
+    op : {'wettest', 'driest'}
       Operation to perform :  'wettest' calculate wettest quarter ; 'driest' calculate driest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
@@ -367,7 +367,7 @@ def prcptot_warmcold_quarter(
       Total precipitation rate at daily, weekly, or monthly frequency.
     tas : xarray.DataArray
       Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
-    op : str
+    op : {'warmest', 'coldest'}
       Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
@@ -447,7 +447,7 @@ def prcptot_wetdry_period(
     ----------
     pr : xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    op : str
+    op : {'wettest', 'driest'}
       Operation to perform :  'wettest' calculate wettest period ; 'driest' calculate driest period.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.

@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.units import convert_units_to, declare_units
+from xclim.core.utils import UnitStr
 
 __all__ = [
     "tas",
@@ -46,7 +47,7 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     ["m/s", "degree"], uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]"
 )
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
+    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: UnitStr = "0.5 m/s"
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """Wind speed and direction from the eastward and northward wind components.
 
@@ -146,7 +147,7 @@ def sfcwind_2_uas_vas(
 
 @declare_units("Pa", tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
-    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
+    tas: xr.DataArray, ice_thresh: UnitStr = None, method: str = "sonntag90"
 ) -> xr.DataArray:
     """Saturation vapor pressure from temperature.
 
@@ -261,7 +262,7 @@ def relative_humidity(
     dtas: xr.DataArray = None,
     huss: xr.DataArray = None,
     ps: xr.DataArray = None,
-    ice_thresh: str = None,
+    ice_thresh: UnitStr = None,
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
@@ -374,7 +375,7 @@ def specific_humidity(
     tas: xr.DataArray,
     rh: xr.DataArray,
     ps: xr.DataArray = None,
-    ice_thresh: str = None,
+    ice_thresh: UnitStr = None,
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
@@ -442,7 +443,10 @@ def specific_humidity(
     "[precipitation]", pr="[precipitation]", tas="[temperature]", thresh="[temperature]"
 )
 def snowfall_approximation(
-    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+    pr: xr.DataArray,
+    tas: xr.DataArray,
+    thresh: UnitStr = "0 degC",
+    method: str = "binary",
 ):
     """Snowfall approximation from total precipitation and temperature.
 
@@ -482,7 +486,10 @@ def snowfall_approximation(
     "[precipitation]", pr="[precipitation]", tas="[temperature]", thresh="[temperature]"
 )
 def rain_approximation(
-    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+    pr: xr.DataArray,
+    tas: xr.DataArray,
+    thresh: UnitStr = "0 degC",
+    method: str = "binary",
 ):
     """Rainfall approximation from total precipitation and temperature.
 

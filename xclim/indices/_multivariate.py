@@ -12,6 +12,7 @@ from xclim.core.units import (
     units,
     units2pint,
 )
+from xclim.core.utils import UnitStr
 
 from . import fwi
 from . import run_length as rl
@@ -172,8 +173,8 @@ def cold_and_dry_days(
 def daily_freezethaw_cycles(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmax: str = "UNSET 0 degC",
-    thresh_tasmin: str = "UNSET 0 degC",
+    thresh_tasmax: UnitStr = "0 degC",
+    thresh_tasmin: UnitStr = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with a diurnal freeze-thaw cycle.
@@ -186,9 +187,9 @@ def daily_freezethaw_cycles(
       Minimum daily temperature values [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K
-    thresh_tasmax : str
+    thresh_tasmax : UnitStr
       The temperature threshold needed to trigger a thaw event [℃] or [K]. Default : '0 degC'
-    thresh_tasmin : str
+    thresh_tasmin : UnitStr
       The temperature threshold needed to trigger a freeze event [℃] or [K]. Default : '0 degC'
     freq : str
       Resampling frequency; Defaults to "YS".
@@ -210,12 +211,6 @@ def daily_freezethaw_cycles(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    if thresh_tasmax.startswith("UNSET ") or thresh_tasmin.startswith("UNSET"):
-        thresh_tasmax, thresh_tasmin = (
-            thresh_tasmax.replace("UNSET ", ""),
-            thresh_tasmin.replace("UNSET ", ""),
-        )
-
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
@@ -244,7 +239,7 @@ def daily_temperature_range(
       Maximum daily temperature values [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "YS".
-    op : str {'min', 'max', 'mean', 'std'} or func
+    op : {'min', 'max', 'mean', 'std'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
@@ -538,8 +533,8 @@ def drought_code(
 def heat_wave_frequency(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: UnitStr = "22.0 degC",
+    thresh_tasmax: UnitStr = "30 degC",
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -556,9 +551,9 @@ def heat_wave_frequency(
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : str
+    thresh_tasmin : UnitStr
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
-    thresh_tasmax : str
+    thresh_tasmax : UnitStr
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -606,8 +601,8 @@ def heat_wave_frequency(
 def heat_wave_max_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: UnitStr = "22.0 degC",
+    thresh_tasmax: UnitStr = "30 degC",
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -625,9 +620,9 @@ def heat_wave_max_length(
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : str
+    thresh_tasmin : UnitStr
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
-    thresh_tasmax : str
+    thresh_tasmax : UnitStr
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -676,8 +671,8 @@ def heat_wave_max_length(
 def heat_wave_total_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: UnitStr = "22.0 degC",
+    thresh_tasmax: UnitStr = "30 degC",
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -694,9 +689,9 @@ def heat_wave_total_length(
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : str
+    thresh_tasmin : UnitStr
       The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
-    thresh_tasmax : str
+    thresh_tasmax : UnitStr
       The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -731,7 +726,7 @@ def liquid_precip_ratio(
     pr: xarray.DataArray,
     prsn: Optional[xarray.DataArray] = None,
     tas: Optional[xarray.DataArray] = None,
-    thresh: str = "0 degC",
+    thresh: UnitStr = "0 degC",
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     r"""Ratio of rainfall to total precipitation.
@@ -743,11 +738,11 @@ def liquid_precip_ratio(
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-    prsn : Optional[xarray.DataArray]
+    prsn : xarray.DataArray, optional
       Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
-    tas : Optional[xarray.DataArray]
+    tas : xarray.DataArray, optional
       Mean daily temperature.
-    thresh : str
+    thresh : UnitStr
       Threshold temperature under which precipitation is assumed to be solid.
     freq : str
       Resampling frequency; Defaults to "QS-DEC".
@@ -788,7 +783,7 @@ def precip_accumulation(
     pr: xarray.DataArray,
     tas: xarray.DataArray = None,
     phase: Optional[str] = None,
-    thresh: str = "0 degC",
+    thresh: UnitStr = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Accumulated total (liquid and/or solid) precipitation.
@@ -804,9 +799,9 @@ def precip_accumulation(
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
-    phase : str, optional,
+    phase : {None, 'liquid', 'solid'}
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
-    thresh : str,
+    thresh : UnitStr
       Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
       Resampling frequency as defined in
@@ -853,7 +848,7 @@ def precip_accumulation(
 def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    thresh: str = "1 mm/d",
+    thresh: UnitStr = "1 mm/d",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of rain on frozen ground events.
@@ -867,7 +862,7 @@ def rain_on_frozen_ground_days(
       Mean daily precipitation flux [Kg m-2 s-1] or [mm]
     tas : xarray.DataArray
       Mean daily temperature [℃] or [K]
-    thresh : str
+    thresh : UnitStr
       Precipitation threshold to consider a day as a rain event. Default : '1 mm/d'
     freq : str
       Resampling frequency; Defaults to "YS".
@@ -915,7 +910,7 @@ def rain_on_frozen_ground_days(
 def days_over_precip_thresh(
     pr: xarray.DataArray,
     per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: UnitStr = "1 mm/day",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
@@ -929,7 +924,7 @@ def days_over_precip_thresh(
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
     per : xarray.DataArray
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
-    thresh : str
+    thresh : UnitStr
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
     freq : str
       Resampling frequency; Defaults to "YS".
@@ -966,7 +961,7 @@ def days_over_precip_thresh(
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
     per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: UnitStr = "1 mm/day",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
@@ -980,7 +975,7 @@ def fraction_over_precip_thresh(
       Mean daily precipitation flux [Kg m-2 s-1] or [mm/day].
     per : xarray.DataArray
       Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
-    thresh : str
+    thresh : UnitStr
        Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
     freq : str
       Resampling frequency; Defaults to "YS".
@@ -1288,8 +1283,8 @@ def tx10p(
 def tx_tn_days_above(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: UnitStr = "22 degC",
+    thresh_tasmax: UnitStr = "30 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with both hot maximum and minimum daily temperatures.
@@ -1302,9 +1297,9 @@ def tx_tn_days_above(
       Minimum daily temperature [℃] or [K]
     tasmax : xarray.DataArray
       Maximum daily temperature [℃] or [K]
-    thresh_tasmin : str
+    thresh_tasmin : UnitStr
       Threshold temperature for tasmin on which to base evaluation [℃] or [K]. Default : '22 degC'
-    thresh_tasmax : str
+    thresh_tasmax : UnitStr
       Threshold temperature for tasmax on which to base evaluation [℃] or [K]. Default : '30 degC'
     freq : str
       Resampling frequency; Defaults to "YS".
@@ -1398,7 +1393,7 @@ def warm_spell_duration_index(
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
 def winter_rain_ratio(
     *,
-    pr: xarray.DataArray = None,
+    pr: xarray.DataArray,
     prsn: xarray.DataArray = None,
     tas: xarray.DataArray = None,
     freq: str = "QS-DEC",
@@ -1412,9 +1407,9 @@ def winter_rain_ratio(
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux [Kg m-2 s-1] or [mm].
-    prsn : xarray.DataArray
+    prsn : xarray.DataArray, optional
       Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
-    tas : xarray.DataArray
+    tas : xarray.DataArray, optional
       Mean daily temperature [℃] or [K]
     freq : str
       Resampling frequency; Defaults to "QS-DEC".

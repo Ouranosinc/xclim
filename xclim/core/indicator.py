@@ -36,7 +36,7 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import MissingVariableError
+from .utils import MissingVariableError, UnitStr
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -323,6 +323,11 @@ class Indicator(IndicatorRegistrar):
                     param_doc["kind"] = InputKind.OPTIONAL_VARIABLE
             else:
                 param_doc["kind"] = InputKind.PARAMETER
+
+        # Try to put units
+        if hasattr(compute, "in_units"):
+            for var, units in compute.in_units.items():
+                params[var]["units"] = units
 
         for name in list(params.keys()):
             if name not in kwds["_parameters"]:

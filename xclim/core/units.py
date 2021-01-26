@@ -361,6 +361,7 @@ def declare_units(
     """Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
+    It also stores the input units as a 'in_units' attribute.
 
     Parameters
     ----------
@@ -429,6 +430,7 @@ def declare_units(
 
             return out
 
+        setattr(wrapper, "in_units", units_by_name)
         return wrapper
 
     return dec

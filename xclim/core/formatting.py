@@ -11,6 +11,7 @@ from fnmatch import fnmatch
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
+from numpy import nan
 
 
 class AttrFormatter(string.Formatter):
@@ -142,8 +143,17 @@ def parse_doc(doc: str) -> Dict[str, str]:
     return out
 
 
+annotation_patt = re.compile(r".*\{(.*)\}.*")
+
+
 def _parse_parameters(section):
-    """Parse the parameters section of a docstring into a dictionary mapping the parameter name to its description."""
+    """Parse the parameters section of a docstring into a dictionary
+    mapping the parameter name to its description.
+
+    The type annotation are not parsed, except for fixed sets of values
+    (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
+    strings, numbers, `None` and `nan` (to represent `numpy.nan`).
+    """
     curr_key = None
     params = {}
     for line in section.split("\n"):
@@ -155,6 +165,15 @@ def _parse_parameters(section):
                 name, annot = line.split(":", maxsplit=1)
                 curr_key = name.strip()
                 params[curr_key] = {"description": ""}
+                match = annotation_patt.search(annot)
+                if match:
+                    try:
+                        choices = [
+                            eval(s, {"nan": nan}) for s in match.groups()[0].split(",")
+                        ]
+                        params[curr_key]["choices"] = choices
+                    except (ValueError, SyntaxError):
+                        pass
     return params
 
 
