@@ -7,7 +7,7 @@ History
 
 Bug fixes
 ~~~~~~~~~
-* Removed the explicitly-installed netCDF4 library, as this is never explicitly used (managed by xarray).
+* Removed the explicitly-installed netCDF4 library from a base install, as this is never explicitly used (now only installed for sdba doc example).
 
 0.23.0 (2021-01-22)
 -------------------
