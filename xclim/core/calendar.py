@@ -456,7 +456,7 @@ def percentile_doy(
     # Create empty percentile array
     g = rr.groupby("time.dayofyear")
 
-    p = g.reduce(np.nanpercentile, dim=("time", "window"), q=per * 100)
+    p = g.quantile(q=per, dim=("time", "window"), skipna=True)
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
