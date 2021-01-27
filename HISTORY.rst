@@ -2,6 +2,14 @@
 History
 =======
 
+0.24.0 (unreleased)
+-------------------
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* modified `xclim.core.calendar.percentile_doy` to use `xarray.quantile()` and improve performance
+
+
 0.23.0 (2021-01-22)
 -------------------
 
