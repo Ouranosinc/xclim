@@ -76,7 +76,7 @@ def test_percentile_doy(tas_series):
     assert p1.sel(dayofyear=3, dim0=0).data == 2
     assert p1.attrs["units"] == "K"
 
-    # test with nan
+def test_percentile_doy_nan(tas_series):
     tas = tas_series(np.arange(365), start="1/1/2001")
     tas = tas.where(tas.time.dt.dayofyear != 2)
     tas = xr.concat((tas, tas), "dim0")
