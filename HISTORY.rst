@@ -2,7 +2,7 @@
 History
 =======
 
-0.23.0 (unreleased)
+0.23.0 (2021-01-22)
 -------------------
 
 Breaking changes
@@ -12,6 +12,7 @@ Breaking changes
 * Added cfchecks for Pr+Tas-based indicators.
 * Refactored test suite to now be available as part of the standard library installation (`xclim.testing.tests`).
 * Running `pytest` with `xdoctest` now requires the `rootdir` to point at `tests` location (`pytest --rootdir xclim/testing/tests/ --xdoctest xclim`).
+* Development checks now require working jupyter notebooks (assessed via the `pytest --nbval` command).
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -22,18 +23,20 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * New `kind` entry in the `parameters` property of indicators, differentiating between [optional] variables and parameters.
+* The git pre-commit hooks (`pre-commit run --all`) now clean the jupyter notebooks with `nbstripout` call.
 
 Bug fixes
 ~~~~~~~~~
 * Fixed a bug in `indices.run_length.lazy_indexing` that occurred with 1D coords and 0D indexes when using the dask backend.
 * Fixed a bug with default frequency handling affecting `fit` indicator.
 * Set missing method to 'skip' for `freq_analysis` indicator.
+* Fixed a bug in `ensembles._ens_align_datasets` that occurred when inputs are `.nc` filepaths but files lack a time dimension.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
 * Clean up in the tests to speed up testing. Addition of a marker to include "slow" tests when desired (`-m slow`).
-* Fixes in the tests to support sklearn v0.24, clisops v0.5 and build xarray@master against python 3.7.
+* Fixes in the tests to support `sklearn>=0.24`, `clisops>=0.5` and build xarray@master against python 3.7.
 * Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
 * Indicator class now has a `default_freq` method.
 
