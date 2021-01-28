@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from xclim import land
+from xclim import land, set_options
 
 
 def test_base_flow_index(ndq_series):
@@ -75,9 +75,23 @@ class TestFit:
         out = land.fit(q, dist="norm")
         assert np.isnan(out.values[0])
 
+    def test_nan(self, q_series):
+        r = np.random.rand(22)
+        r[0] = np.nan
+        q = q_series(r)
+
+        out = land.fit(q, dist="norm")
+        assert not np.isnan(out.values[0])
+
     def test_ndim(self, ndq_series):
         out = land.fit(ndq_series, dist="norm")
         assert out.shape == (2, 2, 3)
+        np.testing.assert_array_equal(out.isnull(), False)
+
+    def test_options(self, q_series):
+        q = q_series(np.random.rand(19))
+        with set_options(missing_options={"at_least_n": {"n": 10}}):
+            out = land.fit(q, dist="norm")
         np.testing.assert_array_equal(out.isnull(), False)
 
 
