@@ -249,51 +249,15 @@ class Indicator(IndicatorRegistrar):
         Parse the signature of the compute function.
 
         Change the annotation, change defaults where needed (and possible) and add the 'ds' argument.
-        Parse `compute` docstring to extract missing attributes and parameters' doc.
+        Parse `compute` docstring to extract missing attributes and parameters' doc, units and kind.
         """
         # Priority: explicit arguments > super class attributes > `compute` docstring info
         kwds["compute"] = compute = kwds.get("compute", None) or cls.compute
 
-        sig = signature(compute)
-        # True if any of non-dataarray arguments ("parameters") are default.
-        # In this case, we can't patch the variable names as default values.
-        has_def = any(
-            [
-                p.annotation is not DataArray
-                and p.default is _empty
-                and p.kind is not p.VAR_KEYWORD
-                for p in sig.parameters.values()
-            ]
-        )
+        new_compute = cls._update_and_inject_arguments(compute)
 
-        def _upd_param(param):
-            if param.annotation is DataArray:
-                if not has_def and param.default is _empty:
-                    default = param.name
-                else:
-                    default = param.default
-                return Parameter(
-                    param.name,
-                    param.kind,
-                    default=default,
-                    annotation=Union[str, DataArray],
-                )
-            return param
-
-        # Parse all parameters, replacing annotations and default where needed and possible.
-        new_params = list(map(_upd_param, sig.parameters.values()))
-        # ds argunent
-        dsparam = Parameter(
-            "ds", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
-        )
-        if new_params[-1].kind == Parameter.VAR_KEYWORD:
-            new_params.insert(-1, dsparam)
-        else:
-            new_params.append(dsparam)
-
-        new_compute = copy_function(compute)
-        kwds["_sig"] = new_compute.__signature__ = sig.replace(parameters=new_params)
-        new_compute.__doc__ = compute.__doc__
+        # The update signature
+        kwds["_sig"] = new_compute.__signature__
         # The input parameters' name
         kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
         # The *indicator* compute function that will be wrapped by __call__
@@ -335,6 +299,62 @@ class Indicator(IndicatorRegistrar):
                 params.pop(name)
         kwds["parameters"] = params
         return kwds
+
+    @classmethod
+    def _update_and_inject_arguments(cls, compute):
+        """Update comput argument and inject those shared by all indicators."""
+        # Base signature
+        sig = signature(compute)
+
+        # Update
+
+        # True if any of non-dataarray arguments ("parameters") are default.
+        # In this case, we can't patch the variable names as default values.
+        has_def = any(
+            [
+                p.annotation is not DataArray
+                and p.default is _empty
+                and p.kind is not p.VAR_KEYWORD
+                for p in sig.parameters.values()
+            ]
+        )
+
+        def _upd_param(param):
+            # Required DataArray arguments receive their own name as new default
+            #         + the Union[str, DataArray] annotation
+            if param.annotation is DataArray:
+                if not has_def and param.default is _empty:
+                    default = param.name
+                else:
+                    default = param.default
+                return Parameter(
+                    param.name,
+                    param.kind,
+                    default=default,
+                    annotation=Union[str, DataArray],
+                )
+            return param
+
+        # Parse all parameters, replacing annotations and default where needed and possible.
+        new_params = list(map(_upd_param, sig.parameters.values()))
+
+        # Injection
+
+        # ds argunent
+        dsparam = Parameter(
+            "ds", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
+        )
+        if new_params[-1].kind == Parameter.VAR_KEYWORD:
+            new_params.insert(-1, dsparam)
+        else:
+            new_params.append(dsparam)
+
+        # Create new compute function to be wrapped in __call__
+        new_compute = copy_function(compute)
+        new_compute.__signature__ = sig.replace(parameters=new_params)
+        new_compute.__doc__ = compute.__doc__
+
+        return new_compute
 
     @classmethod
     def _parse_cf_attrs(
@@ -629,7 +649,13 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     def json(self, args=None):
-        """Return a dictionary representation of the class.
+        """Return a serializable dictionary representation of the class.
+
+        Parameters
+        ----------
+        args : mapping, optional
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -640,18 +666,20 @@ class Indicator(IndicatorRegistrar):
         out = {key: getattr(self, key) for key in names}
         out = self.format(out, args)
 
+        # Format attributes
         out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
         out["notes"] = self.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
+        # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
             if param["default"] is _empty:
                 param["default"] = "none"
-            param["kind"] = param["kind"].value
-            if "choices" in param:
+            param["kind"] = param["kind"].value  # Get the int.
+            if "choices" in param:  # A set is stored, convert to list
                 param["choices"] = list(param["choices"])
-            param.pop("annotation")
+            param.pop("annotation")  # Maybe there's a solution?
         return out
 
     @classmethod
@@ -667,8 +695,8 @@ class Indicator(IndicatorRegistrar):
         ----------
         attrs: dict
           Attributes containing tags to replace with arguments' values.
-        args : dict
-          Function call arguments.
+        args : dict, optional
+          Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
         """
         # Use defaults
