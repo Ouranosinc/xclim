@@ -494,6 +494,7 @@ def percentile_doy(
         )
         p = p.where(mask, p_nans.broadcast_like(p))
 
+
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
     if p.dayofyear.max() == 366:
