@@ -7,6 +7,7 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
+from math import floor
 from typing import Any, Optional, Sequence, Union
 
 import cftime
@@ -429,7 +430,10 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 
 
 def percentile_doy(
-    arr: xr.DataArray, window: int = 5, per: float = 0.1
+    arr: xr.DataArray,
+    window: int = 5,
+    per: float = 0.1,
+    fill_ends=False,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
@@ -443,6 +447,8 @@ def percentile_doy(
       Number of days around each day of the year to include in the calculation.
     per : float
       Percentile between [0,1]
+    fill_ends : boolean
+      Pad first and last windows of the time-series with mean of the window to avoid nan values
 
     Returns
     -------
@@ -453,10 +459,37 @@ def percentile_doy(
     #  This is supported by DataArray.quantile, but not by groupby.reduce.
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
-    # Create empty percentile array
-    g = rr.groupby("time.dayofyear")
+    # rolling automatically adds some nans to the windows on the time-series edges
+    # Optionally fill nans in first and last n=floor(window/2) time steps with average window values for these
+    if fill_ends:
+        nstep = floor(window / 2)
+        tmp1 = rr.isel(time=slice(0, nstep))
+        tmp1 = tmp1.fillna(tmp1.mean(dim="window"))
+        tmp2 = rr.isel(time=slice(len(rr.time) - nstep, None))
+        tmp2 = tmp2.fillna(tmp2.mean(dim="window"))
+        rr = xr.concat(
+            [tmp1, rr.isel(time=slice(nstep, len(rr.time) - nstep)), tmp2], dim="time"
+        )
 
-    p = g.quantile(q=per, dim=("time", "window"), skipna=True)
+    ind = pd.MultiIndex.from_arrays(
+        (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
+        names=("year", "dayofyear"),
+    )
+    rrr = (
+        rr.assign_coords(time=ind)
+        .unstack("time")
+        .stack(stack_dim=("year", "window"))
+        .chunk(dict(stack_dim=-1))
+    )
+
+    # identify data where a xr.quantile(skipna=False) is ok
+    mask = np.isnan(rrr).sum(dim="stack_dim")
+    mask = (mask == 0) | (mask == len(rrr.stack_dim))
+    p = rrr.quantile(q=per, dim="stack_dim", skipna=False)
+
+    # if necessary use xr.quantile(skipna=True) only for grid cells / dayofyear with nans
+    if np.any(~mask):
+        p = p.where(mask, rrr.quantile(q=per, dim="stack_dim", skipna=True))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
