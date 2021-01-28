@@ -489,7 +489,10 @@ def percentile_doy(
 
     # if necessary use xr.quantile(skipna=True) only for grid cells / dayofyear with nans
     if np.any(~mask):
-        p = p.where(mask, rrr.quantile(q=per, dim="stack_dim", skipna=True))
+        p_nans = rrr.where(~mask, drop=True).quantile(
+            q=per, dim="stack_dim", skipna=True
+        )
+        p = p.where(mask, p_nans.broadcast_like(p))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
