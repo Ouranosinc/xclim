@@ -7,11 +7,11 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
+from ast import literal_eval
 from fnmatch import fnmatch
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
-from numpy import nan
 
 
 class AttrFormatter(string.Formatter):
@@ -143,12 +143,9 @@ def parse_doc(doc: str) -> Dict[str, str]:
     return out
 
 
-annotation_patt = re.compile(r".*\{(.*)\}.*")
-
-
 def _parse_parameters(section):
     """Parse the parameters section of a docstring into a dictionary
-    mapping the parameter name to its description.
+    mapping the parameter name to its description and, potentially, to its set of choices.
 
     The type annotation are not parsed, except for fixed sets of values
     (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
@@ -157,23 +154,20 @@ def _parse_parameters(section):
     curr_key = None
     params = {}
     for line in section.split("\n"):
-        if line.strip():
-            if line.startswith(" " * 6):  # description
-                s = " " if params[curr_key]["description"] else ""
-                params[curr_key]["description"] += s + line.strip()
-            elif line.startswith(" " * 4):  # param title
-                name, annot = line.split(":", maxsplit=1)
-                curr_key = name.strip()
-                params[curr_key] = {"description": ""}
-                match = annotation_patt.search(annot)
-                if match:
-                    try:
-                        choices = [
-                            eval(s, {"nan": nan}) for s in match.groups()[0].split(",")
-                        ]
-                        params[curr_key]["choices"] = choices
-                    except (ValueError, SyntaxError):
-                        pass
+        if line.startswith(" " * 6):  # description
+            s = " " if params[curr_key]["description"] else ""
+            params[curr_key]["description"] += s + line.strip()
+        elif line.startswith(" " * 4) and ":" in line:  # param title
+            name, annot = line.split(":", maxsplit=1)
+            curr_key = name.strip()
+            params[curr_key] = {"description": ""}
+            match = re.search(r".*(\{.*\}).*", annot)
+            if match:
+                try:
+                    choices = literal_eval(match.groups()[0])
+                    params[curr_key]["choices"] = choices
+                except ValueError:
+                    pass
     return params
 
 

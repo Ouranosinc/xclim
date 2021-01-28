@@ -36,7 +36,7 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import MissingVariableError, UnitStr
+from .utils import MissingVariableError
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -327,7 +327,8 @@ class Indicator(IndicatorRegistrar):
         # Try to put units
         if hasattr(compute, "in_units"):
             for var, units in compute.in_units.items():
-                params[var]["units"] = units
+                if var in params:
+                    params[var]["units"] = units
 
         for name in list(params.keys()):
             if name not in kwds["_parameters"]:
@@ -638,14 +639,19 @@ class Indicator(IndicatorRegistrar):
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
         out = self.format(out, args)
-        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
 
+        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
         out["notes"] = self.notes
+
         # We need to deepcopy, otherwise empty defaults get overwritten!
         out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
             if param["default"] is _empty:
                 param["default"] = "none"
+            param["kind"] = param["kind"].value
+            if "choices" in param:
+                param["choices"] = list(param["choices"])
+            param.pop("annotation")
         return out
 
     @classmethod
@@ -665,8 +671,9 @@ class Indicator(IndicatorRegistrar):
           Function call arguments.
         formatter : AttrFormatter
         """
+        # Use defaults
         if args is None:
-            return attrs
+            args = {k: v["default"] for k, v in cls.parameters.items()}
 
         out = {}
         for key, val in attrs.items():

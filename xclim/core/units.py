@@ -431,6 +431,7 @@ def declare_units(
             return out
 
         setattr(wrapper, "in_units", units_by_name)
+        setattr(wrapper, "out_units", out_units)
         return wrapper
 
     return dec

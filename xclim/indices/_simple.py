@@ -463,7 +463,7 @@ def max_n_day_precipitation_amount(
 
 
 @declare_units("mm/h", pr="[precipitation]")
-def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS"):
     r"""Highest precipitation intensity over a n-hour moving window.
 
     Calculate the n-hour rolling average of the original hourly total precipitation series

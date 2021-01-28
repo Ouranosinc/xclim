@@ -1453,8 +1453,8 @@ def tropical_nights(
 @declare_units("", tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
 def degree_days_exceedance_date(
     tas: xarray.DataArray,
-    thresh: UnitStr,
-    sum_thresh: UnitStr,
+    thresh: UnitStr = "4 degC",
+    sum_thresh: UnitStr = "200 K days",
     op: str = ">",
     after_date: str = None,
     freq: str = "YS",

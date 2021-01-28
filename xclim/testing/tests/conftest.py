@@ -388,3 +388,15 @@ def is_matplotlib_installed(xdoctest_namespace):
 
     ns = xdoctest_namespace
     ns["is_matplotlib_installed"] = _is_matplotlib_installed
+
+
+@pytest.fixture
+def official_indicators():
+    # Remove unofficial indicators (as those created during the tests)
+    registry_cp = xclim.core.indicator.registry.copy()
+    for identifier, cls in xclim.core.indicator.registry.items():
+        if not cls.__module__.startswith("xclim") or cls.__module__.startswith(
+            "xclim.testing"
+        ):
+            registry_cp.pop(identifier)
+    return registry_cp

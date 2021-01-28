@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
 import gc
+import json
 from typing import Union
 
 import dask
@@ -237,6 +238,20 @@ def test_json(pr_series):
     assert set(meta.keys()).issubset(expected)
     for output in meta["outputs"]:
         assert set(output.keys()).issubset(output_exp)
+
+
+def test_all_jsonable(official_indicators):
+    problems = []
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        try:
+            json.dumps(indinst.json())
+        except TypeError:
+            problems.append(identifier)
+    if problems:
+        raise ValueError(
+            f"Indicators {problems} provide problematic json serialization."
+        )
 
 
 def test_signature():
