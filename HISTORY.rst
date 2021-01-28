@@ -8,6 +8,7 @@ History
 Internal changes
 ~~~~~~~~~~~~~~~~
 * modified `xclim.core.calendar.percentile_doy` to use `xarray.quantile()` and improve performance
+* leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`
 
 
 0.23.0 (2021-01-22)
