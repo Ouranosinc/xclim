@@ -7,6 +7,7 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
+import re
 from typing import Any, Optional, Sequence, Union
 
 import cftime
@@ -455,10 +456,9 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
-    infreq = xr.infer_freq(arr.time) or "D"
-    infreq = infreq if len(infreq) > 1 else f"1{infreq}"
-
-    if pd.to_timedelta(infreq) < pd.to_timedelta("1D"):
+    # Ensure arr sampling frequency is daily or coarser
+    # but cowardly escape the non-inferrable case.
+    if compare_offsets(xr.infer_freq(arr.time) or "D", "<", "D"):
         raise ValueError("input data should have daily or coarser frequency")
 
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
@@ -495,6 +495,47 @@ def percentile_doy(
 
     p.attrs.update(arr.attrs.copy())
     return p
+
+
+def compare_offsets(fA: str, op: str, fB: str):
+    """Compare offsets string based on their approximate length, according to a given operator.
+
+    Offset are compared based on their length approximated for a period starting
+    after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
+    only the multiplicator prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
+    "Business" offsets are not implemented.
+
+    Parameters
+    ----------
+    fA: str
+      RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+    op : {'<', '<=', '==', '>', '>=', '!='}
+      Operator to use, as if they would be numbers.
+    fB: str
+      LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+
+    Returns
+    -------
+    bool
+    """
+    from xclim.indices.generic import get_op
+
+    # Get multiplicator and base frequency
+    patt = r"(\d*)(\w)"
+    tA, bA = re.search(patt, fA.replace("Y", "A")).groups()
+    tB, bB = re.search(patt, fB.replace("Y", "A")).groups()
+    if bA == bB:
+        # Same base freq, compare mulitplicator only.
+        tA = int(tA or "1")
+        tB = int(tB or "1")
+    else:
+        # Different base freq, compare length of first period after beginning of time.
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=fA)
+        tA = (t[1] - t[0]).total_seconds()
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=fB)
+        tB = (t[1] - t[0]).total_seconds()
+
+    return get_op(op)(tA, tB)
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:

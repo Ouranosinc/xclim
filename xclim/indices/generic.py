@@ -109,7 +109,18 @@ def default_freq(**indexer):
     return freq
 
 
-binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
+binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
+
+
+def get_op(op: str):
+    """Get python's comparing function according to its name of representation."""
+    if op in binary_ops:
+        op = binary_ops[op]
+    elif op in binary_ops.values():
+        pass
+    else:
+        raise ValueError(f"Operation `{op}` not recognized.")
+    return xr.core.ops.get_op(op)
 
 
 def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArray:
@@ -129,15 +140,6 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
     xr.DataArray
         Boolean mask of the comparison.
     """
-    from xarray.core.ops import get_op
-
-    if op in binary_ops:
-        op = binary_ops[op]
-    elif op in binary_ops.values():
-        pass
-    else:
-        raise ValueError(f"Operation `{op}` not recognized.")
-
     func = getattr(da, "_binary_op")(get_op(op))
     return func(da, thresh)
 
@@ -186,16 +188,7 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     -------
     xr.DataArray
     """
-    from xarray.core.ops import get_op
-
-    if operator in binary_ops:
-        op = binary_ops[operator]
-    elif operator in binary_ops.values():
-        op = operator
-    else:
-        raise ValueError(f"Operation `{operator}` not recognized.")
-
-    func = getattr(da, "_binary_op")(get_op(op))
+    func = getattr(da, "_binary_op")(get_op(operator))
     events = func(da, da_value) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")

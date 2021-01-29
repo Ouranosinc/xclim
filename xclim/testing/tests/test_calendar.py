@@ -10,6 +10,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 
 from xclim.core.calendar import (
     adjust_doy_calendar,
+    compare_offsets,
     convert_calendar,
     date_range,
     datetime_to_decimal_year,
@@ -91,6 +92,29 @@ def test_percentile_doy_nan(tas_series, use_dask):
     pnan = percentile_doy(tas, window=5, per=50)
     assert pnan.sel(dayofyear=3, dim0=0).data == 2.5
     assert pnan.attrs["units"] == "K"
+
+
+def test_percentile_doy_invalid():
+    tas = xr.DataArray(
+        [0, 1],
+        dims=("time",),
+        coords={"time": pd.date_range("2000-01-01", periods=2, freq="H")},
+    )
+    with pytest.raises(ValueError):
+        percentile_doy(tas)
+
+
+@pytest.mark.parametrize(
+    "freqA,op,freqB,exp",
+    [
+        ("D", ">", "H", True),
+        ("2YS", "<=", "QS-DEC", False),
+        ("4W", "==", "3W", False),
+        ("24H", "==", "D", True),
+    ],
+)
+def test_compare_offsets(freqA, op, freqB, exp):
+    assert compare_offsets(freqA, op, freqB) is exp
 
 
 def test_adjust_doy_360_to_366():
