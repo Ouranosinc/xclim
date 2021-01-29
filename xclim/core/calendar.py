@@ -463,7 +463,7 @@ def percentile_doy(
     )
     rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
 
-    if rrr.chunks is not None and len(rrr.chunks["stack_dim"]) > 1:
+    if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
         rrr = rrr.chunk(dict(stack_dim=-1))
 
     if np.isscalar(per):
