@@ -7,7 +7,6 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
-from math import floor
 from typing import Any, Optional, Sequence, Union
 
 import cftime
@@ -25,6 +24,8 @@ from xarray.coding.cftime_offsets import (
 )
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
+
+from xclim.core.utils import _calc_perc
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
@@ -432,68 +433,54 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: float = 0.1,
-    fill_ends=False,
+    per: Union[float, Sequence[float]] = 10,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
+    All NaNs are skipped.
 
     Parameters
     ----------
     arr : xr.DataArray
-      Input data.
+      Input data, a daily frequency is required.
     window : int
       Number of days around each day of the year to include in the calculation.
-    per : float
-      Percentile between [0,1]
-    fill_ends : boolean
-      Pad first and last windows of the time-series with mean of the window to avoid nan values
+    per : float or sequence of floats
+      Percentile between [0, 100]
 
     Returns
     -------
     xr.DataArray
       The percentiles indexed by the day of the year.
+      For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
-    # TODO: Support percentile array, store percentile in coordinates.
-    #  This is supported by DataArray.quantile, but not by groupby.reduce.
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
-
-    # rolling automatically adds some nans to the windows on the time-series edges
-    # Optionally fill nans in first and last n=floor(window/2) time steps with average window values for these
-    if fill_ends:
-        nstep = floor(window / 2)
-        tmp1 = rr.isel(time=slice(0, nstep))
-        tmp1 = tmp1.fillna(tmp1.mean(dim="window"))
-        tmp2 = rr.isel(time=slice(len(rr.time) - nstep, None))
-        tmp2 = tmp2.fillna(tmp2.mean(dim="window"))
-        rr = xr.concat(
-            [tmp1, rr.isel(time=slice(nstep, len(rr.time) - nstep)), tmp2], dim="time"
-        )
 
     ind = pd.MultiIndex.from_arrays(
         (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
         names=("year", "dayofyear"),
     )
-    rrr = (
-        rr.assign_coords(time=ind)
-        .unstack("time")
-        .stack(stack_dim=("year", "window"))
-        .chunk(dict(stack_dim=-1))
+    rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
+
+    if rrr.chunks is not None and len(rrr.chunks["stack_dim"]) > 1:
+        rrr = rrr.chunk(dict(stack_dim=-1))
+
+    if np.isscalar(per):
+        per = [per]
+
+    p = xr.apply_ufunc(
+        _calc_perc,
+        rrr,
+        input_core_dims=[["stack_dim"]],
+        output_core_dims=[["percentiles"]],
+        keep_attrs=True,
+        kwargs=dict(p=per),
+        dask="parallelized",
+        output_dtypes=[rrr.dtype],
+        output_sizes={"percentiles": len(per)},
     )
-
-    # identify data where a xr.quantile(skipna=False) is ok
-    mask = np.isnan(rrr).sum(dim="stack_dim")
-    mask = (mask == 0) | (mask == len(rrr.stack_dim))
-    p = rrr.quantile(q=per, dim="stack_dim", skipna=False)
-
-    # if necessary use xr.quantile(skipna=True) only for grid cells / dayofyear with nans
-    if np.any(~mask):
-        p_nans = rrr.where(~mask, drop=True).quantile(
-            q=per, dim="stack_dim", skipna=True
-        )
-        p = p.where(mask, p_nans.broadcast_like(p))
-
+    p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
