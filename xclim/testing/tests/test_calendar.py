@@ -69,16 +69,23 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     assert_array_equal(cftime_ends, datetime_ends)
 
 
-def test_percentile_doy(tas_series):
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_percentile_doy(tas_series, use_dask):
+
     tas = tas_series(np.arange(365), start="1/1/2001")
+    if use_dask:
+        tas = tas.chunk(dict(time=10))
     tas = xr.concat((tas, tas), "dim0")
     p1 = percentile_doy(tas, window=5, per=50)
     assert p1.sel(dayofyear=3, dim0=0).data == 2
     assert p1.attrs["units"] == "K"
 
 
-def test_percentile_doy_nan(tas_series):
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_percentile_doy_nan(tas_series, use_dask):
     tas = tas_series(np.arange(365), start="1/1/2001")
+    if use_dask:
+        tas = tas.chunk(dict(time=10))
     tas = tas.where(tas.time.dt.dayofyear != 2)
     tas = xr.concat((tas, tas), "dim0")
     pnan = percentile_doy(tas, window=5, per=50)

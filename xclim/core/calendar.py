@@ -443,9 +443,9 @@ def percentile_doy(
     Parameters
     ----------
     arr : xr.DataArray
-      Input data, a daily frequency is required.
+      Input data, a daily frequency (or coarser) is required.
     window : int
-      Number of days around each day of the year to include in the calculation.
+      Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
       Percentile between [0, 100]
 
@@ -455,6 +455,12 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
+    infreq = xr.infer_freq(arr.time) or "D"
+    infreq = infreq if len(infreq) > 1 else f"1{infreq}"
+
+    if pd.to_timedelta(infreq) < pd.to_timedelta("1D"):
+        raise ValueError("input data should have daily or coarser frequency")
+
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
     ind = pd.MultiIndex.from_arrays(
