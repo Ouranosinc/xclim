@@ -113,7 +113,10 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 
 def get_op(op: str):
-    """Get python's comparing function according to its name of representation."""
+    """Get python's comparing function according to its name of representation.
+
+    Accepted op string are keys and values of xclim.indices.generic.binary_ops.
+    """
     if op in binary_ops:
         op = binary_ops[op]
     elif op in binary_ops.values():

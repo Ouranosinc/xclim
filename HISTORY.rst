@@ -4,16 +4,19 @@ History
 
 0.24.0 (unreleased)
 -------------------
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Numerous changes to `xclim.core.calendar.percentile_doy`
-* `xclim.core.calendar.percentile_doy` : `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis;
-* `xclim.core.calendar.percentile_doy` : `per` argument is now expected to between 0-100 (not 0-1)
-* `xclim.core.calendar.percentile_doy` : input data must have a daily (or coarser) time frequency
+  * `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis.
+  * `per` argument is now expected to between 0-100 (not 0-1).
+  * input data must have a daily (or coarser) time frequency.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * modified `xclim.core.calendar.percentile_doy` to improve performance
+* new `xclim.core.calendar.compare_offsets` for comparing offset strings
+* new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
 
 
 0.23.0 (2021-01-22)

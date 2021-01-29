@@ -448,7 +448,7 @@ def percentile_doy(
     window : int
       Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
-      Percentile between [0, 100]
+      Percentile(s) between [0, 100]
 
     Returns
     -------
@@ -497,7 +497,7 @@ def percentile_doy(
     return p
 
 
-def compare_offsets(fA: str, op: str, fB: str):
+def compare_offsets(freqA: str, op: str, freqB: str):
     """Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
@@ -510,29 +510,30 @@ def compare_offsets(fA: str, op: str, fB: str):
     fA: str
       RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
     op : {'<', '<=', '==', '>', '>=', '!='}
-      Operator to use, as if they would be numbers.
+      Operator to use.
     fB: str
       LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
 
     Returns
     -------
     bool
+      freqA op freqB
     """
     from xclim.indices.generic import get_op
 
     # Get multiplicator and base frequency
     patt = r"(\d*)(\w)"
-    tA, bA = re.search(patt, fA.replace("Y", "A")).groups()
-    tB, bB = re.search(patt, fB.replace("Y", "A")).groups()
+    tA, bA = re.search(patt, freqA.replace("Y", "A")).groups()
+    tB, bB = re.search(patt, freqB.replace("Y", "A")).groups()
     if bA == bB:
         # Same base freq, compare mulitplicator only.
         tA = int(tA or "1")
         tB = int(tB or "1")
     else:
         # Different base freq, compare length of first period after beginning of time.
-        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=fA)
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
         tA = (t[1] - t[0]).total_seconds()
-        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=fB)
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         tB = (t[1] - t[0]).total_seconds()
 
     return get_op(op)(tA, tB)
@@ -617,9 +618,9 @@ def resample_doy(
     Returns
     -------
     xr.DataArray
-      An array with the same dimensions as `doy`, except for the `dayofyear` that is
+      An array with the same dimensions as `doy`, except for `dayofyear`, which is
       replaced by the `time` dimension of `arr`. Values are filled according to the
-      day-of-year value in `doy`.
+      day of year value in `doy`.
     """
     if "dayofyear" not in doy.coords:
         raise AttributeError("Source should have `dayofyear` coordinates.")
