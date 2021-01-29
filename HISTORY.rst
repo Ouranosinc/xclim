@@ -7,10 +7,11 @@ History
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* Numerous changes to `xclim.core.calendar.percentile_doy`
-  * `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis.
-  * `per` argument is now expected to between 0-100 (not 0-1).
-  * input data must have a daily (or coarser) time frequency.
+* Numerous changes to `xclim.core.calendar.percentile_doy`:
+
+    * `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis.
+    * `per` argument is now expected to between 0-100 (not 0-1).
+    * input data must have a daily (or coarser) time frequency.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
