@@ -459,7 +459,7 @@ def percentile_doy(
     infreq = infreq if len(infreq) > 1 else f"1{infreq}"
 
     if pd.to_timedelta(infreq) < pd.to_timedelta("1D"):
-        raise ValueError("input data should be daily or coarser frequency")
+        raise ValueError("input data should have daily or coarser frequency")
 
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
