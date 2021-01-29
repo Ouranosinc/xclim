@@ -525,7 +525,9 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
-def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataArray:
+def adjust_doy_calendar(
+    source: xr.DataArray, target: Union[xr.DataArray, xr.Dataset]
+) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -535,7 +537,7 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataAr
     ----------
     source : xr.DataArray
       Array with `dayofyear` coordinate.
-    target : xr.DataArray
+    target : xr.DataArray or xr.Dataset
       Array with `time` coordinate.
 
     Returns
@@ -553,21 +555,24 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataAr
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
+def resample_doy(
+    doy: xr.DataArray, arr: Union[xr.DataArray, xr.Dataset]
+) -> xr.DataArray:
     """Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
     doy : xr.DataArray
       Array with `dayofyear` coordinate.
-    arr : xr.DataArray
+    arr : xr.DataArray or xr.Dataset
       Array with `time` coordinate.
 
     Returns
     -------
     xr.DataArray
-      An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
-      `doy`.
+      An array with the same dimensions as `doy`, except for the `dayofyear` that is
+      replaced by the `time` dimension of `arr`. Values are filled according to the
+      day-of-year value in `doy`.
     """
     if "dayofyear" not in doy.coords:
         raise AttributeError("Source should have `dayofyear` coordinates.")
@@ -575,12 +580,8 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
     # Adjust calendar
     adoy = adjust_doy_calendar(doy, arr)
 
-    # Create array with arr shape and coords
-    out = xr.full_like(arr, np.nan)
-
-    # Fill with values from `doy`
-    d = out.time.dt.dayofyear.values
-    out.data = adoy.sel(dayofyear=d)
+    out = adoy.rename(dayofyear="time").reindex(time=arr.time.dt.dayofyear)
+    out["time"] = arr.time
 
     return out
 

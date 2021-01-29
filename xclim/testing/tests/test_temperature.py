@@ -24,7 +24,7 @@ class TestCSDI:
         tn += K2C
         tn[10:20] -= 2
         tn = tasmin_series(tn)
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert out[0] == 10
@@ -40,7 +40,7 @@ class TestCSDI:
         tn[10:20] -= 2
         tn = tasmin_series(tn + K2C)
         tn.attrs["units"] = "C"
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert out[0] == 10
@@ -57,7 +57,7 @@ class TestCSDI:
         tn[10:20] -= 2
         tn[9] = np.nan
         tn = tasmin_series(tn)
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert np.isnan(out[0])
@@ -1002,7 +1002,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1033,7 +1033,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1064,7 +1064,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1097,7 +1097,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1128,7 +1128,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1158,7 +1158,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
