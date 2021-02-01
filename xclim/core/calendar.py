@@ -28,8 +28,19 @@ from xarray.core.resample import DataArrayResample
 
 from xclim.core.utils import _calc_perc
 
-# cftime and datetime classes to use for each calendar name
-datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
+datetime_classes = {
+    "default": pydt.datetime,
+    "noleap": cftime.DatetimeNoLeap,
+    "360_day": cftime.Datetime360Day,
+    "365_day": cftime.DatetimeNoLeap,
+    "366_day": cftime.DatetimeAllLeap,
+    "gregorian": cftime.DatetimeGregorian,
+    "proleptic_gregorian": cftime.DatetimeProlepticGregorian,
+    "julian": cftime.DatetimeJulian,
+    "all_leap": cftime.DatetimeAllLeap,
+    "standard": cftime.DatetimeGregorian,
+}
+
 
 # Maximum day of year in each calendar.
 max_doy = {
