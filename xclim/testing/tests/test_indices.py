@@ -110,7 +110,7 @@ class TestColdSpellDurationIndex:
         )
         tn[10:20] -= 2
         tn = tasmin_series(tn)
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = xci.cold_spell_duration_index(tn, tn10, freq="YS")
         assert out[0] == 10
@@ -791,7 +791,7 @@ class TestTGXN10p:
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start="1/1/2000")
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -807,7 +807,7 @@ class TestTGXN10p:
         i = 366
         tas = np.array(range(i))
         tas = tasmax_series(tas, start="1/1/2000")
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -820,7 +820,7 @@ class TestTGXN10p:
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start="1/1/2000")
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -832,7 +832,7 @@ class TestTGXN10p:
     def test_doy_interpolation(self):
         # Just a smoke test
         with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
-            t10 = percentile_doy(ds.tasmin, per=0.1)
+            t10 = percentile_doy(ds.tasmin, per=10).sel(percentiles=10)
             xci.tn10p(ds.tasmin, t10, freq="MS")
 
 
@@ -841,7 +841,7 @@ class TestTGXN90p:
         i = 366
         tas = np.array(range(i))
         tas = tas_series(tas, start="1/1/2000")
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -855,7 +855,7 @@ class TestTGXN90p:
         i = 366
         tas = np.array(range(i))
         tas = tasmax_series(tas, start="1/1/2000")
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -869,7 +869,7 @@ class TestTGXN90p:
         i = 366
         tas = np.array(range(i))
         tas = tasmin_series(tas, start="1/1/2000")
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1428,7 +1428,7 @@ class TestWarmSpellDurationIndex:
         )
         tx[10:20] += 2
         tx = tasmax_series(tx)
-        tx90 = percentile_doy(tx, per=0.9)
+        tx90 = percentile_doy(tx, per=90).sel(percentiles=90)
 
         out = xci.warm_spell_duration_index(tx, tx90, freq="YS")
         assert out[0] == 10
