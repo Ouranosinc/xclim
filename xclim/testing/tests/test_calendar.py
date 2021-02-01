@@ -10,6 +10,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 
 from xclim.core.calendar import (
     adjust_doy_calendar,
+    compare_offsets,
     convert_calendar,
     date_range,
     datetime_to_decimal_year,
@@ -69,21 +70,51 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     assert_array_equal(cftime_ends, datetime_ends)
 
 
-def test_percentile_doy(tas_series):
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_percentile_doy(tas_series, use_dask):
+
     tas = tas_series(np.arange(365), start="1/1/2001")
+    if use_dask:
+        tas = tas.chunk(dict(time=10))
     tas = xr.concat((tas, tas), "dim0")
-    p1 = percentile_doy(tas, window=5, per=0.5)
+    p1 = percentile_doy(tas, window=5, per=50)
     assert p1.sel(dayofyear=3, dim0=0).data == 2
     assert p1.attrs["units"] == "K"
 
 
-def test_percentile_doy_nan(tas_series):
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_percentile_doy_nan(tas_series, use_dask):
     tas = tas_series(np.arange(365), start="1/1/2001")
+    if use_dask:
+        tas = tas.chunk(dict(time=10))
     tas = tas.where(tas.time.dt.dayofyear != 2)
     tas = xr.concat((tas, tas), "dim0")
-    pnan = percentile_doy(tas, window=5, per=0.5)
+    pnan = percentile_doy(tas, window=5, per=50)
     assert pnan.sel(dayofyear=3, dim0=0).data == 2.5
     assert pnan.attrs["units"] == "K"
+
+
+def test_percentile_doy_invalid():
+    tas = xr.DataArray(
+        [0, 1],
+        dims=("time",),
+        coords={"time": pd.date_range("2000-01-01", periods=2, freq="H")},
+    )
+    with pytest.raises(ValueError):
+        percentile_doy(tas)
+
+
+@pytest.mark.parametrize(
+    "freqA,op,freqB,exp",
+    [
+        ("D", ">", "H", True),
+        ("2YS", "<=", "QS-DEC", False),
+        ("4W", "==", "3W", False),
+        ("24H", "==", "D", True),
+    ],
+)
+def test_compare_offsets(freqA, op, freqB, exp):
+    assert compare_offsets(freqA, op, freqB) is exp
 
 
 def test_adjust_doy_360_to_366():
