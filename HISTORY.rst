@@ -21,6 +21,10 @@ Internal changes
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
 
 
+Bug fixes
+~~~~~~~~~
+* Fixed a bug that prevented the use of `xr.set_options(keep_attrs=True)` with indices.
+
 0.23.0 (2021-01-22)
 -------------------
 
