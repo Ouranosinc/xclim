@@ -97,7 +97,9 @@ def cold_spell_days(
     over = tas < t
     group = over.resample(time=freq)
 
-    return group.map(rl.windowed_run_count, window=window, dim="time")
+    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("", tas="[temperature]", thresh="[temperature]")
@@ -134,7 +136,9 @@ def cold_spell_frequency(
     over = tas < t
     group = over.resample(time=freq)
 
-    return group.map(rl.windowed_run_events, window=window, dim="time")
+    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out.attrs["units"] = ""
+    return out
 
 
 @declare_units("mm/day", pr="[precipitation]", thresh="[precipitation]")
@@ -226,7 +230,9 @@ def dry_days(pr: xarray.DataArray, thresh: str = "0.2 mm/d", freq: str = "YS"):
         \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr)
-    return pr.pipe(lambda x: (pr < thresh) * 1).resample(time=freq).sum(dim="time")
+    out = pr.pipe(lambda x: (pr < thresh) * 1).resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
@@ -269,7 +275,9 @@ def maximum_consecutive_wet_days(
     thresh = convert_units_to(thresh, pr, "hydro")
 
     group = (pr > thresh).resample(time=freq)
-    return group.map(rl.longest_run, dim="time")
+    out = group.map(rl.longest_run, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -827,7 +835,9 @@ def heat_wave_index(
     over = tasmax > thresh
     group = over.resample(time=freq)
 
-    return group.map(rl.windowed_run_count, window=window, dim="time")
+    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("C days", tas="[temperature]", thresh="[temperature]")
@@ -925,7 +935,9 @@ def hot_spell_max_length(
     cond = tasmax > thresh_tasmax
     group = cond.resample(time=freq)
     max_l = group.map(rl.longest_run, dim="time")
-    return max_l.where(max_l >= window, 0)
+    out = max_l.where(max_l >= window, 0)
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units(
@@ -984,7 +996,9 @@ def hot_spell_frequency(
 
     cond = tasmax > thresh_tasmax
     group = cond.resample(time=freq)
-    return group.map(rl.windowed_run_events, window=window, dim="time")
+    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out.attrs["units"] = ""
+    return out
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -1020,6 +1034,7 @@ def tn_days_below(
     """
     thresh = convert_units_to(thresh, tasmin)
     f1 = threshold_count(tasmin, "<", thresh, freq)
+    f1.attrs["units"] = "days"
     return f1
 
 
@@ -1055,8 +1070,9 @@ def tx_days_above(
         TX_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    f = (tasmax > thresh) * 1
-    return f.resample(time=freq).sum(dim="time")
+    f = threshold_count(tasmax, ">", thresh, freq)
+    f.attrs["units"] = "days"
+    return f
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
@@ -1092,8 +1108,9 @@ def warm_day_frequency(
 
     """
     thresh = convert_units_to(thresh, tasmax)
-    events = (tasmax > thresh) * 1
-    return events.resample(time=freq).sum(dim="time")
+    events = threshold_count(tasmax, ">", thresh, freq)
+    events.attrs["units"] = "days"
+    return events
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -1119,8 +1136,9 @@ def warm_night_frequency(
       The number of days with tasmin > thresh per period
     """
     thresh = convert_units_to(thresh, tasmin)
-    events = (tasmin > thresh) * 1
-    return events.resample(time=freq).sum(dim="time")
+    events = threshold_count(tasmin, ">", thresh, freq)
+    events.attrs["units"] = "days"
+    return events
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
@@ -1155,8 +1173,9 @@ def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    wd = (pr >= thresh) * 1
-    return wd.resample(time=freq).sum(dim="time")
+    wd = threshold_count(pr, ">=", thresh, freq)
+    wd.attrs["units"] = "days"
+    return wd
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -1201,8 +1220,9 @@ def maximum_consecutive_frost_days(
     """
     t = convert_units_to(thresh, tasmin)
     group = (tasmin < t).resample(time=freq)
-
-    return group.map(rl.longest_run, dim="time")
+    out = group.map(rl.longest_run, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", pr="[precipitation]", thresh="[precipitation]")
@@ -1244,8 +1264,9 @@ def maximum_consecutive_dry_days(
     """
     t = convert_units_to(thresh, pr, "hydro")
     group = (pr < t).resample(time=freq)
-
-    return group.map(rl.longest_run, dim="time")
+    out = group.map(rl.longest_run, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmin="[temperature]", thresh="[temperature]")
@@ -1287,8 +1308,9 @@ def maximum_consecutive_frost_free_days(
     """
     t = convert_units_to(thresh, tasmin)
     group = (tasmin > t).resample(time=freq)
-
-    return group.map(rl.longest_run, dim="time")
+    out = group.map(rl.longest_run, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmax="[temperature]", thresh="[temperature]")
@@ -1330,8 +1352,9 @@ def maximum_consecutive_tx_days(
     """
     t = convert_units_to(thresh, tasmax)
     group = (tasmax > t).resample(time=freq)
-
-    return group.map(rl.longest_run, dim="time")
+    out = group.map(rl.longest_run, dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("[area]", sic="[]", area="[area]", thresh="[]")
@@ -1442,9 +1465,9 @@ def tropical_nights(
         TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
-    return (
-        tasmin.pipe(lambda x: (tasmin > thresh) * 1).resample(time=freq).sum(dim="time")
-    )
+    out = threshold_count(tasmin, ">", thresh, freq)
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("", tas="[temperature]", thresh="[temperature]", sum_thresh="K days")

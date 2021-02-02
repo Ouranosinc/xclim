@@ -113,9 +113,11 @@ def cold_spell_duration_index(
 
     below = tasmin < thresh
 
-    return below.resample(time=freq).map(
+    out = below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
+    out.attrs["units"] = "days"
+    return out
 
 
 def cold_and_dry_days(
@@ -221,7 +223,7 @@ def daily_freezethaw_cycles(
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
     out = ft.resample(time=freq).sum(dim="time")
-
+    out.attrs["units"] = "days"
     return out
 
 
@@ -663,7 +665,9 @@ def heat_wave_max_length(
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
     max_l = group.map(rl.longest_run, dim="time")
-    return max_l.where(max_l >= window, 0)
+    out = max_l.where(max_l >= window, 0)
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units(
@@ -717,7 +721,8 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     group = cond.resample(time=freq)
-    return group.map(rl.windowed_run_count, args=(window,), dim="time")
+    out = group.map(rl.windowed_run_count, args=(window,), dim="time")
+    return out
 
 
 @declare_units(
@@ -780,6 +785,7 @@ def liquid_precip_ratio(
     tot = pr.resample(time=freq).sum(dim="time")
     rain = tot - prsn.resample(time=freq).sum(dim="time")
     ratio = rain / tot
+    ratio.attrs["units"] = ""
     return ratio
 
 
@@ -906,7 +912,9 @@ def rain_on_frozen_ground_days(
     tcond = (tas > frz).rolling(time=8).reduce(func)
     pcond = pr > t
 
-    return (tcond * pcond * 1).resample(time=freq).sum(dim="time")
+    out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units(
@@ -957,7 +965,9 @@ def days_over_precip_thresh(
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr > tp
 
-    return over.resample(time=freq).sum(dim="time")
+    out = over.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units(
@@ -1005,7 +1015,9 @@ def fraction_over_precip_thresh(
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
 
-    return over / total
+    out = over / total
+    out.attrs["units"] = ""
+    return out
 
 
 @declare_units("days", tas="[temperature]", t90="[temperature]")
@@ -1050,7 +1062,9 @@ def tg90p(
     # Identify the days over the 90th percentile
     over = tas > thresh
 
-    return over.resample(time=freq).sum(dim="time")
+    out = over.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tas="[temperature]", t10="[temperature]")
@@ -1095,7 +1109,9 @@ def tg10p(
     # Identify the days below the 10th percentile
     below = tas < thresh
 
-    return below.resample(time=freq).sum(dim="time")
+    out = below.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmin="[temperature]", t90="[temperature]")
@@ -1140,7 +1156,9 @@ def tn90p(
     # Identify the days with min temp above 90th percentile.
     over = tasmin > thresh
 
-    return over.resample(time=freq).sum(dim="time")
+    out = over.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmin="[temperature]", t10="[temperature]")
@@ -1185,7 +1203,9 @@ def tn10p(
     # Identify the days below the 10th percentile
     below = tasmin < thresh
 
-    return below.resample(time=freq).sum(dim="time")
+    out = below.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmax="[temperature]", t90="[temperature]")
@@ -1230,7 +1250,9 @@ def tx90p(
     # Identify the days with max temp above 90th percentile.
     over = tasmax > thresh
 
-    return over.resample(time=freq).sum(dim="time")
+    out = over.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmax="[temperature]", t10="[temperature]")
@@ -1275,7 +1297,9 @@ def tx10p(
     # Identify the days below the 10th percentile
     below = tasmax < thresh
 
-    return below.resample(time=freq).sum(dim="time")
+    out = below.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units(
@@ -1337,7 +1361,9 @@ def tx_tn_days_above(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
-    return events.resample(time=freq).sum(dim="time")
+    out = events.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmax="[temperature]", tx90="[temperature]")
@@ -1390,9 +1416,11 @@ def warm_spell_duration_index(
 
     above = tasmax > thresh
 
-    return above.resample(time=freq).map(
+    out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("", pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")

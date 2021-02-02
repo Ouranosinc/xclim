@@ -345,7 +345,9 @@ def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     f = (tasmin < frz) * 1
-    return f.resample(time=freq).sum(dim="time")
+    out = f.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("days", tasmax="[temperature]")
@@ -381,7 +383,9 @@ def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     if fu != tu:
         frz = units.convert(frz, fu, tu)
     f = (tasmax < frz) * 1
-    return f.resample(time=freq).sum(dim="time")
+    out = f.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = "days"
+    return out
 
 
 @declare_units("mm/day", pr="[precipitation]")

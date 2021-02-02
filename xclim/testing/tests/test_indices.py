@@ -23,7 +23,7 @@ import xarray as xr
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
-from xclim.core.units import ValidationError
+from xclim.core.units import ValidationError, convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -114,7 +114,7 @@ class TestColdSpellDurationIndex:
 
         out = xci.cold_spell_duration_index(tn, tn10, freq="YS")
         assert out[0] == 10
-        assert out.units == "days"
+        convert_units_to(out, "days")
 
 
 class TestColdSpellDays:
@@ -127,7 +127,7 @@ class TestColdSpellDays:
 
         out = xci.cold_spell_days(da, thresh="-10. C", freq="M")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert out.units == "days"
+        convert_units_to(out, "days")
 
 
 class TestColdSpellFreq:
