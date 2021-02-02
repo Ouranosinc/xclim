@@ -13,6 +13,8 @@ from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 
+from .utils import InputKind
+
 
 class AttrFormatter(string.Formatter):
     """A formatter for frequently used attribute values.
@@ -341,3 +343,100 @@ def unprefix_attrs(source, keys, prefix):
         elif key not in out:
             out[key] = val
     return out
+
+
+def _gen_parameters_section(names, parameters):
+    """Generate the "parameters" section of the indicator docstring.
+
+    Parameters
+    ----------
+    names : Sequence[str]
+      Names of the input parameters, in order. Usually `Ind._parameters`.
+    parameters : Mapping[str, Any]
+      Parameters dictionary. Usually `Ind.parameters`, As this is missing `ds`, it is added explicitly.
+    """
+    section = "Parameters\n----------\n"
+    for name in names:
+        if name == "ds":
+            descstr = "Input dataset."
+            defstr = "Default: None."
+            unitstr = ""
+            annotstr = "Dataset, optional"
+        else:
+            param = parameters[name]
+            descstr = param["description"]
+            if param["kind"] == InputKind.VARIABLE:
+                annotstr = "DataArray or str"
+                defstr = f"Default : `ds.{param['default']}`."
+            elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
+                annotstr = "DataArray or str, optional"
+                defstr = ""
+            else:
+                annotstr = getattr(
+                    param["annotation"], "__name__", str(param["annotation"])
+                )
+                defstr = f"Default : {param['default']}. "
+            if param.get("units", False):
+                unitstr = f"[Required units : {param['units']}]"
+            else:
+                unitstr = ""
+        section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
+    return section
+
+
+def _gen_returns_section(cfattrs):
+    """Generate the "Returns" section of an indicator's docstring.
+
+    Parameters
+    ----------
+    cfattrs : Sequence[Dict[str, Any]]
+      The list of cf attributes, usually Indicator.cf_attrs.
+    """
+    section = "Returns\n-------\n"
+    for attrs in cfattrs:
+        section += f"{attrs['var_name']} : DataArray\n"
+        section += f"  {attrs.get('long_name', '')}"
+        if "standard_name" in attrs:
+            section += f" ({attrs['standard_name']})"
+        if "units" in attrs:
+            section += f" [{attrs['units']}]"
+        section += "\n"
+        for key, attr in attrs.items():
+            if key not in ["long_name", "standard_name", "units", "var_name"]:
+                if callable(attr):
+                    attr = "<Dynamically generated string>"
+                section += f"  {key}: {attr}\n"
+    return section
+
+
+def generate_indicator_docstring(kwds):
+    """Generate an indicator's docstring from keywords.
+
+    Parameters
+    ----------
+    kwds : dict
+      The dict of all class attributes and init keywords as generated in the indicator's __new__ method.
+      It should have at least:
+        "compute", "_parameters", "parameters", "cf_attrs".
+    """
+    header = f"{kwds.get('title','')} (realm: {kwds.get('realm')})\n\n{kwds.get('abstract', '')}\n"
+
+    special = f"This indicator will check for missing values according to the method \"{kwds.get('missing', 'from_context')}\".\n"
+    if hasattr(kwds["compute"], "__module__"):
+        special += f"Based on indice `{kwds['compute'].__module__}.{kwds['compute'].__name__}`.\n"
+    if "keywords" in kwds:
+        special += f"Keywords : {', '.join(kwds['keywords'])}."
+
+    parameters = _gen_parameters_section(kwds["_parameters"], kwds["parameters"])
+
+    returns = _gen_returns_section(kwds["cf_attrs"])
+
+    extras = ""
+    for section in ["notes", "references"]:
+        if section in kwds:
+            extras += (
+                f"{section.capitalize()}\n{'-' * len(section)}\n{kwds[section]}\n\n"
+            )
+
+    doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
+    return doc

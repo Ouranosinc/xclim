@@ -15,7 +15,6 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from enum import IntEnum
 from inspect import Parameter, _empty, signature
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
@@ -29,6 +28,7 @@ from . import datachecks
 from .formatting import (
     AttrFormatter,
     default_formatter,
+    generate_indicator_docstring,
     merge_attributes,
     parse_doc,
     update_history,
@@ -36,19 +36,11 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import MissingVariableError
+from .utils import InputKind, MissingVariableError
 
 # Indicators registry
 registry = {}  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
-
-
-class InputKind(IntEnum):
-    """Constants for input parameter kinds."""
-
-    VARIABLE = 0
-    OPTIONAL_VARIABLE = 1
-    PARAMETER = 2
 
 
 class IndicatorRegistrar:
@@ -232,6 +224,10 @@ class Indicator(IndicatorRegistrar):
             raise AttributeError(
                 "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
             )
+
+        kwds["_indcompute"].__doc__ = kwds["__doc__"] = generate_indicator_docstring(
+            kwds
+        )
 
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)

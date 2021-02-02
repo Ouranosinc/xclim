@@ -2,6 +2,14 @@
 API
 ===
 
+Indicators
+==========
+
+.. toctree::
+
+  indicators_api
+
+
 Indices
 =======
 

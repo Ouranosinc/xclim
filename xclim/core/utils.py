@@ -8,16 +8,15 @@ Helper functions for the indices computation, things that do not belong in neith
 `xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
 """
 from collections import defaultdict
+from enum import IntEnum
 from functools import partial
 from types import FunctionType
-from typing import Callable, NewType, Optional
+from typing import Callable, Optional
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-
-UnitStr = NewType("UnitStr", str)
 
 
 def wrapped_partial(
@@ -173,3 +172,11 @@ def _calc_perc(arr, p=[50]):
             np.nanpercentile(arr[nans], p, axis=-1), 0, -1
         ).ravel()
     return out
+
+
+class InputKind(IntEnum):
+    """Constants for input parameter kinds."""
+
+    VARIABLE = 0
+    OPTIONAL_VARIABLE = 1
+    PARAMETER = 2

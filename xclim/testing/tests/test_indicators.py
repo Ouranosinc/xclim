@@ -342,12 +342,15 @@ def test_parsed_doc():
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
     assert params["tas"]["annotation"] is Union[str, xr.DataArray]
+    assert params["tas"]["units"] == "[temperature]"
     assert params["tas"]["kind"] is InputKind.VARIABLE
     assert params["tas"]["default"] == "tas"
     assert params["snd"]["default"] is None
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
+    assert params["snd"]["units"] == "[length]"
     assert params["shut_down_mode"]["annotation"] is str
     assert params["shut_down_mode"]["kind"] is InputKind.PARAMETER
+    assert params["start_up_mode"]["choices"] == {None, "snow_depth"}
 
 
 def test_default_formatter():
