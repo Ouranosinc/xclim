@@ -54,7 +54,7 @@ class FA(Streamflow):
 class Fit(Streamflow):
     freq = None
     missing = "at_least_n"
-    missing_options = {"n": 20}
+    # Do not set `missing_options` so it can be overriden by `set_options`.
 
     @staticmethod
     def cfcheck(**das):
