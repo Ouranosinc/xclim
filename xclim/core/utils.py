@@ -144,3 +144,32 @@ def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
     if chunking:
         return da.chunk(chunks=chunking)
     return da
+
+
+def _calc_perc(arr, p=[50]):
+    """Ufunc-like computing a percentile over the last axis of the array.
+
+    Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
+
+    Parameters
+    ----------
+    arr : np.array
+        Percentile is computed over the last axis.
+    p : sequence of floats
+        Percentile to compute, between 0 and 100. (the default is 50)
+
+    Returns
+    -------
+    np.array
+    """
+    nan_count = np.isnan(arr).sum(axis=-1)
+    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
+    nans = (nan_count > 0) & (nan_count < arr.shape[-1])
+    if np.any(nans):
+        out_mask = np.stack([nans] * len(p), axis=-1)
+        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
+        # only use nanpercentile where we need it (slow performance compared to standard) :
+        out[out_mask] = np.moveaxis(
+            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
+        ).ravel()
+    return out
