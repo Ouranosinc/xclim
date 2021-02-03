@@ -372,9 +372,12 @@ def _gen_parameters_section(names, parameters):
                 annotstr = "DataArray or str, optional"
                 defstr = ""
             else:
-                annotstr = getattr(
-                    param["annotation"], "__name__", str(param["annotation"])
-                )
+                if "choices" in param:
+                    annotstr = str(param["choices"])
+                else:
+                    annotstr = getattr(
+                        param["annotation"], "__name__", str(param["annotation"])
+                    )
                 defstr = f"Default : {param['default']}. "
             if param.get("units", False):
                 unitstr = f"[Required units : {param['units']}]"
@@ -422,10 +425,12 @@ def generate_indicator_docstring(kwds):
     header = f"{kwds.get('title','')} (realm: {kwds.get('realm')})\n\n{kwds.get('abstract', '')}\n"
 
     special = f"This indicator will check for missing values according to the method \"{kwds.get('missing', 'from_context')}\".\n"
-    if hasattr(kwds["compute"], "__module__"):
-        special += f"Based on indice `{kwds['compute'].__module__}.{kwds['compute'].__name__}`.\n"
+    if hasattr(kwds["compute"], "__func__") and hasattr(
+        kwds["compute"].__func__, "__module__"
+    ):
+        special += f"Based on indice `{kwds['compute'].__func__.__module__}.{kwds['compute'].__func__.__name__}`.\n"
     if "keywords" in kwds:
-        special += f"Keywords : {', '.join(kwds['keywords'])}."
+        special += f"Keywords : {kwds['keywords']}.\n"
 
     parameters = _gen_parameters_section(kwds["_parameters"], kwds["parameters"])
 

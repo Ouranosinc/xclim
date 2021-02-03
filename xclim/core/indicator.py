@@ -136,6 +136,16 @@ class Indicator(IndicatorRegistrar):
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
 
+    Attributes
+    ----------
+    parameters : dict
+      Dictionary listing the input parameters of the indicator with their description, default value, annotation
+      kind and, if applicable, units and fixed set of choices. The `kind` entry is an element of
+      :py:class:`xclim.core.utils.InputKind`, so either "VARIABLE", "OPTIONAL_VARIABLE" or "PARAMETER". Where the
+      two first denote an xarray object and the last a string or number. The `ds` argument is left out of the dictionary.
+    cf_attrs : list of dict
+      List of metadata information for each output of the indicator. It minimally contains a `var_name` entry.
+
     Notes
     -----
     All subclasses created are available in the `registry` attribute and can be used to define custom subclasses
