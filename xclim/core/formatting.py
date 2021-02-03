@@ -428,7 +428,7 @@ def generate_indicator_docstring(kwds):
     if hasattr(kwds["compute"], "__func__") and hasattr(
         kwds["compute"].__func__, "__module__"
     ):
-        special += f"Based on indice `{kwds['compute'].__func__.__module__}.{kwds['compute'].__func__.__name__}`.\n"
+        special += f"Based on indice :py:func:`{kwds['compute'].__func__.__module__}.{kwds['compute'].__func__.__name__}`.\n"
     if "keywords" in kwds:
         special += f"Keywords : {kwds['keywords']}.\n"
 
