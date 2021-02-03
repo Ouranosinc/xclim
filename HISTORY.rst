@@ -13,13 +13,20 @@ Breaking changes
     * `per` argument is now expected to between 0-100 (not 0-1).
     * input data must have a daily (or coarser) time frequency.
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Indicator now have docstrings generated from their metadata.
+* Units and fixed choices set are parsed from indice docstrings into `Indicator.parameters`.
+* Units of indices using the `declare_units` decorator are stored in `indice.in_units` and `indice.out_units`.
+* Changes to `Indicator.format` and `Indicator.json` to ensure the resulting json really is serializable.
+
 Internal changes
 ~~~~~~~~~~~~~~~~
 * leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`
 * modified `xclim.core.calendar.percentile_doy` to improve performance
 * new `xclim.core.calendar.compare_offsets` for comparing offset strings
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
-
+* Added a indicators api page to the doc and links to there from the :ref:`Climate Indicators` page.
 
 0.23.0 (2021-01-22)
 -------------------
