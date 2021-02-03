@@ -54,11 +54,3 @@ dt var {
 .xr-attrs dt {
   display: inline !important;
 }
-
-.indbut {
-  cursor: pointer;
-}
-
-.inddoc {
-  display: none;
-}
