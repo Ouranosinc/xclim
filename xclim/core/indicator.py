@@ -308,7 +308,7 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _update_and_inject_arguments(cls, compute):
-        """Update comput argument and inject those shared by all indicators."""
+        """Update compute argument and inject those shared by all indicators."""
         # Base signature
         sig = signature(compute)
 
