@@ -58,7 +58,7 @@ _np_ops = {
 }
 
 
-@declare_units("%", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units(tasmin="[temperature]", tasmax="[temperature]")
 def isothermality(
     tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
@@ -95,7 +95,7 @@ def isothermality(
     return iso
 
 
-@declare_units("%", tas="[temperature]")
+@declare_units(tas="[temperature]")
 def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     r"""ANUCLIM temperature seasonality (coefficient of variation).
 
@@ -141,7 +141,7 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     return seas
 
 
-@declare_units("percent", pr="[precipitation]")
+@declare_units(pr="[precipitation]")
 def precip_seasonality(
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
@@ -159,7 +159,7 @@ def precip_seasonality(
     Returns
     -------
     xarray.DataArray
-      The coefficient of variation of precipitation values.
+      The coefficient of variation of precipitation values, as a percent.
 
     Examples
     --------
@@ -191,11 +191,11 @@ def precip_seasonality(
     with xarray.set_options(keep_attrs=True):
         seas = 100 * _anuclim_coeff_var(pr)
 
-    seas.attrs["units"] = "percent"
+    seas.attrs["units"] = "%"
     return seas
 
 
-@declare_units("[temperature]", tas="[temperature]")
+@declare_units(tas="[temperature]")
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
     op: str = None,
@@ -222,7 +222,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray
-       mean temperature values of the warmest/coldest quearter of each year.
+       Mean temperature values of the warmest/coldest quearter of each year.
 
     Examples
     --------
@@ -243,10 +243,12 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(src_timestep, tas=tas)
 
     oper = _np_ops[op]
-    return select_resample_op(out, oper, freq)
+    out = select_resample_op(out, oper, freq)
+    out.attrs["units"] = tas.units
+    return out
 
 
-@declare_units("[temperature]", tas="[temperature]", pr="[precipitation]")
+@declare_units(tas="[temperature]", pr="[precipitation]")
 def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
@@ -294,7 +296,7 @@ def tg_mean_wetdry_quarter(
         return out
 
 
-@declare_units("mm", pr="[precipitation]")
+@declare_units(pr="[precipitation]")
 def prcptot_wetdry_quarter(
     pr: xarray.DataArray, op: str = None, src_timestep: str = None, freq: str = "YS"
 ) -> xarray.DataArray:
@@ -317,7 +319,7 @@ def prcptot_wetdry_quarter(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray : [mm]
        Total precipitation values of the wettest/driest quarter of each year.
 
     Examples
@@ -335,6 +337,7 @@ def prcptot_wetdry_quarter(
     the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
     should be calculated prior to calling the function.
     """
+    # returns mm values
     out = _to_quarter(src_timestep, pr=pr)
 
     try:
@@ -344,10 +347,12 @@ def prcptot_wetdry_quarter(
             f'Unknown operation "{op}" ; not one of "wettest" or "driest"'
         )
 
-    return select_resample_op(out, oper, freq)
+    out = select_resample_op(out, oper, freq)
+    out.attrs["units"] = "mm"
+    return out
 
 
-@declare_units("mm", pr="[precipitation]", tas="[temperature]")
+@declare_units(pr="[precipitation]", tas="[temperature]")
 def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
@@ -376,8 +381,8 @@ def prcptot_warmcold_quarter(
 
     Returns
     -------
-    xarray.DataArray
-       Total precipitation values of the warmest/coldest quarter of each year.
+    xarray.DataArray : [mm]
+       Total precipitation values of the warmest/coldest quarter of each year
 
     Notes
     -----
@@ -388,6 +393,7 @@ def prcptot_warmcold_quarter(
     """
     # determine input data frequency
     tas_qrt = _to_quarter(src_timestep, tas=tas)
+    # returns mm values
     pr_qrt = _to_quarter(src_timestep, pr=pr)
 
     xr_op = _xr_argops[op]
@@ -397,7 +403,7 @@ def prcptot_warmcold_quarter(
         return out
 
 
-@declare_units("mm", pr="[precipitation]")
+@declare_units(pr="[precipitation]")
 def prcptot(
     pr: xarray.DataArray, src_timestep: str = None, freq: str = "YS"
 ) -> xarray.DataArray:
@@ -414,8 +420,8 @@ def prcptot(
 
     Returns
     -------
-    xarray.DataArray
-       Total precipitation [mm].
+    xarray.DataArray : [mm]
+       Total precipitation.
 
     Notes
     -----
@@ -437,7 +443,7 @@ def prcptot(
     return pr.resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
-@declare_units("mm", pr="[precipitation]")
+@declare_units(pr="[precipitation]")
 def prcptot_wetdry_period(
     pr: xarray.DataArray, *, op: str, src_timestep: str, freq: str = "YS"
 ) -> xarray.DataArray:

@@ -10,7 +10,7 @@ most unit handling methods.
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 import pint.converters
 import pint.unit
@@ -18,6 +18,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
 
+from .calendar import parse_offset
 from .options import datacheck
 from .utils import ValidationError
 
@@ -26,6 +27,7 @@ __all__ = [
     "declare_units",
     "pint_multiply",
     "pint2cfunits",
+    "str2pint",
     "units",
     "units2pint",
 ]
@@ -302,6 +304,35 @@ def convert_units_to(
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
+FREQ_UNITS = {
+    "N": "nanosecond",
+    "L": "millisecond",
+    "S": "second",
+    "T": "minute",
+    "H": "hour",
+    "D": "day",
+    "W": "week",
+    "M": "month",
+    "A": "year",
+}
+
+
+def infer_sampling_units(da: xr.DataArray) -> Tuple[int, str]:
+    """Infer a multiplicator and the units corresponding to one sampling period.
+
+    If `xr.infer_freq` fails, returns (1, "day").
+    """
+    freq = xr.infer_freq(da.time)
+    if freq is None:
+        return 1, "day"
+
+    multi, base, _ = parse_offset(freq)
+    try:
+        return int(multi), FREQ_UNITS[base]
+    except KeyError:
+        raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
+
+
 @datacheck
 def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
     if dim is None or val is None:
@@ -354,21 +385,14 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
 
 
 def declare_units(
-    out_units: Optional[Union[str, List[str]]],
-    check_output: bool = True,
     **units_by_name,
 ) -> Callable:
     """Create a decorator to check units of function arguments.
 
-    The decorator checks that input and output values have units that are compatible with expected dimensions.
+    The decorator checks that input values have units that are compatible with expected dimensions.
 
     Parameters
     ----------
-    out_units : str or Sequence[str]
-      The units of the output(s). If the indice outputs multiple DataArray, a sequence of string of the same length must be given.
-      Pass "" for unitless quantities.
-    check_output : bool
-      Set to False to skip the output units check.
     units_by_name : Mapping[str, str]
       Mapping from the input parameter names to their units or dimensionality ("[...]").
 
@@ -378,12 +402,11 @@ def declare_units(
 
     .. code::
 
-       @declare_units("K", tas=["temperature"])
+       @declare_units(tas=["temperature"])
        def func(tas):
           ...
 
-    the decorator will check that `tas` has units of temperature (C, K, F) and that the output is in Kelvins.
-
+    the decorator will check that `tas` has units of temperature (C, K, F).
     """
 
     def dec(func):
@@ -400,32 +423,18 @@ def declare_units(
 
             out = func(*args, **kwargs)
 
-            def _check_out_units(out, out_units):
-                if "units" in out.attrs:
-                    # Check that output units dimensions match expectations, e.g. [temperature]
-                    if "[" in out_units:
-                        check_units(out, out_units)
-                    # Explicitly convert units if units are declared, e.g K
-                    else:
-                        out = convert_units_to(out, out_units)
-
-                # Otherwise, we impose the units if given.
-                elif "[" not in out_units:
-                    out.attrs["units"] = out_units
-
-                else:
-                    raise ValueError(
-                        "Output units are not propagated by computation nor specified by decorator."
-                    )
-                return out
-
-            if check_output:
-                if isinstance(out, tuple):
-                    out = tuple(
-                        _check_out_units(o, o_u) for o, o_u in zip(out, out_units)
-                    )
-                else:
-                    out = _check_out_units(out, out_units)
+            # Perform very basic sanity check on the output.
+            # Indice are responsible for unit management.
+            # If this fails, it's a developer's error.
+            if isinstance(out, tuple):
+                for outd in out:
+                    assert (
+                        "units" in outd.attrs
+                    ), "No units were assigned in one of the indice's outputs."
+            else:
+                assert (
+                    "units" in out.attrs
+                ), "No units were assigned to the indice's output."
 
             return out
 
