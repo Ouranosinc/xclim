@@ -19,6 +19,7 @@ Bug fixes
 
 Internal changes
 ~~~~~~~~~~~~~~~~
+* leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`
 * modified `xclim.core.calendar.percentile_doy` to improve performance
 * new `xclim.core.calendar.compare_offsets` for comparing offset strings
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
