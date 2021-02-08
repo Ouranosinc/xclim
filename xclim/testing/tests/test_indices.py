@@ -194,7 +194,7 @@ class TestCoolingDegreeDays:
         a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
-        assert cdd.units == "C days"
+        assert cdd.units == "K d"
 
     def test_cdd(self, tas_series):
         a = tas_series(np.array([20, 25, -15, 19]) + K2C)
@@ -264,10 +264,10 @@ class TestMaxPrIntensity:
         pr[10:22] += np.arange(12)  # kg / m2 / s
 
         out = xci.max_pr_intensity(pr, window=1, freq="Y")
-        np.testing.assert_array_almost_equal(out[0], 11 * 3600)
+        np.testing.assert_array_almost_equal(out[0], 11)
 
         out = xci.max_pr_intensity(pr, window=12, freq="Y")
-        np.testing.assert_array_almost_equal(out[0], 5.5 * 3600)
+        np.testing.assert_array_almost_equal(out[0], 5.5)
 
         pr.attrs["units"] = "mm"
         with pytest.raises(ValidationError):
@@ -1208,26 +1208,27 @@ class TestTempWetDryPrecipWarmColdQuarter:
         np.testing.assert_array_almost_equal(out, expected)
 
     @pytest.mark.parametrize(
-        "freq,units,op,expected",
+        "freq,srcts,period,op,expected",
         [
-            (("D", "D"), "mm/day", "warmest", [2021.82232981, 2237.15117103]),
-            (("7D", "W"), "mm/week", "warmest", [2021.82232981, 2237.15117103]),
-            (("MS", "M"), "mm/month", "warmest", [2038.54763205, 2247.47136629]),
-            (("D", "D"), "mm/day", "coldest", [311.91895223, 264.50013361]),
-            (("7D", "W"), "mm/week", "coldest", [311.91895223, 264.50013361]),
-            (("MS", "M"), "mm/month", "coldest", [311.91895223, 259.36682028]),
+            ("D", "D", "day", "warmest", [2021.82232981, 2237.15117103]),
+            ("7D", "W", "week", "warmest", [2021.82232981, 2237.15117103]),
+            ("MS", "M", "month", "warmest", [2038.54763205, 2247.47136629]),
+            ("D", "D", "day", "coldest", [311.91895223, 264.50013361]),
+            ("7D", "W", "week", "coldest", [311.91895223, 264.50013361]),
+            ("MS", "M", "month", "coldest", [311.91895223, 259.36682028]),
         ],
     )
-    def test_pr_warmcold(self, tas_series, pr_series, freq, units, op, expected):
+    def test_pr_warmcold(
+        self, tas_series, pr_series, freq, srcts, period, op, expected
+    ):
         tas, pr = self.get_data(tas_series, pr_series)
-        freq, src_timestep = freq
-        pr = xci.precip_accumulation(pr, freq=freq)
-        pr.attrs["units"] = units
+        pr = convert_units_to(xci.precip_accumulation(pr, freq=freq), "mm")
+        pr.attrs["units"] = f"{pr.units} / {period}"
 
         tas = xci.tg_mean(tas, freq=freq)
 
         out = xci.prcptot_warmcold_quarter(
-            tas=tas, pr=pr, freq="YS", src_timestep=src_timestep, op=op
+            tas=tas, pr=pr, freq="YS", src_timestep=srcts, op=op
         )
         np.testing.assert_array_almost_equal(out, expected)
 

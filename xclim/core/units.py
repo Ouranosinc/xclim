@@ -172,6 +172,9 @@ def pint2cfunits(value: Any) -> str:
       Units following CF-Convention.
     """
     # Print units using abbreviations (millimeter -> mm)
+    if isinstance(value, pint.Quantity):
+        value = value.units
+
     s = f"{value:~}"
 
     # Search and replace patterns
@@ -185,6 +188,11 @@ def pint2cfunits(value: Any) -> str:
         return f"{u}{neg}{p}"
 
     out, n = re.subn(pat, repl, s)
+
+    # Remove multiplications
+    out = out.replace(" * ", " ")
+    # Delta degrees:
+    out = out.replace("Δ°", "delta_deg")
     return out.replace("percent", "%")
 
 
@@ -204,6 +212,8 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     f = a * q.to_base_units()
     if out_units:
         f = f.to(out_units)
+    else:
+        f = f.to_reduced_units()
     out = da * f.magnitude
     out.attrs["units"] = pint2cfunits(f.units)
     return out
@@ -317,20 +327,95 @@ FREQ_UNITS = {
 }
 
 
-def infer_sampling_units(da: xr.DataArray) -> Tuple[int, str]:
+def infer_sampling_units(da: xr.DataArray, deffreq: str = "D") -> Tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
-    If `xr.infer_freq` fails, returns (1, "day").
+    If `xr.infer_freq` fails, returns defval
     """
     freq = xr.infer_freq(da.time)
     if freq is None:
-        return 1, "day"
+        freq = deffreq
 
     multi, base, _ = parse_offset(freq)
     try:
-        return int(multi), FREQ_UNITS[base]
+        return int(multi or "1"), FREQ_UNITS[base]
     except KeyError:
         raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
+
+
+def to_agg_units(
+    out: xr.DataArray, orig: xr.DataArray, op: str, dim="time"
+) -> xr.DataArray:
+    """Set and convert units of an array after an aggregation operation along the sampling dimension (time).
+
+    Parameters
+    ----------
+    out : xr.DataArray
+      The output array of the aggregation operation, no units operation done yet.
+    orig : xr.DataArray
+      The original array before the aggregation operation,
+      used to infer the sampling units and get the variable units.
+    op : {'count', 'prod', 'delta_prod'}
+      The type of aggregation operation performed. The special "delta_*" ops are used
+      with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
+    dim : str
+      The time dimension along which the aggregation was performed.
+    """
+    m, freq_u_raw = infer_sampling_units(orig[dim])
+    freq_u = str2pint(freq_u_raw)
+    orig_u = str2pint(orig.units)
+
+    out = out * m
+    if op == "count":
+        out.attrs["units"] = freq_u_raw
+    elif op == "prod":
+        out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+    elif op == "delta_prod":
+        out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
+    else:
+        raise ValueError(f"Aggregation op {op} not in [count, prod, delta_prod].")
+    return out
+
+
+def rate2amount(
+    rate: xr.DataArray, dim: str = "time", out_units: str = None
+) -> xr.DataArray:
+    """Convert a rate variable to an amount by multiplying by the sampling period length.
+
+    If the sampling period length cannot be inferred (i.e. : it is not consistent), the rate values
+    are multiplied by the duration between their time coordinate and the next one. The last period
+    is estimated with the duration of the one just before.
+
+    Parameters
+    ----------
+    rate : xr.DataArray
+      "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
+    dim : str
+      The time dimension.
+    out_units : str, optional
+      Optional output units to convert to.
+    """
+    try:
+        m, u = infer_sampling_units(rate.time, deffreq=None)
+    except AttributeError:
+        # In coherent time axis : xr.infer_freq returned None
+        # Get sampling period lengths in nanoseconds. Last period as the same length as the one before.
+        dt = (
+            rate.time.diff(dim, label="lower")
+            .reindex({dim: rate[dim]}, method="ffill")
+            .astype(float)
+        )
+        dt = dt / 1e9  # Convert to seconds
+        tu = (str2pint(rate.units) * str2pint("s")).to_reduced_units()
+        amount = rate * dt * tu.m
+        amount.attrs["units"] = pint2cfunits(tu)
+        if out_units:
+            amount = convert_units_to(amount, out_units)
+    else:
+        q = units.Quantity(m, u)
+        amount = pint_multiply(rate, q, out_units=out_units)
+
+    return amount
 
 
 @datacheck

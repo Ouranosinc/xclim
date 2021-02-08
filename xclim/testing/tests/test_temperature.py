@@ -7,6 +7,7 @@ import xarray as xr
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
+from xclim.core.units import convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -88,7 +89,7 @@ class TestDTR:
 
         np.testing.assert_array_equal(dtr, dtrC)
         assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0])
 
         assert np.isnan(dtr.values[1, 1, 0])
 
@@ -98,7 +99,7 @@ class TestDTR:
         dtrC = atmos.max_daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
         np.testing.assert_array_equal(dtr, dtrC)
         assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0])
         assert np.isnan(dtr.values[1, 1, 0])
         assert np.isnan(dtr.values[0, -1, -1])
 
@@ -129,7 +130,7 @@ class TestDTRVar:
         np.testing.assert_array_equal(dtr, dtrC)
 
         # first month jan use 0:30 (n==30) because of day to day diff
-        assert np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0])
 
         assert np.isnan(dtr.values[1, 1, 0])
 
@@ -161,7 +162,7 @@ class TestETR:
         np.testing.assert_array_equal(etr, etrC)
 
         etr1 = max1[0:31].max() - min1[0:31].min()
-        assert np.allclose(etr1, etr.values[0, 0, 0], etrC.values[0, 0, 0])
+        assert np.allclose(etr1, etr.values[0, 0, 0])
 
         assert np.isnan(etr.values[1, 1, 0])
 

@@ -8,10 +8,10 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    infer_sampling_units,
-    pint_multiply,
-    units,
-    units2pint,
+    pint2cfunits,
+    rate2amount,
+    str2pint,
+    to_agg_units,
 )
 
 from . import fwi
@@ -77,9 +77,9 @@ def cold_spell_duration_index(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
-      percentile [days].
+      percentile.
 
     Notes
     -----
@@ -117,10 +117,7 @@ def cold_spell_duration_index(
     out = below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
-    mult, units = infer_sampling_units(tasmin.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 def cold_and_dry_days(
@@ -145,7 +142,7 @@ def cold_and_dry_days(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray,
       The total number of days where cold and dry conditions coincide.
 
     Notes
@@ -199,7 +196,7 @@ def daily_freezethaw_cycles(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Number of days with a diurnal freeze-thaw cycle
 
     Notes
@@ -225,10 +222,7 @@ def daily_freezethaw_cycles(
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
     out = ft.resample(time=freq).sum(dim="time")
-    mult, units = infer_sampling_units(tasmin.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -255,7 +249,7 @@ def daily_temperature_range(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same as tasmin]
       The average variation in daily temperature range for the given time period.
 
     Notes
@@ -269,11 +263,11 @@ def daily_temperature_range(
 
         DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
-    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
+    tasmax = convert_units_to(tasmax, tasmin)
     dtr = tasmax - tasmin
     out = select_resample_op(dtr, op=op, freq=freq)
-
-    out.attrs["units"] = f"{q.units}"
+    u = str2pint(tasmax.units)
+    out.attrs["units"] = pint2cfunits(u - u)
     return out
 
 
@@ -296,7 +290,7 @@ def daily_temperature_range_variability(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same as tasmin]
       The average day-to-day variation in daily temperature range for the given time period.
 
     Notes
@@ -309,10 +303,11 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
-    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
+    tasmax = convert_units_to(tasmax, tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
-    out.attrs["units"] = f"{q.units}"
+    u = str2pint(tasmax.units)
+    out.attrs["units"] = pint2cfunits(u - u)
     return out
 
 
@@ -335,7 +330,7 @@ def extreme_temperature_range(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same as tasmin]
       Extreme intra-period temperature range for the given time period.
 
     Notes
@@ -347,13 +342,13 @@ def extreme_temperature_range(
 
         ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
-    q = 1 * units2pint(tasmax) - 0 * units2pint(tasmin)
-
+    tasmax = convert_units_to(tasmax, tasmin)
     tx_max = tasmax.resample(time=freq).max(dim="time")
     tn_min = tasmin.resample(time=freq).min(dim="time")
 
     out = tx_max - tn_min
-    out.attrs["units"] = f"{q.units}"
+    u = str2pint(tasmax.units)
+    out.attrs["units"] = pint2cfunits(u - u)
     return out
 
 
@@ -408,15 +403,20 @@ def fire_weather_indexes(
     start_date : str, datetime.datetime
       Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
     start_up_mode : {None, "snow_depth"}
-        How to compute start up. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
+      How to compute start up. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
     shut_down_mode : {"temperature", "snow_depth"}
-        How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
+      How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
     params :
-        Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
+      Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
     Returns
     -------
-    DC, DMC, FFMC, ISI, BUI, FWI [all dimensionless]
+    DC: xarray.DataArray, [dimensionless]
+    DMC: xarray.DataArray, [dimensionless]
+    FFMC: xarray.DataArray, [dimensionless]
+    ISI: xarray.DataArray, [dimensionless]
+    BUI: xarray.DataArray, [dimensionless]
+    FWI: xarray.DataArray, [dimensionless]
 
     Notes
     -----
@@ -457,7 +457,7 @@ def fire_weather_indexes(
         start_up_mode=start_up_mode,
         **params,
     )
-    for outd in out:
+    for outd in out.values():
         outd.attrs["units"] = ""
     return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
 
@@ -502,7 +502,8 @@ def drought_code(
 
     Returns
     -------
-    Drought code [-]
+    xarray.DataArray, [dimensionless]
+       Drought code
 
     Notes
     -----
@@ -532,7 +533,7 @@ def drought_code(
         start_up_mode=start_up_mode,
         **params,
     )
-    out.attrs["units"] = ""
+    out["DC"].attrs["units"] = ""
     return out["DC"]
 
 
@@ -550,7 +551,6 @@ def heat_wave_frequency(
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    # Dev note : we should decide if it is deg K or C
     r"""Heat wave frequency.
 
     Number of heat waves over a given period. A heat wave is defined as an event
@@ -574,7 +574,7 @@ def heat_wave_frequency(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
       Number of heatwave at the wanted frequency
 
     Notes
@@ -600,9 +600,7 @@ def heat_wave_frequency(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
-    mult, units = infer_sampling_units(tasmax.time)
-    out = out * mult
-    out.attrs["units"] = units
+    out.attrs["units"] = ""
     return out
 
 
@@ -645,7 +643,7 @@ def heat_wave_max_length(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Maximum length of heatwave at the wanted frequency
 
     Notes
@@ -672,10 +670,7 @@ def heat_wave_max_length(
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
     out = max_l.where(max_l >= window, 0)
-    mult, units = infer_sampling_units(tasmax.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(
@@ -716,7 +711,7 @@ def heat_wave_total_length(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Total length of heatwave at the wanted frequency
 
     Notes
@@ -728,10 +723,7 @@ def heat_wave_total_length(
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
     out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
-    mult, units = infer_sampling_units(tasmax.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(
@@ -767,7 +759,7 @@ def liquid_precip_ratio(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
       Ratio of rainfall to total precipitation
 
     Notes
@@ -828,7 +820,7 @@ def precip_accumulation(
 
     Returns
     -------
-    xarray.DataArray, [mm]
+    xarray.DataArray, [length]
       The total daily precipitation at the given time frequency for the given phase.
 
     Notes
@@ -857,8 +849,7 @@ def precip_accumulation(
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
 
-    out = pr.resample(time=freq).sum(dim="time", keep_attrs=True)
-    return pint_multiply(out, 1 * units.day, "mm")
+    return rate2amount(pr).resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
@@ -886,8 +877,8 @@ def rain_on_frozen_ground_days(
 
     Returns
     -------
-    xarray.DataArray
-      The number of rain on frozen ground events per period [days]
+    xarray.DataArray, [time]
+      The number of rain on frozen ground events per period
 
     Notes
     -----
@@ -919,10 +910,7 @@ def rain_on_frozen_ground_days(
     pcond = pr > t
 
     out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
-    mult, units = infer_sampling_units(pr.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tas, "count")
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
@@ -950,7 +938,7 @@ def days_over_precip_thresh(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily precipitation above the given percentile [days]
 
     Examples
@@ -970,10 +958,7 @@ def days_over_precip_thresh(
 
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     out = threshold_count(pr, ">", tp, freq)
-    mult, units = infer_sampling_units(pr.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, pr, "count")
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
@@ -1001,7 +986,7 @@ def fraction_over_precip_thresh(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
       Fraction of precipitation over threshold during wet days days.
 
     """
@@ -1043,7 +1028,7 @@ def tg90p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily mean temperature below the 10th percentile [days]
 
     Notes
@@ -1065,11 +1050,7 @@ def tg90p(
 
     # Identify the days over the 90th percentile
     out = threshold_count(tas, ">", thresh, freq)
-
-    mult, units = infer_sampling_units(tas.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tas, "count")
 
 
 @declare_units(tas="[temperature]", t10="[temperature]")
@@ -1091,7 +1072,7 @@ def tg10p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily mean temperature below the 10th percentile [days]
 
     Notes
@@ -1113,11 +1094,7 @@ def tg10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tas, "<", thresh, freq)
-
-    mult, units = infer_sampling_units(tas.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tas, "count")
 
 
 @declare_units(tasmin="[temperature]", t90="[temperature]")
@@ -1139,7 +1116,7 @@ def tn90p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily minimum temperature below the 10th percentile [days]
 
     Notes
@@ -1161,11 +1138,7 @@ def tn90p(
 
     # Identify the days with min temp above 90th percentile.
     out = threshold_count(tasmin, ">", thresh, freq)
-
-    mult, units = infer_sampling_units(tasmin.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(tasmin="[temperature]", t10="[temperature]")
@@ -1187,7 +1160,7 @@ def tn10p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily minimum temperature below the 10th percentile [days]
 
     Notes
@@ -1209,11 +1182,7 @@ def tn10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmin, "<", thresh, freq)
-
-    mult, units = infer_sampling_units(tasmin.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(tasmax="[temperature]", t90="[temperature]")
@@ -1235,7 +1204,7 @@ def tx90p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily maximum temperature below the 10th percentile [days]
 
     Notes
@@ -1257,11 +1226,7 @@ def tx90p(
 
     # Identify the days with max temp above 90th percentile.
     out = threshold_count(tasmax, ">", thresh, freq)
-
-    mult, units = infer_sampling_units(tasmax.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(tasmax="[temperature]", t10="[temperature]")
@@ -1283,7 +1248,7 @@ def tx10p(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with daily maximum temperature below the 10th percentile [days]
 
     Notes
@@ -1305,11 +1270,7 @@ def tx10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmax, "<", thresh, freq)
-
-    mult, units = infer_sampling_units(tasmax.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(
@@ -1344,7 +1305,7 @@ def tx_tn_days_above(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       the number of days with tasmin > thresh_tasmin and
       tasmax > thresh_tasamax per period
 
@@ -1371,11 +1332,7 @@ def tx_tn_days_above(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
     events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
     out = events.resample(time=freq).sum(dim="time")
-
-    mult, units = infer_sampling_units(events.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(tasmax="[temperature]", tx90="[temperature]")
@@ -1401,7 +1358,7 @@ def warm_spell_duration_index(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
       percentile [days].
 
@@ -1431,11 +1388,7 @@ def warm_spell_duration_index(
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
     )
-
-    mult, units = infer_sampling_units(above.time)
-    out = out * mult
-    out.attrs["units"] = units
-    return out
+    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
