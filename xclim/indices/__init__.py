@@ -8,7 +8,7 @@ Indices library
 This module contains climate indices functions operating on `xarray.DataArray`. Most of these
 functions operate on daily time series, but some might accept other sampling frequencies as well. All
 functions perform units checks to make sure that inputs have the expected dimensions (for example
-have units of temperature, whether it is celsius, kelvin or fahrenheit), and the the `units`
+have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
 attribute of the output DataArray.
 
 The `calendar`, `fwi`, `generic`, `run_length` and `utils` submodule provide helpers to simplify
@@ -46,22 +46,35 @@ about the data or methods used to produce it).
 The third and fourth sections are the **Parameters** and **Returns** sections describing the input and output values
 respectively.
 
+The following example shows the structure of an indice definition:
+
 .. code-block:: python
 
-   Parameters
-   ----------
-   <standard_name> : xarray.DataArray
-     <Long_name> of variable [acceptable units].
-   threshold : Union[str, float, int]
-     Description of the threshold / units.
-     e.g. The 10th percentile of historical temperature [K].
-   freq : Optional[str]
-     Resampling frequency.
+   @declare_units(var1="[units dimension]", thresh="[units dimension]")
+   def indice_name(var: xr.DataArray, threshold: str = "0 degC", freq: str = "YS"):
+       \"\"\"
+       The first line is the title
 
-   Returns
-   -------
-   xarray.DataArray
-     Output's <long_name> [units]
+       The second paragraph is the abstract.
+
+       Parameters
+       ----------
+       <var_name> : xarray.DataArray
+         Description of variable (no need to specify units, the signature and decorator carry this information).
+         <var_name> is a short name like "tas", "pr" or "sfcWind".
+       threshold : str
+         Description of the threshold (no need to specify units or the default again).
+         Parameters required to run the computation must always have a working default value.
+       freq : str
+         Resampling frequency. (the signature carries the default value information)
+
+       Returns
+       -------
+       <var_name> : xarray.DataArray, [ouput units dimension]
+         Output's <long_name>
+       \"\"\"
+       <body of the function>
+       # Don't forget to explicitly handle the units!
 
 The next sections would be **Notes** and **References**:
 
