@@ -75,6 +75,7 @@ def open_dataset(
 ) -> Dataset:
     """
     Open a dataset from the online GitHub-like repository.
+
     If a local copy is found then always use that to avoid network traffic.
 
     Parameters
