@@ -70,9 +70,9 @@ def cold_spell_duration_index(
     tn10 : xarray.DataArray
       10th percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
-      Minimum number of days with temperature below threshold to qualify as a cold spell. Default: 6.
+      Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -128,7 +128,7 @@ def cold_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values [℃] or [K]
+      Mean daily temperature values,
     tgin25 : xarray.DataArray
       First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
@@ -136,7 +136,7 @@ def cold_and_dry_days(
     wet25 : xarray.DataArray
       First quartile of daily total precipitation computed by month.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -183,15 +183,15 @@ def daily_freezethaw_cycles(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K
+      Maximum daily temperature.
     thresh_tasmax : str
-      The temperature threshold needed to trigger a thaw event [℃] or [K]. Default : '0 degC'
+      The temperature threshold needed to trigger a thaw event.
     thresh_tasmin : str
-      The temperature threshold needed to trigger a freeze event [℃] or [K]. Default : '0 degC'
+      The temperature threshold needed to trigger a freeze event.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -233,11 +233,11 @@ def daily_temperature_range(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
     op : {'min', 'max', 'mean', 'std'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
@@ -276,11 +276,11 @@ def daily_temperature_range_variability(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -315,11 +315,11 @@ def extreme_temperature_range(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature values [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -547,17 +547,17 @@ def heat_wave_frequency(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmin : str
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+      The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+      The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -616,17 +616,17 @@ def heat_wave_max_length(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmin : str
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+      The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+      The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -675,7 +675,6 @@ def heat_wave_total_length(
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    # Dev note : we should decide if it is deg K or C
     r"""Heat wave total length.
 
     Total length of heat waves over a given period. A heat wave is defined as an event
@@ -685,17 +684,17 @@ def heat_wave_total_length(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmin : str
-      The minimum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '22 degC'
+      The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+      The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -736,15 +735,15 @@ def liquid_precip_ratio(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily precipitation flux.
     prsn : xarray.DataArray, optional
-      Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
       Mean daily temperature.
     thresh : str
       Threshold temperature under which precipitation is assumed to be solid.
     freq : str
-      Resampling frequency; Defaults to "QS-DEC".
+      Resampling frequency.
 
     Returns
     -------
@@ -795,7 +794,7 @@ def precip_accumulation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily precipitation flux.
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
     phase : {None, 'liquid', 'solid'}
@@ -803,8 +802,7 @@ def precip_accumulation(
     thresh : str
       Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
-      Resampling frequency as defined in
-      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling. Defaults to "YS"
+      Resampling frequency.
 
     Returns
     -------
@@ -858,13 +856,13 @@ def rain_on_frozen_ground_days(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm]
+      Mean daily precipitation flux.
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Precipitation threshold to consider a day as a rain event. Default : '1 mm/d'
+      Precipitation threshold to consider a day as a rain event.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -920,13 +918,13 @@ def days_over_precip_thresh(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day]
+      Mean daily precipitation flux.
     per : xarray.DataArray
-      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
+      Daily percentile of wet day precipitation flux.
     thresh : str
-       Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
+       Precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -971,13 +969,13 @@ def fraction_over_precip_thresh(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm/day].
+      Mean daily precipitation flux.
     per : xarray.DataArray
-      Daily percentile of wet day precipitation flux [Kg m-2 s-1] or [mm/day].
+      Daily percentile of wet day precipitation flux.
     thresh : str
-       Precipitation value over which a day is considered wet [Kg m-2 s-1] or [mm/day].
+       Precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1013,11 +1011,11 @@ def tg90p(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     t90 : xarray.DataArray
-      90th percentile of daily mean temperature [℃] or [K]
+      90th percentile of daily mean temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1058,11 +1056,11 @@ def tg10p(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     t10 : xarray.DataArray
-      10th percentile of daily mean temperature [℃] or [K]
+      10th percentile of daily mean temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1103,11 +1101,11 @@ def tn90p(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     t90 : xarray.DataArray
-      90th percentile of daily minimum temperature [℃] or [K]
+      90th percentile of daily minimum temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1148,11 +1146,11 @@ def tn10p(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     t10 : xarray.DataArray
-      10th percentile of daily minimum temperature [℃] or [K]
+      10th percentile of daily minimum temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1193,11 +1191,11 @@ def tx90p(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     t90 : xarray.DataArray
-      90th percentile of daily maximum temperature [℃] or [K]
+      90th percentile of daily maximum temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1238,11 +1236,11 @@ def tx10p(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     t10 : xarray.DataArray
-      10th percentile of daily maximum temperature [℃] or [K]
+      10th percentile of daily maximum temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1293,15 +1291,15 @@ def tx_tn_days_above(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmin : str
-      Threshold temperature for tasmin on which to base evaluation [℃] or [K]. Default : '22 degC'
+      Threshold temperature for tasmin on which to base evaluation.
     thresh_tasmax : str
-      Threshold temperature for tasmax on which to base evaluation [℃] or [K]. Default : '30 degC'
+      Threshold temperature for tasmax on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1347,13 +1345,13 @@ def warm_spell_duration_index(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     tx90 : xarray.DataArray
-      90th percentile of daily maximum temperature [℃] or [K]
+      90th percentile of daily maximum temperature.
     window : int
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1405,13 +1403,13 @@ def winter_rain_ratio(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily precipitation flux.
     prsn : xarray.DataArray, optional
-      Mean daily solid precipitation flux [Kg m-2 s-1] or [mm].
+      Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "QS-DEC".
+      Resampling frequency.
 
     Returns
     -------

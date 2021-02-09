@@ -69,11 +69,11 @@ def isothermality(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Average daily minimum temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Average daily minimum temperature at daily, weekly, or monthly frequency.
     tasmax : xarray.DataArray
-      Average daily maximum temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Average daily maximum temperature at daily, weekly, or monthly frequency.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -105,7 +105,7 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Mean temperature at daily, weekly, or monthly frequency.
 
     Returns
     -------
@@ -211,13 +211,13 @@ def tg_mean_warmcold_quarter(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Mean temperature at daily, weekly, or monthly frequency.
     op : str {'warmest', 'coldest'}
       Operation to perform:  'warmest' calculate warmest quarter; 'coldest' calculate coldest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -262,7 +262,7 @@ def tg_mean_wetdry_quarter(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Mean temperature at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : {'wettest', 'driest'}
@@ -270,7 +270,7 @@ def tg_mean_wetdry_quarter(
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -313,7 +313,7 @@ def prcptot_wetdry_quarter(
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -366,13 +366,13 @@ def prcptot_warmcold_quarter(
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
     tas : xarray.DataArray
-      Mean temperature [℃] or [K] at daily, weekly, or monthly frequency.
+      Mean temperature at daily, weekly, or monthly frequency.
     op : {'warmest', 'coldest'}
       Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -410,7 +410,7 @@ def prcptot(
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -452,7 +452,7 @@ def prcptot_wetdry_period(
     src_timestep : {'D', 'W', 'M'}
       Input data time frequency - One of daily, weekly or monthly.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
