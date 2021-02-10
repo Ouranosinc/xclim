@@ -313,33 +313,34 @@ class Indicator(IndicatorRegistrar):
         sig = signature(compute)
 
         # Update
-
-        # True if any of non-dataarray arguments ("parameters") are default.
-        # In this case, we can't patch the variable names as default values.
-        has_def = any(
-            [
-                p.annotation is not DataArray
-                and p.default is _empty
-                and p.kind is not p.VAR_KEYWORD
-                for p in sig.parameters.values()
-            ]
-        )
-
         def _upd_param(param):
             # Required DataArray arguments receive their own name as new default
             #         + the Union[str, DataArray] annotation
+            # Parameters with no default receive None
+            if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
+                return param
+
             if param.annotation is DataArray:
-                if not has_def and param.default is _empty:
+                annot = Union[str, DataArray]
+            else:
+                annot = param.annotation
+
+            if param.default is _empty:
+                if param.annotation is DataArray:
                     default = param.name
                 else:
-                    default = param.default
-                return Parameter(
-                    param.name,
-                    param.kind,
-                    default=default,
-                    annotation=Union[str, DataArray],
-                )
-            return param
+                    default = None
+            else:
+                default = param.default
+
+            return Parameter(
+                param.name,
+                max(
+                    param.kind, 1
+                ),  # We keep the kind, except we replace POSITIONAL_ONLY by POSITONAL_OR_KEYWORD
+                default=default,
+                annotation=annot,
+            )
 
         # Parse all parameters, replacing annotations and default where needed and possible.
         new_params = list(map(_upd_param, sig.parameters.values()))
