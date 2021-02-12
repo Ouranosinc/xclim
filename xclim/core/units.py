@@ -330,7 +330,7 @@ FREQ_UNITS = {
 def infer_sampling_units(da: xr.DataArray, deffreq: str = "D") -> Tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
-    If `xr.infer_freq` fails, returns defval
+    If `xr.infer_freq` fails, returns default frequency. 
     """
     freq = xr.infer_freq(da.time)
     if freq is None:
@@ -382,7 +382,7 @@ def rate2amount(
 ) -> xr.DataArray:
     """Convert a rate variable to an amount by multiplying by the sampling period length.
 
-    If the sampling period length cannot be inferred (i.e. : it is not consistent), the rate values
+    If the sampling period length cannot be inferred, the rate values
     are multiplied by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
 

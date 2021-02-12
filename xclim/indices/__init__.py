@@ -51,7 +51,7 @@ The following example shows the structure of an indice definition:
 .. code-block:: python
 
    @declare_units(var1="[units dimension]", thresh="[units dimension]")
-   def indice_name(var: xr.DataArray, threshold: str = "0 degC", freq: str = "YS"):
+   def indice_name(var1: xr.DataArray, threshold: str = "0 degC", freq: str = "YS"):
        \"\"\"
        The first line is the title
 
