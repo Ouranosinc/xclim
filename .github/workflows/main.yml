@@ -7,11 +7,26 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  black:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [black, doctests]
+        tox-env: [black]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Install tox
+        run: pip install tox
+      - name: Run linting suite
+        run: tox -e ${{ matrix.tox-env }}
+
+  doctests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tox-env: [doctests]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -23,7 +38,7 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
 
   test:
-    needs: lint
+    needs: black
     runs-on: ubuntu-latest
     strategy:
       matrix:
