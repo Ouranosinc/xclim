@@ -39,6 +39,8 @@ units.define(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
     )
 )
+# In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
+units.define("year = 365.25 * day = yr")
 
 # Define commonly encountered units not defined by pint
 if version.parse(pint.__version__) >= version.parse("0.10"):
@@ -65,9 +67,6 @@ else:
         "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
     )
 
-units.define(
-    "year = 365.25 * day = yr"
-)  # Default symb is "a" which is not CF-compliant.
 units.define("[speed] = [length] / [time]")
 
 # Default context.
