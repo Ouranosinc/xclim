@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
     - name: Install packages
@@ -31,7 +31,7 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov xclim -m "not slow"
-        - coveralls
+        coveralls
     - name: Build docs 🏗️
       run: make --directory=docs clean html
       if: matrix.python-version == 3.6
