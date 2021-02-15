@@ -43,12 +43,10 @@ jobs:
       run: |
         pytest --cov xclim -m "not slow"
     - name: Coveralls
-      env:
-        COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.plattform }}
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: .coverage
+        flag-name: run-${{ matrix.python-version }}
         parallel: true
 
   finish:
