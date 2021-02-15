@@ -12,10 +12,10 @@ Breaking changes
     * `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis.
     * `per` argument is now expected to between 0-100 (not 0-1).
     * input data must have a daily (or coarser) time frequency.
-    
+
 Bug fixes
 ~~~~~~~~~
-* Removed the explicitly-installed netCDF4 library from a base install, as this is never explicitly used (now only installed for sdba doc example).
+* Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
