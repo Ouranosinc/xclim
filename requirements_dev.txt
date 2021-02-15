@@ -12,6 +12,6 @@ pytest-cov
 pytest-runner
 pylint
 xdoctest
-pydocstyle
+pydocstyle>=5.1.1
 nbval
 pre-commit>=2.9
