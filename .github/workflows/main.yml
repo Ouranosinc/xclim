@@ -31,7 +31,21 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov xclim -m "not slow"
-        coveralls
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel: true
     - name: Build docs 🏗️
       run: make --directory=docs clean html
       if: matrix.python-version == 3.6
+
+  finish:
+      needs: test
+      runs-on: ubuntu-latest
+      steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
