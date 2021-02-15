@@ -65,6 +65,9 @@ else:
         "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
     )
 
+units.define(
+    "year = 365.25 * day = yr"
+)  # Default symb is "a" which is not CF-compliant.
 units.define("[speed] = [length] / [time]")
 
 # Default context.
@@ -171,10 +174,10 @@ def pint2cfunits(value: Any) -> str:
     out : str
       Units following CF-Convention.
     """
-    # Print units using abbreviations (millimeter -> mm)
     if isinstance(value, pint.Quantity):
         value = value.units
 
+    # Print units using abbreviations (millimeter -> mm)
     s = f"{value:~}"
 
     # Search and replace patterns
@@ -189,11 +192,21 @@ def pint2cfunits(value: Any) -> str:
 
     out, n = re.subn(pat, repl, s)
 
-    # Remove multiplications
-    out = out.replace(" * ", " ")
+    # Remove multiplications and ^ powers
+    out = out.replace(" * ", " ").replace("^", "")
     # Delta degrees:
     out = out.replace("Δ°", "delta_deg")
     return out.replace("percent", "%")
+
+
+def ensure_cf_units(ustr: str):
+    """Ensure the passed unit string is CF-compliant.
+
+    The str will be parsed to pint then recasted to a string by xclim's `pint2cfunits`.
+    Currently, this does not really ensure CF-compliance, but ensures all xclim units
+    will be consistent.
+    """
+    return pint2cfunits(units2pint(ustr))
 
 
 def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
@@ -315,22 +328,22 @@ def convert_units_to(
 
 
 FREQ_UNITS = {
-    "N": "nanosecond",
-    "L": "millisecond",
-    "S": "second",
-    "T": "minute",
-    "H": "hour",
-    "D": "day",
+    "N": "ns",
+    "L": "ms",
+    "S": "s",
+    "T": "min",
+    "H": "h",
+    "D": "d",
     "W": "week",
     "M": "month",
-    "A": "year",
+    "A": "yr",
 }
 
 
 def infer_sampling_units(da: xr.DataArray, deffreq: str = "D") -> Tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
-    If `xr.infer_freq` fails, returns default frequency. 
+    If `xr.infer_freq` fails, returns `deffreq`.
     """
     freq = xr.infer_freq(da.time)
     if freq is None:
@@ -360,6 +373,36 @@ def to_agg_units(
       with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
       The time dimension along which the aggregation was performed.
+
+    Examples
+    --------
+    Take a daily array of temperature and count number of days above a threshold.
+    `to_agg_units` will infer the units from the sampling rate along "time", so
+    we ensure the final units are correct.
+
+    >>> time = xr.cftime_range('2001-01-01', freq='D', periods=365)
+    >>> tas = xr.DataArray(np.arange(365), dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
+    >>> cond = tas > 100  # Which days are boiling
+    >>> Ndays = cond.sum('time')  # Number of boiling days
+    >>> Ndays.attrs.get('units')
+    None
+    >>> Ndays = to_agg_units(Ndays, tas, op='count')
+    >>> Ndays.units
+    'd'
+
+    Similarly, here we compute the total heating degree-days but we have weekly data:
+    >>> time = xr.cftime_range('2001-01-01', freq='MS', periods=12)
+    >>> tas = xr.DataArray(np.arange(12) + 10, dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
+    >>> degdays = (tas - 16).clip(0).sum('time')   # Integral of  temperature above a threshold
+    >>> degdays = to_agg_units(degdays, tas, op='delta_prod')
+    >>> degdays.units
+    'month delta_degC'
+
+    Which we can always convert to the more common "K days":
+
+    >>> degdays = convert_units_to(degdays, "K days")
+    >>> degdays.units
+    'K d'
     """
     m, freq_u_raw = infer_sampling_units(orig[dim])
     freq_u = str2pint(freq_u_raw)
@@ -394,6 +437,33 @@ def rate2amount(
       The time dimension.
     out_units : str, optional
       Optional output units to convert to.
+
+    Examples
+    --------
+    The following converts a daily array of precipitation in mm/h to the daily amounts in mm.
+
+    >>> time = xr.cftime_range('2001-01-01', freq='D', periods=365)
+    >>> pr = xr.DataArray([1] * 365, dims=('time',), coords={'time': time}, attrs={'units': 'mm/h'})
+    >>> pram = rate2amount(pr)
+    >>> pram.units
+    'mm'
+    >>> float(pram[0])
+    24.0
+
+    Also works if the time axis is irregular : the rates are assumed constant for the whole period
+    starting on the values timestamp to the next timestamp.
+
+    >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
+    >>> pr = xr.DataArray([1] * 3, dims=('time',), coords={'time': time}, attrs={'units': 'mm/h'})
+    >>> pram = rate2amount(pr)
+    >>> pram.values
+    array([216., 504., 504.])
+
+    Finally, we can force output units:
+
+    >>> pram = rate2amount(pr, out_units='pc')  # Get rain amount in parsecs. Why not.
+    >>> pram.values
+    array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
     """
     try:
         m, u = infer_sampling_units(rate.time, deffreq=None)
@@ -516,10 +586,12 @@ def declare_units(
                     assert (
                         "units" in outd.attrs
                     ), "No units were assigned in one of the indice's outputs."
+                    outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
             else:
                 assert (
                     "units" in out.attrs
                 ), "No units were assigned to the indice's output."
+                out.attrs["units"] = ensure_cf_units(out.attrs["units"])
 
             return out
 

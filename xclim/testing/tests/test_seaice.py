@@ -48,7 +48,7 @@ class TestSeaIceExtent:
         area.attrs["units"] = "km^2"
 
         a = sea_ice_extent(sic, area)
-        assert a.units == "km^2"
+        assert a.units == "km2"
 
         expected = 4 * np.pi * area.r ** 2 / 2.0 / 1e6
         np.testing.assert_array_almost_equal(a / expected, 1, 3)
@@ -84,10 +84,10 @@ class TestSeaIceArea(TestSeaIceExtent):
 
         # Convert area to km^2
         area /= 1e6
-        area.attrs["units"] = "km^2"
+        area.attrs["units"] = "km2"
 
         a = sea_ice_area(sic, area)
-        assert a.units == "km^2"
+        assert a.units == "km2"
 
         expected = 4 * np.pi * area.r ** 2 / 2.0 / 2.0 / 1e6
         np.testing.assert_array_almost_equal(a / expected, 1, 3)

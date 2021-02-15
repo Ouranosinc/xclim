@@ -191,7 +191,7 @@ def ndq_series():
         dims=("time", "x", "y"),
         coords={"time": time, "x": cx, "y": cy},
         attrs={
-            "units": "m^3 s-1",
+            "units": "m3 s-1",
             "standard_name": "water_volume_transport_in_river_channel",
         },
     )

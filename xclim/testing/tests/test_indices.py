@@ -114,7 +114,7 @@ class TestColdSpellDurationIndex:
 
         out = xci.cold_spell_duration_index(tn, tn10, freq="YS")
         assert out[0] == 10
-        convert_units_to(out, "days")
+        assert out.units == "d"
 
 
 class TestColdSpellDays:
@@ -127,7 +127,7 @@ class TestColdSpellDays:
 
         out = xci.cold_spell_days(da, thresh="-10. C", freq="M")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        convert_units_to(out, "days")
+        assert out.units == "d"
 
 
 class TestColdSpellFreq:
@@ -881,8 +881,8 @@ class TestTGXN90p:
 
 
 class TestTas:
-    @pytest.mark.parametrize("tasmin_units", ["K", "degC"])
-    @pytest.mark.parametrize("tasmax_units", ["K", "degC"])
+    @pytest.mark.parametrize("tasmin_units", ["K", "°C"])
+    @pytest.mark.parametrize("tasmax_units", ["K", "°C"])
     def test_tas(
         self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units
     ):
@@ -913,11 +913,11 @@ class TestTxMean:
         assert txm.units == "K"
 
         a = tasmax_series(np.array([20, 21, 22, 23, 24]))
-        a.attrs["units"] = "C"
+        a.attrs["units"] = "°C"
         txm = xci.tx_mean(a, freq="YS")
 
         assert txm == 22
-        assert txm.units == "C"
+        assert txm.units == "°C"
 
 
 class TestTxMax:
@@ -1058,7 +1058,7 @@ class TestTemperatureSeasonality:
     def test_celsius(self, tas_series):
         a = np.zeros(365)
         a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "C"
+        a.attrs["units"] = "°C"
         a[(a.time.dt.season == "DJF")] += -15
         a[(a.time.dt.season == "MAM")] += -5
         a[(a.time.dt.season == "JJA")] += 22
@@ -1149,7 +1149,7 @@ class TestPrecipWettestDriestQuarter:
         p_month_m = p_month / 10
         p_month_m.attrs["units"] = "cm month-1"
         out = xci.prcptot_wetdry_quarter(p_month_m, op="wettest", src_timestep="M")
-        np.testing.assert_array_almost_equal(out, [242, 242])
+        np.testing.assert_array_almost_equal(out, [24.2, 24.2])
 
 
 class TestTempWetDryPrecipWarmColdQuarter:
@@ -1266,7 +1266,7 @@ class TestTempWarmestColdestQuarter:
     def test_Celsius(self, tas_series):
         a = np.zeros(365 * 2)
         a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "degC"
+        a.attrs["units"] = "°C"
         a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
         a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
 

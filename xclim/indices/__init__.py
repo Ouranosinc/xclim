@@ -51,7 +51,7 @@ The following example shows the structure of an indice definition:
 .. code-block:: python
 
    @declare_units(var1="[units dimension]", thresh="[units dimension]")
-   def indice_name(var1: xr.DataArray, threshold: str = "0 degC", freq: str = "YS"):
+   def indice_name(var1: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
        \"\"\"
        The first line is the title
 
@@ -59,10 +59,10 @@ The following example shows the structure of an indice definition:
 
        Parameters
        ----------
-       <var_name> : xarray.DataArray
+       var1 : xarray.DataArray
          Description of variable (no need to specify units, the signature and decorator carry this information).
-         <var_name> is a short name like "tas", "pr" or "sfcWind".
-       threshold : str
+         <var1> is a short name like "tas", "pr" or "sfcWind".
+       thresh : str
          Description of the threshold (no need to specify units or the default again).
          Parameters required to run the computation must always have a working default value.
        freq : str
@@ -70,8 +70,9 @@ The following example shows the structure of an indice definition:
 
        Returns
        -------
-       <var_name> : xarray.DataArray, [ouput units dimension]
+       <var_name> : xarray.DataArray, [output units dimension]
          Output's <long_name>
+         Specifying <var_name> is optional.
        \"\"\"
        <body of the function>
        # Don't forget to explicitly handle the units!
