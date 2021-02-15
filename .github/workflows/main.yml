@@ -13,7 +13,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get -y install pandoc
-        if: matrix.tox-env == docs
+        if: ${{ matrix.tox-env }} == "docs"
       - uses: actions/setup-python@v2
         with:
           python-version: 3.6
