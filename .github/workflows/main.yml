@@ -1,6 +1,10 @@
 name: xclim
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   lint:
@@ -42,19 +46,19 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov xclim -m "not slow"
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        flag-name: run-${{ matrix.python-version }}
-        parallel: true
+#    - name: Coveralls
+#      uses: coverallsapp/github-action@master
+#      with:
+#        github-token: ${{ secrets.GITHUB_TOKEN }}
+#        flag-name: run-${{ matrix.python-version }}
+#        parallel: true
 
-  finish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Coveralls Finished
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.github_token }}
-        parallel-finished: true
+#  finish:
+#    needs: build
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Coveralls Finished
+#      uses: coverallsapp/github-action@master
+#      with:
+#        github-token: ${{ secrets.github_token }}
+#        parallel-finished: true
