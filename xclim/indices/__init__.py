@@ -6,7 +6,7 @@ Indices library
 ===============
 
 This module contains climate indices functions operating on `xarray.DataArray`. Most of these
-functions operate on daily time series, but some might accept other sampling frequencies as well. All
+functions operate on daily time series, but might accept other sampling frequencies as well. All
 functions perform units checks to make sure that inputs have the expected dimensions (for example
 have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
 attribute of the output DataArray.

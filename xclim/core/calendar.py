@@ -52,10 +52,10 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date..
+      An object defining some date.
       If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
       Values must have either a datetime64 dtype or a cftime dtype.
-      `obj`can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+      `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
       or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
       Name of the coordinate to check (if `obj` is a DataArray or Dataset).

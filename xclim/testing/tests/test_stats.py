@@ -214,7 +214,7 @@ class TestFrequencyAnalysis:
         assert v.shape == (1, 2, 3)
         assert np.isnan(v[:, 0, 0])
         assert ~np.isnan(v[:, 1, 1])
-        assert out.units == "m^3 s-1"
+        assert out.units == "m3 s-1"
 
         # smoke test when time is not the first dimension
         stats.frequency_analysis(

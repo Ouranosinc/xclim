@@ -113,19 +113,18 @@ units.enable_contexts(hydro)
 # @end
 
 
-def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
+def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : Union[xr.DataArray, str]
+    value : Union[xr.DataArray, str. pint.Quantity]
       Input data array or string representing a unit (with no magnitude).
 
     Returns
     -------
     pint.unit.UnitDefinition
       Units of the data array.
-
     """
 
     def _transform(s):
@@ -160,18 +159,18 @@ def units2pint(value: Union[xr.DataArray, str]) -> pint.unit.UnitDefinition:
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-def pint2cfunits(value: Any) -> str:
-    """Return a CF-Convention unit string from a `pint` unit.
+def pint2cfunits(value: Union[units.Unit, units.Quantity]) -> str:
+    """Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
     ----------
-    value : pint.UnitRegistry
+    value : pint.Unit
       Input unit.
 
     Returns
     -------
     out : str
-      Units following CF-Convention.
+      Units following CF-Convention, using symbols.
     """
     if isinstance(value, pint.Quantity):
         value = value.units
@@ -191,19 +190,17 @@ def pint2cfunits(value: Any) -> str:
 
     out, n = re.subn(pat, repl, s)
 
-    # Remove multiplications and ^ powers
-    out = out.replace(" * ", " ").replace("^", "")
+    # Remove multiplications
+    out = out.replace(" * ", " ")
     # Delta degrees:
     out = out.replace("Δ°", "delta_deg")
     return out.replace("percent", "%")
 
 
-def ensure_cf_units(ustr: str):
+def ensure_cf_units(ustr: str) -> str:
     """Ensure the passed unit string is CF-compliant.
 
-    The str will be parsed to pint then recasted to a string by xclim's `pint2cfunits`.
-    Currently, this does not really ensure CF-compliance, but ensures all xclim units
-    will be consistent.
+    The string will be parsed to pint then recasted to a string by xclim's `pint2cfunits`.
     """
     return pint2cfunits(units2pint(ustr))
 
