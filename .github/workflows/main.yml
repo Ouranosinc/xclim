@@ -27,12 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [py37-xarray, py38]
+        tox-env: [py37-xarray, py38-slow]
         python-version: [3.7, 3.8]
         exclude:
           - tox-env: py37-xarray
             python-version: 3.8
-          - tox-env: py38
+          - tox-env: py38-slow
             python-version: 3.7
     steps:
     - uses: actions/checkout@v2
