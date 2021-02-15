@@ -11,13 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [black, docs, doctests]
+        tox-env: [black, doctests]
     steps:
       - uses: actions/checkout@v2
-      - name: Install packages
-        run: |
-          sudo apt-get -y install pandoc
-        if: ${{ matrix.tox-env }} == "docs"
       - uses: actions/setup-python@v2
         with:
           python-version: 3.6
@@ -26,7 +22,7 @@ jobs:
       - name: Run lint
         run: tox -e ${{ matrix.tox-env }}
 
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -46,6 +42,21 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov xclim -m "not slow"
+
+  docs:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install packages
+        run: |
+          sudo apt-get -y install pandoc
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: make docs
+        run: make --directory=docs clean html
+
 #    - name: Coveralls
 #      uses: coverallsapp/github-action@master
 #      with:
@@ -54,7 +65,7 @@ jobs:
 #        parallel: true
 
 #  finish:
-#    needs: build
+#    needs: test
 #    runs-on: ubuntu-latest
 #    steps:
 #    - name: Coveralls Finished
