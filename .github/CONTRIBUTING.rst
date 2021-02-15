@@ -154,10 +154,10 @@ Before you submit a pull request, please follow these guidelines:
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
-    https://travis-ci.com/Ouranosinc/xclim/pull_requests
+    https://github.com/Ouranosinc/xclim/actions
 
 .. warning::
-    PEP8, Black, Pytest (with xdoctest) and Pydocstyle (for numpy docstrings) conventions are strongly enforced.
+    PEP8, Black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
