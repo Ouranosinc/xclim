@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
     - name: Install packages
@@ -24,7 +24,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
-        python -m pip install -e .[gis]
+        python -m pip install -e .[dev,gis]
     - name: Lint
       run: make lint
       if: matrix.python-version == 3.6

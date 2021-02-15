@@ -8,6 +8,7 @@ tox
 coverage
 twine
 pytest
+pytest-cov
 pytest-runner
 pylint
 xdoctest
