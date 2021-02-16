@@ -22,11 +22,13 @@ New features and enhancements
 
 Internal changes
 ~~~~~~~~~~~~~~~~
-* leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`
-* modified `xclim.core.calendar.percentile_doy` to improve performance
-* new `xclim.core.calendar.compare_offsets` for comparing offset strings
-* new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
-* Added a indicators api page to the doc and links to there from the :ref:`Climate Indicators` page.
+* Leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`.
+* Modified `xclim.core.calendar.percentile_doy` to improve performance.
+* New `xclim.core.calendar.compare_offsets` for comparing offset strings.
+* New `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
+* The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
+* Added an indicators API page to the docs and links to there from the :ref:`Climate Indicators` page.
+
 
 0.23.0 (2021-01-22)
 -------------------
