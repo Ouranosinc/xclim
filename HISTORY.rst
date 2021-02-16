@@ -23,6 +23,7 @@ Internal changes
 * modified `xclim.core.calendar.percentile_doy` to improve performance
 * new `xclim.core.calendar.compare_offsets` for comparing offset strings
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
+* The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
 
 
 0.23.0 (2021-01-22)
