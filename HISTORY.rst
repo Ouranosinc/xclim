@@ -18,13 +18,14 @@ Breaking changes
     * Indice functions are now more flexible : output units may change for different input units, but the dimensionality is consistent.
     * Indice functions now accept non-daily data, but daily is assumed if the frequency cannot be inferred.
 
+* Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
+
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Indicator now have docstrings generated from their metadata.
 * Units and fixed choices set are parsed from indice docstrings into `Indicator.parameters`.
 * Units of indices using the `declare_units` decorator are stored in `indice.in_units` and `indice.out_units`.
 * Changes to `Indicator.format` and `Indicator.json` to ensure the resulting json really is serializable.
-
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -34,9 +35,9 @@ Internal changes
 * New `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
 * The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
 * Indice functions must always set the units (the `declare_units` decorator does no check anymore).
-* new `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
+* New `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
-* new `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
+* New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
 * Added an indicators API page to the docs and links to there from the :ref:`Climate Indicators` page.
 
 Bug fixes
