@@ -25,7 +25,6 @@ requirements = [
     "numba",
     "pandas>=0.23",
     "cftime>=1.2.0,<1.4.0",
-    "netCDF4>=1.4",
     "dask[array]>=2.6",
     "pint>=0.9",
     "bottleneck~=1.3.1",
@@ -47,6 +46,7 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "netCDF4",
     "nc-time-axis",
     "distributed>=2.0",
 ]
