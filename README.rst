@@ -58,9 +58,8 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
         :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
         :alt: Gitter Chat
 
-
-.. |build| image:: https://img.shields.io/travis/Ouranosinc/xclim.svg
-        :target: https://travis-ci.com/Ouranosinc/xclim
+.. |build| image:: https://github.com/Ouranosinc/xclim/workflows/xclim/badge.svg
+        :target: https://github.com/Ouranosinc/xclim/actions
         :alt: Build Status
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
