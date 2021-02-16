@@ -13,6 +13,12 @@ Breaking changes
     * `per` argument is now expected to between 0-100 (not 0-1).
     * input data must have a daily (or coarser) time frequency.
 
+* Change in unit handling paradigm for indices, many indices will have different output units than before.
+
+    * Indice functions are now more flexible : output units may change for different input units, but the dimensionality is consistent.
+    * Indice functions now accept non-daily data, but daily is assumed if the frequency cannot be inferred.
+
+
 Internal changes
 ~~~~~~~~~~~~~~~~
 * leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`
@@ -20,7 +26,14 @@ Internal changes
 * new `xclim.core.calendar.compare_offsets` for comparing offset strings
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
 * The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
+* Indice functions must always set the units (the `declare_units` decorator does no check anymore).
+* new `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
+* `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
+* new `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
 
+Bug fixes
+~~~~~~~~~
+* The unit handling change resolved a bug that prevented the use of `xr.set_options(keep_attrs=True)` with indices.
 
 0.23.0 (2021-01-22)
 -------------------

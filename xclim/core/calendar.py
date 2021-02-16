@@ -8,7 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 import re
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy as np
@@ -52,10 +52,10 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date..
+      An object defining some date.
       If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
       Values must have either a datetime64 dtype or a cftime dtype.
-      `obj`can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+      `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
       or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
       Name of the coordinate to check (if `obj` is a DataArray or Dataset).
@@ -522,9 +522,9 @@ def compare_offsets(freqA: str, op: str, freqB: str):
     from xclim.indices.generic import get_op
 
     # Get multiplicator and base frequency
-    patt = r"(\d*)(\w)"
-    tA, bA = re.search(patt, freqA.replace("Y", "A")).groups()
-    tB, bB = re.search(patt, freqB.replace("Y", "A")).groups()
+    tA, bA, _ = parse_offset(freqA)
+    tB, bB, _ = parse_offset(freqB)
+
     if bA == bB:
         # Same base freq, compare mulitplicator only.
         tA = int(tA or "1")
@@ -537,6 +537,15 @@ def compare_offsets(freqA: str, op: str, freqB: str):
         tB = (t[1] - t[0]).total_seconds()
 
     return get_op(op)(tA, tB)
+
+
+def parse_offset(freq: str) -> Tuple[str, str, Optional[str]]:
+    """Parse an offset string.
+
+    Returns: multiplicator, offset base, anchor (or None)
+    """
+    patt = r"(\d*)(\w)S?(?:-(\w{2,3}))?"
+    return re.search(patt, freq.replace("Y", "A")).groups()
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
