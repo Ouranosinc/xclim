@@ -135,10 +135,11 @@ def parse_doc(doc: str) -> Dict[str, str]:
         elif header == "Parameters":
             out["parameters"] = _parse_parameters(content)
         elif header == "Returns":
-            match = re.search(r"xarray\.DataArray\s*(.*)", content)
-            if match:
-                out["long_name"] = match.groups()[0]
-
+            rets = _parse_returns(content)
+            if rets:
+                meta = list(rets.values())[0]
+                if "long_name" in meta:
+                    out["long_name"] = meta["long_name"]
     return out
 
 
@@ -155,6 +156,28 @@ def _parse_parameters(section):
                 name, annot = line.split(":", maxsplit=1)
                 curr_key = name.strip()
                 params[curr_key] = {"description": ""}
+    return params
+
+
+def _parse_returns(section):
+    """Parse the returns section of a docstring into a dictionary mapping the parameter name to its description."""
+    curr_key = None
+    params = {}
+    for line in section.split("\n"):
+        if line.strip():
+            if line.startswith(" " * 6):  # long_name
+                s = " " if params[curr_key]["long_name"] else ""
+                params[curr_key]["long_name"] += s + line.strip()
+            elif line.startswith(" " * 4):  # param title
+                annot, *name = reversed(line.split(":", maxsplit=1))
+                if name:
+                    curr_key = name[0].strip()
+                else:
+                    curr_key = None
+                params[curr_key] = {"long_name": ""}
+                annot, *unit = annot.split(",", maxsplit=1)
+                if unit:
+                    params[curr_key]["units"] = unit[0].strip()
     return params
 
 

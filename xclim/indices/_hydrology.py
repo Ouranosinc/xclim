@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 
-@declare_units("", q="[discharge]")
+@declare_units(q="[discharge]")
 def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     r"""Base flow index.
 
@@ -24,7 +24,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
       Base flow index.
 
     Notes
@@ -48,10 +48,12 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     mq = q.resample(time=freq)
 
     m7m = m7.min(dim="time")
-    return m7m / mq.mean(dim="time")
+    out = m7m / mq.mean(dim="time")
+    out.attrs["units"] = ""
+    return out
 
 
-@declare_units("", q="[discharge]")
+@declare_units(q="[discharge]")
 def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     r"""Richards-Baker flashiness index.
 
@@ -67,7 +69,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
       R-B Index.
 
     Notes
@@ -85,4 +87,6 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     """
     d = np.abs(q.diff(dim="time")).resample(time=freq)
     mq = q.resample(time=freq)
-    return d.sum(dim="time") / mq.sum(dim="time")
+    out = d.sum(dim="time") / mq.sum(dim="time")
+    out.attrs["units"] = ""
+    return out

@@ -23,7 +23,7 @@ import xarray as xr
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
-from xclim.core.units import ValidationError
+from xclim.core.units import ValidationError, convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -114,7 +114,7 @@ class TestColdSpellDurationIndex:
 
         out = xci.cold_spell_duration_index(tn, tn10, freq="YS")
         assert out[0] == 10
-        assert out.units == "days"
+        assert out.units == "d"
 
 
 class TestColdSpellDays:
@@ -127,7 +127,7 @@ class TestColdSpellDays:
 
         out = xci.cold_spell_days(da, thresh="-10. C", freq="M")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert out.units == "days"
+        assert out.units == "d"
 
 
 class TestColdSpellFreq:
@@ -194,7 +194,7 @@ class TestCoolingDegreeDays:
         a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
-        assert cdd.units == "C days"
+        assert cdd.units == "K d"
 
     def test_cdd(self, tas_series):
         a = tas_series(np.array([20, 25, -15, 19]) + K2C)
@@ -264,10 +264,10 @@ class TestMaxPrIntensity:
         pr[10:22] += np.arange(12)  # kg / m2 / s
 
         out = xci.max_pr_intensity(pr, window=1, freq="Y")
-        np.testing.assert_array_almost_equal(out[0], 11 * 3600)
+        np.testing.assert_array_almost_equal(out[0], 11)
 
         out = xci.max_pr_intensity(pr, window=12, freq="Y")
-        np.testing.assert_array_almost_equal(out[0], 5.5 * 3600)
+        np.testing.assert_array_almost_equal(out[0], 5.5)
 
         pr.attrs["units"] = "mm"
         with pytest.raises(ValidationError):
@@ -881,8 +881,8 @@ class TestTGXN90p:
 
 
 class TestTas:
-    @pytest.mark.parametrize("tasmin_units", ["K", "degC"])
-    @pytest.mark.parametrize("tasmax_units", ["K", "degC"])
+    @pytest.mark.parametrize("tasmin_units", ["K", "°C"])
+    @pytest.mark.parametrize("tasmax_units", ["K", "°C"])
     def test_tas(
         self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units
     ):
@@ -913,11 +913,11 @@ class TestTxMean:
         assert txm.units == "K"
 
         a = tasmax_series(np.array([20, 21, 22, 23, 24]))
-        a.attrs["units"] = "C"
+        a.attrs["units"] = "°C"
         txm = xci.tx_mean(a, freq="YS")
 
         assert txm == 22
-        assert txm.units == "C"
+        assert txm.units == "°C"
 
 
 class TestTxMax:
@@ -1058,7 +1058,7 @@ class TestTemperatureSeasonality:
     def test_celsius(self, tas_series):
         a = np.zeros(365)
         a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "C"
+        a.attrs["units"] = "°C"
         a[(a.time.dt.season == "DJF")] += -15
         a[(a.time.dt.season == "MAM")] += -5
         a[(a.time.dt.season == "JJA")] += 22
@@ -1149,7 +1149,7 @@ class TestPrecipWettestDriestQuarter:
         p_month_m = p_month / 10
         p_month_m.attrs["units"] = "cm month-1"
         out = xci.prcptot_wetdry_quarter(p_month_m, op="wettest", src_timestep="M")
-        np.testing.assert_array_almost_equal(out, [242, 242])
+        np.testing.assert_array_almost_equal(out, [24.2, 24.2])
 
 
 class TestTempWetDryPrecipWarmColdQuarter:
@@ -1208,26 +1208,27 @@ class TestTempWetDryPrecipWarmColdQuarter:
         np.testing.assert_array_almost_equal(out, expected)
 
     @pytest.mark.parametrize(
-        "freq,units,op,expected",
+        "freq,srcts,period,op,expected",
         [
-            (("D", "D"), "mm/day", "warmest", [2021.82232981, 2237.15117103]),
-            (("7D", "W"), "mm/week", "warmest", [2021.82232981, 2237.15117103]),
-            (("MS", "M"), "mm/month", "warmest", [2038.54763205, 2247.47136629]),
-            (("D", "D"), "mm/day", "coldest", [311.91895223, 264.50013361]),
-            (("7D", "W"), "mm/week", "coldest", [311.91895223, 264.50013361]),
-            (("MS", "M"), "mm/month", "coldest", [311.91895223, 259.36682028]),
+            ("D", "D", "day", "warmest", [2021.82232981, 2237.15117103]),
+            ("7D", "W", "week", "warmest", [2021.82232981, 2237.15117103]),
+            ("MS", "M", "month", "warmest", [2038.54763205, 2247.47136629]),
+            ("D", "D", "day", "coldest", [311.91895223, 264.50013361]),
+            ("7D", "W", "week", "coldest", [311.91895223, 264.50013361]),
+            ("MS", "M", "month", "coldest", [311.91895223, 259.36682028]),
         ],
     )
-    def test_pr_warmcold(self, tas_series, pr_series, freq, units, op, expected):
+    def test_pr_warmcold(
+        self, tas_series, pr_series, freq, srcts, period, op, expected
+    ):
         tas, pr = self.get_data(tas_series, pr_series)
-        freq, src_timestep = freq
-        pr = xci.precip_accumulation(pr, freq=freq)
-        pr.attrs["units"] = units
+        pr = convert_units_to(xci.precip_accumulation(pr, freq=freq), "mm")
+        pr.attrs["units"] = f"{pr.units} / {period}"
 
         tas = xci.tg_mean(tas, freq=freq)
 
         out = xci.prcptot_warmcold_quarter(
-            tas=tas, pr=pr, freq="YS", src_timestep=src_timestep, op=op
+            tas=tas, pr=pr, freq="YS", src_timestep=srcts, op=op
         )
         np.testing.assert_array_almost_equal(out, expected)
 
@@ -1265,7 +1266,7 @@ class TestTempWarmestColdestQuarter:
     def test_Celsius(self, tas_series):
         a = np.zeros(365 * 2)
         a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "degC"
+        a.attrs["units"] = "°C"
         a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
         a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
 
