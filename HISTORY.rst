@@ -25,6 +25,7 @@ Internal changes
 * modified `xclim.core.calendar.percentile_doy` to improve performance
 * new `xclim.core.calendar.compare_offsets` for comparing offset strings
 * new `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
+* The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
 * Indice functions must always set the units (the `declare_units` decorator does no check anymore).
 * new `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
