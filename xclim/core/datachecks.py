@@ -8,14 +8,9 @@ Utilities designed to check the validity of data inputs.
 import xarray as xr
 
 from ..indices.run_length import suspicious_run
+from .calendar import clim_mean_doy, within_bnds_doy
 from .options import datacheck
-from .utils import (
-    ValidationError,
-    clim_mean_doy,
-    reshape_doy,
-    within_bnds_doy,
-    wrapped_partial,
-)
+from .utils import ValidationError
 
 
 @datacheck
