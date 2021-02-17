@@ -7,8 +7,8 @@ Calendar handling utilities
 Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
-from typing import Any, Optional, Sequence, Union
-from warnings import warn
+import re
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy as np
@@ -25,6 +25,8 @@ from xarray.coding.cftime_offsets import (
 )
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
+
+from xclim.core.utils import _calc_perc
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
@@ -50,11 +52,11 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date..
+      An object defining some date.
       If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
-        Values must have either a datetime64 dtype or a cftime dtype.
-      `obj`can also be a python datetime.datetime, a cftime object or a pandas Timestamp
-        or an iterable of those, in which case the calendar is inferred from the first value.
+      Values must have either a datetime64 dtype or a cftime dtype.
+      `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+      or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
       Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
@@ -135,30 +137,30 @@ def convert_calendar(
     If one of the source or target calendars is `360_day`, `align_on` must be specified and two options are offered.
 
     "year"
-        The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
-        meaning that the missing/surplus days are added/removed at regular intervals.
+      The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
+      meaning that the missing/surplus days are added/removed at regular intervals.
 
-        From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
-            To a leap year:
-                January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
-            To a non-leap year:
-                February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
+      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
+        To a leap year:
+          January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
+        To a non-leap year:
+          February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
 
-        From standard calendar to a '360_day', the following dates in the source array will be dropped:
-            From a leap year:
-                January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
-            From a non-leap year:
-                February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
+      From standard calendar to a '360_day', the following dates in the source array will be dropped:
+        From a leap year:
+          January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
+        From a non-leap year:
+          February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
 
-        This option is best used on daily and subdaily data.
+      This option is best used on daily and subdaily data.
 
     "date"
-        The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
-        a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
-        dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
-        a standard calendar.
+      The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
+      a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
+      dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
+      a standard calendar.
 
-        This option is best used with data on a frequency coarser than daily.
+      This option is best used with data on a frequency coarser than daily.
     """
     cal_src = get_calendar(source, dim=dim)
 
@@ -430,34 +432,61 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 
 
 def percentile_doy(
-    arr: xr.DataArray, window: int = 5, per: float = 0.1
+    arr: xr.DataArray,
+    window: int = 5,
+    per: Union[float, Sequence[float]] = 10,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
+    All NaNs are skipped.
 
     Parameters
     ----------
     arr : xr.DataArray
-      Input data.
+      Input data, a daily frequency (or coarser) is required.
     window : int
-      Number of days around each day of the year to include in the calculation.
-    per : float
-      Percentile between [0,1]
+      Number of time-steps around each day of the year to include in the calculation.
+    per : float or sequence of floats
+      Percentile(s) between [0, 100]
 
     Returns
     -------
     xr.DataArray
       The percentiles indexed by the day of the year.
+      For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
-    # TODO: Support percentile array, store percentile in coordinates.
-    #  This is supported by DataArray.quantile, but not by groupby.reduce.
+    # Ensure arr sampling frequency is daily or coarser
+    # but cowardly escape the non-inferrable case.
+    if compare_offsets(xr.infer_freq(arr.time) or "D", "<", "D"):
+        raise ValueError("input data should have daily or coarser frequency")
+
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
-    # Create empty percentile array
-    g = rr.groupby("time.dayofyear")
+    ind = pd.MultiIndex.from_arrays(
+        (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
+        names=("year", "dayofyear"),
+    )
+    rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
 
-    p = g.reduce(np.nanpercentile, dim=("time", "window"), q=per * 100)
+    if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
+        rrr = rrr.chunk(dict(stack_dim=-1))
+
+    if np.isscalar(per):
+        per = [per]
+
+    p = xr.apply_ufunc(
+        _calc_perc,
+        rrr,
+        input_core_dims=[["stack_dim"]],
+        output_core_dims=[["percentiles"]],
+        keep_attrs=True,
+        kwargs=dict(p=per),
+        dask="parallelized",
+        output_dtypes=[rrr.dtype],
+        output_sizes={"percentiles": len(per)},
+    )
+    p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
 
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
@@ -466,6 +495,57 @@ def percentile_doy(
 
     p.attrs.update(arr.attrs.copy())
     return p
+
+
+def compare_offsets(freqA: str, op: str, freqB: str):
+    """Compare offsets string based on their approximate length, according to a given operator.
+
+    Offset are compared based on their length approximated for a period starting
+    after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
+    only the multiplicator prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
+    "Business" offsets are not implemented.
+
+    Parameters
+    ----------
+    fA: str
+      RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+    op : {'<', '<=', '==', '>', '>=', '!='}
+      Operator to use.
+    fB: str
+      LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+
+    Returns
+    -------
+    bool
+      freqA op freqB
+    """
+    from xclim.indices.generic import get_op
+
+    # Get multiplicator and base frequency
+    tA, bA, _ = parse_offset(freqA)
+    tB, bB, _ = parse_offset(freqB)
+
+    if bA == bB:
+        # Same base freq, compare mulitplicator only.
+        tA = int(tA or "1")
+        tB = int(tB or "1")
+    else:
+        # Different base freq, compare length of first period after beginning of time.
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
+        tA = (t[1] - t[0]).total_seconds()
+        t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
+        tB = (t[1] - t[0]).total_seconds()
+
+    return get_op(op)(tA, tB)
+
+
+def parse_offset(freq: str) -> Tuple[str, str, Optional[str]]:
+    """Parse an offset string.
+
+    Returns: multiplicator, offset base, anchor (or None)
+    """
+    patt = r"(\d*)(\w)S?(?:-(\w{2,3}))?"
+    return re.search(patt, freq.replace("Y", "A")).groups()
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
@@ -502,7 +582,9 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     return tmp.interp(dayofyear=range(1, doy_max + 1))
 
 
-def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataArray:
+def adjust_doy_calendar(
+    source: xr.DataArray, target: Union[xr.DataArray, xr.Dataset]
+) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -512,7 +594,7 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataAr
     ----------
     source : xr.DataArray
       Array with `dayofyear` coordinate.
-    target : xr.DataArray
+    target : xr.DataArray or xr.Dataset
       Array with `time` coordinate.
 
     Returns
@@ -530,21 +612,24 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray) -> xr.DataAr
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
+def resample_doy(
+    doy: xr.DataArray, arr: Union[xr.DataArray, xr.Dataset]
+) -> xr.DataArray:
     """Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
     doy : xr.DataArray
       Array with `dayofyear` coordinate.
-    arr : xr.DataArray
+    arr : xr.DataArray or xr.Dataset
       Array with `time` coordinate.
 
     Returns
     -------
     xr.DataArray
-      An array with the same `time` dimension as `arr` whose values are filled according to the day-of-year value in
-      `doy`.
+      An array with the same dimensions as `doy`, except for `dayofyear`, which is
+      replaced by the `time` dimension of `arr`. Values are filled according to the
+      day of year value in `doy`.
     """
     if "dayofyear" not in doy.coords:
         raise AttributeError("Source should have `dayofyear` coordinates.")
@@ -552,12 +637,8 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray) -> xr.DataArray:
     # Adjust calendar
     adoy = adjust_doy_calendar(doy, arr)
 
-    # Create array with arr shape and coords
-    out = xr.full_like(arr, np.nan)
-
-    # Fill with values from `doy`
-    d = out.time.dt.dayofyear.values
-    out.data = adoy.sel(dayofyear=d)
+    out = adoy.rename(dayofyear="time").reindex(time=arr.time.dt.dayofyear)
+    out["time"] = arr.time
 
     return out
 

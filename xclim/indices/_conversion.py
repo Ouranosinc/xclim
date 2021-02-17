@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import xarray as xr
@@ -13,10 +13,12 @@ __all__ = [
     "saturation_vapor_pressure",
     "relative_humidity",
     "specific_humidity",
+    "snowfall_approximation",
+    "rain_approximation",
 ]
 
 
-@declare_units("[temperature]", tasmin="[temperature]", tasmax="[temperature]")
+@declare_units(tasmin="[temperature]", tasmax="[temperature]")
 def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     """Average temperature from minimum and maximum temperatures.
 
@@ -40,9 +42,7 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     return tas
 
 
-@declare_units(
-    ["m/s", "degree"], uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]"
-)
+@declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
 def uas_vas_2_sfcwind(
     uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
 ) -> Tuple[xr.DataArray, xr.DataArray]:
@@ -63,9 +63,9 @@ def uas_vas_2_sfcwind(
 
     Returns
     -------
-    wind : xr.DataArray
-      Wind velocity (m s-1)
-    windfromdir : xr.DataArray
+    wind : xr.DataArray, [m s-1]
+      Wind velocity
+    windfromdir : xr.DataArray, [°]
       Direction from which the wind blows, following the meteorological convention where
       360 stands for North and 0 for calm winds.
 
@@ -81,6 +81,7 @@ def uas_vas_2_sfcwind(
 
     # Wind speed is the hypotenuse of "uas" and "vas"
     wind = np.hypot(uas, vas)
+    wind.attrs["units"] = "m s-1"
 
     # Calculate the angle
     windfromdir_math = np.degrees(np.arctan2(vas, uas))
@@ -93,11 +94,11 @@ def uas_vas_2_sfcwind(
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
     windfromdir = xr.where(windfromdir.round() == 0, 360, windfromdir)
     windfromdir = xr.where(wind < wind_thresh, 0, windfromdir)
-
+    windfromdir.attrs["units"] = "degree"
     return wind, windfromdir
 
 
-@declare_units(["m s-1", "m s-1"], sfcWind="[speed]", sfcWindfromdir="[]")
+@declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_2_uas_vas(
     sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray
 ) -> Tuple[xr.DataArray, xr.DataArray]:
@@ -115,10 +116,10 @@ def sfcwind_2_uas_vas(
 
     Returns
     -------
-    uas : xr.DataArray
-      Eastward wind velocity (m s-1)
-    vas : xr.DataArray
-      Northward wind velocity (m s-1)
+    uas : xr.DataArray, [m s-1]
+      Eastward wind velocity
+    vas : xr.DataArray, [m s-1]
+      Northward wind velocity
 
     """
     # Converts the wind speed to m s-1
@@ -139,10 +140,12 @@ def sfcwind_2_uas_vas(
 
     uas = sfcWind * np.cos(np.radians(windfromdir_math))
     vas = sfcWind * np.sin(np.radians(windfromdir_math))
+    uas.attrs["units"] = "m s-1"
+    vas.attrs["units"] = "m s-1"
     return uas, vas
 
 
-@declare_units("Pa", tas="[temperature]", ice_thresh="[temperature]")
+@declare_units(tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
     tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
 ) -> xr.DataArray:
@@ -151,12 +154,17 @@ def saturation_vapor_pressure(
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array
+      Temperature array
     ice_thresh : str
-        Threshold temperature under which to switch to equations in reference to ice instead of water.
-        If None (default) everything is computed with reference to water.
+      Threshold temperature under which to switch to equations in reference to ice instead of water.
+      If None (default) everything is computed with reference to water.
     method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Which method to use, see notes.
+      Which method to use, see notes.
+
+    Returns
+    -------
+    xarray.DataArray, [Pa]
+      Saturation vapor pressure
 
     Notes
     -----
@@ -243,11 +251,11 @@ def saturation_vapor_pressure(
             f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
         )
 
+    e_sat.attrs["units"] = "Pa"
     return e_sat
 
 
 @declare_units(
-    "%",
     tas="[temperature]",
     dtas="[temperature]",
     huss="[]",
@@ -271,21 +279,26 @@ def relative_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array
+      Temperature array
     dtas : xr.DataArray
-        Dewpoint temperature, if specified, overrides huss and ps.
+      Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
-        Specific Humidity
+      Specific Humidity
     ps : xr.DataArray
-        Air Pressure
+      Air Pressure
     ice_thresh : str
-        Threshold temperature under which to switch to equations in reference to ice instead of water.
-        If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
+      Threshold temperature under which to switch to equations in reference to ice instead of water.
+      If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
     method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+      Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-        What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
-        if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
+      What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
+      if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
+
+    Returns
+    -------
+    xr.DataArray, [%]
+      Relative humidity
 
     Notes
     -----
@@ -357,12 +370,11 @@ def relative_humidity(
         rh = rh.clip(0, 100)
     elif invalid_values == "mask":
         rh = rh.where((rh <= 100) & (rh >= 0))
-
+    rh.attrs["units"] = "%"
     return rh
 
 
 @declare_units(
-    "",
     tas="[temperature]",
     rh="[]",
     ps="[pressure]",
@@ -381,20 +393,25 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array
+      Temperature array
     rh : xr.DataArrsay
     ps : xr.DataArray
-        Air Pressure
+      Air Pressure
     ice_thresh : str
-        Threshold temperature under which to switch to equations in reference to ice instead of water.
-        If None (default) everything is computed with reference to water.
+      Threshold temperature under which to switch to equations in reference to ice instead of water.
+      If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+      Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-        What to do with values larger than the saturation specific humidity and lower than 0.
-        If "clip" (default), clips everything to 0 - q_sat
-        if "mask", replaces values outside the range by np.nan,
-        if None, does nothing.
+      What to do with values larger than the saturation specific humidity and lower than 0.
+      If "clip" (default), clips everything to 0 - q_sat
+      if "mask", replaces values outside the range by np.nan,
+      if None, does nothing.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Specific humidity
 
     Notes
     -----
@@ -432,5 +449,85 @@ def specific_humidity(
             q = q.clip(0, q_sat)
         elif invalid_values == "mask":
             q = q.where((q <= q_sat) & (q >= 0))
-
+    q.attrs["units"] = ""
     return q
+
+
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+def snowfall_approximation(
+    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+):
+    """Snowfall approximation from total precipitation and temperature.
+
+    Solid precipitation estimated from precipitation and temperature according to a given method.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [kg m-2 s-1] or [mm].
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    thresh : str,
+      Threshold temperature, used by method "binary".
+    method : {"binary"}
+      Which method to use when approximating snowfall from total precipitation. See notes.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as pr]
+      Solid precipitation flux
+
+    Notes
+    -----
+    The following methods are available to approximate snowfall:
+
+    - "binary" : When the given temperature is under a given threshold, precipitation
+        is assumed to be solid. The method is agnostic to the type of temperature used
+        (mean, maximum or minimum).
+
+    """
+    thresh = convert_units_to(thresh, tas)
+    if method == "binary":
+        prsn = pr.where(tas < thresh, 0)
+    else:
+        raise ValueError(f"Method {method} not in ['binary'].")
+
+    prsn.attrs["units"] = pr.attrs["units"]
+    return prsn
+
+
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+def rain_approximation(
+    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+):
+    """Rainfall approximation from total precipitation and temperature.
+
+    Liquid precipitation estimated from precipitation and temperature according to a given method.
+    This is a convenience method based on `snowfall_approximation`, see the latter for details.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux [kg m-2 s-1] or [mm].
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    thresh : str,
+      Threshold temperature, used by method "binary".
+    method : {"binary"}
+      Which method to use when approximating snowfall from total precipitation. See notes.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as pr]
+      Liquid precipitation rate
+
+    Notes
+    -----
+    See the documentation of `snowfall_approximation` for details. This method computes
+    the snowfall approximation and subtracts it from the total precipitation to estimate
+    the liquid rain precipitation.
+
+    """
+    prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+    prlp.attrs["units"] = pr.attrs["units"]
+    return prlp

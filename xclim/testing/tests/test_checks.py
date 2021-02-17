@@ -24,7 +24,12 @@ def date_range(request):
 
 
 @pytest.mark.parametrize(
-    "value,expected", [("a string", "a string"), ("a long string", "a * string")]
+    "value,expected",
+    [
+        ("a string", "a string"),
+        ("a long string", "a * string"),
+        ("a string", ["not correct", "a string"]),
+    ],
 )
 def test_check_valid_ok(value, expected):
     d = TestObj(value)
@@ -32,7 +37,12 @@ def test_check_valid_ok(value, expected):
 
 
 @pytest.mark.parametrize(
-    "value,expected", [(None, "a string"), ("a long string", "a * strings")]
+    "value,expected",
+    [
+        (None, "a string"),
+        ("a long string", "a * strings"),
+        ("a string", ["not correct", "also not correct"]),
+    ],
 )
 def test_check_valid_raise(value, expected):
     d = TestObj(value)

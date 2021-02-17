@@ -33,14 +33,29 @@ class Stats(Streamflow):
 
 
 class FA(Streamflow):
-    """Frequency analysis."""
+    """Frequency analysis.
 
-    missing = "at_least_n"
-    missing_options = {"n": 20}
+    Notes
+    -----
+    FA performs three steps:
+     1. Compute stats over time series (min, max)
+     2. Fit statistical distribution parameters
+     3. Compute parametric quantiles for given return periods
+
+    Missing value functionality cannot be meaningfully applied here, because indicators apply missing value
+    operations on input and apply the mask on output. The `freq` of the input could be "YS", but this same
+    `freq` would then be used to compute the mask, which makes no sense.
+    """
+
+    missing = "skip"
 
 
 # Disable the daily checks because the inputs are period extremas.
-class Fit(FA):
+class Fit(Streamflow):
+    freq = None
+    missing = "at_least_n"
+    # Do not set `missing_options` so it can be overriden by `set_options`.
+
     @staticmethod
     def cfcheck(**das):
         pass
@@ -57,7 +72,6 @@ base_flow_index = Streamflow(
     description="Minimum 7-day average flow divided by the mean flow.",
     compute=base_flow_index,
 )
-
 
 freq_analysis = FA(
     identifier="freq_analysis",

@@ -28,6 +28,7 @@ from .utils import (
 )
 
 __all__ = [
+    "BaseAdjustment",
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
     "LOCI",

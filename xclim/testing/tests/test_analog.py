@@ -50,6 +50,7 @@ def test_randn():
     assert_almost_equal(r.std(0, ddof=1), std)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method):
     if method == "skezely_rizzo":
@@ -65,6 +66,7 @@ def test_spatial_analogs(method):
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
+@pytest.mark.slow
 def test_spatial_analogs_multidim():
     diss = open_dataset("SpatialAnalogs/dissimilarity")
     data = open_dataset("SpatialAnalogs/indicators")

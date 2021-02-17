@@ -2,14 +2,89 @@
 History
 =======
 
-0.22.0 (unreleased)
+0.24.0 (unreleased)
 -------------------
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
+* Numerous changes to `xclim.core.calendar.percentile_doy`:
+
+    * `per` now accepts a sequence as well as a scalar and as such the output has a percentiles axis.
+    * `per` argument is now expected to between 0-100 (not 0-1).
+    * input data must have a daily (or coarser) time frequency.
+
+* Change in unit handling paradigm for indices, many indices will have different output units than before.
+
+    * Indice functions are now more flexible : output units may change for different input units, but the dimensionality is consistent.
+    * Indice functions now accept non-daily data, but daily is assumed if the frequency cannot be inferred.
+
+* Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Leave `missing_options` undefined in `land.fit` indicator to allow control via `set_options`.
+* Modified `xclim.core.calendar.percentile_doy` to improve performance.
+* New `xclim.core.calendar.compare_offsets` for comparing offset strings.
+* New `xclim.indices.generic.get_op` to retrieve a function from a string representation of that operator.
+* The CI pipeline has been migrated from Travis CI to GitHub Actions. All stages are still built using `tox`.
+* Indice functions must always set the units (the `declare_units` decorator does no check anymore).
+* New `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
+* `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
+* New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
+
+Bug fixes
+~~~~~~~~~
+* The unit handling change resolved a bug that prevented the use of `xr.set_options(keep_attrs=True)` with indices.
+
+0.23.0 (2021-01-22)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Renamed indicator `atmos.degree_days_depassment_date` to `atmos.degree_days_exceedance_date`.
+* In `degree_days_exceedance_date` : renamed argument `start_date` to `after_date`.
+* Added cfchecks for Pr+Tas-based indicators.
+* Refactored test suite to now be available as part of the standard library installation (`xclim.testing.tests`).
+* Running `pytest` with `xdoctest` now requires the `rootdir` to point at `tests` location (`pytest --rootdir xclim/testing/tests/ --xdoctest xclim`).
+* Development checks now require working jupyter notebooks (assessed via the `pytest --nbval` command).
 
 New indicators
 ~~~~~~~~~~~~~~
+* `rain_approximation` and `snowfall_approximation` for computing `prlp` and `prsn` from `pr` and `tas` (or `tasmin` or `tasmax`) according to some threshold and method.
+* `solid_precip_accumulation` and `liquid_precip_accumulation` now accept a `thresh` parameter to control the binary snow/rain temperature threshold.
+* `first_snowfall` and `last_snowfall` to compute the date of first/last snowfall exceeding a threshold in a period.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* New `kind` entry in the `parameters` property of indicators, differentiating between [optional] variables and parameters.
+* The git pre-commit hooks (`pre-commit run --all`) now clean the jupyter notebooks with `nbstripout` call.
+
+Bug fixes
+~~~~~~~~~
+* Fixed a bug in `indices.run_length.lazy_indexing` that occurred with 1D coords and 0D indexes when using the dask backend.
+* Fixed a bug with default frequency handling affecting `fit` indicator.
+* Set missing method to 'skip' for `freq_analysis` indicator.
+* Fixed a bug in `ensembles._ens_align_datasets` that occurred when inputs are `.nc` filepaths but files lack a time dimension.
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* `core.cfchecks.check_valid` now accepts a sequence of strings as its `expected` argument.
+* Clean up in the tests to speed up testing. Addition of a marker to include "slow" tests when desired (`-m slow`).
+* Fixes in the tests to support `sklearn>=0.24`, `clisops>=0.5` and build xarray@master against python 3.7.
+* Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
+* Indicator class now has a `default_freq` method.
+
+
+0.22.0 (2020-12-07)
+-------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Statistical functions (`frequency_analysis`, `fa`, `fit`, `parametric_quantile`) are now solely accessible via `indices.stats`.
+
+New indicators
+~~~~~~~~~~~~~~
+* `atmos.degree_days_depassment_date`, the day of year when the degree days sum exceeds a threshold.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,9 +103,10 @@ Bug fixes
 ~~~~~~~~~
 * Fixed bug that prevented the use of `xclim.core.missing.MissingBase` and subclasses with an indexer and a cftime datetime coordinate.
 * Fixed issues with metadata handling in statistical indices.
+* Various small fixes to the documentation (re-establishment of some internally and externally linked documents).
 
 Internal changes
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 * Passing `align_on` to `xclim.core.calendar.convert_calendar` without using '360_day' calendars will not raise a warning anymore.
 * Added formatting utilities for metadata attributes (`update_cell_methods`, `prefix_attrs` and `unprefix_attrs`).
 * `xclim/ensembles.py` moved to `xclim/ensembles/*.py`, splitting stats/creation, reduction  and robustness methods.

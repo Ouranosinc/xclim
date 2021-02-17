@@ -8,6 +8,7 @@ import xarray as xr
 import xclim
 import xclim.testing
 from xclim.core.calendar import max_doy
+from xclim.testing.tests import TD
 
 
 @pytest.fixture
@@ -92,6 +93,25 @@ def pr_series():
 
 
 @pytest.fixture
+def prsn_series():
+    def _prsn_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="pr",
+            attrs={
+                "standard_name": "solid_precipitation_flux",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+            },
+        )
+
+    return _prsn_series
+
+
+@pytest.fixture
 def pr_hr_series():
     """Return hourly time series."""
 
@@ -171,7 +191,7 @@ def ndq_series():
         dims=("time", "x", "y"),
         coords={"time": time, "x": cx, "y": cy},
         attrs={
-            "units": "m^3 s-1",
+            "units": "m3 s-1",
             "standard_name": "water_volume_transport_in_river_channel",
         },
     )
@@ -305,8 +325,7 @@ def add_example_file_paths(xdoctest_namespace, tas_series):
     ns = xdoctest_namespace
 
     nrcan = Path("NRCANdaily")
-    cmip3 = Path("cmip3")
-    cmip5 = Path("cmip5")
+    era5 = Path("ERA5")
 
     ns["path_to_pr_file"] = str(nrcan / "nrcan_canada_daily_pr_1990.nc")
 
@@ -314,11 +333,11 @@ def add_example_file_paths(xdoctest_namespace, tas_series):
 
     ns["path_to_tasmin_file"] = str(nrcan / "nrcan_canada_daily_tasmin_1990.nc")
 
-    ns["path_to_tas_file"] = str(cmip3 / "tas.sresb1.giss_model_e_r.run1.atm.da.nc")
+    ns["path_to_tas_file"] = str(era5 / "daily_surface_cancities_1990-1993.nc")
 
-    ns["path_to_multi_shape_file"] = str(cmip5 / "multi_regions.json")
+    ns["path_to_multi_shape_file"] = str(TD / "multi_regions.json")
 
-    ns["path_to_shape_file"] = str(cmip5 / "southern_qc_geojson.json")
+    ns["path_to_shape_file"] = str(TD / "southern_qc_geojson.json")
 
     time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     ns["temperature_datasets"] = [
@@ -327,14 +346,22 @@ def add_example_file_paths(xdoctest_namespace, tas_series):
             coords={"time": time},
             name="tas",
             dims=("time",),
-            attrs={"units": "K"},
+            attrs={
+                "units": "K",
+                "cell_methods": "time: mean within days",
+                "standard_name": "air_temperature",
+            },
         ),
         xr.DataArray(
             12 * np.random.random_sample(time.size) + 273,
             coords={"time": time},
             name="tas",
             dims=("time",),
-            attrs={"units": "K"},
+            attrs={
+                "units": "K",
+                "cell_methods": "time: mean within days",
+                "standard_name": "air_temperature",
+            },
         ),
     ]
 

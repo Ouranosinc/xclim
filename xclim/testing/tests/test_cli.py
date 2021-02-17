@@ -5,10 +5,11 @@ import numpy as np
 import pytest
 import xarray as xr
 from click.testing import CliRunner
-from test_fwi import get_data as fwi_get_data
 
-import xclim as xc
+import xclim
 from xclim.cli import cli
+
+from .test_fwi import get_data as fwi_get_data
 
 try:
     from dask.distributed import Client
@@ -19,9 +20,9 @@ except ImportError:
 @pytest.mark.parametrize(
     "indicators,indnames",
     [
-        ([xc.atmos.tg_mean], ["tg_mean"]),
+        ([xclim.atmos.tg_mean], ["tg_mean"]),
         (
-            [xc.atmos.tn_mean, xc.atmos.daily_freezethaw_cycles],
+            [xclim.atmos.tn_mean, xclim.atmos.daily_freezethaw_cycles],
             ["tn_mean", "dlyfrzthw"],
         ),
     ],
@@ -39,22 +40,22 @@ def test_indices():
     runner = CliRunner()
     results = runner.invoke(cli, ["indices"])
 
-    for name, ind in xc.core.indicator.registry.items():
+    for name, ind in xclim.core.indicator.registry.items():
         assert name.lower() in results.output
 
 
 @pytest.mark.parametrize(
     "indicator,indname",
     [
-        (xc.atmos.heating_degree_days, "heating_degree_days"),
-        (xc.land.base_flow_index, "base_flow_index"),
+        (xclim.atmos.heating_degree_days, "heating_degree_days"),
+        (xclim.land.base_flow_index, "base_flow_index"),
     ],
 )
 def test_indicator_help(indicator, indname):
     runner = CliRunner()
     results = runner.invoke(cli, [indname, "--help"])
 
-    for name in indicator._sig.parameters.keys():
+    for name in indicator.parameters.keys():
         assert name in results.output
 
 
@@ -77,7 +78,7 @@ def test_normal_computation(
         data_vars={
             "tasmin": tasmin,
             "tasmax": tasmax,
-            "tas": xc.atmos.tg(tasmin, tasmax),
+            "tas": xclim.atmos.tg(tasmin, tasmax),
             "pr": pr,
         }
     )
@@ -146,7 +147,7 @@ def test_renaming_variable(tas_series, tmp_path):
     output_file = tmp_path / "out.nc"
     tas.name = "tas"
     tas.to_netcdf(input_file)
-    with xc.set_options(cf_compliance="warn"):
+    with xclim.set_options(cf_compliance="warn"):
         runner = CliRunner()
         results = runner.invoke(
             cli,
@@ -219,7 +220,7 @@ def test_missing_variable(tas_series, tmp_path):
         (["--dask-nthreads", "2"], "Error: '--dask-maxmem' must be given"),
         (["--chunks", "time:90"], "100% Complete"),
         (["--chunks", "time:90,lat:5"], "100% Completed"),
-        (["--version"], xc.__version__),
+        (["--version"], xclim.__version__),
     ],
 )
 def test_global_options(tas_series, tmp_path, options, output):

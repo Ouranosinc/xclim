@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import xarray as xr
 from scipy.stats import norm, uniform
 
 from xclim.sdba.adjustment import (
@@ -51,6 +50,7 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["xclim_history"]
 
 
+@pytest.mark.slow
 class TestScaling:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_time(self, kind, name, series):
@@ -92,6 +92,7 @@ class TestScaling:
         np.testing.assert_array_almost_equal(p, ref)
 
 
+@pytest.mark.slow
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
@@ -137,14 +138,15 @@ class TestDQM:
         middle = (x > 1e-2) * (x < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
-        # Test with simure not equal to hist
-        ff = series(np.ones(ns) * 1.1, name)
-        sim2 = apply_correction(sim, ff, kind)
-        ref2 = apply_correction(ref, ff, kind)
+        # PB 13-01-21 : This seems the same as the next test.
+        # Test with sim not equal to hist
+        # ff = series(np.ones(ns) * 1.1, name)
+        # sim2 = apply_correction(sim, ff, kind)
+        # ref2 = apply_correction(ref, ff, kind)
 
-        p2 = DQM.adjust(sim2, interp="linear")
+        # p2 = DQM.adjust(sim2, interp="linear")
 
-        np.testing.assert_array_almost_equal(p2[middle], ref2[middle], 1)
+        # np.testing.assert_array_almost_equal(p2[middle], ref2[middle], 1)
 
         # Test with actual trend in sim
         trend = series(
@@ -156,10 +158,8 @@ class TestDQM:
         np.testing.assert_array_almost_equal(p3[middle], ref3[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    @pytest.mark.parametrize(
-        "spatial_dims", [None, {"lat": np.arange(20), "lon": np.arange(20)}]
-    )
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, spatial_dims):
+    @pytest.mark.parametrize("add_dims", [True, False])
+    def test_mon_U(self, mon_series, series, kind, name, add_dims):
         """
         Train on
         hist: U
@@ -167,7 +167,7 @@ class TestDQM:
 
         Predict on hist to get ref
         """
-        n = 10000
+        n = 5000
         u = np.random.rand(n)
 
         # Define distributions
@@ -186,18 +186,18 @@ class TestDQM:
         ref_t = mon_series(apply_correction(y, trend, kind), name)
         sim = series(apply_correction(x, trend, kind), name)
 
-        if spatial_dims:
-            hist = hist.expand_dims(**spatial_dims).chunk({"lat": 10})
-            sim = sim.expand_dims(**spatial_dims).chunk({"lat": 10})
-            ref_t = ref_t.expand_dims(**spatial_dims)
+        if add_dims:
+            hist = hist.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
+            sim = sim.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
+            ref_t = ref_t.expand_dims(lat=[0, 1, 2])
 
         DQM = DetrendedQuantileMapping(kind=kind, group="time.month", nquantiles=5)
         DQM.train(ref, hist)
         mqm = DQM.ds.af.mean(dim="quantiles")
         p = DQM.adjust(sim)
 
-        if spatial_dims:
-            mqm = mqm.isel({crd: 0 for crd in spatial_dims.keys()})
+        if add_dims:
+            mqm = mqm.isel(lat=0)
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
 
@@ -212,6 +212,7 @@ class TestDQM:
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
 
+@pytest.mark.slow
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):
@@ -332,6 +333,7 @@ class TestQDM:
         np.testing.assert_almost_equal(bc_sim.std(), 16.7, 0)
 
 
+@pytest.mark.slow
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name):

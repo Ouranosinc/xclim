@@ -57,8 +57,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions
-  are welcome :)
+* Remember that this is a volunteer-driven project, and that contributions are welcome :)
 
 Get Started!
 ------------
@@ -71,7 +70,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. Assuming you have `virtualenvwrapper` installed, this is how you set up your fork for local development::
 
     # For virtualenv environments:
     $ mkvirtualenv xclim
@@ -91,14 +90,15 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     # For virtualenv environments:
-    $ pip install black pytest pydocstyle xdoctest tox
+    $ pip install black pytest nbval xdoctest pydocstyle tox
 
     # For Anaconda/Miniconda environments:
     $ conda install -c conda-forge black pytest pydocstyle xdoctest tox
 
     $ black --check --target-version py36 xclim tests
     $ flake8 xclim tests
-    $ pytest --root-dir tests/ --xdoctest xclim
+    $ pytest --nbval docs/notebooks
+    $ pytest --root-dir xclim/testing/tests/ --xdoctest xclim
     $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
     $ tox
 
@@ -110,6 +110,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # For Anaconda/Miniconda environments:
     $ conda install -c conda-forge pre-commit
 
+    # To install the necessary pre-commit hooks:
     $ pre-commit install
 
 7. Commit your changes and push your branch to GitHub::
@@ -153,23 +154,27 @@ Before you submit a pull request, please follow these guidelines:
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
-    https://travis-ci.com/Ouranosinc/xclim/pull_requests
+    https://github.com/Ouranosinc/xclim/actions
 
 .. warning::
-    PEP8, Black, Pytest(doctest) and Pydocstyle (for numpy docstrings) conventions are strongly enforced.
+    PEP8, Black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
 Tips
 ----
 
-To run a subset of tests::
+To run a subset of tests, we suggest a few approaches. For running only a test file::
 
-$ pytest tests.test_xclim
+    $ pytest xclim/testing/tests/test_xclim.py
+
+To skip all slow tests::
+
+    $ pytest -m "not slow"
 
 To run all conventions tests at once::
 
-$ pre-commit run --all-files
+    $ pre-commit run --all-files
 
 Versioning
 ----------

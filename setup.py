@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.21.5-beta"
+VERSION = "0.23.3-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -24,8 +24,7 @@ requirements = [
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
-    "cftime>=1.2.0",
-    "netCDF4>=1.4",
+    "cftime>=1.2.0,<1.4.0",
     "dask[array]>=2.6",
     "pint>=0.9",
     "bottleneck~=1.3.1",
@@ -35,9 +34,9 @@ requirements = [
     "packaging>=20.0",
 ]
 
-setup_requirements = ["pytest-runner"]
+setup_requirements = ["pytest-runner", "wheel"]
 
-test_requirements = ["pytest", "tox"]
+test_requirements = ["pytest", "tox", "xdoctest"]
 
 docs_requirements = [
     "sphinx",
@@ -47,11 +46,12 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "netCDF4",
     "nc-time-axis",
     "distributed>=2.0",
 ]
 
-gis_requirements = ["clisops>0.4.0"]
+gis_requirements = ["clisops>=0.4.0"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:

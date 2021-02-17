@@ -248,9 +248,8 @@ def first_run(
         if isinstance(da.data, dsk.Array):
             ind = ind.chunk(da.chunks)
         wind_sum = da.rolling(time=window).sum(skipna=False)
-        out = ind.where(wind_sum >= window).min(dim=dim) - (
-            window - 1
-        )  # remove window -1 as rolling result index is last element of the moving window
+        out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
+        # remove window - 1 as rolling result index is last element of the moving window
 
     if coord:
         crd = da[dim]
@@ -347,13 +346,13 @@ def season_length(
     # Invert the condition and mask all values after beginning
     # we fillna(0) as so to differentiate series with no runs and all-nan series
     not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
-    if date is not None:
-        # Mask also values after "date"
-        mid_idx = index_of_date(da.time, date, max_idxs=1)
-        if mid_idx.size == 0:
-            # The date is not within the group. Happens at boundaries.
-            return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
-        not_da = not_da.where(da.time >= da.time[mid_idx][0])
+
+    # Mask also values after "date"
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    if mid_idx.size == 0:
+        # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+    not_da = not_da.where(da.time >= da.time[mid_idx][0])
 
     end = first_run(
         not_da,
@@ -402,7 +401,7 @@ def run_end_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1)
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -448,7 +447,7 @@ def first_run_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1)
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
 
@@ -489,7 +488,7 @@ def last_run_before_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date)
+    mid_idx = index_of_date(da.time, date, default=-1)
 
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
@@ -734,16 +733,17 @@ def lazy_indexing(
 ) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
-    The algorithm differs whether da is 1D or not.
+    Two case
 
     Parameters
     ----------
     da : xr.DataArray
       Input array. If not 1D, `dim` must be given and must not appear in index.
     index : xr.DataArray
-      N-d integer indices, all dimensions of index must be in da
-    dim : Dimension along which to index,
-          unused if `da` is 1D, should not be present in `index`.
+      N-d integer indices, if da is not 1D, all dimensions of index must be in da
+    dim : str, optional
+      Dimension along which to index, unused if `da` is 1D,
+      should not be present in `index`.
 
     Returns
     -------
@@ -751,22 +751,32 @@ def lazy_indexing(
       Values of `da` at indices `index`
     """
     if da.ndim == 1:
-
+        # Case where da is 1D and index is N-D
+        # Slightly better performance using map_blocks, over an apply_ufunc
         def _index_from_1d_array(array, indices):
             return array[
                 indices,
             ]
 
-        invalid = index.isnull()
+        idx_ndim = index.ndim
+        if idx_ndim == 0:
+            # The 0-D index case, we add a dummy dimension to help dask
+            dim = xr.core.utils.get_temp_dimname(da.dims, "x")
+            index = index.expand_dims(dim)
+        invalid = index.isnull()  # Which indexes to mask
+        # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
+        # for each chunk of index, take corresponding values from da
         func = partial(_index_from_1d_array, da)
-
         out = index.map_blocks(func)
+        # mask where index was NaN
         out = out.where(~invalid)
-        if index.shape == ():
-            out = out.drop_vars(da.dims[0])
+        if idx_ndim == 0:
+            # 0-D case, drop useless coords and dummy dim
+            out = out.drop_vars(da.dims[0]).squeeze()
         return out
 
+    # Case where index.dims is a subset of da.dims.
     if dim is None:
         diff_dims = set(da.dims) - set(index.dims)
         if len(diff_dims) == 0:
@@ -785,7 +795,7 @@ def lazy_indexing(
     return xr.apply_ufunc(
         _index_from_nd_array,
         da,
-        index,
+        index.astype(int),
         input_core_dims=[[dim], []],
         output_core_dims=[[]],
         dask="parallelized",
@@ -794,7 +804,10 @@ def lazy_indexing(
 
 
 def index_of_date(
-    time: xr.DataArray, date: str, max_idxs: Optional[int] = None
+    time: xr.DataArray,
+    date: Optional[str],
+    max_idxs: Optional[int] = None,
+    default: int = 0,
 ) -> np.ndarray:
     """Get the index of a date in a time array.
 
@@ -802,15 +815,26 @@ def index_of_date(
     ----------
     time : xr.DataArray
       An array of datetime values, any calendar.
-    date : str
+    date : str or None
       A string in the "yyyy-mm-dd" or "mm-dd" format.
+      If None, returns default.
     max_idxs: int, optional
+      Maximum number of returned indexes.
+    default: int
+      Index to return if date is None.
+
+    Raises
+    ------
+    ValueError
+      If there are most instances of `date` in `time` than `max_idxs`.
 
     Returns
     -------
     ndarray
       1D array of integers, indexes of `date` in `time`.
     """
+    if date is None:
+        return np.array([default])
     try:
         date = datetime.strptime(date, "%Y-%m-%d")
         year_cond = time.dt.year == date.year

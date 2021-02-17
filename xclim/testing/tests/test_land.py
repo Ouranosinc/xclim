@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from xclim import land
+from xclim import land, set_options
 
 
 def test_base_flow_index(ndq_series):
@@ -23,11 +23,13 @@ class Test_FA:
         )
         assert out.long_name == "N-year return period max winter 1-day flow"
         assert out.shape == (2, 2, 3)  # nrt, nx, ny
+        np.testing.assert_array_equal(out.isnull(), False)
 
     def test_no_indexer(self, ndq_series):
         out = land.freq_analysis(ndq_series, mode="max", t=[2, 5], dist="gamma")
         assert out.long_name == "N-year return period max annual 1-day flow"
         assert out.shape == (2, 2, 3)  # nrt, nx, ny
+        np.testing.assert_array_equal(out.isnull(), False)
 
     def test_q27(self, ndq_series):
         out = land.freq_analysis(ndq_series, mode="max", t=2, dist="gamma", window=7)
@@ -40,13 +42,6 @@ class Test_FA:
             q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
         )
         assert np.isnan(out.values[:, 0, 0]).all()
-
-    def test_too_short(self, q_series):
-        q = q_series(np.random.rand(10))
-        out = land.freq_analysis(
-            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
-        assert np.isnan(out.values[0])
 
 
 class TestStats:
@@ -69,6 +64,35 @@ class TestFit:
         ts = land.stats(ndq_series, freq="YS", op="max")
         p = land.fit(ts, dist="gumbel_r")
         assert p.attrs["estimator"] == "Maximum likelihood"
+
+    def test_too_short(self, q_series):
+        """Missing if less than 20 values are present."""
+        q = q_series(np.random.rand(21))
+        out = land.fit(q, dist="norm")
+        assert not np.isnan(out.values[0])
+
+        q = q_series(np.random.rand(19))
+        out = land.fit(q, dist="norm")
+        assert np.isnan(out.values[0])
+
+    def test_nan(self, q_series):
+        r = np.random.rand(22)
+        r[0] = np.nan
+        q = q_series(r)
+
+        out = land.fit(q, dist="norm")
+        assert not np.isnan(out.values[0])
+
+    def test_ndim(self, ndq_series):
+        out = land.fit(ndq_series, dist="norm")
+        assert out.shape == (2, 2, 3)
+        np.testing.assert_array_equal(out.isnull(), False)
+
+    def test_options(self, q_series):
+        q = q_series(np.random.rand(19))
+        with set_options(missing_options={"at_least_n": {"n": 10}}):
+            out = land.fit(q, dist="norm")
+        np.testing.assert_array_equal(out.isnull(), False)
 
 
 def test_qdoy_max(ndq_series, q_series):

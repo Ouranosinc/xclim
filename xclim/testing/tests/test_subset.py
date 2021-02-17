@@ -6,10 +6,6 @@ import xarray as xr
 
 from xclim.testing import open_dataset
 
-# class TestSubsetImport:
-#     subset = pytest.importorskip('clisops.core.subset', reason="`clisops` subset utilities are not installed.")
-#     pytest.importorskip("rtree", reason="rtree spatial indexing utilities are not installed.")
-
 try:
     import clisops.core.subset as subset
     import geopandas as gpd
@@ -17,8 +13,9 @@ except ImportError:
     subset = False
     gpd = False
 
+pytestmark = pytest.mark.slow
 TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
+TESTS_DATA = os.path.join(TESTS_HOME, "data")
 
 
 class TestSubsetRaises:
@@ -87,7 +84,7 @@ class TestSubsetTime:
     def test_warnings(self):
         da = open_dataset(self.nc_poslons).tas
 
-        with pytest.raises(ValueError) as record:
+        with pytest.raises(ValueError):
             subset.subset_time(da, start_date="2059", end_date="2050")
 
         with pytest.raises(TypeError):
@@ -96,8 +93,8 @@ class TestSubsetTime:
         with pytest.warns(None) as record:
             subset.subset_time(
                 da,
-                start_date=2050,
-                end_date=2055,
+                start_date=2050,  # noqa
+                end_date=2055,  # noqa
             )
         assert (
             'start_date and end_date require dates in (type: str) using formats of "%Y", "%Y-%m" or "%Y-%m-%d".'
@@ -656,13 +653,11 @@ class TestSubsetShape:
             else:
                 lat1 = sub.lat.isel(lat=i[0])
                 lon1 = sub.lon.isel(lon=i[1])
-                # print(lon1.values, lat1.values)
                 np.testing.assert_array_equal(
                     sub[vari].sel(lon=lon1, lat=lat1), ds[vari].sel(lon=lon1, lat=lat1)
                 )
 
-    @pytest.mark.parametrize("vectorize", [True, False])
-    def test_wraps(self, tmp_netcdf_filename, vectorize):
+    def test_wraps(self, tmp_netcdf_filename):
         ds = open_dataset(self.nc_file)
 
         # Polygon crosses meridian, a warning should be raised
@@ -679,7 +674,7 @@ class TestSubsetShape:
         self.compare_vals(ds, sub, "tas")
 
         poly = gpd.read_file(self.meridian_multi_geojson)
-        subtas = subset.subset_shape(ds.tas, poly, vectorize=vectorize)
+        subtas = subset.subset_shape(ds.tas, poly)
         np.testing.assert_array_almost_equal(
             float(np.mean(subtas.isel(time=0))), 281.091553
         )
@@ -691,14 +686,13 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
-            subset.subset_shape(ds, self.meridian_multi_geojson, vectorize=vectorize)
+            subset.subset_shape(ds, self.meridian_multi_geojson)
 
-    @pytest.mark.parametrize("vectorize", [True, False])
-    def test_no_wraps(self, tmp_netcdf_filename, vectorize):
+    def test_no_wraps(self, tmp_netcdf_filename):
         ds = open_dataset(self.nc_file)
 
         with pytest.warns(None) as record:
-            sub = subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
+            sub = subset.subset_shape(ds, self.poslons_geojson)
 
         self.compare_vals(ds, sub, "tas")
 
@@ -723,7 +717,7 @@ class TestSubsetShape:
         assert tmp_netcdf_filename.exists()
         with xr.open_dataset(filename_or_obj=tmp_netcdf_filename) as f:
             assert {"tas", "crs"}.issubset(set(f.data_vars))
-            subset.subset_shape(ds, self.poslons_geojson, vectorize=vectorize)
+            subset.subset_shape(ds, self.poslons_geojson)
 
     def test_all_neglons(self):
         ds = open_dataset(self.nc_file_neglons)

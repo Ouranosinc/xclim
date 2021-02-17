@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Tests for `xclim.locales`
 import json
+import warnings
 
 import numpy as np
 import pytest
@@ -142,7 +143,9 @@ def test_xclim_translations(locale):
     translated_inds = []
     # Remove unofficial indicators (as those created during the tests)
     for identifier, cls in registry.items():
-        if not cls.__module__.startswith("xclim"):
+        if not cls.__module__.startswith("xclim") or cls.__module__.startswith(
+            "xclim.testing"
+        ):
             registry_cp.pop(identifier)
 
     for indicator, fields in dic.items():

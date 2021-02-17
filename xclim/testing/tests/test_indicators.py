@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # Tests for the Indicator objects
 import gc
-from inspect import _empty
 from typing import Union
 
 import dask
@@ -19,7 +18,7 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Daily, Indicator, registry
+from xclim.core.indicator import Daily, Indicator, InputKind, registry
 from xclim.core.units import units
 from xclim.core.utils import MissingVariableError
 from xclim.indices import tg_mean
@@ -328,9 +327,12 @@ def test_parsed_doc():
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
     assert params["tas"]["annotation"] is Union[str, xr.DataArray]
-    assert params["tas"]["default"] is _empty
+    assert params["tas"]["kind"] is InputKind.VARIABLE
+    assert params["tas"]["default"] == "tas"
     assert params["snd"]["default"] is None
+    assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["shut_down_mode"]["annotation"] is str
+    assert params["shut_down_mode"]["kind"] is InputKind.PARAMETER
 
 
 def test_default_formatter():
@@ -387,9 +389,7 @@ def test_update_history():
 
 
 def test_input_dataset():
-    dsx = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990")
-    dsn = open_dataset("NRCANdaily/nrcan_canada_daily_tasmin_1990")
-    ds = xr.merge([dsx, dsn])
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
     out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
@@ -402,5 +402,6 @@ def test_input_dataset():
     out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
 
     # Inexistent variable:
+    dsx = ds.drop_vars("tasmin")
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa

@@ -7,6 +7,8 @@ from scipy.stats import gamma
 
 from xclim.sdba.utils import equally_spaced_nodes
 
+__all__ = ["series", "cannon_2015_rvs", "cannon_2015_dist"]
+
 
 def series(values, name, start="2000-01-01"):
     coords = collections.OrderedDict()

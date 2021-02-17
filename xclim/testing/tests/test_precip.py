@@ -5,52 +5,25 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import atmos
+from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
 K2C = 273.15
 
 
 class TestRainOnFrozenGround:
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    @pytest.mark.parametrize("chunks", [{"time": 366}, None])
+    def test_3d_data_with_nans(self, chunks):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
-    @pytest.mark.parametrize("prunits,prfac", [("kg m-2 s-1", 1), ("mm/day", 86400)])
-    @pytest.mark.parametrize(
-        "tasunits,tasoffset,chunks", [(None, None, {"time": 73.0}), ("C", K2C, None)]
-    )
-    def test_3d_data_with_nans(self, prunits, prfac, tasunits, tasoffset, chunks):
-        pr = open_dataset(self.nc_pr).pr
-        pr2 = pr.copy()
-        pr2.values *= prfac
-        pr2.attrs["units"] = prunits
+        pr = ds.pr.copy()
+        pr.values[1, 10] = np.nan
 
-        tasmax = open_dataset(self.nc_tasmax, chunks=chunks).tasmax
-        tasmin = open_dataset(self.nc_tasmin, chunks=chunks).tasmin
-        tas = 0.5 * (tasmax + tasmin)
-        tas.attrs = tasmax.attrs
-        tas2 = tas.copy()
         if chunks:
-            tas2 = tas2.chunk(chunks)
-        if tasunits:
-            tas2.values -= tasoffset
-            tas2.attrs["units"] = tasunits
+            ds = ds.chunk(chunks)
 
-        pr2.values[10, 1, 0] = np.nan
-        pr.values[10, 1, 0] = np.nan
-
-        outref = atmos.rain_on_frozen_ground_days(pr, tas, freq="MS")
-        out21 = atmos.rain_on_frozen_ground_days(pr2, tas, freq="MS")
-        out22 = atmos.rain_on_frozen_ground_days(pr2, tas2, freq="MS")
-        out12 = atmos.rain_on_frozen_ground_days(pr, tas2, freq="MS")
-
-        np.testing.assert_array_equal(outref, out21)
-        np.testing.assert_array_equal(outref, out22)
-        np.testing.assert_array_equal(outref, out12)
-
-        assert np.isnan(out22.values[0, 1, 0])
-        assert np.isnan(out22.values[0, -1, -1])
+        out = atmos.rain_on_frozen_ground_days(pr, ds.tas, freq="YS")
+        np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
 class TestPrecipAccumulation:
@@ -103,6 +76,16 @@ class TestPrecipAccumulation:
         assert "solid" in out_sol.long_name
         assert "liquid" in out_liq.long_name
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
+
+        # With a non-default threshold
+        out_sol = atmos.solid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+        out_liq = atmos.liquid_precip_accumulation(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
 
 class TestWetDays:
@@ -346,3 +329,42 @@ class TestMaxConsecDryDays:
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
+
+
+class TestSnowfallDate:
+    tasmin_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+
+    def get_snowfall(self):
+        dnr = xr.merge((open_dataset(self.pr_file), open_dataset(self.tasmin_file)))
+        return atmos.snowfall_approximation(
+            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
+        )
+
+    def test_first_snowfall(self):
+        with set_options(check_missing="skip"):
+            fs = atmos.first_snowfall(prsn=self.get_snowfall(), thresh="0.5 mm/day")
+
+        np.testing.assert_array_equal(
+            fs[:, [0, 45, 82], [10, 105, 155]],
+            np.array(
+                [
+                    [[1, 1, 1], [1, 1, 1], [11, np.nan, np.nan]],
+                    [[254, 256, 277], [274, 292, 275], [300, np.nan, np.nan]],
+                ]
+            ),
+        )
+
+    def test_last_snowfall(self):
+        with set_options(check_missing="skip"):
+            ls = atmos.last_snowfall(prsn=self.get_snowfall(), thresh="0.5 mm/day")
+
+        np.testing.assert_array_equal(
+            ls[:, [0, 45, 82], [10, 105, 155]],
+            np.array(
+                [
+                    [[155, 151, 129], [127, 157, 110], [106, np.nan, np.nan]],
+                    [[365, 363, 363], [365.0, 364, 364], [362, np.nan, np.nan]],
+                ]
+            ),
+        )

@@ -6,38 +6,21 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-import warnings
+from typing import Union
 
-# Note: scipy.stats.dist.shapes: comma separated names of shape parameters
-# The other parameters, common to all distribution, are loc and scale.
 import numpy as np
 import xarray as xr
 
-from .stats import __all__
-
-__all__ = [x for x in __all__]
-
-warnings.warn(
-    f"xclim.indices.generic has been refactored in xclim v0.21.0 and has moved several functions to 'xclim.indices.stats'. "
-    f"The affected functions are as follows: `{'`, `'.join(__all__)}`. "
-    f"They have been made available here for your convenience. This functionality will change in xclim v0.22.0. "
-    f"Please update your scripts accordingly.",
-    UserWarning,
-    stacklevel=2,
-)
-
-__all__.extend(
-    [
-        "select_time",
-        "select_resample_op",
-        "doymax",
-        "doymin",
-        "default_freq",
-        "threshold_count",
-        "get_daily_events",
-        "daily_downsampler",
-    ]
-)
+__all__ = [
+    "select_time",
+    "select_resample_op",
+    "doymax",
+    "doymin",
+    "default_freq",
+    "threshold_count",
+    "get_daily_events",
+    "daily_downsampler",
+]
 
 
 def select_time(da: xr.DataArray, **indexer):
@@ -126,10 +109,47 @@ def default_freq(**indexer):
     return freq
 
 
-binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
+binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
 
-def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.DataArray:
+def get_op(op: str):
+    """Get python's comparing function according to its name of representation.
+
+    Accepted op string are keys and values of xclim.indices.generic.binary_ops.
+    """
+    if op in binary_ops:
+        op = binary_ops[op]
+    elif op in binary_ops.values():
+        pass
+    else:
+        raise ValueError(f"Operation `{op}` not recognized.")
+    return xr.core.ops.get_op(op)
+
+
+def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArray:
+    """Compare a dataArray to a threshold using given operator.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input data.
+    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
+      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
+    thresh : Union[float, int]
+      Threshold value.
+
+    Returns
+    -------
+    xr.DataArray
+        Boolean mask of the comparison.
+    """
+    func = getattr(da, "_binary_op")(get_op(op))
+    return func(da, thresh)
+
+
+def threshold_count(
+    da: xr.DataArray, op: str, thresh: Union[float, int], freq: str
+) -> xr.DataArray:
     """Count number of days above or below threshold.
 
     Parameters
@@ -138,7 +158,7 @@ def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.Dat
       Input data.
     op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
-    thresh : str
+    thresh : Union[float, int]
       Threshold value.
     freq : str
       Resampling frequency defining the periods
@@ -149,17 +169,7 @@ def threshold_count(da: xr.DataArray, op: str, thresh: str, freq: str) -> xr.Dat
     xr.DataArray
       The number of days meeting the constraints for each period.
     """
-    from xarray.core.ops import get_op
-
-    if op in binary_ops:
-        op = binary_ops[op]
-    elif op in binary_ops.values():
-        pass
-    else:
-        raise ValueError(f"Operation `{op}` not recognized.")
-
-    func = getattr(da, "_binary_op")(get_op(op))
-    c = func(da, thresh) * 1
+    c = compare(da, op, thresh) * 1
     return c.resample(time=freq).sum(dim="time")
 
 
@@ -181,16 +191,7 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     -------
     xr.DataArray
     """
-    from xarray.core.ops import get_op
-
-    if operator in binary_ops:
-        op = binary_ops[operator]
-    elif operator in binary_ops.values():
-        op = operator
-    else:
-        raise ValueError(f"Operation `{operator}` not recognized.")
-
-    func = getattr(da, "_binary_op")(get_op(op))
+    func = getattr(da, "_binary_op")(get_op(operator))
     events = func(da, da_value) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")

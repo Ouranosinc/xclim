@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test clean-pyc clean-build docs help lint test test-all
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -51,10 +51,15 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 xclim tests
+	pydocstyle --convention=numpy xclim
+	flake8 xclim
+	black --check --target-version py36 xclim
+	pylint --rcfile=setup.cfg --exit-zero xclim
 
 test: ## run tests quickly with the default Python
-	py.test
+	pytest xclim/testing/tests
+	pytest --nbval docs/notebooks
+	pytest --rootdir xclim/testing/tests/ --xdoctest xclim
 
 test-all: ## run tests on every Python version with tox
 	tox

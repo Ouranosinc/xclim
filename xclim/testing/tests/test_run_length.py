@@ -438,3 +438,7 @@ def test_lazy_indexing_special_cases(use_dask):
 
     with pytest.raises(ValueError, match="more than one dimension more than index"):
         rl.lazy_indexing(a, b)
+
+    c = xr.DataArray([1], dims=("x",)).chunk()[0]
+    b["z"] = np.arange(b.z.size)
+    rl.lazy_indexing(b, c)

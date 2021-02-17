@@ -6,6 +6,8 @@ import xarray as xr
 
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
+from xclim.core.options import set_options
+from xclim.core.units import convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -23,7 +25,7 @@ class TestCSDI:
         tn += K2C
         tn[10:20] -= 2
         tn = tasmin_series(tn)
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert out[0] == 10
@@ -39,7 +41,7 @@ class TestCSDI:
         tn[10:20] -= 2
         tn = tasmin_series(tn + K2C)
         tn.attrs["units"] = "C"
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert out[0] == 10
@@ -56,7 +58,7 @@ class TestCSDI:
         tn[10:20] -= 2
         tn[9] = np.nan
         tn = tasmin_series(tn)
-        tn10 = percentile_doy(tn, per=0.1)
+        tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
         out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
         assert np.isnan(out[0])
@@ -87,7 +89,7 @@ class TestDTR:
 
         np.testing.assert_array_equal(dtr, dtrC)
         assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:31].mean(), dtr.values[0, 0, 0])
 
         assert np.isnan(dtr.values[1, 1, 0])
 
@@ -97,7 +99,7 @@ class TestDTR:
         dtrC = atmos.max_daily_temperature_range(tasmin_C, tasmax_C, freq="MS")
         np.testing.assert_array_equal(dtr, dtrC)
         assert dtr.attrs["units"] == "K"
-        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:31].max(), dtr.values[0, 0, 0])
         assert np.isnan(dtr.values[1, 1, 0])
         assert np.isnan(dtr.values[0, -1, -1])
 
@@ -128,7 +130,7 @@ class TestDTRVar:
         np.testing.assert_array_equal(dtr, dtrC)
 
         # first month jan use 0:30 (n==30) because of day to day diff
-        assert np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0], dtrC.values[0, 0, 0])
+        assert np.allclose(dtr1[0:30].mean(), dtr.values[0, 0, 0])
 
         assert np.isnan(dtr.values[1, 1, 0])
 
@@ -160,7 +162,7 @@ class TestETR:
         np.testing.assert_array_equal(etr, etrC)
 
         etr1 = max1[0:31].max() - min1[0:31].min()
-        assert np.allclose(etr1, etr.values[0, 0, 0], etrC.values[0, 0, 0])
+        assert np.allclose(etr1, etr.values[0, 0, 0])
 
         assert np.isnan(etr.values[1, 1, 0])
 
@@ -1001,7 +1003,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, window=1, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1032,7 +1034,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, window=1, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1063,7 +1065,7 @@ class TestT90p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t90 = percentile_doy(tas, per=0.1)
+        t90 = percentile_doy(tas, window=1, per=90).sel(percentiles=90)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1096,7 +1098,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1127,7 +1129,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1157,7 +1159,7 @@ class TestT10p:
         tasC = tas.copy()
         tasC -= K2C
         tasC.attrs["units"] = "C"
-        t10 = percentile_doy(tas, per=0.1)
+        t10 = percentile_doy(tas, per=10).sel(percentiles=10)
 
         # create cold spell in june
         tas[175:180] = 1
@@ -1186,3 +1188,30 @@ def test_freshet_start(tas_series):
         tas_series(np.arange(-50, 350) + 274, start="1/1/2000"), freq="YS"
     )
     assert out[0] == 51
+
+
+def test_degree_days_exceedance_date():
+    tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
+    tas.attrs.update(
+        cell_methods="time: mean within days", standard_name="air_temperature"
+    )
+
+    out = atmos.degree_days_exceedance_date(
+        tas=tas,
+        thresh="4 degC",
+        op=">",
+        sum_thresh="200 K days",
+    )
+    np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
+    assert "tmean > 4 degc" in out.attrs["description"]
+
+    with set_options(check_missing="skip"):
+        out = atmos.degree_days_exceedance_date(
+            tas=tas,
+            thresh="4 degC",
+            op=">",
+            sum_thresh="1500 K days",
+            after_date="07-02",
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)

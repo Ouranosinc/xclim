@@ -16,6 +16,7 @@
 import os
 import sys
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -68,15 +69,24 @@ class TestEnsembleStats:
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
 
-    def test_no_time(self):
+    def test_no_time(self, tmp_path):
         # create again using xr.Dataset objects
+        f1 = Path(tmp_path / "notime")
+        f1.mkdir()
         ds_all = []
         for n in self.nc_files:
             ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
+            ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
+                f1.joinpath(n)
+            )
 
         ens = ensembles.create_ensemble(ds_all)
+        assert len(ens.realization) == len(self.nc_files)
+
+        in_ncs = list(Path(f1).glob("*.nc"))
+        ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(self.nc_files)
 
     def test_create_unequal_times(self):
@@ -210,34 +220,35 @@ class TestEnsembleStats:
         assert "Computation of statistics on" in out1.attrs["xclim_history"]
 
 
+@pytest.mark.slow
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
     def test_kmeans_rsqcutoff(self):
-        pytest.importorskip("sklearn", minversion="0.22")
+        pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
+            data=ds.data, method={"rsq_cutoff": 0.5}, random_state=42, make_graph=False
         )
 
-        assert ids == [0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 15, 20, 22]
-        assert len(ids) == 14
+        assert ids == [4, 7, 10, 23]
+        assert len(ids) == 4
 
         # Test max cluster option
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
-            method={"rsq_cutoff": 0.9},
+            method={"rsq_cutoff": 0.5},
             random_state=42,
             make_graph=False,
-            max_clusters=10,
+            max_clusters=3,
         )
-        assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
-        assert len(ids) == 10
+        assert ids == [4, 7, 23]
+        assert len(ids) == 3
 
     def test_kmeans_rsqopt(self):
-        pytest.importorskip("sklearn", minversion="0.22")
+        pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
@@ -245,8 +256,8 @@ class TestEnsembleReduction:
             random_state=42,
             make_graph=False,
         )
-        assert ids == [4, 5, 7, 10, 11, 12, 13]
-        assert len(ids) == 7
+        assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
+        assert len(ids) == 8
 
     def test_kmeans_nclust(self):
         ds = open_dataset(self.nc_file)
@@ -272,13 +283,13 @@ class TestEnsembleReduction:
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
-            method={"rsq_cutoff": 0.9},
+            method={"rsq_cutoff": 0.5},
             random_state=42,
             make_graph=False,
             sample_weights=sample_weights,
         )
-        assert ids == [0, 1, 3, 4, 5, 6, 7, 10, 11, 18, 20]
-        assert len(ids) == 11
+        assert ids == [0, 20, 23]
+        assert len(ids) == 3
 
         # RSQ optimize
         sample_weights = np.ones(ds.data.shape[0])
@@ -296,21 +307,8 @@ class TestEnsembleReduction:
         assert ids == [4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 7
 
-        sample_weights = np.ones(ds.data.shape[0])
-        # try zero weights
-        sample_weights[[6, 18, 22]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            sample_weights=sample_weights,
-        )
-        assert ids == [4, 5, 7, 10, 12, 13]
-        assert len(ids) == 6
-
     def test_kmeans_variweights(self):
-        pytest.importorskip("sklearn", minversion="0.22")
+        pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         # Test sample weights
         var_weights = np.ones(ds.data.shape[1])
@@ -327,19 +325,7 @@ class TestEnsembleReduction:
         assert ids == [1, 3, 8, 10, 13, 14, 16, 19, 20]
         assert len(ids) == 9
 
-        # using RSQ optimize
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"rsq_optimize": None},
-            random_state=42,
-            make_graph=False,
-            variable_weights=var_weights,
-        )
-
-        assert ids == [2, 4, 8, 13, 14, 22]
-        assert len(ids) == 6
-
-        # try zero weights
+        # using RSQ optimize and try zero weights
         var_weights = np.ones(ds.data.shape[1])
         var_weights[[1, 4]] = 0
 
@@ -351,8 +337,8 @@ class TestEnsembleReduction:
             variable_weights=var_weights,
         )
         # Results here may change according to sklearn version, hence the *isin* intead of ==
-        assert all(np.isin([4, 12, 13, 16], ids))
-        assert len(ids) == 5
+        assert all(np.isin([12, 13, 16], ids))
+        assert len(ids) == 6
 
     def test_kmeans_modelweights(self):
         ds = open_dataset(self.nc_file)
@@ -374,45 +360,31 @@ class TestEnsembleReduction:
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
 
-        model_weights = np.ones(ds.data.shape[0])
-        model_weights[[0, 3, 4, 6, 7, 10, 11, 12, 13]] = 0
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data,
-            method={"n_clusters": 9},
-            random_state=42,
-            make_graph=False,
-            model_weights=model_weights,
-        )
-        for i in np.where(model_weights == 0)[0]:
-            # as long as the cluster has more than one member the models w/ weight==0 should not be present
-            if np.sum(cluster == cluster[i]) > 1:
-                assert i not in ids
-
     @pytest.mark.skipif(
         "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
     )
     def test_kmeans_rsqcutoff_with_graphs(self):
-        pytest.importorskip("sklearn", minversion="0.22")
+        pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=True
+            data=ds.data, method={"rsq_cutoff": 0.5}, random_state=42, make_graph=True
         )
 
-        assert ids == [0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 15, 20, 22]
-        assert len(ids) == 14
+        assert ids == [4, 7, 10, 23]
+        assert len(ids) == 4
 
         # Test max cluster option
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
-            method={"rsq_cutoff": 0.9},
+            method={"rsq_cutoff": 0.5},
             random_state=42,
             make_graph=True,
-            max_clusters=10,
+            max_clusters=3,
         )
-        assert ids == [0, 1, 3, 4, 6, 7, 10, 11, 18, 20]
-        assert len(ids) == 10
+        assert ids == [4, 7, 23]
+        assert len(ids) == 3
 
     @pytest.mark.parametrize(
         "crit,num_select,expected",

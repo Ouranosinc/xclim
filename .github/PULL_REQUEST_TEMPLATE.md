@@ -6,7 +6,7 @@
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Documentation has been added / updated (for bug fixes / features)
 - [ ] HISTORY.rst has been updated (with summary of main changes)
-- [ ] `bumpversion (minor / major / patch)` has been called on this branch
+- [ ] `bumpversion (major / minor / patch)` has been called on this branch
 - [ ] Tags have been pushed (`git push --tags`)
 
 * **What kind of change does this PR introduce?** <!--(Bug fix, feature, docs update, etc.)-->

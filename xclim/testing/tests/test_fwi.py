@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 import xarray as xr
@@ -17,9 +15,6 @@ from xclim.indices.fwi import (
     fire_weather_ufunc,
     initial_spread_index,
 )
-
-TESTS_HOME = os.path.abspath(os.path.dirname(__file__))
-TESTS_DATA = os.path.join(TESTS_HOME, "testdata")
 
 
 def get_data(as_xr=False):
@@ -149,9 +144,9 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
 
     snd = xr.full_like(tas, 0)
     lat = xr.full_like(tas.isel(time=0), 45)
-    DC0 = xr.full_like(tas.isel(time=0), np.nan)
-    DMC0 = xr.full_like(tas.isel(time=0), np.nan)
-    FFMC0 = xr.full_like(tas.isel(time=0), np.nan)
+    DC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
+    DMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
+    FFMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
 
     # Test invalid combination
     with pytest.raises(TypeError):
