@@ -11,6 +11,12 @@ from xclim.testing import open_dataset
 K2C = 273.15
 
 
+@pytest.mark.skip(reason="Not yet implemented.")
+class TestSuspiciousRun:
+    def test_simple(self):
+        assert False
+
+
 class TestRLE:
     def test_dataarray(self):
         values = np.zeros(365)

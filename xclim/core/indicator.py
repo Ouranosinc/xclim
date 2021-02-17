@@ -39,7 +39,7 @@ from .units import convert_units_to, units
 from .utils import MissingVariableError
 
 # Indicators registry
-registry = {}  # Main class registry
+registry = dict()  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
@@ -178,6 +178,9 @@ class Indicator(IndicatorRegistrar):
     missing_options = None
     context = "none"
     freq = None
+
+    # A dictionary of suspect flag-raising criteria
+    flag = {"no-check": lambda x: False}
 
     # Variable metadata (_cf_names, those that can be lists or strings)
     # A developper should access those through cf_attrs on instances
@@ -408,6 +411,18 @@ class Indicator(IndicatorRegistrar):
         self.bind_call(self.datacheck, **das)
         self.bind_call(self.cfcheck, **das)
 
+        # TODO: Migrated from Data Quality Assurance Checks
+        # for da in das:
+        #     self.validate(da)
+        #     self.validate(da, self.flag)
+        #     # Flag suspicious time series
+        #     flags = self.validate(da, self.flag)
+        #     if any(flags.values()):
+        #         da.attrs["flags"] = ", ".join(
+        #             [key for key, val in flags.items() if val]
+        #         )
+        # self.cfprobe(*das)
+
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **ba.kwargs)
         if isinstance(outs, DataArray):
@@ -438,6 +453,18 @@ class Indicator(IndicatorRegistrar):
         if n_outs == 1:
             return outs[0]
         return tuple(outs)
+
+    # TODO: Migrated from Data Quality Assurance Checks
+    # def validate(self, da, conditions):
+    #     """Validate input data requirements. Raise error and return suspect flags if one of the
+    #      conditions are not met."""
+    #     checks.assert_daily(da)
+    #
+    #     flags = {}
+    #     for key, func in conditions.items():
+    #         flags[key] = func(da)
+    #
+    #     return flags
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""

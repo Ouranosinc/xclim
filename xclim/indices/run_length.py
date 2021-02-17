@@ -850,3 +850,26 @@ def index_of_date(
             f"More than {max_idxs} instance of date {date} found in the coordinate array."
         )
     return idxs
+
+
+# TODO: Migrated from Data Quality Assurance Checks
+def suspicious_run(arr, window: int = 10, thresh: float = None):
+    """Return True if the array contains a run of identical values.
+    Parameters
+    ----------
+    arr : sequence
+     Array of values to be parsed.
+    window : int
+      Minimum run length
+    thresh : float
+      Threshold above which values are checked for identical values.
+    Returns
+    -------
+    bool
+      Whether or not the series contains a run of identical values.
+    """
+    v, rl, pos = rle(arr)
+    if thresh:
+        return ((v > thresh) * rl >= window).any()
+    else:
+        return (rl >= window).any()

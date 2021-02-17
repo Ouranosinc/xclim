@@ -27,7 +27,7 @@ def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
             break
     else:
         raise ValidationError(
-            f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
+            f"Variable has a non-conforming {key}: Got `{att}`, expected `{expected}`",
         )
 
 
@@ -59,3 +59,9 @@ def check_valid_max_temperature(var, units="K"):
     r"""Check that a variable is a valid daily maximum temperature."""
     check_valid_temperature(var, units)
     check_valid(var, "cell_methods", "time: maximum within days")
+
+
+# TODO: Migrated from Data Quality Assurance Checks
+def check_valid_precipitation(var, units):
+    check_valid(var, "standard_name", "precipitation_flux")
+    check_valid(var, "units", units)
