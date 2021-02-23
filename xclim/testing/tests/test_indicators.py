@@ -110,7 +110,7 @@ def test_registering():
 
     # Confirm registries live in subclasses.
     class IndicatorNew(Indicator):
-        _nvar = 2
+        nvar = 2
 
     # Identifier must be given
     with pytest.raises(AttributeError, match="has not been set."):

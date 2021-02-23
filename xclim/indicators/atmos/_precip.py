@@ -38,7 +38,7 @@ class HrPr(Hourly):
 class PrTasx(Daily2D):
     """Indicator involving pr and one of tas, tasmin or tasmax."""
 
-    _nvar = 2
+    nvar = 2
     context = "hydro"
 
     @staticmethod
@@ -53,7 +53,7 @@ class PrTasx(Daily2D):
 class PrTas(Daily2D):
     """Indicator involving pr and one of tas, tasmin or tasmax."""
 
-    _nvar = 2
+    nvar = 2
     context = "hydro"
 
     @staticmethod
@@ -225,7 +225,7 @@ drought_code = PrTas(
 )
 
 fire_weather_indexes = Daily(
-    _nvar=4,
+    nvar=4,
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
