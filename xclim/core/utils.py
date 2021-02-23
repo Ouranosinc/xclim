@@ -4,15 +4,14 @@
 Miscellaneous indices utilities
 ===============================
 
-Helper functions for the indices computation, things that do not belong in neither
-`xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
+Helper functions for the indices computation, indicator construction and other things.
 """
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from inspect import Parameter
 from types import FunctionType
-from typing import Any, Callable, Dict, List, NewType, Optional, Sequence, Union
+from typing import Callable, NewType, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -94,7 +93,7 @@ def walk_map(d: dict, func: FunctionType):
 
 
 class ValidationError(ValueError):
-    """xclim ValidationError class."""
+    """Error raised when input data to an indicator fails the validation tests."""
 
     @property
     def msg(self):  # noqa
@@ -102,7 +101,7 @@ class ValidationError(ValueError):
 
 
 class MissingVariableError(ValueError):
-    """xclim Variable missing from dataset error."""
+    """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
 def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
@@ -186,49 +185,75 @@ class InputKind(IntEnum):
     """Constants for input parameter kinds.
 
     For use by external parses to determine what kind of data the indicator expects.
-    On the creation of an indicator, the appropriate constant is stored in `Indicator.parameters[<varname>]['kind']`.
+    On the creation of an indicator, the appropriate constant is stored in :py:attr:`xclim.core.indicator.Indicator.parameters`.
+    The integer value is what gets stored in the output of :py:meth:`xclim.core.indicator.Indicator.json`.
 
     For developpers : for each constant, the docstring specifies the annotation a parameter of an indice function
     should use in order to be picked up by the indicator constructor.
     """
 
-    #: A data variable (DataArray or variable name).
-    #: Annotation : `xr.DataArray`.
     VARIABLE = 0
-    #: An optional data variable (DataArray or variable name).
-    #: Annotation : `xr.DataArray` or `Optional[xr.DataArray]`.
+    """A data variable (DataArray or variable name).
+
+       Annotation : ``xr.DataArray``.
+    """
     OPTIONAL_VARIABLE = 1
-    #: A string representing a quantity with units.
-    #: Annotation : `str` +  an entry in the `declare_units` decorator.
+    """An optional data variable (DataArray or variable name).
+
+       Annotation : ``xr.DataArray`` or ``Optional[xr.DataArray]``.
+    """
     QUANTITY_STR = 2
-    #: A string representing an "offset alias", as defined by pandas (see https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases).
-    #: Annotation : `str` + `freq` as the parameter name.
+    """A string representing a quantity with units.
+
+       Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+    """
     FREQ_STR = 3
-    #: A number.
-    #: Annotation : `int`, `float` and Union's and optional's thereof.
+    """A string representing an "offset alias", as defined by pandas.
+
+       See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases .
+       Annotation : ``str`` + ``freq`` as the parameter name.
+    """
     NUMBER = 4
-    #: A simple string.
-    #: Annotation : `str` or `Optional[str]`. In most cases, this kind of parameter makes sense with choices indicated
-    #: in the docstring's version of the annotation with curly braces. See [Defining new indices](notebooks/customize.ipynb#Defining-new-indices).
+    """A number.
+
+       Annotation : ``int``, ``float`` and Union's and optional's thereof.
+    """
     STRING = 5
-    #: A calendar date without a year in the MM-DD format.
-    #: Annotation : `xclim.core.utils.DateOfYearStr` (may be optional).
+    """A simple string.
+
+       Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
+       in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
+    """
     DATE_OF_YEAR = 6
-    #: A date in the YYYY-MM-DD format, may include a time (HH:MM:SS).
-    #: Annotation : `xclim.core.utils.DateStr` (may be optional).
+    """A calendar date without a year in the MM-DD format.
+
+       Annotation : :py:obj:`xclim.core.utils.DateOfYearStr` (may be optional).
+    """
     DATE = 7
-    #: A sequence of numbers
-    #: Annotation : `Sequence[int]`, `Sequence[float]` and Union thereof, including single `int` and `float`.
+    """A date in the YYYY-MM-DD format, may include a time.
+
+       Annotation : :py:obj:`xclim.core.utils.DateStr` (may be optional).
+    """
     NUMBER_SEQUENCE = 8
-    #: A mapping from argument name to value.
-    #: Developpers : maps the "**kwargs"". Please use as little as possible.
+    """A sequence of numbers
+
+       Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
+    """
     KWARGS = 50
-    #: An xarray dataset.
-    #: Developers : as indices only accept DataArrays, this should only be added on the indicator's initialization.
+    """A mapping from argument name to value.
+
+       Developpers : maps the ``**kwargs``. Please use as little as possible.
+    """
     DATASET = 70
-    #: An object that fits None of the previous kinds. Returned for variadic keyword arguments (**kwargs).
-    #: Developers : This the fallback kind and should be avoided as much as possible.
+    """An xarray dataset.
+
+       Developers : as indices only accept DataArrays, this should only be added on the indicator's constructor.
+    """
     OTHER_PARAMETER = 99
+    """An object that fits None of the previous kinds.
+
+       Developers : This is the fallback kind, it will raise an error in xclim's unit tests if used.
+    """
 
 
 def _typehint_is_in(hint, hints):
@@ -243,12 +268,12 @@ def _typehint_is_in(hint, hints):
 
 
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
-    """Returns the approprite InputKind constant from an inspect.Parameter object.
+    """Returns the approprite InputKind constant from an ``inspect.Parameter`` object.
 
-    The correspondance between parameters and kinds is documented in :py:class:`InputKind`.
+    The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the inspect object is whether the parameter
-    has been assigned units through the :py:function:`xclim.core.units.declare_units` decorator.
-    That can be given with the `has_units` flag.
+    has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
+    That can be given with the ``has_units`` flag.
     """
     if (
         param.annotation in [DataArray, Union[DataArray, str]]

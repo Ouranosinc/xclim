@@ -114,7 +114,20 @@ default_formatter = AttrFormatter(
 
 
 def parse_doc(doc: str) -> Dict[str, str]:
-    """Crude regex parsing."""
+    """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
+
+    The appropriate docstring syntax is detailed in :ref:`Defining new indices`.
+
+    Parameters
+    ----------
+    doc : str
+      The docstring of an indice function.
+
+    Returns
+    -------
+    dict
+      A dictionary with all parsed sections.
+    """
     if doc is None:
         return dict()
 
@@ -294,24 +307,6 @@ def update_history(
         merged_history += "\n"
     merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}."
     return merged_history
-
-
-def update_cell_methods(attrs, new):
-    """Update cell methods attributes.
-
-    attrs : dict
-      Original data attributes.
-    new : str
-      Cell method to append to the original cell methods.
-
-
-    Returns
-    -------
-    str
-      Updated cell method.
-    """
-    cm = attrs.get("cell_methods", "")
-    return (cm + " " + new).strip()
 
 
 def prefix_attrs(source, keys, prefix):

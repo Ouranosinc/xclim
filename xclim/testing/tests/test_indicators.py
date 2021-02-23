@@ -19,9 +19,9 @@ from xclim.core.formatting import (
     parse_doc,
     update_history,
 )
-from xclim.core.indicator import Daily, Indicator, InputKind, registry
+from xclim.core.indicator import Daily, Indicator, registry
 from xclim.core.units import units
-from xclim.core.utils import MissingVariableError
+from xclim.core.utils import InputKind, MissingVariableError
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
 from xclim.testing import open_dataset

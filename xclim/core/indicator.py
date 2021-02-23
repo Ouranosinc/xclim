@@ -16,7 +16,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from inspect import Parameter, _empty, signature
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -36,7 +36,7 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import InputKind, MissingVariableError, infer_kind_from_parameter
+from .utils import MissingVariableError, infer_kind_from_parameter
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -62,7 +62,9 @@ def _parse_indice(indice: Callable, **new_kwargs):
     docmeta : Mapping[str, str]
       A dictionary of the metadata attributes parsed in the docstring.
     params : Mapping[str, Mapping[str, Any]]
-      A dictionary of metadata for each input parameter of the indice.
+      A dictionary of metadata for each input parameter of the indice. The metadata dictionaries
+      include the following entries: "default", "description", "kind" and, optionally, "choices" and "units".
+      "kind" is one of the constants in :py:class:`xclim.core.utils.InputKind`.
     """
     # Base signature
     sig = signature(indice)
@@ -237,16 +239,6 @@ class Indicator(IndicatorRegistrar):
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
 
-    Attributes
-    ----------
-    parameters : dict
-      Dictionary listing the input parameters of the indicator with their description, default value, annotation
-      kind and, if applicable, units and fixed set of choices. The `kind` entry is an element of
-      :py:class:`xclim.core.utils.InputKind`, so either "VARIABLE", "OPTIONAL_VARIABLE" or "PARAMETER". Where the
-      two first denote an xarray object and the last a string or number. The `ds` argument is left out of the dictionary.
-    cf_attrs : list of dict
-      List of metadata information for each output of the indicator. It minimally contains a `var_name` entry.
-
     Notes
     -----
     All subclasses created are available in the `registry` attribute and can be used to define custom subclasses
@@ -254,9 +246,9 @@ class Indicator(IndicatorRegistrar):
 
     """
 
-    # Number of input DataArray variables. Should be updated by subclasses if needed.
-    # This number sets which inputs are passed to the tests.
-    _nvar = 1
+    #: Number of input DataArray variables. Should be updated by subclasses if needed.
+    #: This number sets which inputs are passed to the tests.
+    nvar = 1
 
     # Allowed metadata attributes on the output variables
     _cf_names = [
@@ -300,10 +292,19 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    #: A dictionary mapping metadata about the input parameters to the indicator.
-    #: Contains : `default`, `description`, `kind` and, sometimes `units`, `choices`.
-    #: `Kind` refers to the enumeration `py:class:xclim.core.units.InputKind`.
-    parameters = None
+    parameters: Mapping[str, Any]
+    """A dictionary mapping metadata about the input parameters to the indicator.
+
+       Contains : "default", "description", "kind" and, sometimes, "units" and "choices".
+       "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
+    """
+
+    cf_attrs: Sequence[Mapping[str, Any]]
+    """A list of metadata information for each output of the indicator.
+
+       It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
+       "units", "cell_methods", "description" and "comment".
+    """
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
@@ -405,7 +406,7 @@ class Indicator(IndicatorRegistrar):
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
-        self.check_identifier(self.identifier)
+        self._check_identifier(self.identifier)
         if self.missing == "from_context" and self.missing_options is not None:
             raise ValueError(
                 "Cannot set `missing_options` with `missing` method being from context."
@@ -438,7 +439,7 @@ class Indicator(IndicatorRegistrar):
         # Assume the first arguments are always the DataArrays.
         # Only the first nvar inputs are checked (data + cf checks)
         das = OrderedDict()
-        for name in self._parameters[: self._nvar]:
+        for name in self._parameters[: self.nvar]:
             das[name] = ba.arguments.pop(name)
 
         # Metadata attributes from templates
@@ -448,12 +449,12 @@ class Indicator(IndicatorRegistrar):
             if n_outs > 1:
                 var_id = f"{self.identifier}.{attrs['var_name']}"
             var_attrs.append(
-                self.update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
+                self._update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
             )
 
         # Pre-computation validation checks on DataArray arguments
-        self.bind_call(self.datacheck, **das)
-        self.bind_call(self.cfcheck, **das)
+        self._bind_call(self.datacheck, **das)
+        self._bind_call(self.cfcheck, **das)
 
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **ba.kwargs)
@@ -478,7 +479,7 @@ class Indicator(IndicatorRegistrar):
 
         # Mask results that do not meet criteria defined by the `missing` method.
         # This means all variables must have the same dimensions...
-        mask = self.mask(*das.values(), **ba.arguments)
+        mask = self._mask(*das.values(), **ba.arguments)
         outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
@@ -505,7 +506,7 @@ class Indicator(IndicatorRegistrar):
                         f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
                     )
 
-    def bind_call(self, func, **das):
+    def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
 
         This will try to bind keyword arguments to `func` arguments. If this fails, `func` is called with positional
@@ -537,7 +538,7 @@ class Indicator(IndicatorRegistrar):
             return func(*ba.args, **ba.kwargs)
 
     @classmethod
-    def update_attrs(cls, ba, das, attrs, var_id=None, names=None):
+    def _update_attrs(cls, ba, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and xclim_history attributes are updated, adding to existing values. The language of the string is
@@ -567,10 +568,10 @@ class Indicator(IndicatorRegistrar):
         """
         args = ba.arguments
 
-        out = cls.format(attrs, args)
+        out = cls._format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
-                cls.format(
+                cls._format(
                     get_local_attrs(
                         (var_id or cls.__name__).upper(),
                         locale,
@@ -615,7 +616,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @staticmethod
-    def check_identifier(identifier: str) -> None:
+    def _check_identifier(identifier: str) -> None:
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
@@ -629,7 +630,7 @@ class Indicator(IndicatorRegistrar):
     ):
         """Return a dictionary of unformated translated translatable attributes.
 
-        Translatable attributes are defined in xclim.core.locales.TRANSLATABLE_ATTRS
+        Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
 
         Parameters
         ----------
@@ -685,10 +686,10 @@ class Indicator(IndicatorRegistrar):
         """
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
-        out = self.format(out, args)
+        out = self._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
+        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
         out["notes"] = self.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
@@ -703,7 +704,7 @@ class Indicator(IndicatorRegistrar):
         return out
 
     @classmethod
-    def format(
+    def _format(
         cls,
         attrs: dict,
         args: dict = None,
@@ -751,18 +752,18 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
-    def default_freq(self, **indexer):
+    def _default_freq(self, **indexer):
         """Return default frequency."""
         if self.freq in ["D", "H"]:
             return default_freq(**indexer)
         return None
 
-    def mask(self, *args, **kwds):
+    def _mask(self, *args, **kwds):
         """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") if "freq" in kwds else self.default_freq(**indexer)
+        freq = kwds.get("freq") if "freq" in kwds else self._default_freq(**indexer)
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
@@ -805,7 +806,7 @@ class Indicator(IndicatorRegistrar):
 class Indicator2D(Indicator):
     """Indicator using two dimensions."""
 
-    _nvar = 2
+    nvar = 2
 
 
 class Daily(Indicator):
@@ -822,7 +823,7 @@ class Daily(Indicator):
 class Daily2D(Daily):
     """Indicator using two dimensions at daily frequency."""
 
-    _nvar = 2
+    nvar = 2
 
 
 class Hourly(Indicator):
