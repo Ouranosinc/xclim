@@ -368,6 +368,22 @@ def unprefix_attrs(source, keys, prefix):
     return out
 
 
+KIND_ANNOTATION = {
+    InputKind.VARIABLE: "str or DataArray",
+    InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
+    InputKind.QUANTITY_STR: "quantity (string with units)",
+    InputKind.FREQ_STR: "offset alias (string)",
+    InputKind.NUMBER: "number",
+    InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
+    InputKind.STRING: "str",
+    InputKind.DATE_OF_YEAR: "date (string, MM-DD)",
+    InputKind.DATE: "date (sting, YYYY-MM-DD)",
+    InputKind.DATASET: "Dataset, optional",
+    InputKind.KWARGS: "",
+    InputKind.OTHER_PARAMETER: "Any",
+}
+
+
 def _gen_parameters_section(names, parameters):
     """Generate the "parameters" section of the indicator docstring.
 
@@ -389,19 +405,15 @@ def _gen_parameters_section(names, parameters):
             param = parameters[name]
             descstr = param["description"]
             if param["kind"] == InputKind.VARIABLE:
-                annotstr = "DataArray or str"
-                defstr = f"Default : `ds.{param['default']}`."
+                defstr = f"Default : `ds.{param['default']}`. "
             elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
-                annotstr = "DataArray or str, optional"
                 defstr = ""
             else:
-                if "choices" in param:
-                    annotstr = str(param["choices"])
-                else:
-                    annotstr = getattr(
-                        param["annotation"], "__name__", str(param["annotation"])
-                    )
                 defstr = f"Default : {param['default']}. "
+            if "choices" in param:
+                annotstr = str(param["choices"])
+            else:
+                annotstr = KIND_ANNOTATION[param["kind"]]
             if param.get("units", False):
                 unitstr = f"[Required units : {param['units']}]"
             else:

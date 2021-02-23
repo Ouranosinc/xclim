@@ -36,11 +36,112 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import InputKind, MissingVariableError
+from .utils import InputKind, MissingVariableError, infer_kind_from_parameter
 
 # Indicators registry
 registry = {}  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
+
+
+def _parse_indice(indice: Callable, **new_kwargs):
+    """Parse an indice function and return all elements needed for constructing an indicator.
+
+    Parameters
+    ----------
+    indice : Callable
+      A indice function, written according to xclim's guidelines.
+    new_kwargs :
+      Mapping from name to dicts containing the necessary info for injecting new keyword-only
+      arguments into the indice_wrapper function. The meta dict can include (all optional):
+      `default`, `description`, `annotation`.
+
+    Returns
+    -------
+    indice_wrapper : callable
+      A function with a new signature including the injected args in new_kwargs.
+    docmeta : Mapping[str, str]
+      A dictionary of the metadata attributes parsed in the docstring.
+    params : Mapping[str, Mapping[str, Any]]
+      A dictionary of metadata for each input parameter of the indice.
+    """
+    # Base signature
+    sig = signature(indice)
+
+    # Update
+    def _upd_param(param):
+        # Required DataArray arguments receive their own name as new default
+        #         + the Union[str, DataArray] annotation
+        # Parameters with no default receive None
+        if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
+            return param
+
+        if param.annotation is DataArray:
+            annot = Union[str, DataArray]
+        else:
+            annot = param.annotation
+
+        if param.default is _empty:
+            if param.annotation is DataArray:
+                default = param.name
+            else:
+                default = None
+        else:
+            default = param.default
+
+        return Parameter(
+            param.name,
+            # We keep the kind, except we replace POSITIONAL_ONLY by POSITONAL_OR_KEYWORD
+            max(param.kind, 1),
+            default=default,
+            annotation=annot,
+        )
+
+    # Parse all parameters, replacing annotations and default where needed and possible.
+    new_params = list(map(_upd_param, sig.parameters.values()))
+
+    # Injection
+    for name, meta in new_kwargs.items():
+        # ds argunent
+        param = Parameter(
+            name,
+            Parameter.KEYWORD_ONLY,
+            default=meta.get("default"),
+            annotation=meta.get("annotation"),
+        )
+
+        if new_params[-1].kind == Parameter.VAR_KEYWORD:
+            new_params.insert(-1, param)
+        else:
+            new_params.append(param)
+
+    # Create new compute function to be wrapped in __call__
+    indice_wrapper = copy_function(indice)
+    indice_wrapper.__signature__ = new_sig = sig.replace(parameters=new_params)
+    indice_wrapper.__doc__ = indice.__doc__
+
+    # Docstring parsing
+    parsed = parse_doc(indice.__doc__)
+
+    # Extract params and pop those not in the signature.
+    params = parsed.pop("parameters", {})
+    for dropped in set(params.keys()) - set(new_sig.parameters.keys()):
+        params.pop(dropped)
+
+    if hasattr(indice, "in_units"):
+        # Try to put units
+        for var, ustr in indice.in_units.items():
+            if var in params:
+                params[var]["units"] = ustr
+
+    # Fill default values and annotation in parameter doc
+    for name, param in new_sig.parameters.items():
+        if name in new_kwargs and "description" in new_kwargs[name]:
+            params[name] = {"description": new_kwargs[name]["description"]}
+        param_doc = params.setdefault(name, {"description": ""})
+        param_doc["default"] = param.default
+        param_doc["kind"] = infer_kind_from_parameter(param, "units" in param_doc)
+
+    return indice_wrapper, parsed, params
 
 
 class IndicatorRegistrar:
@@ -198,6 +299,10 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
+
+    #: A dictionary mapping metadata about the input parameters to the indicator.
+    #: Contains : `default`, `description`, `kind` and, sometimes `units`, `choices`.
+    #: `Kind` refers to the enumeration `py:class:xclim.core.units.InputKind`.
     parameters = None
 
     def __new__(cls, **kwds):
@@ -209,9 +314,32 @@ class Indicator(IndicatorRegistrar):
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
         # Parse and update compute's signature.
+        kwds["compute"] = kwds.get("compute", None) or cls.compute
         # Updated to allow string variable names and the ds arg.
         # Parse docstring of the compute function, its signature and its parameters
-        kwds = cls._parse_compute_and_docstring(kwds)
+        kwds["_indcompute"], docmeta, params = _parse_indice(
+            kwds["compute"],
+            ds={
+                "annotation": Dataset,
+                "description": "A dataset with the variables given by name.",
+            },
+        )
+
+        # The update signature
+        kwds["_sig"] = kwds["_indcompute"].__signature__
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+
+        # All fields parsed by parse_doc except "parameters"
+        # i.e. : title, abstract, notes, references, long_name
+        for name, value in docmeta.items():
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
+
+        # The input parameters' metadata
+        # We dump whatever the base class had and take what was parsed from the current compute function.
+        kwds["parameters"] = params
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -248,120 +376,6 @@ class Indicator(IndicatorRegistrar):
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
-
-    @classmethod
-    def _parse_compute_and_docstring(cls, kwds):
-        """
-        Parse the signature of the compute function.
-
-        Change the annotation, change defaults where needed (and possible) and add the 'ds' argument.
-        Parse `compute` docstring to extract missing attributes and parameters' doc, units and kind.
-        """
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-        kwds["compute"] = compute = kwds.get("compute", None) or cls.compute
-
-        new_compute = cls._update_and_inject_arguments(compute)
-
-        # The update signature
-        kwds["_sig"] = new_compute.__signature__
-        # The input parameters' name
-        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
-        # The *indicator* compute function that will be wrapped by __call__
-        kwds["_indcompute"] = new_compute
-
-        # Docstring parsing
-        parsed = parse_doc(compute.__doc__)
-
-        for name, value in parsed.copy().items():
-            if not getattr(cls, name):
-                # Set if neither the class attr is set nor the kwds attr
-                kwds.setdefault(name, value)
-
-        # Fill default values and annotation in parameter doc
-        # params is a multilayer dict, we want to use a brand new one so deepcopy
-        params = deepcopy(kwds.get("parameters", cls.parameters or {}))
-        for name, param in kwds["_sig"].parameters.items():
-            if name == "ds":  # Don't add ds in the parameters list
-                continue
-            param_doc = params.setdefault(name, {"description": ""})
-            param_doc["default"] = param.default
-            param_doc["annotation"] = param.annotation
-            if param.annotation == Union[str, DataArray]:
-                if param.default == name:
-                    param_doc["kind"] = InputKind.VARIABLE
-                else:
-                    param_doc["kind"] = InputKind.OPTIONAL_VARIABLE
-            else:
-                param_doc["kind"] = InputKind.PARAMETER
-
-        # Try to put units
-        if hasattr(compute, "in_units"):
-            for var, units in compute.in_units.items():
-                if var in params:
-                    params[var]["units"] = units
-
-        for name in list(params.keys()):
-            if name not in kwds["_parameters"]:
-                params.pop(name)
-        kwds["parameters"] = params
-        return kwds
-
-    @classmethod
-    def _update_and_inject_arguments(cls, compute):
-        """Update compute argument and inject those shared by all indicators."""
-        # Base signature
-        sig = signature(compute)
-
-        # Update
-        def _upd_param(param):
-            # Required DataArray arguments receive their own name as new default
-            #         + the Union[str, DataArray] annotation
-            # Parameters with no default receive None
-            if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
-                return param
-
-            if param.annotation is DataArray:
-                annot = Union[str, DataArray]
-            else:
-                annot = param.annotation
-
-            if param.default is _empty:
-                if param.annotation is DataArray:
-                    default = param.name
-                else:
-                    default = None
-            else:
-                default = param.default
-
-            return Parameter(
-                param.name,
-                max(
-                    param.kind, 1
-                ),  # We keep the kind, except we replace POSITIONAL_ONLY by POSITONAL_OR_KEYWORD
-                default=default,
-                annotation=annot,
-            )
-
-        # Parse all parameters, replacing annotations and default where needed and possible.
-        new_params = list(map(_upd_param, sig.parameters.values()))
-
-        # Injection
-
-        # ds argunent
-        dsparam = Parameter(
-            "ds", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
-        )
-        if new_params[-1].kind == Parameter.VAR_KEYWORD:
-            new_params.insert(-1, dsparam)
-        else:
-            new_params.append(dsparam)
-
-        # Create new compute function to be wrapped in __call__
-        new_compute = copy_function(compute)
-        new_compute.__signature__ = sig.replace(parameters=new_params)
-        new_compute.__doc__ = compute.__doc__
-
-        return new_compute
 
     @classmethod
     def _parse_cf_attrs(
@@ -682,11 +696,10 @@ class Indicator(IndicatorRegistrar):
         out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
             if param["default"] is _empty:
-                param["default"] = "none"
+                param.pop("default")
             param["kind"] = param["kind"].value  # Get the int.
             if "choices" in param:  # A set is stored, convert to list
                 param["choices"] = list(param["choices"])
-            param.pop("annotation")  # Maybe there's a solution?
         return out
 
     @classmethod

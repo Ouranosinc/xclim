@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
-import inspect
 import warnings
 
 import click
@@ -8,6 +7,7 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
+from xclim.core.utils import InputKind
 
 try:
     from dask.distributed import Client, progress
@@ -93,20 +93,21 @@ def _create_command(indname):
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator.parameters.items():
-        if param["default"] is inspect._empty:
-            default = name if param["annotation"] is xr.DataArray else None
-            # Required DataArray -> default is a variable name
-            # Required param not a DataArray -> no default
-        else:
-            # Not required but stored default or "None"
-            default = param["default"] or "None"
+        if name in ["ds"] or param["kind"] == InputKind.KWARGS:
+            continue
+        choices = "" if "choices" not in param else f" Choices: {param['choices']}"
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=default,
+                default=param["default"],
                 show_default=True,
-                help=param["description"],
-                metavar="VAR_NAME" if param["annotation"] is xr.DataArray else "TEXT",
+                help=param["description"] + choices,
+                metavar=(
+                    "VAR_NAME"
+                    if param["kind"]
+                    in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+                    else "TEXT"
+                ),
             )
         )
 

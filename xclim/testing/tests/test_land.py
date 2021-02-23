@@ -65,16 +65,6 @@ class TestFit:
         p = land.fit(ts, dist="gumbel_r")
         assert p.attrs["estimator"] == "Maximum likelihood"
 
-    def test_too_short(self, q_series):
-        """Missing if less than 20 values are present."""
-        q = q_series(np.random.rand(21))
-        out = land.fit(q, dist="norm")
-        assert not np.isnan(out.values[0])
-
-        q = q_series(np.random.rand(19))
-        out = land.fit(q, dist="norm")
-        assert np.isnan(out.values[0])
-
     def test_nan(self, q_series):
         r = np.random.rand(22)
         r[0] = np.nan

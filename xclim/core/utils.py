@@ -10,13 +10,21 @@ Helper functions for the indices computation, things that do not belong in neith
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from inspect import Parameter
 from types import FunctionType
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, List, NewType, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from xarray import DataArray, Dataset
+
+#: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
+DateStr = NewType("DateStr", str)
+
+#: Type annotation for strings representing dates without a year (MM-DD).
+DateOfYearStr = NewType("DateOfYearStr", str)
 
 
 def wrapped_partial(
@@ -175,8 +183,113 @@ def _calc_perc(arr, p=[50]):
 
 
 class InputKind(IntEnum):
-    """Constants for input parameter kinds."""
+    """Constants for input parameter kinds.
 
+    For use by external parses to determine what kind of data the indicator expects.
+    On the creation of an indicator, the appropriate constant is stored in `Indicator.parameters[<varname>]['kind']`.
+
+    For developpers : for each constant, the docstring specifies the annotation a parameter of an indice function
+    should use in order to be picked up by the indicator constructor.
+    """
+
+    #: A data variable (DataArray or variable name).
+    #: Annotation : `xr.DataArray`.
     VARIABLE = 0
+    #: An optional data variable (DataArray or variable name).
+    #: Annotation : `xr.DataArray` or `Optional[xr.DataArray]`.
     OPTIONAL_VARIABLE = 1
-    PARAMETER = 2
+    #: A string representing a quantity with units.
+    #: Annotation : `str` +  an entry in the `declare_units` decorator.
+    QUANTITY_STR = 2
+    #: A string representing an "offset alias", as defined by pandas (see https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases).
+    #: Annotation : `str` + `freq` as the parameter name.
+    FREQ_STR = 3
+    #: A number.
+    #: Annotation : `int`, `float` and Union's and optional's thereof.
+    NUMBER = 4
+    #: A simple string.
+    #: Annotation : `str` or `Optional[str]`. In most cases, this kind of parameter makes sense with choices indicated
+    #: in the docstring's version of the annotation with curly braces. See [Defining new indices](notebooks/customize.ipynb#Defining-new-indices).
+    STRING = 5
+    #: A calendar date without a year in the MM-DD format.
+    #: Annotation : `xclim.core.utils.DateOfYearStr` (may be optional).
+    DATE_OF_YEAR = 6
+    #: A date in the YYYY-MM-DD format, may include a time (HH:MM:SS).
+    #: Annotation : `xclim.core.utils.DateStr` (may be optional).
+    DATE = 7
+    #: A sequence of numbers
+    #: Annotation : `Sequence[int]`, `Sequence[float]` and Union thereof, including single `int` and `float`.
+    NUMBER_SEQUENCE = 8
+    #: A mapping from argument name to value.
+    #: Developpers : maps the "**kwargs"". Please use as little as possible.
+    KWARGS = 50
+    #: An xarray dataset.
+    #: Developers : as indices only accept DataArrays, this should only be added on the indicator's initialization.
+    DATASET = 70
+    #: An object that fits None of the previous kinds. Returned for variadic keyword arguments (**kwargs).
+    #: Developers : This the fallback kind and should be avoided as much as possible.
+    OTHER_PARAMETER = 99
+
+
+def _typehint_is_in(hint, hints):
+    """Returns whether the first argument is in the other arguments.
+
+    If the first arg is an Union of several typehints, this returns True only
+    if all the members of that Union are in the given list.
+    """
+    # This code makes use of the "set-like" property of Unions and Optionals:
+    # Optional[X, Y] == Union[X, Y, None] == Union[X, Union[X, Y], None] etc.
+    return Union[(hint,) + tuple(hints)] == Union[tuple(hints)]
+
+
+def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
+    """Returns the approprite InputKind constant from an inspect.Parameter object.
+
+    The correspondance between parameters and kinds is documented in :py:class:`InputKind`.
+    The only information not inferable through the inspect object is whether the parameter
+    has been assigned units through the :py:function:`xclim.core.units.declare_units` decorator.
+    That can be given with the `has_units` flag.
+    """
+    if (
+        param.annotation in [DataArray, Union[DataArray, str]]
+        and param.default is not None
+    ):
+        return InputKind.VARIABLE
+
+    if (
+        Optional[param.annotation]
+        in [Optional[DataArray], Optional[Union[DataArray, str]]]
+        and param.default is None
+    ):
+        return InputKind.OPTIONAL_VARIABLE
+
+    if _typehint_is_in(param.annotation, (str, None)) and has_units:
+        return InputKind.QUANTITY_STR
+
+    if param.name == "freq":
+        return InputKind.FREQ_STR
+
+    if _typehint_is_in(param.annotation, (None, int, float)):
+        return InputKind.NUMBER
+
+    if _typehint_is_in(
+        param.annotation, (None, int, float, Sequence[int], Sequence[float])
+    ):
+        return InputKind.NUMBER_SEQUENCE
+
+    if _typehint_is_in(param.annotation, (None, str)):
+        return InputKind.STRING
+
+    if _typehint_is_in(param.annotation, (None, DateOfYearStr)):
+        return InputKind.DATE_OF_YEAR
+
+    if _typehint_is_in(param.annotation, (None, DateStr)):
+        return InputKind.DATE
+
+    if _typehint_is_in(param.annotation, (None, Dataset)):
+        return InputKind.DATASET
+
+    if param.kind == param.VAR_KEYWORD:
+        return InputKind.KWARGS
+
+    return InputKind.OTHER_PARAMETER

@@ -13,6 +13,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import DateStr
 
 from . import fwi
 from . import run_length as rl
@@ -363,7 +364,7 @@ def fire_weather_indexes(
     ffmc0: xarray.DataArray = None,
     dmc0: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
-    start_date: str = None,
+    start_date: DateStr = None,
     start_up_mode: str = None,
     shut_down_mode: str = "temperature",
     **params,
@@ -463,10 +464,10 @@ def drought_code(
     lat: xarray.DataArray,
     snd: xarray.DataArray = None,
     dc0: xarray.DataArray = None,
-    start_date: str = None,
+    start_date: DateStr = None,
     start_up_mode: str = None,
     shut_down_mode: str = "snow_depth",
-    **params: Union[int, float],
+    **params,
 ):
     r"""Drought code (FWI component).
 

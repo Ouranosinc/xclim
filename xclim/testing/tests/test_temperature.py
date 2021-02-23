@@ -753,18 +753,12 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        with pytest.warns(FutureWarning) as record:
-            frzthw = atmos.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        frzthw = atmos.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
         frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
-
-        assert (
-            "This index calculation will soon require user-specified thresholds."
-            in [str(q.message) for q in record]
-        )
 
         assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
 

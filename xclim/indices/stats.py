@@ -43,7 +43,7 @@ _lm3_dist_map = {
 }
 
 
-def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
+def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters

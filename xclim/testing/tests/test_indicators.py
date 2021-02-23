@@ -254,6 +254,19 @@ def test_all_jsonable(official_indicators):
         )
 
 
+def test_all_parameters_understood(official_indicators):
+    problems = []
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        for name, param in indinst.parameters.items():
+            if param["kind"] == InputKind.OTHER_PARAMETER:
+                problems.append((identifier, name))
+    if problems:
+        raise ValueError(
+            f"The following indicator/parameter couple {problems} use types not listed in InputKind."
+        )
+
+
 def test_signature():
     from inspect import signature
 
@@ -269,7 +282,7 @@ def test_signature():
 
 def test_doc():
     ind = UniIndTemp()
-    assert ind.__call__.__doc__ == ind.compute.__doc__
+    assert ind.__call__.__doc__.startswith("Docstring (realm: atmos)")
 
 
 def test_delayed(tasmax_series):
@@ -315,13 +328,8 @@ def test_parse_doc():
         doc["abstract"]
         == "Resample the original daily mean temperature series by taking the mean over each period."
     )
-    assert (
-        doc["parameters"]["tas"]["description"] == "Mean daily temperature [℃] or [K]"
-    )
-    assert (
-        doc["parameters"]["freq"]["description"]
-        == 'Resampling frequency; Defaults to "YS" (yearly).'
-    )
+    assert doc["parameters"]["tas"]["description"] == "Mean daily temperature."
+    assert doc["parameters"]["freq"]["description"] == "Resampling frequency."
     assert doc["notes"].startswith("Let")
     assert "math::" in doc["notes"]
     assert "references" not in doc
@@ -341,16 +349,15 @@ def test_parsed_doc():
 
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
-    assert params["tas"]["annotation"] is Union[str, xr.DataArray]
     assert params["tas"]["units"] == "[temperature]"
     assert params["tas"]["kind"] is InputKind.VARIABLE
     assert params["tas"]["default"] == "tas"
     assert params["snd"]["default"] is None
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["snd"]["units"] == "[length]"
-    assert params["shut_down_mode"]["annotation"] is str
-    assert params["shut_down_mode"]["kind"] is InputKind.PARAMETER
+    assert params["shut_down_mode"]["kind"] is InputKind.STRING
     assert params["start_up_mode"]["choices"] == {None, "snow_depth"}
+    assert params["start_date"]["kind"] is InputKind.DATE
 
 
 def test_default_formatter():
