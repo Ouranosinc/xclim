@@ -702,5 +702,35 @@
     "description": "Premier jour {freq:m} où la précipitation solide excède {thresh}.",
     "title": "Premier jour avec une précipitation solide au-dessus d'un seuil",
     "abstract": "Premier jour d'une période où la précipitation solide excède un certain seuil."
+  },
+  "DAYS_OVER_PRECIP_THRESH": {
+    "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",
+    "description": "Nombre {freq:m} de jours où la précipitation au-dessus d'un percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés.",
+    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
+  },
+  "FRACTION_OVER_PRECIP_THRESH": {
+    "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
+    "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "description": "Fraction {freq:f} des jours pluvieux où la précipitation au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "long_name": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
+  },
+  "LIQUID_PRECIP_RATIO": {
+    "title": "Fraction liquide de la précipitation totale.",
+    "abstract": "Le ratio entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus d'un seuil.",
+    "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}.",
+    "long_name": "Fraction liquide de la précipitation totale."
+  },
+  "WARM_SPELL_DURATION_INDEX": {
+    "title": "Indice de durée des vaques de chaleur.",
+    "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le 90e percentile. Le 90e percentile des températures devrait être calculé avec une fenêtre mobile de 5 jours.",
+    "description": "Nombre {freq:m} total de jours faisant parties de vagues de chaleur d'au moins {window} jours consécutifs où tmax est au-dessus du 90e percentile.",
+    "long_name": "Indice de durée des vagues de chaleur."
+  },
+  "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
+    "title": "Nombre maximal de jours chauds consécutifs.",
+    "abstract": "Nombre maximal de jours consecutifs où la température maximale quotidienne excède un certain seuil.",
+    "description": "Nombre {freq:m} maximal de jours chauds consécutifs (Tmax > {thresh}).",
+    "long_name": "Nombre maximal de jours chauds consécutifs."
   }
 }

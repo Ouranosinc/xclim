@@ -1322,7 +1322,7 @@ def maximum_consecutive_frost_free_days(
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray, thresh: str = "25 degC", freq: str = "YS"
 ):
-    r"""Maximum number of consecutive summer days (Tx > 25℃).
+    r"""Maximum number of consecutive summer days.
 
     Return the maximum number of consecutive days within the period where
     the maximum temperature is above a certain threshold.

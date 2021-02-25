@@ -1341,7 +1341,7 @@ def warm_spell_duration_index(
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
-    Number of days with at least six consecutive days where the daily maximum temperature is above the 90th
+    Number of days inside spells of a minimum number of consecutive days where the daily maximum temperature is above the 90th
     percentile. The 90th percentile should be computed for a 5-day moving window, centered on each calendar day in the
     1961-1990 period.
 
@@ -1359,8 +1359,7 @@ def warm_spell_duration_index(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with at least six consecutive days where the daily maximum temperature is above the 90th
-      percentile [days].
+      Warm spell duration index
 
     Examples
     --------
@@ -1380,8 +1379,10 @@ def warm_spell_duration_index(
     precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
+    thresh = convert_units_to(tx90, tasmax)
+
     # Create time series out of doy values.
-    thresh = resample_doy(tx90, tasmax)
+    thresh = resample_doy(thresh, tasmax)
 
     above = tasmax > thresh
 

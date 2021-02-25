@@ -5,6 +5,11 @@ History
 0.24.0 (unreleased)
 -------------------
 
+New indicators
+~~~~~~~~~~~~~~
+* `days_over_precip_thresh`, `fraction_over_precip_thresh`, `liquid_precip_ratio`, `warm_spell_duration_index`,  all from eponymous indices.
+* `maximum_consecutive_warm_days` from indice `maximum_consecutive_tx_days`)
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Numerous changes to `xclim.core.calendar.percentile_doy`:
