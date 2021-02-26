@@ -44,6 +44,7 @@ Internal changes
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
 * New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
 * Added an indicators API page to the docs and links to there from the :ref:`Climate Indicators` page.
+* Removed `xclim.core.checks` which was deprecated since 0.18.
 
 Bug fixes
 ~~~~~~~~~
