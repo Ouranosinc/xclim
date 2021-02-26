@@ -18,10 +18,10 @@ Breaking changes
     * `per` argument is now expected to between 0-100 (not 0-1).
     * input data must have a daily (or coarser) time frequency.
 
-* Change in unit handling paradigm for indices, which as a result will lead to some indices returning values with different units. Note that related `Indicator` objects remain unchanged and will return units consistent with CF Convention. If you are concerned with code stability, please use `Indicator` objects. The change was necessary to resolve inconsistencies with xarray's `keep_attrs=True` context.
+* Change in unit handling paradigm for indices, many indices will have different output units than before.
 
-    * Indice functions now return output units that preserve consistency with input units. That is, feeding inputs in Celsius will yield outputs in Celsius instead of casting to Kelvin. In all cases the dimensionality is preserved.
-    * Indice functions now accept non-daily data, but daily frequency is assumed by default if the frequency cannot be inferred.
+    * Indice functions are now more flexible : output units may change for different input units, but the dimensionality is consistent.
+    * Indice functions now accept non-daily data, but daily is assumed if the frequency cannot be inferred.
 
 * Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
 
