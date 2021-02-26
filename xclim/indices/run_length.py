@@ -15,7 +15,7 @@ import numpy as np
 import xarray as xr
 from dask import array as dsk
 
-from xclim.core.utils import DateOfYearStr, DateStr
+from xclim.core.utils import DateStr, DayOfYearStr
 
 npts_opt = 9000
 
@@ -309,7 +309,7 @@ def last_run(
 def season_length(
     da: xr.DataArray,
     window: int,
-    date: Optional[DateOfYearStr] = None,
+    date: Optional[DayOfYearStr] = None,
     dim: str = "time",
 ) -> xr.DataArray:
     """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
@@ -324,7 +324,7 @@ def season_length(
       Input N-dimensional DataArray (boolean)
     window : int
       Minimum duration of consecutive values to start and end the season.
-    date: DateOfYearStr, optional
+    date: DayOfYearStr, optional
       The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
@@ -375,7 +375,7 @@ def season_length(
 def run_end_after_date(
     da: xr.DataArray,
     window: int,
-    date: DateOfYearStr = "07-01",
+    date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
 ) -> xr.DataArray:
@@ -423,7 +423,7 @@ def run_end_after_date(
 def first_run_after_date(
     da: xr.DataArray,
     window: int,
-    date: DateOfYearStr = "07-01",
+    date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
 ) -> xr.DataArray:
@@ -435,7 +435,7 @@ def first_run_after_date(
       Input N-dimensional DataArray (boolean)
     window : int
       Minimum duration of consecutive run to accumulate values.
-    date : DateOfYearStr
+    date : DayOfYearStr
       The date after which to look for the run.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
@@ -464,7 +464,7 @@ def first_run_after_date(
 def last_run_before_date(
     da: xr.DataArray,
     window: int,
-    date: DateOfYearStr = "07-01",
+    date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
 ) -> xr.DataArray:
@@ -476,7 +476,7 @@ def last_run_before_date(
       Input N-dimensional DataArray (boolean)
     window : int
       Minimum duration of consecutive run to accumulate values.
-    date : DateOfYearStr
+    date : DayOfYearStr
       The date before which to look for the last event.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
@@ -807,7 +807,7 @@ def lazy_indexing(
 
 def index_of_date(
     time: xr.DataArray,
-    date: Optional[Union[DateStr, DateOfYearStr]],
+    date: Optional[Union[DateStr, DayOfYearStr]],
     max_idxs: Optional[int] = None,
     default: int = 0,
 ) -> np.ndarray:
@@ -817,7 +817,7 @@ def index_of_date(
     ----------
     time : xr.DataArray
       An array of datetime values, any calendar.
-    date : DateOfYearStr or DateStr, optional
+    date : DayOfYearStr or DateStr, optional
       A string in the "yyyy-mm-dd" or "mm-dd" format.
       If None, returns default.
     max_idxs: int, optional

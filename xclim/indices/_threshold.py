@@ -11,7 +11,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DateOfYearStr
+from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
 from .generic import threshold_count
@@ -414,7 +414,7 @@ def growing_degree_days(
 def growing_season_end(
     tas: xarray.DataArray,
     thresh: str = "5.0 degC",
-    mid_date: DateOfYearStr = "07-01",
+    mid_date: DayOfYearStr = "07-01",
     window: int = 5,
     freq: str = "YS",
 ):
@@ -429,7 +429,7 @@ def growing_season_end(
       Mean daily temperature.
     thresh : str
       Threshold temperature on which to base evaluation.
-    mid_date : DateOfYearStr
+    mid_date : str
       Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
@@ -462,7 +462,7 @@ def growing_season_length(
     tas: xarray.DataArray,
     thresh: str = "5.0 degC",
     window: int = 6,
-    mid_date: DateOfYearStr = "07-01",
+    mid_date: DayOfYearStr = "07-01",
     freq: str = "YS",
 ):
     r"""Growing season length.
@@ -483,7 +483,7 @@ def growing_season_length(
       Threshold temperature on which to base evaluation.
     window : int
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
-    mid_date : DateOfYearStr
+    mid_date : str
       Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
       Resampling frequency.
@@ -535,7 +535,7 @@ def growing_season_length(
 def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[DateOfYearStr] = "01-01",
+    mid_date: Optional[DayOfYearStr] = "01-01",
     thresh: str = "0.0 degC",
     freq: str = "AS-JUL",
 ):
@@ -553,7 +553,7 @@ def frost_season_length(
       Minimum daily temperature.
     window : int
       Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
-    mid_date : DateOfYearStr, optional
+    mid_date : str, optional
       Date the must be included in the season. It is the earliest the end of the season can be.
       If None, there is no limit.
     thresh : str
@@ -608,7 +608,7 @@ def frost_season_length(
 def last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
-    before_date: DateOfYearStr = "07-01",
+    before_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -623,7 +623,7 @@ def last_spring_frost(
       Mean daily temperature.
     thresh : str
       Threshold temperature on which to base evaluation.
-    before_date : DateOfYearStr
+    before_date : str,
       Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
@@ -654,7 +654,7 @@ def last_spring_frost(
 def first_day_below(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
-    after_date: DateOfYearStr = "07-01",
+    after_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -671,7 +671,7 @@ def first_day_below(
       Minimum daily temperature.
     thresh : str
       Threshold temperature on which to base evaluation.
-    after_date : DateOfYearStr
+    after_date : str
       Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
@@ -702,7 +702,7 @@ def first_day_below(
 def first_day_above(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
-    after_date: DateOfYearStr = "01-01",
+    after_date: DayOfYearStr = "01-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -719,7 +719,7 @@ def first_day_above(
       Minimum daily temperature.
     thresh : str
       Threshold temperature on which to base evaluation.
-    after_date : DateOfYearStr
+    after_date : str
       Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature above threshold needed for evaluation.
@@ -1476,7 +1476,7 @@ def degree_days_exceedance_date(
     thresh: str = "0 degC",
     sum_thresh: str = "25 K days",
     op: str = ">",
-    after_date: DateOfYearStr = None,
+    after_date: DayOfYearStr = None,
     freq: str = "YS",
 ):
     r"""Degree days exceedance date.
@@ -1495,7 +1495,7 @@ def degree_days_exceedance_date(
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
       If equivalent to '>', degree days are computed as `tas - thresh` and if
       equivalent to '<', they are computed as `thresh - tas`.
-    after_date: DateOfYearStr, optional
+    after_date: str, optional
       Date at which to start the cumulative sum. In "mm-dd" format, defaults to the
       start of the sampling period.
     freq : str

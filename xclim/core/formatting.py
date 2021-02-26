@@ -371,7 +371,7 @@ KIND_ANNOTATION = {
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
     InputKind.STRING: "str",
-    InputKind.DATE_OF_YEAR: "date (string, MM-DD)",
+    InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
     InputKind.DATE: "date (sting, YYYY-MM-DD)",
     InputKind.DATASET: "Dataset, optional",
     InputKind.KWARGS: "",

@@ -23,7 +23,7 @@ from xarray import DataArray, Dataset
 DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
-DateOfYearStr = NewType("DateOfYearStr", str)
+DayOfYearStr = NewType("DayOfYearStr", str)
 
 
 def wrapped_partial(
@@ -224,10 +224,10 @@ class InputKind(IntEnum):
        Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
        in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
     """
-    DATE_OF_YEAR = 6
-    """A calendar date without a year in the MM-DD format.
+    DAY_OF_YEAR = 6
+    """A date, but without a year, in the MM-DD format.
 
-       Annotation : :py:obj:`xclim.core.utils.DateOfYearStr` (may be optional).
+       Annotation : :py:obj:`xclim.core.utils.DayOfYearStr` (may be optional).
     """
     DATE = 7
     """A date in the YYYY-MM-DD format, may include a time.
@@ -305,8 +305,8 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     if _typehint_is_in(param.annotation, (None, str)):
         return InputKind.STRING
 
-    if _typehint_is_in(param.annotation, (None, DateOfYearStr)):
-        return InputKind.DATE_OF_YEAR
+    if _typehint_is_in(param.annotation, (None, DayOfYearStr)):
+        return InputKind.DAY_OF_YEAR
 
     if _typehint_is_in(param.annotation, (None, DateStr)):
         return InputKind.DATE
