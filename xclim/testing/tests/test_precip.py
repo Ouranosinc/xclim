@@ -6,6 +6,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.core.calendar import percentile_doy
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -368,3 +369,52 @@ class TestSnowfallDate:
                 ]
             ),
         )
+
+
+def test_days_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = percentile_doy(pr, window=5, per=80)
+
+    out1 = atmos.days_over_precip_thresh(pr, per)
+    np.testing.assert_array_equal(out1[1, :, 0], np.array([87, 63, 74, 79]))
+
+    out2 = atmos.days_over_precip_thresh(pr, per, thresh="2 mm/d")
+    np.testing.assert_array_equal(out2[1, :, 0], np.array([87, 63, 71, 79]))
+
+    assert "only days with at least 2 mm/d are counted." in out2.description
+
+
+def test_fraction_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = percentile_doy(pr, window=5, per=80)
+
+    out = atmos.fraction_over_precip_thresh(pr, per)
+    np.testing.assert_allclose(
+        out[1, :, 0], np.array([0.832, 0.785, 0.776, 0.815]), atol=0.001
+    )
+
+    out = atmos.fraction_over_precip_thresh(pr, per, thresh="0.002 m/d")
+    np.testing.assert_allclose(
+        out[1, :, 0], np.array([0.853, 0.818, 0.803, 0.840]), atol=0.001
+    )
+
+    assert "only days with at least 0.002 m/d are included" in out.description
+
+
+def test_liquid_precip_ratio():
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+    out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tas, thresh="0 degC", freq="YS")
+    np.testing.assert_allclose(
+        out[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3
+    )
+
+    with set_options(cf_compliance="raise"):
+        # Test if tasmax is allowed
+        out = atmos.liquid_precip_ratio(
+            pr=ds.pr, tas=ds.tasmax, thresh="33 degF", freq="YS"
+        )
+        np.testing.assert_allclose(
+            out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3
+        )
+        assert "where temperature is above 33 degf." in out.description
