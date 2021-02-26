@@ -52,7 +52,6 @@ def generate_local_dict(locale: str, init_english: bool = False):
             ):
                 if init_english:
                     eng_attr = var_attrs.get(translatable_attr)
-                    print(translatable_attr, eng_attr)
                     if not isinstance(eng_attr, str):
                         eng_attr = ""
                 ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
