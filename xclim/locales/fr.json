@@ -711,8 +711,8 @@
   },
   "FRACTION_OVER_PRECIP_THRESH": {
     "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
-    "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
-    "description": "Fraction {freq:f} des jours pluvieux où la précipitation au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
+    "description": "Fraction {freq:f} des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
     "long_name": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
   },
   "LIQUID_PRECIP_RATIO": {
@@ -722,7 +722,7 @@
     "long_name": "Fraction liquide de la précipitation totale."
   },
   "WARM_SPELL_DURATION_INDEX": {
-    "title": "Indice de durée des vaques de chaleur.",
+    "title": "Indice de durée des vagues de chaleur.",
     "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le 90e percentile. Le 90e percentile des températures devrait être calculé avec une fenêtre mobile de 5 jours.",
     "description": "Nombre {freq:m} total de jours faisant parties de vagues de chaleur d'au moins {window} jours consécutifs où tmax est au-dessus du 90e percentile.",
     "long_name": "Indice de durée des vagues de chaleur."
