@@ -15,9 +15,8 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from enum import IntEnum
 from inspect import Parameter, _empty, signature
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -29,6 +28,7 @@ from . import datachecks
 from .formatting import (
     AttrFormatter,
     default_formatter,
+    generate_indicator_docstring,
     merge_attributes,
     parse_doc,
     update_history,
@@ -36,19 +36,114 @@ from .formatting import (
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import convert_units_to, units
-from .utils import MissingVariableError
+from .utils import MissingVariableError, infer_kind_from_parameter
 
 # Indicators registry
 registry = {}  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
-class InputKind(IntEnum):
-    """Constants for input parameter kinds."""
+def _parse_indice(indice: Callable, **new_kwargs):
+    """Parse an indice function and return all elements needed for constructing an indicator.
 
-    VARIABLE = 0
-    OPTIONAL_VARIABLE = 1
-    PARAMETER = 2
+    Parameters
+    ----------
+    indice : Callable
+      A indice function, written according to xclim's guidelines.
+    new_kwargs :
+      Mapping from name to dicts containing the necessary info for injecting new keyword-only
+      arguments into the indice_wrapper function. The meta dict can include (all optional):
+      `default`, `description`, `annotation`.
+
+    Returns
+    -------
+    indice_wrapper : callable
+      A function with a new signature including the injected args in new_kwargs.
+    docmeta : Mapping[str, str]
+      A dictionary of the metadata attributes parsed in the docstring.
+    params : Mapping[str, Mapping[str, Any]]
+      A dictionary of metadata for each input parameter of the indice. The metadata dictionaries
+      include the following entries: "default", "description", "kind" and, optionally, "choices" and "units".
+      "kind" is one of the constants in :py:class:`xclim.core.utils.InputKind`.
+    """
+    # Base signature
+    sig = signature(indice)
+
+    # Update
+    def _upd_param(param):
+        # Required DataArray arguments receive their own name as new default
+        #         + the Union[str, DataArray] annotation
+        # Parameters with no default receive None
+        if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
+            return param
+
+        if param.annotation is DataArray:
+            annot = Union[str, DataArray]
+        else:
+            annot = param.annotation
+
+        if param.default is _empty:
+            if param.annotation is DataArray:
+                default = param.name
+            else:
+                default = None
+        else:
+            default = param.default
+
+        return Parameter(
+            param.name,
+            # We keep the kind, except we replace POSITIONAL_ONLY by POSITONAL_OR_KEYWORD
+            max(param.kind, 1),
+            default=default,
+            annotation=annot,
+        )
+
+    # Parse all parameters, replacing annotations and default where needed and possible.
+    new_params = list(map(_upd_param, sig.parameters.values()))
+
+    # Injection
+    for name, meta in new_kwargs.items():
+        # ds argunent
+        param = Parameter(
+            name,
+            Parameter.KEYWORD_ONLY,
+            default=meta.get("default"),
+            annotation=meta.get("annotation"),
+        )
+
+        if new_params[-1].kind == Parameter.VAR_KEYWORD:
+            new_params.insert(-1, param)
+        else:
+            new_params.append(param)
+
+    # Create new compute function to be wrapped in __call__
+    indice_wrapper = copy_function(indice)
+    indice_wrapper.__signature__ = new_sig = sig.replace(parameters=new_params)
+    indice_wrapper.__doc__ = indice.__doc__
+
+    # Docstring parsing
+    parsed = parse_doc(indice.__doc__)
+
+    # Extract params and pop those not in the signature.
+    params = parsed.pop("parameters", {})
+    for dropped in set(params.keys()) - set(new_sig.parameters.keys()):
+        params.pop(dropped)
+
+    if hasattr(indice, "in_units"):
+        # Try to put units
+        for var, ustr in indice.in_units.items():
+            if var in params:
+                params[var]["units"] = ustr
+
+    # Fill default values and annotation in parameter doc
+    for name, param in new_sig.parameters.items():
+        if name in new_kwargs and "description" in new_kwargs[name]:
+            params[name] = {"description": new_kwargs[name]["description"]}
+        param_doc = params.setdefault(name, {"description": ""})
+        param_doc["default"] = param.default
+        param_doc["kind"] = infer_kind_from_parameter(param, "units" in param_doc)
+
+    return indice_wrapper, parsed, params
 
 
 class IndicatorRegistrar:
@@ -151,9 +246,9 @@ class Indicator(IndicatorRegistrar):
 
     """
 
-    # Number of input DataArray variables. Should be updated by subclasses if needed.
-    # This number sets which inputs are passed to the tests.
-    _nvar = 1
+    #: Number of input DataArray variables. Should be updated by subclasses if needed.
+    #: This number sets which inputs are passed to the tests.
+    nvar = 1
 
     # Allowed metadata attributes on the output variables
     _cf_names = [
@@ -196,7 +291,20 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
-    parameters = None
+
+    parameters: Mapping[str, Any]
+    """A dictionary mapping metadata about the input parameters to the indicator.
+
+       Contains : "default", "description", "kind" and, sometimes, "units" and "choices".
+       "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
+    """
+
+    cf_attrs: Sequence[Mapping[str, Any]]
+    """A list of metadata information for each output of the indicator.
+
+       It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
+       "units", "cell_methods", "description" and "comment".
+    """
 
     def __new__(cls, **kwds):
         """Create subclass from arguments."""
@@ -207,9 +315,32 @@ class Indicator(IndicatorRegistrar):
         kwds["var_name"] = kwds.get("var_name", cls.var_name) or identifier
 
         # Parse and update compute's signature.
+        kwds["compute"] = kwds.get("compute", None) or cls.compute
         # Updated to allow string variable names and the ds arg.
         # Parse docstring of the compute function, its signature and its parameters
-        kwds = cls._parse_compute_and_docstring(kwds)
+        kwds["_indcompute"], docmeta, params = _parse_indice(
+            kwds["compute"],
+            ds={
+                "annotation": Dataset,
+                "description": "A dataset with the variables given by name.",
+            },
+        )
+
+        # The update signature
+        kwds["_sig"] = kwds["_indcompute"].__signature__
+        # The input parameters' name
+        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
+
+        # All fields parsed by parse_doc except "parameters"
+        # i.e. : title, abstract, notes, references, long_name
+        for name, value in docmeta.items():
+            if not getattr(cls, name):
+                # Set if neither the class attr is set nor the kwds attr
+                kwds.setdefault(name, value)
+
+        # The input parameters' metadata
+        # We dump whatever the base class had and take what was parsed from the current compute function.
+        kwds["parameters"] = params
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -233,6 +364,10 @@ class Indicator(IndicatorRegistrar):
                 "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
             )
 
+        kwds["_indcompute"].__doc__ = kwds["__doc__"] = generate_indicator_docstring(
+            kwds
+        )
+
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
@@ -242,93 +377,6 @@ class Indicator(IndicatorRegistrar):
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
-
-    @classmethod
-    def _parse_compute_and_docstring(cls, kwds):
-        """
-        Parse the signature of the compute function.
-
-        Change the annotation, change defaults where needed (and possible) and add the 'ds' argument.
-        Parse `compute` docstring to extract missing attributes and parameters' doc.
-        """
-        # Priority: explicit arguments > super class attributes > `compute` docstring info
-        kwds["compute"] = compute = kwds.get("compute", None) or cls.compute
-
-        sig = signature(compute)
-        # True if any of non-dataarray arguments ("parameters") are default.
-        # In this case, we can't patch the variable names as default values.
-        has_def = any(
-            [
-                p.annotation is not DataArray
-                and p.default is _empty
-                and p.kind is not p.VAR_KEYWORD
-                for p in sig.parameters.values()
-            ]
-        )
-
-        def _upd_param(param):
-            if param.annotation is DataArray:
-                if not has_def and param.default is _empty:
-                    default = param.name
-                else:
-                    default = param.default
-                return Parameter(
-                    param.name,
-                    param.kind,
-                    default=default,
-                    annotation=Union[str, DataArray],
-                )
-            return param
-
-        # Parse all parameters, replacing annotations and default where needed and possible.
-        new_params = list(map(_upd_param, sig.parameters.values()))
-        # ds argunent
-        dsparam = Parameter(
-            "ds", Parameter.KEYWORD_ONLY, default=None, annotation=Optional[Dataset]
-        )
-        if new_params[-1].kind == Parameter.VAR_KEYWORD:
-            new_params.insert(-1, dsparam)
-        else:
-            new_params.append(dsparam)
-
-        new_compute = copy_function(compute)
-        kwds["_sig"] = new_compute.__signature__ = sig.replace(parameters=new_params)
-        new_compute.__doc__ = compute.__doc__
-        # The input parameters' name
-        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
-        # The *indicator* compute function that will be wrapped by __call__
-        kwds["_indcompute"] = new_compute
-
-        # Docstring parsing
-        parsed = parse_doc(compute.__doc__)
-
-        for name, value in parsed.copy().items():
-            if not getattr(cls, name):
-                # Set if neither the class attr is set nor the kwds attr
-                kwds.setdefault(name, value)
-
-        # Fill default values and annotation in parameter doc
-        # params is a multilayer dict, we want to use a brand new one so deepcopy
-        params = deepcopy(kwds.get("parameters", cls.parameters or {}))
-        for name, param in kwds["_sig"].parameters.items():
-            if name == "ds":  # Don't add ds in the parameters list
-                continue
-            param_doc = params.setdefault(name, {"description": ""})
-            param_doc["default"] = param.default
-            param_doc["annotation"] = param.annotation
-            if param.annotation == Union[str, DataArray]:
-                if param.default == name:
-                    param_doc["kind"] = InputKind.VARIABLE
-                else:
-                    param_doc["kind"] = InputKind.OPTIONAL_VARIABLE
-            else:
-                param_doc["kind"] = InputKind.PARAMETER
-
-        for name in list(params.keys()):
-            if name not in kwds["_parameters"]:
-                params.pop(name)
-        kwds["parameters"] = params
-        return kwds
 
     @classmethod
     def _parse_cf_attrs(
@@ -358,7 +406,7 @@ class Indicator(IndicatorRegistrar):
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
-        self.check_identifier(self.identifier)
+        self._check_identifier(self.identifier)
         if self.missing == "from_context" and self.missing_options is not None:
             raise ValueError(
                 "Cannot set `missing_options` with `missing` method being from context."
@@ -391,7 +439,7 @@ class Indicator(IndicatorRegistrar):
         # Assume the first arguments are always the DataArrays.
         # Only the first nvar inputs are checked (data + cf checks)
         das = OrderedDict()
-        for name in self._parameters[: self._nvar]:
+        for name in self._parameters[: self.nvar]:
             das[name] = ba.arguments.pop(name)
 
         # Metadata attributes from templates
@@ -401,12 +449,12 @@ class Indicator(IndicatorRegistrar):
             if n_outs > 1:
                 var_id = f"{self.identifier}.{attrs['var_name']}"
             var_attrs.append(
-                self.update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
+                self._update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
             )
 
         # Pre-computation validation checks on DataArray arguments
-        self.bind_call(self.datacheck, **das)
-        self.bind_call(self.cfcheck, **das)
+        self._bind_call(self.datacheck, **das)
+        self._bind_call(self.cfcheck, **das)
 
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **ba.kwargs)
@@ -431,7 +479,7 @@ class Indicator(IndicatorRegistrar):
 
         # Mask results that do not meet criteria defined by the `missing` method.
         # This means all variables must have the same dimensions...
-        mask = self.mask(*das.values(), **ba.arguments)
+        mask = self._mask(*das.values(), **ba.arguments)
         outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
@@ -458,7 +506,7 @@ class Indicator(IndicatorRegistrar):
                         f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
                     )
 
-    def bind_call(self, func, **das):
+    def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
 
         This will try to bind keyword arguments to `func` arguments. If this fails, `func` is called with positional
@@ -490,7 +538,7 @@ class Indicator(IndicatorRegistrar):
             return func(*ba.args, **ba.kwargs)
 
     @classmethod
-    def update_attrs(cls, ba, das, attrs, var_id=None, names=None):
+    def _update_attrs(cls, ba, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and xclim_history attributes are updated, adding to existing values. The language of the string is
@@ -520,10 +568,10 @@ class Indicator(IndicatorRegistrar):
         """
         args = ba.arguments
 
-        out = cls.format(attrs, args)
+        out = cls._format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
-                cls.format(
+                cls._format(
                     get_local_attrs(
                         (var_id or cls.__name__).upper(),
                         locale,
@@ -568,7 +616,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @staticmethod
-    def check_identifier(identifier: str) -> None:
+    def _check_identifier(identifier: str) -> None:
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
@@ -582,7 +630,7 @@ class Indicator(IndicatorRegistrar):
     ):
         """Return a dictionary of unformated translated translatable attributes.
 
-        Translatable attributes are defined in xclim.core.locales.TRANSLATABLE_ATTRS
+        Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
 
         Parameters
         ----------
@@ -623,7 +671,13 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     def json(self, args=None):
-        """Return a dictionary representation of the class.
+        """Return a serializable dictionary representation of the class.
+
+        Parameters
+        ----------
+        args : mapping, optional
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -632,19 +686,25 @@ class Indicator(IndicatorRegistrar):
         """
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(self, key) for key in names}
-        out = self.format(out, args)
-        out["outputs"] = [self.format(attrs, args) for attrs in self.cf_attrs]
+        out = self._format(out, args)
 
+        # Format attributes
+        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
         out["notes"] = self.notes
+
         # We need to deepcopy, otherwise empty defaults get overwritten!
+        # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
             if param["default"] is _empty:
-                param["default"] = "none"
+                param.pop("default")
+            param["kind"] = param["kind"].value  # Get the int.
+            if "choices" in param:  # A set is stored, convert to list
+                param["choices"] = list(param["choices"])
         return out
 
     @classmethod
-    def format(
+    def _format(
         cls,
         attrs: dict,
         args: dict = None,
@@ -656,12 +716,13 @@ class Indicator(IndicatorRegistrar):
         ----------
         attrs: dict
           Attributes containing tags to replace with arguments' values.
-        args : dict
-          Function call arguments.
+        args : dict, optional
+          Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
         """
+        # Use defaults
         if args is None:
-            return attrs
+            args = {k: v["default"] for k, v in cls.parameters.items()}
 
         out = {}
         for key, val in attrs.items():
@@ -691,18 +752,18 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
-    def default_freq(self, **indexer):
+    def _default_freq(self, **indexer):
         """Return default frequency."""
         if self.freq in ["D", "H"]:
             return default_freq(**indexer)
         return None
 
-    def mask(self, *args, **kwds):
+    def _mask(self, *args, **kwds):
         """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
         indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") if "freq" in kwds else self.default_freq(**indexer)
+        freq = kwds.get("freq") if "freq" in kwds else self._default_freq(**indexer)
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
@@ -745,7 +806,7 @@ class Indicator(IndicatorRegistrar):
 class Indicator2D(Indicator):
     """Indicator using two dimensions."""
 
-    _nvar = 2
+    nvar = 2
 
 
 class Daily(Indicator):
@@ -762,7 +823,7 @@ class Daily(Indicator):
 class Daily2D(Daily):
     """Indicator using two dimensions at daily frequency."""
 
-    _nvar = 2
+    nvar = 2
 
 
 class Hourly(Indicator):

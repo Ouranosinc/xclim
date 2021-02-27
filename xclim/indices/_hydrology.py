@@ -18,9 +18,9 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     Parameters
     ----------
     q : xarray.DataArray
-      Rate of river discharge [m³/s]
+      Rate of river discharge.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -63,9 +63,9 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     Parameters
     ----------
     q : xarray.DataArray
-      Rate of river discharge [m³/s]
+      Rate of river discharge.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------

@@ -11,6 +11,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
 from .generic import threshold_count
@@ -74,13 +75,13 @@ def cold_spell_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Threshold temperature below which a cold spell begins [℃] or [K]. Default: '-10 degC'
+      Threshold temperature below which a cold spell begins.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-      Resampling frequency; Defaults to "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -117,18 +118,18 @@ def cold_spell_frequency(
     r"""Cold spell frequency.
 
     The number of cold spell events, defined as a sequence of consecutive days with mean daily
-    temperature below a threshold in °C.
+    temperature below a threshold.
 
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Threshold temperature below which a cold spell begins [℃] or [K]. Default: '-10 degC'
+      Threshold temperature below which a cold spell begins.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-      Resampling frequency; Defaults to "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -157,12 +158,11 @@ def daily_pr_intensity(
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation [mm/d or kg/m²/s]
+      Daily precipitation.
     thresh : str
-      precipitation value over which a day is considered wet. Default : '1 mm/day'
+      precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency defining the periods defined in
-      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -218,11 +218,11 @@ def dry_days(pr: xarray.DataArray, thresh: str = "0.2 mm/d", freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation [mm/d or kg/m²/s]
+      Daily precipitation.
     thresh : str
-      Threshold temperature on which to base evaluation. Default: '0.2 mm/d'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -255,11 +255,11 @@ def maximum_consecutive_wet_days(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [Kg m-2 s-1] or [mm]
+      Mean daily precipitation flux.
     thresh : str
-      Threshold precipitation on which to base evaluation [Kg m-2 s-1] or [mm]. Default : '1 mm/day'
+      Threshold precipitation on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -300,11 +300,11 @@ def cooling_degree_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Temperature threshold above which air is cooled. Default : '18 degC'
+      Temperature threshold above which air is cooled.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -341,13 +341,13 @@ def freshet_start(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K].
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
+      Threshold temperature on which to base evaluation.
     window : int
       Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -378,18 +378,18 @@ def freshet_start(
 def growing_degree_days(
     tas: xarray.DataArray, thresh: str = "4.0 degC", freq: str = "YS"
 ):
-    r"""Growing degree-days over threshold temperature value [℃].
+    r"""Growing degree-days over threshold temperature value.
 
     The sum of degree-days over the threshold temperature.
 
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K].
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '4.0 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency. Default: "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -414,7 +414,7 @@ def growing_degree_days(
 def growing_season_end(
     tas: xarray.DataArray,
     thresh: str = "5.0 degC",
-    mid_date: str = "07-01",
+    mid_date: DayOfYearStr = "07-01",
     window: int = 5,
     freq: str = "YS",
 ):
@@ -426,15 +426,15 @@ def growing_season_end(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K].
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '5.0 degC'.
+      Threshold temperature on which to base evaluation.
     mid_date : str
       Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
-      Resampling frequency. Default: "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -462,7 +462,7 @@ def growing_season_length(
     tas: xarray.DataArray,
     thresh: str = "5.0 degC",
     window: int = 6,
-    mid_date: str = "07-01",
+    mid_date: DayOfYearStr = "07-01",
     freq: str = "YS",
 ):
     r"""Growing season length.
@@ -478,15 +478,15 @@ def growing_season_length(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K].
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '5.0 degC'.
+      Threshold temperature on which to base evaluation.
     window : int
       Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     mid_date : str
       Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
-      Resampling frequency. Default: "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -535,7 +535,7 @@ def growing_season_length(
 def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[str] = "01-01",
+    mid_date: Optional[DayOfYearStr] = "01-01",
     thresh: str = "0.0 degC",
     freq: str = "AS-JUL",
 ):
@@ -550,16 +550,16 @@ def frost_season_length(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K].
+      Minimum daily temperature.
     window : int
-      Minimum number of days with temperature below threshold to mark the beginning and end of frost season. Default: 5.
+      Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
     mid_date : str, optional
       Date the must be included in the season. It is the earliest the end of the season can be.
       If None, there is no limit.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0.0 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency. Default: "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -608,7 +608,7 @@ def frost_season_length(
 def last_spring_frost(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
-    before_date: str = "07-01",
+    before_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -620,15 +620,15 @@ def last_spring_frost(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K].
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
-    before_date : str
+      Threshold temperature on which to base evaluation.
+    before_date : str,
       Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -654,7 +654,7 @@ def last_spring_frost(
 def first_day_below(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
-    after_date: str = "07-01",
+    after_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -668,15 +668,15 @@ def first_day_below(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K].
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default '0 degC'.
+      Threshold temperature on which to base evaluation.
     after_date : str
       Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -702,7 +702,7 @@ def first_day_below(
 def first_day_above(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
-    after_date: str = "01-01",
+    after_date: DayOfYearStr = "01-01",
     window: int = 1,
     freq: str = "YS",
 ):
@@ -716,15 +716,15 @@ def first_day_above(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K].
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '0 degC'.
+      Threshold temperature on which to base evaluation.
     after_date : str
       Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
       Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -755,7 +755,6 @@ def first_snowfall(
     r"""First day with solid precipitation above a threshold.
 
     Returns the first day of a period where the solid precipitation exceeds a threshold.
-
     WARNING: The default `freq` is valid for the northern hemisphere.
 
     Parameters
@@ -763,9 +762,9 @@ def first_snowfall(
     prsn : xarray.DataArray
       Solid precipitation flux.
     thresh : str
-      Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
+      Threshold precipitation flux on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -795,7 +794,6 @@ def last_snowfall(
     r"""Last day with solid precipitation above a threshold.
 
     Returns the last day of a period where the solid precipitation exceeds a threshold.
-
     WARNING: The default freq is valid for the northern hemisphere.
 
     Parameters
@@ -803,9 +801,9 @@ def last_snowfall(
     prsn : xarray.DataArray
       Solid precipitation flux.
     thresh : str
-      Threshold precipitation flux on which to base evaluation. Default '0.5 mm/day'.
+      Threshold precipitation flux on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -840,13 +838,13 @@ def heat_wave_index(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh : str
-      Threshold temperature on which to designate a heatwave [℃] or [K]. Default: '25.0 degC'.
+      Threshold temperature on which to designate a heatwave.
     window : int
       Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -872,11 +870,11 @@ def heating_degree_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '17.0 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -905,7 +903,6 @@ def hot_spell_max_length(
     window: int = 1,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    # Dev note : we should decide if it is deg K or C
     r"""Longest hot spell.
 
     Longest spell of high temperatures over a given period.
@@ -917,13 +914,13 @@ def hot_spell_max_length(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+      The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -964,7 +961,6 @@ def hot_spell_frequency(
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    # Dev note : we should decide if it is deg K or C
     r"""Hot spell frequency.
 
     Number of hot spells over a given period. A hot spell is defined as an event
@@ -974,13 +970,13 @@ def hot_spell_frequency(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event [℃] or [K]. Default : '30 degC'
+      The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1025,11 +1021,11 @@ def tn_days_below(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K] . Default: '-10 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1061,11 +1057,11 @@ def tx_days_above(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '25 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1097,11 +1093,11 @@ def warm_day_frequency(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default : '30 degC'
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1134,11 +1130,11 @@ def warm_night_frequency(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default : '22 degC'
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1159,12 +1155,11 @@ def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation [mm]
+      Daily precipitation.
     thresh : str
-      Precipitation value over which a day is considered wet. Default: '1 mm/day'.
+      Precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency defining the periods defined in
-      http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1201,11 +1196,11 @@ def maximum_consecutive_frost_days(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [K] or [°C].
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature [K] or [°C].
+      Threshold temperature.
     freq : str
-      Resampling frequency; Defaults to "AS-JUL".
+      Resampling frequency.
 
     Returns
     -------
@@ -1244,11 +1239,11 @@ def maximum_consecutive_dry_days(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [mm]
+      Mean daily precipitation flux.
     thresh : str
-      Threshold precipitation on which to base evaluation [mm]. Default : '1 mm/day'
+      Threshold precipitation on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1287,11 +1282,11 @@ def maximum_consecutive_frost_free_days(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Max daily temperature [K]
+      Max daily temperature.
     thresh : str
-      Threshold temperature [K].
+      Threshold temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1330,11 +1325,11 @@ def maximum_consecutive_tx_days(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Max daily temperature [K]
+      Max daily temperature.
     thresh : str
-      Threshold temperature [K].
+      Threshold temperature.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1371,9 +1366,9 @@ def sea_ice_area(sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "1
     Parameters
     ----------
     sic : xarray.DataArray
-      Sea ice concentration [0,1].
+      Sea ice concentration [0, 1].
     area : xarray.DataArray
-      Grid cell area [m²]
+      Grid cell area.
     thresh : str
       Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
 
@@ -1411,9 +1406,9 @@ def sea_ice_extent(
     Parameters
     ----------
     sic : xarray.DataArray
-      Sea ice concentration [0,1].
+      Sea ice concentration [0, 1].
     area : xarray.DataArray
-      Grid cell area [m²]
+      Grid cell area.
     thresh : str
       Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
 
@@ -1450,11 +1445,11 @@ def tropical_nights(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     thresh : str
-      Threshold temperature on which to base evaluation [℃] or [K]. Default: '20 degC'.
+      Threshold temperature on which to base evaluation.
     freq : str
-      Resampling frequency; Defaults to "YS".
+      Resampling frequency.
 
     Returns
     -------
@@ -1478,10 +1473,10 @@ def tropical_nights(
 @declare_units(tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
 def degree_days_exceedance_date(
     tas: xarray.DataArray,
-    thresh: str,
-    sum_thresh: str,
+    thresh: str = "0 degC",
+    sum_thresh: str = "25 K days",
     op: str = ">",
-    after_date: str = None,
+    after_date: DayOfYearStr = None,
     freq: str = "YS",
 ):
     r"""Degree days exceedance date.
@@ -1496,7 +1491,7 @@ def degree_days_exceedance_date(
     thresh : str
       Threshold temperature on which to base degree days evaluation.
     sum_thresh : str
-      Threshold of the degree days sum, in "K days".
+      Threshold of the degree days sum.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
       If equivalent to '>', degree days are computed as `tas - thresh` and if
       equivalent to '<', they are computed as `thresh - tas`.
@@ -1504,8 +1499,7 @@ def degree_days_exceedance_date(
       Date at which to start the cumulative sum. In "mm-dd" format, defaults to the
       start of the sampling period.
     freq : str
-      Resampling frequency; Defaults to "YS". If `start_date` is given, `freq` should
-      be annual.
+      Resampling frequency. If `after_date` is given, `freq` should be annual.
 
     Returns
     -------
@@ -1526,6 +1520,9 @@ def degree_days_exceedance_date(
         \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
+
+    Cumulated degree days have numerous applications including plant and insect phenology.
+    See https://en.wikipedia.org/wiki/Growing_degree-day for examples.
     """
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")

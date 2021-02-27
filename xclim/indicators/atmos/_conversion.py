@@ -25,7 +25,7 @@ class Converter(Indicator):
 
 tg = Converter(
     identifier="tg",
-    _nvar=2,
+    nvar=2,
     units="K",
     standard_name="air_temperature",
     long_name="Daily mean temperature",
@@ -37,7 +37,7 @@ tg = Converter(
 
 wind_speed_from_vector = Converter(
     identifier="wind_speed_from_vector",
-    _nvar=2,
+    nvar=2,
     var_name=["sfcWind", "sfcWindfromdir"],
     units=["m s-1", "degree"],
     standard_name=["wind_speed", "wind_from_direction"],
@@ -53,7 +53,7 @@ wind_speed_from_vector = Converter(
 
 wind_vector_from_speed = Converter(
     identifier="wind_vector_from_speed",
-    _nvar=2,
+    nvar=2,
     var_name=["uas", "vas"],
     units=["m s-1", "m s-1"],
     standard_name=["eastward_wind", "northward_wind"],
@@ -69,7 +69,7 @@ wind_vector_from_speed = Converter(
 
 saturation_vapor_pressure = Converter(
     identifier="e_sat",
-    _nvar=1,
+    nvar=1,
     units="Pa",
     long_name="Saturation vapor pressure",
     description=lambda **kws: (
@@ -87,7 +87,7 @@ saturation_vapor_pressure = Converter(
 
 relative_humidity_from_dewpoint = Converter(
     identifier="rh_fromdewpoint",
-    _nvar=2,
+    nvar=2,
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
@@ -113,7 +113,7 @@ relative_humidity_from_dewpoint = Converter(
 
 relative_humidity = Converter(
     identifier="rh",
-    _nvar=3,
+    nvar=3,
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
@@ -136,7 +136,7 @@ relative_humidity = Converter(
 
 specific_humidity = Converter(
     identifier="huss",
-    _nvar=3,
+    nvar=3,
     units="",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
@@ -156,7 +156,7 @@ specific_humidity = Converter(
 
 snowfall_approximation = Converter(
     identifier="prsn",
-    _nvar=2,
+    nvar=2,
     units="kg m-2 s-1",
     standard_name="solid_precipitation_flux",
     long_name="Solid precipitation",
@@ -169,7 +169,7 @@ snowfall_approximation = Converter(
 
 rain_approximation = Converter(
     identifier="prlp",
-    _nvar=2,
+    nvar=2,
     units="kg m-2 s-1",
     standard_name="precipitation_flux",
     long_name="Liquid precipitation",

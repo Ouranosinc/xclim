@@ -10,7 +10,6 @@ import pytest
 from xclim import atmos
 from xclim.core import locales as xloc
 from xclim.core.formatting import default_formatter
-from xclim.core.indicator import registry
 from xclim.core.options import set_options
 from xclim.locales import generate_local_dict
 
@@ -127,8 +126,7 @@ def test_indicator_integration():
 
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
-def test_xclim_translations(locale):
-    registry_cp = registry.copy()
+def test_xclim_translations(locale, official_indicators):
     loc, dic = xloc.get_local_dict(locale)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
@@ -141,29 +139,23 @@ def test_xclim_translations(locale):
     ) == {"modifiers"}
 
     translated_inds = []
-    # Remove unofficial indicators (as those created during the tests)
-    for identifier, cls in registry.items():
-        if not cls.__module__.startswith("xclim") or cls.__module__.startswith(
-            "xclim.testing"
-        ):
-            registry_cp.pop(identifier)
-
+    registry = official_indicators.copy()
     for indicator, fields in dic.items():
         if indicator != "attrs_mapping":
             # Checking that the translated indicator does exist
             # For translations of children of MultiIndicators, only check that the indicator exists
             if "." in indicator:
                 indicator = indicator.split(".")[0]
-                assert indicator in registry_cp or indicator in translated_inds
+                assert indicator in registry or indicator in translated_inds
             else:
-                assert registry_cp.pop(indicator)
+                assert registry.pop(indicator)
                 translated_inds.append(indicator)
             # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
 
-    if bool(registry_cp):
+    if bool(registry):
         pytest.fail(
-            f"Indicators {','.join(registry_cp.keys())} do not have translations for official locale {locale}."
+            f"Indicators {','.join(registry.keys())} do not have translations for official locale {locale}."
         )
 
 
