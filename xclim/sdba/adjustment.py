@@ -1,5 +1,5 @@
 """Adjustment objects."""
-from typing import Union
+from typing import Optional, Sequence, Union
 from warnings import warn
 
 import numpy as np
@@ -47,6 +47,8 @@ def _raise_on_multiple_chunk(da, main_dim):
 
 class BaseAdjustment(Parametrizable):
     """Base class for adjustment objects."""
+
+    _hist_calendar = None
 
     def __init__(self, **kwargs):
         """Initialize base object for adjustment algorithms.
@@ -142,10 +144,10 @@ class BaseAdjustment(Parametrizable):
         self.ds = xr.Dataset(data_vars=kwargs)
         self.ds.attrs["adj_params"] = str(self)
 
-    def _train(self):
+    def _train(self, ref: DataArray, hist: DataArray):
         raise NotImplementedError
 
-    def _adjust(self, sim):
+    def _adjust(self, sim, **kwargs):
         raise NotImplementedError
 
 
@@ -525,7 +527,13 @@ class PrincipalComponents(BaseAdjustment):
     """Principal components inspired adjustment."""
 
     @parse_group
-    def __init__(self, *, group="time", crd_dims=None, pts_dims=None):
+    def __init__(
+        self,
+        *,
+        group: Union[str, Grouper] = "time",
+        crd_dims: Optional[Sequence[str]] = None,
+        pts_dims: Optional[Sequence[str]] = None,
+    ):
         r"""Principal Component adjustment.
 
         Method remapping simulation values to the observation through principal component
@@ -685,6 +693,8 @@ class PrincipalComponents(BaseAdjustment):
             vmean = self.ds.hist_mean
         elif norm_to == "sim":
             vmean = self.train_group.apply("mean", sim).stack({lbl_M: crds_M})
+        else:
+            raise NotImplementedError
 
         sim = sim.stack({lbl_M: crds_M})
 

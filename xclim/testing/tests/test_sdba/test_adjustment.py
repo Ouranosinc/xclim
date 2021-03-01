@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import xarray as xr
 from scipy.stats import norm, uniform
 
 from xclim.sdba.adjustment import (

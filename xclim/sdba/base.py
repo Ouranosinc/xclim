@@ -1,7 +1,7 @@
 """Base classes."""
 from inspect import signature
 from types import FunctionType
-from typing import Callable, Mapping, Optional, Sequence, Union
+from typing import Callable, Mapping, Optional, Sequence, Set, Union
 
 import numpy as np
 import xarray as xr
@@ -42,7 +42,7 @@ class Grouper(Parametrizable):
         self,
         group: str,
         window: int = 1,
-        add_dims: Optional[Sequence[str]] = None,
+        add_dims: Optional[Union[Sequence[str], Set[str]]] = None,
         interp: Union[bool, str] = False,
     ):
         """Create the Grouper object.
