@@ -8,7 +8,7 @@ History
 New indicators
 ~~~~~~~~~~~~~~
 * `days_over_precip_thresh`, `fraction_over_precip_thresh`, `liquid_precip_ratio`, `warm_spell_duration_index`,  all from eponymous indices.
-* `maximum_consecutive_warm_days` from indice `maximum_consecutive_tx_days`)
+* `maximum_consecutive_warm_days` from indice `maximum_consecutive_tx_days`.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -44,7 +44,7 @@ Internal changes
 * New `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
 * New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
-* Added an indicators API page to the docs and links to there from the :ref:`Climate Indicators` page.
+* Added an indicators API page to the docs and links to there from the `Climate Indicators` page.
 
 Bug fixes
 ~~~~~~~~~
