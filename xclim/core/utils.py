@@ -4,18 +4,26 @@
 Miscellaneous indices utilities
 ===============================
 
-Helper functions for the indices computation, things that do not belong in neither
-`xclim.indices.calendar`, `xclim.indices.fwi`, `xclim.indices.generic` or `xclim.indices.run_length`.
+Helper functions for the indices computation, indicator construction and other things.
 """
 from collections import defaultdict
+from enum import IntEnum
 from functools import partial
+from inspect import Parameter
 from types import FunctionType
-from typing import Callable, Mapping, Optional
+from typing import Callable, NewType, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from xarray import DataArray, Dataset
+
+#: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
+DateStr = NewType("DateStr", str)
+
+#: Type annotation for strings representing dates without a year (MM-DD).
+DayOfYearStr = NewType("DayOfYearStr", str)
 
 
 def wrapped_partial(
@@ -85,7 +93,7 @@ def walk_map(d: dict, func: FunctionType):
 
 
 class ValidationError(ValueError):
-    """xclim ValidationError class."""
+    """Error raised when input data to an indicator fails the validation tests."""
 
     @property
     def msg(self):  # noqa
@@ -93,7 +101,7 @@ class ValidationError(ValueError):
 
 
 class MissingVariableError(ValueError):
-    """xclim Variable missing from dataset error."""
+    """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
 def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
@@ -171,3 +179,142 @@ def _calc_perc(arr, p=[50]):
             np.nanpercentile(arr[nans], p, axis=-1), 0, -1
         ).ravel()
     return out
+
+
+class InputKind(IntEnum):
+    """Constants for input parameter kinds.
+
+    For use by external parses to determine what kind of data the indicator expects.
+    On the creation of an indicator, the appropriate constant is stored in :py:attr:`xclim.core.indicator.Indicator.parameters`.
+    The integer value is what gets stored in the output of :py:meth:`xclim.core.indicator.Indicator.json`.
+
+    For developpers : for each constant, the docstring specifies the annotation a parameter of an indice function
+    should use in order to be picked up by the indicator constructor.
+    """
+
+    VARIABLE = 0
+    """A data variable (DataArray or variable name).
+
+       Annotation : ``xr.DataArray``.
+    """
+    OPTIONAL_VARIABLE = 1
+    """An optional data variable (DataArray or variable name).
+
+       Annotation : ``xr.DataArray`` or ``Optional[xr.DataArray]``.
+    """
+    QUANTITY_STR = 2
+    """A string representing a quantity with units.
+
+       Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+    """
+    FREQ_STR = 3
+    """A string representing an "offset alias", as defined by pandas.
+
+       See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases .
+       Annotation : ``str`` + ``freq`` as the parameter name.
+    """
+    NUMBER = 4
+    """A number.
+
+       Annotation : ``int``, ``float`` and Union's and optional's thereof.
+    """
+    STRING = 5
+    """A simple string.
+
+       Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
+       in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
+    """
+    DAY_OF_YEAR = 6
+    """A date, but without a year, in the MM-DD format.
+
+       Annotation : :py:obj:`xclim.core.utils.DayOfYearStr` (may be optional).
+    """
+    DATE = 7
+    """A date in the YYYY-MM-DD format, may include a time.
+
+       Annotation : :py:obj:`xclim.core.utils.DateStr` (may be optional).
+    """
+    NUMBER_SEQUENCE = 8
+    """A sequence of numbers
+
+       Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
+    """
+    KWARGS = 50
+    """A mapping from argument name to value.
+
+       Developpers : maps the ``**kwargs``. Please use as little as possible.
+    """
+    DATASET = 70
+    """An xarray dataset.
+
+       Developers : as indices only accept DataArrays, this should only be added on the indicator's constructor.
+    """
+    OTHER_PARAMETER = 99
+    """An object that fits None of the previous kinds.
+
+       Developers : This is the fallback kind, it will raise an error in xclim's unit tests if used.
+    """
+
+
+def _typehint_is_in(hint, hints):
+    """Returns whether the first argument is in the other arguments.
+
+    If the first arg is an Union of several typehints, this returns True only
+    if all the members of that Union are in the given list.
+    """
+    # This code makes use of the "set-like" property of Unions and Optionals:
+    # Optional[X, Y] == Union[X, Y, None] == Union[X, Union[X, Y], None] etc.
+    return Union[(hint,) + tuple(hints)] == Union[tuple(hints)]
+
+
+def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
+    """Returns the approprite InputKind constant from an ``inspect.Parameter`` object.
+
+    The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
+    The only information not inferable through the inspect object is whether the parameter
+    has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
+    That can be given with the ``has_units`` flag.
+    """
+    if (
+        param.annotation in [DataArray, Union[DataArray, str]]
+        and param.default is not None
+    ):
+        return InputKind.VARIABLE
+
+    if (
+        Optional[param.annotation]
+        in [Optional[DataArray], Optional[Union[DataArray, str]]]
+        and param.default is None
+    ):
+        return InputKind.OPTIONAL_VARIABLE
+
+    if _typehint_is_in(param.annotation, (str, None)) and has_units:
+        return InputKind.QUANTITY_STR
+
+    if param.name == "freq":
+        return InputKind.FREQ_STR
+
+    if _typehint_is_in(param.annotation, (None, int, float)):
+        return InputKind.NUMBER
+
+    if _typehint_is_in(
+        param.annotation, (None, int, float, Sequence[int], Sequence[float])
+    ):
+        return InputKind.NUMBER_SEQUENCE
+
+    if _typehint_is_in(param.annotation, (None, str)):
+        return InputKind.STRING
+
+    if _typehint_is_in(param.annotation, (None, DayOfYearStr)):
+        return InputKind.DAY_OF_YEAR
+
+    if _typehint_is_in(param.annotation, (None, DateStr)):
+        return InputKind.DATE
+
+    if _typehint_is_in(param.annotation, (None, Dataset)):
+        return InputKind.DATASET
+
+    if param.kind == param.VAR_KEYWORD:
+        return InputKind.KWARGS
+
+    return InputKind.OTHER_PARAMETER

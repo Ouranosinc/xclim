@@ -101,7 +101,6 @@ stats = Stats(
     compute=generic.select_resample_op,
 )
 
-
 fit = Fit(
     identifier="fit",
     var_name="params",
@@ -112,6 +111,8 @@ fit = Fit(
     title="Distribution parameters fitted over the time dimension.",
     cell_methods="time: fit",
     compute=_fit,
+    missing="skip",
+    missing_options=None,
 )
 
 

@@ -7,9 +7,9 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.formatting import (
+    merge_attributes,
     prefix_attrs,
     unprefix_attrs,
-    update_cell_methods,
     update_history,
 )
 
@@ -43,7 +43,7 @@ _lm3_dist_map = {
 }
 
 
-def fit(da: xr.DataArray, dist: str = "norm", method="ML"):
+def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -187,7 +187,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
-        cell_methods=update_cell_methods(out.attrs, "dparams: ppf"),
+        cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
         xclim_history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",

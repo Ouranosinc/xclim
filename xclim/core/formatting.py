@@ -7,10 +7,13 @@ Formatting utilities for indicators
 import datetime as dt
 import re
 import string
+from ast import literal_eval
 from fnmatch import fnmatch
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
+
+from .utils import InputKind
 
 
 class AttrFormatter(string.Formatter):
@@ -111,7 +114,20 @@ default_formatter = AttrFormatter(
 
 
 def parse_doc(doc: str) -> Dict[str, str]:
-    """Crude regex parsing."""
+    """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
+
+    The appropriate docstring syntax is detailed in :ref:`Defining new indices`.
+
+    Parameters
+    ----------
+    doc : str
+      The docstring of an indice function.
+
+    Returns
+    -------
+    dict
+      A dictionary with all parsed sections.
+    """
     if doc is None:
         return dict()
 
@@ -144,18 +160,30 @@ def parse_doc(doc: str) -> Dict[str, str]:
 
 
 def _parse_parameters(section):
-    """Parse the parameters section of a docstring into a dictionary mapping the parameter name to its description."""
+    """Parse the parameters section of a docstring into a dictionary
+    mapping the parameter name to its description and, potentially, to its set of choices.
+
+    The type annotation are not parsed, except for fixed sets of values
+    (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
+    strings, numbers, `None` and `nan` (to represent `numpy.nan`).
+    """
     curr_key = None
     params = {}
     for line in section.split("\n"):
-        if line.strip():
-            if line.startswith(" " * 6):  # description
-                s = " " if params[curr_key]["description"] else ""
-                params[curr_key]["description"] += s + line.strip()
-            elif line.startswith(" " * 4):  # param title
-                name, annot = line.split(":", maxsplit=1)
-                curr_key = name.strip()
-                params[curr_key] = {"description": ""}
+        if line.startswith(" " * 6):  # description
+            s = " " if params[curr_key]["description"] else ""
+            params[curr_key]["description"] += s + line.strip()
+        elif line.startswith(" " * 4) and ":" in line:  # param title
+            name, annot = line.split(":", maxsplit=1)
+            curr_key = name.strip()
+            params[curr_key] = {"description": ""}
+            match = re.search(r".*(\{.*\}).*", annot)
+            if match:
+                try:
+                    choices = literal_eval(match.groups()[0])
+                    params[curr_key]["choices"] = choices
+                except ValueError:
+                    pass
     return params
 
 
@@ -281,24 +309,6 @@ def update_history(
     return merged_history
 
 
-def update_cell_methods(attrs, new):
-    """Update cell methods attributes.
-
-    attrs : dict
-      Original data attributes.
-    new : str
-      Cell method to append to the original cell methods.
-
-
-    Returns
-    -------
-    str
-      Updated cell method.
-    """
-    cm = attrs.get("cell_methods", "")
-    return (cm + " " + new).strip()
-
-
 def prefix_attrs(source, keys, prefix):
     """Rename some of the keys of a dictionary by adding a prefix.
 
@@ -351,3 +361,117 @@ def unprefix_attrs(source, keys, prefix):
         elif key not in out:
             out[key] = val
     return out
+
+
+KIND_ANNOTATION = {
+    InputKind.VARIABLE: "str or DataArray",
+    InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
+    InputKind.QUANTITY_STR: "quantity (string with units)",
+    InputKind.FREQ_STR: "offset alias (string)",
+    InputKind.NUMBER: "number",
+    InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
+    InputKind.STRING: "str",
+    InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
+    InputKind.DATE: "date (sting, YYYY-MM-DD)",
+    InputKind.DATASET: "Dataset, optional",
+    InputKind.KWARGS: "",
+    InputKind.OTHER_PARAMETER: "Any",
+}
+
+
+def _gen_parameters_section(names, parameters):
+    """Generate the "parameters" section of the indicator docstring.
+
+    Parameters
+    ----------
+    names : Sequence[str]
+      Names of the input parameters, in order. Usually `Ind._parameters`.
+    parameters : Mapping[str, Any]
+      Parameters dictionary. Usually `Ind.parameters`, As this is missing `ds`, it is added explicitly.
+    """
+    section = "Parameters\n----------\n"
+    for name in names:
+        if name == "ds":
+            descstr = "Input dataset."
+            defstr = "Default: None."
+            unitstr = ""
+            annotstr = "Dataset, optional"
+        else:
+            param = parameters[name]
+            descstr = param["description"]
+            if param["kind"] == InputKind.VARIABLE:
+                defstr = f"Default : `ds.{param['default']}`. "
+            elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
+                defstr = ""
+            else:
+                defstr = f"Default : {param['default']}. "
+            if "choices" in param:
+                annotstr = str(param["choices"])
+            else:
+                annotstr = KIND_ANNOTATION[param["kind"]]
+            if param.get("units", False):
+                unitstr = f"[Required units : {param['units']}]"
+            else:
+                unitstr = ""
+        section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
+    return section
+
+
+def _gen_returns_section(cfattrs):
+    """Generate the "Returns" section of an indicator's docstring.
+
+    Parameters
+    ----------
+    cfattrs : Sequence[Dict[str, Any]]
+      The list of cf attributes, usually Indicator.cf_attrs.
+    """
+    section = "Returns\n-------\n"
+    for attrs in cfattrs:
+        section += f"{attrs['var_name']} : DataArray\n"
+        section += f"  {attrs.get('long_name', '')}"
+        if "standard_name" in attrs:
+            section += f" ({attrs['standard_name']})"
+        if "units" in attrs:
+            section += f" [{attrs['units']}]"
+        section += "\n"
+        for key, attr in attrs.items():
+            if key not in ["long_name", "standard_name", "units", "var_name"]:
+                if callable(attr):
+                    attr = "<Dynamically generated string>"
+                section += f"  {key}: {attr}\n"
+    return section
+
+
+def generate_indicator_docstring(kwds):
+    """Generate an indicator's docstring from keywords.
+
+    Parameters
+    ----------
+    kwds : dict
+      The dict of all class attributes and init keywords as generated in the indicator's __new__ method.
+      It should have at least:
+        "compute", "_parameters", "parameters", "cf_attrs".
+    """
+    header = f"{kwds.get('title','')} (realm: {kwds.get('realm')})\n\n{kwds.get('abstract', '')}\n"
+
+    special = f"This indicator will check for missing values according to the method \"{kwds.get('missing', 'from_context')}\".\n"
+    if hasattr(kwds["compute"], "__func__") and hasattr(
+        kwds["compute"].__func__, "__module__"
+    ):
+        special += f"Based on indice :py:func:`{kwds['compute'].__func__.__module__}.{kwds['compute'].__func__.__name__}`.\n"
+    if "keywords" in kwds:
+        special += f"Keywords : {kwds['keywords']}.\n"
+
+    parameters = _gen_parameters_section(kwds["_parameters"], kwds["parameters"])
+
+    returns = _gen_returns_section(kwds["cf_attrs"])
+
+    extras = ""
+    for section in ["notes", "references"]:
+        if section in kwds:
+            extras += (
+                f"{section.capitalize()}\n{'-' * len(section)}\n{kwds[section]}\n\n"
+            )
+
+    doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
+    return doc

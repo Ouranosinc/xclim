@@ -39,9 +39,9 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -69,9 +69,9 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -109,9 +109,9 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -139,9 +139,9 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -169,9 +169,9 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -200,9 +200,9 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -230,9 +230,9 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -260,9 +260,9 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -291,9 +291,9 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -321,11 +321,11 @@ def frost_days(tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     thresh : str
       Freezing temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -357,9 +357,9 @@ def ice_days(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -389,9 +389,9 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation flux values [Kg m-2 s-1] or [mm]
+      Daily precipitation values.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -430,11 +430,11 @@ def max_n_day_precipitation_amount(
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
+      Daily precipitation values.
     window : int
       Window size in days.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
@@ -460,7 +460,7 @@ def max_n_day_precipitation_amount(
 
 
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS"):
     r"""Highest precipitation intensity over a n-hour moving window.
 
     Calculate the n-hour rolling average of the original hourly total precipitation series
@@ -469,11 +469,11 @@ def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Hourly precipitation values [Kg m-2 s-1] or [mm]
+      Hourly precipitation values.
     window : int
       Window size in hours.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
