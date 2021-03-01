@@ -24,6 +24,7 @@ Breaking changes
     * Indice functions now accept non-daily data, but daily frequency is assumed by default if the frequency cannot be inferred.
 
 * Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
+* Removed `xclim.core.checks` which was deprecated since 0.18.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,7 +45,6 @@ Internal changes
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
 * New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
 * Added an indicators API page to the docs and links to there from the :ref:`Climate Indicators` page.
-* Removed `xclim.core.checks` which was deprecated since 0.18.
 
 Bug fixes
 ~~~~~~~~~
