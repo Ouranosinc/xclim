@@ -124,14 +124,14 @@ class set_options:
         of attributes.
       Default: ``[]``.
     - ``data_validation``: Whether to 'log',  'raise' an error or
-        'warn' the user on inputs that fail the data checks in `xclim.core.checks`.
+        'warn' the user on inputs that fail the data checks in `xclim.core.datachecks`.
       Default: ``'raise'``.
     - ``cf_compliance``: Whether to 'log',  'raise' an error or
-        'warn' the user on inputs that fail the CF compliance checks in `xclim.core.checks`.
+        'warn' the user on inputs that fail the CF compliance checks in `xclim.core.cfchecks`.
       Default: ``'warn'``.
     - ``check_missing``: How to check for missing data and flag computed indicators.
         Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
-        Missing method can be registered through the `xclim.core.checks.register_missing_method` decorator.
+        Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
