@@ -24,6 +24,7 @@ Breaking changes
     * Indice functions now accept non-daily data, but daily frequency is assumed by default if the frequency cannot be inferred.
 
 * Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
+* Removed `xclim.core.checks` which was deprecated since 0.18.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

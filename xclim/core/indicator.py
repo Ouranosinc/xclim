@@ -230,7 +230,7 @@ class Indicator(IndicatorRegistrar):
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None.
     missing: {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.checks.MissingBase` to create new custom methods. If
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
     freq: {"D", "H", None}
       The expected frequency of the input data. Use None if irrelevant.
