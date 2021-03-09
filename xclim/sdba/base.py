@@ -7,6 +7,8 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
+from xclim.core.calendar import days_in_year, get_calendar
+
 
 # ## Base class for the sdba module
 class Parametrizable(dict):
@@ -88,6 +90,20 @@ class Grouper(Parametrizable):
             window=window,
             interp=interp,
         )
+
+    def get_coordinate(self, ds=None):
+        if self.prop == "month":
+            return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
+        if self.prop == "dayofyear":
+            if ds is not None:
+                mdoy = max(days_in_year(yr) for yr in np.unique(ds[self.dim].dt.year))
+            else:
+                mdoy = 365
+            return xr.DataArray(
+                np.arange(1, mdoy + 1), dims=("dayofyear"), name="dayofyear"
+            )
+        # TODO woups what happens when there is no group? (prop is None)
+        raise NotImplementedError()
 
     def group(self, da: xr.DataArray = None, **das: xr.DataArray):
         """Return a xr.core.groupby.GroupBy object.
@@ -205,7 +221,7 @@ class Grouper(Parametrizable):
     def apply(
         self,
         func: Union[FunctionType, str],
-        da: Union[xr.DataArray, Mapping[str, xr.DataArray]],
+        da: Union[xr.DataArray, Mapping[str, xr.DataArray], xr.Dataset],
         main_only: bool = False,
         **kwargs,
     ):
@@ -216,7 +232,7 @@ class Grouper(Parametrizable):
         func : Union[FunctionType, str]
           The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
           The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
-        da : Union[xr.DataArray, Mapping[str, xr.DataArray]]
+        da : Union[xr.DataArray, Mapping[str, xr.DataArray], xr.Dataset]
           The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary. A dataset will be created before grouping.
         main_only : bool
           Whether to call the function with the main dimension only (if True)
@@ -245,7 +261,7 @@ class Grouper(Parametrizable):
         broadcast everything back to the ungrouped dimensions. To overcome this issue, function may add a "_group_apply_reshape" attribute set to
         True on the variables that should be reduced and these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
-        if isinstance(da, dict):
+        if isinstance(da, (dict, xr.Dataset)):
             grpd = self.group(**da)
             dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
                 [
