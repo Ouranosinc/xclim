@@ -32,6 +32,13 @@ class TestThresholdCount:
         np.testing.assert_array_equal(out, [50, 0])
 
 
+class TestDomainCount:
+    def test_simple(self, tas_series):
+        ts = tas_series(np.arange(365))
+        out = generic.domain_count(ts, low=10, high=20, freq="Y")
+        np.testing.assert_array_equal(out, [11, 0])
+
+
 class TestDailyDownsampler:
     def test_std_calendar(self):
 

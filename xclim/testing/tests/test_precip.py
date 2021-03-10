@@ -371,6 +371,13 @@ class TestSnowfallDate:
         )
 
 
+class TestDaysWithSnow:
+    def test_simple(self, prsn_series):
+        prsn = prsn_series(np.arange(366), start="1999-07-01")
+        out = atmos.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
+        assert out[0] == 11
+
+
 def test_days_over_precip_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
