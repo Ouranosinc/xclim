@@ -1745,13 +1745,19 @@ def test_continous_snow_cover_start(snd_series):
 
 def test_continuous_snow_cover_end(snd_series):
     a = np.concatenate(
-        [np.zeros(100), np.arange(10), np.ones(100), np.arange(10)[::-1], np.zeros(145)]
+        [
+            np.zeros(100),
+            np.arange(10),
+            10 * np.ones(100),
+            10 * np.arange(10)[::-1],
+            np.zeros(145),
+        ]
     )
-    snd = snd_series(a / 100)
-    out = xci.continuous_snow_cover_start(snd)
+    snd = snd_series(a / 100.0)
+    out = xci.continuous_snow_cover_end(snd)
     np.testing.assert_equal(
         out,
         [
-            (snd.time.dt.dayofyear[0].data + 219) % 365,
+            (snd.time.dt.dayofyear[0].data + 219) % 366,
         ],
     )

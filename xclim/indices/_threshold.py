@@ -179,18 +179,26 @@ def continuous_snow_cover_end(
       for a minimum duration.
       If there is no such day, return np.nan.
     """
-    start = continuous_snow_cover_start(snd, thresh, window, freq)
-
     thresh = convert_units_to(thresh, snd)
-    cond = snd < thresh
+    cond = snd >= thresh
 
-    out = cond.resample(time=freq).map(
-        rl.first_run_after_date,
+    # Option with coordinates
+    out1 = cond.resample(time=freq).map(
+        rl.season_length,
         window=window,
-        start=start,
         dim="time",
-        coord="dayofyear",
     )
+    out1 = out1.coords["end"].dt.dayofyear
+
+    # Option with bnds
+    out2 = cond.resample(time=freq).map(
+        rl.season,
+        window=window,
+        dim="time",
+    )
+    out2 = out2.isel(season_bnds=-1).dt.dayofyear
+
+    out = out2
     out.attrs["units"] = ""
     return out
 

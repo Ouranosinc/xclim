@@ -306,6 +306,67 @@ def last_run(
     return out
 
 
+def season(
+    da: xr.DataArray,
+    window: int,
+    date: Optional[DayOfYearStr] = None,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
+
+    A "season" is a run of True values that may include breaks under a given length (`window`).
+    The start is computed as the first run of `window` True values, then end as the first subsequent run
+    of  `window` False values. If a date is passed, it must be included in the season.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input N-dimensional DataArray (boolean)
+    window : int
+      Minimum duration of consecutive values to start and end the season.
+    date: DayOfYearStr, optional
+      The date (in MM-DD format) that a run must include to be considered valid.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+
+    Returns
+    -------
+    xr.DataArray
+      Length of longest run of True values along a given dimension (inclusive of a given date) without breaks longer than a given length.
+
+    Notes
+    -----
+    The run can include holes of False or NaN values, so long as they do not exceed the window size.
+
+    If a date is given, the season end is forced to be later or equal to this date. This means that
+    even if the "real" season has been over for a long time, this is the date used in the length calculation.
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
+    the temperature is over 25 for all june, but july and august have very cold temperatures.
+    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    """
+    beg = first_run(da, window=window, dim=dim)
+    # Invert the condition and mask all values after beginning
+    # we fillna(0) as so to differentiate series with no runs and all-nan series
+    not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
+
+    # Mask also values after "date"
+    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    if mid_idx.size == 0:
+        # The date is not within the group. Happens at boundaries.
+        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+    not_da = not_da.where(da.time >= da.time[mid_idx][0])
+
+    end = first_run(
+        not_da,
+        window=window,
+        dim=dim,
+    )
+
+    return xr.concat(
+        [lazy_indexing(da["time"], beg), lazy_indexing(da["time"], end)], "season_bnds"
+    )
+
+
 def season_length(
     da: xr.DataArray,
     window: int,
@@ -369,6 +430,11 @@ def season_length(
     if date is not None:
         sl = sl.where(beg < mid_idx.squeeze())
     sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
+
+    # Add coordinates storing the beginning and end of season
+    sl.coords["start"] = lazy_indexing(da.time, beg, "time")
+    sl.coords["end"] = lazy_indexing(da.time, end, "time")
+
     return sl
 
 
