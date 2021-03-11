@@ -828,7 +828,7 @@ def last_snowfall(
 @declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
 def days_with_snow(
     prsn: xarray.DataArray,
-    low: str = "1E-9 kg m-2 s-1",
+    low: str = "0 kg m-2 s-1",
     high: str = "1E6 kg m-2 s-1",
     freq: str = "AS-JUL",
 ):

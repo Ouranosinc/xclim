@@ -285,7 +285,7 @@ days_with_snow = Prsn(
     identifier="days_with_snow",
     title="Days with snowfall",
     long_name="Number of days with solid precipitation flux between low and high thresholds.",
-    description="{freq} number of days with solid precipitation flux between {low} and {high}.",
+    description="{freq} number of days with solid precipitation flux larger than {low} and smaller or equal to {high}.",
     units="days",
     compute=indices.days_with_snow,
 )

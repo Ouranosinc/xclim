@@ -1720,5 +1720,5 @@ def test_days_with_snow(prsn_series):
     assert sum(out) == 364
 
     out = xci.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
-    np.testing.assert_array_equal(out, [11, 0])
+    np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"

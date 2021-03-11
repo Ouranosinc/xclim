@@ -176,6 +176,8 @@ def threshold_count(
 def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.DataArray:
     """Count number of days where value is within low and high thresholds.
 
+    A value is counted if it is larger than `low`, and smaller or equal to `high`, i.e. in `]low, high]`.
+
     Parameters
     ----------
     da : xr.DataArray
@@ -193,7 +195,7 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     xr.DataArray
       The number of days where value is within [low, high] for each period.
     """
-    c = compare(da, ">=", low) * compare(da, "<=", high) * 1
+    c = compare(da, ">", low) * compare(da, "<=", high) * 1
     return c.resample(time=freq).sum(dim="time")
 
 

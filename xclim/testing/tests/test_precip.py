@@ -373,9 +373,9 @@ class TestSnowfallDate:
 
 class TestDaysWithSnow:
     def test_simple(self, prsn_series):
-        prsn = prsn_series(np.arange(366), start="1999-07-01")
-        out = atmos.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
-        assert out[0] == 11
+        prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
+        out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1")
+        np.testing.assert_array_equal(out[1], [np.nan, 224, 263, 123, np.nan])
 
 
 def test_days_over_precip_thresh():

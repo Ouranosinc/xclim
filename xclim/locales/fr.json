@@ -705,7 +705,7 @@
   },
   "DAYS_WITH_SNOW": {
     "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
-    "description": "Nombre {freq:m} de jours où la précipitation solide est entre {low} et {high}.",
+    "description": "Nombre {freq:m} de jours où la précipitation solide est plus grande que {low} et plus petite ou égale à {high}.",
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
