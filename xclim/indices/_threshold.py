@@ -29,6 +29,8 @@ __all__ = [
     "daily_pr_intensity",
     "degree_days_exceedance_date",
     "cooling_degree_days",
+    "continuous_snow_cover_end",
+    "continuous_snow_cover_start",
     "days_with_snow",
     "freshet_start",
     "growing_degree_days",
@@ -44,6 +46,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "snow_cover_duration",
     "tn_days_below",
     "tx_days_above",
     "warm_day_frequency",
@@ -144,6 +147,89 @@ def cold_spell_frequency(
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_cover_end(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""End date of continuous snow cover.
+
+    First day after the start of the continuous snow cover when snow depth is below `threshold` for at least
+    `window` consecutive days.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    window : int
+      Minimum number of days with snow depth below threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      First day after the start of the continuous snow cover when the snow depth goes below a threshold
+      for a minimum duration.
+      If there is no such day, return np.nan.
+    """
+    start = continuous_snow_cover_start(snd, thresh, window, freq)
+
+    thresh = convert_units_to(thresh, snd)
+    cond = snd < thresh
+
+    out = cond.resample(time=freq).map(
+        rl.first_run_after_date,
+        window=window,
+        start=start,
+        dim="time",
+        coord="dayofyear",
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_cover_start(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""Start date of continuous snow cover.
+
+    Day of year when snow depth is above `threshold` for at least `window` consecutive days.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    window : int
+      Minimum number of days with snow depth above or equal to threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      First day of the year when the snow depth is superior to a threshold for a minimum duration.
+      If there is no such day, return np.nan.
+    """
+    thresh = convert_units_to(thresh, snd)
+    cond = snd >= thresh
+
+    out = cond.resample(time=freq).map(
+        rl.first_run,
+        window=window,
+        dim="time",
+        coord="dayofyear",
+    )
     out.attrs["units"] = ""
     return out
 
@@ -1043,6 +1129,34 @@ def hot_spell_frequency(
     out = group.map(rl.windowed_run_events, window=window, dim="time")
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def snow_cover_duration(
+    snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    """Number of days with snow depth above a threshold.
+
+    Number of days where surface snow depth is greater or equal to given threshold.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where snow depth is greater or equal to threshold.
+    """
+    thresh = convert_units_to(thresh, snd)
+    out = threshold_count(snd, ">=", thresh, freq)
+    return to_agg_units(out, snd, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")

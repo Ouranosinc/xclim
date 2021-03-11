@@ -1722,3 +1722,36 @@ def test_days_with_snow(prsn_series):
     out = xci.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
     np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"
+
+
+def test_snow_cover_duration(snd_series):
+    a = np.ones(365) / 100.0
+    a[10:20] = 0.3
+    snd = snd_series(a)
+    out = xci.snow_cover_duration(snd)
+    assert out[0] == 10
+
+
+def test_continous_snow_cover_start(snd_series):
+    snd = snd_series(np.arange(365) / 100.0)
+    out = xci.continuous_snow_cover_start(snd)
+    np.testing.assert_equal(
+        out,
+        [
+            snd.time.dt.dayofyear[0].data + 2,
+        ],
+    )
+
+
+def test_continuous_snow_cover_end(snd_series):
+    a = np.concatenate(
+        [np.zeros(100), np.arange(10), np.ones(100), np.arange(10)[::-1], np.zeros(145)]
+    )
+    snd = snd_series(a / 100)
+    out = xci.continuous_snow_cover_start(snd)
+    np.testing.assert_equal(
+        out,
+        [
+            (snd.time.dt.dayofyear[0].data + 219) % 365,
+        ],
+    )

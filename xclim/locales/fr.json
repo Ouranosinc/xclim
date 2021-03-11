@@ -709,6 +709,24 @@
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
+  "SNOW_COVER_DURATION": {
+    "long_name": "Nombre de jour où la profondeur de neige est au-dessus d'un seuil.",
+    "description": "Nombre {freq:m} de jours où la profondeur de neige est supérieure ou égale à {thresh}.",
+    "title": "Durée du couvert de neige",
+    "abstract": "Nombre de jours pendant lesquels la profondeur de neige est supérieure ou égale à un seuil."
+  },
+  "CONTINUOUS_SNOW_COVER_START": {
+    "long_name": "Date d'établissement du couvert de neige",
+    "description": "Première date à laquelle la profondeur de neige est supérieure à {thresh} pendant au moins {window} jours.",
+    "title": "Date du début du couvert de neige",
+    "abstract": "Première date à partir de laquelle la profondeur de neige est supérieure ou égale à un seuil pendant un nombre de jours consécutifs."
+  },
+  "CONTINUOUS_SNOW_COVER_END": {
+    "long_name": "Date de disparition du couvert de neige",
+    "description": "Première date à laquelle la profondeur de neige passe sous {thresh} pendant au moins {window} jours suite à l'établissement du couvert de neige.",
+    "title": "Date du fin du couvert de neige",
+    "abstract": "Première date à partir de laquelle la profondeur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
+  },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",

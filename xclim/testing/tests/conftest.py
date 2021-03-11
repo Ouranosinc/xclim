@@ -296,6 +296,24 @@ def huss_series():
 
 
 @pytest.fixture
+def snd_series():
+    def _snd_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="snd",
+            attrs={
+                "standard_name": "surface_snow_thickness",
+                "units": "m",
+            },
+        )
+
+    return _snd_series
+
+
+@pytest.fixture
 def ps_series():
     def _ps_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
