@@ -32,7 +32,7 @@ def test_map_cdf(series):
         y_value=yd.ppf(q),
         group="time",
     )
-    np.testing.assert_allclose(x_value, xd.ppf(q), 3)
+    np.testing.assert_allclose(x_value, [xd.ppf(q)], 0.1)
 
     # Scalar
     q = 0.5
@@ -42,7 +42,7 @@ def test_map_cdf(series):
         y_value=yd.ppf(q),
         group="time",
     )
-    np.testing.assert_allclose(x_value, xd.ppf(q), 3)
+    np.testing.assert_allclose(x_value, [[xd.ppf(q)]], 0.1)
 
 
 def test_equally_spaced_nodes():
@@ -110,13 +110,9 @@ def test_interp_on_quantiles(shape, group, method):
         xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
 
 
-@pytest.mark.parametrize("use_dask", [True, False])
-def test_rank(use_dask):
+def test_rank():
     arr = np.random.random_sample(size=(10, 10, 1000))
     da = xr.DataArray(arr, dims=("x", "y", "time"))
-
-    if use_dask:
-        da = da.chunk({"x": 1})
 
     ranks = u.rank(da, dim="time", pct=False)
 

@@ -200,7 +200,7 @@ def broadcast(
     if sel is None:
         sel = {}
 
-    if group.prop is not None and group.prop not in sel:
+    if group.prop != "group" and group.prop not in sel:
         sel.update({group.prop: group.get_index(x, interp=interp)})
 
     if sel:
@@ -208,7 +208,7 @@ def broadcast(
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
-            if group.prop is not None:
+            if group.prop != "group":
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
             if interp == "cubic" and len(sel.keys()) > 1:
@@ -223,6 +223,8 @@ def broadcast(
             if var in grouped.coords and var not in grouped.dims:
                 grouped = grouped.drop_vars(var)
 
+    if group.prop == "group" and "group" in grouped.dims:
+        grouped = grouped.squeeze("group", drop=True)
     return grouped
 
 
@@ -400,7 +402,7 @@ def interp_on_quantiles(
     dim = group.dim
     prop = group.prop
 
-    if prop is None:
+    if prop == "group":
         fill_value = "extrapolate" if method == "nearest" else np.nan
 
         def _interp_quantiles_1D(newx, oldx, oldy):
@@ -411,8 +413,8 @@ def interp_on_quantiles(
         return xr.apply_ufunc(
             _interp_quantiles_1D,
             newx,
-            xq,
-            yq,
+            xq.squeeze("group", drop=True),
+            yq.squeeze("group", drop=True),
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
@@ -463,10 +465,12 @@ def interp_on_quantiles(
     )
 
 
+# TODO is this useless?
 def rank(da, dim="time", pct=False):
-    """Ranks data.
+    """Ranks data along a dimension.
 
-    Replicates `xr.DataArray.rank` but with support for dask-stored data. Xarray's docstring is below:
+    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
+    Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that
     would have been otherwise assigned to all of the values within that
@@ -488,20 +492,4 @@ def rank(da, dim="time", pct=False):
     ranked : DataArray
         DataArray with the same coordinates and dtype 'float64'.
     """
-
-    def _nanrank(data):
-        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
-        ranked = func(data, axis=-1)
-        if pct:
-            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
-            ranked /= count
-        return ranked
-
-    return xr.apply_ufunc(
-        _nanrank,
-        da,
-        input_core_dims=[[dim]],
-        output_core_dims=[[dim]],
-        dask="parallelized",
-        output_dtypes=[da.dtype],
-    )
+    return da.rank(dim, pct=pct)

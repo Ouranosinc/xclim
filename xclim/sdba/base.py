@@ -76,7 +76,7 @@ class Grouper(Parametrizable):
         if "." in group:
             dim, prop = group.split(".")
         else:
-            dim, prop = group, None
+            dim, prop = group, "group"
 
         if isinstance(interp, str):
             interp = interp != "nearest"
@@ -113,10 +113,17 @@ class Grouper(Parametrizable):
             return xr.DataArray(
                 np.arange(1, mdoy + 1), dims=("dayofyear"), name="dayofyear"
             )
+        if self.prop == "group":
+            return xr.DataArray([1], dims=("group",), name="group")
         # TODO woups what happens when there is no group? (prop is None)
         raise NotImplementedError()
 
-    def group(self, da: xr.DataArray = None, **das: xr.DataArray):
+    def group(
+        self,
+        da: Union[xr.DataArray, xr.Dataset] = None,
+        main_only=False,
+        **das: xr.DataArray,
+    ):
         """Return a xr.core.groupby.GroupBy object.
 
         More than one array can be combined to a dataset before grouping using the `das`  kwargs.
@@ -148,14 +155,13 @@ class Grouper(Parametrizable):
                 }
             )
 
-        if self.window > 1:
+        if not main_only and self.window > 1:
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
 
-        if self.prop is None and self.dim == "time":
+        if self.prop == "group":
             group = self.get_index(da)
-            group.name = self.dim
         else:
             group = self.name
 
@@ -187,10 +193,10 @@ class Grouper(Parametrizable):
             with a special case of `month` and `interp=True`.
           If `Grouper.dim` is not `time`, the dim is simply returned.
         """
-        if self.prop is None:
+        if self.prop == "group":
             if self.dim == "time":
-                return xr.full_like(da[self.dim], True, dtype=bool)
-            return da[self.dim]
+                return xr.full_like(da[self.dim], True, dtype=bool).rename("group")
+            return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
         i = getattr(ind, self.prop)
@@ -273,7 +279,7 @@ class Grouper(Parametrizable):
         True on the variables that should be reduced and these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
         if isinstance(da, (dict, xr.Dataset)):
-            grpd = self.group(**da)
+            grpd = self.group(main_only=main_only, **da)
             dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
                 [
                     d.chunks[d.get_axis_num(self.dim)]
@@ -284,7 +290,7 @@ class Grouper(Parametrizable):
                 key=len,
             )
         else:
-            grpd = self.group(da)
+            grpd = self.group(da, main_only=main_only)
             # Get chunking to rechunk is the operation is non-grouping
             # To match the behaviour of the case above, an empty list signifies that dask is not used for the input.
             dim_chunks = (
@@ -306,12 +312,9 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    if self.prop is not None:
-                        out[name] = outvar.groupby(self.name).first(
-                            skipna=False, keep_attrs=True
-                        )
-                    else:
-                        out[name] = out[name].isel({self.dim: 0})
+                    out[name] = self.group(outvar, main_only=True).first(
+                        skipna=False, keep_attrs=True
+                    )
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.
@@ -325,14 +328,11 @@ class Grouper(Parametrizable):
 
         # If the grouped operation did not reduce the array, the result is sometimes unsorted along dim
         if self.dim in out.dims:
-            if out[self.dim].size == 1:
-                out = out.squeeze(self.dim, drop=True)  # .drop_vars(self.dim)
-            else:
-                out = out.sortby(self.dim)
-                # The expected behavior for downstream methods would be to conserve chunking along dim
-                if out.chunks:
-                    # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
-                    out = out.chunk({self.dim: dim_chunks or -1})
+            out = out.sortby(self.dim)
+            # The expected behavior for downstream methods would be to conserve chunking along dim
+            if out.chunks:
+                # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
+                out = out.chunk({self.dim: dim_chunks or -1})
         if self.prop in out.dims and out.chunks:
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})

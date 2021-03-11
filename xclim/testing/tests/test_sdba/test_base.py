@@ -72,16 +72,16 @@ def test_grouper_apply(tas_series, use_dask, group, n):
 
     # Normal monthly mean
     out_mean = grouper.apply("mean", tas)
-    if grouper.prop:
+    if grouper.prop != "group":
         exp = tas.groupby(group).mean()
     else:
-        exp = tas.mean(dim=grouper.dim)
+        exp = tas.mean(dim=grouper.dim).expand_dims("group").T
     np.testing.assert_array_equal(out_mean, exp)
 
     # With additionnal dimension included
     grouper = Grouper(group, add_dims=["lat"])
     out = grouper.apply("mean", tas)
-    assert out.ndim == int(grouper.prop is not None)
+    assert out.ndim == 1
     np.testing.assert_array_equal(out, exp.mean("lat"))
     assert out.attrs["group"] == group
     assert out.attrs["group_compute_dims"] == [grouper.dim, "lat"]
@@ -97,10 +97,10 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(
         window_dim="window"
     )
-    if grouper.prop:
+    if grouper.prop != "group":
         exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
     else:
-        exp = rolld.mean(dim=[grouper.dim, "window"])
+        exp = rolld.mean(dim=[grouper.dim, "window"]).expand_dims("group").T
     np.testing.assert_array_equal(out, exp)
 
     # With function + nongrouping-grouped
@@ -126,23 +126,23 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         return xr.Dataset(data_vars={"tas1_mean": tas1, "norm_tas0": tas0})
 
     out = grouper.apply(mixed_reduce, {"tas1": tas1, "tas0": tas0})
-    if grouper.prop:
-        assert grouper.prop not in out.norm_tas0.dims
-        assert grouper.prop in out.tas1_mean.dims
+    assert grouper.prop not in out.norm_tas0.dims
+    assert grouper.prop in out.tas1_mean.dims
 
     if use_dask:
-        assert out.tas1_mean.chunks == (((n,),) if grouper.prop else tuple())
+        assert out.tas1_mean.chunks == ((n,),)
         assert out.norm_tas0.chunks == ((366,),)
 
     # Mixed input
-    if grouper.prop:
+    def normalize_from_precomputed(grpds, dim=None):
+        return (grpds.tas / grpds.tas1_mean).mean(dim=dim)
 
-        def normalize_from_precomputed(grpds, dim=None):
-            return (grpds.tas / grpds.tas1_mean).mean(dim=dim)
-
-        out = grouper.apply(
-            normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}
-        ).isel(lat=0)
+    out = grouper.apply(
+        normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}
+    ).isel(lat=0)
+    if grouper.prop == "group":
+        exp = normed.mean("time").isel(lat=0)
+    else:
         exp = normed.groupby(group).mean().isel(lat=0)
-        assert grouper.prop in out.dims
-        np.testing.assert_array_equal(out, exp)
+    assert grouper.prop in out.dims
+    np.testing.assert_array_equal(out, exp)
