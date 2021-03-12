@@ -534,10 +534,29 @@ class PrincipalComponents(BaseAdjustment):
         crd_dims: Optional[Sequence[str]] = None,
         pts_dims: Optional[Sequence[str]] = None,
     ):
-        r"""Principal Component adjustment.
+ r"""Principal component adjustment.
 
-        Method remapping simulation values to the observation through principal component
-        analysis ([hnilica2017]_)
+        This bias-correction method maps model simulation values to the observation
+        space through principal components ([hnilica2017]_). Values in the simulation
+        space (multiple variables, or multiple sites) can be thought of as coordinates
+        along axes, such as variable, temperature, etc. Principal components (PC) are a
+        linear combinations of the original variables where the coefficients are the
+        eigenvectors of the covariance matrix. Values can then be expressed as coordinates
+        along the PC axes. The method makes the assumption that bias-corrected values have
+        the same coordinates along the PC axes of the observations. By converting from the
+        observation PC space to the original space, we get bias corrected values.
+        Mathematically,
+
+        .. math::
+
+           bc = <o> + O M^{-1} (x - <m>)
+
+        where :math:`bc` is the bias-corrected value, :math:`<o>, <m>` the observation and model vector means
+        respectively, :math:`O, M` the rescaled eigenvectors of the  observation and model covariance matrices
+        respectively, and `x` the original modeled value vector to be corrected.
+
+        Note that *principal components* is meant here as the algebraic operation defining a coordinate system
+        based on the eigenvectors, not statistical principal component analysis.
 
         Parameters
         ----------
@@ -606,7 +625,7 @@ class PrincipalComponents(BaseAdjustment):
 
         # Grouper used in the training part
         train_group = Grouper(group.name, window=group.window, add_dims=pts_dims)
-        # Groupe used in the adjust part : no window, no add_dims
+        # Grouper used in the adjust part : no window, no add_dims
         adj_group = Grouper(group.name)
 
         super().__init__(
@@ -632,6 +651,7 @@ class PrincipalComponents(BaseAdjustment):
 
         # The real thing, acting on 2D numpy arrays
         def _compute_transform_matrix(ref, hist):
+            """Return the transformation matrix converting simulation coordinates to observation coordinates."""
             # Get transformation matrix from PC coords to ref, dropping points with a NaN coord.
             ref_na = np.isnan(ref).any(axis=0)
             R = pc_matrix(ref[:, ~ref_na])
@@ -649,6 +669,7 @@ class PrincipalComponents(BaseAdjustment):
 
         # The group wrapper
         def _compute_transform_matrices(ds, dim):
+            """Apply `_compute_transform_matrix` along dimensions other than time and the variables to map."""
             # The multiple PC-space dimensions are along "coordinate"
             # Matrix multiplication in xarray behaves as a dot product across
             # same-name dimensions, instead of reducing according to the dimension order,
@@ -699,6 +720,7 @@ class PrincipalComponents(BaseAdjustment):
         sim = sim.stack({lbl_M: crds_M})
 
         def _compute_adjust(ds, dim):
+           """Apply the mapping transformation."""
             scen = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
             return scen
 
