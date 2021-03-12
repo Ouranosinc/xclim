@@ -689,7 +689,7 @@ class PrincipalComponents(BaseAdjustment):
         hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
-        self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
+        self.ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
         self.ds.attrs["_reference_coord"] = lbl_R
         self.ds.attrs["_model_coord"] = lbl_M
 
