@@ -378,7 +378,7 @@ def duck_empty(dims, sizes, chunks=None):
     return xr.DataArray(content, dims=dims)
 
 
-def map_blocks(refvar=None, **outvars):
+def map_blocks(reduces=None, **outvars):
     """
     Decorator for declaring functions and wrapping them into a map_blocks. It takes care of constructing
     the template dataset.
@@ -394,13 +394,42 @@ def map_blocks(refvar=None, **outvars):
     It must always output a dataset matching the mapping passed to the decorator.
     """
 
+    def merge_dimensions(*seqs):
+        """Merge several dimensions lists while preserving order."""
+        out = seqs[0].copy()
+        for seq in seqs[1:]:
+            last_index = 0
+            for i, e in enumerate(seq):
+                if e in out:
+                    indx = out.index(e)
+                    if indx < last_index:
+                        raise ValueError(
+                            "Dimensions order mismatch, lists are not mergeable."
+                        )
+                    last_index = indx
+                else:
+                    out.insert(last_index + 1, e)
+        return out
+
+    # Ordered list of all added dimensions
+    out_dims = merge_dimensions(*outvars.values())
+    # List of dimensions reduced by the function.
+    red_dims = reduces or []
+
     def _decorator(func):
+
+        # @wraps(func, hide_wrapped=True)
         def _map_blocks(ds, **kwargs):
             if isinstance(ds, xr.Dataset):
                 ds = ds.unify_chunks()
 
             # Get group if present
             group = kwargs.get("group")
+
+            # Ensure group is given as it might not be in the signature of the wrapped func
+            if {"<PROP>", "<DIM>"}.intersection(out_dims + red_dims) and group is None:
+                raise ValueError("Missing required `group` argument.")
+
             if uses_dask(ds):
                 # Use dask if any of the input is dask-backed.
                 chunks = (
@@ -415,36 +444,34 @@ def map_blocks(refvar=None, **outvars):
             else:
                 chunks = None
 
-            # Make template
-
-            # TODO : Is this too intricated?
-            # Base dims are untouched by func, we also keep the order
-            # "reference" object for dimension handling
-            if isinstance(ds, xr.Dataset):
-                if refvar is None:
-                    da = list(ds.data_vars.values())[0]
-                else:
-                    da = ds[refvar]
+            # Make translation dict
+            if group is not None:
+                placeholders = {"<PROP>": group.prop, "<DIM>": group.dim}
             else:
-                da = ds
+                placeholders = {}
 
-            base_dims = [d for d in da.dims if group is not None and d != group.dim]
-            alldims = set()
-            alldims.update(*[set(dims) for dims in outvars.values()])
-            # Ensure the untouched dimensions are first.
-            alldims = base_dims + list(alldims)
+            # Get new dimensions (in order), translating placeholders to real names.
+            new_dims = [placeholders.get(dim, dim) for dim in out_dims]
+            reduced_dims = [placeholders.get(dim, dim) for dim in red_dims]
 
-            if any(dim in ["<PROP>", "<DIM>"] for dim in alldims) and group is None:
-                raise ValueError("Missing required `group` argument.")
+            for dim in new_dims:
+                if dim in ds.dims and dim not in reduced_dims:
+                    raise ValueError(
+                        f"Dimension {dim} is meant to be added by the computation but it is already on one of the inputs."
+                    )
 
+            # Dimensions untouched by the function.
+            base_dims = list(set(ds.dims) - set(new_dims) - set(reduced_dims))
+
+            # All dimensions of the output data, new_dims are added at the end on purpose.
+            all_dims = base_dims + new_dims
+
+            # The coordinates of the output data.
             coords = {}
-            for i in range(len(alldims)):
-                dim = alldims[i]
-                if dim == "<PROP>":
-                    alldims[i] = group.prop
+            for dim in all_dims:
+                if dim == group.prop:
                     coords[group.prop] = group.get_coordinate(ds=ds)
-                elif dim == "<DIM>":
-                    alldims[i] = group.dim
+                elif dim == group.dim:
                     coords[group.dim] = ds[group.dim]
                 elif dim in ds.coords:
                     coords[dim] = ds[dim]
@@ -454,22 +481,19 @@ def map_blocks(refvar=None, **outvars):
                     raise ValueError(
                         f"This function adds the {dim} dimension, its coordinate must be provided as a keyword argument."
                     )
-
-            if group is not None:
-                placeholders = {"<PROP>": group.prop, "<DIM>": group.dim}
-            else:
-                placeholders = {}
-
             sizes = {name: crd.size for name, crd in coords.items()}
 
+            # Create the output dataset, but empty
             tmpl = xr.Dataset(coords=coords)
             for var, dims in outvars.items():
+                # Out variables must have the base dims + new_dims
                 dims = base_dims + [placeholders.get(dim, dim) for dim in dims]
+                # duck empty calls dask if chunks is not None
                 tmpl[var] = duck_empty(dims, sizes, chunks)
-            tmpl = tmpl.transpose(*alldims)  # To be sure.
 
             def _transpose_on_exit(dsblock, **kwargs):
-                return func(dsblock, **kwargs).transpose(*alldims)
+                """Call the decorated func and transpose to ensure the same dim order as on the templace."""
+                return func(dsblock, **kwargs).transpose(*all_dims)
 
             return ds.map_blocks(_transpose_on_exit, template=tmpl, kwargs=kwargs)
 
@@ -478,7 +502,7 @@ def map_blocks(refvar=None, **outvars):
     return _decorator
 
 
-def map_groups(refvar=None, main_only=False, **outvars):
+def map_groups(reduces=["<DIM>"], main_only=False, **outvars):
     """
     Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
     See :py:func:`map_blocks`.
@@ -493,12 +517,13 @@ def map_groups(refvar=None, main_only=False, **outvars):
     """
 
     def _decorator(func):
-        decorator = map_blocks(**outvars)
+        decorator = map_blocks(reduces=reduces, **outvars)
 
         def _apply_on_group(dsblock, **kwargs):
             group = kwargs.pop("group")
             return group.apply(func, dsblock, main_only=main_only, **kwargs)
 
+        # wraps(func, injected=['dim'], hide_wrapped=True)(
         return decorator(_apply_on_group)
 
     return _decorator

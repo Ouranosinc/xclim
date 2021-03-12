@@ -43,7 +43,7 @@ def eqm_train(ds, *, dim, kind, quantiles):
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-@map_blocks(refvar="sim", scen=["<DIM>"])
+@map_blocks(reduces=["<PROP>", "quantiles"], scen=[])
 def qm_adjust(ds, *, group, interp, extrapolation, kind):
     """QM (DQM and EQM): Adjust step on one block."""
     af, hist_q = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
@@ -53,7 +53,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind):
     return scen.to_dataset()
 
 
-@map_blocks(refvar="sim", sim=["<DIM>"])
+@map_blocks(reduces=["<PROP>"], sim=[])
 def dqm_scale_sim(ds, *, group, interp, kind):
     """DQM: Sim preprocessing on one block"""
     sim = u.apply_correction(
@@ -69,7 +69,7 @@ def dqm_scale_sim(ds, *, group, interp, kind):
     return sim.rename("sim").to_dataset()
 
 
-@map_blocks(refvar="sim", scen=["<DIM>"])
+@map_blocks(reduces=["<PROP>", "quantiles"], scen=[])
 def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     """QDM: Adjust process on one block."""
     af, _ = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)

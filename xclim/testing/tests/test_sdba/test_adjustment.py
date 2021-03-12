@@ -129,7 +129,7 @@ class TestDQM:
 
         # Results are not so good at the endpoints
         np.testing.assert_array_almost_equal(
-            DQM.ds.af[2:-2], expected[2:-2, np.newaxis], 1
+            DQM.ds.af[:, 2:-2], expected[np.newaxis, 2:-2], 1
         )
 
         # Test predict
@@ -247,7 +247,7 @@ class TestQDM:
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QDM.ds.af.T, expected, 1)
+        np.testing.assert_array_almost_equal(QDM.ds.af, expected, 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -302,7 +302,7 @@ class TestQDM:
             mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
         )
         np.testing.assert_array_almost_equal(
-            QDM.ds.af.sel(quantiles=q, **sel), expected.T, 1
+            QDM.ds.af.sel(quantiles=q, **sel), expected, 1
         )
 
         # Test predict
@@ -364,9 +364,9 @@ class TestQM:
         p = QM.adjust(sim, interp="linear")
 
         q = QM.ds.coords["quantiles"]
-        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[:, np.newaxis]
+        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QM.ds.af[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(QM.ds.af[:, 2:-2], expected[:, 2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
