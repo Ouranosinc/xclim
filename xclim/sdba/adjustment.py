@@ -534,7 +534,7 @@ class PrincipalComponents(BaseAdjustment):
         crd_dims: Optional[Sequence[str]] = None,
         pts_dims: Optional[Sequence[str]] = None,
     ):
- r"""Principal component adjustment.
+        r"""Principal component adjustment.
 
         This bias-correction method maps model simulation values to the observation
         space through principal components ([hnilica2017]_). Values in the simulation
@@ -545,15 +545,7 @@ class PrincipalComponents(BaseAdjustment):
         along the PC axes. The method makes the assumption that bias-corrected values have
         the same coordinates along the PC axes of the observations. By converting from the
         observation PC space to the original space, we get bias corrected values.
-        Mathematically,
-
-        .. math::
-
-           bc = <o> + O M^{-1} (x - <m>)
-
-        where :math:`bc` is the bias-corrected value, :math:`<o>, <m>` the observation and model vector means
-        respectively, :math:`O, M` the rescaled eigenvectors of the  observation and model covariance matrices
-        respectively, and `x` the original modeled value vector to be corrected.
+        See notes for a mathematical explanation.
 
         Note that *principal components* is meant here as the algebraic operation defining a coordinate system
         based on the eigenvectors, not statistical principal component analysis.
@@ -568,7 +560,8 @@ class PrincipalComponents(BaseAdjustment):
           See :py:class:`xclim.sdba.base.Grouper` for details.
           The adjustment will be performed on each group independently.
         crd_dims : Sequence of str, optional
-          The data dimensions to flatten into the "coordinate" dimension, see Notes.
+          The data dimension(s) along which the multiple simulation space dimensions are taken.
+          They are flattened into  "coordinate" dimension, see Notes.
           Default is `None` in which case all dimensions shared by `ref` and `hist`,
           except those in `pts_dims` are used.
           The training algorithm currently doesn't support any chunking
@@ -578,12 +571,6 @@ class PrincipalComponents(BaseAdjustment):
           They will be merged with those given through the `add_dims` property
           of `group`.
 
-        In adjustment:
-
-        norm_to : {'hist', 'sim'}
-          Before the transformation, sim values are normalized by subtracting the mean of
-          hist if norm_to == 'hist' (default) and its own mean if norm_to == 'sim'.
-
         Notes
         -----
         The input data is understood as a set of N points in a :math:`M`-dimensional space.
@@ -591,6 +578,10 @@ class PrincipalComponents(BaseAdjustment):
         - :math:`N` is taken along the data coordinates listed in `pts_dims` and the `group` (the main `dim` but also the `add_dims`).
 
         - :math:`M` is taken along the data coordinates listed in `crd_dims`, the default being all except those in `pts_dims`.
+
+        For example, for a 3D matrix of data, say in (lat, lon, time), we could say that all spatial points
+        are independent dimensions of the simulation space by passing  ``crd_dims=['lat', 'lon']``. For
+        a (5, 5, 365) array, this results in a 25-dimensions space, i.e. :math:`M = 25` and :math:`N = 365`.
 
         Thus, the adjustment is equivalent to a linear transformation
         of these :math:`N` points in a :math:`M`-dimensional space.
@@ -705,22 +696,17 @@ class PrincipalComponents(BaseAdjustment):
         self.ds.attrs["_reference_coord"] = lbl_R
         self.ds.attrs["_model_coord"] = lbl_M
 
-    def _adjust(self, sim, norm_to="hist"):
+    def _adjust(self, sim):
         lbl_R = self.ds.attrs["_reference_coord"]
         lbl_M = self.ds.attrs["_model_coord"]
         crds_M = self.ds.indexes[lbl_M].names
 
-        if norm_to == "hist":
-            vmean = self.ds.hist_mean
-        elif norm_to == "sim":
-            vmean = self.train_group.apply("mean", sim).stack({lbl_M: crds_M})
-        else:
-            raise NotImplementedError
+        vmean = self.train_group.apply("mean", sim).stack({lbl_M: crds_M})
 
         sim = sim.stack({lbl_M: crds_M})
 
         def _compute_adjust(ds, dim):
-           """Apply the mapping transformation."""
+            """Apply the mapping transformation."""
             scen = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
             return scen
 
