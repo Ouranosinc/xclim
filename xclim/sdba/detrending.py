@@ -49,7 +49,7 @@ class BaseDetrend(Parametrizable):
 
         Returns a new object that can be used for detrending and retrending. Fitted objects are unique to the fitted coordinate used.
         """
-        new = self.copy()
+        new = self.__class__(**self.parameters)
         new._set_trend(new._get_trend(da))
         return new
 
