@@ -311,8 +311,9 @@ def season(
     window: int,
     date: Optional[DayOfYearStr] = None,
     dim: str = "time",
+    coord: Optional[Union[str, bool]] = False,
 ) -> xr.DataArray:
-    """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
+    """Return the bounds of a season (along dim).
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
     The start is computed as the first run of `window` True values, then end as the first subsequent run
@@ -328,17 +329,21 @@ def season(
       The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
+    coord : Optional[str]
+      If not False, the function returns values along `dim` instead of indexes.
+      If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+      DateTimeAccessor object to use (ex: 'dayofyear').
 
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along a given dimension (inclusive of a given date) without breaks longer than a given length.
+      "dim" is reduced to "season_bnds" with 2 elements : season start and season end, both indices of da[dim].
 
     Notes
     -----
     The run can include holes of False or NaN values, so long as they do not exceed the window size.
 
-    If a date is given, the season end is forced to be later or equal to this date. This means that
+    If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
     Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
     the temperature is over 25 for all june, but july and august have very cold temperatures.
@@ -350,21 +355,73 @@ def season(
     not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
 
     # Mask also values after "date"
-    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:
         # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
-    not_da = not_da.where(da.time >= da.time[mid_idx][0])
+        base = da.isel({dim: 0})  # To have the proper shape
+        beg = xr.full_like(base, np.nan, float).drop_vars(dim)
+        end = xr.full_like(base, np.nan, float).drop_vars(dim)
+        length = xr.full_like(base, np.nan, float).drop_vars(dim)
+    else:
+        if date is not None:
+            # If the beginning was after the mid date, both bounds are NaT.
+            valid_start = beg < mid_idx.squeeze()
+        else:
+            valid_start = True
 
-    end = first_run(
-        not_da,
-        window=window,
-        dim=dim,
-    )
+        not_da = not_da.where(da.time >= da.time[mid_idx][0])
+        end = first_run(
+            not_da,
+            window=window,
+            dim=dim,
+        )
+        # If there was a beginning but no end, season goes to the end of the array
+        no_end = beg.notnull() & end.isnull()
 
-    return xr.concat(
-        [lazy_indexing(da["time"], beg), lazy_indexing(da["time"], end)], "season_bnds"
+        # Length
+        length = end - beg
+
+        # No end:  length is actually until the end of the array, so it is missing 1
+        length = xr.where(no_end, da[dim].size - beg, length)
+        # Where the begining was before the mid date, invalid.
+        length = length.where(valid_start)
+        # Where there were data points, but no season : put 0 length
+        length = xr.where(beg.isnull() & end.notnull(), 0, length)
+
+        # No end: end defaults to the last element (this differs from length, but heh)
+        end = xr.where(no_end, da[dim].size - 1, end)
+
+        # Where the beginning was before the mid date
+        beg = beg.where(valid_start)
+        end = end.where(valid_start)
+
+    if coord:
+        crd = da[dim]
+        if isinstance(coord, str):
+            crd = getattr(crd.dt, coord)
+            coordstr = coord
+        else:
+            coordstr = dim
+        beg = lazy_indexing(crd, beg)
+        end = lazy_indexing(crd, end)
+    else:
+        coordstr = "index"
+
+    out = xr.Dataset({"start": beg, "end": end, "length": length})
+
+    out.start.attrs.update(
+        long_name="Start of the season.",
+        description=f"First {coordstr} of a run of at least {window} steps respecting the condition.",
     )
+    out.end.attrs.update(
+        long_name="End of the season.",
+        description=f"First {coordstr} of a run of at least {window} steps breaking the condition, starting after `start`.",
+    )
+    out.length.attrs.update(
+        long_name="Length of the season.",
+        description="Number of steps of the original series in the season, between 'start' and 'end'.",
+    )
+    return out
 
 
 def season_length(
@@ -405,37 +462,8 @@ def season_length(
     the temperature is over 25 for all june, but july and august have very cold temperatures.
     Instead of returning 30 days (june), the function will return 61 days (july + june).
     """
-    beg = first_run(da, window=window, dim=dim)
-    # Invert the condition and mask all values after beginning
-    # we fillna(0) as so to differentiate series with no runs and all-nan series
-    not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
-
-    # Mask also values after "date"
-    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
-    if mid_idx.size == 0:
-        # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
-    not_da = not_da.where(da.time >= da.time[mid_idx][0])
-
-    end = first_run(
-        not_da,
-        window=window,
-        dim=dim,
-    )
-
-    sl = end - beg
-    sl = xr.where(
-        beg.notnull() & end.isnull(), da.time.size - beg, sl
-    )  # If series is not ended by end of resample time frequency
-    if date is not None:
-        sl = sl.where(beg < mid_idx.squeeze())
-    sl = xr.where(beg.isnull() & end.notnull(), 0, sl)  # If series is never triggered
-
-    # Add coordinates storing the beginning and end of season
-    sl.coords["start"] = lazy_indexing(da.time, beg, "time")
-    sl.coords["end"] = lazy_indexing(da.time, end, "time")
-
-    return sl
+    seas = season(da, window, date, dim, coord=False)
+    return seas.length
 
 
 def run_end_after_date(
@@ -469,21 +497,27 @@ def run_end_after_date(
     xr.DataArray
       Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+        return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
 
     end = first_run(
-        (~da).where(da.time >= da.time[mid_idx][0]),
+        (~da).where(da[dim] >= da[dim][mid_idx][0]),
         window=window,
         dim=dim,
         coord=coord,
     )
-    beg = first_run(da.where(da.time < da.time[mid_idx][0]), window=window, dim=dim)
-    end = xr.where(
-        end.isnull() & beg.notnull(), da.time.isel(time=-1).dt.dayofyear, end
-    )
-    return end.where(beg.notnull()).drop_vars("time")
+    beg = first_run(da.where(da[dim] < da[dim][mid_idx][0]), window=window, dim=dim)
+
+    if coord:
+        last = da[dim][-1]
+        if isinstance(coord, str):
+            last = getattr(last.dt, coord)
+    else:
+        last = da[dim].size - 1
+
+    end = xr.where(end.isnull() & beg.notnull(), last, end)
+    return end.where(beg.notnull()).drop_vars(dim, errors="ignore")
 
 
 def first_run_after_date(
