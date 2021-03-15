@@ -182,23 +182,11 @@ def continuous_snow_cover_end(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    # Option with coordinates
-    out1 = cond.resample(time=freq).map(
-        rl.season_length,
-        window=window,
-        dim="time",
+    out = (
+        cond.resample(time=freq)
+        .map(rl.season, window=window, dim="time", coord="dayofyear")
+        .end
     )
-    out1 = out1.coords["end"].dt.dayofyear
-
-    # Option with bnds
-    out2 = cond.resample(time=freq).map(
-        rl.season,
-        window=window,
-        dim="time",
-    )
-    out2 = out2.isel(season_bnds=-1).dt.dayofyear
-
-    out = out2
     out.attrs["units"] = ""
     return out
 
@@ -232,11 +220,15 @@ def continuous_snow_cover_start(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    out = cond.resample(time=freq).map(
-        rl.first_run,
-        window=window,
-        dim="time",
-        coord="dayofyear",
+    out = (
+        cond.resample(time=freq)
+        .map(
+            rl.season,
+            window=window,
+            dim="time",
+            coord="dayofyear",
+        )
+        .start
     )
     out.attrs["units"] = ""
     return out
