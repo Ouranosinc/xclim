@@ -9,7 +9,8 @@ Available methods
 -----------------
 
 .. automodule:: xclim.sdba.adjustment
-   :members: Scaling, LOCI, EmpiricalQuantileMapping, DetrendedQuantileMapping, QuantileDeltaMapping
+   :members:
+   :special-members:
    :show-inheritance:
 
 

@@ -27,9 +27,9 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     Parameters
     ----------
     tasmin : xarray.DataArray
-        Minimum (daily) temperature [℃] or [K]
+        Minimum (daily) temperature
     tasmax : xarray.DataArray
-        Maximum (daily) temperature [℃] or [K]
+        Maximum (daily) temperature
 
     Returns
     -------
@@ -54,9 +54,9 @@ def uas_vas_2_sfcwind(
     Parameters
     ----------
     uas : xr.DataArray
-      Eastward wind velocity (m s-1)
+      Eastward wind velocity
     vas : xr.DataArray
-      Northward wind velocity (m s-1)
+      Northward wind velocity
     calm_wind_thresh : str
       The threshold under which winds are considered "calm" and for which the direction
       is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
@@ -109,7 +109,7 @@ def sfcwind_2_uas_vas(
     Parameters
     ----------
     sfcWind : xr.DataArray
-      Wind velocity (m s-1)
+      Wind velocity
     sfcWindfromdir : xr.DataArray
       Direction from which the wind blows, following the meteorological convention
       where 360 stands for North.
@@ -455,7 +455,10 @@ def specific_humidity(
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def snowfall_approximation(
-    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+    pr: xr.DataArray,
+    tas: xr.DataArray,
+    thresh: str = "0 degC",
+    method: str = "binary",
 ):
     """Snowfall approximation from total precipitation and temperature.
 
@@ -464,7 +467,7 @@ def snowfall_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [kg m-2 s-1] or [mm].
+      Mean daily precipitation flux.
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
     thresh : str,
@@ -498,7 +501,10 @@ def snowfall_approximation(
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def rain_approximation(
-    pr: xr.DataArray, tas: xr.DataArray, thresh: str = "0 degC", method: str = "binary"
+    pr: xr.DataArray,
+    tas: xr.DataArray,
+    thresh: str = "0 degC",
+    method: str = "binary",
 ):
     """Rainfall approximation from total precipitation and temperature.
 
@@ -508,7 +514,7 @@ def rain_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux [kg m-2 s-1] or [mm].
+      Mean daily precipitation flux.
     tas : xarray.DataArray, optional
       Mean, maximum or minimum daily temperature.
     thresh : str,

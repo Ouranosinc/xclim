@@ -150,7 +150,7 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
 def threshold_count(
     da: xr.DataArray, op: str, thresh: Union[float, int], freq: str
 ) -> xr.DataArray:
-    """Count number of days above or below threshold.
+    """Count number of days where value is above or below threshold.
 
     Parameters
     ----------
@@ -170,6 +170,32 @@ def threshold_count(
       The number of days meeting the constraints for each period.
     """
     c = compare(da, op, thresh) * 1
+    return c.resample(time=freq).sum(dim="time")
+
+
+def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.DataArray:
+    """Count number of days where value is within low and high thresholds.
+
+    A value is counted if it is larger than `low`, and smaller or equal to `high`, i.e. in `]low, high]`.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input data.
+    low : float
+      Minimum threshold value.
+    high : float
+      Maximum threshold value.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xr.DataArray
+      The number of days where value is within [low, high] for each period.
+    """
+    c = compare(da, ">", low) * compare(da, "<=", high) * 1
     return c.resample(time=freq).sum(dim="time")
 
 

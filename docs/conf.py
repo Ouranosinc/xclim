@@ -54,12 +54,13 @@ def _indicator_table(realm):
         #     for (name, p) in ind._sig.parameters.items()
         # }
         try:
-            table[indname] = ind.json()  # args)
+            table[indname] = ind.json()  # args?
         except KeyError as err:
             warnings.warn(
                 f"{ind.identifier} could not be documented.({err})", UserWarning
             )
         else:
+            table[indname]["doc"] = ind.__doc__
             table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
@@ -87,6 +88,7 @@ extensions = [
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
+    "autodoc_indicator",
 ]
 
 napoleon_numpy_docstring = True

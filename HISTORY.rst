@@ -2,8 +2,25 @@
 History
 =======
 
-0.24.0 (unreleased)
+0.25.0 (unreleased)
 -------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `generic.count_domain` used to count values within low and high thresholds.
+
+
+0.24.0 (2021-03-01)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* `days_over_precip_thresh`, `fraction_over_precip_thresh`, `liquid_precip_ratio`, `warm_spell_duration_index`,  all from eponymous indices.
+* `maximum_consecutive_warm_days` from indice `maximum_consecutive_tx_days`.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -13,12 +30,20 @@ Breaking changes
     * `per` argument is now expected to between 0-100 (not 0-1).
     * input data must have a daily (or coarser) time frequency.
 
-* Change in unit handling paradigm for indices, many indices will have different output units than before.
+* Change in unit handling paradigm for indices, which as a result will lead to some indices returning values with different units. Note that related `Indicator` objects remain unchanged and will return units consistent with CF Convention. If you are concerned with code stability, please use `Indicator` objects. The change was necessary to resolve inconsistencies with xarray's `keep_attrs=True` context.
 
-    * Indice functions are now more flexible : output units may change for different input units, but the dimensionality is consistent.
-    * Indice functions now accept non-daily data, but daily is assumed if the frequency cannot be inferred.
+    * Indice functions now return output units that preserve consistency with input units. That is, feeding inputs in Celsius will yield outputs in Celsius instead of casting to Kelvin. In all cases the dimensionality is preserved.
+    * Indice functions now accept non-daily data, but daily frequency is assumed by default if the frequency cannot be inferred.
 
 * Removed the explicitly-installed `netCDF4` python library from the base installation, as this is never explicitly used (now only installed in the `docs` recipe for sdba documented example).
+* Removed `xclim.core.checks`, which was deprecated since v0.18.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Indicator now have docstrings generated from their metadata.
+* Units and fixed choices set are parsed from indice docstrings into `Indicator.parameters`.
+* Units of indices using the `declare_units` decorator are stored in `indice.in_units` and `indice.out_units`.
+* Changes to `Indicator.format` and `Indicator.json` to ensure the resulting json really is serializable.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -31,6 +56,7 @@ Internal changes
 * New `xclim.core.units.rate2amout` to convert rates like precipitation to amounts.
 * `xclim.core.units.pint2cfunits` now removes ' * ' symbols and changes `Δ°` to `delta_deg`.
 * New `xclim.core.units.to_agg_units` and `xclim.core.units.infer_sampling_units` for unit handling involving aggregation operations along the time dimension.
+* Added an indicators API page to the docs and links to there from the `Climate Indicators` page.
 
 Bug fixes
 ~~~~~~~~~
@@ -97,6 +123,7 @@ New features and enhancements
 * Clarification to `frequency_analysis` notebook.
 * Now officially supporting PEP596 (Python3.9).
 * New methods `xclim.ensembles.change_significance` and `xclim.ensembles.knutti_sedlacek` to qualify climate change agreement among members of an ensemble.
+* New bias-adjustment method : `PrincipalComponent`.
 
 Bug fixes
 ~~~~~~~~~

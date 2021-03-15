@@ -6,6 +6,7 @@ import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
+from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
 
 from xclim.core.calendar import _interpolate_doy_calendar
@@ -505,3 +506,83 @@ def rank(da, dim="time", pct=False):
         dask="parallelized",
         output_dtypes=[da.dtype],
     )
+
+
+def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
+    """Construct a Principal Component matrix.
+
+    This matrix can be used to transform points in arr to principal components
+    coordinates. Note that this function does not manage NaNs; if a single observation is null, all elements
+    of the transformation matrix involving that variable will be NaN.
+
+    Parameters
+    ----------
+    arr : Union[numpy.ndarray, dask.array.Array]
+      2D array (M, N) of the M coordinates of N points.
+
+    Returns
+    -------
+    A
+      MxM Array of the same type as arr.
+    """
+    # Get appropriate math module
+    mod = dsk if isinstance(arr, dsk.Array) else np
+
+    # Covariance matrix
+    cov = mod.cov(arr)
+
+    # Get eigenvalues and eigenvectors
+    # There are no such method yet in dask, but we are lucky:
+    # the SVD decomposition of a symmetric matrix gives the eigen stuff.
+    # And covariance matrices are by definition symmetric!
+    # Numpy has a hermitian=True option to accelerate, but not dask...
+    kwargs = {} if mod is dsk else {"hermitian": True}
+    eig_vec, eig_vals, _ = mod.linalg.svd(cov, **kwargs)
+
+    # The PC matrix is the eigen vectors matrix scaled by the square root of the eigen values
+    return eig_vec * mod.sqrt(eig_vals)
+
+
+def best_pc_orientation(A, Binv, val=1000):
+    """Return best orientation vector for A.
+
+    Eigenvectors returned by `pc_matrix` do not have a defined orientation.
+    Given an inverse transform Binv and a transform A, this returns the orientation
+    minimizing the projected distance for a test point far from the origin.
+
+    This trick is explained in [hnilica2017]_. See documentation of
+    `sdba.adjustment.PrincipalComponentAdjustment`.
+
+    Parameters
+    ----------
+    A : numpy.ndarray
+      MxM Matrix defining the final transformation.
+    Binv : numpy.ndarray
+      MxM Matrix defining the (inverse) first transformation.
+    val : float
+      The coordinate of the test point (same for all axes). It should be much
+      greater than the largest furthest point in the array used to define B.
+
+    Returns
+    -------
+    orient :
+      Mx1 vector of orientation correction (1 or -1).
+    """
+    m = A.shape[0]
+    orient = np.ones(m)
+    P = np.diag(val * np.ones(m))
+
+    # Compute first reference error
+    err = np.linalg.norm(P - A @ Binv @ P)
+    for i in range(m):
+        # Switch the ith axis orientation
+        orient[i] = -1
+        # Compute new error
+        new_err = np.linalg.norm(P - (A * orient) @ Binv @ P)
+        if new_err > err:
+            # Previous error was lower, switch back
+            orient[i] = 1
+        else:
+            # New orientation is better, keep and remember error.
+            err = new_err
+    return orient

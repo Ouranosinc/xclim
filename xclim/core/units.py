@@ -33,7 +33,9 @@ __all__ = [
 ]
 
 
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+units = pint.UnitRegistry(
+    autoconvert_offset_to_baseunit=True
+)  # , on_redefinition="ignore")
 units.define(
     pint.unit.UnitDefinition(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
@@ -540,7 +542,8 @@ def declare_units(
 ) -> Callable:
     """Create a decorator to check units of function arguments.
 
-    The decorator checks that input values have units that are compatible with expected dimensions.
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+    It also stores the input units as a 'in_units' attribute.
 
     Parameters
     ----------
@@ -591,6 +594,7 @@ def declare_units(
 
             return out
 
+        setattr(wrapper, "in_units", units_by_name)
         return wrapper
 
     return dec

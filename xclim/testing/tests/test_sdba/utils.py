@@ -66,3 +66,9 @@ def cannon_2015_rvs(n, random=True):
         r = [d.ppf(u) for d in fd]
 
     return map(lambda x: series(x, "pr"), r)
+
+
+def nancov(X):
+    """Numpy's cov but dropping observations with NaNs."""
+    X_na = np.isnan(X).any(axis=0)
+    return np.cov(X[:, ~X_na])

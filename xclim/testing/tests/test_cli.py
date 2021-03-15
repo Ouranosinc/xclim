@@ -56,7 +56,8 @@ def test_indicator_help(indicator, indname):
     results = runner.invoke(cli, [indname, "--help"])
 
     for name in indicator.parameters.keys():
-        assert name in results.output
+        if name != "ds":
+            assert name in results.output
 
 
 @pytest.mark.parametrize(
