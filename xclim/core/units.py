@@ -33,7 +33,9 @@ __all__ = [
 ]
 
 
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+units = pint.UnitRegistry(
+    autoconvert_offset_to_baseunit=True
+)  # , on_redefinition="ignore")
 units.define(
     pint.unit.UnitDefinition(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)

@@ -36,7 +36,7 @@ class TestDomainCount:
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(365))
         out = generic.domain_count(ts, low=10, high=20, freq="Y")
-        np.testing.assert_array_equal(out, [11, 0])
+        np.testing.assert_array_equal(out, [10, 0])
 
 
 class TestDailyDownsampler:
