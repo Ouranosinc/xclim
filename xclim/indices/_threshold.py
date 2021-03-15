@@ -14,7 +14,7 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
-from .generic import threshold_count
+from .generic import domain_count, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -29,6 +29,7 @@ __all__ = [
     "daily_pr_intensity",
     "degree_days_exceedance_date",
     "cooling_degree_days",
+    "days_with_snow",
     "freshet_start",
     "growing_degree_days",
     "growing_season_end",
@@ -822,6 +823,40 @@ def last_snowfall(
     )
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
+def days_with_snow(
+    prsn: xarray.DataArray,
+    low: str = "0 kg m-2 s-1",
+    high: str = "1E6 kg m-2 s-1",
+    freq: str = "AS-JUL",
+):
+    r"""Days with snow.
+
+    Return the number of days where snowfall is within low and high thresholds.
+
+    Parameters
+    ----------
+    prsn : xr.DataArray
+      Solid precipitation flux.
+    low : float
+      Minimum threshold solid precipitation flux.
+    high : float
+      Maximum threshold solid precipitation flux.
+    freq : str
+      Resampling frequency defining the periods
+      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where snowfall is between low and high thresholds.
+    """
+    low = convert_units_to(low, prsn)
+    high = convert_units_to(high, prsn)
+    out = domain_count(prsn, low, high, freq)
+    return to_agg_units(out, prsn, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")

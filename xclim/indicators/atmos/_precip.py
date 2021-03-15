@@ -24,6 +24,7 @@ __all__ = [
     "fire_weather_indexes",
     "last_snowfall",
     "first_snowfall",
+    "days_with_snow",
     "days_over_precip_thresh",
     "fraction_over_precip_thresh",
     "liquid_precip_ratio",
@@ -280,6 +281,14 @@ first_snowfall = Prsn(
     compute=indices.first_snowfall,
 )
 
+days_with_snow = Prsn(
+    identifier="days_with_snow",
+    title="Days with snowfall",
+    long_name="Number of days with solid precipitation flux between low and high thresholds.",
+    description="{freq} number of days with solid precipitation flux larger than {low} and smaller or equal to {high}.",
+    units="days",
+    compute=indices.days_with_snow,
+)
 
 days_over_precip_thresh = Pr(
     identifier="days_over_precip_thresh",
