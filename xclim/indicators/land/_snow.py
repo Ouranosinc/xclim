@@ -6,6 +6,12 @@ from xclim.indices import (
     snow_cover_duration,
 )
 
+__all__ = [
+    "snow_cover_duration",
+    "continuous_snow_cover_start",
+    "continuous_snow_cover_end",
+]
+
 
 class SnowDepth(Daily):
     @staticmethod
