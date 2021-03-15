@@ -727,6 +727,12 @@
     "title": "Date du fin du couvert de neige",
     "abstract": "Première date à partir de laquelle la profondeur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
   },
+  "SND_MAX_DOY": {
+    "long_name": "Date de la profondeur de neige maximale",
+    "description": "Date {freq:m} à laquelle la profondeur de neige atteint sa valeur maximale.",
+    "title": "Date où la profondeur de neige est maximale",
+    "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
+  },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",

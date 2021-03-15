@@ -1,6 +1,8 @@
 import numpy as np
+import pytest
 
 from xclim import land
+from xclim.core.utils import ValidationError
 
 
 class TestSnowCoverDuration:
@@ -23,3 +25,24 @@ class TestContinuousSnowCoverStartEnd:
         out = land.continuous_snow_cover_end(snd)
         assert out.units == ""
         np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
+
+
+class TestSndMaxDoy:
+    def test_simple(self, snd_series):
+        a = np.zeros(365)
+        a[200] = 1
+        snd = snd_series(a, start="2001-07-01")
+        out = land.snd_max_doy(snd)
+        np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
+
+    def test_units(self, tas_series):
+        """Check that unit declaration works."""
+        tas = tas_series(np.random.rand(365), start="1999-07-01")
+        with pytest.raises(ValidationError):
+            land.snd_max_doy(tas)
+
+    @pytest.mark.xfail
+    def test_no_snow(self, snd_series):
+        snd = snd_series(np.zeros(365), start="2001-07-01")
+        out = land.snd_max_doy(snd)
+        np.testing.assert_array_equal(out, np.nan)

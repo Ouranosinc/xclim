@@ -7,11 +7,15 @@ History
 
 New indicators
 ~~~~~~~~~~~~~~
+* `snd_max_doy` returns the day of the year where snow depth reaches its maximum value.
+* `snow_cover_duration` computes the number of days snow depth exceeds some minimal threshold.
+* `continuous_snow_cover_start` and `continuous_snow_cover_end` identify the day of the year when snow depth crosses a threshold for a given period of time.
 * `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
+* `run_length.season` returns a dataset storing the start, end and length of a *season*.
 
 
 0.24.0 (2021-03-01)
