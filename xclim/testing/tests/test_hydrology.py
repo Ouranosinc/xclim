@@ -33,3 +33,21 @@ class TestSnowMeltWEMax:
         out = xci.snow_melt_we_max(swe)
         np.testing.assert_array_equal(out, 6)
         assert out.units == "kg m-2"
+
+
+class TestMeltandPrecipMax:
+    def test_simple(self, swe_series, pr_series):
+        a = np.zeros(365)
+
+        # 1 km / m2 of melt on day 11.
+        a[10] = 1
+        swe = swe_series(a, start="1999-07-01")
+
+        # 1 kg/ m2 /d of rain on day 11
+        b = np.zeros(365)
+        b[11] = 1.0 / 60 ** 2 / 24
+        pr = pr_series(b, start="1999-07-01")
+
+        out = xci.melt_and_precip_max(swe, pr)
+        np.testing.assert_array_equal(out, 2)
+        assert out.units == "kg m-2"

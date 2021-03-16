@@ -84,7 +84,7 @@ snow_melt_we_max = SnowWaterEq(
     identifier="snow_melt_we_max",
     standard_name="change_over_time_in_surface_snow_amount",
     var_name="{freq}_snow_melt_we_max",
-    description="{freq} maximum change in snow melt water equivalent",
+    description="{freq} maximum change in snow melt water equivalent over {window} days",
     units="kg/m^2",
     compute=xci.snow_melt_we_max,
 )
