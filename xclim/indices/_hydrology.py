@@ -3,10 +3,7 @@ import xarray
 
 from xclim.core.units import declare_units
 
-__all__ = [
-    "base_flow_index",
-    "rb_flashiness_index",
-]
+__all__ = ["base_flow_index", "rb_flashiness_index", "snow_melt_we_max"]
 
 
 @declare_units(q="[discharge]")
@@ -89,4 +86,37 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     mq = q.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
+    return out
+
+
+@declare_units(swe="[mass]/[area]")
+def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
+    """Maximum snow melt
+
+    The maximum snow melt over a given number of days expressed in snow water equivalent.
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+      Snow water equivalent.
+    window : int
+      Number of days during which the melt is accumulated.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum snow melt over a given number of days for each period. [mass/area]
+    """
+
+    # Compute change in SWE. Set melt as a positive change.
+    dswe = swe.diff(dim="time") * -1
+
+    # Sum over window
+    agg = dswe.rolling(time=window).sum()
+
+    # Max over period
+    out = agg.max(dim="time")
+    out.attrs["units"] = swe.units
     return out

@@ -733,6 +733,12 @@
     "title": "Date où la profondeur de neige est maximale",
     "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
   },
+  "SNOW_MELT_WE_MAX": {
+    "long_name": "Fonte de neige maximale",
+    "description": "Fonte maximale {freq:m} de neige sur {window} jours.",
+    "title": "Fonte de neige maximale",
+    "abstract": "Équivalent en eau de la fonte de neige maximale"
+  },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",

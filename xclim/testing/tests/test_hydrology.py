@@ -22,3 +22,14 @@ class TestRBIndex:
         q = q_series(a)
         out = xci.rb_flashiness_index(q)
         np.testing.assert_array_equal(out, 2)
+
+
+class TestSnowMeltWEMax:
+    def test_simple(self, swe_series):
+        a = np.zeros(365)
+        a[10:20] = np.arange(0, 10)
+        a[20:25] = np.arange(10, 0, -2)
+        swe = swe_series(a, start="1999-07-01")
+        out = xci.snow_melt_we_max(swe)
+        np.testing.assert_array_equal(out, 6)
+        assert out.units == "kg m-2"
