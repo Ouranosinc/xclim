@@ -6,6 +6,7 @@ from xclim.indices import (
     continuous_snow_cover_end,
     continuous_snow_cover_start,
     generic,
+    snd_max_doy,
     snow_cover_duration,
 )
 
@@ -62,9 +63,5 @@ snd_max_doy = SnowDepth(
     description="{freq} day of year when snow depth reaches its maximum value.",
     units="",
     _partial=True,
-    compute=declare_units(da="[length]")(
-        wrapped_partial(
-            generic.select_resample_op, op=generic.doymax, suggested=dict(freq="AS-JUL")
-        )
-    ),
+    compute=snd_max_doy,
 )
