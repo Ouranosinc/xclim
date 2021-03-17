@@ -203,7 +203,7 @@ class TestDQM:
         if add_dims:
             mqm = mqm.isel(lat=0)
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
+        np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon(self, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000)
