@@ -491,6 +491,9 @@ def map_blocks(reduces=None, **outvars):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
                 return func(dsblock, **kwargs).transpose(*all_dims)
 
+            # Fancy patching for explicit dask task names
+            _transpose_on_exit.__name__ = f"block_{func.__name__}"
+
             return ds.map_blocks(_transpose_on_exit, template=tmpl, kwargs=kwargs)
 
         return _map_blocks
@@ -518,6 +521,9 @@ def map_groups(reduces=["<DIM>"], main_only=False, **outvars):
         def _apply_on_group(dsblock, **kwargs):
             group = kwargs.pop("group")
             return group.apply(func, dsblock, main_only=main_only, **kwargs)
+
+        # Fancy patching for explicit dask task names
+        _apply_on_group.__name__ = f"group_{func.__name__}"
 
         # wraps(func, injected=['dim'], hide_wrapped=True)(
         return decorator(_apply_on_group)

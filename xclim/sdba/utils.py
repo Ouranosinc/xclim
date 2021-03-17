@@ -2,7 +2,6 @@
 from typing import Callable, List, Mapping, Optional, Union
 from warnings import warn
 
-import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -19,66 +18,54 @@ ADDITIVE = "+"
 loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
-@parse_group
+def _ecdf_1d(x, value):
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
+
+
+def map_cdf_1d(x, y, y_value):
+    """Return the value in `x` with the same CDF as `y_value` in `y`."""
+    q = _ecdf_1d(y, y_value)
+    _func = np.nanquantile
+    return _func(x, q=q)
+
+
 def map_cdf(
-    x: xr.DataArray,
-    y: xr.DataArray,
-    y_value: xr.DataArray,
+    ds: xr.Dataset,
     *,
-    group: Union[str, Grouper] = "time",
-    skipna: bool = False,
+    y_value: xr.DataArray,
+    dim,
 ):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
+    This function is meant to be wrapped in a `Grouper.apply`.
+
     Parameters
     ----------
-    x : xr.DataArray
-      Values from which to pick
-    y : xr.DataArray
-      Reference values giving the ranking
+    ds : xr.Dataset
+      Variables: x, Values from which to pick,
+      y, Reference values giving the ranking
     y_value : float, array
       Value within the support of `y`.
     dim : str
       Dimension along which to compute quantile.
-    group: Union[str, Grouper]
-    skipna: bool
 
     Returns
     -------
     array
       Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-
-    def _map_cdf_1d(x, y, y_value, skipna=False):
-        q = _ecdf_1d(y, y_value)
-        _func = np.nanquantile if skipna else np.quantile
-        return _func(x, q=q)
-
-    def _map_cdf_group(gr, y_value, dim=["time"], skipna=False):
-        return xr.apply_ufunc(
-            _map_cdf_1d,
-            gr.x,
-            gr.y,
-            input_core_dims=[dim] * 2,
-            output_core_dims=[["x"]],
-            vectorize=True,
-            keep_attrs=True,
-            kwargs={"y_value": y_value, "skipna": skipna},
-            dask="parallelized",
-            output_dtypes=[gr.x.dtype],
-        )
-
-    return group.apply(
-        _map_cdf_group,
-        {"x": x, "y": y},
-        y_value=np.atleast_1d(y_value),
-        skipna=skipna,
+    return xr.apply_ufunc(
+        map_cdf_1d,
+        ds.x,
+        ds.y,
+        input_core_dims=[dim] * 2,
+        output_core_dims=[["x"]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"y_value": np.atleast_1d(y_value)},
+        output_dtypes=[ds.x.dtype],
     )
-
-
-def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
-    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
 def ecdf(x: xr.DataArray, value: float, dim: str = "time"):

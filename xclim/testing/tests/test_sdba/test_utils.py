@@ -27,22 +27,20 @@ def test_map_cdf(series):
 
     q = [0.1, 0.5, 0.99]
     x_value = u.map_cdf(
-        x=series(xd.rvs(n), "pr"),
-        y=series(yd.rvs(n), "pr"),
+        xr.Dataset(dict(x=series(xd.rvs(n), "pr"), y=series(yd.rvs(n), "pr"))),
         y_value=yd.ppf(q),
-        group="time",
+        dim=["time"],
     )
-    np.testing.assert_allclose(x_value, [xd.ppf(q)], 0.1)
+    np.testing.assert_allclose(x_value, xd.ppf(q), 0.1)
 
     # Scalar
     q = 0.5
     x_value = u.map_cdf(
-        x=series(xd.rvs(n), "pr"),
-        y=series(yd.rvs(n), "pr"),
+        xr.Dataset(dict(x=series(xd.rvs(n), "pr"), y=series(yd.rvs(n), "pr"))),
         y_value=yd.ppf(q),
-        group="time",
+        dim=["time"],
     )
-    np.testing.assert_allclose(x_value, [[xd.ppf(q)]], 0.1)
+    np.testing.assert_allclose(x_value, [xd.ppf(q)], 0.1)
 
 
 def test_equally_spaced_nodes():

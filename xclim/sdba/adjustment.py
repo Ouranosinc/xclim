@@ -9,20 +9,20 @@ from xarray.core.dataarray import DataArray
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 
-from ._qm import dqm_scale_sim, dqm_train, eqm_train, qdm_adjust, qm_adjust
+from ._adjustment import (
+    dqm_scale_sim,
+    dqm_train,
+    eqm_train,
+    loci_adjust,
+    loci_train,
+    qdm_adjust,
+    qm_adjust,
+    scaling_adjust,
+    scaling_train,
+)
 from .base import Grouper, Parametrizable, parse_group
 from .detrending import PolyDetrend
-from .utils import (
-    ADDITIVE,
-    MULTIPLICATIVE,
-    apply_correction,
-    best_pc_orientation,
-    broadcast,
-    equally_spaced_nodes,
-    get_correction,
-    map_cdf,
-    pc_matrix,
-)
+from .utils import ADDITIVE, best_pc_orientation, equally_spaced_nodes, pc_matrix
 
 __all__ = [
     "BaseAdjustment",
@@ -457,29 +457,22 @@ class LOCI(BaseAdjustment):
         super().__init__(group=group, thresh=thresh)
 
     def _train(self, ref, hist):
-        s_thresh = map_cdf(hist, ref, self.thresh, group=self.group).isel(
-            x=0
-        )  # Selecting the first threshold.
-        # Compute scaling factor on wet-day intensity
-        sth = broadcast(s_thresh, hist, group=self.group)
-        ws = xr.where(hist >= sth, hist, np.nan)
-        wo = xr.where(ref >= self.thresh, ref, np.nan)
-
-        ms = self.group.apply("mean", ws, skipna=True)
-        mo = self.group.apply("mean", wo, skipna=True)
-
-        # Adjustment factor
-        af = get_correction(ms - s_thresh, mo - self.thresh, MULTIPLICATIVE)
-        af.attrs.update(long_name="LOCI adjustment factors")
-        s_thresh.attrs.update(long_name="Threshold over modeled data")
-        self.ds = xr.Dataset(dict(hist_thresh=s_thresh, ref_thresh=self.thresh, af=af))
+        ds = loci_train(
+            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, thresh=self.thresh
+        )
+        ds.af.attrs.update(long_name="LOCI adjustment factors")
+        ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
+        self.ds = ds
 
     def _adjust(self, sim, interp="linear"):
-        sth = broadcast(self.ds.hist_thresh, sim, group=self.group, interp=interp)
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
-        with xr.set_options(keep_attrs=True):
-            scen = (factor * (sim - sth) + self.ds.ref_thresh).clip(min=0)
-        return scen
+        return loci_adjust(
+            xr.Dataset(
+                {"hist_thresh": self.ds.hist_thresh, "af": self.ds.af, "sim": sim}
+            ),
+            group=self.group,
+            thresh=self.thresh,
+            interp=interp,
+        ).scen
 
 
 class Scaling(BaseAdjustment):
@@ -509,15 +502,19 @@ class Scaling(BaseAdjustment):
         super().__init__(group=group, kind=kind)
 
     def _train(self, ref, hist):
-        mean_hist = self.group.apply("mean", hist)
-        mean_ref = self.group.apply("mean", ref)
-        af = get_correction(mean_hist, mean_ref, self.kind)
-        af.attrs.update(long_name="Scaling adjustment factors")
-        self.ds = xr.Dataset({"af": af})
+        ds = scaling_train(
+            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, kind=self.kind
+        )
+        ds.af.attrs.update(long_name="Scaling adjustment factors")
+        self.ds = ds
 
     def _adjust(self, sim, interp="nearest"):
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
-        return apply_correction(sim, factor, self.kind)
+        return scaling_adjust(
+            xr.Dataset({"sim": sim, "af": self.ds.af}),
+            group=self.group,
+            interp=interp,
+            kind=self.kind,
+        ).scen
 
 
 class PrincipalComponents(BaseAdjustment):
