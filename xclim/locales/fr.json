@@ -703,6 +703,12 @@
     "title": "Premier jour avec une précipitation solide au-dessus d'un seuil",
     "abstract": "Premier jour d'une période où la précipitation solide excède un certain seuil."
   },
+  "DAYS_WITH_SNOW": {
+    "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
+    "description": "Nombre {freq:m} de jours où la précipitation solide est plus grande que {low} et plus petite ou égale à {high}.",
+    "title": "Jours avec neige",
+    "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
+  },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",

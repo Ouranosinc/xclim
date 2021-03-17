@@ -2,6 +2,18 @@
 History
 =======
 
+0.25.0 (unreleased)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `generic.count_domain` used to count values within low and high thresholds.
+
+
 0.24.0 (2021-03-01)
 -------------------
 
