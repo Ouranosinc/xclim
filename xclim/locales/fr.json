@@ -729,7 +729,7 @@
   },
   "SND_MAX_DOY": {
     "long_name": "Date de la profondeur de neige maximale",
-    "description": "Date {freq:m} à laquelle la profondeur de neige atteint sa valeur maximale.",
+    "description": "Date {freq:f} à laquelle la profondeur de neige atteint sa valeur maximale.",
     "title": "Date où la profondeur de neige est maximale",
     "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
   },
