@@ -742,7 +742,7 @@
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
     "description": "Precipitation et fonte de neige maximales {freq:fpl} sur {window} jours.",
-    "title": "Précipitations et fonte de neige maximale",
+    "title": "Précipitations et fonte de neige maximales",
     "abstract": "Maximum des apports en eau provenant des précipitations et de la fonte de neige."
   },
   "HIGH_PRECIP_LOW_TEMP": {
