@@ -41,6 +41,7 @@ __all__ = [
     "heat_wave_frequency",
     "heat_wave_max_length",
     "heat_wave_total_length",
+    "high_precip_low_temp",
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
@@ -904,6 +905,51 @@ def rain_on_frozen_ground_days(
 
     out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(out, tas, "count")
+
+
+@declare_units(
+    pr="[precipitation]",
+    tas="[temperature]",
+    pr_thresh="[precipitation]",
+    tas_thresh="[temperature]",
+)
+def high_precip_low_temp(
+    pr: xarray.DataArray,
+    tas: xarray.DataArray,
+    pr_thresh: str = "0.4 mm",
+    tas_thresh: str = "-0.2 C",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Number of days with precipitation above threshold and temperature below threshold.
+
+    Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
+    threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray
+      Daily mean, minimum or maximum temperature.
+    pr_thresh : str
+      Precipitation threshold to exceed.
+    tas_thresh : str
+      Temperature threshold not to exceed.
+    freq : str
+      Resampling frequency.
+
+    Example
+    -------
+    To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
+    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm", tas_thresh="-0.2 C")
+    """
+    pr_thresh = convert_units_to(pr_thresh, pr)
+    tas_thresh = convert_units_to(tas_thresh, tas)
+
+    cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
+    out = cond.resample(time=freq).sum(dim="time")
+    return to_agg_units(out, pr, "count")
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")

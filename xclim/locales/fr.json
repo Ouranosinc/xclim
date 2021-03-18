@@ -745,6 +745,12 @@
     "title": "Précipitations et fonte de neige maximale",
     "abstract": "Maximum des apports en eau provenant des précipitations et de la fonte de neige."
   },
+  "HIGH_PRECIP_LOW_TEMP": {
+    "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
+    "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égales à {pr_thresh} et température inférieure à {tas_thresh}.",
+    "title": "Jours avec précipitations et températures froides"
+    "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
+  },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",
