@@ -122,7 +122,7 @@ def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
     agg = dswe.rolling(time=window).sum()
 
     # Max over period
-    out = agg.max(dim="time")
+    out = agg.resample(time=freq).max(dim="time")
     out.attrs["units"] = swe.units
     return out
 
