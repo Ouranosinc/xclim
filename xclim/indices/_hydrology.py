@@ -162,6 +162,6 @@ def melt_and_precip_max(
     agg = total.rolling(time=window).sum()
 
     # Max over period
-    out = agg.max(dim="time")
+    out = agg.resample(time=freq).max(dim="time")
     out.attrs["units"] = swe.units
     return out
