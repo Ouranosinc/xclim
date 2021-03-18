@@ -710,7 +710,7 @@
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
   "SNOW_COVER_DURATION": {
-    "long_name": "Nombre de jour où la profondeur de neige est au-dessus d'un seuil.",
+    "long_name": "Nombre de jour où la profondeur de neige est au-dessus d'un seuil",
     "description": "Nombre {freq:m} de jours où la profondeur de neige est supérieure ou égale à {thresh}.",
     "title": "Durée du couvert de neige",
     "abstract": "Nombre de jours pendant lesquels la profondeur de neige est supérieure ou égale à un seuil."
@@ -727,11 +727,35 @@
     "title": "Date du fin du couvert de neige",
     "abstract": "Première date à partir de laquelle la profondeur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
   },
+  "SND_MAX_DOY": {
+    "long_name": "Date de la profondeur de neige maximale",
+    "description": "Date {freq:f} à laquelle la profondeur de neige atteint sa valeur maximale.",
+    "title": "Date où la profondeur de neige est maximale",
+    "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
+  },
+  "SNOW_MELT_WE_MAX": {
+    "long_name": "Fonte de neige maximale",
+    "description": "Fonte maximale {freq:f} de neige sur {window} jours.",
+    "title": "Fonte de neige maximale",
+    "abstract": "Équivalent en eau de la fonte de neige maximale."
+  },
+  "MELT_AND_PRECIP_MAX": {
+    "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
+    "description": "Precipitation et fonte de neige maximales {freq:fpl} sur {window} jours.",
+    "title": "Précipitations et fonte de neige maximales",
+    "abstract": "Maximum des apports en eau provenant des précipitations et de la fonte de neige."
+  },
+  "HIGH_PRECIP_LOW_TEMP": {
+    "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
+    "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égale à {pr_thresh} et température inférieure à {tas_thresh}.",
+    "title": "Jours avec précipitations et températures froides",
+    "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
+  },
   "DAYS_OVER_PRECIP_THRESH": {
-    "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
+    "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation au-dessus d'un percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés.",
-    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
+    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien"
   },
   "FRACTION_OVER_PRECIP_THRESH": {
     "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",

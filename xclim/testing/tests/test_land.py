@@ -93,3 +93,11 @@ def test_qdoy_max(ndq_series, q_series):
     a[100] = 2
     out = land.doy_qmax(q_series(a), freq="YS")
     assert out[0] == 101
+
+
+def test_snow_melt_we_max(swe_series):
+    a = np.zeros(365)
+    a[10] = 5
+    swe = swe_series(a)
+    out = land.snow_melt_we_max(swe)
+    assert out[0] == 5
