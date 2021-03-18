@@ -747,7 +747,7 @@
   },
   "HIGH_PRECIP_LOW_TEMP": {
     "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
-    "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égales à {pr_thresh} et température inférieure à {tas_thresh}.",
+    "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égale à {pr_thresh} et température inférieure à {tas_thresh}.",
     "title": "Jours avec précipitations et températures froides"
     "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
   },
