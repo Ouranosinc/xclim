@@ -192,17 +192,17 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
             start_up_mode="snow_depth",
         )
 
-    # Test output is complete
+    # Test output is complete + dask
     out = fire_weather_ufunc(
-        tas=tas,
-        pr=pr,
-        lat=lat,
+        tas=tas.chunk(),
+        pr=pr.chunk(),
+        lat=lat.chunk(),
         dc0=DC0,
         indexes=["DC"],
         start_date="2017-03-03",
     )
-
     assert len(out.keys()) == 1
+    out["DC"].load()
 
     out = fire_weather_ufunc(
         tas=tas,
