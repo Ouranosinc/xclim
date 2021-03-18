@@ -735,7 +735,7 @@
   },
   "SNOW_MELT_WE_MAX": {
     "long_name": "Fonte de neige maximale",
-    "description": "Fonte maximale {freq:m} de neige sur {window} jours.",
+    "description": "Fonte maximale {freq:f} de neige sur {window} jours.",
     "title": "Fonte de neige maximale",
     "abstract": "Équivalent en eau de la fonte de neige maximale."
   },
