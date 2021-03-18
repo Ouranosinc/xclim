@@ -38,6 +38,22 @@ class SnowWaterEq(Daily):
         )
 
 
+class SWEPr(Daily):
+    @staticmethod
+    def cfcheck(swe, pr):
+        check_valid(
+            swe,
+            "standard_name",
+            [
+                "liquid_water_content_of_surface_snow",
+                "liquid_water_content_of_snow_layer",
+            ],
+        )
+        check_valid(
+            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
+        )
+
+
 snow_cover_duration = SnowDepth(
     identifier="snow_cover_duration",
     units="days",
@@ -84,7 +100,16 @@ snow_melt_we_max = SnowWaterEq(
     identifier="snow_melt_we_max",
     standard_name="change_over_time_in_surface_snow_amount",
     var_name="{freq}_snow_melt_we_max",
-    description="{freq} maximum change in snow melt water equivalent over {window} days",
-    units="kg/m^2",
+    description="{freq} maximum negative change in melt water equivalent over {window} days.",
+    units="kg m-2",
     compute=xci.snow_melt_we_max,
+)
+
+
+melt_and_precip_max = SWEPr(
+    identifier="melt_and_precip_max",
+    var_name="{freq}_melt_and_precip_max",
+    description="{freq} maximum precipitation flux and negative change in snow water equivalent over {window} days.",
+    units="kg m-2",
+    compute=xci.melt_and_precip_max,
 )
