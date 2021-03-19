@@ -3,11 +3,13 @@ from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily, Daily2D
 
 __all__ = [
+    "blowing_snow",
     "snow_cover_duration",
     "continuous_snow_cover_start",
     "continuous_snow_cover_end",
     "snd_max_doy",
     "snow_melt_we_max",
+    "winter_storm",
 ]
 
 
@@ -50,6 +52,13 @@ class SWEPr(Daily2D):
         check_valid(
             pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
         )
+
+
+class SndWs(Daily2D):
+    @staticmethod
+    def cfcheck(snd, sfcWind):
+        check_valid(snd, "standard_name", "surface_snow_thickness")
+        check_valid(sfcWind, "standard_name", "wind_speed")
 
 
 snow_cover_duration = SnowDepth(
@@ -104,4 +113,23 @@ melt_and_precip_max = SWEPr(
     description="{freq} maximum precipitation flux and negative change in snow water equivalent over {window} days.",
     units="kg m-2",
     compute=xci.melt_and_precip_max,
+)
+
+
+winter_storm = SnowDepth(
+    identifier="winter_storm",
+    var_name="{freq}_winter_storm",
+    description="{freq} number of days with snowfall accumulation above {thresh}.",
+    units="days",
+    compute=xci.winter_storm,
+)
+
+
+blowing_snow = SndWs(
+    identifier="blowing_snow",
+    var_name="{freq}_blowing_snow",
+    description="{freq} number of days with snowfall over last {window} days above {snd_thresh} and wind speed above "
+    "{sfcWind_thresh}.",
+    units="days",
+    compute=xci.blowing_snow,
 )

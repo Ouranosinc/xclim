@@ -28,6 +28,7 @@ from .generic import select_resample_op, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "blowing_snow",
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "daily_freezethaw_cycles",
@@ -1463,3 +1464,53 @@ def winter_rain_ratio(
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
     return ratio.sel(time=winter)
+
+
+@declare_units(
+    snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]"
+)
+def blowing_snow(
+    snd: xarray.DataArray,
+    sfcWind: xarray.DataArray,
+    snd_thresh: str = "5 cm",
+    sfcWind_thresh: str = "15 km/h",
+    window: int = 3,
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    """
+    Days with blowing snow events
+
+    Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow depth.
+    sfcWind : xr.DataArray
+      Wind velocity
+    snd_thresh : str
+      Threshold on net snowfall accumulation over the last `window` days.
+    sfcWind_thresh : str
+      Wind speed threshold.
+    window : int
+      Period over which snow is accumulated before comparing against threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days where snowfall and wind speeds are above respective thresholds.
+    """
+    snd_thresh = convert_units_to(snd_thresh, snd)
+    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
+
+    # Net snow accumulation over the last `window` days
+    snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
+
+    # Blowing snow conditions
+    cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
+
+    out = cond.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = to_agg_units(out, snd, "count")
+    return out

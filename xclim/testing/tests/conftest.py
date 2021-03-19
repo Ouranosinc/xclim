@@ -269,7 +269,7 @@ def ws_series():
             dims="time",
             name="ws",
             attrs={
-                "standard_name": "wind speed",
+                "standard_name": "wind_speed",
                 "units": "km h-1",
             },
         )
