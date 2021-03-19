@@ -41,7 +41,6 @@ class TestSndMaxDoy:
         with pytest.raises(ValidationError):
             land.snd_max_doy(tas)
 
-    @pytest.mark.xfail
     def test_no_snow(self, snd_series):
         snd = snd_series(np.zeros(365), start="2001-07-01")
         out = land.snd_max_doy(snd)
