@@ -1,7 +1,7 @@
 import numpy as np
 import xarray
 
-from xclim.core.units import declare_units
+from xclim.core.units import declare_units, rate2amount, to_agg_units
 
 from . import generic
 
@@ -9,6 +9,8 @@ __all__ = [
     "base_flow_index",
     "rb_flashiness_index",
     "snd_max_doy",
+    "snow_melt_we_max",
+    "melt_and_precip_max",
 ]
 
 
@@ -124,3 +126,71 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
+
+
+@declare_units(swe="[mass]/[area]")
+def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
+    """Maximum snow melt
+
+    The maximum snow melt over a given number of days expressed in snow water equivalent.
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+      Snow water equivalent.
+    window : int
+      Number of days during which the melt is accumulated.
+
+    The maximum snow melt over a given number of days for each period. [mass/area]
+    """
+
+    # Compute change in SWE. Set melt as a positive change.
+    dswe = swe.diff(dim="time") * -1
+
+    # Sum over window
+    agg = dswe.rolling(time=window).sum()
+
+    # Max over period
+    out = agg.resample(time=freq).max(dim="time")
+    out.attrs["units"] = swe.units
+    return out
+
+
+@declare_units(swe="[mass]/[area]", pr="[precipitation]")
+def melt_and_precip_max(
+    swe: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq="AS-JUL"
+):
+    """Maximum snow melt and precipitation
+
+    The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+      Snow water equivalent.
+    pr : xarray.DataArray
+      Daily precipitation flux.
+    window : int
+      Number of days during which the water input is accumulated.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum snow melt plus precipitation over a given number of days for each period. [mass/area]
+    """
+
+    # Compute change in SWE. Set melt as a positive change.
+    dswe = swe.diff(dim="time") * -1
+
+    # Add precipitation total
+    total = rate2amount(pr) + dswe
+
+    # Sum over window
+    agg = total.rolling(time=window).sum()
+
+    # Max over period
+    out = agg.resample(time=freq).max(dim="time")
+    out.attrs["units"] = swe.units
+    return out

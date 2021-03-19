@@ -314,6 +314,24 @@ def snd_series():
 
 
 @pytest.fixture
+def swe_series():
+    def _swe_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="swe",
+            attrs={
+                "standard_name": "liquid_water_content_of_surface_snow",
+                "units": "kg/m2",
+            },
+        )
+
+    return _swe_series
+
+
+@pytest.fixture
 def ps_series():
     def _ps_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))

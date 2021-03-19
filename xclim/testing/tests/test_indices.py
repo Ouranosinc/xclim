@@ -1761,3 +1761,11 @@ def test_continuous_snow_cover_end(snd_series):
             (snd.time.dt.dayofyear[0].data + 219) % 366,
         ],
     )
+
+
+def test_high_precip_low_temp(pr_series, tasmin_series):
+    pr = pr_series([0, 1, 2, 0, 0])
+    tas = tasmin_series(np.array([0, 0, 1, 1]) + K2C)
+
+    out = xci.high_precip_low_temp(pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C")
+    np.testing.assert_array_equal(out, [1])

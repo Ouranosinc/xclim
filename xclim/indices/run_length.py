@@ -352,7 +352,7 @@ def season(
     beg = first_run(da, window=window, dim=dim)
     # Invert the condition and mask all values after beginning
     # we fillna(0) as so to differentiate series with no runs and all-nan series
-    not_da = (~da).where(da.time.copy(data=np.arange(da.time.size)) >= beg.fillna(0))
+    not_da = (~da).where(da[dim].copy(data=np.arange(da[dim].size)) >= beg.fillna(0))
 
     # Mask also values after "date"
     mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
@@ -369,7 +369,7 @@ def season(
         else:
             valid_start = True
 
-        not_da = not_da.where(da.time >= da.time[mid_idx][0])
+        not_da = not_da.where(da[dim] >= da[dim][mid_idx][0])
         end = first_run(
             not_da,
             window=window,

@@ -7,10 +7,11 @@ History
 
 New indicators
 ~~~~~~~~~~~~~~
+* `land.snow_melt_we_max` computes the maximum snow melt over n days, and `land.melt_and_precip_max` the maximum combined snow melt and precipitation.
 * `snd_max_doy` returns the day of the year where snow depth reaches its maximum value.
-* `snow_cover_duration` computes the number of days snow depth exceeds some minimal threshold.
-* `continuous_snow_cover_start` and `continuous_snow_cover_end` identify the day of the year when snow depth crosses a threshold for a given period of time.
-* `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+* `land.snow_cover_duration` computes the number of days snow depth exceeds some minimal threshold.
+* `land.continuous_snow_cover_start` and `land.continuous_snow_cover_end` identify the day of the year when snow depth crosses a threshold for a given period of time.
+* `atmos.days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

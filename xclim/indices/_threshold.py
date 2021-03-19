@@ -178,6 +178,10 @@ def continuous_snow_cover_end(
       First day after the start of the continuous snow cover when the snow depth goes below a threshold
       for a minimum duration.
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
@@ -216,6 +220,10 @@ def continuous_snow_cover_start(
     xarray.DataArray, [dimensionless]
       First day of the year when the snow depth is superior to a threshold for a minimum duration.
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
@@ -858,6 +866,11 @@ def first_snowfall(
     xarray.DataArray, [dimensionless]
       First day of the year when the solid precipitation  is superior to a threshold,
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
+    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -897,6 +910,11 @@ def last_snowfall(
     xarray.DataArray, [dimensionless]
       Last day of the year when the solid precipitation is superior to a threshold,
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
+    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -938,6 +956,11 @@ def days_with_snow(
     -------
     xarray.DataArray, [time]
       Number of days where snowfall is between low and high thresholds.
+
+    References
+    ----------
+    Matthews, L., Andrey, J., & Picketts, I. (2017). Planning for Winter Road Maintenance in the Context of Climate
+    Change, Weather, Climate, and Society, 9(3), 521-532, https://doi.org/10.1175/WCAS-D-16-0103.1
     """
     low = convert_units_to(low, prsn)
     high = convert_units_to(high, prsn)
