@@ -52,6 +52,7 @@ __all__ = [
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
+    "winter_storm",
     "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
@@ -1720,4 +1721,41 @@ def degree_days_exceedance_date(
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def winter_storm(snd: xarray.DataArray, thresh: str = "25 cm", freq="AS-JUL"):
+    """
+    Days with snowfall over threshold.
+
+    Number of days with snowfall accumulation greater or equal to threshold.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow depth.
+    thresh : str
+      Threshold on snowfall accumulation require to label an event a `winter storm`.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days per period identified as winter storms.
+
+    Notes
+    -----
+    Snowfall accumulation is estimated by the change in snow depth.
+    """
+    thresh = convert_units_to(thresh, snd)
+
+    # Compute daily accumulation
+    acc = snd.diff(dim="time")
+
+    # Winter storm condition
+    out = threshold_count(acc, ">=", thresh, freq)
+
+    out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
