@@ -1,8 +1,6 @@
 from xclim import indices as xci
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Daily
-from xclim.core.units import declare_units
-from xclim.core.utils import wrapped_partial
+from xclim.core.indicator import Daily, Daily2D
 
 __all__ = [
     "snow_cover_duration",
@@ -38,7 +36,7 @@ class SnowWaterEq(Daily):
         )
 
 
-class SWEPr(Daily):
+class SWEPr(Daily2D):
     @staticmethod
     def cfcheck(swe, pr):
         check_valid(
@@ -87,13 +85,7 @@ snd_max_doy = SnowDepth(
     description="{freq} day of year when snow depth reaches its maximum value.",
     units="",
     _partial=True,
-    compute=declare_units(da="[length]")(
-        wrapped_partial(
-            xci.generic.select_resample_op,
-            op=xci.generic.doymax,
-            suggested=dict(freq="AS-JUL"),
-        )
-    ),
+    compute=xci.snd_max_doy,
 )
 
 snow_melt_we_max = SnowWaterEq(
