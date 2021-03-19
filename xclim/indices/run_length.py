@@ -51,12 +51,18 @@ def rle(
     -------
     xr.DataArray
     """
+    use_dask = isinstance(da.data, dsk.Array)
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": -1})
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    if use_dask:
+        i = i.chunk({dim: -1})
+
     ind, da = xr.broadcast(i, da)
-    # Rechunk, but with broadcasted da
-    ind = ind.chunk(da.chunks)
+    if use_dask:
+        # Rechunk, but with broadcasted da
+        ind = ind.chunk(da.chunks)
+
     b = ind.where(~da)  # find indexes where false
     end1 = (
         da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
@@ -69,18 +75,21 @@ def rle(
     # Ensure bfill operates on entire (unchunked) time dimension
     # Determine appropraite chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
     ndims = len(b.shape)
-    chunk_dim = b[dim].size
-    # divide extra dims into equal size
-    # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-    chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
-    if ndims > 1:
-        chunksize_ex_dims = np.round(np.power(max_chunk / chunk_dim, 1 / (ndims - 1)))
-    chunks = dict()
-    chunks[dim] = -1
-    for dd in b.dims:
-        if dd != dim:
-            chunks[dd] = chunksize_ex_dims
-    b = b.chunk(chunks)
+    if use_dask:
+        chunk_dim = b[dim].size
+        # divide extra dims into equal size
+        # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
+        chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
+        if ndims > 1:
+            chunksize_ex_dims = np.round(
+                np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
+            )
+        chunks = dict()
+        chunks[dim] = -1
+        for dd in b.dims:
+            if dd != dim:
+                chunks[dd] = chunksize_ex_dims
+        b = b.chunk(chunks)
 
     # back fill nans with first position after
     z = b.bfill(dim=dim)
