@@ -250,9 +250,9 @@ fire_weather_indexes = Daily(
         "Fire Weather Index",
     ],
     description=[
-        "Numeric rating of the average moisture content of deep, compact organic layers. Computed with start up method {start_up_mode}",
-        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth. Computed with start up method {start_up_mode}",
-        "Numeric rating of the average moisture content of litter and other cured fine fuels. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of deep, compact organic layers.",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels.",
         "Numeric rating of the expected rate of fire spread.",
         "Numeric rating of the total amount of fuel available for combustion.",
         "Numeric rating of fire intensity.",

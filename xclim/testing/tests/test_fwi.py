@@ -4,13 +4,12 @@ import xarray as xr
 
 from xclim import atmos
 from xclim.indices.fwi import (
-    _shut_down_and_start_ups,
+    _day_length,
+    _day_length_factor,
+    _drought_code,
+    _duff_moisture_code,
+    _fine_fuel_moisture_code,
     build_up_index,
-    day_length,
-    day_length_factor,
-    drought_code,
-    duff_moisture_code,
-    fine_fuel_moisture_code,
     fire_weather_index,
     fire_weather_ufunc,
     initial_spread_index,
@@ -46,7 +45,7 @@ def test_fine_fuel_moisture_code():
     ffmc = np.full(d.shape[0] + 1, np.nan)
     ffmc[0] = 85
     for i, row in d.iterrows():
-        ffmc[i + 1] = fine_fuel_moisture_code(
+        ffmc[i + 1] = _fine_fuel_moisture_code(
             row["temp"], row["pr"], row["ws"], row["rh"], ffmc[i]
         )
 
@@ -59,7 +58,7 @@ def test_duff_moisture_code():
     dmc = np.full(d.shape[0] + 1, np.nan)
     dmc[0] = 6
     for i, row in d.iterrows():
-        dmc[i + 1] = duff_moisture_code(
+        dmc[i + 1] = _duff_moisture_code(
             row["temp"],
             row["pr"],
             row["rh"],
@@ -77,7 +76,7 @@ def test_drought_code():
     dc = np.full(d.shape[0] + 1, np.nan)
     dc[0] = 15
     for i, row in d.iterrows():
-        dc[i + 1] = drought_code(
+        dc[i + 1] = _drought_code(
             row["temp"], row["pr"], row["mth"].astype(int), row["lat"], dc[i]
         )
 
@@ -123,17 +122,20 @@ def test_fire_weather_indicator():
         ffmc0=ds.ffmc[1],
         dmc0=ds.dmc[1],
         dc0=ds.dc[1],
+        season_mask=None,
+        season_method=None,
+        overwintering=False,
     )
     xr.testing.assert_allclose(dc.T[10:], ds.dc[10:], rtol=0.01)
     xr.testing.assert_allclose(fwi.T[10:], ds.fwi[10:], rtol=0.05, atol=0.05)
 
 
 def test_day_length():
-    assert day_length(44, 1) == 6.5
+    assert _day_length(44, 1) == 6.5
 
 
 def test_day_lengh_factor():
-    assert day_length_factor(44, 1) == -1.6
+    assert _day_length_factor(44, 1) == -1.6
 
 
 def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
@@ -154,7 +156,6 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
             tas=tas,
             pr=pr,
             rh=rh,
-            ws=ws,
             lat=lat,
             dc0=DC0,
             indexes=["DC", "ISI"],
@@ -176,33 +177,19 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
             lat=lat,
             dc0=DC0,
             indexes=["DC"],
-            start_up_mode="snow_depth",
+            season_method="LA08",
         )
 
-    # Test starting too early
-    with pytest.raises(ValueError):
-        fire_weather_ufunc(
-            tas=tas,
-            pr=pr,
-            lat=lat,
-            dc0=DC0,
-            snd=snd,
-            indexes=["DC"],
-            start_date="2017-01-01",
-            start_up_mode="snow_depth",
-        )
-
-    # Test output is complete
+    # Test output is complete + dask
     out = fire_weather_ufunc(
-        tas=tas,
-        pr=pr,
-        lat=lat,
+        tas=tas.chunk(),
+        pr=pr.chunk(),
+        lat=lat.chunk(),
         dc0=DC0,
         indexes=["DC"],
-        start_date="2017-03-03",
     )
-
-    assert len(out.keys()) == 1
+    assert len(out.keys()) == 3
+    out["DC"].load()
 
     out = fire_weather_ufunc(
         tas=tas,
@@ -215,65 +202,64 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
         dmc0=DMC0,
         ffmc0=FFMC0,
         indexes=["DSR"],
-        start_date="2017-01-01",
     )
 
-    assert len(out.keys()) == 7
+    assert len(out.keys()) == 9
 
 
-@pytest.mark.parametrize(
-    "shut_down_mode,exp_shut_down",
-    [("temperature", [True, False]), ("snow_depth", [True, True])],
-)
-@pytest.mark.parametrize(
-    "start_up_mode,exp_start_wet,exp_start_dry,exp_last_prec",
-    [
-        (None, [True, True], [False, False], 0),
-        ("snow_depth", [False, True], [True, False], 9),
-    ],
-)
-def test_start_up_shut_down(
-    shut_down_mode,
-    exp_shut_down,
-    start_up_mode,
-    exp_start_wet,
-    exp_start_dry,
-    exp_last_prec,
-):
-    tas = np.ones((5, 70)) * 10
-    tas[0, :] = 0
-    snd = np.ones((5, 70)) * 0
-    snd[1, :] = 0.2
-    snd[3, 60] = 1000
-    snd[4, :60] = 0.2
-    prev = np.array([1, np.nan, 1, np.nan, np.nan])
-    pr = np.zeros((5, 70))
-    pr[:, 60] = 2
+# @pytest.mark.parametrize(
+#     "shut_down_mode,exp_shut_down",
+#     [("temperature", [True, False]), ("snow_depth", [True, True])],
+# )
+# @pytest.mark.parametrize(
+#     "start_up_mode,exp_start_wet,exp_start_dry,exp_last_prec",
+#     [
+#         (None, [True, True], [False, False], 0),
+#         ("snow_depth", [False, True], [True, False], 9),
+#     ],
+# )
+# def test_start_up_shut_down(
+#     shut_down_mode,
+#     exp_shut_down,
+#     start_up_mode,
+#     exp_start_wet,
+#     exp_start_dry,
+#     exp_last_prec,
+# ):
+#     tas = np.ones((5, 70)) * 10
+#     tas[0, :] = 0
+#     snd = np.ones((5, 70)) * 0
+#     snd[1, :] = 0.2
+#     snd[3, 60] = 1000
+#     snd[4, :60] = 0.2
+#     prev = np.array([1, np.nan, 1, np.nan, np.nan])
+#     pr = np.zeros((5, 70))
+#     pr[:, 60] = 2
 
-    shut_down, start_wet, start_dry, last_prec = _shut_down_and_start_ups(
-        70,
-        prev=prev,
-        tas=tas,
-        pr=pr,
-        snd=snd,
-        start_up_mode=start_up_mode,
-        shut_down_mode=shut_down_mode,
-        startShutDays=2,
-        snowCoverDaysCalc=60,
-        tempThresh=5,
-        precThresh=1,
-        snoDThresh=0.1,
-        minWinterSnoD=0.1,
-        minSnowDayFrac=0.5,
-    )
-    np.testing.assert_array_equal(shut_down[:2], exp_shut_down)
-    assert not (start_dry[2] and start_wet[2])
-    np.testing.assert_array_equal(start_wet[3:], exp_start_wet)
-    np.testing.assert_array_equal(start_dry[3:], exp_start_dry)
-    if np.isscalar(last_prec):
-        assert np.isnan(last_prec)
-    else:
-        assert last_prec[4] == exp_last_prec
+#     shut_down, start_wet, start_dry, last_prec = _shut_down_and_start_ups(
+#         70,
+#         prev=prev,
+#         tas=tas,
+#         pr=pr,
+#         snd=snd,
+#         start_up_mode=start_up_mode,
+#         shut_down_mode=shut_down_mode,
+#         startShutDays=2,
+#         snowCoverDaysCalc=60,
+#         tempThresh=5,
+#         precThresh=1,
+#         snoDThresh=0.1,
+#         minWinterSnoD=0.1,
+#         minSnowDayFrac=0.5,
+#     )
+#     np.testing.assert_array_equal(shut_down[:2], exp_shut_down)
+#     assert not (start_dry[2] and start_wet[2])
+#     np.testing.assert_array_equal(start_wet[3:], exp_start_wet)
+#     np.testing.assert_array_equal(start_dry[3:], exp_start_dry)
+#     if np.isscalar(last_prec):
+#         assert np.isnan(last_prec)
+#     else:
+#         assert last_prec[4] == exp_last_prec
 
 
 CFS_data = """mth day lat temp rh ws pr ffmc dmc dc isi bui fwi

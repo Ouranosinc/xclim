@@ -73,8 +73,6 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
 .. todo::
 
-    Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25,
-    Add references,
     Allow computation of DC/DMC/FFMC independently,
 """
 from collections import OrderedDict
@@ -108,6 +106,8 @@ DEFAULT_PARAMS = dict(
     DCStart=15.0,
     FFMCStart=85.0,
     DMCStart=6.0,
+    carry_over_fraction=0.75,
+    wetting_efficiency_fraction=0.75,
 )
 
 
@@ -612,58 +612,69 @@ def fire_season(
 
 
 def _fire_weather_calc(
-    tas, pr, rh, ws, snd, mth, lat, dcprev, dmcprev, ffmcprev, season_mask, **params
+    tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr, **params
 ):
     """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead."""
-    indexes = params["indexes"]
+    outputs = params["outputs"]
 
-    ind_prevs = {"DC": dcprev, "DMC": dmcprev, "FFMC": ffmcprev}
-    for name, ind_prev in ind_prevs.copy().items():
-        if ind_prev is None:
-            ind_prevs.pop(name)
+    ind_prevs = {"DC": dc0.copy(), "DMC": dmc0.copy(), "FFMC": ffmc0.copy()}
+    for ind in list(ind_prevs.keys()):
+        if ind not in outputs:
+            ind_prevs.pop(ind)
+
+    season_method = params.get("season_method")
+    if season_method is None:
+        # None means "always on"
+        season_mask = np.full_like(tas, True, dtype=bool)
+    elif season_method != "mask":
+        # "mask" means it was passed as an arg. Other values are methods so we compute.
+        season_mask = _fire_season(tas, snd, method=season_method)
+
+    out = OrderedDict()
+    for name in outputs:
+        if name == "winter_pr":
+            out[name] = winter_pr.copy()
+        elif name == "season_mask":
+            out[name] = season_mask
         else:
-            ind_prevs[name] = ind_prev.copy()
-
-    ind_data = OrderedDict()
-    for indice in indexes:
-        ind_data[indice] = np.full_like(tas, np.nan)
-
-    if season_mask is None:
-        season_mask = _fire_season(tas, snd, method=params.get("season_method", "WF93"))
+            out[name] = np.full_like(tas, np.nan)
 
     # Cast the mask as integers, use smallest dtype for memory purposes.
     season_mask = season_mask.astype(np.int16)
 
-    overwintering = params.get("overwintering", False)
+    overwintering = params["overwintering"]
     if overwintering:
-        acc_precip = np.full_like(tas[..., 0], np.nan, dtype=float)
-        last_DC = np.full_like(tas[..., 0], np.nan, dtype=float)
+        last_DC = dc0
 
     for it in range(tas.shape[-1]):
 
         if it == 0:
-            delta = season_mask[it]
+            delta = season_mask[..., it]
         else:
-            delta = season_mask[it] - season_mask[it - 1]
+            delta = season_mask[..., it] - season_mask[..., it - 1]
 
         shut_down = delta == -1
-        winter = (delta == 0) & (season_mask[it] == 0)
+        winter = (delta == 0) & (season_mask[..., it] == 0)
         start_up = delta == 1
         # case4 = (delta == 0) & (season_mask[it] == 1)
 
         if "DC" in ind_prevs:
             if overwintering:
                 last_DC[shut_down] = ind_prevs["DC"][shut_down]
-                acc_precip[shut_down] = pr[shut_down, it]
+                out["winter_pr"][shut_down] = pr[shut_down, it]
 
-                acc_precip[winter] = acc_precip[winter] + pr[winter, it]
+                out["winter_pr"][winter] = out["winter_pr"][winter] + pr[winter, it]
 
                 ind_prevs["DC"][start_up] = _overwintering_drought_code(
-                    last_DC[start_up], acc_precip[start_up]
+                    last_DC[start_up],
+                    out["winter_pr"][start_up],
+                    params["carry_over_fraction"],
+                    params["wetting_efficiency_fraction"],
                 )
                 last_DC[start_up] = np.nan
-                acc_precip[start_up] = np.nan
+                out["winter_pr"][start_up] = np.nan
             else:
+                print(ind_prevs["DC"].shape, shut_down.shape, dc0.shape, tas.shape)
                 ind_prevs["DC"][start_up] = params["DCStart"]
             ind_prevs["DC"][shut_down] = np.nan
 
@@ -676,12 +687,12 @@ def _fire_weather_calc(
             ind_prevs["FFMC"][shut_down] = np.nan
 
         # Main computation
-        if "DC" in indexes:
-            ind_data["DC"][..., it] = _drought_code(
+        if "DC" in outputs:
+            out["DC"][..., it] = _drought_code(
                 tas[..., it], pr[..., it], mth[..., it], lat, ind_prevs["DC"]
             )
-        if "DMC" in indexes:
-            ind_data["DMC"][..., it] = _duff_moisture_code(
+        if "DMC" in outputs:
+            out["DMC"][..., it] = _duff_moisture_code(
                 tas[..., it],
                 pr[..., it],
                 rh[..., it],
@@ -689,33 +700,33 @@ def _fire_weather_calc(
                 lat,
                 ind_prevs["DMC"],
             )
-        if "FFMC" in indexes:
-            ind_data["FFMC"][..., it] = _fine_fuel_moisture_code(
+        if "FFMC" in outputs:
+            out["FFMC"][..., it] = _fine_fuel_moisture_code(
                 tas[..., it], pr[..., it], ws[..., it], rh[..., it], ind_prevs["FFMC"]
             )
-        if "ISI" in indexes:
-            ind_data["ISI"][..., it] = initial_spread_index(
-                ws[..., it], ind_data["FFMC"][..., it]
+        if "ISI" in outputs:
+            out["ISI"][..., it] = initial_spread_index(
+                ws[..., it], out["FFMC"][..., it]
             )
-        if "BUI" in indexes:
-            ind_data["BUI"][..., it] = build_up_index(
-                ind_data["DMC"][..., it], ind_data["DC"][..., it]
+        if "BUI" in outputs:
+            out["BUI"][..., it] = build_up_index(
+                out["DMC"][..., it], out["DC"][..., it]
             )
-        if "FWI" in indexes:
-            ind_data["FWI"][..., it] = fire_weather_index(
-                ind_data["ISI"][..., it], ind_data["BUI"][..., it]
+        if "FWI" in outputs:
+            out["FWI"][..., it] = fire_weather_index(
+                out["ISI"][..., it], out["BUI"][..., it]
             )
 
-        if "DSR" in indexes:
-            ind_data["DSR"][..., it] = daily_severity_rating(ind_data["FWI"][..., it])
+        if "DSR" in outputs:
+            out["DSR"][..., it] = daily_severity_rating(out["FWI"][..., it])
 
         # Set the previous values
         for ind, ind_prev in ind_prevs.items():
-            ind_prev[...] = ind_data[ind][..., it]
+            ind_prev[...] = out[ind][..., it]
 
-    if len(indexes) == 1:
-        return ind_data[indexes[0]]
-    return tuple(ind_data.values())
+    if len(outputs) == 1:
+        return out[outputs[0]]
+    return tuple(out.values())
 
 
 def fire_weather_ufunc(
@@ -729,10 +740,12 @@ def fire_weather_ufunc(
     dc0: Optional[xr.DataArray] = None,
     dmc0: Optional[xr.DataArray] = None,
     ffmc0: Optional[xr.DataArray] = None,
+    winter_pr: Optional[xr.DataArray] = None,
     season_mask: Optional[xr.DataArray] = None,
     start_dates: Optional[Union[str, xr.DataArray]] = None,
     indexes: Sequence[str] = None,
-    season_method: str = "WF93",
+    season_method: Optional[str] = "WF93",
+    overwintering: bool = True,
     **params,
 ):
     """Fire Weather Indexes computation using xarray's apply_ufunc.
@@ -748,25 +761,31 @@ def fire_weather_ufunc(
     ws : xr.DataArray, optional
         Noon surface wind speed in km/h, not needed for DC, DMC or BUI
     snd : xr.DataArray, optional
-        Noon snow depth in m, only needed if `start_up_mode` is "snow_depth"
+        Noon snow depth in m, only needed if `season_method` is "LA08"
     lat : xr.DataArray, optional
         Latitude in °N, not needed for FFMC or ISI
     dc0 : xr.DataArray, optional
-        DC the day before `start_date`, defaults to NaN.
+        Previous DC map, see Notes. Defaults to NaN.
     dmc0 : xr.DataArray, optional
-        DMC the day before `start_date`, defaults to NaN.
+        Previous DMC map, see Notes. Defaults to NaN.
     ffmc0 : xr.DataArray, optional
-        FFMC the day before `start_date`, defaults to NaN.
+        Previous FFMC map, see Notes. Defaults to NaN.
+    winter_pr : xr.DataArray, optional
+        Accumulated precipitation since the end of the last season, until the beginning of the current data, mm/day.
+        Only used if `overwintering` is True, defaults to 0.
     season_mask : xr.DataArray, optional
-        Boolean mask, True where the fire season is active. Same shape as tas.
+        Boolean mask, True where/when the fire season is active.
     indexes : Sequence[str], optional
         Which indexes to compute. If intermediate indexes are needed, they will be added to the list and output.
     start_date : str, optional
         Date at which to start the computation.
         Defaults to `snowCoverDaysCalc` after the beginning of tas.
-    season_method : {"WF93", "LA08"}
-        How to compute the start up and shut down of the fire season. See module doc for valid values.
+    season_method : {None, "WF93", "LA08"}
+        How to compute the start up and shut down of the fire season.
+        If "None", no start ups or shud downs are computed, similar to the R fwi function.
         Ignored if `season_mask` is given.
+    overwintering: bool
+        Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
     **params :
         Other keyword arguments for the Fire Weather Indexes computation.
         Default values of those are stored in `xclim.indices.fwi.DEFAULT_PARAMS`
@@ -776,6 +795,16 @@ def fire_weather_ufunc(
     -------
     dict[str, xarray.DataArray]
         Dictionary containing the computed indexes as prescribed in `indexes`
+
+    Notes
+    -----
+    When overwintering is activated, the argument `dc0` is understood as last season's
+    last DC map and will be used to compute the overwintered DC at the beginning of the
+    next season.
+
+    If overwintering is not activated and neither is fire season computation (`season_method`
+    and `season_mask` are `None`), `dc0`, `dmc0` and `ffmc0` are understood as the codes
+    on the day before the first day of FWI computation.
     """
     for k, v in DEFAULT_PARAMS.items():
         params.setdefault(k, v)
@@ -783,7 +812,7 @@ def fire_weather_ufunc(
     indexes = set(
         params.setdefault(
             "indexes",
-            indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR", "fireSeason"],
+            indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"],
         )
     )
     if "DSR" in indexes:
@@ -796,26 +825,26 @@ def fire_weather_ufunc(
         indexes.update({"FFMC"})
     indexes = sorted(
         list(indexes),
-        key=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR", "fireSeason"].index,
+        key=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"].index,
     )
 
     # Whether each argument is needed in _fire_weather_calc
     # Same order as _fire_weather_calc, Assumes the list of indexes is complete.
     # (name, list of indexes + start_up/shut_down modes, has_time_dim)
     needed_args = (
-        (tas, "tas", ["DC", "DMC", "FFMC", "fireSeason"], True),
+        (tas, "tas", ["DC", "DMC", "FFMC", "WF93", "LA08"], True),
         (pr, "pr", ["DC", "DMC", "FFMC"], True),
         (rh, "rh", ["DMC", "FFMC"], True),
         (ws, "ws", ["FFMC"], True),
         (snd, "snd", ["LA08"], True),
         (tas.time.dt.month, "month", ["DC", "DMC"], True),
         (lat, "lat", ["DC", "DMC"], False),
-        (dc0, "dc0", ["DC"], False),
-        (dmc0, "dmc0", ["DMC"], False),
-        (ffmc0, "ffmc0", ["FFMC"], False),
     )
-    args = []
-    input_core_dims = []
+    # Arg order : tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr
+    #              0   1   2   3    4   5    6    7             8    9     10    11
+    args = [None] * 12
+    input_core_dims = [[]] * 12
+
     # Verification of all arguments
     for i, (arg, name, usedby, has_time_dim) in enumerate(needed_args):
         if any([ind in indexes + [season_method] for ind in usedby]):
@@ -823,37 +852,70 @@ def fire_weather_ufunc(
                 raise TypeError(
                     f"Missing input argument {name} for index combination {indexes} with fire season method '{season_method}'"
                 )
-            if hasattr(arg, "data") and isinstance(arg.data, dsk.Array):
-                # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
-                warn(
-                    "Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
-                )
-                args.append(arg.load())
-            else:
-                args.append(arg)
-            input_core_dims.append(["time"] if has_time_dim else [])
-        else:
-            args.append(None)
-            input_core_dims.append([])
+            args[i] = arg
+            input_core_dims[i] = ["time"] if has_time_dim else []
+
+    # Always pass the previous codes.
+    if dc0 is None:
+        dc0 = xr.full_like(tas.isel(time=0), np.nan)
+    if dmc0 is None:
+        dmc0 = xr.full_like(tas.isel(time=0), np.nan)
+    if ffmc0 is None:
+        ffmc0 = xr.full_like(tas.isel(time=0), np.nan)
+    args[8:11] = [dc0, dmc0, ffmc0]
+
+    # Output config from the current indexes list
+    outputs = indexes
+    output_dtypes = [tas.dtype] * len(indexes)
+    output_core_dims = len(indexes) * [("time",)]
 
     if season_mask is not None:
-        args.append(season_mask)
-        input_core_dims.append(["time"])
-    else:
-        args.append(None)
-        input_core_dims.append([])
+        # A mask was passed, ignore passed method and tell the ufunc to use it.
+        args[7] = season_mask
+        input_core_dims[7] = ["time"]
+        season_method = "mask"
+    elif season_method is not None:
+        # Season mask not given and a method chosen : we output the computed mask.
+        outputs.append("season_mask")
+        output_core_dims.append(("time",))
+        output_dtypes.append(bool)
+
+    if overwintering:
+        # Overwintering code activated
+        if season_method is None and season_mask is None:
+            raise ValueError(
+                "If overwintering is activated, either `season_method` or `season_mask` must be given."
+            )
+        # We assume dc0 to be last season's last DC
+        if dc0 is None:
+            dc0 = xr.full_like(tas.isel(time=0), np.nan)
+        # Last winter PR is 0 by default
+        if winter_pr is None:
+            winter_pr = xr.zeros_like(pr.isel(time=0))
+        args[8] = dc0
+        args[11] = winter_pr
+
+        # Activating overwintering will produce an extra output, that has no "time" dimension.
+        outputs.append("winter_pr")
+        output_core_dims.append([])
+        output_dtypes.append(pr.dtype)
 
     params["season_method"] = season_method
-    params["indexes"] = indexes
+    params["overwintering"] = overwintering
+    params["outputs"] = outputs
 
     das = xr.apply_ufunc(
         _fire_weather_calc,
         *args,
         kwargs=params,
-        input_core_dims=input_core_dims,  # nargs[0] * (("time",),) + nargs[1] * ((),) + snowdims,
-        output_core_dims=len(indexes) * (("time",),),
-        dask="forbidden",
+        input_core_dims=input_core_dims,
+        output_core_dims=output_core_dims,
+        dask="parallelized",
+        output_dtypes=output_dtypes,
+        dask_gufunc_kwargs={
+            "meta": tuple(np.array((), dtype=dtype) for dtype in output_dtypes)
+        },
     )
-    if len(indexes) == 1:
-        return {indexes[0]: das}
-    return {ind: da for ind, da in zip(indexes, das)}
+    if len(outputs) == 1:
+        return {outputs[0]: das}
+    return {name: da for name, da in zip(outputs, das)}
