@@ -20,6 +20,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
 * `run_length.season` returns a dataset storing the start, end and length of a *season*.
+* Fire Weather indices now support dask-backed data.
 
 
 0.24.0 (2021-03-01)

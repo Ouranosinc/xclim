@@ -1473,8 +1473,11 @@ class TestTG:
 class TestFireWeatherIndex:
     nc_gfwed = os.path.join("FWI", "GFWED_sample_2017.nc")
 
-    def test_fire_weather_indexes(self):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_fire_weather_indexes(self, use_dask):
         ds = open_dataset(self.nc_gfwed)
+        if use_dask:
+            ds = ds.chunk({"loc": 1})
         fwis = xci.fire_weather_indexes(
             ds.tas,
             ds.prbc,
@@ -1497,8 +1500,11 @@ class TestFireWeatherIndex:
                 atol=1e-4,
             )
 
-    def test_drought_code(self):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_drought_code(self, use_dask):
         ds = open_dataset(self.nc_gfwed)
+        if use_dask:
+            ds = ds.chunk({"loc": 1})
         dc = xci.drought_code(
             ds.tas,
             ds.prbc,
