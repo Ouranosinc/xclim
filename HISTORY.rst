@@ -12,6 +12,7 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
+* Fire Weather indices now support dask-backed data.
 
 
 0.24.0 (2021-03-01)

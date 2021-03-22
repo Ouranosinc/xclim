@@ -73,8 +73,6 @@ https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
 .. todo::
 
-    Skip computations over the ocean and where Tg_annual < -10 and where Pr_annual < 0.25,
-    Add references,
     Allow computation of DC/DMC/FFMC independently,
 """
 from collections import OrderedDict
@@ -517,7 +515,7 @@ def _fire_weather_calc(
     ind_prevs = {"DC": dcprev, "DMC": dmcprev, "FFMC": ffmcprev}
 
     for name, ind_prev in ind_prevs.copy().items():
-        if ind_prev is None:
+        if ind_prev is None or (ind_prev.ndim == 0 and ind_prev == np.array(None)):
             ind_prevs.pop(name)
         else:
             ind_prevs[name] = ind_prev.copy()
@@ -719,14 +717,7 @@ def fire_weather_ufunc(
                 raise TypeError(
                     f"Missing input argument {name} for index combination {indexes} with start up '{start_up_mode}' and shut down '{shut_down_mode}'"
                 )
-            if hasattr(arg, "data") and isinstance(arg.data, dskarray):
-                # TODO remove this when xarray supports multiple dask outputs in apply_ufunc
-                warn(
-                    "Dask arrays have been detected in the input of the Fire Weather calculation but they are not supported yet. Data will be loaded."
-                )
-                args.append(arg.load())
-            else:
-                args.append(arg)
+            args.append(arg)
             input_core_dims.append(["time"] if has_time_dim else [])
         else:
             args.append(None)
@@ -742,7 +733,9 @@ def fire_weather_ufunc(
         kwargs=params,
         input_core_dims=input_core_dims,  # nargs[0] * (("time",),) + nargs[1] * ((),) + snowdims,
         output_core_dims=len(indexes) * (("time",),),
-        dask="forbidden",
+        dask="parallelized",
+        output_dtypes=[tas.dtype] * len(indexes),
+        dask_gufunc_kwargs={"meta": (np.array((), dtype=tas.dtype),) * len(indexes)},
     )
     if len(indexes) == 1:
         return {indexes[0]: das}
