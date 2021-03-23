@@ -1,6 +1,7 @@
 # noqa: D100
 from typing import Optional, Union
 
+import dask.array as dsk
 import numpy as np
 import xarray
 
@@ -13,7 +14,6 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DateStr
 
 from . import fwi
 from . import run_length as rl
@@ -37,6 +37,7 @@ __all__ = [
     "extreme_temperature_range",
     "fire_weather_indexes",
     "drought_code",
+    "fire_season",
     "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
@@ -495,6 +496,105 @@ def drought_code(
     )
     out["DC"].attrs["units"] = ""
     return out["DC"]
+
+
+@declare_units(
+    tas="[temperature]",
+    snd="[length]",
+    temp_end_thresh="[temperature]",
+    temp_start_thresh="[temperature]",
+    snow_thresh="[length]",
+)
+def fire_season(
+    tas: xarray.DataArray,
+    snd: xarray.DataArray = None,
+    method: str = "WF93",
+    keep_longest: Union[bool, str] = False,
+    temp_start_thresh: str = "12 degC",
+    temp_end_thresh: str = "5 degC",
+    temp_condition_days: int = 3,
+    snow_condition_days: int = 3,
+    snow_thresh: str = "0 cm",
+):
+    """Compute the active fire season mask.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+      Daily surface temperature, cffdrs recommends using maximum daily temperature.
+    snd : xr.DataArray, optional
+      Snow depth, used with method == 'LA08'.
+    method : {"WF93", "LA08"}
+      Which method to use. "LA08" needs the snow depth.
+    keep_longest : bool or str
+      If True, only keeps the longest fire season in the mask. If a str, it is understood
+      as a frequnecy and only the longest fire season for each of these period is kept.
+      Every "seasons" are returned if False, including the short shoulder seasons.
+    temp_start_thresh: str
+      Minimal temperature needed to start the season.
+    temp_end_thresh : str
+      Maximal temperature needed to end the season.
+    temp_condition_days: int
+      Number of days with temperature above or below the thresholds to trigger a start or an end of the fire season.
+    snow_condition_days: int
+      Number of days with snow depth above or below the threshold to trigger a start or an end of the fire season, only used with method "LA08".
+    snow_thresh: str
+      Minimal snow depth level to end a fire season, only used with method "LA08".
+
+    Returns
+    -------
+    fire_season : xr.DataArray
+      Fire season mask
+
+    References
+    ----------
+    [WF93] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
+    [LA08] Lawson, B.D. and O.B. Armitage. 2008. Weather guide for the Canadian Forest Fire Danger Rating System. NRCAN, CFS, Edmonton, AB
+    """
+    kwargs = {
+        "temp_start_thresh": convert_units_to(temp_start_thresh, "degC"),
+        "temp_end_thresh": convert_units_to(temp_end_thresh, "degC"),
+        "snow_thresh": convert_units_to(snow_thresh, "m"),
+        "temp_condition_days": temp_condition_days,
+        "snow_condition_days": snow_condition_days,
+    }
+
+    def _apply_fire_season(ds):
+        season_mask = ds.tas.copy(
+            data=fwi._fire_season(
+                tas=ds.tas.transpose(..., "time").values,
+                snd=None if method == "WF93" else ds.snd.transpose(..., "time").values,
+                method=method,
+                **kwargs,
+            )
+        )
+        season_mask.attrs = {}
+
+        if keep_longest is not False:
+            if isinstance(keep_longest, str):
+                time = season_mask.time
+                season_mask = season_mask.resample(time=keep_longest).map(
+                    rl.keep_longest_run
+                )
+                season_mask["time"] = time
+            else:
+                season_mask = rl.keep_longest_run(season_mask)
+
+        return season_mask
+
+    ds = convert_units_to(tas, "degC").rename("tas").to_dataset()
+    if snd is not None:
+        ds["snd"] = convert_units_to(snd, "m")
+        ds = ds.unify_chunks()
+
+    if isinstance(tas.data, dsk.Array):
+        tmpl = tas.copy(data=dsk.empty_like(ds.tas.data))
+    else:
+        tmpl = tas.copy(data=np.empty_like(ds.tas.data))
+
+    out = ds.map_blocks(_apply_fire_season, template=tmpl)
+    out.attrs["units"] = ""
+    return out
 
 
 @declare_units(

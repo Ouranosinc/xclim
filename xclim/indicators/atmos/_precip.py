@@ -223,7 +223,7 @@ drought_code = PrTas(
     units="",
     standard_name="drought_code",
     long_name="Drought Code",
-    description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
+    description="Numeric rating of the average moisture content of organic layers.",
     compute=indices.drought_code,
     missing="skip",
 )

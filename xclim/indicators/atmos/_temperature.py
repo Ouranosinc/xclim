@@ -90,6 +90,14 @@ class Tasmax(Daily):
         cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
 
 
+class Tasx(Daily):
+    """Class for univariate indices using mean daily temperature as the input."""
+
+    @staticmethod
+    def cfcheck(tas):
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+
+
 class TasminTasmax(Daily2D):
     @staticmethod
     def cfcheck(tasmin, tasmax):
@@ -666,4 +674,12 @@ maximum_consecutive_warm_days = Tasmax(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_tx_days,
+)
+
+
+fire_season = Tasx(
+    identifier="fire_season",
+    description="Fire season mask, computed with method {method}.",
+    units="",
+    compute=indices.fire_season,
 )
