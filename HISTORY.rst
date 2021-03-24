@@ -13,6 +13,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
 * Fire Weather indices now support dask-backed data.
+* Objects from the `xclim.sdba` submodule can be created from their string repr or from dataset they created.
 
 
 0.24.0 (2021-03-01)
