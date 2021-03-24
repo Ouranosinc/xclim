@@ -4,7 +4,9 @@
 Fire Weather Indices Submodule
 ==============================
 
-Methods defined here are used by :func:`xclim.indices.fire_season`, :func:`xclim.indices.drought_code` and :func:`xclim.indices.fire_weather_indexes`, and corresponding indicators.
+This submodule defines the :py:func:`xclim.indices.fire_season`, :py::func:`xclim.indices.drought_code`
+and :py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
+Users should read this module's documentation and the one of `fire_weather_ufunc`.
 
 First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using
 MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system.

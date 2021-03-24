@@ -1,7 +1,6 @@
 # noqa: D100
-from typing import Optional, Union
+from typing import Optional
 
-import dask.array as dsk
 import numpy as np
 import xarray
 
@@ -15,7 +14,6 @@ from xclim.core.units import (
     to_agg_units,
 )
 
-from . import fwi
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op, threshold_count
