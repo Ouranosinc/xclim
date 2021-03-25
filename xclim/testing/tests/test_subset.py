@@ -729,7 +729,7 @@ class TestSubsetShape:
 
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tasmax.isel(time=0))), 269.2540588378906
+            float(np.mean(sub.tasmax.isel(time=0))), 269.254, 3
         )
         # Check that no warnings are raised for meridian crossing
         assert (
