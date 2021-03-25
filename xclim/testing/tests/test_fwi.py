@@ -135,9 +135,6 @@ def test_fire_weather_indicator():
         rh=fwi_data.rh,
         ws=fwi_data.ws,
         lat=fwi_data.lat,
-        season_mask=None,
-        season_method=None,
-        overwintering=False,
     )
 
     dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.fire_weather_indexes(
@@ -149,9 +146,6 @@ def test_fire_weather_indicator():
         ffmc0=ffmc[-1],
         dmc0=dmc[-1],
         dc0=dc[-1],
-        season_mask=None,
-        season_method=None,
-        overwintering=False,
     )
     xr.testing.assert_allclose(dc, fwi_data.dc.isel(test=0), rtol=1e-6)
     xr.testing.assert_allclose(dmc, fwi_data.dmc.isel(test=0), rtol=1e-6)
@@ -175,20 +169,17 @@ def test_fire_weather_ufunc_overwintering():
         tas=convert_units_to(ds.tas, "degC"),
         pr=convert_units_to(ds.pr, "mm/d"),
     )
-    season_mask_all = fire_season(
-        ds.tas, method="WF93", keep_longest=False, temp_end_thresh="4 degC"
-    )
-    season_mask_all_LA08 = fire_season(
-        ds.tas, snd=ds.snd, method="LA08", keep_longest=False
-    )
-    season_mask_yr = fire_season(ds.tas, method="WF93", keep_longest="YS")
+    season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
+    season_mask_all_LA08 = fire_season(ds.tas, snd=ds.snd, method="LA08")
+    season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
 
     # Mask is computed correctly and parameters are passed
-    # season not passed, and season_method defaulting to WF93
+    # season not passed so computed on the fly
     out1 = fire_weather_ufunc(
         tas=ds.tas,
         pr=ds.pr,
         lat=ds.lat,
+        season_method="WF93",
         overwintering=False,
         temp_end_thresh=4,
         indexes=["DC"],
@@ -277,7 +268,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
         dc0=DC0,
         indexes=["DC"],
     )
-    assert len(out.keys()) == 3
+    assert len(out.keys()) == 1
     out["DC"].load()
 
     out = fire_weather_ufunc(
@@ -293,7 +284,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
         indexes=["DSR"],
     )
 
-    assert len(out.keys()) == 9
+    assert len(out.keys()) == 7
 
 
 @pytest.mark.parametrize(
@@ -311,7 +302,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
             {
                 "temp_start_thresh": "283.15 K",
                 "temp_end_thresh": "3 degC",
-                "keep_longest": "YS",
+                "freq": "YS",
             },
         ),
     ],

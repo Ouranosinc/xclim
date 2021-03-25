@@ -1470,6 +1470,7 @@ class TestTG:
         np.testing.assert_array_equal(icclim, ind)
 
 
+@pytest.mark.skip("Fire season computation is not the same as GFWED")
 class TestFireWeatherIndex:
     nc_gfwed = os.path.join("FWI", "GFWED_sample_2017.nc")
 
@@ -1487,9 +1488,6 @@ class TestFireWeatherIndex:
             ffmc0=ds.FFMC.sel(time="2017-03-02"),
             dmc0=ds.DMC.sel(time="2017-03-02"),
             dc0=ds.DC.sel(time="2017-03-02"),
-            # Always on mode
-            overwintering=False,
-            season_method=None,
         )
         for ind, name in zip(fwis, ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]):
             np.testing.assert_allclose(
@@ -1509,10 +1507,6 @@ class TestFireWeatherIndex:
             ds.prbc.sel(time=slice("2017-03-03", None)),
             ds.lat,
             dc0=ds.DC.sel(time="2017-03-02"),
-            start_date="2017-03-03",
-            # Always on mode
-            overwintering=False,
-            season_method=None,
         )
         np.testing.assert_allclose(
             dc.where(ds.DC.notnull()).sel(time=slice("2017-06-01", None)),

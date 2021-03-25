@@ -717,9 +717,6 @@ def fire_weather_ufunc(
         Boolean mask, True where/when the fire season is active.
     indexes : Sequence[str], optional
         Which indexes to compute. If intermediate indexes are needed, they will be added to the list and output.
-    start_date : str, optional
-        Date at which to start the computation.
-        Defaults to `snowCoverDaysCalc` after the beginning of tas.
     season_method : {None, "WF93", "LA08"}
         How to compute the start up and shut down of the fire season.
         If "None", no start ups or shud downs are computed, similar to the R fwi function.
@@ -882,7 +879,10 @@ def fire_weather_ufunc(
     )
 
     if tas.ndim == 1:
-        das = [da.squeeze(dummy_dim, drop=True) for da in das]
+        if len(outputs) == 1:
+            das = das.squeeze(dummy_dim, drop=True)
+        else:
+            das = [da.squeeze(dummy_dim, drop=True) for da in das]
 
     if len(outputs) == 1:
         return {outputs[0]: das}
@@ -981,6 +981,9 @@ def fire_weather_indexes(
     ffmc0: xr.DataArray = None,
     dmc0: xr.DataArray = None,
     dc0: xr.DataArray = None,
+    season_mask: Optional[xr.DataArray] = None,
+    season_method: Optional[str] = None,
+    overwintering: bool = False,
     **params,
 ):
     r"""Fire weather indexes.
@@ -1009,6 +1012,14 @@ def fire_weather_indexes(
       Initial values of the Duff moisture code.
     dc0 : xr.DataArray
       Initial values of the drought code.
+    season_mask : xr.DataArray, optional
+        Boolean mask, True where/when the fire season is active.
+    season_method : {None, "WF93", "LA08"}
+        How to compute the start up and shut down of the fire season.
+        If "None", no start ups or shud downs are computed, similar to the R fwi function.
+        Ignored if `season_mask` is given.
+    overwintering: bool
+        Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
     params :
       Any other keyword parameters as defined in :py:func:`fire_weather_ufunc`.
 
@@ -1048,6 +1059,9 @@ def fire_weather_indexes(
         ffmc0=ffmc0,
         snd=snd,
         indexes=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"],
+        season_mask=season_mask,
+        season_method=season_method,
+        overwintering=overwintering,
         **params,
     )
     for outd in out.values():
@@ -1062,6 +1076,9 @@ def drought_code(
     lat: xr.DataArray,
     snd: xr.DataArray = None,
     dc0: xr.DataArray = None,
+    season_mask: Optional[xr.DataArray] = None,
+    season_method: Optional[str] = None,
+    overwintering: bool = False,
     **params,
 ):
     r"""Drought code (FWI component).
@@ -1081,6 +1098,14 @@ def drought_code(
       Noon snow depth.
     dc0 : xr.DataArray
       Initial values of the drought code.
+    season_mask : xr.DataArray, optional
+      Boolean mask, True where/when the fire season is active.
+    season_method : {None, "WF93", "LA08"}
+      How to compute the start up and shut down of the fire season.
+      If "None", no start ups or shud downs are computed, similar to the R fwi function.
+      Ignored if `season_mask` is given.
+    overwintering: bool
+      Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
     params :
       Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
 
@@ -1110,6 +1135,9 @@ def drought_code(
         dc0=dc0,
         snd=snd,
         indexes=["DC"],
+        season_mask=season_mask,
+        season_method=season_method,
+        overwintering=overwintering,
         **params,
     )
     out["DC"].attrs["units"] = ""
@@ -1127,14 +1155,16 @@ def fire_season(
     tas: xr.DataArray,
     snd: xr.DataArray = None,
     method: str = "WF93",
-    keep_longest: Union[bool, str] = False,
+    freq: Optional[str] = None,
     temp_start_thresh: str = "12 degC",
     temp_end_thresh: str = "5 degC",
     temp_condition_days: int = 3,
     snow_condition_days: int = 3,
     snow_thresh: str = "0 cm",
 ):
-    """Compute the active fire season mask.
+    """Fire season mask.
+
+    Binary mask of the active fire season, defined by conditions on consecutive daily temperatures and, optionally, snow depths.
 
     Parameters
     ----------
@@ -1144,10 +1174,9 @@ def fire_season(
       Snow depth, used with method == 'LA08'.
     method : {"WF93", "LA08"}
       Which method to use. "LA08" needs the snow depth.
-    keep_longest : bool or str
-      If True, only keeps the longest fire season in the mask. If a str, it is understood
-      as a frequnecy and only the longest fire season for each of these period is kept.
-      Every "seasons" are returned if False, including the short shoulder seasons.
+    freq : str, optional
+      If given only the longest fire season for each period defined by this frequency,
+      Every "seasons" are returned if None, including the short shoulder seasons.
     temp_start_thresh: str
       Minimal temperature needed to start the season.
     temp_end_thresh : str
@@ -1188,15 +1217,10 @@ def fire_season(
         )
         season_mask.attrs = {}
 
-        if keep_longest is not False:
-            if isinstance(keep_longest, str):
-                time = season_mask.time
-                season_mask = season_mask.resample(time=keep_longest).map(
-                    rl.keep_longest_run
-                )
-                season_mask["time"] = time
-            else:
-                season_mask = rl.keep_longest_run(season_mask)
+        if freq is not None:
+            time = season_mask.time
+            season_mask = season_mask.resample(time=freq).map(rl.keep_longest_run)
+            season_mask["time"] = time
 
         return season_mask
 

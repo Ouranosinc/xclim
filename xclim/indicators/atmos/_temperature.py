@@ -56,6 +56,7 @@ __all__ = [
     "degree_days_exceedance_date",
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
+    "fire_season",
 ]
 
 

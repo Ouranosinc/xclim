@@ -355,9 +355,8 @@ def test_parsed_doc():
     assert params["snd"]["default"] is None
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["snd"]["units"] == "[length]"
-    assert params["shut_down_mode"]["kind"] is InputKind.STRING
-    assert params["start_up_mode"]["choices"] == {None, "snow_depth"}
-    assert params["start_date"]["kind"] is InputKind.DATE
+    assert params["season_method"]["kind"] is InputKind.STRING
+    assert params["season_method"]["choices"] == {None, "WF93", "LA08"}
 
 
 def test_default_formatter():

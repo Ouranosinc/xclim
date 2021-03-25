@@ -143,10 +143,10 @@ def test_multi_output(tmp_path):
             "-o",
             str(output_file),
             "-v",
-            "wind_speed_from_vectors",
+            "wind_speed_from_vector",
         ],
     )
-    assert "Processing : fwi" in results.output
+    assert "Processing : wind_speed_from_vector" in results.output
 
 
 def test_renaming_variable(tas_series, tmp_path):
