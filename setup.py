@@ -36,7 +36,7 @@ requirements = [
 
 setup_requirements = ["pytest-runner", "wheel"]
 
-test_requirements = ["pytest", "tox", "xdoctest"]
+test_requirements = ["pytest", "tox", "xdoctest", "pooch"]
 
 docs_requirements = [
     "sphinx",
@@ -49,6 +49,7 @@ docs_requirements = [
     "netCDF4",
     "nc-time-axis",
     "distributed>=2.0",
+    "pooch",
 ]
 
 gis_requirements = ["clisops>=0.4.0"]
