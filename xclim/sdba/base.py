@@ -47,7 +47,7 @@ class Parametrizable(dict):
         >>> obj2
         Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
         """
-        # regex pattern that fully matches a string produces by Parametrizable._repr__
+        # regex pattern that fully matches a string produced by Parametrizable._repr__
         match = re.fullmatch(r"(?P<class>[A-Za-z0-9_]+)\((?P<args>.*)\)", defstr)
         if not match:
             raise ValueError(
