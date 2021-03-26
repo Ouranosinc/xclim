@@ -50,13 +50,22 @@ def rle(
     Returns
     -------
     xr.DataArray
+      Values are 0 where da is False (out of runs),
+      are N on the first day of a run, where N is the length of that run,
+      and are NaN on the other days of the runs.
     """
+    use_dask = isinstance(da.data, dsk.Array)
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim).chunk({"time": -1})
+    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
+    if use_dask:
+        i = i.chunk({dim: -1})
+
     ind, da = xr.broadcast(i, da)
-    # Rechunk, but with broadcasted da
-    ind = ind.chunk(da.chunks)
+    if use_dask:
+        # Rechunk, but with broadcasted da
+        ind = ind.chunk(da.chunks)
+
     b = ind.where(~da)  # find indexes where false
     end1 = (
         da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
@@ -69,24 +78,28 @@ def rle(
     # Ensure bfill operates on entire (unchunked) time dimension
     # Determine appropraite chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
     ndims = len(b.shape)
-    chunk_dim = b[dim].size
-    # divide extra dims into equal size
-    # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-    chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
-    if ndims > 1:
-        chunksize_ex_dims = np.round(np.power(max_chunk / chunk_dim, 1 / (ndims - 1)))
-    chunks = dict()
-    chunks[dim] = -1
-    for dd in b.dims:
-        if dd != dim:
-            chunks[dd] = chunksize_ex_dims
-    b = b.chunk(chunks)
+    if use_dask:
+        chunk_dim = b[dim].size
+        # divide extra dims into equal size
+        # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
+        chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
+        if ndims > 1:
+            chunksize_ex_dims = np.round(
+                np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
+            )
+        chunks = dict()
+        chunks[dim] = -1
+        for dd in b.dims:
+            if dd != dim:
+                chunks[dd] = chunksize_ex_dims
+        b = b.chunk(chunks)
 
     # back fill nans with first position after
     z = b.bfill(dim=dim)
     # calculate lengths
     d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
+    d = d.isel({dim: slice(None, -1)}).where(da, 0)
     return d
 
 
@@ -304,6 +317,98 @@ def last_run(
     if not coord:
         return reversed_da[dim].size - out - 1
     return out
+
+
+# TODO: Add window arg
+# Maybe todo : Inverse window arg to tolerate holes?
+def run_bounds(
+    mask: xr.DataArray, dim: str = "time", coord: Optional[Union[bool, str]] = True
+):
+    """Return the start and end dates of boolean runs along a dimension.
+
+    Parameters
+    ----------
+    mask : xr.DataArray
+      Boolean array.
+    dim : str
+      Dimension along which to look for runs.
+    coord : bool or str
+      If True, return values of the coordinate, if a string, returns values from `dim.dt.<coord>`.
+      if False, return indexes.
+
+    Returns
+    -------
+    xr.DataArray
+      With ``dim`` reduced to "events" and "bounds". The events dim is as long as needed, padded with NaN or NaT.
+    """
+    if isinstance(mask.data, dsk.Array):
+        raise NotImplementedError(
+            "Dask arrays not supported as we can't know the final event number before computing."
+        )
+
+    diff = xr.concat((mask.isel({dim: 0}).astype(int), mask.astype(int).diff(dim)), dim)
+
+    nstarts = (diff == 1).sum(dim).max().item()
+
+    def _get_indices(arr, *, N):
+        out = np.full((N,), np.nan, dtype=float)
+        inds = np.where(arr)[0]
+        out[: len(inds)] = inds
+        return out
+
+    starts = xr.apply_ufunc(
+        _get_indices,
+        diff == 1,
+        input_core_dims=[[dim]],
+        output_core_dims=[["events"]],
+        kwargs={"N": nstarts},
+        vectorize=True,
+    )
+
+    ends = xr.apply_ufunc(
+        _get_indices,
+        diff == -1,
+        input_core_dims=[[dim]],
+        output_core_dims=[["events"]],
+        kwargs={"N": nstarts},
+        vectorize=True,
+    )
+
+    if coord:
+        crd = mask[dim]
+        if isinstance(coord, str):
+            crd = getattr(crd.dt, coord)
+
+        starts = lazy_indexing(crd, starts).drop(dim)
+        ends = lazy_indexing(crd, ends).drop(dim)
+    return xr.concat((starts, ends), "bounds")
+
+
+def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
+    """Keep the longest run along a dimension.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Boolean array
+    dim : str
+      Dimension along which to check for the longest run.
+
+    Returns
+    -------
+    xr.DataArray
+      Boolean array similar to da but with only one run, the (first) longest.
+    """
+    # Get run lengths
+    rls = rle(da, dim)
+    out = xr.where(
+        # Construct an integer array and find the max
+        rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
+        rls + 1,  # Add one to the First longest run
+        rls,
+    )
+    out = out.ffill(dim) == out.max(dim)
+    return da.copy(data=out.transpose(*da.dims).data)  # Keep everything the same
 
 
 def season_length(

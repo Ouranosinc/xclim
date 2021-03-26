@@ -28,6 +28,7 @@ from ._hydrology import *
 from ._multivariate import *
 from ._simple import *
 from ._threshold import *
+from .fwi import drought_code, fire_season, fire_weather_indexes
 
 """
 Notes for docstring
