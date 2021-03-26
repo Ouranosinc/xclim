@@ -22,6 +22,7 @@ class Parametrizable(dict):
 
     def __new__(cls, *args, **kwargs):
         """Add subclass to registry."""
+        # This way, the from_string constructor can match what it finds in repr strings to a class.
         cls._parametrizable_classes[cls.__name__] = cls
         return super().__new__(cls, *args, **kwargs)
 
@@ -47,6 +48,10 @@ class Parametrizable(dict):
         >>> obj2
         Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
         """
+        # This method is a basic and specific un-serializer for Parametrizable objects (and children)
+        # It uses the fact that Parametrizable classes DO NOT have real attributes: only methods and what is stored in the dict
+        # This allows for creating an empty obj with new, by passing the init and filling it with the dict method "update"
+
         # regex pattern that fully matches a string produced by Parametrizable._repr__
         match = re.fullmatch(r"(?P<class>[A-Za-z0-9_]+)\((?P<args>.*)\)", defstr)
         if not match:
@@ -58,21 +63,25 @@ class Parametrizable(dict):
                 f"Wrong class : constructor of {cls.__name__} received a string for {match.groupdict()['class']}"
             )
 
+        # Get a new instance of cls but bypassing the init, basically this returns an empty dict with the methods of cls
         obj = cls.__new__(cls)
         params = {}
         # regex pattern that matches each argument in the repr of a Parametrizable obj, distinguishing other Parametrizable classes (and their arguments) from python literals
-        print(match.groupdict()["args"] + ", ")
+        # Iterate over the matches
         for argmatch in re.finditer(
             r"(?P<name>[A-Za-z0-9_]+)=(?P<vstr>((?P<vcls>[A-Za-z0-9_]+)\((.*?)\))|.+?(?=, ))",
             match.groupdict()["args"] + ", ",
         ):
             dd = argmatch.groupdict()
             if dd["vcls"] is not None:
+                # Thus we matched another Parametrizable class repr, recursively call it "from _string"
                 params[dd["name"]] = cls._parametrizable_classes[
                     dd["vcls"]
                 ].from_string(dd["vstr"])
             else:
+                # A normal python literal
                 params[dd["name"]] = literal_eval(dd["vstr"])
+        # Update the params (Parametrizable inherits this from dict
         obj.update(params)
         return obj
 
