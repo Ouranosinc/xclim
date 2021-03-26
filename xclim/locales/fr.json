@@ -738,5 +738,11 @@
     "abstract": "Nombre maximal de jours consecutifs où la température maximale quotidienne excède un certain seuil.",
     "description": "Nombre {freq:m} maximal de jours chauds consécutifs (Tmax > {thresh}).",
     "long_name": "Nombre maximal de jours chauds consécutifs."
+  },
+  "FIRE_SEASON": {
+    "title": "Saison des incendies.",
+    "abstract": "Masque binaire de la saison des incendies, défini selon des conditions de températures quotidiennes consécutives et, optionnellement, d'épaisseurs du couvert de neige.",
+    "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
+    "long_name": "Saison des incendies"
   }
 }

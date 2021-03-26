@@ -1,4 +1,5 @@
 """Atmospheric conversion definitions."""
+from inspect import _empty
 
 from xclim import indices
 from xclim.core.indicator import Indicator
@@ -104,6 +105,7 @@ relative_humidity_from_dewpoint = Converter(
     ),
     compute=wrapped_partial(
         indices.relative_humidity,
+        suggested={"dtas": _empty},
         huss=None,
         ps=None,
         invalid_values="mask",
