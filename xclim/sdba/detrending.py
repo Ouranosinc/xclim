@@ -3,12 +3,12 @@ from typing import Union
 
 import xarray as xr
 
-from .base import Grouper, Parametrizable, parse_group
+from .base import Grouper, ParametrizableWithDataset, parse_group
 from .loess import loess_smoothing
 from .utils import ADDITIVE, apply_correction, invert
 
 
-class BaseDetrend(Parametrizable):
+class BaseDetrend(ParametrizableWithDataset):
     """Base class for detrending objects.
 
     Defines three methods:
@@ -38,8 +38,11 @@ class BaseDetrend(Parametrizable):
         kind : {'*', '+'}
             The way the trend is removed or added, either additive or multiplicative.
         """
-        self.__fitted = False
         super().__init__(group=group, kind=kind, **kwargs)
+
+    @property
+    def __fitted(self):
+        return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
@@ -47,8 +50,7 @@ class BaseDetrend(Parametrizable):
         Returns a new object storing the fit data that can be used for detrending and retrending.
         """
         new = self.__class__(**self.parameters)
-        new._set_ds(new.group.apply(new._fit, da, main_only=True))
-        new.__fitted = True
+        new.set_dataset(new.group.apply(new._fit, da, main_only=True))
         return new
 
     def get_trend(self, da: xr.DataArray):
@@ -78,10 +80,6 @@ class BaseDetrend(Parametrizable):
             raise ValueError("You must call fit() before retrending")
         trend = self.get_trend(da)
         return self._retrend(da, trend)
-
-    def _set_ds(self, ds):
-        self.ds = ds
-        self.ds.attrs["fit_params"] = str(self)
 
     def _detrend(self, da, trend):
         # Remove trend from series

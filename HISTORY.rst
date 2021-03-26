@@ -14,8 +14,10 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
 * Fire Weather indices now support dask-backed data.
+* Objects from the `xclim.sdba` submodule can be created from their string repr or from the dataset they created.
 * Fire Weather Index submodule replicates the R code of cffdrs, including fire season determination and overwintering of the drought_code.
 * New `run_bounds` and `keep_longest_run` utilities in `xclim.indices.run_length`.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~
