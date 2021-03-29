@@ -732,8 +732,7 @@ def high_precip_low_temp(
     tas_thresh: str = "-0.2 C",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """
-        Number of days with precipitation above threshold and temperature below threshold.
+    """Number of days with precipitation above threshold and temperature below threshold.
 
         Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
         threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
@@ -754,7 +753,7 @@ def high_precip_low_temp(
         Returns
         -------
         xarray.DataArray, [time]
-          Count of days with high precipitation and low temperatures
+          Count of days with high precipitation and low temperatures.
 
         Example
         -------
