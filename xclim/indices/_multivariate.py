@@ -940,6 +940,11 @@ def high_precip_low_temp(
     freq : str
       Resampling frequency.
 
+    Return
+    ------
+    xarray.DataArray, [time]
+      Count of days with high precipitation and low temperatures
+
     Example
     -------
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
