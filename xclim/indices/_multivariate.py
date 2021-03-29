@@ -731,36 +731,36 @@ def high_precip_low_temp(
     pr_thresh: str = "0.4 mm",
     tas_thresh: str = "-0.2 C",
     freq: str = "YS",
-) -> xarray.DataArray:
+) -> xarray.DataArray:  # noqa: D401
     """Number of days with precipitation above threshold and temperature below threshold.
 
-        Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
-        threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
+    Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
+    threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
 
-        Parameters
-        ----------
-        pr : xarray.DataArray
-          Mean daily precipitation flux.
-        tas : xarray.DataArray
-          Daily mean, minimum or maximum temperature.
-        pr_thresh : str
-          Precipitation threshold to exceed.
-        tas_thresh : str
-          Temperature threshold not to exceed.
-        freq : str
-          Resampling frequency.
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray
+      Daily mean, minimum or maximum temperature.
+    pr_thresh : str
+      Precipitation threshold to exceed.
+    tas_thresh : str
+      Temperature threshold not to exceed.
+    freq : str
+      Resampling frequency.
 
-        Returns
-        -------
-        xarray.DataArray, [time]
-          Count of days with high precipitation and low temperatures.
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Count of days with high precipitation and low temperatures.
 
-        Example
-        -------
-        To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
-        >>> pr = xr.open_dataset(path_to_pr_file).pr
+    Example
+    -------
+    To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     `   >>> tasmin = x.open_dataset(path_to_tasman_file).tasmin
-        >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm", tas_thresh="-0.2 C")
+    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm", tas_thresh="-0.2 C")
     """
     pr_thresh = convert_units_to(pr_thresh, pr)
     tas_thresh = convert_units_to(tas_thresh, tas)
