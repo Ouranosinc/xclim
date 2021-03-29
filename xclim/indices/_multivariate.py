@@ -751,8 +751,8 @@ def high_precip_low_temp(
     freq : str
       Resampling frequency.
 
-    Return
-    ------
+    Returns
+    -------
     xarray.DataArray, [time]
       Count of days with high precipitation and low temperatures
 
