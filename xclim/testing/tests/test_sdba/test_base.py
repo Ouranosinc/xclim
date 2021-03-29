@@ -19,6 +19,10 @@ def test_param_class():
         "group=Grouper(dim='time',"
     )
 
+    s = str(obj)
+    obj2 = Parametrizable.from_string(s)
+    assert obj.parameters == obj2.parameters
+
 
 @pytest.mark.parametrize(
     "group,window,nvals",

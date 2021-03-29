@@ -8,8 +8,7 @@ from click.testing import CliRunner
 
 import xclim
 from xclim.cli import cli
-
-from .test_fwi import get_data as fwi_get_data
+from xclim.testing import open_dataset
 
 try:
     from dask.distributed import Client
@@ -130,16 +129,24 @@ def test_multi_input(tas_series, pr_series, tmp_path):
 
 
 def test_multi_output(tmp_path):
-    ds = fwi_get_data(as_xr=True).rename(temp="tas")
-    input_file = tmp_path / "fwi_in.nc"
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    input_file = tmp_path / "ws_in.nc"
     output_file = tmp_path / "out.nc"
     ds.to_netcdf(input_file)
 
     runner = CliRunner()
     results = runner.invoke(
-        cli, ["-i", str(input_file), "-o", str(output_file), "-v", "fwi"]
+        cli,
+        [
+            "-i",
+            str(input_file),
+            "-o",
+            str(output_file),
+            "-v",
+            "wind_speed_from_vector",
+        ],
     )
-    assert "Processing : fwi" in results.output
+    assert "Processing : wind_speed_from_vector" in results.output
 
 
 def test_renaming_variable(tas_series, tmp_path):

@@ -15,13 +15,22 @@ New indicators
 * `land.snow_cover_duration` computes the number of days snow depth exceeds some minimal threshold.
 * `land.continuous_snow_cover_start` and `land.continuous_snow_cover_end` identify the day of the year when snow depth crosses a threshold for a given period of time.
 * `atmos.days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+* `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+* `fire_season`, create a fire season mask from temperature and, optionnally, snow depth timeseries.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `generic.count_domain` used to count values within low and high thresholds.
 * `run_length.season` returns a dataset storing the start, end and length of a *season*.
 * Fire Weather indices now support dask-backed data.
+* Objects from the `xclim.sdba` submodule can be created from their string repr or from the dataset they created.
+* Fire Weather Index submodule replicates the R code of cffdrs, including fire season determination and overwintering of the drought_code.
+* New `run_bounds` and `keep_longest_run` utilities in `xclim.indices.run_length`.
 
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Small changes in the output of `indices.run_length.rle`.
 
 0.24.0 (2021-03-01)
 -------------------
