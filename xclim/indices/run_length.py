@@ -318,7 +318,7 @@ def last_run(
         return reversed_da[dim].size - out - 1
     return out
 
-  
+
 # TODO: Add window arg
 # Maybe todo : Inverse window arg to tolerate holes?
 def run_bounds(
@@ -410,7 +410,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     out = out.ffill(dim) == out.max(dim)
     return da.copy(data=out.transpose(*da.dims).data)  # Keep everything the same
 
-  
+
 def season(
     da: xr.DataArray,
     window: int,
