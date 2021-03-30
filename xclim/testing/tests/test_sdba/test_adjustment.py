@@ -332,7 +332,7 @@ class TestQDM:
         )
 
         # Test predict
-        np.testing.assert_allclose(p, ref, rtol=0.1, atol=0.2)
+        np.testing.assert_allclose(p, ref.transpose(*p.dims), rtol=0.1, atol=0.2)
 
     def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
