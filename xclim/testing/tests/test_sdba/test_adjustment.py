@@ -26,7 +26,7 @@ from .utils import nancov
 
 @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
 class TestLoci:
-    def test_time(self, series, group, dec):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path):
         n = 10000
         u = np.random.rand(n)
 
@@ -49,6 +49,17 @@ class TestLoci:
 
         assert "xclim_history" in p.attrs
         assert "Bias-adjusted with LOCI(" in p.attrs["xclim_history"]
+
+        file = tmp_path / "test_loci.nc"
+        loci.ds.to_netcdf(file)
+
+        ds = xr.open_dataset(file)
+        loci2 = LOCI.from_dataset(ds)
+
+        xr.testing.assert_equal(loci.ds, loci2.ds)
+
+        p2 = loci2.adjust(sim)
+        np.testing.assert_array_equal(p, p2)
 
 
 @pytest.mark.slow
@@ -205,7 +216,7 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon(self, cannon_2015_rvs):
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path):
         ref, hist, sim = cannon_2015_rvs(15000)
 
         DQM = DetrendedQuantileMapping(kind="*", group="time")
@@ -214,6 +225,17 @@ class TestDQM:
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
+
+        file = tmp_path / "test_dqm.nc"
+        DQM.ds.to_netcdf(file)
+
+        ds = xr.open_dataset(file)
+        DQM2 = DetrendedQuantileMapping.from_dataset(ds)
+
+        xr.testing.assert_equal(DQM.ds, DQM2.ds)
+
+        p2 = DQM2.adjust(sim)
+        np.testing.assert_array_equal(p, p2)
 
 
 @pytest.mark.slow

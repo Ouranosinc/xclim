@@ -1,4 +1,6 @@
 """Base classes."""
+import re
+from ast import literal_eval
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union
@@ -20,6 +22,73 @@ class Parametrizable(dict):
     :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
+    _parametrizable_classes = {}
+
+    def __new__(cls, *args, **kwargs):
+        """Add subclass to registry."""
+        # This way, the from_string constructor can match what it finds in repr strings to a class.
+        cls._parametrizable_classes[cls.__name__] = cls
+        return super().__new__(cls, *args, **kwargs)
+
+    @classmethod
+    def from_string(cls, defstr: str):
+        """Create an instance of this object from a string.
+
+        The string must have been created with `str(object)` where object has the same type
+        as this object. The resulting instance might be slightly different than the original one.
+
+        Parameters
+        ----------
+        defstr : str
+          String providing the definition of the object.
+
+        Examples
+        --------
+        >>> obj = Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
+        >>> ss = str(obj)
+        >>> obj2 = Parametrizable.from_string(ss)
+        >>> obj
+        Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
+        >>> obj2
+        Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
+        """
+        # This method is a basic and specific un-serializer for Parametrizable objects (and children)
+        # It uses the fact that Parametrizable classes DO NOT have real attributes: only methods and what is stored in the dict
+        # This allows for creating an empty obj with new, by passing the init and filling it with the dict method "update"
+
+        # regex pattern that fully matches a string produced by Parametrizable._repr__
+        match = re.fullmatch(r"(?P<class>[A-Za-z0-9_]+)\((?P<args>.*)\)", defstr)
+        if not match:
+            raise ValueError(
+                f"Received malformed string for creating a {cls.__name__} instance. ({defstr})"
+            )
+        if match.groupdict()["class"] != cls.__name__:
+            raise ValueError(
+                f"Wrong class : constructor of {cls.__name__} received a string for {match.groupdict()['class']}"
+            )
+
+        # Get a new instance of cls but bypassing the init, basically this returns an empty dict with the methods of cls
+        obj = cls.__new__(cls)
+        params = {}
+        # regex pattern that matches each argument in the repr of a Parametrizable obj, distinguishing other Parametrizable classes (and their arguments) from python literals
+        # Iterate over the matches
+        for argmatch in re.finditer(
+            r"(?P<name>[A-Za-z0-9_]+)=(?P<vstr>((?P<vcls>[A-Za-z0-9_]+)\((.*?)\))|.+?(?=, ))",
+            match.groupdict()["args"] + ", ",
+        ):
+            dd = argmatch.groupdict()
+            if dd["vcls"] is not None:
+                # Thus we matched another Parametrizable class repr, recursively call it "from _string"
+                params[dd["name"]] = cls._parametrizable_classes[
+                    dd["vcls"]
+                ].from_string(dd["vstr"])
+            else:
+                # A normal python literal
+                params[dd["name"]] = literal_eval(dd["vstr"])
+        # Update the params (Parametrizable inherits this from dict
+        obj.update(params)
+        return obj
+
     def __getattr__(self, attr):
         """Get attributes."""
         try:
@@ -37,6 +106,33 @@ class Parametrizable(dict):
         """Return a string representation that allows eval to recreate it."""
         params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
         return f"{self.__class__.__name__}({params})"
+
+
+class ParametrizableWithDataset(Parametrizable):
+    """Parametrizeable class that also has a `ds` attribute storing a dataset."""
+
+    _attribute = "params"
+
+    @classmethod
+    def from_dataset(cls, ds: xr.Dataset):
+        """Create an instance from a dataset.
+
+        The dataset must have a global attribute with a name corresponding to `self.__attribute`,
+        and that attribute must be the result of `str(object)` where object is of the same type as
+        this object.
+        """
+        defstr = ds.attrs[cls._attribute]
+        obj = cls.from_string(defstr)
+        obj.set_dataset(ds)
+        return obj
+
+    def set_dataset(self, ds: xr.Dataset):
+        """Stores an xarray dataset in the `ds` attribute.
+
+        Useful with custom object initialization or if some external processing was performed.
+        """
+        self.ds = ds
+        self.ds.attrs[self._attribute] = str(self)
 
 
 class Grouper(Parametrizable):

@@ -29,6 +29,8 @@ __all__ = [
     "daily_pr_intensity",
     "degree_days_exceedance_date",
     "cooling_degree_days",
+    "continuous_snow_cover_end",
+    "continuous_snow_cover_start",
     "days_with_snow",
     "freshet_start",
     "growing_degree_days",
@@ -44,11 +46,13 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "snow_cover_duration",
     "tn_days_below",
     "tx_days_above",
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
+    "winter_storm",
     "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
@@ -144,6 +148,97 @@ def cold_spell_frequency(
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_cover_end(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""End date of continuous snow cover.
+
+    First day after the start of the continuous snow cover when snow depth is below `threshold` for at least
+    `window` consecutive days.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    window : int
+      Minimum number of days with snow depth below threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      First day after the start of the continuous snow cover when the snow depth goes below a threshold
+      for a minimum duration.
+      If there is no such day, return np.nan.
+
+    References
+    ----------
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    """
+    thresh = convert_units_to(thresh, snd)
+    cond = snd >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(rl.season, window=window, dim="time", coord="dayofyear")
+        .end
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_cover_start(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""Start date of continuous snow cover.
+
+    Day of year when snow depth is above `threshold` for at least `window` consecutive days.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    window : int
+      Minimum number of days with snow depth above or equal to threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      First day of the year when the snow depth is superior to a threshold for a minimum duration.
+      If there is no such day, return np.nan.
+
+    References
+    ----------
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    """
+    thresh = convert_units_to(thresh, snd)
+    cond = snd >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(
+            rl.season,
+            window=window,
+            dim="time",
+            coord="dayofyear",
+        )
+        .start
+    )
     out.attrs["units"] = ""
     return out
 
@@ -772,6 +867,11 @@ def first_snowfall(
     xarray.DataArray, [dimensionless]
       First day of the year when the solid precipitation  is superior to a threshold,
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
+    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -811,6 +911,11 @@ def last_snowfall(
     xarray.DataArray, [dimensionless]
       Last day of the year when the solid precipitation is superior to a threshold,
       If there is no such day, return np.nan.
+
+    References
+    ----------
+    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
+    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -852,6 +957,11 @@ def days_with_snow(
     -------
     xarray.DataArray, [time]
       Number of days where snowfall is between low and high thresholds.
+
+    References
+    ----------
+    Matthews, L., Andrey, J., & Picketts, I. (2017). Planning for Winter Road Maintenance in the Context of Climate
+    Change, Weather, Climate, and Society, 9(3), 521-532, https://doi.org/10.1175/WCAS-D-16-0103.1
     """
     low = convert_units_to(low, prsn)
     high = convert_units_to(high, prsn)
@@ -1043,6 +1153,34 @@ def hot_spell_frequency(
     out = group.map(rl.windowed_run_events, window=window, dim="time")
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def snow_cover_duration(
+    snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    """Number of days with snow depth above a threshold.
+
+    Number of days where surface snow depth is greater or equal to given threshold.
+    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow thickness.
+    thresh : str
+      Threshold snow thickness.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where snow depth is greater or equal to threshold.
+    """
+    thresh = convert_units_to(thresh, snd)
+    out = threshold_count(snd, ">=", thresh, freq)
+    return to_agg_units(out, snd, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -1583,4 +1721,41 @@ def degree_days_exceedance_date(
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs["units"] = ""
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def winter_storm(snd: xarray.DataArray, thresh: str = "25 cm", freq="AS-JUL"):
+    """
+    Days with snowfall over threshold.
+
+    Number of days with snowfall accumulation greater or equal to threshold.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow depth.
+    thresh : str
+      Threshold on snowfall accumulation require to label an event a `winter storm`.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days per period identified as winter storms.
+
+    Notes
+    -----
+    Snowfall accumulation is estimated by the change in snow depth.
+    """
+    thresh = convert_units_to(thresh, snd)
+
+    # Compute daily accumulation
+    acc = snd.diff(dim="time")
+
+    # Winter storm condition
+    out = threshold_count(acc, ">=", thresh, freq)
+
+    out.attrs["units"] = to_agg_units(out, snd, "count")
     return out

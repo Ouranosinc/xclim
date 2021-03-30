@@ -3,12 +3,12 @@ from typing import Union
 
 import xarray as xr
 
-from .base import Grouper, Parametrizable, map_groups, parse_group
+from .base import Grouper, ParametrizableWithDataset, map_groups, parse_group
 from .loess import loess_smoothing
 from .utils import ADDITIVE, apply_correction, invert
 
 
-class BaseDetrend(Parametrizable):
+class BaseDetrend(ParametrizableWithDataset):
     """Base class for detrending objects.
 
     Defines three methods:
@@ -42,7 +42,10 @@ class BaseDetrend(Parametrizable):
             The way the trend is removed or added, either additive or multiplicative.
         """
         super().__init__(group=group, kind=kind, **kwargs)
-        self.__fitted = False
+
+    @property
+    def fitted(self):
+        return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
@@ -50,7 +53,7 @@ class BaseDetrend(Parametrizable):
         Returns a new object that can be used for detrending and retrending. Fitted objects are unique to the fitted coordinate used.
         """
         new = self.__class__(**self.parameters)
-        new._set_trend(new._get_trend(da))
+        new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
         return new
 
     def _get_trend(self, da: xr.DataArray):
@@ -71,20 +74,15 @@ class BaseDetrend(Parametrizable):
 
     def detrend(self, da: xr.DataArray):
         """Remove the previously fitted trend from a DataArray."""
-        if not self.__fitted:
+        if not self.fitted:
             raise ValueError("You must call fit() before detrending.")
         return self._detrend(da, self.trend)
 
     def retrend(self, da: xr.DataArray):
         """Put the previously fitted trend back on a DataArray."""
-        if not self.__fitted:
+        if not self.fitted:
             raise ValueError("You must call fit() before retrending")
         return self._retrend(da, self.trend)
-
-    def _set_trend(self, trend):
-        self.__fitted = True
-        self.trend = trend
-        self.trend.attrs["fit_params"] = str(self)
 
     def _detrend(self, da, trend):
         # Remove trend from series
@@ -96,10 +94,6 @@ class BaseDetrend(Parametrizable):
 
     def _get_trend_group(self, grpd, dim="time"):
         raise NotImplementedError
-
-    @property
-    def fitted(self):
-        return self.__fitted
 
     def __repr__(self):
         rep = super().__repr__()

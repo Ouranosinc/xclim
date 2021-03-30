@@ -20,7 +20,7 @@ from ._adjustment import (
     scaling_adjust,
     scaling_train,
 )
-from .base import Grouper, Parametrizable, parse_group
+from .base import Grouper, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
 from .utils import ADDITIVE, best_pc_orientation, equally_spaced_nodes, pc_matrix
 
@@ -42,18 +42,31 @@ def _raise_on_multiple_chunk(da, main_dim):
         )
 
 
-class BaseAdjustment(Parametrizable):
-    """Base class for adjustment objects."""
+class BaseAdjustment(ParametrizableWithDataset):
+    """Base class for adjustment objects.
+
+    Children classes should implement:
+
+    __init__(**kwargs)
+      For fully functioning `Parametrizable` subclasses, the init should only pass kwargs the
+      base class. It could set some, after the super().__init__(), but only through bracket
+      access (self['abc'] = abc). All parameters should be simple python literals or other
+      `Parametrizable` subclasses instances.
+
+    _train(ref, hist)
+      Receiving the training target and data, returning a training dataset.
+
+    _adjust(sim, **kwargs)
+      Receiving the projected data and some arguments, returning the `scen` dataarray.
+
+    """
 
     _hist_calendar = None
+    _attribute = "adj_params"
 
-    def __init__(self, **kwargs):
-        """Initialize base object for adjustment algorithms.
-
-        Subclasses should implement the `_train` and `_adjust` methods.
-        """
-        self.__trained = False
-        super().__init__(**kwargs)
+    @property
+    def __trained(self):
+        return hasattr(self, "ds")
 
     def train(
         self,
@@ -90,10 +103,9 @@ class BaseAdjustment(Parametrizable):
                     stacklevel=4,
                 )
 
-        self._train(ref, hist)
-        self.ds.attrs["adj_params"] = str(self)
+        ds = self._train(ref, hist)
+        self.set_dataset(ds)
         self._hist_calendar = get_calendar(hist)
-        self.__trained = True
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -135,7 +147,7 @@ class BaseAdjustment(Parametrizable):
         scen.attrs["bias_adjustment"] = infostr
         return scen
 
-    def _train(self, ref, hist):
+    def _train(self, ref: DataArray, hist: DataArray):
         raise NotImplementedError
 
     def _adjust(self, sim, **kwargs):
@@ -197,21 +209,22 @@ class EmpiricalQuantileMapping(BaseAdjustment):
             equally_spaced_nodes(self.nquantiles, eps=1e-6), dtype="float32"
         )
 
-        self.ds = eqm_train(
+        ds = eqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
             group=self.group,
             kind=self.kind,
             quantiles=quantiles,
         )
 
-        self.ds.af.attrs.update(
+        ds.af.attrs.update(
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        self.ds.hist_q.attrs.update(
+        ds.hist_q.attrs.update(
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
+        return ds
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
         return qm_adjust(
@@ -303,25 +316,26 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             equally_spaced_nodes(self.nquantiles, eps=1e-6), dtype="float32"
         )
 
-        self.ds = dqm_train(
+        ds = dqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
             group=self.group,
             quantiles=quantiles,
             kind=self.kind,
         )
 
-        self.ds.af.attrs.update(
+        ds.af.attrs.update(
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        self.ds.hist_q.attrs.update(
+        ds.hist_q.attrs.update(
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        self.ds.scaling.attrs.update(
+        ds.scaling.attrs.update(
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
+        return ds
 
     def _adjust(
         self,
@@ -462,7 +476,7 @@ class LOCI(BaseAdjustment):
         )
         ds.af.attrs.update(long_name="LOCI adjustment factors")
         ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
-        self.ds = ds
+        return ds
 
     def _adjust(self, sim, interp="linear"):
         return loci_adjust(
@@ -506,7 +520,7 @@ class Scaling(BaseAdjustment):
             xr.Dataset({"ref": ref, "hist": hist}), group=self.group, kind=self.kind
         )
         ds.af.attrs.update(long_name="Scaling adjustment factors")
-        self.ds = ds
+        return ds
 
     def _adjust(self, sim, interp="nearest"):
         return scaling_adjust(
@@ -686,9 +700,11 @@ class PrincipalComponents(BaseAdjustment):
         hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
-        self.ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
-        self.ds.attrs["_reference_coord"] = lbl_R
-        self.ds.attrs["_model_coord"] = lbl_M
+        ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
+
+        ds.attrs["_reference_coord"] = lbl_R
+        ds.attrs["_model_coord"] = lbl_M
+        return ds
 
     def _adjust(self, sim):
         lbl_R = self.ds.attrs["_reference_coord"]

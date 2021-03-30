@@ -26,6 +26,7 @@ __all__ = [
     "first_snowfall",
     "days_with_snow",
     "days_over_precip_thresh",
+    "high_precip_low_temp",
     "fraction_over_precip_thresh",
     "liquid_precip_ratio",
 ]
@@ -223,7 +224,7 @@ drought_code = PrTas(
     units="",
     standard_name="drought_code",
     long_name="Drought Code",
-    description="Numeric rating of the average moisture content of organic layers. Computed with start up method {start_up_mode}",
+    description="Numeric rating of the average moisture content of organic layers.",
     compute=indices.drought_code,
     missing="skip",
 )
@@ -250,9 +251,9 @@ fire_weather_indexes = Daily(
         "Fire Weather Index",
     ],
     description=[
-        "Numeric rating of the average moisture content of deep, compact organic layers. Computed with start up method {start_up_mode}",
-        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth. Computed with start up method {start_up_mode}",
-        "Numeric rating of the average moisture content of litter and other cured fine fuels. Computed with start up method {start_up_mode}",
+        "Numeric rating of the average moisture content of deep, compact organic layers.",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels.",
         "Numeric rating of the expected rate of fire spread.",
         "Numeric rating of the total amount of fuel available for combustion.",
         "Numeric rating of fire intensity.",
@@ -297,6 +298,15 @@ days_over_precip_thresh = Pr(
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
+)
+
+
+high_precip_low_temp = PrTasx(
+    identifier="high_precip_low_temp",
+    description="{freq} number of days with precipitation above {pr_thresh} and temperature below {tas_thresh}.",
+    units="days",
+    cell_methods="time: sum over days",
+    compute=indices.high_precip_low_temp,
 )
 
 

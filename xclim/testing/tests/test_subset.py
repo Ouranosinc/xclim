@@ -669,14 +669,14 @@ class TestSubsetShape:
 
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tas.isel(time=0))), 285.064453
+            float(np.mean(sub.tas.isel(time=0))), 285.064, 3
         )
         self.compare_vals(ds, sub, "tas")
 
         poly = gpd.read_file(self.meridian_multi_geojson)
         subtas = subset.subset_shape(ds.tas, poly)
         np.testing.assert_array_almost_equal(
-            float(np.mean(subtas.isel(time=0))), 281.091553
+            float(np.mean(subtas.isel(time=0))), 281.092, 3
         )
 
         assert sub.crs.prime_meridian_name == "Greenwich"
@@ -701,7 +701,7 @@ class TestSubsetShape:
 
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tas.isel(time=0))), 276.732483
+            float(np.mean(sub.tas.isel(time=0))), 276.732, 3
         )
         # Check that no warnings are raised for meridian crossing
         assert (
@@ -729,7 +729,7 @@ class TestSubsetShape:
 
         # Average temperature at surface for region in January (time=0)
         np.testing.assert_array_almost_equal(
-            float(np.mean(sub.tasmax.isel(time=0))), 269.2540588378906
+            float(np.mean(sub.tasmax.isel(time=0))), 269.254, 3
         )
         # Check that no warnings are raised for meridian crossing
         assert (

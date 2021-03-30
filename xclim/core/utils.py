@@ -249,6 +249,11 @@ class InputKind(IntEnum):
 
        Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
     """
+    BOOL = 9
+    """A boolean flag.
+
+       Annotation : ``bool``, or optional thereof.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -320,6 +325,9 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     if _typehint_is_in(param.annotation, (None, DateStr)):
         return InputKind.DATE
+
+    if _typehint_is_in(param.annotation, (None, bool)):
+        return InputKind.BOOL
 
     if _typehint_is_in(param.annotation, (None, Dataset)):
         return InputKind.DATASET

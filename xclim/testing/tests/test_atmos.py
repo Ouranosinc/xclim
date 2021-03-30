@@ -139,3 +139,19 @@ def test_rain_approximation(pr_series, tas_series):
     np.testing.assert_allclose(
         prlp, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3
     )
+
+
+def test_high_precip_low_temp(pr_series, tasmin_series):
+    pr = np.zeros(365)
+    pr[1:3] = [1, 2]
+    pr = pr_series(pr, start="1999-01-01")
+
+    tas = np.zeros(365)
+    tas[2:4] = [1, 1]
+    tas += K2C
+    tas = tasmin_series(tas, start="1999-01-01")
+
+    out = atmos.high_precip_low_temp(
+        pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C"
+    )
+    np.testing.assert_array_equal(out, [1])
