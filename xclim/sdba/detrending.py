@@ -76,13 +76,13 @@ class BaseDetrend(ParametrizableWithDataset):
         """Remove the previously fitted trend from a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before detrending.")
-        return self._detrend(da, self.trend)
+        return self._detrend(da, self.ds.trend)
 
     def retrend(self, da: xr.DataArray):
         """Put the previously fitted trend back on a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before retrending")
-        return self._retrend(da, self.trend)
+        return self._retrend(da, self.ds.trend)
 
     def _detrend(self, da, trend):
         # Remove trend from series

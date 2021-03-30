@@ -287,7 +287,7 @@ class Grouper(Parametrizable):
         """
         if self.prop == "group":
             if self.dim == "time":
-                return xr.full_like(da[self.dim], True, dtype=bool).rename("group")
+                return xr.full_like(da[self.dim], 1, dtype=int).rename("group")
             return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
