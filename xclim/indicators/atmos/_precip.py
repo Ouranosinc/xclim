@@ -26,6 +26,7 @@ __all__ = [
     "first_snowfall",
     "days_with_snow",
     "days_over_precip_thresh",
+    "high_precip_low_temp",
     "fraction_over_precip_thresh",
     "liquid_precip_ratio",
 ]
@@ -297,6 +298,15 @@ days_over_precip_thresh = Pr(
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
+)
+
+
+high_precip_low_temp = PrTasx(
+    identifier="high_precip_low_temp",
+    description="{freq} number of days with precipitation above {pr_thresh} and temperature below {tas_thresh}.",
+    units="days",
+    cell_methods="time: sum over days",
+    compute=indices.high_precip_low_temp,
 )
 
 

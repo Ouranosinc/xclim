@@ -26,6 +26,7 @@ from .generic import select_resample_op, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "blowing_snow",
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "daily_freezethaw_cycles",
@@ -37,6 +38,7 @@ __all__ = [
     "heat_wave_frequency",
     "heat_wave_max_length",
     "heat_wave_total_length",
+    "high_precip_low_temp",
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
@@ -717,6 +719,57 @@ def rain_on_frozen_ground_days(
     return to_agg_units(out, tas, "count")
 
 
+@declare_units(
+    pr="[precipitation]",
+    tas="[temperature]",
+    pr_thresh="[precipitation]",
+    tas_thresh="[temperature]",
+)
+def high_precip_low_temp(
+    pr: xarray.DataArray,
+    tas: xarray.DataArray,
+    pr_thresh: str = "0.4 mm/d",
+    tas_thresh: str = "-0.2 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:  # noqa: D401
+    """Number of days with precipitation above threshold and temperature below threshold.
+
+    Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
+    threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray
+      Daily mean, minimum or maximum temperature.
+    pr_thresh : str
+      Precipitation threshold to exceed.
+    tas_thresh : str
+      Temperature threshold not to exceed.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Count of days with high precipitation and low temperatures.
+
+    Example
+    -------
+    To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
+    """
+    pr_thresh = convert_units_to(pr_thresh, pr)
+    tas_thresh = convert_units_to(tas_thresh, tas)
+
+    cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
+    out = cond.resample(time=freq).sum(dim="time")
+    return to_agg_units(out, pr, "count")
+
+
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
 def days_over_precip_thresh(
     pr: xarray.DataArray,
@@ -1228,3 +1281,53 @@ def winter_rain_ratio(
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
     return ratio.sel(time=winter)
+
+
+@declare_units(
+    snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]"
+)
+def blowing_snow(
+    snd: xarray.DataArray,
+    sfcWind: xarray.DataArray,
+    snd_thresh: str = "5 cm",
+    sfcWind_thresh: str = "15 km/h",
+    window: int = 3,
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    """
+    Days with blowing snow events
+
+    Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow depth.
+    sfcWind : xr.DataArray
+      Wind velocity
+    snd_thresh : str
+      Threshold on net snowfall accumulation over the last `window` days.
+    sfcWind_thresh : str
+      Wind speed threshold.
+    window : int
+      Period over which snow is accumulated before comparing against threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days where snowfall and wind speeds are above respective thresholds.
+    """
+    snd_thresh = convert_units_to(snd_thresh, snd)
+    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
+
+    # Net snow accumulation over the last `window` days
+    snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
+
+    # Blowing snow conditions
+    cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
+
+    out = cond.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = to_agg_units(out, snd, "count")
+    return out

@@ -269,7 +269,7 @@ def ws_series():
             dims="time",
             name="ws",
             attrs={
-                "standard_name": "wind speed",
+                "standard_name": "wind_speed",
                 "units": "km h-1",
             },
         )
@@ -293,6 +293,42 @@ def huss_series():
         )
 
     return _huss_series
+
+
+@pytest.fixture
+def snd_series():
+    def _snd_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="snd",
+            attrs={
+                "standard_name": "surface_snow_thickness",
+                "units": "m",
+            },
+        )
+
+    return _snd_series
+
+
+@pytest.fixture
+def swe_series():
+    def _swe_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="swe",
+            attrs={
+                "standard_name": "liquid_water_content_of_surface_snow",
+                "units": "kg/m2",
+            },
+        )
+
+    return _swe_series
 
 
 @pytest.fixture

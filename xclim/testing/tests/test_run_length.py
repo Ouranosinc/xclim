@@ -490,3 +490,20 @@ def test_lazy_indexing_special_cases(use_dask):
     c = xr.DataArray([1], dims=("x",)).chunk()[0]
     b["z"] = np.arange(b.z.size)
     rl.lazy_indexing(b, c)
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_season(use_dask, tas_series):
+    t = np.zeros(360)
+    t[140:150] = 1
+    tas = tas_series(t, start="2000-01-01")
+    runs = xr.concat((tas, tas), dim="dim0")
+    runs = runs >= 1
+
+    if use_dask:
+        runs = runs.chunk({"time": 10, "dim0": 1})
+
+    out = rl.season(runs, window=2)
+    np.testing.assert_array_equal(out.start.load(), [140, 140])
+    np.testing.assert_array_equal(out.end.load(), [150, 150])
+    np.testing.assert_array_equal(out.length.load(), [10, 10])
