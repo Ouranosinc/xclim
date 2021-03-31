@@ -5,6 +5,10 @@ History
 0.25.0 2021-03-31)
 ------------------
 
+Announcements
+~~~~~~~~~~~~~
+* Deprecation: Release 0.25.0 of `xclim` will be the last version to explicitly support Python3.6 and `xarray<0.17.0`.
+
 New indicators
 ~~~~~~~~~~~~~~
 * `land.winter_storm` computes days with snow accumulation over threshold.
