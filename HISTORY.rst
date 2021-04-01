@@ -2,8 +2,16 @@
 History
 =======
 
-0.25.0 2021-03-31)
-------------------
+0.26.0 (unreleased)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Fix the `from_string` object creation in sdba.
+
+
+0.25.0 (2021-03-31)
+-------------------
 
 Announcements
 ~~~~~~~~~~~~~
