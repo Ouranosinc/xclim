@@ -18,13 +18,14 @@ class Parametrizable(dict):
     :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
     """
 
-    _parametrizable_classes = {}
-
-    def __new__(cls, *args, **kwargs):
-        """Add subclass to registry."""
-        # This way, the from_string constructor can match what it finds in repr strings to a class.
-        cls._parametrizable_classes[cls.__name__] = cls
-        return super().__new__(cls, *args, **kwargs)
+    @classmethod
+    def _get_subclasses(cls):
+        """Return a dict of all the subclasses of the current class and recursively for those subclasses."""
+        subcls = {}
+        for sub in cls.__subclasses__():
+            subcls[sub.__name__] = sub
+            subcls.update(sub._get_subclasses())
+        return subcls
 
     @classmethod
     def from_string(cls, defstr: str):
@@ -75,7 +76,7 @@ class Parametrizable(dict):
             dd = argmatch.groupdict()
             if dd["vcls"] is not None:
                 # Thus we matched another Parametrizable class repr, recursively call it "from _string"
-                params[dd["name"]] = cls._parametrizable_classes[
+                params[dd["name"]] = Parametrizable._get_subclasses()[
                     dd["vcls"]
                 ].from_string(dd["vstr"])
             else:
