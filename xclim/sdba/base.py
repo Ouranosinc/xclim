@@ -21,7 +21,7 @@ class Parametrizable(dict):
     @classmethod
     def _get_subclasses(cls):
         """Return a dict of all the subclasses of the current class and recursively for those subclasses."""
-        subcls = {}
+        subcls = {cls.__name__: cls}
         for sub in cls.__subclasses__():
             subcls[sub.__name__] = sub
             subcls.update(sub._get_subclasses())
