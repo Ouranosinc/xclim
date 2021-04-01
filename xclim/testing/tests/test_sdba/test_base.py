@@ -5,6 +5,10 @@ import xarray as xr
 from xclim.sdba.base import Grouper, Parametrizable
 
 
+class ATestSubClass(Parametrizable):
+    pass
+
+
 def test_param_class():
     gr = Grouper(group="time.month")
     in_params = dict(
@@ -14,14 +18,16 @@ def test_param_class():
 
     assert obj.parameters == in_params
 
-    repr(obj).startswith(
-        "ParametrizableClass(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
+    assert repr(obj).startswith(
+        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
         "group=Grouper(dim='time',"
     )
 
     s = str(obj)
     obj2 = Parametrizable.from_string(s)
     assert obj.parameters == obj2.parameters
+
+    assert "ATestSubClass" in Parametrizable._get_subclasses()
 
 
 @pytest.mark.parametrize(
