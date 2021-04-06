@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.6
+          python-version: 3.7
       - name: Install tox
         run: pip install tox
       - name: Run linting suite
@@ -42,13 +42,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [py37-xarray, py38-slow]
-        python-version: [3.7, 3.8]
+        tox-env: [py37-xarray, py38-slow, py39]
+        python-version: [3.7, 3.8, 3.9]
         exclude:
           - tox-env: py37-xarray
-            python-version: 3.8
+            python-version: [3.8, 3.9]
           - tox-env: py38-slow
-            python-version: 3.7
+            python-version: [3.7, 3.9]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
