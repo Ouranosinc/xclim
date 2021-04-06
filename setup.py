@@ -20,7 +20,7 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.16",
+    "xarray>=0.17",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
@@ -72,7 +72,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

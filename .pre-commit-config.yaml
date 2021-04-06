@@ -31,7 +31,7 @@ repos:
     hooks:
     -   id: black
         language_version: python3
-        args: ["--target-version", "py36"]
+        args: ["--target-version", "py37"]
 -   repo: https://github.com/pycqa/flake8
     rev: 3.8.4
     hooks:
