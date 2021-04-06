@@ -72,7 +72,7 @@ TRANSLATABLE_ATTRS = [
 
 def list_locales():
     """Return a list of available locales in xclim."""
-    locale_list = pkg_resources.resource_listdir("xclim.locales", "")
+    locale_list = pkg_resources.resource_listdir("xclim.data", "")
     return [locale.split(".")[0] for locale in locale_list if locale.endswith(".json")]
 
 
@@ -146,7 +146,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
         return (
             locale,
-            json.load(pkg_resources.resource_stream("xclim.locales", f"{locale}.json")),
+            json.load(pkg_resources.resource_stream("xclim.data", f"{locale}.json")),
         )
     if isinstance(locale[1], dict):
         return locale

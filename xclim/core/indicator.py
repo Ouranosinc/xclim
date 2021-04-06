@@ -43,7 +43,7 @@ registry = {}  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
-def _parse_indice(indice: Callable, **new_kwargs):
+def _parse_indice(indice: Callable, passed=None, **new_kwargs):
     """Parse an indice function and return all elements needed for constructing an indicator.
 
     Parameters
@@ -68,6 +68,7 @@ def _parse_indice(indice: Callable, **new_kwargs):
     """
     # Base signature
     sig = signature(indice)
+    passed = passed or {}
 
     # Update
     def _upd_param(param):
@@ -82,13 +83,12 @@ def _parse_indice(indice: Callable, **new_kwargs):
         else:
             annot = param.annotation
 
-        if param.default is _empty:
+        default = passed.get(param.name, {}).get("default", param.default)
+        if default is _empty:
             if param.annotation is DataArray:
                 default = param.name
             else:
                 default = None
-        else:
-            default = param.default
 
         return Parameter(
             param.name,
@@ -142,6 +142,7 @@ def _parse_indice(indice: Callable, **new_kwargs):
         param_doc = params.setdefault(name, {"description": ""})
         param_doc["default"] = param.default
         param_doc["kind"] = infer_kind_from_parameter(param, "units" in param_doc)
+        param_doc.update(passed.get(name, {}))
 
     return indice_wrapper, parsed, params
 
@@ -320,6 +321,7 @@ class Indicator(IndicatorRegistrar):
         # Parse docstring of the compute function, its signature and its parameters
         kwds["_indcompute"], docmeta, params = _parse_indice(
             kwds["compute"],
+            passed=kwds.get("parameters"),
             ds={
                 "annotation": Dataset,
                 "description": "A dataset with the variables given by name.",
@@ -402,6 +404,16 @@ class Indicator(IndicatorRegistrar):
                 if value:
                     attrs[name] = value
         return cf_attrs
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an indicator subclass and instance from a dictionary of parameters.
+
+        The exact structure of the dictionary is detailed in :py:mod:`xclim.core.yaml`.
+        """
+        from .yaml import create_indicator
+
+        return create_indicator(data, base=cls)
 
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
