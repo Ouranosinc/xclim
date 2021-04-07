@@ -845,7 +845,7 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
         input_core_dims=[["time"]],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.int],
+        output_dtypes=[int],
         keep_attrs=True,
         kwargs={"window": window},
     )
@@ -872,7 +872,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
         input_core_dims=[["time"]],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.int],
+        output_dtypes=[int],
         keep_attrs=True,
         kwargs={"window": window},
     )
@@ -897,7 +897,7 @@ def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> xr.DataArray:
         input_core_dims=[["time"]],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.int],
+        output_dtypes=[int],
         keep_attrs=True,
     )
 
@@ -927,7 +927,7 @@ def first_run_ufunc(
         input_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.float],
+        output_dtypes=[float],
         keep_attrs=True,
         kwargs={"window": window},
     )
