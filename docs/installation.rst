@@ -83,6 +83,6 @@ To create a conda development environment including all xclim dependencies, ente
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.6 --file=requirements_dev.txt
+    $ conda create -n my_xclim_env python=3.7 --file=requirements_dev.txt
     $ conda activate my_xclim_env
     $ pip install .[dev]

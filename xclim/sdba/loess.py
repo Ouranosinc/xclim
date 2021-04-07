@@ -165,5 +165,5 @@ def loess_smoothing(
             "reg_func": reg_func,
         },
         dask="parallelized",
-        output_dtypes=[np.float],
+        output_dtypes=[float],
     )
