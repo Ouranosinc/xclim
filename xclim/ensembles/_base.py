@@ -239,7 +239,7 @@ def ensemble_percentiles(
         kwargs=dict(p=values),
         dask="parallelized",
         output_dtypes=[ens.dtype],
-        output_sizes={"percentiles": len(values)},
+        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
     )
 
     out = out.assign_coords(

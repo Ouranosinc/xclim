@@ -276,7 +276,7 @@ def nearest_neighbor(x, y):
     # Pool the samples and find the nearest neighbours
     xy = np.vstack([x, y])
     tree = KDTree(xy)
-    _, ind = tree.query(xy, k=2, eps=0, p=2, n_jobs=2)
+    _, ind = tree.query(xy, k=2, eps=0, p=2, workers=2)
 
     # Identify points whose neighbors are from the same sample
     same = ~np.logical_xor(*(ind < nx).T)
@@ -538,8 +538,8 @@ def kldiv(x, y, *, k=1):
     # Get the k'th nearest neighbour from each points in x for both x and y.
     # We get the values for K + 1 to make sure the output is a 2D array.
     kmax = max(ka) + 1
-    r, _ = xtree.query(x, k=kmax, eps=0, p=2, n_jobs=2)
-    s, _ = ytree.query(x, k=kmax, eps=0, p=2, n_jobs=2)
+    r, _ = xtree.query(x, k=kmax, eps=0, p=2, workers=2)
+    s, _ = ytree.query(x, k=kmax, eps=0, p=2, workers=2)
 
     # There is a mistake in the paper. In Eq. 14, the right side misses a
     # negative sign on the first term of the right hand side.
