@@ -418,7 +418,7 @@ def interp_on_quantiles(
             output_core_dims=[[dim]],
             vectorize=True,
             dask="parallelized",
-            output_dtypes=[np.float],
+            output_dtypes=[float],
         )
     # else:
 

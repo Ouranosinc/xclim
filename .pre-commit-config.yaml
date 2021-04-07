@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.10.0
+    rev: v2.11.0
     hooks:
     -   id: pyupgrade
         language_version: python3
@@ -31,9 +31,9 @@ repos:
     hooks:
     -   id: black
         language_version: python3
-        args: ["--target-version", "py36"]
+        args: ["--target-version", "py37"]
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.0
     hooks:
     -   id: flake8
         language_version: python3
@@ -44,13 +44,13 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.7.0
+    rev: 5.8.0
     hooks:
     -   id: isort
         language_version: python3
         args: ['--profile', 'black']
 -   repo: https://github.com/pycqa/pydocstyle
-    rev: 5.1.1
+    rev: 6.0.0
     hooks:
     -   id: pydocstyle
         language_version: python3
