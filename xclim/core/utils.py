@@ -9,6 +9,7 @@ Helper functions for the indices computation, indicator construction and other t
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from importlib.resources import open_text
 from inspect import Parameter
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
@@ -18,12 +19,16 @@ import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
+from yaml import safe_load
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
+
+# Official variables definitions
+variables = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
 
 def wrapped_partial(

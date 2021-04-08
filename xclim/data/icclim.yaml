@@ -1,0 +1,36 @@
+# module: icclim
+realm: atmos
+# base: Daily
+doc: |
+  ==============
+  ICCLIM indices
+  ==============
+  The European Climate Assessment & Dataset project (`ECAD`_) defines
+  a set of 26 core climate indices. Those have been made accessible
+  directly in xclim through their ECAD name for compatibility. However,
+  the methods in this module are only wrappers around the corresponding
+  methods of  `xclim.indices`. Note that none of the checks performed by
+  the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
+  are performed in this module.
+
+  .. _ECAD: https://www.ecad.eu/
+indices:
+  TG:
+    base: tg_mean
+  GD4:
+    base: growing_degree_days
+    index_function:
+      parameters:
+        thresh:
+          kind: quantity
+          data: 4
+          units: degC
+  RX5day:
+    base: max_n_day_precipitation_amount
+    index_function:
+      parameters:
+        window:
+          kind: number
+          data: 5
+    output:
+      long_name: "Icclim's RX5day"

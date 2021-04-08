@@ -476,3 +476,11 @@ def generate_indicator_docstring(kwds):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
+
+
+def parse_cell_methods(cell_methods: Sequence[Mapping[str, str]]) -> str:
+    """Parse cell methods as YAML reads them into a string."""
+    methods = []
+    for cell_method in cell_methods:
+        methods.append("".join([f"{dim}: {meth}" for dim, meth in cell_method.items()]))
+    return " ".join(methods)

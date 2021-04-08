@@ -32,7 +32,7 @@ requirements = [
     "scikit-learn>=0.21.3",
     "Click",
     "packaging>=20.0",
-    "yaml",
+    "pyyaml",
 ]
 
 setup_requirements = ["pytest-runner", "wheel"]

@@ -15,16 +15,16 @@ from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_un
 
 from . import run_length as rl
 
-__all__ = [
-    "select_time",
-    "select_resample_op",
-    "doymax",
-    "doymin",
-    "default_freq",
-    "threshold_count",
-    "get_daily_events",
-    "daily_downsampler",
-]
+# __all__ = [
+#     "select_time",
+#     "select_resample_op",
+#     "doymax",
+#     "doymin",
+#     "default_freq",
+#     "threshold_count",
+#     "get_daily_events",
+#     "daily_downsampler",
+# ]
 
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
@@ -331,7 +331,7 @@ def count_level_crossings(
     return out
 
 
-def count_occurences(data: xr.DataArray, threshold: str, condition: str, freq: str):
+def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: str):
     """Calculates the number of times some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
