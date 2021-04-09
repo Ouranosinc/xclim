@@ -150,6 +150,8 @@ class IndicatorRegistrar:
             submodule = module.split(".")[2]
             if submodule not in ["atmos", "land", "ocean", "seaIce"]:
                 name = f"{submodule}.{name}"
+        else:
+            name = f"{module}.{name}"
         if name in registry:
             warnings.warn(f"Class {name} already exists and will be overwritten.")
         registry[name] = cls
