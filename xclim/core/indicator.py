@@ -34,6 +34,8 @@ Indicator-defining yaml files are structured in the following way:
         references: <references>  # Plural or singular accepted (for harmonizing cf-index-meta and xclim)
         keywords: <keywords>
         notes: <notes>
+        title: <title>
+        abstract: <abstract>
         period:  # If given, both "allowed" and "default" must also be given.
           allowed:  # A list of allowed periods (resampling frequencies)
             annual:  # Translates to "A" (includes "Y")
@@ -45,6 +47,8 @@ Indicator-defining yaml files are structured in the following way:
           var_name: <var_name>  # Defaults to "identifier",
           standard_name: <standard_name>
           long_name: <long_name>
+          description: <description>
+          comment: <comment>
           units: <units>  # Defaults to ""
           cell_methods:
             - <dim1> : <method 1>
@@ -438,12 +442,6 @@ class Indicator(IndicatorRegistrar):
         notes: str, optional
           Other indicator attributes to fill in for missing values in the individual definition.
         """
-        # Get identifier
-        # Priority is : passed arg -> var_name in data.output
-        identifier = identifier or data.get("output", {}).get("var_name")
-        if identifier is None:
-            raise ValueError("An identifier must be given to create an Indicator.")
-
         # Make cell methods. YAML will generate a list-of-dict structure, put it back in a space-divided string
         if data.get("output", {}).get("cell_methods") is not None:
             cell_methods = parse_cell_methods(data["output"]["cell_methods"])
@@ -474,6 +472,7 @@ class Indicator(IndicatorRegistrar):
             params = None
             input_units = None
 
+        metadata_placeholders = {}
         if "index_function" in data:
             # Generate compute function
             # data.index_function.name refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
@@ -497,13 +496,34 @@ class Indicator(IndicatorRegistrar):
                 # Handle cf-index-meta cases
                 if param.get("kind") == "quantity":
                     # A string with units
-                    injected_params[name] = f"{param['data']} {param['units']}"
+                    value = f"{param['data']} {param['units']}"
                 elif param.get("kind") in ["reducer", "operator"]:
                     # cf-index-meta defined kinds :value is stored in a field of the same name as the kind.
-                    injected_params[name] = param[param["kind"]]
+                    value = param[param["kind"]]
                 else:
                     # All other xclim-defined kinds in "data"
-                    injected_params[name] = param["data"]
+                    value = param["data"]
+                if isinstance(value, str) and "{" in value:
+                    # User-chosen parameter.
+                    params = (
+                        params or {}
+                    )  # In case there were no "input" section (and param is None)
+                    params[name] = {
+                        "default": param.get("default"),
+                        "description": param.get(
+                            "description", param.get("standard_name", name)
+                        ),
+                    }
+                    if "units" in param:
+                        params[name]["units"] = param["units"]
+                        input_units = input_units or {}
+                        input_units[name] = param["units"]
+                    # We will need to replace placeholders in metadata strings (only for cf-index-meta indicators)
+                    if value[1:-1] != name:
+                        metadata_placeholders[value] = "{" + name + "}"
+                else:
+                    # Injected parameter
+                    injected_params[name] = value
 
             if input_units is not None:
                 compute = declare_units(**input_units)(compute)
@@ -529,10 +549,15 @@ class Indicator(IndicatorRegistrar):
             keywords=data.get("keywords", keywords),
             references=data.get("references", data.get("reference", references)),
             notes=data.get("notes", notes),
+            # Indicator-specific metadata
+            title=data.get("title"),
+            abstract=data.get("abstract"),
             # Output meta
             var_name=data.get("output", {}).get("var_name", identifier),
             standard_name=data.get("output", {}).get("standard_name"),
             long_name=data.get("output", {}).get("long_name"),
+            description=data.get("output", {}).get("description"),
+            comment=data.get("output", {}).get("comment"),
             units=data.get("output", {}).get("units"),
             cell_methods=cell_methods,
             # Input data, override defaults given in generic compute's signature.
@@ -543,6 +568,12 @@ class Indicator(IndicatorRegistrar):
             cfcheck=cfcheck,
             allowed_periods=allowed_periods,
         )
+
+        for cf_name in cls._cf_names:
+            if isinstance(kwargs[cf_name], str):
+                for old, new in metadata_placeholders.items():
+                    kwargs[cf_name] = kwargs[cf_name].replace(old, new)
+
         # Remove kwargs passed as "None", they will be taken from the base class instead.
         # For most parameters it would be ok to pass a None anyway (we figure that out in __new__),
         # but some (like nvar) would not like that.
@@ -1212,23 +1243,23 @@ def build_indicator_module_from_yaml(
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
-        if isinstance(data, str):
-            mapping[identifier] = data
+        clean_id = identifier.replace("{", "").replace(
+            "}", ""
+        )  # cf-index-meta has illegal characters in the identifiers.
+        if "base" in data:
+            base = registry[data["base"].upper()]
         else:
-            if "base" in data:
-                base = registry[data["base"].upper()]
-            else:
-                base = default_base
-            try:
-                mapping[identifier] = base.from_dict(data, identifier, **defkwargs)
-            except Exception as err:
-                msg = f"Constructing {identifier} failed with {err!r}"
-                if mode == "ignore":
-                    logging.info(msg)
-                elif mode == "warn":
-                    warnings.warn(msg)
-                else:  # mode == "raise"
-                    raise ValueError(msg)
+            base = default_base
+        try:
+            mapping[clean_id] = base.from_dict(data, clean_id, **defkwargs)
+        except Exception as err:
+            msg = f"Constructing {identifier} failed with {err!r}"
+            if mode == "ignore":
+                logging.info(msg)
+            elif mode == "warn":
+                warnings.warn(msg)
+            else:  # mode == "raise"
+                raise ValueError(msg)
 
     # Construct module
     return build_indicator_module(module_name, objs=mapping, doc=doc)
