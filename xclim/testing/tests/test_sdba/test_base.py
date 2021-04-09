@@ -21,7 +21,7 @@ def test_param_class():
 
     assert repr(obj).startswith(
         "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
-        "group=Grouper(dim='time',"
+        "group=Grouper("
     )
 
     s = jsonpickle.encode(obj)
