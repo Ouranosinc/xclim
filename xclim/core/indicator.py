@@ -145,9 +145,11 @@ class IndicatorRegistrar:
         """Add subclass to registry."""
         name = cls.__name__
         module = cls.__module__
-        if not module.startswith("xclim.indicators"):
-            submodule = module.split(".")[-1]
-            name = f"{submodule}.{name}"
+        # If the module is not one of xclim's default, prepend the submodule name.
+        if module.startswith("xclim.indicators"):
+            submodule = module.split(".")[2]
+            if submodule not in ["atmos", "land", "ocean", "seaIce"]:
+                name = f"{submodule}.{name}"
         if name in registry:
             warnings.warn(f"Class {name} already exists and will be overwritten.")
         registry[name] = cls
@@ -1197,7 +1199,7 @@ def build_indicator_module_from_yaml(
     defkwargs = {
         # We can override the module of indicators in their init (weird but cool)
         # This way, submodule indicators are prefixed with the module name in the registry.
-        "module": module_name,
+        "module": f"xclim.indicators.{module_name}",
         # Other default argument, only given in case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
         "keywords": keywords or yml.get("keywords"),
