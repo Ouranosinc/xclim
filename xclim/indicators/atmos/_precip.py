@@ -199,7 +199,7 @@ liquid_precip_accumulation = PrTasx(
     units="mm",
     standard_name="lwe_thickness_of_liquid_precipitation_amount",
     long_name="Total liquid precipitation",
-    description="{freq} total liquid precipitation, estimated as precipitation when temperature >= {thresh}",
+    description="{freq} total {phase} precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(
         indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"

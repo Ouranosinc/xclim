@@ -30,7 +30,6 @@ indices:
     index_function:
       parameters:
         window:
-          kind: number
           data: 5
     output:
       long_name: "Icclim's RX5day"

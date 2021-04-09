@@ -28,15 +28,19 @@ Indicator-defining yaml files are structured in the following way:
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
     indices:
       <identifier>:
+        base: <base indicator class>  # Defaults to module-wide base class or "Daily".
+        realm: <realm>  # Defaults to the module-wide realm or "atmos"
+        reference: <references>
+        references: <references>  # Plural or singular accepted (for harmonizing cf-index-meta and xclim)
+        keywords: <keywords>
+        notes: <notes>
         period:  # If given, both "allowed" and "default" must also be given.
           allowed:  # A list of allowed periods (resampling frequencies)
-            annual:  # Translates to "A" or "Y"
+            annual:  # Translates to "A" (includes "Y")
             seasonal:  # Translates to "Q"
             monthly:  # Translates to "M"
             weekly:  # Translates to "W"
           default: annual  #  Translates to "YS", "QS-DEC", "MS" or "W-SUN". See xclim.core.units.FREQ_NAMES.
-        realm: <realm>  # Defaults to the module-wide realm or "atmos"
-        base: <base indicator class>  # Defaults to module-wide base class or "Daily".
         output:
           var_name: <var_name>  # Defaults to "identifier",
           standard_name: <standard_name>
@@ -48,15 +52,13 @@ Indicator-defining yaml files are structured in the following way:
 
         index_function:
           name: <function name>  # Refering to a function in xclim.indices.generic or xclim.indices
-          parameters:
+          parameters:  # See below for details on that section.
             <param name>  # Refering to a parameter of the function above.
-              kind: <param kind>  # One of quantity, operator or reducer
-              data: <param data>  # If kind = quantity, the magnitude of the quantity
-              units: <param units>  # If kind = quantity, the units of the quantity
-              # If kind = quantity, the value passed to the function is : "<param data> <param units>".
-              operator: <param value>  # If kind = operator, the operator to use, see below.
-              reducer: <param value>  # If kind = reducer, the reducing operation to use, see below.
-              value: <param value>  # Other way to pass parameter values, kind is not needed in that case.
+              kind: <param kind>  # Optional, one of quantity, operator or reducer
+              data: <param data>
+              units: <param units>
+              operator: <param data>
+              reducer: <param data>
             ...
 
         input:
@@ -70,11 +72,19 @@ a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow th
 
 Parameters
 ~~~~~~~~~~
-Mappings passed in the `data.index_functions.parameters` section can be of 3 kinds:
+`cf-index-meta` defines three kinds of parameters:
 
-    - "quantity", a quantity with a magnitude and some units,
+    - "quantity", a quantity with a magnitude and some units, (equivalent to xclim.core.utils.InputKind.QUANTITY_STR)
+      The value is given through the magnitude in "data" and units in "units".
     - "operator", one of "<", "<=", ">", ">=", "==", "!=", an operator for conditional computations.
+      The value is given in "operator".
     - "reducer", one of "maximum", "minimum", "mean", "sum", a reducing method name.
+      The value is given in "reducer".
+
+xclim supports both this syntax and a simpler one where only the "data" key is given.
+As YAML is able to cast simple python literals, no passing of "kind" is needed, if a string parameter could be
+mistranslated to a boolean or a number, simply use quotes to isolate it. To pass a number sequence, use
+the yaml list syntax.
 
 Inputs
 ~~~~~~
@@ -134,6 +144,10 @@ class IndicatorRegistrar:
     def __new__(cls):
         """Add subclass to registry."""
         name = cls.__name__
+        module = cls.__module__
+        if not module.startswith("xclim.indicators"):
+            submodule = module.split(".")[-1]
+            name = f"{submodule}.{name}"
         if name in registry:
             warnings.warn(f"Class {name} already exists and will be overwritten.")
         registry[name] = cls
@@ -352,15 +366,16 @@ class Indicator(IndicatorRegistrar):
                 "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
             )
 
-        kwds["_indcompute"].__doc__ = kwds["__doc__"] = generate_indicator_docstring(
-            kwds
-        )
-
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
-        # Set the module to the base class' module. Otherwise all indicators will have module `xclim.core.indicator`.
-        new.__module__ = cls.__module__
+        # If the module was not forced, set the module to the base class' module.
+        # Otherwise all indicators will have module `xclim.core.indicator`.
+        # Forcing the module is there so YAML-generated submodules are correctly seen by IndicatorRegristrar.
+        new.__module__ = kwds.get("module", cls.__module__)
+
+        # Generate docstring
+        new._indcompute.__doc__ = new.__doc__ = generate_indicator_docstring(new)
 
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
@@ -392,15 +407,32 @@ class Indicator(IndicatorRegistrar):
         return cf_attrs
 
     @classmethod
-    def from_dict(cls, data: dict, identifier: Optional[str] = None):
+    def from_dict(
+        cls,
+        data: dict,
+        identifier: str,
+        module: Optional[str] = None,
+        realm: Optional[str] = None,
+        keywords: Optional[str] = None,
+        references: Optional[str] = None,
+        notes: Optional[str] = None,
+    ):
         """Create an indicator subclass and instance from a dictionary of parameters.
 
         Parameters
         ----------
         data: dict
           The exact structure of this dictionary is detailed in the submodule documentation.
-        identifier : str, optional
-          The name of the subclass and internal indicator name. Defaults to `data.output.var_name`.
+        identifier : str
+          The name of the subclass and internal indicator name.
+        module : str
+          The module name of the indicator. This is meant to be used only if the indicator
+          is part of a dynamically generated submodule, to override the module of the base class.
+        realm: str, optional
+        keywords: str, optional
+        references str, optional
+        notes: str, optional
+          Other indicator attributes to fill in for missing values in the individual definition.
         """
         # Get identifier
         # Priority is : passed arg -> var_name in data.output
@@ -458,12 +490,16 @@ class Indicator(IndicatorRegistrar):
             injected_params = {}
             # In cf-index-meta, when there are no parameters, the key is still there with a None value.
             for name, param in (data["index_function"].get("parameters") or {}).items():
-                if param["kind"] == "quantity":
+                # Handle cf-index-meta cases
+                if param.get("kind") == "quantity":
                     # A string with units
                     injected_params[name] = f"{param['data']} {param['units']}"
-                else:  # "reducer", "condition"
-                    # Simple string-like parameters, value is stored in a field of the same name as the kind.
+                elif param.get("kind") in ["reducer", "operator"]:
+                    # cf-index-meta defined kinds :value is stored in a field of the same name as the kind.
                     injected_params[name] = param[param["kind"]]
+                else:
+                    # All other xclim-defined kinds in "data"
+                    injected_params[name] = param["data"]
 
             if input_units is not None:
                 compute = declare_units(**input_units)(compute)
@@ -483,8 +519,12 @@ class Indicator(IndicatorRegistrar):
 
         kwargs = dict(
             # General
-            realm=data.get("realm"),
             identifier=identifier,
+            module=module,
+            realm=data.get("realm", realm),
+            keywords=data.get("keywords", keywords),
+            references=data.get("references", data.get("reference", references)),
+            notes=data.get("notes", notes),
             # Output meta
             var_name=data.get("output", {}).get("var_name", identifier),
             standard_name=data.get("output", {}).get("standard_name"),
@@ -678,7 +718,7 @@ class Indicator(IndicatorRegistrar):
           `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
         args = ba.arguments
-
+        args.update(getattr(cls._indcompute, "_injected", {}))
         out = cls._format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
@@ -1099,10 +1139,13 @@ def build_indicator_module(
 def build_indicator_module_from_yaml(
     filename: PathLike,
     name: Optional[str] = None,
-    realm: Optional[str] = None,
     base: Type[Indicator] = Daily,
     doc: Optional[str] = None,
     mode: str = "raise",
+    realm: Optional[str] = None,
+    keywords: Optional[str] = None,
+    references: Optional[str] = None,
+    notes: Optional[str] = None,
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1115,9 +1158,6 @@ def build_indicator_module_from_yaml(
     name: str, optional
       The name of the new or existing module, defaults to the name of the file.
       (e.g: `atmos.yml` -> `atmos`)
-    realm: str, optional
-      The realm to attribute to all indicators. Superseeded by the name given in the
-      yaml file or in individual indicator definitions (see submodule's doc).
     base: Indicator subclass
       The Indicator subclass from which the new indicators are based. Superseeded by
       the class given in the yaml file or in individual indicator definitions (see submodule's doc).
@@ -1125,6 +1165,13 @@ def build_indicator_module_from_yaml(
       The docstring of the new submodule. Defaults to a very minimal header with the submodule's name.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
+    realm: str, optional
+    keywords: str, optional
+    references str, optional
+    notes: str, optional
+      Other indicator attributes that would apply to all indicators in this module.
+      Values given here are overridden by the ones given in individual definition, but
+      they override the ones given at top-level in the YAMl file.
 
     Returns
     -------
@@ -1143,9 +1190,20 @@ def build_indicator_module_from_yaml(
     # Load values from top-level in yml.
     # Priority of arguments differ.
     module_name = name or yml.get("module", filepath.stem)
-    default_realm = realm or yml.get("realm")
     default_base = registry.get(yml.get("base"), base)
     doc = doc or yml.get("doc")
+
+    # Module-wide default values for some attributes
+    defkwargs = {
+        # We can override the module of indicators in their init (weird but cool)
+        # This way, submodule indicators are prefixed with the module name in the registry.
+        "module": module_name,
+        # Other default argument, only given in case the indicator definition does not give them.
+        "realm": realm or yml.get("realm"),
+        "keywords": keywords or yml.get("keywords"),
+        "references": references or yml.get("refereces"),
+        "notes": notes or yml.get("notes"),
+    }
 
     # Parse the indicators:
     mapping = {}
@@ -1157,19 +1215,16 @@ def build_indicator_module_from_yaml(
                 base = registry[data["base"].upper()]
             else:
                 base = default_base
-            data.setdefault("realm", default_realm)
             try:
-                mapping[identifier] = base.from_dict(data, identifier=identifier)
+                mapping[identifier] = base.from_dict(data, identifier, **defkwargs)
             except Exception as err:
-                msg = f"Constructing {identifier} failed with {err!s}"
+                msg = f"Constructing {identifier} failed with {err!r}"
                 if mode == "ignore":
                     logging.info(msg)
                 elif mode == "warn":
                     warnings.warn(msg)
                 else:  # mode == "raise"
                     raise ValueError(msg)
-            else:
-                mapping[identifier].__module__ = module_name
 
     # Construct module
     return build_indicator_module(module_name, objs=mapping, doc=doc)

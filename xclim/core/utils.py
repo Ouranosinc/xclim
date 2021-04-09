@@ -69,6 +69,11 @@ def wrapped_partial(
     fully_wrapped = update_wrapper(
         partial_func, func, injected=list(fixed.keys()), hide_wrapped=True
     )
+
+    # Store all injected params,
+    injected = getattr(func, "_injected", {})
+    injected.update(fixed)
+    fully_wrapped._injected = injected
     return fully_wrapped
 
 
