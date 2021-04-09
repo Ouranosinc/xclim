@@ -7,7 +7,7 @@ History
 
 Bug fixes
 ~~~~~~~~~
-* Fix the `from_string` object creation in sdba.
+* Remove `from_string` object creation in sdba, replace with use of new dependency `jsonpickle`.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

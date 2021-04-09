@@ -48,8 +48,8 @@ def _raise_on_multiple_chunk(da, main_dim):
 class BaseAdjustment(ParametrizableWithDataset):
     """Base class for adjustment objects."""
 
-    _hist_calendar = None
-    _attribute = "adj_params"
+    _attribute = "_xclim_adjustment"
+    _repr_hide_params = ["hist_calendar"]
 
     @property
     def __trained(self):
@@ -90,8 +90,8 @@ class BaseAdjustment(ParametrizableWithDataset):
                     stacklevel=4,
                 )
 
+        self["hist_calendar"] = get_calendar(hist)
         self._train(ref, hist)
-        self._hist_calendar = get_calendar(hist)
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -112,7 +112,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
             if (
                 self.group.prop == "dayofyear"
-                and get_calendar(sim) != self._hist_calendar
+                and get_calendar(sim) != self.hist_calendar
             ):
                 warn(
                     (
@@ -130,6 +130,14 @@ class BaseAdjustment(ParametrizableWithDataset):
             f"Bias-adjusted with {str(self)}.adjust(sim, {params})", sim
         )
         return scen
+
+    def set_dataset(self, ds: xr.Dataset):
+        """Stores an xarray dataset in the `ds` attribute.
+
+        Useful with custom object initialization or if some external processing was performed.
+        """
+        super().set_dataset(ds)
+        self.ds.attrs["adj_params"] = str(self)
 
     def _train(self, ref: DataArray, hist: DataArray):
         raise NotImplementedError
