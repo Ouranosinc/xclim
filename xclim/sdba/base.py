@@ -13,8 +13,11 @@ from boltons.funcutils import wraps
 class Parametrizable(dict):
     """Helper base class resembling a dictionary.
 
-    Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
-    :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
+    The concept of this object is that is _completely_ defined by the content of its internal dictionary.
+    When serializing and restoring this object, only members of :py:methd:`Parametrizable.parameters` are preserved.
+    Parameters passed in the init or set using item access "[ ]" are considered those stored in the internal
+    dictionary. Other variables set with `self.var = data` will be lost in the serialization process.
+    This class is best serialized and restored with `jsonpickle`.
     """
 
     _repr_hide_params = []
