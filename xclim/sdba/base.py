@@ -15,7 +15,7 @@ class Parametrizable(dict):
 
     This object is _completely_ defined by the content of its internal dictionary, accessible through item access
     (`self['attr']`) or in `self.parameters`. When serializing and restoring this object, only members of that internal
-    dict are preserved. All other attributes set directly with `self.attr = value` will not be preserved upon serialization 
+    dict are preserved. All other attributes set directly with `self.attr = value` will not be preserved upon serialization
     and restoration of the object with `[json]pickle`.
     dictionary. Other variables set with `self.var = data` will be lost in the serialization process.
     This class is best serialized and restored with `jsonpickle`.
