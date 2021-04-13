@@ -32,6 +32,7 @@ requirements = [
     "scikit-learn>=0.21.3",
     "Click",
     "packaging>=20.0",
+    "jsonpickle",
 ]
 
 setup_requirements = ["pytest-runner", "wheel"]

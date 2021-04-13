@@ -18,3 +18,4 @@ dependencies:
  - Click
  - netCDF4>=1.4
  - clisops>=0.4.0
+ - jsonpickle
