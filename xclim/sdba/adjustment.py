@@ -8,6 +8,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
+from xclim.indices import stats
 
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
@@ -20,6 +21,8 @@ from .utils import (
     broadcast,
     equally_spaced_nodes,
     extrapolate_qm,
+    get_clusters,
+    get_clusters_1d,
     get_correction,
     interp_on_quantiles,
     map_cdf,
@@ -189,7 +192,10 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         )
 
     def _train(self, ref, hist):
-        quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
+        if np.isscalar(self.nquantiles):
+            quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
+        else:
+            quantiles = self.nquantiles
         ref_q = self.group.apply("quantile", ref, q=quantiles).rename(
             quantile="quantiles"
         )
@@ -396,6 +402,93 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         af = broadcast(af, sim, group=self.group, interp=interp, sel=sel)
 
         return apply_correction(sim, af, self.kind)
+
+
+class ExtremeValues(ParametrizableWithDataset):
+    def __init__(
+        self,
+        *,
+        adjustment: BaseAdjustment,
+        q_thresh: float = 0.95,
+        v_thresh: float = 1,  # What is this?
+        dist: str = "genpareto",
+    ):
+        super().__init__(
+            adjustment=adjustment, q_thresh=q_thresh, v_thresh=v_thresh, dist=dist
+        )
+
+    def train(self, ref, hist):
+
+        self.adjustment.train(ref, hist)
+        ds = self.adjustment.ds
+        ds = ds.assign(
+            thresh=(
+                ref.quantile(self.q_thresh, dim="time")
+                + hist.quantile(self.q_thresh, dim="time")
+            )
+            / 2
+        )
+
+        ref_clusters = get_clusters(ref, ds.thresh, self.v_thresh)  # PB: WTF 1?
+        ds = ds.assign(
+            fit_params=stats.fit(ref_clusters.maximum, self.dist, dim="cluster")
+        )
+        self.set_dataset(ds)
+
+    def adjust(
+        self,
+        sim,
+        adj_kwargs: Optional[dict] = None,
+        frac: float = 0.25,
+        power: float = 1.0,
+    ):
+
+        scen = self.adjustment.adjust(sim, **(adj_kwargs or {}))
+
+        def _adjust_extremes_1d(sim, scen, ref_params, thresh, *, dist, v_thresh):
+            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, v_thresh)
+
+            new_scen = scen.copy()
+            if sim_posmax.size == 0:
+                return new_scen
+
+            sim_fit = stats._fitfunc_1d(
+                sim_maxs, dist=dist, nparams=len(ref_params), method="ML"
+            )
+
+            sim_cdf = dist.cdf(sim_maxs, *sim_fit)
+            new_sim = dist.ppf(sim_cdf, *ref_params) + thresh
+
+            # Get the weights based on frac and power values
+            transition = (
+                (sim_maxs - sim_maxs.min())
+                / (frac * ((sim_maxs.max()) - sim_maxs.min()))
+            ) ** power
+            np.clip(transition, None, 1, out=transition)
+
+            # Apply linear transition
+            new_scen_trans = (new_sim * transition) + (
+                scen[sim_posmax] * (1.0 - transition)
+            )
+
+            # We put the new data in the bias-corrected vector
+            new_scen[sim_posmax] = new_scen_trans
+            return new_scen
+
+        new_scen = xr.apply_ufunc(
+            _adjust_extremes_1d,
+            sim,
+            scen,
+            self.ds.fit_params,
+            self.ds.thresh,
+            input_core_dims=[["time"], ["time"], ["dparams"], []],
+            output_core_dims=[["time"]],
+            vectorize=True,
+            kwargs={"dist": stats.get_dist(self.dist), "v_thresh": self.v_thresh},
+            dask="parallelized",
+            output_dtypes=[scen.dtype],
+        )
+        return new_scen
 
 
 class LOCI(BaseAdjustment):

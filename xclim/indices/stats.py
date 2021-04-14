@@ -43,7 +43,31 @@ _lm3_dist_map = {
 }
 
 
-def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
+# Fit the parameters.
+# This would also be the place to impose constraints on the series minimum length if needed.
+def _fitfunc_1d(arr, *, dist, nparams, method):
+    """Fit distribution parameters."""
+    x = np.ma.masked_invalid(arr).compressed()
+
+    # Return NaNs if array is empty.
+    if len(x) <= 1:
+        return [np.nan] * nparams
+
+    # Estimate parameters
+    if method == "ML":
+        args, kwargs = _fit_start(x, dist.name)
+        params = dist.fit(x, *args, **kwargs)
+    elif method == "PWM":
+        params = list(dist.lmom_fit(x).values())
+
+    # Fill with NaNs if one of the parameters is NaN
+    if np.isnan(params).any():
+        params[:] = np.nan
+
+    return params
+
+
+def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML", dim: str = "time"):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -78,40 +102,25 @@ def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
-    # Fit the parameters.
-    # This would also be the place to impose constraints on the series minimum length if needed.
-    def fitfunc(arr):
-        """Fit distribution parameters."""
-        x = np.ma.masked_invalid(arr).compressed()
-
-        # Return NaNs if array is empty.
-        if len(x) <= 1:
-            return [np.nan] * len(dist_params)
-
-        # Estimate parameters
-        if method == "ML":
-            args, kwargs = _fit_start(x, dist)
-            params = dc.fit(x, *args, **kwargs)
-        elif method == "PWM":
-            params = list(lm3dc.lmom_fit(x).values())
-
-        # Fill with NaNs if one of the parameters is NaN
-        if np.isnan(params).any():
-            params[:] = np.nan
-
-        return params
-
     # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
     duck = dask.array if isinstance(da.data, dask.array.Array) else np
-    data = duck.apply_along_axis(fitfunc, da.get_axis_num("time"), da)
+    data = duck.apply_along_axis(
+        _fitfunc_1d,
+        da.get_axis_num(dim),
+        da,
+        dist=dc if method == "ML" else lm3dc,
+        nparams=len(dist_params),
+        method=method,
+    )
 
     # Coordinates for the distribution parameters
     coords = dict(da.coords.items())
-    coords.pop("time")
+    if dim in coords:
+        coords.pop(dim)
     coords["dparams"] = dist_params
 
     # Dimensions for the distribution parameters
-    dims = [d if d != "time" else "dparams" for d in da.dims]
+    dims = [d if d != dim else "dparams" for d in da.dims]
 
     out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = prefix_attrs(
@@ -125,7 +134,7 @@ def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
         scipy_dist=dist,
         units="",
         xclim_history=update_history(
-            f"Estimate distribution parameters by {method_name[method]} method.",
+            f"Estimate distribution parameters by {method_name[method]} method along dimension {dim}.",
             new_name="fit",
             data=da,
         ),
@@ -359,3 +368,83 @@ def _fit_start(x, dist):
         return (chat,), {"loc": loc, "scale": scale}
 
     return (), {}
+
+
+def _dist_method_1D(
+    params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs
+):
+    """Statistical function for given argument on given distribution initialized with params.
+
+    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
+    Every method where "*args" are the distribution parameters can be wrapped.
+
+    Parameters
+    ----------
+    params: 1D sequence of floats
+      Distribution parameters, in the same order as given by :py:func:`fit`.
+    arg: optional, array_like
+      The argument for the requested function.
+    dist: str
+      The scipy name of the distribution.
+    function : str
+      The name of the function to call.
+    kwargs
+      Other parameters to pass to the function call.
+
+    Returns
+    -------
+    array_like
+      Same shape as arg in most cases.
+    """
+    dist = get_dist(dist)
+    args = ([arg] if arg is not None else []) + list(params)
+    return getattr(dist, function)(*args, **kwargs)
+
+
+def dist_method(
+    function: str,
+    fit_params: xr.DataArray,
+    arg: Optional[xr.DataArray] = None,
+    **kwargs,
+):
+    """Vectorized statistical function for given argument on given distribution initialized with params.
+
+    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
+    Methods where "*args" are the distribution parameters can be wrapped, except those
+    that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
+
+    Parameters
+    ----------
+    function : str
+      The name of the function to call.
+    fit_params: xr.DataArray
+      Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
+      Must have a `scipy_dist` attribute with the name of the distribution fitted.
+    arg: optional, array_like
+      The argument for the requested function.
+    kwargs
+      Other parameters to pass to the function call.
+
+    Returns
+    -------
+    array_like
+      Same shape as arg.
+    """
+
+    args = [fit_params]
+    input_core_dims = [["dparams"]]
+
+    if arg is not None:
+        args.append(arg)
+        input_core_dims.append([])
+
+    return xr.apply_ufunc(
+        _dist_method_1D,
+        *args,
+        input_core_dims=input_core_dims,
+        output_core_dims=[[]],
+        kwargs={"dist": fit_params.attrs["scipy_dist"], "function": function, **kwargs},
+        vectorize=True,
+        output_dtypes=[float],
+        dask="parallelized",
+    )

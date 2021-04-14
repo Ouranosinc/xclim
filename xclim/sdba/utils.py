@@ -11,6 +11,7 @@ from scipy.interpolate import griddata, interp1d
 
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
+from xclim.indices import stats
 
 from .base import Grouper, parse_group
 
@@ -586,3 +587,119 @@ def best_pc_orientation(A, Binv, val=1000):
             # New orientation is better, keep and remember error.
             err = new_err
     return orient
+
+
+def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
+    """Get clusters of a 1D array.
+
+    A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
+
+    Taken from julia's Extremes package, function getcluster.
+
+    Parameters
+    ----------
+    data: 1D ndarray
+    u1 : float
+    u2 : float
+    """
+    # Boolean array, True where data is over u2
+    # We pad with values under u2, so that clusters never start or end at boundaries.
+    exce = np.concatenate(([u2 - 1], data, [u2 - 1])) > u2
+
+    # 1 just before the start of the cluster
+    # -1 on the last element of the cluster
+    bounds = np.diff(exce.astype(np.int32))
+    starts = np.where(bounds == 1)[
+        0
+    ]  # +1 to get the first element -1 to get the same index as in data
+    ends = np.where(bounds == -1)[
+        0
+    ]  # -1 to get the same index as in data +1 to get the element after (for python slicing)
+
+    cl_maxpos = []
+    cl_maxval = []
+    cl_start = []
+    cl_end = []
+    for start, end in zip(starts, ends):
+        cluster_max = data[start:end].max()
+        if cluster_max > u1:
+            cl_maxval.append(cluster_max)
+            cl_maxpos.append(start + np.argmax(data[start:end]))
+            cl_start.append(start)
+            cl_end.append(end - 1)
+
+    return (
+        np.array(cl_start),
+        np.array(cl_end),
+        np.array(cl_maxpos),
+        np.array(cl_maxval),
+    )
+
+
+def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
+    """Get cluster count, maximum and position along a given dim.
+
+    See `get_clusters_1d`.
+
+    Returns
+    -------
+    xr.Dataset
+      With variables,
+        - `nclusters` : Number of clusters for each point (with `dim` reduced), int
+        - `start` : First index in the cluster (`dim` reduced, new `cluster`), int
+        - `end` : Last index in the cluster, inclusive (`dim` reduced, new `cluster`), int
+        - `maxpos` : Index of the maximal value within the cluster (`dim` reduced, new `cluster`), int
+        - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
+
+      For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
+    """
+
+    def _get_clusters(arr, u1, u2, N):
+        st, ed, mp, mv = get_clusters_1d(arr, u1, u2)
+        count = len(st)
+        pad = [-1] * (N - count)
+        return (
+            np.append(st, pad),
+            np.append(ed, pad),
+            np.append(mp, pad),
+            np.append(mv, [np.NaN] * (N - count)),
+            count,
+        )
+
+    # The largest possible number of clusters. Ex: odd positions are < u2, even positions are > u1.
+    N = data[dim].size // 2
+
+    starts, ends, maxpos, maxval, nclusters = xr.apply_ufunc(
+        _get_clusters,
+        data,
+        u1,
+        u2,
+        input_core_dims=[[dim], [], []],
+        output_core_dims=[["cluster"], ["cluster"], ["cluster"], ["cluster"], []],
+        kwargs={"N": N},
+        output_dtypes=[int, int, int, data.dtype, int],
+        dask="parallelized",
+        vectorize=True,
+        dask_gufunc_kwargs={
+            "meta": (
+                np.array((), dtype=int),
+                np.array((), dtype=int),
+                np.array((), dtype=int),
+                np.array((), dtype=data.dtype),
+                np.array((), dtype=int),
+            ),
+            "output_sizes": {"cluster": N},
+        },
+    )
+
+    ds = xr.Dataset(
+        {
+            "start": starts,
+            "end": ends,
+            "maxpos": maxpos,
+            "maximum": maxval,
+            "nclusters": nclusters,
+        }
+    )
+
+    return ds.isel(cluster=slice(None, ds.nclusters.max().item()))
