@@ -147,7 +147,7 @@ class IndicatorRegistrar:
 
     def __new__(cls):
         """Add subclass to registry."""
-        name = cls.__name__
+        name = cls.__name__.upper()
         module = cls.__module__
         # If the module is not one of xclim's default, prepend the submodule name.
         if module.startswith("xclim.indicators"):
@@ -157,7 +157,9 @@ class IndicatorRegistrar:
         else:
             name = f"{module}.{name}"
         if name in registry:
-            warnings.warn(f"Class {name} already exists and will be overwritten.")
+            warnings.warn(
+                f"Class {name} already exists and will be overwritten.", stacklevel=4
+            )
         registry[name] = cls
         return super().__new__(cls)
 
@@ -448,10 +450,10 @@ class Indicator(IndicatorRegistrar):
         else:
             cell_methods = None
 
+        params = {}
         if "input" in data:
             # Override input metadata
             input_units = {}
-            params = {}
             nvar = len(data["input"])
             for varname, name in data["input"].items():
                 # Indicator's new will put the name of the variable as its default,
@@ -469,7 +471,6 @@ class Indicator(IndicatorRegistrar):
         else:
             nvar = None
             cfcheck = None
-            params = None
             input_units = None
 
         metadata_placeholders = {}
@@ -494,8 +495,8 @@ class Indicator(IndicatorRegistrar):
             # In cf-index-meta, when there are no parameters, the key is still there with a None value.
             for name, param in (data["index_function"].get("parameters") or {}).items():
                 # Handle cf-index-meta cases
-                if param.get("kind") == "quantity":
-                    # A string with units
+                if param.get("kind") == "quantity" and isinstance(param["data"], str):
+                    # A string with units, but not a placeholder (data is a dict)
                     value = f"{param['data']} {param['units']}"
                 elif param.get("kind") in ["reducer", "operator"]:
                     # cf-index-meta defined kinds :value is stored in a field of the same name as the kind.
@@ -503,11 +504,11 @@ class Indicator(IndicatorRegistrar):
                 else:
                     # All other xclim-defined kinds in "data"
                     value = param["data"]
-                if isinstance(value, str) and "{" in value:
-                    # User-chosen parameter.
-                    params = (
-                        params or {}
-                    )  # In case there were no "input" section (and param is None)
+
+                if isinstance(value, dict):
+                    # User-chosen parameter. placeholder.
+                    # It should be a string, this is a bug from cf-index-meta.
+                    value = list(value.keys())[0]
                     params[name] = {
                         "default": param.get("default"),
                         "description": param.get(
@@ -519,8 +520,8 @@ class Indicator(IndicatorRegistrar):
                         input_units = input_units or {}
                         input_units[name] = param["units"]
                     # We will need to replace placeholders in metadata strings (only for cf-index-meta indicators)
-                    if value[1:-1] != name:
-                        metadata_placeholders[value] = "{" + name + "}"
+                    if value != name:
+                        metadata_placeholders["{" + value + "}"] = "{" + name + "}"
                 else:
                     # Injected parameter
                     injected_params[name] = value
@@ -561,7 +562,7 @@ class Indicator(IndicatorRegistrar):
             units=data.get("output", {}).get("units"),
             cell_methods=cell_methods,
             # Input data, override defaults given in generic compute's signature.
-            parameters=params,
+            parameters=params or None,  # None if an empty dict
             nvar=nvar,
             compute=compute,
             # Checks
@@ -753,7 +754,6 @@ class Indicator(IndicatorRegistrar):
           `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
         args = ba.arguments
-        args.update(getattr(cls._indcompute, "_injected", {}))
         out = cls._format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
@@ -909,6 +909,8 @@ class Indicator(IndicatorRegistrar):
         # Use defaults
         if args is None:
             args = {k: v["default"] for k, v in cls.parameters.items()}
+
+        args.update(getattr(cls._indcompute, "_injected", {}))
 
         out = {}
         for key, val in attrs.items():
@@ -1236,21 +1238,20 @@ def build_indicator_module_from_yaml(
         # Other default argument, only given in case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
         "keywords": keywords or yml.get("keywords"),
-        "references": references or yml.get("refereces"),
+        "references": references or yml.get("references"),
         "notes": notes or yml.get("notes"),
     }
-
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
         clean_id = identifier.replace("{", "").replace(
             "}", ""
         )  # cf-index-meta has illegal characters in the identifiers.
-        if "base" in data:
-            base = registry[data["base"].upper()]
-        else:
-            base = default_base
         try:
+            if "base" in data:
+                base = registry[data["base"].upper()]
+            else:
+                base = default_base
             mapping[clean_id] = base.from_dict(data, clean_id, **defkwargs)
         except Exception as err:
             msg = f"Constructing {identifier} failed with {err!r}"

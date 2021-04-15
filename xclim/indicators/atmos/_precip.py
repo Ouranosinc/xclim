@@ -230,6 +230,7 @@ drought_code = PrTas(
 )
 
 fire_weather_indexes = Daily(
+    module=__name__,  # Hack because we aren't using a class defined with xclim.indicators.atmos.
     nvar=4,
     identifier="fwi",
     realm="atmos",

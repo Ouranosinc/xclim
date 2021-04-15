@@ -97,16 +97,16 @@ def test_attrs(tas_series):
 
 
 def test_registering():
-    UniIndTemp()
-    assert "TMIN" in registry
+    UniIndTemp(module="test")
+    assert "test.TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
-    class Test123(registry["TMIN"]):
+    class Test123(registry["test.TMIN"]):
         identifier = "test123"
 
-    assert "TEST123" not in registry
-    Test123()
-    assert "TEST123" in registry
+    assert "test.TEST123" not in registry
+    Test123(module="test")
+    assert "test.TEST123" in registry
 
     # Confirm registries live in subclasses.
     class IndicatorNew(Indicator):
@@ -120,14 +120,14 @@ def test_registering():
     with pytest.raises(AttributeError, match="realm must be given"):
         IndicatorNew(identifier="i2d")
 
-    indnew = IndicatorNew(identifier="i2d", realm="atmos")
-    assert "I2D" in registry
-    assert registry["I2D"].get_instance() is indnew
+    indnew = IndicatorNew(identifier="i2d", realm="atmos", module="test")
+    assert "test.I2D" in registry
+    assert registry["test.I2D"].get_instance() is indnew
 
     del indnew
     gc.collect()
     with pytest.raises(ValueError, match="There is no existing instance"):
-        registry["I2D"].get_instance()
+        registry["test.I2D"].get_instance()
 
 
 def test_module():
@@ -246,7 +246,7 @@ def test_all_jsonable(official_indicators):
         indinst = ind.get_instance()
         try:
             json.dumps(indinst.json())
-        except TypeError:
+        except (TypeError, KeyError):
             problems.append(identifier)
     if problems:
         raise ValueError(
