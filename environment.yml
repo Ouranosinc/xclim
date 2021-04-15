@@ -19,3 +19,4 @@ dependencies:
  - netCDF4>=1.4
  - clisops>=0.4.0
  - pyyaml
+ - jsonpickle

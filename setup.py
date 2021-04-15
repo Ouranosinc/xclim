@@ -33,6 +33,7 @@ requirements = [
     "Click",
     "packaging>=20.0",
     "pyyaml",
+    "jsonpickle",
 ]
 
 setup_requirements = ["pytest-runner", "wheel"]
