@@ -968,7 +968,7 @@ def days_since_to_doy(
     out = dac + start_doy
     out = xr.where(out > doy_max, out - doy_max, out)
 
-    out.attrs.update(da.attrs)
-    del out.attrs["calendar"]
-    del out.attrs["units"]
+    out.attrs.update(
+        {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
+    )
     return convert_calendar(out, base_calendar)
