@@ -15,6 +15,8 @@ from xclim.core.calendar import (
     date_range,
     datetime_to_decimal_year,
     days_in_year,
+    days_since_to_doy,
+    doy_to_days_since,
     ensure_cftime_array,
     get_calendar,
     interp_calendar,
@@ -377,3 +379,42 @@ def test_datetime_to_decimal_year(source_cal, exp180):
     )
     decy = datetime_to_decimal_year(times, calendar=source_cal)
     np.testing.assert_almost_equal(decy[180] - 2004, exp180)
+
+
+def test_doy_to_days_since():
+    # simple test
+    time = date_range("2020-07-01", "2022-07-01", freq="AS-JUL")
+    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time})
+
+    out = doy_to_days_since(da)
+    np.testing.assert_array_equal(out, [7, 178, 186])
+
+    da2 = days_since_to_doy(out)
+    xr.testing.assert_identical(da, da2)
+
+    # other calendar
+    out = doy_to_days_since(da, calendar="noleap")
+    np.testing.assert_array_equal(out, [8, 178, 186])
+
+    da2 = days_since_to_doy(out)  # calendar read from attribute
+    xr.testing.assert_identical(da, da2)
+
+    # with start
+    time = date_range("2020-12-31", "2022-12-31", freq="Y")
+    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time})
+
+    out = doy_to_days_since(da, start="01-02")
+    np.testing.assert_array_equal(out, [188, 358, 1])
+
+    da2 = days_since_to_doy(out)  # start read from attribute
+    xr.testing.assert_identical(da, da2)
+
+    # finer freq
+    time = date_range("2020-01-01", "2020-03-01", freq="MS")
+    da = xr.DataArray([15, 33, 66], dims=("time",), coords={"time": time})
+
+    out = doy_to_days_since(da)
+    np.testing.assert_array_equal(out, [14, 1, 5])
+
+    da2 = days_since_to_doy(out)  # start read from attribute
+    xr.testing.assert_identical(da, da2)
