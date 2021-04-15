@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import xarray
@@ -13,9 +13,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DateStr
 
-from . import fwi
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op, threshold_count
@@ -28,6 +26,7 @@ from .generic import select_resample_op, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "blowing_snow",
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "daily_freezethaw_cycles",
@@ -35,12 +34,11 @@ __all__ = [
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
     "extreme_temperature_range",
-    "fire_weather_indexes",
-    "drought_code",
     "fraction_over_precip_thresh",
     "heat_wave_frequency",
     "heat_wave_max_length",
     "heat_wave_total_length",
+    "high_precip_low_temp",
     "liquid_precip_ratio",
     "precip_accumulation",
     "rain_on_frozen_ground_days",
@@ -345,191 +343,6 @@ def extreme_temperature_range(
     u = str2pint(tasmax.units)
     out.attrs["units"] = pint2cfunits(u - u)
     return out
-
-
-@declare_units(
-    tas="[temperature]",
-    pr="[precipitation]",
-    ws="[speed]",
-    rh="[]",
-    snd="[length]",
-)
-def fire_weather_indexes(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    ws: xarray.DataArray,
-    rh: xarray.DataArray,
-    lat: xarray.DataArray,
-    snd: xarray.DataArray = None,
-    ffmc0: xarray.DataArray = None,
-    dmc0: xarray.DataArray = None,
-    dc0: xarray.DataArray = None,
-    start_date: DateStr = None,
-    start_up_mode: str = None,
-    shut_down_mode: str = "temperature",
-    **params,
-):
-    r"""Fire weather indexes.
-
-    Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
-    the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
-    the Initial Spread Index, the Build Up Index and the Fire Weather Index.
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-      Noon temperature.
-    pr : xarray.DataArray
-      Rain fall in open over previous 24 hours, at noon.
-    ws : xarray.DataArray
-      Noon wind speed.
-    rh : xarray.DataArray
-      Noon relative humidity.
-    lat : xarray.DataArray
-      Latitude coordinate
-    snd : xarray.DataArray
-      Noon snow depth.
-    ffmc0 : xarray.DataArray
-      Initial values of the fine fuel moisture code.
-    dmc0 : xarray.DataArray
-      Initial values of the Duff moisture code.
-    dc0 : xarray.DataArray
-      Initial values of the drought code.
-    start_date : str, datetime.datetime
-      Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
-    start_up_mode : {None, "snow_depth"}
-      How to compute start up. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
-    shut_down_mode : {"temperature", "snow_depth"}
-      How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See module doc for valid values.
-    params :
-      Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
-
-    Returns
-    -------
-    DC: xarray.DataArray, [dimensionless]
-    DMC: xarray.DataArray, [dimensionless]
-    FFMC: xarray.DataArray, [dimensionless]
-    ISI: xarray.DataArray, [dimensionless]
-    BUI: xarray.DataArray, [dimensionless]
-    FWI: xarray.DataArray, [dimensionless]
-
-    Notes
-    -----
-    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
-
-    References
-    ----------
-    Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
-    """
-    tas = convert_units_to(tas, "C")
-    pr = convert_units_to(pr, "mm/day")
-    ws = convert_units_to(ws, "km/h")
-    rh = convert_units_to(rh, "pct")
-    if snd is not None:
-        snd = convert_units_to(snd, "m")
-
-    if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
-    if dmc0 is None:
-        dmc0 = xarray.full_like(tas.isel(time=0), np.nan)
-    if ffmc0 is None:
-        ffmc0 = xarray.full_like(tas.isel(time=0), np.nan)
-
-    params["start_date"] = start_date
-
-    out = fwi.fire_weather_ufunc(
-        tas=tas,
-        pr=pr,
-        rh=rh,
-        ws=ws,
-        lat=lat,
-        dc0=dc0,
-        dmc0=dmc0,
-        ffmc0=ffmc0,
-        snd=snd,
-        indices=["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"],
-        shut_down_mode=shut_down_mode,
-        start_up_mode=start_up_mode,
-        **params,
-    )
-    for outd in out.values():
-        outd.attrs["units"] = ""
-    return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
-
-
-@declare_units(tas="[temperature]", pr="[precipitation]", snd="[length]")
-def drought_code(
-    tas: xarray.DataArray,
-    pr: xarray.DataArray,
-    lat: xarray.DataArray,
-    snd: xarray.DataArray = None,
-    dc0: xarray.DataArray = None,
-    start_date: DateStr = None,
-    start_up_mode: str = None,
-    shut_down_mode: str = "snow_depth",
-    **params,
-):
-    r"""Drought code (FWI component).
-
-    The drought code is part of the Canadian Forest Fire Weather Index System.
-    It is a numeric rating of the average moisture content of organic layers.
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-      Noon temperature.
-    pr : xarray.DataArray
-      Rain fall in open over previous 24 hours, at noon.
-    lat : xarray.DataArray
-      Latitude coordinate
-    snd : xarray.DataArray
-      Noon snow depth.
-    dc0 : xarray.DataArray
-      Initial values of the drought code.
-    start_date : str, datetime.datetime
-      Date at which to start the computation, dc0/dmc0/ffcm0 should be given at the day before.
-    start_up_mode : {None, "snow_depth"}
-      How to compute start up. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
-    shut_down_mode : {"temperature", "snow_depth"}
-      How to compute shut down. Mode "snow_depth" requires the additional "snd" array. See the FWI submodule doc for valid values.
-    params :
-      Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc`.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-       Drought code
-
-    Notes
-    -----
-    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
-
-    References
-    ----------
-    Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
-    """
-    tas = convert_units_to(tas, "C")
-    pr = convert_units_to(pr, "mm/day")
-    if snd is not None:
-        snd = convert_units_to(snd, "m")
-
-    if dc0 is None:
-        dc0 = xarray.full_like(tas.isel(time=0), np.nan)
-
-    out = fwi.fire_weather_ufunc(
-        tas=tas,
-        pr=pr,
-        lat=lat,
-        dc0=dc0,
-        snd=snd,
-        indexes=["DC"],
-        start_date=start_date,
-        shut_down_mode=shut_down_mode,
-        start_up_mode=start_up_mode,
-        **params,
-    )
-    out["DC"].attrs["units"] = ""
-    return out["DC"]
 
 
 @declare_units(
@@ -904,6 +717,57 @@ def rain_on_frozen_ground_days(
 
     out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(out, tas, "count")
+
+
+@declare_units(
+    pr="[precipitation]",
+    tas="[temperature]",
+    pr_thresh="[precipitation]",
+    tas_thresh="[temperature]",
+)
+def high_precip_low_temp(
+    pr: xarray.DataArray,
+    tas: xarray.DataArray,
+    pr_thresh: str = "0.4 mm/d",
+    tas_thresh: str = "-0.2 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:  # noqa: D401
+    """Number of days with precipitation above threshold and temperature below threshold.
+
+    Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
+    threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray
+      Daily mean, minimum or maximum temperature.
+    pr_thresh : str
+      Precipitation threshold to exceed.
+    tas_thresh : str
+      Temperature threshold not to exceed.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Count of days with high precipitation and low temperatures.
+
+    Example
+    -------
+    To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
+    """
+    pr_thresh = convert_units_to(pr_thresh, pr)
+    tas_thresh = convert_units_to(tas_thresh, tas)
+
+    cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
+    out = cond.resample(time=freq).sum(dim="time")
+    return to_agg_units(out, pr, "count")
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
@@ -1417,3 +1281,53 @@ def winter_rain_ratio(
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
     return ratio.sel(time=winter)
+
+
+@declare_units(
+    snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]"
+)
+def blowing_snow(
+    snd: xarray.DataArray,
+    sfcWind: xarray.DataArray,
+    snd_thresh: str = "5 cm",
+    sfcWind_thresh: str = "15 km/h",
+    window: int = 3,
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    """
+    Days with blowing snow events
+
+    Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+      Surface snow depth.
+    sfcWind : xr.DataArray
+      Wind velocity
+    snd_thresh : str
+      Threshold on net snowfall accumulation over the last `window` days.
+    sfcWind_thresh : str
+      Wind speed threshold.
+    window : int
+      Period over which snow is accumulated before comparing against threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      Number of days where snowfall and wind speeds are above respective thresholds.
+    """
+    snd_thresh = convert_units_to(snd_thresh, snd)
+    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
+
+    # Net snow accumulation over the last `window` days
+    snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
+
+    # Blowing snow conditions
+    cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
+
+    out = cond.resample(time=freq).sum(dim="time")
+    out.attrs["units"] = to_agg_units(out, snd, "count")
+    return out

@@ -4,7 +4,7 @@ channels:
  - defaults
 dependencies:
  - numpy>=1.16
- - xarray>=0.16
+ - xarray>=0.17
  - scipy>=1.2
  - numba
  - pandas>=0.23
@@ -18,3 +18,4 @@ dependencies:
  - Click
  - netCDF4>=1.4
  - clisops>=0.4.0
+ - jsonpickle

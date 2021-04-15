@@ -484,7 +484,7 @@ def percentile_doy(
         kwargs=dict(p=per),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
-        output_sizes={"percentiles": len(per)},
+        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
     )
     p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
 

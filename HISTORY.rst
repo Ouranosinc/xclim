@@ -2,18 +2,50 @@
 History
 =======
 
-0.25.0 (unreleased)
+0.26.0 (unreleased)
 -------------------
+
+Bug fixes
+~~~~~~~~~
+* Remove `from_string` object creation in sdba, replace with use of new dependency `jsonpickle`.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `xclim` now requires `xarray>=0.17` and no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+
+
+0.25.0 (2021-03-31)
+-------------------
+
+Announcements
+~~~~~~~~~~~~~
+* Deprecation: Release 0.25.0 of `xclim` will be the last version to explicitly support Python3.6 and `xarray<0.17.0`.
 
 New indicators
 ~~~~~~~~~~~~~~
-* `days_with_snow`, which allows counting days with snow between low and high thresholds, e.g. days with high amount of snow.
+* `land.winter_storm` computes days with snow accumulation over threshold.
+* `land.blowing_snow` computes days with both snow accumulation over last days and high wind speeds.
+* `land.snow_melt_we_max` computes the maximum snow melt over n days, and `land.melt_and_precip_max` the maximum combined snow melt and precipitation.
+* `snd_max_doy` returns the day of the year where snow depth reaches its maximum value.
+* `atmos.high_precip_low_temp` returns days with freezing rain conditions (low temperature and precipitations).
+* `land.snow_cover_duration` computes the number of days snow depth exceeds some minimal threshold.
+* `land.continuous_snow_cover_start` and `land.continuous_snow_cover_end` identify the day of the year when snow depth crosses a threshold for a given period of time.
+* `days_with_snow`, counts days with snow between low and high thresholds, e.g. days with high amount of snow (`indice` and `indicator` available).
+* `fire_season`, creates a fire season mask from temperature and, optionally, snow depth time-series.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* `generic.count_domain` used to count values within low and high thresholds.
+* `generic.count_domain` counts values within low and high thresholds.
+* `run_length.season` returns a dataset storing the start, end and length of a *season*.
 * Fire Weather indices now support dask-backed data.
+* Objects from the `xclim.sdba` submodule can be created from their string repr or from the dataset they created.
+* Fire Weather Index submodule replicates the R code of `cffdrs`, including fire season determination and overwintering of the drought_code.
+* New `run_bounds` and `keep_longest_run` utilities in `xclim.indices.run_length`.
+* New bias-adjustment method: `PrincipalComponent` (based on Hnilica et al. 2017 https://doi.org/10.1002/joc.4890).
 
+Internal changes
+~~~~~~~~~~~~~~~~
+* Small changes in the output of `indices.run_length.rle`.
 
 0.24.0 (2021-03-01)
 -------------------
@@ -124,7 +156,6 @@ New features and enhancements
 * Clarification to `frequency_analysis` notebook.
 * Now officially supporting PEP596 (Python3.9).
 * New methods `xclim.ensembles.change_significance` and `xclim.ensembles.knutti_sedlacek` to qualify climate change agreement among members of an ensemble.
-* New bias-adjustment method : `PrincipalComponent`.
 
 Bug fixes
 ~~~~~~~~~

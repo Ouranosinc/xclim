@@ -1,8 +1,13 @@
+import jsonpickle
 import numpy as np
 import pytest
 import xarray as xr
 
 from xclim.sdba.base import Grouper, Parametrizable
+
+
+class ATestSubClass(Parametrizable):
+    pass
 
 
 def test_param_class():
@@ -14,10 +19,14 @@ def test_param_class():
 
     assert obj.parameters == in_params
 
-    repr(obj).startswith(
-        "ParametrizableClass(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
-        "group=Grouper(dim='time',"
+    assert repr(obj).startswith(
+        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
+        "group=Grouper("
     )
+
+    s = jsonpickle.encode(obj)
+    obj2 = jsonpickle.decode(s)
+    assert obj.parameters == obj2.parameters
 
 
 @pytest.mark.parametrize(

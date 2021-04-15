@@ -9,7 +9,7 @@ from xarray.core.dataarray import DataArray
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 
-from .base import Grouper, Parametrizable, parse_group
+from .base import Grouper, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
 from .processing import normalize
 from .utils import (
@@ -45,18 +45,15 @@ def _raise_on_multiple_chunk(da, main_dim):
         )
 
 
-class BaseAdjustment(Parametrizable):
+class BaseAdjustment(ParametrizableWithDataset):
     """Base class for adjustment objects."""
 
-    _hist_calendar = None
+    _attribute = "_xclim_adjustment"
+    _repr_hide_params = ["hist_calendar"]
 
-    def __init__(self, **kwargs):
-        """Initialize base object for adjustment algorithms.
-
-        Subclasses should implement the `_train` and `_adjust` methods.
-        """
-        self.__trained = False
-        super().__init__(**kwargs)
+    @property
+    def __trained(self):
+        return hasattr(self, "ds")
 
     def train(
         self,
@@ -93,9 +90,8 @@ class BaseAdjustment(Parametrizable):
                     stacklevel=4,
                 )
 
+        self["hist_calendar"] = get_calendar(hist)
         self._train(ref, hist)
-        self._hist_calendar = get_calendar(hist)
-        self.__trained = True
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -116,7 +112,7 @@ class BaseAdjustment(Parametrizable):
 
             if (
                 self.group.prop == "dayofyear"
-                and get_calendar(sim) != self._hist_calendar
+                and get_calendar(sim) != self.hist_calendar
             ):
                 warn(
                     (
@@ -135,13 +131,12 @@ class BaseAdjustment(Parametrizable):
         )
         return scen
 
-    def _make_dataset(self, **kwargs):
-        """Set the trained dataset from the passed variables.
+    def set_dataset(self, ds: xr.Dataset):
+        """Stores an xarray dataset in the `ds` attribute.
 
-        The trained dataset should at least have a `af` variable storing the adjustment factors.
-        Adds the adjustment parameters as the "adj_params" dictionary attribute.
+        Useful with custom object initialization or if some external processing was performed.
         """
-        self.ds = xr.Dataset(data_vars=kwargs)
+        super().set_dataset(ds)
         self.ds.attrs["adj_params"] = str(self)
 
     def _train(self, ref: DataArray, hist: DataArray):
@@ -220,7 +215,7 @@ class EmpiricalQuantileMapping(BaseAdjustment):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        self._make_dataset(af=af, hist_q=hist_q)
+        self.set_dataset(xr.Dataset(dict(af=af, hist_q=hist_q)))
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
         af, hist_q = extrapolate_qm(self.ds.af, self.ds.hist_q, method=extrapolation)
@@ -475,7 +470,9 @@ class LOCI(BaseAdjustment):
         af = get_correction(ms - s_thresh, mo - self.thresh, MULTIPLICATIVE)
         af.attrs.update(long_name="LOCI adjustment factors")
         s_thresh.attrs.update(long_name="Threshold over modeled data")
-        self._make_dataset(hist_thresh=s_thresh, ref_thresh=self.thresh, af=af)
+        self.set_dataset(
+            xr.Dataset(dict(hist_thresh=s_thresh, ref_thresh=self.thresh, af=af))
+        )
 
     def _adjust(self, sim, interp="linear"):
         sth = broadcast(self.ds.hist_thresh, sim, group=self.group, interp=interp)
@@ -516,7 +513,7 @@ class Scaling(BaseAdjustment):
         mean_ref = self.group.apply("mean", ref)
         af = get_correction(mean_hist, mean_ref, self.kind)
         af.attrs.update(long_name="Scaling adjustment factors")
-        self._make_dataset(af=af)
+        self.set_dataset(xr.Dataset(dict(af=af)))
 
     def _adjust(self, sim, interp="nearest"):
         factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
@@ -692,7 +689,9 @@ class PrincipalComponents(BaseAdjustment):
         hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
-        self._make_dataset(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean)
+        self.set_dataset(
+            xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
+        )
         self.ds.attrs["_reference_coord"] = lbl_R
         self.ds.attrs["_model_coord"] = lbl_M
 

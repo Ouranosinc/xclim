@@ -143,8 +143,7 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
     xr.DataArray
         Boolean mask of the comparison.
     """
-    func = getattr(da, "_binary_op")(get_op(op))
-    return func(da, thresh)
+    return get_op(op)(da, thresh)
 
 
 def threshold_count(
