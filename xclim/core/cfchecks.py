@@ -38,7 +38,7 @@ def generate_cfcheck(*varnames):
             data = variables[varname]
             if "cell_methods" in data:
                 check_valid(
-                    var, "cell_methods", parse_cell_methods(data["cell_methods"])
+                    var, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"
                 )
             if "standard_name" in data:
                 check_valid(var, "standard_name", data["standard_name"])

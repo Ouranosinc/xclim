@@ -379,10 +379,13 @@ class Indicator(IndicatorRegistrar):
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
-        # If the module was not forced, set the module to the base class' module.
-        # Otherwise all indicators will have module `xclim.core.indicator`.
         # Forcing the module is there so YAML-generated submodules are correctly seen by IndicatorRegristrar.
-        new.__module__ = kwds.get("module", cls.__module__)
+        if "module" in kwds:
+            new.__module__ = f"xclim.indicators.{kwds['module']}"
+        else:
+            # If the module was not forced, set the module to the base class' module.
+            # Otherwise all indicators will have module `xclim.core.indicator`.
+            new.__module__ = cls.__module__
 
         # Generate docstring
         new._indcompute.__doc__ = new.__doc__ = generate_indicator_docstring(new)
@@ -1234,7 +1237,7 @@ def build_indicator_module_from_yaml(
     defkwargs = {
         # We can override the module of indicators in their init (weird but cool)
         # This way, submodule indicators are prefixed with the module name in the registry.
-        "module": f"xclim.indicators.{module_name}",
+        "module": module_name,
         # Other default argument, only given in case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
         "keywords": keywords or yml.get("keywords"),
@@ -1259,7 +1262,7 @@ def build_indicator_module_from_yaml(
             elif mode == "warn":
                 warnings.warn(msg)
             else:  # mode == "raise"
-                raise ValueError(msg)
+                raise ValueError(msg) from err
 
     # Construct module
     return build_indicator_module(module_name, objs=mapping, doc=doc)

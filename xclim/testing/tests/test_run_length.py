@@ -42,7 +42,7 @@ class TestRLE:
         np.testing.assert_array_equal(out, expected)
 
 
-class TestLongestRun:
+class TestStatisticsRun:
     nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_simple(self):
@@ -150,6 +150,30 @@ class TestLongestRun:
             rl.longest_run, dim="time", ufunc_1dim=False
         )
         np.testing.assert_array_equal(lt_orig, lt_Ndim)
+
+    @pytest.mark.parametrize("ufunc_1dim", [True, False])
+    def test_other_stats(self, ufunc_1dim):
+        values = np.ones(365)
+        values[35] = 0
+        time = pd.date_range(
+            "1/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
+        )
+        da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
+
+        lt = da.resample(time="YS").map(
+            rl.rle_statistics, reducer="min", ufunc_1dim=ufunc_1dim
+        )
+        assert lt == 35
+
+        lt = da.resample(time="YS").map(
+            rl.rle_statistics, reducer="mean", ufunc_1dim=ufunc_1dim
+        )
+        assert lt == 182
+
+        lt = da.resample(time="YS").map(
+            rl.rle_statistics, reducer="std", ufunc_1dim=ufunc_1dim
+        )
+        assert lt == 147
 
 
 class TestFirstRun:

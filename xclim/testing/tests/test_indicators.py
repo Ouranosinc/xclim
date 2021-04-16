@@ -133,6 +133,9 @@ def test_registering():
 def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
+    # Virtual module also are stored under xclim.indicators
+    assert xclim.indicators.cf.fd.__module__ == "xclim.indicators.cf"
+    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
 
 
 def test_temp_unit_conversion(tas_series):
@@ -429,3 +432,40 @@ def test_input_dataset():
     dsx = ds.drop_vars("tasmin")
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
+
+
+def test_indicator_from_dict():
+    d = dict(
+        realm="atmos",
+        output=dict(
+            var_name="tmean{thresh}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods="time: mean within {freq:noun}",
+        ),
+        index_function=dict(
+            name="thresholded_statictics",
+            parameters=dict(
+                threshold={"data": {"thresh": None}, "description": "A threshold temp"},
+                condition={"data": "`<"},
+                reducer={"data": "mean"},
+            ),
+        ),
+        input={"data": "tas"},
+    )
+
+    ind = Daily.from_dict(d, identifier="tmean", module="test")
+
+    assert ind.realm == "atmos"
+    # Parameters metadata modification
+    assert ind.parameters["threshold"]["description"] == "A threshold temp"
+    # Injection of paramters
+    assert "condition" in ind.compute._injected
+    # Placeholders were translated to name in signature
+    assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
+    # Default value for input variable injected and meta injected
+    assert ind._sig.parameters["data"].default == "tas"
+    assert ind.parameters["data"]["units"] == "[temperature]"
+    # Cf checks were generated
+    assert ind.cfcheck is not Daily.cfcheck

@@ -127,7 +127,8 @@ def rle_statistics(
     Returns
     -------
     xr.DataArray
-      Length of runs of True values along dimension, according to the reducing function (int)
+      Length of runs of True values along dimension, according to the reducing function (float)
+      If there are no runs (but the data is valid), returns 0.
     """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
@@ -137,7 +138,8 @@ def rle_statistics(
         rl_stat = statistics_run_ufunc(da, reducer)
     else:
         d = rle(da, dim=dim)
-        rl_stat = getattr(d, reducer)(dim=dim)
+        rl_stat = getattr(d.where(d > 0), reducer)(dim=dim)
+        rl_stat = xr.where((d.isnull() | (d == 0)).all(dim=dim), 0, rl_stat)
 
     return rl_stat
 
@@ -812,7 +814,10 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str) -> int:
       Statistics on length of runs.
     """
     v, rl = rle_1d(arr)[:2]
-    return getattr(np.where(v, rl, 0), reducer)()
+    if not np.any(v):
+        return 0
+    func = getattr(np, f"nan{reducer}")
+    return func(np.where(v, rl, np.NaN))
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -931,7 +936,7 @@ def statistics_run_ufunc(
         kwargs={"reducer": reducer},
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[int],
+        output_dtypes=[float],
         keep_attrs=True,
     )
 
