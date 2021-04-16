@@ -389,11 +389,17 @@ def test_doy_to_days_since():
     out = doy_to_days_since(da)
     np.testing.assert_array_equal(out, [7, 178, 186])
 
+    assert out.attrs["units"] == "days after 07-01"
+
     da2 = days_since_to_doy(out)
     xr.testing.assert_identical(da, da2)
 
+    out = doy_to_days_since(da, start="07-01")
+    np.testing.assert_array_equal(out, [7, 178, 186])
+
     # other calendar
     out = doy_to_days_since(da, calendar="noleap")
+    assert out.attrs["calendar"] == "noleap"
     np.testing.assert_array_equal(out, [8, 178, 186])
 
     da2 = days_since_to_doy(out)  # calendar read from attribute
@@ -401,12 +407,13 @@ def test_doy_to_days_since():
 
     # with start
     time = date_range("2020-12-31", "2022-12-31", freq="Y")
-    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time})
+    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time}, name="da")
 
     out = doy_to_days_since(da, start="01-02")
     np.testing.assert_array_equal(out, [188, 358, 1])
 
     da2 = days_since_to_doy(out)  # start read from attribute
+    assert da2.name == da.name
     xr.testing.assert_identical(da, da2)
 
     # finer freq
@@ -414,6 +421,7 @@ def test_doy_to_days_since():
     da = xr.DataArray([15, 33, 66], dims=("time",), coords={"time": time})
 
     out = doy_to_days_since(da)
+    assert out.attrs["units"] == "days after time coordinate"
     np.testing.assert_array_equal(out, [14, 1, 5])
 
     da2 = days_since_to_doy(out)  # start read from attribute

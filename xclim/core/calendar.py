@@ -845,7 +845,7 @@ def _doy_days_since_doys(base: xr.DataArray, start: Optional[DayOfYearStr] = Non
             vectorize=True,
         )
         start_doy = starts.dt.dayofyear
-        start_doy = start_doy.where(start_doy > base_doy, start_doy + doy_max)
+        start_doy = start_doy.where(start_doy >= base_doy, start_doy + doy_max)
     else:
         start_doy = base_doy
 
@@ -916,7 +916,7 @@ def doy_to_days_since(
         else:
             out.attrs.update(units="days after time coordinate")
 
-    out.attrs.update(calendar=calendar)
+    out.attrs.update(calendar=calendar).rename(da.name)
     return convert_calendar(out, base_calendar)
 
 
@@ -974,5 +974,5 @@ def days_since_to_doy(
 
     out.attrs.update(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
-    )
+    ).rename(da.name)
     return convert_calendar(out, base_calendar)
