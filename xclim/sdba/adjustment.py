@@ -8,6 +8,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
+from xclim.core.units import convert_units_to
 from xclim.indices import stats
 
 from .base import Grouper, ParametrizableWithDataset, parse_group
@@ -147,6 +148,52 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     def _adjust(self, sim, **kwargs):
         raise NotImplementedError
+
+
+class AdjustmentCorrection(BaseAdjustment):
+    """Base class for Adjustment correcting objects."""
+
+    def adjust(self, scen: DataArray, sim: Optional[DataArray] = None, **kwargs):
+        """Modifies bias-adjusted data. Refer to the class documentation for the algorithm details.
+
+        Parameters
+        ----------
+        scen: DataArray
+          Bias-adjusted time series.
+        sim : DataArray
+          Time series to be bias-adjusted, source of scen.
+        kwargs :
+          Algorithm-specific keyword arguments, see class doc.
+        """
+        if not self.__trained:
+            raise ValueError("train() must be called before adjusting.")
+
+        if hasattr(self, "group"):
+            # Right now there is no other way of getting the main adjustment dimension
+            _raise_on_multiple_chunk(sim, self.group.dim)
+
+            if (
+                self.group.prop == "dayofyear"
+                and get_calendar(sim) != self.hist_calendar
+            ):
+                warn(
+                    (
+                        "This adjustment was trained on a simulation with the "
+                        f"{self._hist_calendar} calendar but the sim input uses "
+                        f"{get_calendar(sim)}. This is not recommended with dayofyear "
+                        "grouping and could give strange results."
+                    ),
+                    stacklevel=4,
+                )
+
+        new_scen = self._adjust(scen, sim=sim, **kwargs)
+        new_scen.attrs.update(scen.attrs)
+        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        new_scen.attrs["xclim_history"] = update_history(
+            f"Bias-adjustment corrected with {str(self)}.adjust(scen, sim, {params})",
+            scen,
+        )
+        return new_scen
 
 
 class EmpiricalQuantileMapping(BaseAdjustment):
@@ -412,49 +459,49 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         return apply_correction(sim, af, self.kind)
 
 
-class ExtremeValues(ParametrizableWithDataset):
+class ExtremeValues(AdjustmentCorrection):
     def __init__(
         self,
+        cluster_thresh: str,
         *,
-        adjustment: BaseAdjustment,
         q_thresh: float = 0.95,
-        v_thresh: float = 1,  # What is this?
         dist: str = "genpareto",
     ):
-        super().__init__(
-            adjustment=adjustment, q_thresh=q_thresh, v_thresh=v_thresh, dist=dist
-        )
+        super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh, dist=dist)
 
-    def train(self, ref, hist):
+    def _train(self, ref, hist):
+        thresh = (
+            ref.quantile(self.q_thresh, dim="time")
+            + hist.quantile(self.q_thresh, dim="time")
+        ) / 2
 
-        self.adjustment.train(ref, hist)
-        ds = self.adjustment.ds
-        ds = ds.assign(
-            thresh=(
-                ref.quantile(self.q_thresh, dim="time")
-                + hist.quantile(self.q_thresh, dim="time")
+        cluster_thresh = convert_units_to(self.cluster_thresh, ref)
+
+        ref_clusters = get_clusters(ref, thresh, cluster_thresh)
+        ds = xr.Dataset(
+            dict(
+                fit_params=stats.fit(ref_clusters.maximum, self.dist, dim="cluster"),
+                thresh=thresh,
             )
-            / 2
         )
-
-        ref_clusters = get_clusters(ref, ds.thresh, self.v_thresh)  # PB: WTF 1?
-        ds = ds.assign(
-            fit_params=stats.fit(ref_clusters.maximum, self.dist, dim="cluster")
+        ds.fit_params.attrs.update(
+            long_name=f"{self.dist} distribution parameters of ref",
+        )
+        ds.thresh.attrs.update(
+            long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
+            description=f"Mean of the {self.q_thresh * 100}th percentile of ref and hist.",
         )
         self.set_dataset(ds)
 
-    def adjust(
+    def _adjust(
         self,
+        scen,
         sim,
-        adj_kwargs: Optional[dict] = None,
         frac: float = 0.25,
         power: float = 1.0,
     ):
-
-        scen = self.adjustment.adjust(sim, **(adj_kwargs or {}))
-
-        def _adjust_extremes_1d(sim, scen, ref_params, thresh, *, dist, v_thresh):
-            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, v_thresh)
+        def _adjust_extremes_1d(sim, scen, ref_params, thresh, *, dist, cluster_thresh):
+            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
 
             new_scen = scen.copy()
             if sim_posmax.size == 0:
@@ -492,7 +539,10 @@ class ExtremeValues(ParametrizableWithDataset):
             input_core_dims=[["time"], ["time"], ["dparams"], []],
             output_core_dims=[["time"]],
             vectorize=True,
-            kwargs={"dist": stats.get_dist(self.dist), "v_thresh": self.v_thresh},
+            kwargs={
+                "dist": stats.get_dist(self.dist),
+                "cluster_thresh": convert_units_to(self.cluster_thresh, sim),
+            },
             dask="parallelized",
             output_dtypes=[scen.dtype],
         )
