@@ -158,7 +158,7 @@ class IndicatorRegistrar:
             name = f"{module}.{name}"
         if name in registry:
             warnings.warn(
-                f"Class {name} already exists and will be overwritten.", stacklevel=4
+                f"Class {name} already exists and will be overwritten.", stacklevel=1
             )
         registry[name] = cls
         return super().__new__(cls)
