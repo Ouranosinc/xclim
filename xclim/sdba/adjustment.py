@@ -460,6 +460,8 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
 
 class ExtremeValues(AdjustmentCorrection):
+    """Adjustment correction for extreme values."""
+
     def __init__(
         self,
         cluster_thresh: str,
@@ -467,6 +469,57 @@ class ExtremeValues(AdjustmentCorrection):
         q_thresh: float = 0.95,
         dist: str = "genpareto",
     ):
+        r"""Adjustement correction for extreme values.
+
+        The tail of the distribution of adjusted data is corrected with according to the
+        parametric distribution of the reference data.
+
+        Code based on `biascorrect_extremes` in the julia package [ClimateTools]_.
+
+        Parameters
+        ----------
+        At instantiation:
+
+        cluster_thresh: Quantity (str with units)
+          The threshold value for defining clusters.
+        q_thresh : float
+          The quantile of "extreme" values.
+        dist : str
+          Name of the distribution (scipy name) to use.
+
+        In adjustment:
+
+        frac: float, [0, 1]
+          Fraction where the cutoff happens between the original scen and the corrected one.
+          See Notes.
+        power: float
+          Shape of the correction strength, see Notes.
+
+        Notes
+        -----
+
+
+        Correction strength:
+
+        Once new extreme values are found, a mixture from the original scen and corrected scen
+        is used in the result. For each original value :math:`S_i` and corrected value :math:`C_i`
+        the final extreme value :math:`V_i` is:
+
+        .. math::
+
+            V_i = C_i * \tau + S_i * (1 - \tau)
+
+        Where :math:`\tau` is a function of sim's extreme values :math:`F` and of arguments
+        ``frac`` (:math:`f`) and ``power`` (:math:`p`):
+
+        .. math::
+
+            \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
+
+        References
+        ----------
+        .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
+        """
         super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh, dist=dist)
 
     def _train(self, ref, hist):
@@ -516,8 +569,8 @@ class ExtremeValues(AdjustmentCorrection):
 
             # Get the weights based on frac and power values
             transition = (
-                (sim_maxs - sim_maxs.min())
-                / (frac * ((sim_maxs.max()) - sim_maxs.min()))
+                ((sim_maxs - sim_maxs.min()) / ((sim_maxs.max()) - sim_maxs.min()))
+                / frac
             ) ** power
             np.clip(transition, None, 1, out=transition)
 
