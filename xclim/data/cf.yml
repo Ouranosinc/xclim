@@ -1,7 +1,7 @@
 # These index definitions are auto-generated from the master table at
 # https://bitbucket.org/cf-index-meta/cf-index-meta
 
-# This is based on version 0.2.0+1.g51a796d.
+# This is based on version 0.2.0+9.g972dadb.dirty.
 # Start of xclim modifications
 realm: atmos
 doc: |
@@ -9,7 +9,7 @@ doc: |
   CF Standard indices
   ===================
 
-  Indicator found here are defined by the team at `cf-index-meta`_.
+  Indicator found here are defined by the team at `clix-meta`_.
   Adapted documentation from that repository follows:
 
   The repository aims to provide a platform for thinking about, and developing,
@@ -22,8 +22,8 @@ doc: |
   CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
   which both are controlled vocabularies of the CF Conventions.
 
-  .. _cf-index-meta: https://bitbucket.org/cf-index-meta/cf-index-meta/src/master/
-references: cf-index-meta https://bitbucket.org/cf-index-meta/cf-index-meta/src/master/
+  .. _clix-meta: https://github.com/clix-meta/clix-meta
+references: clix-meta https://github.com/clix-meta/clix-meta
 # End of xclim modification.
 indices:
   fd:
@@ -185,7 +185,7 @@ indices:
       long_name: "Number of sharp Ice Days (Tmax < 0C)"
       units: "1"
       cell_methods:
-        - time: minimum within days
+        - time: maximum within days
         - time: sum over days
     input:
       data: tasmax
@@ -221,7 +221,7 @@ indices:
       long_name: "Number of Summer Days (Tmax > 25C)"
       units: "1"
       cell_methods:
-        - time: minimum within days
+        - time: maximum within days
         - time: sum over days
     input:
       data: tasmax
@@ -257,7 +257,7 @@ indices:
       long_name: "Number of Hot Days (Tmax >= 35C)"
       units: "1"
       cell_methods:
-        - time: minimum within days
+        - time: maximum within days
         - time: sum over days
     input:
       data: tasmax
@@ -975,13 +975,13 @@ indices:
       default: annual
     output:
       var_name: "cfd"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      proposed_standard_name: spell_length_with_air_temperature_below_threshold
       long_name: "Maximum number of consecutive frost days (Tmin < 0 C)"
-      units: "1"
+      units: "day"
       cell_methods:
         - time: minimum within days
-        - time: sum over days
+        - time: maximum over days
     input:
       data: tasmin
     index_function:
@@ -1011,13 +1011,13 @@ indices:
       default: annual
     output:
       var_name: "csu"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      proposed_standard_name: spell_length_with_air_temperature_above_threshold
       long_name: "Maximum number of consecutive summer days (Tmax >25 C)"
-      units: "1"
+      units: "day"
       cell_methods:
         - time: maximum within days
-        - time: sum over days
+        - time: maximum over days
     input:
       data: tasmax
     index_function:
@@ -2006,6 +2006,422 @@ indices:
       definition:
       comment: "mean of daily mean temperature"
 
+  tn10p:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tn10p"
+      standard_name:
+      long_name: "Percentage of days when Tmin < 10th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmin
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 10
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name: "tn10p"
+      long_name: "WMO No.1500: Cold nights (count of days)"
+      definition: "Number of days when TN < 10th percentile"
+      comment:
+
+  tx10p:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tx10p"
+      standard_name:
+      long_name: "Percentage of days when Tmax < 10th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmax
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 10
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name: "tx10p"
+      long_name: "WMO No.1500: Cold day-times (count of days)"
+      definition: "Number of days when TX < 10th percentile"
+      comment:
+
+  tn90p:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tn90p"
+      standard_name:
+      long_name: "Percentage of days when Tmin > 90th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmin
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 90
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name: "tn90p"
+      long_name: "WMO No.1500: Warm nights (count of days)"
+      definition: "Number of days when TN > 90th percentile"
+      comment:
+
+  tx90p:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tx90p"
+      standard_name:
+      long_name: "Percentage of days when Tmax > 90th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmax
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 90
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name: "tx90p"
+      long_name: "WMO No.1500: Warm day-times (count of days)"
+      definition: "Number of days when TX > 90th percentile"
+      comment:
+
+  tg10p:
+    reference: ECA&D
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tg10p"
+      standard_name:
+      long_name: "Percentage of days when Tmean < 10th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tas
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 10
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name: "tg10p"
+      long_name:
+      definition:
+      comment:
+
+  tg90p:
+    reference: ECA&D
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tg90p"
+      standard_name:
+      long_name: "Percentage of days when Tmean > 90th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tas
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 90
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name: "tg90p"
+      long_name:
+      definition:
+      comment:
+
+  txgt50p:
+    reference: ET-SCI
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "txgt50p"
+      standard_name:
+      long_name: "Percentage of days when Tmax > 50th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmax
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: 50
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name: "tx50p"
+      long_name: "Above average days"
+      definition: "Number of days where TX > 50th percentile"
+      comment:
+
+  txgt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "txgt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmax > {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmax
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
+  tngt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tngt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmin > {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmin
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
+  tmgt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tmgt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmean > {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tas
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: ">"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
+  txlt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "txlt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmax < {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmax
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
+  tnlt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tnlt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmin < {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tasmin
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
+  tmlt{PRC}p:
+    reference: CLIPC
+    period:
+      allowed:
+        annual:
+      default: annual
+    output:
+      var_name: "tmlt{PRC}p"
+      standard_name:
+      long_name: "Percentage of days when Tmean < {PRC}th percentile"
+      units: "%"
+      cell_methods:
+    input:
+      data: tas
+    index_function:
+      name: count_percentile_occurrences
+      parameters:
+        percentile:
+          kind: quantity
+          standard_name:
+          proposed_standard_name: quantile
+          data: {PRC}
+          units: "%"
+        condition:
+          kind: operator
+          operator: "<"
+    ET:
+      short_name:
+      long_name:
+      definition:
+      comment:
+
   dtr:
     reference: ETCCDI
     period:
@@ -2017,7 +2433,7 @@ indices:
     output:
       var_name: "dtr"
       standard_name:
-      proposed_standard_name: air_temperature_difference
+      proposed_standard_name: air_temperature_range
       long_name: "Mean Diurnal Temperature Range"
       units: "degree_Celsius"
       cell_methods:
@@ -2073,7 +2489,7 @@ indices:
     output:
       var_name: "etr"
       standard_name:
-      proposed_standard_name: air_temperature_difference
+      proposed_standard_name: air_temperature_range
       long_name: "Intra-period extreme temperature range"
       units: "degree_Celsius"
       cell_methods:
@@ -2358,14 +2774,14 @@ indices:
       definition:
       comment:
 
-  gddgrow5:
+  gddgrow{TT}:
     reference: ET-SCI
     period:
       allowed:
         annual:
       default: annual
     output:
-      var_name: "gddgrow5"
+      var_name: "gddgrow{TT}"
       standard_name: integral_of_air_temperature_excess_wrt_time
       long_name: "Annual Growing Degree Days (Tmean > 5C)"
       units: "degree_Celsius day"

@@ -15,7 +15,7 @@ Dictionary and YAML parser
 
 To construct indicators dynamically, xclim can also use dictionaries and parse them from YAML files.
 This is especially useful for generating whole indicator "submodules" from files.
-This functionality is based on and extends the work of [cf-index-meta](https://bitbucket.org/cf-index-meta/cf-index-meta).
+This functionality is based on and extends the work of [clix-meta](https://github.com/clix-meta/clix-meta/).
 
 YAML file structure
 ~~~~~~~~~~~~~~~~~~~
@@ -31,7 +31,7 @@ Indicator-defining yaml files are structured in the following way:
         base: <base indicator class>  # Defaults to module-wide base class or "Daily".
         realm: <realm>  # Defaults to the module-wide realm or "atmos"
         reference: <references>
-        references: <references>  # Plural or singular accepted (for harmonizing cf-index-meta and xclim)
+        references: <references>  # Plural or singular accepted (for harmonizing clix-meta and xclim)
         keywords: <keywords>
         notes: <notes>
         title: <title>
@@ -76,7 +76,7 @@ a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow th
 
 Parameters
 ~~~~~~~~~~
-`cf-index-meta` defines three kinds of parameters:
+`clix-meta` defines three kinds of parameters:
 
     - "quantity", a quantity with a magnitude and some units, (equivalent to xclim.core.utils.InputKind.QUANTITY_STR)
       The value is given through the magnitude in "data" and units in "units".
@@ -492,14 +492,14 @@ class Indicator(IndicatorRegistrar):
                     )
 
             injected_params = {}
-            # In cf-index-meta, when there are no parameters, the key is still there with a None value.
+            # In clix-meta, when there are no parameters, the key is still there with a None value.
             for name, param in (data["index_function"].get("parameters") or {}).items():
-                # Handle cf-index-meta cases
+                # Handle clix-meta cases
                 if param.get("kind") == "quantity" and isinstance(param["data"], str):
                     # A string with units, but not a placeholder (data is a dict)
                     value = f"{param['data']} {param['units']}"
                 elif param.get("kind") in ["reducer", "operator"]:
-                    # cf-index-meta defined kinds :value is stored in a field of the same name as the kind.
+                    # clix-meta defined kinds :value is stored in a field of the same name as the kind.
                     value = param[param["kind"]]
                 else:
                     # All other xclim-defined kinds in "data"
@@ -507,7 +507,7 @@ class Indicator(IndicatorRegistrar):
 
                 if isinstance(value, dict):
                     # User-chosen parameter. placeholder.
-                    # It should be a string, this is a bug from cf-index-meta.
+                    # It should be a string, this is a bug from clix-meta.
                     value = list(value.keys())[0]
                     params[name] = {
                         "default": param.get("default"),
@@ -519,7 +519,7 @@ class Indicator(IndicatorRegistrar):
                         params[name]["units"] = param["units"]
                         input_units = input_units or {}
                         input_units[name] = param["units"]
-                    # We will need to replace placeholders in metadata strings (only for cf-index-meta indicators)
+                    # We will need to replace placeholders in metadata strings (only for clix-meta indicators)
                     if value != name:
                         metadata_placeholders["{" + value + "}"] = "{" + name + "}"
                 else:
@@ -1244,9 +1244,8 @@ def build_indicator_module_from_yaml(
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
-        clean_id = identifier.replace("{", "").replace(
-            "}", ""
-        )  # cf-index-meta has illegal characters in the identifiers.
+        # clix-meta has illegal characters in the identifiers.
+        clean_id = identifier.replace("{", "").replace("}", "")
         try:
             if "base" in data:
                 base = registry[data["base"].upper()]

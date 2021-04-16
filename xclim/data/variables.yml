@@ -146,3 +146,13 @@ variables:
       - fg
       - FG
     comment: not well established
+
+  snw:
+    standard_name: surface_snow_amount
+    cell_methods:
+      - time: mean
+    dimensionality: mass per surface
+    aliases:
+      - swe
+      - SWE
+    comment: not well established
