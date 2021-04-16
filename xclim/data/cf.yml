@@ -2774,14 +2774,14 @@ indices:
       definition:
       comment:
 
-  gddgrow{TT}:
+  gddgrow5:
     reference: ET-SCI
     period:
       allowed:
         annual:
       default: annual
     output:
-      var_name: "gddgrow{TT}"
+      var_name: "gddgrow5"
       standard_name: integral_of_air_temperature_excess_wrt_time
       long_name: "Annual Growing Degree Days (Tmean > 5C)"
       units: "degree_Celsius day"
