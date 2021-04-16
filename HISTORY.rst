@@ -5,6 +5,10 @@ History
 0.26.0 (unreleased)
 -------------------
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+
 Bug fixes
 ~~~~~~~~~
 * Remove `from_string` object creation in sdba, replace with use of new dependency `jsonpickle`.
