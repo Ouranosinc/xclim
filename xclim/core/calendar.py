@@ -910,7 +910,11 @@ def doy_to_days_since(
     if start is not None:
         out.attrs.update(units=f"days after {start}")
     else:
-        out.attrs.update(units="days after time coordinate")
+        starts = np.unique(out.time.dt.strftime("%m-%d"))
+        if len(starts) == 1:
+            out.attrs.update(units=f"days after {starts[0]}")
+        else:
+            out.attrs.update(units="days after time coordinate")
 
     out.attrs.update(calendar=calendar)
     return convert_calendar(out, base_calendar)
