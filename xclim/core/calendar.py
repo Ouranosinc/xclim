@@ -908,9 +908,9 @@ def doy_to_days_since(
     out = xr.where(dac > base_doy, dac, dac + doy_max) - start_doy
     out.attrs.update(da.attrs)
     if start is not None:
-        out.attrs.update(units=f"days since {start}")
+        out.attrs.update(units=f"days after {start}")
     else:
-        out.attrs.update(units="days since time coordinate")
+        out.attrs.update(units="days after time coordinate")
 
     out.attrs.update(calendar=calendar)
     return convert_calendar(out, base_calendar)
