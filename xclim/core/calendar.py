@@ -916,8 +916,8 @@ def doy_to_days_since(
         else:
             out.attrs.update(units="days after time coordinate")
 
-    out.attrs.update(calendar=calendar).rename(da.name)
-    return convert_calendar(out, base_calendar)
+    out.attrs.update(calendar=calendar)
+    return convert_calendar(out, base_calendar).rename(da.name)
 
 
 def days_since_to_doy(
@@ -974,5 +974,5 @@ def days_since_to_doy(
 
     out.attrs.update(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
-    ).rename(da.name)
-    return convert_calendar(out, base_calendar)
+    )
+    return convert_calendar(out, base_calendar).rename(da.name)
