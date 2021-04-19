@@ -379,7 +379,7 @@ class Indicator(IndicatorRegistrar):
         # Create new class object
         new = type(identifier.upper(), (cls,), kwds)
 
-        # Forcing the module is there so YAML-generated submodules are correctly seen by IndicatorRegristrar.
+        # Forcing the module is there so YAML-generated submodules are correctly seen by IndicatorRegistrar.
         if "module" in kwds:
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
@@ -1144,7 +1144,7 @@ def build_indicator_module(
     Parameters
     ----------
     name : str
-      New module name. If it alreay exists, the module is extended with the passed objects,
+      New module name. If it already exists, the module is extended with the passed objects,
       overwritting those with same names.
     objs : dict
       Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
@@ -1207,7 +1207,9 @@ def build_indicator_module_from_yaml(
       How to deal with broken indice definitions.
     realm: str, optional
     keywords: str, optional
+       Comma separated keywords.
     references str, optional
+        Source citations. 
     notes: str, optional
       Other indicator attributes that would apply to all indicators in this module.
       Values given here are overridden by the ones given in individual definition, but

@@ -335,7 +335,7 @@ def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: 
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold),
-    i.e. if condition is <, data < threshold.
+    i.e. if condition is `<`, then this counts the number of times `data < threshold`.
     Finally, count the number of occurrences when condition is met.
 
     Parameters
