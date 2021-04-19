@@ -247,3 +247,11 @@ def normalize(
         broadcast(invert(norm, kind), x, group=group, interp="nearest"),
         kind,
     )
+
+
+def uniform_noise_like(da: xr.DataArray, low: float = 1e-6, high: float = 1e-3):
+    """Return an unform noise array of the same shape as da.
+
+    Noise is uniformly distributed between low and high.
+    """
+    return da.copy(data=(high - low) * np.random.random_sample(size=da.shape) + low)

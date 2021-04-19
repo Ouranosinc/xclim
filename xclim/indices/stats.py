@@ -45,7 +45,7 @@ _lm3_dist_map = {
 
 # Fit the parameters.
 # This would also be the place to impose constraints on the series minimum length if needed.
-def _fitfunc_1d(arr, *, dist, nparams, method):
+def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     """Fit distribution parameters."""
     x = np.ma.masked_invalid(arr).compressed()
 
@@ -55,8 +55,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method):
 
     # Estimate parameters
     if method == "ML":
-        args, kwargs = _fit_start(x, dist.name)
-        params = dist.fit(x, *args, **kwargs)
+        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+        params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
 
@@ -67,7 +67,13 @@ def _fitfunc_1d(arr, *, dist, nparams, method):
     return params
 
 
-def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML", dim: str = "time"):
+def fit(
+    da: xr.DataArray,
+    dist: str = "norm",
+    method: str = "ML",
+    dim: str = "time",
+    **fitkwargs,
+):
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -81,6 +87,8 @@ def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML", dim: str = "ti
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
       The PWM method is usually more robust to outliers.
+    **fitkwargs
+      Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
     -------
@@ -111,6 +119,7 @@ def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML", dim: str = "ti
         dist=dc if method == "ML" else lm3dc,
         nparams=len(dist_params),
         method=method,
+        **fitkwargs,
     )
 
     # Coordinates for the distribution parameters
@@ -334,7 +343,7 @@ def get_lm3_dist(dist):
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
-def _fit_start(x, dist):
+def _fit_start(x, dist, **fitkwargs):
     """Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
@@ -359,6 +368,17 @@ def _fit_start(x, dist):
     if dist == "genextreme":
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
+
+    if dist == "genpareto" and "floc" in fitkwargs:
+        # Taken from julia' Extremes. Case for when "mu/loc" is known.
+        t = fitkwargs["floc"]
+        if not np.isclose(t, 0):
+            m = (x - t).mean()
+            v = (x - t).var()
+
+        c = 0.5 * (1 - m ** 2 / v)
+        scale = (1 - c) * m
+        return (c,), {"scale": scale}
 
     if dist in ("weibull_min"):
         s = x.std()

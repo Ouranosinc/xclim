@@ -56,7 +56,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     _repr_hide_params = ["hist_calendar"]
 
     @property
-    def __trained(self):
+    def _trained(self):
         return hasattr(self, "ds")
 
     def train(
@@ -73,7 +73,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
-        if self.__trained:
+        if self._trained:
             warn("train() was already called, overwriting old results.")
 
         if hasattr(self, "group"):
@@ -107,7 +107,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        if not self.__trained:
+        if not self._trained:
             raise ValueError("train() must be called before adjusting.")
 
         if hasattr(self, "group"):
@@ -165,7 +165,7 @@ class AdjustmentCorrection(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        if not self.__trained:
+        if not self._trained:
             raise ValueError("train() must be called before adjusting.")
 
         if hasattr(self, "group"):
@@ -523,26 +523,32 @@ class ExtremeValues(AdjustmentCorrection):
         super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh, dist=dist)
 
     def _train(self, ref, hist):
+        cluster_thresh = convert_units_to(self.cluster_thresh, ref)
+        hist = convert_units_to(hist, ref)
+
+        # Extreme value threshold computed relative to "large values".
+        # We use the mean between ref and hist here.
         thresh = (
-            ref.quantile(self.q_thresh, dim="time")
-            + hist.quantile(self.q_thresh, dim="time")
+            ref.where(ref >= cluster_thresh).quantile(self.q_thresh, dim="time")
+            + hist.where(hist >= cluster_thresh).quantile(self.q_thresh, dim="time")
         ) / 2
 
-        cluster_thresh = convert_units_to(self.cluster_thresh, ref)
-
+        # All large value clusters
         ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-        ds = xr.Dataset(
-            dict(
-                fit_params=stats.fit(ref_clusters.maximum, self.dist, dim="cluster"),
-                thresh=thresh,
-            )
+        # Parameters of a genpareto (or other) distribution, we force te location at thresh.
+        fit_params = stats.fit(
+            ref_clusters.maximum - thresh, self.dist, dim="cluster", floc=0
         )
+        # Param "loc" was fitted with 0, put thresh back
+        fit_params[..., 1] = fit_params[..., 1] + thresh
+
+        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
         ds.fit_params.attrs.update(
             long_name=f"{self.dist} distribution parameters of ref",
         )
         ds.thresh.attrs.update(
             long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
-            description=f"Mean of the {self.q_thresh * 100}th percentile of ref and hist.",
+            description=f"Mean of the {self.q_thresh * 100}th percentile of large values (x > {self.cluster_thresh}) of ref and hist.",
         )
         self.set_dataset(ds)
 
@@ -554,32 +560,37 @@ class ExtremeValues(AdjustmentCorrection):
         power: float = 1.0,
     ):
         def _adjust_extremes_1d(sim, scen, ref_params, thresh, *, dist, cluster_thresh):
+            # Clusters of large values of sim
             _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
 
             new_scen = scen.copy()
             if sim_posmax.size == 0:
+                # Happens if everything is under `cluster_thresh`
                 return new_scen
 
+            # Fit the dist, force location at thresh
             sim_fit = stats._fitfunc_1d(
-                sim_maxs, dist=dist, nparams=len(ref_params), method="ML"
+                sim_maxs, dist=dist, nparams=len(ref_params), method="ML", floc=thresh
             )
 
+            # Cumulative density function for extreme values in sim's distribution
             sim_cdf = dist.cdf(sim_maxs, *sim_fit)
+            # Equivalent value of sim's CDF's but in ref's distribution.
             new_sim = dist.ppf(sim_cdf, *ref_params) + thresh
 
-            # Get the weights based on frac and power values
+            # Get the transition weights based on frac and power values
             transition = (
                 ((sim_maxs - sim_maxs.min()) / ((sim_maxs.max()) - sim_maxs.min()))
                 / frac
             ) ** power
             np.clip(transition, None, 1, out=transition)
 
-            # Apply linear transition
+            # Apply smotth linear transition between scen and corrected scen
             new_scen_trans = (new_sim * transition) + (
                 scen[sim_posmax] * (1.0 - transition)
             )
 
-            # We put the new data in the bias-corrected vector
+            # We change new_scen to the new data
             new_scen[sim_posmax] = new_scen_trans
             return new_scen
 
