@@ -1,18 +1,21 @@
 import numpy as np
 import pytest
 import xarray as xr
-from scipy.stats import norm, uniform
+from scipy.stats import genpareto, norm, uniform
 
+from xclim.core.units import convert_units_to
 from xclim.sdba.adjustment import (
     LOCI,
     BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
+    ExtremeValues,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
 )
 from xclim.sdba.base import Grouper
+from xclim.sdba.processing import jitter_under_thresh, uniform_noise_like
 from xclim.sdba.utils import (
     ADDITIVE,
     MULTIPLICATIVE,
@@ -20,6 +23,7 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
+from xclim.testing import open_dataset
 
 from .utils import nancov
 
@@ -513,6 +517,100 @@ class TestPrincipalComponents:
 
         # "Error" is very small
         assert (ref - scen).mean() < 5e-3
+
+
+class TestExtremeValues:
+    @pytest.mark.parametrize(
+        "c_thresh,q_thresh,frac,power",
+        [
+            ["1 mm/d", 0.95, 0.25, 1],
+            ["1 mm/d", 0.90, 1e-6, 1],
+            ["0.007 m/week", 0.95, 0.25, 2],
+        ],
+    )
+    def test_simple(self, c_thresh, q_thresh, frac, power):
+        n = 45 * 365
+
+        def gen_testdata(c, s):
+            base = np.clip(norm.rvs(loc=0, scale=s, size=(n,)), 0, None)
+            qv = np.quantile(base[base > 1], q_thresh)
+            base[base > qv] = genpareto.rvs(
+                c, loc=qv, scale=s, size=base[base > qv].shape
+            )
+            return xr.DataArray(
+                base,
+                dims=("time",),
+                coords={
+                    "time": xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+                },
+                attrs={"units": "mm/day", "thresh": qv},
+            )
+
+        ref = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
+        hist = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
+        sim = gen_testdata(-0.15, 2.5)
+
+        EQM = EmpiricalQuantileMapping(group="time.dayofyear", nquantiles=15, kind="*")
+        EQM.train(ref, hist)
+        scen = EQM.adjust(sim)
+
+        EX = ExtremeValues(c_thresh, q_thresh=q_thresh, dist="genpareto")
+        EX.train(ref, hist)
+
+        qv = (ref.thresh + hist.thresh) / 2
+        np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.15, rtol=0.1)
+        np.testing.assert_allclose(EX.ds.thresh, qv, atol=0.15, rtol=0.01)
+
+        scen2 = EX.adjust(scen, sim, frac=frac, power=power)
+
+        # What to test???
+        # Test if extreme values of sim are still extreme
+        exval = sim > EX.ds.thresh
+        assert (scen2.where(exval) > EX.ds.thresh).sum() > (
+            scen.where(exval) > EX.ds.thresh
+        ).sum()
+        # ONLY extreme values have been touched (but some might not have been modified)
+        assert (((scen != scen2) | exval) == exval).all()
+
+    def test_julia(self):
+
+        dsim = open_dataset(
+            "sdba/fermont_CanESM2_1950-2100.nc", branch="sdba-testfiles"
+        )
+        dref = open_dataset("sdba/fermont_nrcan_1950-2013.nc", branch="sdba-testfiles")
+        dexp = open_dataset(
+            "sdba/fermont_biasadjusted_external.nc", branch="sdba-testfiles"
+        )
+
+        ref = convert_units_to(dref.sel(time=slice("1980", "2009")).pr, "mm/d")
+        hist = convert_units_to(dsim.sel(time=slice("1980", "2009")).pr, "mm/d")
+        sim = convert_units_to(dsim.sel(time=slice("2040", "2069")).pr, "mm/d")
+
+        quantiles = np.linspace(0.01, 0.99, num=50)
+
+        EQM = EmpiricalQuantileMapping(
+            group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
+        )
+
+        with xr.set_options(keep_attrs=True):
+            ref = ref + uniform_noise_like(ref, low=1e-6, high=1e-3)
+            hist = hist + uniform_noise_like(hist, low=1e-6, high=1e-3)
+            sim = sim + uniform_noise_like(sim, low=1e-6, high=1e-3)
+
+        EQM.train(ref, hist)
+        scen = EQM.adjust(sim, interp="linear", extrapolation="constant")
+
+        EX = ExtremeValues(cluster_thresh="1 mm/day")
+        EX.train(ref, hist)
+        new_scen = EX.adjust(scen, sim, frac=0.000000001)
+
+        exp_scen = dexp.julia_extremes_flat_pr
+        np.testing.assert_allclose(
+            (new_scen - exp_scen).where(new_scen != scen, drop=True),
+            0,
+            atol=0.01,
+            rtol=2e-3,
+        )
 
 
 def test_raise_on_multiple_chunks(tas_series):

@@ -11,7 +11,6 @@ from scipy.interpolate import griddata, interp1d
 
 from xclim.core.calendar import _interpolate_doy_calendar
 from xclim.core.utils import ensure_chunk_size
-from xclim.indices import stats
 
 from .base import Grouper, parse_group
 
@@ -594,13 +593,20 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
 
-    Taken from julia's Extremes package, function getcluster.
+    Inpsired from julia's Extremes package, function getcluster.
 
     Parameters
     ----------
     data: 1D ndarray
+      Values to get clusters from.
     u1 : float
+      Extreme value threshold, at least one value in the cluster must exceed this.
     u2 : float
+      Cluster threshold, values above this can be part of a cluster.
+
+    Reference
+    ---------
+    Extreme value analysis package for Julia (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
     """
     # Boolean array, True where data is over u2
     # We pad with values under u2, so that clusters never start or end at boundaries.
@@ -609,12 +615,10 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
     # 1 just before the start of the cluster
     # -1 on the last element of the cluster
     bounds = np.diff(exce.astype(np.int32))
-    starts = np.where(bounds == 1)[
-        0
-    ]  # +1 to get the first element -1 to get the same index as in data
-    ends = np.where(bounds == -1)[
-        0
-    ]  # -1 to get the same index as in data +1 to get the element after (for python slicing)
+    # We add 1 to get the first element and sub 1 to get the same index as in data
+    starts = np.where(bounds == 1)[0]
+    # We sub 1 to get the same index as in data and add 1 to get the element after (for python slicing)
+    ends = np.where(bounds == -1)[0]
 
     cl_maxpos = []
     cl_maxval = []
@@ -639,7 +643,7 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
 def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
     """Get cluster count, maximum and position along a given dim.
 
-    See `get_clusters_1d`.
+    See `get_clusters_1d`. Used by `adjustment.ExtremeValues`.
 
     Returns
     -------

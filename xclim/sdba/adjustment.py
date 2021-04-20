@@ -471,10 +471,10 @@ class ExtremeValues(AdjustmentCorrection):
     ):
         r"""Adjustement correction for extreme values.
 
-        The tail of the distribution of adjusted data is corrected with according to the
-        parametric distribution of the reference data.
+        The tail of the distribution of adjusted data is corrected according to the
+        parametric distribution of the reference data, [RRJF2021]_.
 
-        Code based on `biascorrect_extremes` in the julia package [ClimateTools]_.
+        Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
 
         Parameters
         ----------
@@ -483,23 +483,28 @@ class ExtremeValues(AdjustmentCorrection):
         cluster_thresh: Quantity (str with units)
           The threshold value for defining clusters.
         q_thresh : float
-          The quantile of "extreme" values.
+          The quantile of "extreme" values, [0, 1[.
         dist : str
           Name of the distribution (scipy name) to use.
 
         In adjustment:
 
-        frac: float, [0, 1]
+        frac: float
           Fraction where the cutoff happens between the original scen and the corrected one.
-          See Notes.
+          See Notes, ]0, 1].
         power: float
           Shape of the correction strength, see Notes.
 
         Notes
         -----
-
-
-        Correction strength:
+        Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters",
+        i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
+        of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
+        threshold. The maximal value of each cluster of `ref`, if it exceeds that new threshold,
+        is taken and a `dist` (default : Generalized Pareto) distribution is fitted to them.
+        Similarly with `sim`. The cdf of the extreme values of `sim` is computed in reference
+        to the distribution fitted on `sim` and then the corresponding values (quantile / ppf)
+        in reference to the distribution fitted on `ref` are taken as the new bias-adjusted values.
 
         Once new extreme values are found, a mixture from the original scen and corrected scen
         is used in the result. For each original value :math:`S_i` and corrected value :math:`C_i`
@@ -519,6 +524,7 @@ class ExtremeValues(AdjustmentCorrection):
         References
         ----------
         .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
+        .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
         """
         super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh, dist=dist)
 
@@ -542,7 +548,9 @@ class ExtremeValues(AdjustmentCorrection):
         # Param "loc" was fitted with 0, put thresh back
         fit_params[..., 1] = fit_params[..., 1] + thresh
 
-        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
+        ds = xr.Dataset(
+            dict(fit_params=fit_params, thresh=thresh, nclusters=ref_clusters.nclusters)
+        )
         ds.fit_params.attrs.update(
             long_name=f"{self.dist} distribution parameters of ref",
         )
@@ -559,7 +567,7 @@ class ExtremeValues(AdjustmentCorrection):
         frac: float = 0.25,
         power: float = 1.0,
     ):
-        def _adjust_extremes_1d(sim, scen, ref_params, thresh, *, dist, cluster_thresh):
+        def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
             # Clusters of large values of sim
             _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
 
@@ -596,8 +604,8 @@ class ExtremeValues(AdjustmentCorrection):
 
         new_scen = xr.apply_ufunc(
             _adjust_extremes_1d,
-            sim,
             scen,
+            sim,
             self.ds.fit_params,
             self.ds.thresh,
             input_core_dims=[["time"], ["time"], ["dparams"], []],
