@@ -8,6 +8,7 @@ History
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+* New bias adjustment correction method "ExtremeValues", intended for re-adjusting extreme precipitation values.
 
 Bug fixes
 ~~~~~~~~~
