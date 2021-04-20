@@ -871,7 +871,7 @@ def within_bnds_doy(arr: xr.DataArray, low: xr.DataArray, high: xr.DataArray):
     high = reshape_doy(high, arr)
     return (low < arr) * (arr < high)
 
-  
+
 def _doy_days_since_doys(base: xr.DataArray, start: Optional[DayOfYearStr] = None):
     """Common calculation for doy to days since and inverse conversions.
 

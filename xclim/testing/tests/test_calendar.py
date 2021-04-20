@@ -395,7 +395,7 @@ def test_clim_mean_doy(tas_series):
     np.testing.assert_array_equal(m[1:-1], np.arange(365, 365 * 2)[1:-1])
     np.testing.assert_array_almost_equal(s[1:-1], 298.0223, 4)
 
-    
+
 def test_doy_to_days_since():
     # simple test
     time = date_range("2020-07-01", "2022-07-01", freq="AS-JUL")
