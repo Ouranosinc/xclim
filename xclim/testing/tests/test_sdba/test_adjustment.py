@@ -558,7 +558,7 @@ class TestExtremeValues:
         EX.train(ref, hist)
 
         qv = (ref.thresh + hist.thresh) / 2
-        np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.15, rtol=0.1)
+        np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.5, rtol=0.1)
         np.testing.assert_allclose(EX.ds.thresh, qv, atol=0.15, rtol=0.01)
 
         scen2 = EX.adjust(scen, sim, frac=frac, power=power)
