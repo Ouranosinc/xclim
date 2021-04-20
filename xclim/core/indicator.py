@@ -1145,7 +1145,7 @@ def build_indicator_module(
     ----------
     name : str
       New module name. If it already exists, the module is extended with the passed objects,
-      overwritting those with same names.
+      overwriting those with same names.
     objs : dict
       Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
     doc : str
@@ -1209,7 +1209,7 @@ def build_indicator_module_from_yaml(
     keywords: str, optional
        Comma separated keywords.
     references str, optional
-        Source citations. 
+        Source citations.
     notes: str, optional
       Other indicator attributes that would apply to all indicators in this module.
       Values given here are overridden by the ones given in individual definition, but
