@@ -1208,7 +1208,7 @@ def build_indicator_module_from_yaml(
     realm: str, optional
     keywords: str, optional
        Comma separated keywords.
-    references str, optional
+    references: str, optional
         Source citations.
     notes: str, optional
       Other indicator attributes that would apply to all indicators in this module.
