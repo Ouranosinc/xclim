@@ -572,12 +572,14 @@ class TestExtremeValues:
         # ONLY extreme values have been touched (but some might not have been modified)
         assert (((scen != scen2) | exval) == exval).all()
 
-    def test_julia(self):
+    def test_dask_julia(self):
 
         dsim = open_dataset(
             "sdba/fermont_CanESM2_1950-2100.nc", branch="sdba-testfiles"
-        )
-        dref = open_dataset("sdba/fermont_nrcan_1950-2013.nc", branch="sdba-testfiles")
+        ).chunk()
+        dref = open_dataset(
+            "sdba/fermont_nrcan_1950-2013.nc", branch="sdba-testfiles"
+        ).chunk()
         dexp = open_dataset(
             "sdba/fermont_biasadjusted_external.nc", branch="sdba-testfiles"
         )
@@ -603,6 +605,8 @@ class TestExtremeValues:
         EX = ExtremeValues(cluster_thresh="1 mm/day")
         EX.train(ref, hist)
         new_scen = EX.adjust(scen, sim, frac=0.000000001)
+
+        new_scen.load()
 
         exp_scen = dexp.julia_extremes_flat_pr
         np.testing.assert_allclose(

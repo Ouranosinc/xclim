@@ -654,6 +654,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
         - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
 
       For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
+      The length along `cluster` is half the size of "dim", the maximal theoritical number of clusters.
     """
 
     def _get_clusters(arr, u1, u2, N):
@@ -704,4 +705,4 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
         }
     )
 
-    return ds.isel(cluster=slice(None, ds.nclusters.max().item()))
+    return ds

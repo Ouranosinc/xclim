@@ -524,14 +524,19 @@ class ExtremeValues(BaseAdjustment):
                 ref_clusters.maximum - thresh, "genpareto", dim="cluster", floc=0
             )
             # Param "loc" was fitted with 0, put thresh back
-            fit_params[..., 1] = fit_params[..., 1] + thresh
+            fit_params = fit_params.where(
+                fit_params.dparams != "loc", fit_params + thresh
+            )
         else:
             dist = ref_params.attrs.get("scipy_dist", "genpareto")
             fit_params = ref_params.copy().transpose(..., "dparams")
             if dist == "genextreme":
-                fit_params[..., 1] = fit_params.sel(dparams="scale") + fit_params.sel(
-                    dparams="c"
-                ) * (thresh - fit_params.sel(dparams="loc"))
+                fit_params = xr.where(
+                    fit_params.dparams == "loc",
+                    fit_params.sel(dparams="scale")
+                    + fit_params.sel(dparams="c") * (thresh - fit_params),
+                    fit_params,
+                )
             elif dist != "genpareto":
                 raise ValueError(f"Unknown conversion from {dist} to genpareto.")
 
