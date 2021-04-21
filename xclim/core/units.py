@@ -310,17 +310,17 @@ def convert_units_to(
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, (float, int)):
-        if context == "hydro":
-            fu = units.mm / units.day
-        else:
-            fu = units.degC
-        warnings.warn(
-            "Future versions of xclim will require explicit unit specifications.",
-            FutureWarning,
-            stacklevel=3,
-        )
-        return units.Quantity(source, units=fu).to(tu).m
+    # if isinstance(source, (float, int)):
+    #     if context == "hydro":
+    #         fu = units.mm / units.day
+    #     else:
+    #         fu = units.degC
+    #     warnings.warn(
+    #         "Future versions of xclim will require explicit unit specifications.",
+    #         FutureWarning,
+    #         stacklevel=3,
+    #     )
+    #     return units.Quantity(source, units=fu).to(tu).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 

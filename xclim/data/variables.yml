@@ -8,7 +8,7 @@ variables:
     standard_name: precipitation_flux
     cell_methods:
       - time: mean
-    dimensionality: precipitation
+    dimensionality: "[precipitation]"
     description: Daily surface precipitation flux.
     aliases:
       - pradjust
@@ -25,7 +25,7 @@ variables:
     standard_name: air_temperature
     cell_methods:
       - time: mean
-    dimensionality: temperature
+    dimensionality: "[temperature]"
     description: Mean daily surface temperature.
     aliases:
       - tasadjust
@@ -45,7 +45,7 @@ variables:
     standard_name: air_temperature
     cell_methods:
       - time: maximum
-    dimensionality: temperature
+    dimensionality: "[temperature]"
     description: Maximum daily surface temperature.
     aliases:
       - tasmaxadjust
@@ -62,7 +62,7 @@ variables:
     standard_name: air_temperature
     cell_methods:
       - time: minimum
-    dimensionality: temperature
+    dimensionality: "[temperature]"
     description: Minimum daily surface temperature.
     aliases:
       - tasminadjust
@@ -79,7 +79,7 @@ variables:
     standard_name: relative_humidity
     cell_methods:
       - time: mean
-    dimensionality:
+    dimensionality: "[]"
     description: Daily relative humidity.
     aliases:
       - hursadjust
@@ -91,7 +91,7 @@ variables:
     standard_name: air_pressure_at_sea_level
     cell_methods:
       - time: mean
-    dimensionality: pressure
+    dimensionality: "[pressure]"
     description: Daily air pressure.
     aliases:
       - mslp
@@ -106,7 +106,7 @@ variables:
     standard_name: surface_snow_thickness
     cell_methods:
       - time: mean
-    dimensionality: length
+    dimensionality: "[length]"
     description: Snow thickness.
     aliases:
       - sd
@@ -117,7 +117,7 @@ variables:
     standard_name: duration_of_sunshine
     cell_methods:
       - time: mean
-    dimensionality: time
+    dimensionality: "[time]"
     description: Daily duration of sunshine.
     aliases:
       - ss
@@ -128,7 +128,7 @@ variables:
     standard_name: wind_speed_of_gust
     cell_methods:
       - time: maximum
-    dimensionality: speed
+    dimensionality: "[speed]"
     description: Daily maximum surface wind speed.
     aliases:
       - fx
@@ -139,7 +139,7 @@ variables:
     standard_name: wind_speed
     cell_methods:
       - time: mean
-    dimensionality: speed
+    dimensionality: "[speed]"
     description: Daily mean surface wind speed.
     aliases:
       - sfcwind
@@ -151,7 +151,7 @@ variables:
     standard_name: surface_snow_amount
     cell_methods:
       - time: mean
-    dimensionality: mass per surface
+    dimensionality: "[mass]/[length]^2"
     aliases:
       - swe
       - SWE

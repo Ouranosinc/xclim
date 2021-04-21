@@ -383,7 +383,7 @@ def relative_humidity(
 def specific_humidity(
     tas: xr.DataArray,
     rh: xr.DataArray,
-    ps: xr.DataArray = None,
+    ps: xr.DataArray,
     ice_thresh: str = None,
     method: str = "sonntag90",
     invalid_values: str = None,

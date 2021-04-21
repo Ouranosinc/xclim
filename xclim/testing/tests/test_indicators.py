@@ -442,7 +442,7 @@ def test_indicator_from_dict():
             units="K",
             long_name="{freq} mean surface temperature",
             standard_name="{freq} mean temperature",
-            cell_methods="time: mean within {freq:noun}",
+            cell_methods={"time": "mean within days"},
         ),
         index_function=dict(
             name="thresholded_statictics",

@@ -28,7 +28,6 @@ from . import run_length as rl
 
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
-reducer_op = {"maximum": "max", "minimum": "min", "mean": "mean", "sum": "sum"}
 
 
 def select_time(da: xr.DataArray, **indexer):
@@ -303,16 +302,17 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 def count_level_crossings(
     low_data: xr.DataArray, high_data: xr.DataArray, threshold: str, freq: str
 ):
-    """This index function takes two inputs, low_data and high_data, together with one parameter, the threshold.
+    """Calculate the number of times low_data is below threshold while high_data is above threshold.
 
-    It calculates the number of times low_data is below threshold while high_data is above threshold.
     First, the threshold is transformed to the same standard_name and units as the input data,
     then the thresholding is performed, and finally, the number of occurrences is counted.
 
     Parameters
     ----------
     low_data: xr.DataArray
+      Variable that must be under the threshold.
     high_data: xr.DataArray
+      Variable that must be above the threshold.
     threshold: str
       Quantity.
     freq: str
@@ -326,12 +326,11 @@ def count_level_crossings(
     higher = compare(high_data, ">", threshold)
 
     out = (lower & higher).resample(time=freq).sum()
-    out.attrs["units"] = ""
-    return out
+    return to_agg_units(out, low_data, "count", dim="time")
 
 
 def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: str):
-    """Calculates the number of times some condition is met.
+    """Calculate the number of times some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold),
@@ -353,21 +352,20 @@ def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: 
     cond = compare(data, condition, threshold)
 
     out = cond.resample(time=freq).sum()
-    out.attrs["units"] = ""
-    return out
+    return to_agg_units(out, data, "count", dim="time")
 
 
 def diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
 ):
-    """This index function takes two inputs, low_data and high_data, i.e. daily minimum and maximum temperature.
-
-    From this it calculated the average diurnal temperature range.
+    """Calculate the average diurnal temperature range.
 
     Parameters
     ----------
     low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
     high_data : xr.DataArray
+      Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
     """
@@ -382,7 +380,7 @@ def diurnal_temperature_range(
 
 
 def first_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str):
-    """Calculates the first time some condition is met.
+    """Calculate the first time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -413,7 +411,7 @@ def first_occurence(data: xr.DataArray, threshold: str, condition: str, freq: st
 
 
 def last_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str):
-    """Calculates the last time some condition is met.
+    """Calculate the last time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -446,7 +444,7 @@ def last_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str
 def spell_length(
     data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
 ):
-    """Calculates statistics on lengths of spells.
+    """Calculate statistics on lengths of spells.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -470,14 +468,14 @@ def spell_length(
 
     out = cond.resample(time=freq).map(
         rl.rle_statistics,
-        reducer=reducer_op[reducer],
+        reducer=reducer,
         dim="time",
     )
     return to_agg_units(out, data, "count")
 
 
 def statistics(data: xr.DataArray, reducer: str, freq: str):
-    """Calculates a simple statistic of the data.
+    """Calculate a simple statistic of the data.
 
     Parameters
     ----------
@@ -495,7 +493,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str):
 def thresholded_statistics(
     data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
 ):
-    """Calculates a simple statistic of the data for which some condition is met.
+    """Calculate a simple statistic of the data for which some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -523,7 +521,7 @@ def thresholded_statistics(
 
 
 def temperature_sum(data: xr.DataArray, threshold: str, condition: str, freq: str):
-    """Calculates the temperature sum above/below a threshold.
+    """Calculate the temperature sum above/below a threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -553,14 +551,14 @@ def temperature_sum(data: xr.DataArray, threshold: str, condition: str, freq: st
 def interday_diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
 ):
-    """This index function takes two inputs, low_data and high_data, i.e. daily minimum and maximum temperature.
-
-    From this it calculates the average absolute day-to-day difference in diurnal temperature range.
+    """Calculate the average absolute day-to-day difference in diurnal temperature range.
 
     Parameters
     ----------
     low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
     high_data : xr.DataArray
+      Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
     """
@@ -577,14 +575,14 @@ def interday_diurnal_temperature_range(
 def extreme_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
 ):
-    """This index function takes two inputs, low_data and high_data, i.e. daily minimum and maximum temperature.
-
-    From this it calculates the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
+    """Calculate the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
 
     Parameters
     ----------
     low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
     high_data : xr.DataArray
+      Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
     """

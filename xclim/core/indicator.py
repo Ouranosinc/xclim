@@ -161,6 +161,7 @@ class IndicatorRegistrar:
                 f"Class {name} already exists and will be overwritten.", stacklevel=1
             )
         registry[name] = cls
+        cls._registry_id = name
         return super().__new__(cls)
 
     def __init__(self):
@@ -468,7 +469,7 @@ class Indicator(IndicatorRegistrar):
                     "default": name,
                     "description": variables[name]["description"],
                 }
-                input_units[varname] = f"[{variables[name]['dimensionality']}]"
+                input_units[varname] = variables[name]["dimensionality"]
 
             cfcheck = generate_cfcheck(*[varname for varname in data["input"].values()])
         else:
@@ -498,8 +499,10 @@ class Indicator(IndicatorRegistrar):
             # In clix-meta, when there are no parameters, the key is still there with a None value.
             for name, param in (data["index_function"].get("parameters") or {}).items():
                 # Handle clix-meta cases
-                if param.get("kind") == "quantity" and isinstance(param["data"], str):
-                    # A string with units, but not a placeholder (data is a dict)
+                if param.get("kind") == "quantity" and isinstance(
+                    param["data"], (str, int, float)
+                ):
+                    # A string with units, but not a placeholder (where data is a dict)
                     value = f"{param['data']} {param['units']}"
                 elif param.get("kind") in ["reducer", "operator"]:
                     # clix-meta defined kinds :value is stored in a field of the same name as the kind.
@@ -627,7 +630,7 @@ class Indicator(IndicatorRegistrar):
         var_attrs = []
         for attrs in self.cf_attrs:
             if n_outs > 1:
-                var_id = f"{self.identifier}.{attrs['var_name']}"
+                var_id = f"{self._registry_id}.{attrs['var_name']}"
             var_attrs.append(
                 self._update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
             )
@@ -762,7 +765,7 @@ class Indicator(IndicatorRegistrar):
             out.update(
                 cls._format(
                     get_local_attrs(
-                        (var_id or cls.__name__).upper(),
+                        var_id or cls._registry_id,
                         locale,
                         names=names or list(attrs.keys()),
                         append_locale_name=True,
@@ -796,7 +799,7 @@ class Indicator(IndicatorRegistrar):
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         attrs["xclim_history"] = update_history(
-            f"{var_id or cls.identifier}({', '.join(callstr)})",
+            f"{var_id or cls._registry_id}({', '.join(callstr)})",
             new_name=out.get("var_name"),
             **das,
         )
@@ -844,7 +847,7 @@ class Indicator(IndicatorRegistrar):
             return attrs
 
         # Translate global attrs
-        attrid = str(self.identifier).upper()
+        attrid = self._registry_id
         attrs = _translate(
             attrid,
             self.__dict__,
@@ -855,7 +858,7 @@ class Indicator(IndicatorRegistrar):
         attrs["outputs"] = []
         for var_attrs in self.cf_attrs:  # Translate for each variable
             if len(self.cf_attrs) > 1:
-                attrid = f"{str(self.identifier).upper()}.{var_attrs['var_name']}"
+                attrid = f"{self.registry_id}.{var_attrs['var_name']}"
             attrs["outputs"].append(_translate(attrid, var_attrs, TRANSLATABLE_ATTRS))
         return attrs
 

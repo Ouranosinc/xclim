@@ -68,6 +68,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: K
     index_function:
       name: tg_mean_wetdry_quarter
       parameters:
@@ -78,6 +80,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: K
     index_function:
       name: tg_mean_wetdry_quarter
       parameters:
@@ -88,6 +92,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: K
     index_function:
       name: tg_mean_warmcold_quarter
       parameters:
@@ -98,6 +104,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: K
     index_function:
       name: tg_mean_warmcold_quarter
       parameters:
@@ -116,6 +124,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_wetdry_period
       parameters:
@@ -126,6 +136,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_wetdry_period
       parameters:
@@ -143,6 +155,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_wetdry_quarter
       parameters:
@@ -153,6 +167,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_wetdry_quarter
       parameters:
@@ -163,6 +179,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_warmcold_quarter
       parameters:
@@ -173,6 +191,8 @@ indices:
       allowed:
         annual:
       default: annual
+    output:
+      units: mm
     index_function:
       name: prcptot_warmcold_quarter
       parameters:

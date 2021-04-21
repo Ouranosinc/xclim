@@ -3881,7 +3881,7 @@ indices:
       standard_name:
       proposed_standard_name: number_of_occurrences_with_air_temperature_level_crossings
       long_name: "Number of zero-crossing days (days when Tmin < 0 degC < Tmax)"
-      units: "??????"
+      units: "days"
       cell_methods:
         - time: sum over days
     input:

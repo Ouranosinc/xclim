@@ -416,7 +416,7 @@ def add_example_dataarray(xdoctest_namespace, tas_series):
 def is_matplotlib_installed(xdoctest_namespace):
     def _is_matplotlib_installed():
         try:
-            import matplotlib
+            import matplotlib  # noqa
 
             return
         except ImportError:
@@ -428,11 +428,55 @@ def is_matplotlib_installed(xdoctest_namespace):
 
 @pytest.fixture
 def official_indicators():
-    # Remove unofficial indicators (as those created during the tests)
+    # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
     registry_cp = xclim.core.indicator.registry.copy()
     for identifier, cls in xclim.core.indicator.registry.items():
-        if not cls.__module__.startswith("xclim") or cls.__module__.startswith(
-            "xclim.testing"
-        ):
+        if identifier != cls._registry_id:
             registry_cp.pop(identifier)
     return registry_cp
+
+
+@pytest.fixture(scope="session")
+def atmosds():
+    ds = xclim.testing.open_dataset(
+        "ERA5/daily_surface_cancities_1990-1993.nc", branch="upd-era5-daily"
+    )
+
+    sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
+    huss = xclim.atmos.specific_humidity(ds=ds)
+    hurs = ds.rh
+    snw = ds.swe * 1000
+    # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
+    snd = snw / 300
+    snw.attrs.update(
+        standard_name="surface_snow_amount",
+        units="kg m-2",
+        cell_methods="time: mean within days",
+    )
+    snd.attrs.update(
+        standard_name="surface_snow_thickness",
+        units="m",
+        cell_methods="time: mean within days",
+    )
+
+    psl = ds.ps
+
+    tn10 = xclim.core.calendar.percentile_doy(ds.tasmin, per=10)
+    t10 = xclim.core.calendar.percentile_doy(ds.tas, per=10)
+    t90 = xclim.core.calendar.percentile_doy(ds.tas, per=90)
+    tx90 = xclim.core.calendar.percentile_doy(ds.tasmax, per=90)
+
+    ds = ds.assign(
+        sfcWind=sfcWind,
+        sfcWindfromdir=sfcWindfromdir,
+        huss=huss,
+        hurs=hurs,
+        psl=psl,
+        snw=snw,
+        snd=snd,
+        tn10=tn10,
+        t10=t10,
+        t90=t90,
+        tx90=tx90,
+    )
+    return ds
