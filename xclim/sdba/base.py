@@ -170,6 +170,9 @@ class Grouper(Parametrizable):
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
+            if da.chunks is not None:
+                # Rechunk. There might be padding chunks.
+                da = da.chunk({self.dim: -1})
 
         if self.prop is None and self.dim == "time":
             group = self.get_index(da)
