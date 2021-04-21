@@ -150,52 +150,6 @@ class BaseAdjustment(ParametrizableWithDataset):
         raise NotImplementedError
 
 
-class AdjustmentCorrection(BaseAdjustment):
-    """Base class for Adjustment correcting objects."""
-
-    def adjust(self, scen: DataArray, sim: Optional[DataArray] = None, **kwargs):
-        """Modifies bias-adjusted data. Refer to the class documentation for the algorithm details.
-
-        Parameters
-        ----------
-        scen: DataArray
-          Bias-adjusted time series.
-        sim : DataArray
-          Time series to be bias-adjusted, source of scen.
-        kwargs :
-          Algorithm-specific keyword arguments, see class doc.
-        """
-        if not self._trained:
-            raise ValueError("train() must be called before adjusting.")
-
-        if hasattr(self, "group"):
-            # Right now there is no other way of getting the main adjustment dimension
-            _raise_on_multiple_chunk(sim, self.group.dim)
-
-            if (
-                self.group.prop == "dayofyear"
-                and get_calendar(sim) != self.hist_calendar
-            ):
-                warn(
-                    (
-                        "This adjustment was trained on a simulation with the "
-                        f"{self._hist_calendar} calendar but the sim input uses "
-                        f"{get_calendar(sim)}. This is not recommended with dayofyear "
-                        "grouping and could give strange results."
-                    ),
-                    stacklevel=4,
-                )
-
-        new_scen = self._adjust(scen, sim=sim, **kwargs)
-        new_scen.attrs.update(scen.attrs)
-        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
-        new_scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjustment corrected with {str(self)}.adjust(scen, sim, {params})",
-            scen,
-        )
-        return new_scen
-
-
 class EmpiricalQuantileMapping(BaseAdjustment):
     """Coventionnal quantile mapping adjustment."""
 
@@ -459,22 +413,23 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         return apply_correction(sim, af, self.kind)
 
 
-class ExtremeValues(AdjustmentCorrection):
-    """Adjustment correction for extreme values."""
+class ExtremeValues(BaseAdjustment):
+    """Second order adjustment for extreme values."""
 
     def __init__(
         self,
         cluster_thresh: str,
         *,
         q_thresh: float = 0.95,
-        dist: str = "genpareto",
     ):
         r"""Adjustement correction for extreme values.
 
         The tail of the distribution of adjusted data is corrected according to the
-        parametric distribution of the reference data, [RRJF2021]_.
-
-        Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
+        parametric Generalized Pareto distribution of the reference data, [RRJF2021]_.
+        The distributions are composed of the maximal values of clusters of "large" values.
+        With "large" values being those above `cluster_thresh`. Only extreme values, whose
+        quantile within the pool of large values are above `q_thresh`, are re-adjusted.
+        See Notes.
 
         Parameters
         ----------
@@ -484,8 +439,11 @@ class ExtremeValues(AdjustmentCorrection):
           The threshold value for defining clusters.
         q_thresh : float
           The quantile of "extreme" values, [0, 1[.
-        dist : str
-          Name of the distribution (scipy name) to use.
+
+        In training:
+
+        ref_params :  xr.DataArray
+          Distribution parameters to use in place of a fitted dist on `ref`.
 
         In adjustment:
 
@@ -501,7 +459,7 @@ class ExtremeValues(AdjustmentCorrection):
         i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
         of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
         threshold. The maximal value of each cluster of `ref`, if it exceeds that new threshold,
-        is taken and a `dist` (default : Generalized Pareto) distribution is fitted to them.
+        is taken and Generalized Pareto distribution is fitted to them.
         Similarly with `sim`. The cdf of the extreme values of `sim` is computed in reference
         to the distribution fitted on `sim` and then the corresponding values (quantile / ppf)
         in reference to the distribution fitted on `ref` are taken as the new bias-adjusted values.
@@ -521,14 +479,33 @@ class ExtremeValues(AdjustmentCorrection):
 
             \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
+        Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
+
         References
         ----------
         .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
         .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
         """
-        super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh, dist=dist)
+        super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh)
 
-    def _train(self, ref, hist):
+    def train(self, ref, hist, ref_params=None):
+        """Train the second-order adjustment object. Refer to the class documentation for the algorithm details.
+
+        Parameters
+        ----------
+        ref : DataArray
+          Training target, usually a reference time series drawn from observations.
+        hist : DataArray
+          Training data, usually a model output whose biases are to be adjusted.
+        ref_params: DataArray, optional
+          Distribution parameters to use inplace of a Generalized Pareto fitted on `ref`.
+          Must be similar to the output of `xclim.indices.stats.fit` called on `ref`.
+          If the `scipy_dist` attribute is missing, `genpareto` is assumed.
+          Only `genextreme` and `genpareto` are accepted as scipy_dist.
+        """
+        if self._trained:
+            warn("train() was already called, overwriting old results.")
+
         cluster_thresh = convert_units_to(self.cluster_thresh, ref)
         hist = convert_units_to(hist, ref)
 
@@ -539,20 +516,28 @@ class ExtremeValues(AdjustmentCorrection):
             + hist.where(hist >= cluster_thresh).quantile(self.q_thresh, dim="time")
         ) / 2
 
-        # All large value clusters
-        ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-        # Parameters of a genpareto (or other) distribution, we force the location at thresh.
-        fit_params = stats.fit(
-            ref_clusters.maximum - thresh, self.dist, dim="cluster", floc=0
-        )
-        # Param "loc" was fitted with 0, put thresh back
-        fit_params[..., 1] = fit_params[..., 1] + thresh
+        if ref_params is None:
+            # All large value clusters
+            ref_clusters = get_clusters(ref, thresh, cluster_thresh)
+            # Parameters of a genpareto (or other) distribution, we force the location at thresh.
+            fit_params = stats.fit(
+                ref_clusters.maximum - thresh, "genpareto", dim="cluster", floc=0
+            )
+            # Param "loc" was fitted with 0, put thresh back
+            fit_params[..., 1] = fit_params[..., 1] + thresh
+        else:
+            dist = ref_params.attrs.get("scipy_dist", "genpareto")
+            fit_params = ref_params.copy().transpose(..., "dparams")
+            if dist == "genextreme":
+                fit_params[..., 1] = fit_params.sel(dparams="scale") + fit_params.sel(
+                    dparams="c"
+                ) * (thresh - fit_params.sel(dparams="loc"))
+            elif dist != "genpareto":
+                raise ValueError(f"Unknown conversion from {dist} to genpareto.")
 
-        ds = xr.Dataset(
-            dict(fit_params=fit_params, thresh=thresh, nclusters=ref_clusters.nclusters)
-        )
+        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
         ds.fit_params.attrs.update(
-            long_name=f"{self.dist} distribution parameters of ref",
+            long_name="Generalized Pareto distribution parameters of ref",
         )
         ds.thresh.attrs.update(
             long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
@@ -560,13 +545,27 @@ class ExtremeValues(AdjustmentCorrection):
         )
         self.set_dataset(ds)
 
-    def _adjust(
+    def adjust(
         self,
-        scen,
-        sim,
+        scen: xr.DataArray,
+        sim: xr.DataArray,
         frac: float = 0.25,
         power: float = 1.0,
     ):
+        """Return second order bias-adjusted data. Refer to the class documentation for the algorithm details.
+
+        Parameters
+        ----------
+        scen: DataArray
+          Bias-adjusted time series.
+        sim : DataArray
+          Time series to be bias-adjusted, source of scen.
+        kwargs :
+          Algorithm-specific keyword arguments, see class doc.
+        """
+        if not self._trained:
+            raise ValueError("train() must be called before adjusting.")
+
         def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
             # Clusters of large values of sim
             _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
@@ -612,11 +611,16 @@ class ExtremeValues(AdjustmentCorrection):
             output_core_dims=[["time"]],
             vectorize=True,
             kwargs={
-                "dist": stats.get_dist(self.dist),
+                "dist": stats.get_dist("genpareto"),
                 "cluster_thresh": convert_units_to(self.cluster_thresh, sim),
             },
             dask="parallelized",
             output_dtypes=[scen.dtype],
+        )
+
+        params = f"frac={frac}, power={power}"
+        new_scen.attrs["xclim_history"] = update_history(
+            f"Second order bias-adjustment with {str(self)}.adjust(sim, {params})", sim
         )
         return new_scen
 

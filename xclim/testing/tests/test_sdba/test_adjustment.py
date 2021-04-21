@@ -554,7 +554,7 @@ class TestExtremeValues:
         EQM.train(ref, hist)
         scen = EQM.adjust(sim)
 
-        EX = ExtremeValues(c_thresh, q_thresh=q_thresh, dist="genpareto")
+        EX = ExtremeValues(c_thresh, q_thresh=q_thresh)
         EX.train(ref, hist)
 
         qv = (ref.thresh + hist.thresh) / 2

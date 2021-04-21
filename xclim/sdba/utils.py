@@ -593,8 +593,6 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
 
-    Inspired from Julia's Extremes.jl package, function getcluster.
-
     Parameters
     ----------
     data: 1D ndarray
@@ -606,7 +604,7 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
 
     Reference
     ---------
-    Extreme value analysis package for Julia (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
+    `getcluster` of Extremes.jl (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
     """
     # Boolean array, True where data is over u2
     # We pad with values under u2, so that clusters never start or end at boundaries.
