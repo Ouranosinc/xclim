@@ -576,10 +576,10 @@ class TestExtremeValues:
 
         dsim = open_dataset(
             "sdba/fermont_CanESM2_1950-2100.nc", branch="sdba-testfiles"
-        ).chunk()
+        ).chunk({"time": -1})
         dref = open_dataset(
             "sdba/fermont_nrcan_1950-2013.nc", branch="sdba-testfiles"
-        ).chunk()
+        ).chunk({"time": -1})
         dexp = open_dataset(
             "sdba/fermont_biasadjusted_external.nc", branch="sdba-testfiles"
         )
