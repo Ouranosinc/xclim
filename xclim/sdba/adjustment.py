@@ -541,7 +541,7 @@ class ExtremeValues(AdjustmentCorrection):
 
         # All large value clusters
         ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-        # Parameters of a genpareto (or other) distribution, we force te location at thresh.
+        # Parameters of a genpareto (or other) distribution, we force the location at thresh.
         fit_params = stats.fit(
             ref_clusters.maximum - thresh, self.dist, dim="cluster", floc=0
         )
@@ -593,7 +593,7 @@ class ExtremeValues(AdjustmentCorrection):
             ) ** power
             np.clip(transition, None, 1, out=transition)
 
-            # Apply smotth linear transition between scen and corrected scen
+            # Apply smooth linear transition between scen and corrected scen
             new_scen_trans = (new_sim * transition) + (
                 scen[sim_posmax] * (1.0 - transition)
             )
