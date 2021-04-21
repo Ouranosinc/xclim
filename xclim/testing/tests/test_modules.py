@@ -15,6 +15,7 @@ def test_default_modules_exist():
     assert getattr(cf, "fd", None) is not None
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "indname", [name for name in registry.keys() if name.startswith("cf.")]
 )
@@ -27,6 +28,7 @@ def test_cf(indname, atmosds):
     ind(ds=atmosds)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "indname", [name for name in registry.keys() if name.startswith("icclim.")]
 )
@@ -39,6 +41,7 @@ def test_icclim(indname, atmosds):
     ind(ds=atmosds)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "indname", [name for name in registry.keys() if name.startswith("anuclim.")]
 )

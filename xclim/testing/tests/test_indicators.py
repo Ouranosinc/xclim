@@ -91,7 +91,7 @@ def test_attrs(tas_series):
     txm = ind(a, thresh=5, freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["xclim_history"]
-    assert "tmin(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
+    assert "TMIN(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
     assert f"xclim version: {__version__}." in txm.attrs["xclim_history"]
     assert txm.name == "tmin5"
 
@@ -442,10 +442,10 @@ def test_indicator_from_dict():
             units="K",
             long_name="{freq} mean surface temperature",
             standard_name="{freq} mean temperature",
-            cell_methods={"time": "mean within days"},
+            cell_methods=[{"time": "mean within days"}],
         ),
         index_function=dict(
-            name="thresholded_statictics",
+            name="thresholded_statistics",
             parameters=dict(
                 threshold={"data": {"thresh": None}, "description": "A threshold temp"},
                 condition={"data": "`<"},
