@@ -12,7 +12,7 @@ def test_default_modules_exist():
     assert getattr(anuclim, "P1_AnnMeanTemp", None) is not None
     assert getattr(anuclim, "P19_PrecipColdestQuarter", None) is not None
 
-    assert getattr(cf, "fd", None) is not None
+    assert getattr(cf, "fg", None) is not None
 
 
 @pytest.mark.slow

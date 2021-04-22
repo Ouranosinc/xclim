@@ -134,7 +134,7 @@ def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
-    assert xclim.indicators.cf.fd.__module__ == "xclim.indicators.cf"
+    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
     assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
 
 
