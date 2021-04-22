@@ -26,905 +26,905 @@ doc: |
 references: clix-meta https://github.com/clix-meta/clix-meta
 # End of xclim modification.
 indices:
-  fd:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "fd"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of Frost Days (Tmin < 0C)"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 0
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "fd"
-      long_name: "Frost days"
-      definition: "Count when TN < 0ºC"
-      comment: "count of days when daily minimum temperature is below 0 degC"
+  # fd:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "fd"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of Frost Days (Tmin < 0C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 0
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "fd"
+  #     long_name: "Frost days"
+  #     definition: "Count when TN < 0ºC"
+  #     comment: "count of days when daily minimum temperature is below 0 degC"
 
-  tnlt2:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnlt2"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of weak Frost Days (Tmin < +2C)"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 2
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "fd2"
-      long_name: "Frost days 2"
-      definition: "Count when TN < 2ºC"
-      comment: "count of days when daily minimum temperature is below plus 2 degC"
+  # tnlt2:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnlt2"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of weak Frost Days (Tmin < +2C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 2
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "fd2"
+  #     long_name: "Frost days 2"
+  #     definition: "Count when TN < 2ºC"
+  #     comment: "count of days when daily minimum temperature is below plus 2 degC"
 
-  tnltm2:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnltm2"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of sharp Frost Days (Tmin < -2C)"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: -2
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "fdm2"
-      long_name: "Hard freeze"
-      definition: "Count when TN < -2ºC"
-      comment: "count of days when daily minimum temperature is below minus 2 degC"
+  # tnltm2:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnltm2"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of sharp Frost Days (Tmin < -2C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: -2
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "fdm2"
+  #     long_name: "Hard freeze"
+  #     definition: "Count when TN < -2ºC"
+  #     comment: "count of days when daily minimum temperature is below minus 2 degC"
 
-  tnltm20:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnltm20"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name:
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: -20
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "fdm20"
-      long_name: "Very hard freeze"
-      definition: "Count when TN < -20ºC"
-      comment: "count of days when daily minimum temperature is below minus 20 degC"
+  # tnltm20:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnltm20"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name:
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: -20
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "fdm20"
+  #     long_name: "Very hard freeze"
+  #     definition: "Count when TN < -20ºC"
+  #     comment: "count of days when daily minimum temperature is below minus 20 degC"
 
-  id:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "id"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of sharp Ice Days (Tmax < 0C)"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 0
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "id"
-      long_name: "Ice days"
-      definition: "Count when TX < 0ºC"
-      comment: "count of days when daily maximum temperature is below 0 degC"
+  # id:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "id"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of sharp Ice Days (Tmax < 0C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 0
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "id"
+  #     long_name: "Ice days"
+  #     definition: "Count when TX < 0ºC"
+  #     comment: "count of days when daily maximum temperature is below 0 degC"
 
-  su:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "su"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      long_name: "Number of Summer Days (Tmax > 25C)"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 25
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "su"
-      long_name: "Summer days"
-      definition: "Count when TX > 25ºC"
-      comment: "count of days when daily maximum temperature is above plus 25 degC"
+  # su:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "su"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+  #     long_name: "Number of Summer Days (Tmax > 25C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 25
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "su"
+  #     long_name: "Summer days"
+  #     definition: "Count when TX > 25ºC"
+  #     comment: "count of days when daily maximum temperature is above plus 25 degC"
 
-  txge30:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txge30"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of Hot Days (Tmax >= 35C)"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 30
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "su30"
-      long_name: "Hot days"
-      definition: "Count when TX >= 30ºC"
-      comment: "count of days when daily maximum temperature is above or equal plus 30 degC"
+  # txge30:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txge30"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of Hot Days (Tmax >= 35C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 30
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "su30"
+  #     long_name: "Hot days"
+  #     definition: "Count when TX >= 30ºC"
+  #     comment: "count of days when daily maximum temperature is above or equal plus 30 degC"
 
-  txge35:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txge35"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of Very Hot Days (Tmax >= 35C)"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 35
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "su35"
-      long_name: "Very hot days"
-      definition: "Count when TX >= 35ºC"
-      comment: "count of days when daily maximum temperature is above or equal plus 35 degC"
+  # txge35:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txge35"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of Very Hot Days (Tmax >= 35C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 35
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "su35"
+  #     long_name: "Very hot days"
+  #     definition: "Count when TX >= 35ºC"
+  #     comment: "count of days when daily maximum temperature is above or equal plus 35 degC"
 
-  tr:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tr"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      long_name: "Number of Tropical Nights (Tmin > 20C)"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 20
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "tr"
-      long_name: "Tropical nights"
-      definition: "Count when TN > 20ºC"
-      comment: "count of days when daily minimum temperature is above plus 20 degC"
+  # tr:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tr"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+  #     long_name: "Number of Tropical Nights (Tmin > 20C)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 20
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "tr"
+  #     long_name: "Tropical nights"
+  #     definition: "Count when TN > 20ºC"
+  #     comment: "count of days when daily minimum temperature is above plus 20 degC"
 
-  tmge5:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmge5"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of days with Tmean >= 5C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 5
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "tm5a"
-      long_name: "TM above 5C"
-      definition: "Count when TM >= 5ºC"
-      comment: "count of days when daily mean temperature is above plus 5 degC"
+  # tmge5:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmge5"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of days with Tmean >= 5C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 5
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "tm5a"
+  #     long_name: "TM above 5C"
+  #     definition: "Count when TM >= 5ºC"
+  #     comment: "count of days when daily mean temperature is above plus 5 degC"
 
-  tmlt5:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmlt5"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of days with Tmean < 5C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 5
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "tm5b"
-      long_name: "TM below 5C"
-      definition: "Count when TM < 5ºC"
-      comment: "count of days when daily mean temperature is below plus 5 degC"
+  # tmlt5:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmlt5"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of days with Tmean < 5C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 5
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "tm5b"
+  #     long_name: "TM below 5C"
+  #     definition: "Count when TM < 5ºC"
+  #     comment: "count of days when daily mean temperature is below plus 5 degC"
 
-  tmge10:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmge10"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of days with Tmean >= 10C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 10
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "tm10a"
-      long_name: "TM above 10C"
-      definition: "Count when TM >= 10ºC"
-      comment: "count of days when daily mean temperature is above plus 10 degC"
+  # tmge10:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmge10"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of days with Tmean >= 10C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 10
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "tm10a"
+  #     long_name: "TM above 10C"
+  #     definition: "Count when TM >= 10ºC"
+  #     comment: "count of days when daily mean temperature is above plus 10 degC"
 
-  tmlt10:
-    reference: ET-SCI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmlt10"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of days with Tmean < 10C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: 10
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name: "tm10b"
-      long_name: "TM below 10C"
-      definition: "Count when TM < 10ºC"
-      comment: "count of days when daily mean temperature is below plus 10 degC"
+  # tmlt10:
+  #   reference: ET-SCI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmlt10"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of days with Tmean < 10C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: 10
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name: "tm10b"
+  #     long_name: "TM below 10C"
+  #     definition: "Count when TM < 10ºC"
+  #     comment: "count of days when daily mean temperature is below plus 10 degC"
 
-  tngt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tngt{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      long_name: "Number of days with Tmin > {TT}C"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily minimum temperature is above {TT} degC"
+  # tngt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tngt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+  #     long_name: "Number of days with Tmin > {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily minimum temperature is above {TT} degC"
 
-  tnlt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnlt{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of days with Tmin < {TT}C"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily minimum temperature is below {TT} degC"
+  # tnlt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnlt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of days with Tmin < {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily minimum temperature is below {TT} degC"
 
-  tnge{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnge{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of days with Tmin >= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily minimum temperature is above or equal {TT} degC"
+  # tnge{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnge{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of days with Tmin >= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily minimum temperature is above or equal {TT} degC"
 
-  tnle{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tnle{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      long_name: "Number of days with Tmin <= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
-    input:
-      data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily minimum temperature is below or equal{TT} degC"
+  # tnle{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tnle{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+  #     long_name: "Number of days with Tmin <= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: minimum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmin
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily minimum temperature is below or equal{TT} degC"
 
-  txgt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txgt{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      long_name: "Number of days with Tmax > {TT}C"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily maximum temperature is above {TT} degC"
+  # txgt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txgt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+  #     long_name: "Number of days with Tmax > {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily maximum temperature is above {TT} degC"
 
-  txlt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txlt{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of days with Tmax < {TT}C"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily maximum temperature is below {TT} degC"
+  # txlt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txlt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of days with Tmax < {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily maximum temperature is below {TT} degC"
 
-  txge{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txge{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of days with Tmax >= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily maximum temperature is above or equal {TT} degC"
+  # txge{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txge{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of days with Tmax >= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily maximum temperature is above or equal {TT} degC"
 
-  txle{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "txle{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      long_name: "Number of days with Tmax <= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: maximum within days
-        - time: sum over days
-    input:
-      data: tasmax
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily maximum temperature is below or equal {TT} degC"
+  # txle{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "txle{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+  #     long_name: "Number of days with Tmax <= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: maximum within days
+  #       - time: sum over days
+  #   input:
+  #     data: tasmax
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily maximum temperature is below or equal {TT} degC"
 
-  tmgt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmgt{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
-      long_name: "Number of days with Tmean > {TT}C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily mean temperature is above {TT} degC"
+  # tmgt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmgt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_above_threshold
+  #     long_name: "Number of days with Tmean > {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily mean temperature is above {TT} degC"
 
-  tmlt{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmlt{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
-      long_name: "Number of days with Tmean < {TT}C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily mean temperature is below {TT} degC"
+  # tmlt{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmlt{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_below_threshold
+  #     long_name: "Number of days with Tmean < {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily mean temperature is below {TT} degC"
 
-  tmge{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmge{TT}"
-      standard_name: number_of_days_with_air_temperature_above_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
-      long_name: "Number of days with Tmean >= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily mean temperature is above or equal {TT} degC"
+  # tmge{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmge{TT}"
+  #     standard_name: number_of_days_with_air_temperature_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_above_threshold
+  #     long_name: "Number of days with Tmean >= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily mean temperature is above or equal {TT} degC"
 
-  tmle{TT}:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "tmle{TT}"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
-      long_name: "Number of days with Tmean <= {TT}C"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: tas
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          data: {TT}
-          units: "degree_Celsius"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment: "count of days when daily mean temperature is below or equal{TT} degC"
+  # tmle{TT}:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "tmle{TT}"
+  #     standard_name: number_of_days_with_air_temperature_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_at_or_below_threshold
+  #     long_name: "Number of days with Tmean <= {TT}C"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: tas
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         data: {TT}
+  #         units: "degree_Celsius"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment: "count of days when daily mean temperature is below or equal{TT} degC"
 
   ctngt{TT}:
     reference: CLIPC
@@ -2842,187 +2842,187 @@ indices:
       definition:
       comment:
 
-  r10mm:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "r10mm"
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      long_name: "Number of heavy precipitation days (Precip >=10mm)"
-      units: "1"
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      data: pr
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          data: 10
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "r10mm"
-      long_name: "Number of heavy precipitation days"
-      definition: "Count of days when P>=10mm"
-      comment: "count of days when daily total precipitation is above 10 mm"
+  # r10mm:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "r10mm"
+  #     standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+  #     long_name: "Number of heavy precipitation days (Precip >=10mm)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: sum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         data: 10
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "r10mm"
+  #     long_name: "Number of heavy precipitation days"
+  #     definition: "Count of days when P>=10mm"
+  #     comment: "count of days when daily total precipitation is above 10 mm"
 
-  r20mm:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "r20mm"
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      long_name: "Number of very heavy precipitation days (Precip >= 20mm)"
-      units: "1"
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      data: pr
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          data: 20
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "r20mm"
-      long_name: "Number of very heavy precipitation days"
-      definition: "Count of days when P>=20mm"
-      comment: "count of days when daily total precipitation is above 20 mm"
+  # r20mm:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "r20mm"
+  #     standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+  #     long_name: "Number of very heavy precipitation days (Precip >= 20mm)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: sum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         data: 20
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "r20mm"
+  #     long_name: "Number of very heavy precipitation days"
+  #     definition: "Count of days when P>=20mm"
+  #     comment: "count of days when daily total precipitation is above 20 mm"
 
-  r{RT}mm:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "r{RT}mm"
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      long_name: "Number of days with daily Precip >= {RT}mm)"
-      units: "1"
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      data: pr
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          data: {RT}
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name: "rnnmm"
-      long_name: "Number of days above a user-defined threshold"
-      definition:
-      comment: "count of days when daily total precipitation is above X mm"
+  # r{RT}mm:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "r{RT}mm"
+  #     standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+  #     long_name: "Number of days with daily Precip >= {RT}mm)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: sum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         data: {RT}
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name: "rnnmm"
+  #     long_name: "Number of days above a user-defined threshold"
+  #     definition:
+  #     comment: "count of days when daily total precipitation is above X mm"
 
-  wetdays:
-    reference: CLIPC
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "wetdays"
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      long_name: "Number of Wet Days (precip >= 1 mm)"
-      units: "1"
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      data: pr
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          long_name: "Wet day threshold"
-          data: 1
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # wetdays:
+  #   reference: CLIPC
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "wetdays"
+  #     standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+  #     long_name: "Number of Wet Days (precip >= 1 mm)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: sum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         long_name: "Wet day threshold"
+  #         data: 1
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
-  rr1:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "rr1"
-      standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      long_name: "Number of Wet Days (precip >= 1 mm)"
-      units: "1"
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      data: pr
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          long_name: "Wet day threshold"
-          data: 1
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # rr1:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "rr1"
+  #     standard_name: number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+  #     long_name: "Number of Wet Days (precip >= 1 mm)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: sum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         long_name: "Wet day threshold"
+  #         data: 1
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
   cdd:
     reference: ETCCDI
@@ -3566,149 +3566,149 @@ indices:
       definition:
       comment:
 
-  sd1:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "sd1"
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      long_name: "Snow days (SD >= 1 cm)"
-      units: "day"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: snd
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: surface_snow_thickness
-          data: 1
-          units: "cm"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # sd1:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "sd1"
+  #     standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+  #     long_name: "Snow days (SD >= 1 cm)"
+  #     units: "day"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: snd
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: surface_snow_thickness
+  #         data: 1
+  #         units: "cm"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
-  sd5cm:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "sd5cm"
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      long_name: "Number of days with snow depth >= 5 cm"
-      units: "day"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: snd
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: surface_snow_thickness
-          data: 5
-          units: "cm"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # sd5cm:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "sd5cm"
+  #     standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+  #     long_name: "Number of days with snow depth >= 5 cm"
+  #     units: "day"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: snd
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: surface_snow_thickness
+  #         data: 5
+  #         units: "cm"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
-  sd50cm:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "sd50cm"
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      long_name: "Number of days with snow depth >= 50 cm"
-      units: "day"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: snd
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: surface_snow_thickness
-          data: 50
-          units: "cm"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # sd50cm:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "sd50cm"
+  #     standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+  #     long_name: "Number of days with snow depth >= 50 cm"
+  #     units: "day"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: snd
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: surface_snow_thickness
+  #         data: 50
+  #         units: "cm"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
-  sd{D}cm:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "sd{D}cm"
-      standard_name: number_of_days_with_surface_snow_thickness_above_threshold
-      proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
-      long_name: "Number of days with snow depth >= {D} cm"
-      units: "day"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: snd
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: surface_snow_thickness
-          data: {D}
-          units: "cm"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # sd{D}cm:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "sd{D}cm"
+  #     standard_name: number_of_days_with_surface_snow_thickness_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_surface_snow_thickness_at_or_above_threshold
+  #     long_name: "Number of days with snow depth >= {D} cm"
+  #     units: "day"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: snd
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: surface_snow_thickness
+  #         data: {D}
+  #         units: "cm"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
   ss:
     reference: ECA&D
@@ -3767,77 +3767,77 @@ indices:
       definition:
       comment:
 
-  fg6bft:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "fg6bft"
-      standard_name: number_of_days_with_wind_speed_above_threshold
-      proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_above_threshold
-      long_name: "Days with daily averaged wind strength >= 6 Bft (>=10.8 m/s)"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: sfcWind
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: wind_speed
-          data: 10.8
-          units: "meter second-1"
-        condition:
-          kind: operator
-          operator: ">"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # fg6bft:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "fg6bft"
+  #     standard_name: number_of_days_with_wind_speed_above_threshold
+  #     proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_above_threshold
+  #     long_name: "Days with daily averaged wind strength >= 6 Bft (>=10.8 m/s)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: sfcWind
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: wind_speed
+  #         data: 10.8
+  #         units: "meter second-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
-  fgcalm:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "fgcalm"
-      standard_name: number_of_days_with_wind_speed_below_threshold
-      proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_below_threshold
-      long_name: "Calm days (daily mean wind strength <= 2 m/s)"
-      units: "1"
-      cell_methods:
-        - time: mean within days
-        - time: sum over days
-    input:
-      data: sfcWind
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: wind_speed
-          data: 2
-          units: "meter second-1"
-        condition:
-          kind: operator
-          operator: "<"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # fgcalm:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "fgcalm"
+  #     standard_name: number_of_days_with_wind_speed_below_threshold
+  #     proposed_standard_name: number_of_occurrences_with_wind_speed_at_or_below_threshold
+  #     long_name: "Calm days (daily mean wind strength <= 2 m/s)"
+  #     units: "1"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: sum over days
+  #   input:
+  #     data: sfcWind
+  #   index_function:
+  #     name: count_occurrences
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: wind_speed
+  #         data: 2
+  #         units: "meter second-1"
+  #       condition:
+  #         kind: operator
+  #         operator: "<"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
   fg:
     reference: ECA&D
@@ -3868,36 +3868,36 @@ indices:
       definition:
       comment:
 
-  nzero:
-    reference: SMHI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "nzero"
-      standard_name:
-      proposed_standard_name: number_of_occurrences_with_air_temperature_level_crossings
-      long_name: "Number of zero-crossing days (days when Tmin < 0 degC < Tmax)"
-      units: "days"
-      cell_methods:
-        - time: sum over days
-    input:
-      low_data: tasmin
-      high_data: tasmax
-    index_function:
-      name: count_level_crossings
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: air_temperature
-          long_name: "Level crossing value for daily air temperature"
-          data: 0
-          units: "degree_Celsius"
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # nzero:
+  #   reference: SMHI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "nzero"
+  #     standard_name:
+  #     proposed_standard_name: number_of_occurrences_with_air_temperature_level_crossings
+  #     long_name: "Number of zero-crossing days (days when Tmin < 0 degC < Tmax)"
+  #     units: "days"
+  #     cell_methods:
+  #       - time: sum over days
+  #   input:
+  #     low_data: tasmin
+  #     high_data: tasmax
+  #   index_function:
+  #     name: count_level_crossings
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: air_temperature
+  #         long_name: "Level crossing value for daily air temperature"
+  #         data: 0
+  #         units: "degree_Celsius"
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
