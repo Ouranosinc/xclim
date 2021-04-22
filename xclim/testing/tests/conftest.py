@@ -431,7 +431,7 @@ def official_indicators():
     # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
     registry_cp = xclim.core.indicator.registry.copy()
     for cls in xclim.core.indicator.registry.values():
-        if cls.identifier != cls._registry_id:
+        if cls.identifier.upper() != cls._registry_id:
             registry_cp.pop(cls._registry_id)
     return registry_cp
 
