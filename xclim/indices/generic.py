@@ -323,7 +323,7 @@ def count_level_crossings(
     threshold = convert_units_to(threshold, low_data)
 
     lower = compare(low_data, "<", threshold)
-    higher = compare(high_data, ">", threshold)
+    higher = compare(high_data, ">=", threshold)
 
     out = (lower & higher).resample(time=freq).sum()
     return to_agg_units(out, low_data, "count", dim="time")
