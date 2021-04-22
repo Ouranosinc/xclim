@@ -3104,44 +3104,44 @@ indices:
       definition: "Maximum number of consecutive days with P>=1mm"
       comment: "maximum consecutive days when daily total precipitation is at least 1 mm"
 
-  prcptot:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "prcptot"
-      standard_name: lwe_thickness_of_precipitation_amount
-      long_name: "Total precipitation during Wet Days"
-      units: "mm"
-      cell_methods:
-        - time: sum within days
-        - time: mean over days
-    input:
-      data: pr
-    index_function:
-      name: thresholded_statistics
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          long_name: "Wet day threshold"
-          data: 1
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-        reducer:
-          kind: reducer
-          reducer: sum
-    ET:
-      short_name: "prcptot"
-      long_name: "Total wet- day precipitation"
-      definition: "PRCP from wet days (P>=1mm)"
-      comment: "sum of total daily precipitation during days having at least 1 mm"
+  # prcptot:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "prcptot"
+  #     standard_name: lwe_thickness_of_precipitation_amount
+  #     long_name: "Total precipitation during Wet Days"
+  #     units: "mm"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: mean over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: thresholded_statistics
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         long_name: "Wet day threshold"
+  #         data: 1
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #       reducer:
+  #         kind: reducer
+  #         reducer: sum
+  #   ET:
+  #     short_name: "prcptot"
+  #     long_name: "Total wet- day precipitation"
+  #     definition: "PRCP from wet days (P>=1mm)"
+  #     comment: "sum of total daily precipitation during days having at least 1 mm"
 
   sdii:
     reference: ETCCDI
@@ -3222,44 +3222,44 @@ indices:
       definition:
       comment:
 
-  rx1day:
-    reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
-    output:
-      var_name: "rx1day"
-      standard_name: lwe_thickness_of_precipitation_amount
-      long_name: "Maximum 1-day precipitation"
-      units: "mm"
-      cell_methods:
-        - time: sum within days
-        - time: maximum over days
-    input:
-      data: pr
-    index_function:
-      name: thresholded_statistics
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          long_name: "Wet day threshold"
-          data: 1
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-        reducer:
-          kind: reducer
-          reducer: max
-    ET:
-      short_name: "rx1day"
-      long_name: "Monthly maximum 1-day precipitation"
-      definition: "Maximum one-day precipitation"
-      comment:
+  # rx1day:
+  #   reference: ETCCDI
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: annual
+  #   output:
+  #     var_name: "rx1day"
+  #     standard_name: lwe_thickness_of_precipitation_amount
+  #     long_name: "Maximum 1-day precipitation"
+  #     units: "mm"
+  #     cell_methods:
+  #       - time: sum within days
+  #       - time: maximum over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: thresholded_statistics
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         long_name: "Wet day threshold"
+  #         data: 1
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #       reducer:
+  #         kind: reducer
+  #         reducer: max
+  #   ET:
+  #     short_name: "rx1day"
+  #     long_name: "Monthly maximum 1-day precipitation"
+  #     definition: "Maximum one-day precipitation"
+  #     comment:
 
   rx5day:
     reference: ETCCDI
@@ -3382,44 +3382,44 @@ indices:
       definition:
       comment:
 
-  rr:
-    reference: ECA&D
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: monthly
-    output:
-      var_name: "rr"
-      standard_name: lwe_thickness_of_precipitation_amount
-      long_name: "Precipitation sum"
-      units: "mm"
-      cell_methods:
-        - time: mean within days
-        - time: mean over days
-    input:
-      data: pr
-    index_function:
-      name: thresholded_statistics
-      parameters:
-        threshold:
-          kind: quantity
-          standard_name: lwe_precipitation_rate
-          long_name: "Wet day threshold"
-          data: 1
-          units: "mm day-1"
-        condition:
-          kind: operator
-          operator: ">"
-        reducer:
-          kind: reducer
-          reducer: sum
-    ET:
-      short_name:
-      long_name:
-      definition:
-      comment:
+  # rr:
+  #   reference: ECA&D
+  #   period:
+  #     allowed:
+  #       annual:
+  #       seasonal:
+  #       monthly:
+  #     default: monthly
+  #   output:
+  #     var_name: "rr"
+  #     standard_name: lwe_thickness_of_precipitation_amount
+  #     long_name: "Precipitation sum"
+  #     units: "mm"
+  #     cell_methods:
+  #       - time: mean within days
+  #       - time: mean over days
+  #   input:
+  #     data: pr
+  #   index_function:
+  #     name: thresholded_statistics
+  #     parameters:
+  #       threshold:
+  #         kind: quantity
+  #         standard_name: lwe_precipitation_rate
+  #         long_name: "Wet day threshold"
+  #         data: 1
+  #         units: "mm day-1"
+  #       condition:
+  #         kind: operator
+  #         operator: ">"
+  #       reducer:
+  #         kind: reducer
+  #         reducer: sum
+  #   ET:
+  #     short_name:
+  #     long_name:
+  #     definition:
+  #     comment:
 
   pp:
     reference: ECA&D
