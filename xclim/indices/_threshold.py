@@ -4,6 +4,7 @@ from typing import Optional
 import numpy as np
 import xarray
 
+from xclim.core.calendar import get_calendar
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -192,7 +193,7 @@ def continuous_snow_cover_end(
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(snd))
     return out
 
 
@@ -239,7 +240,7 @@ def continuous_snow_cover_start(
         )
         .start
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(snd))
     return out
 
 
@@ -466,7 +467,7 @@ def freshet_start(
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tas))
     return out
 
 
@@ -549,7 +550,7 @@ def growing_season_end(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tas))
     return out
 
 
@@ -742,7 +743,7 @@ def last_spring_frost(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tas))
     return out
 
 
@@ -790,7 +791,7 @@ def first_day_below(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tasmin))
     return out
 
 
@@ -838,7 +839,7 @@ def first_day_above(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tasmin))
     return out
 
 
@@ -882,7 +883,7 @@ def first_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(prsn))
     return out
 
 
@@ -1720,7 +1721,7 @@ def degree_days_exceedance_date(
         )
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(tas))
     return out
 
 
