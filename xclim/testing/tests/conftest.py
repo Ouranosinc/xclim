@@ -438,9 +438,7 @@ def official_indicators():
 
 @pytest.fixture(scope="session")
 def atmosds():
-    ds = xclim.testing.open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="upd-era5-daily"
-    )
+    ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
     sfcWind.attrs.update(cell_methods="time: mean within days")
