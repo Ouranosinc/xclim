@@ -1,6 +1,7 @@
 import pytest
 
 from xclim.core.indicator import registry
+from xclim.core.options import set_options
 from xclim.core.utils import InputKind
 
 
@@ -20,12 +21,13 @@ def test_default_modules_exist():
     "indname", [name for name in registry.keys() if name.startswith("cf.")]
 )
 def test_cf(indname, atmosds):
-    # skip when missing default values
-    ind = registry[indname].get_instance()
-    for name, param in ind.parameters.items():
-        if param["kind"] is not InputKind.DATASET and param["default"] is None:
-            pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
-    ind(ds=atmosds)
+    with set_options(cf_compliance="warn"):
+        # skip when missing default values
+        ind = registry[indname].get_instance()
+        for name, param in ind.parameters.items():
+            if param["kind"] is not InputKind.DATASET and param["default"] is None:
+                pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
+        ind(ds=atmosds)
 
 
 @pytest.mark.slow
