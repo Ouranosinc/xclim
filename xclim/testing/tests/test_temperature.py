@@ -1218,7 +1218,7 @@ def test_warm_spell_duration_index():
     out = atmos.warm_spell_duration_index(
         tasmax=tasmax, tx90=tx90, window=3, freq="AS-JUL"
     )
-    np.testing.assert_array_equal(out[0, :, 0], np.array([np.nan, 3, 0, 0, np.nan]))
+    np.testing.assert_array_equal(out[:, 0, 0], np.array([np.nan, 3, 0, 0, np.nan]))
     assert (
         "Annual total number of days within spells of at least 3 days"
         in out.description
@@ -1228,7 +1228,7 @@ def test_warm_spell_duration_index():
 def test_maximum_consecutive_warm_days():
     tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
     out = atmos.maximum_consecutive_warm_days(tasmax)
-    np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
+    np.testing.assert_array_equal(out[:, 1], np.array([13, 21, 6, 10]))
     assert (
         "Annual longest spell of consecutive days with tmax above 25 degc."
         in out.description
