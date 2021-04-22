@@ -443,6 +443,7 @@ def atmosds():
     )
 
     sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
+    sfcWind.attrs.update(cell_methods="time: mean within days")
     huss = xclim.atmos.specific_humidity(ds=ds)
     hurs = ds.rh
     snw = ds.swe * 1000
@@ -460,6 +461,7 @@ def atmosds():
     )
 
     psl = ds.ps
+    psl.attrs.update(standard_name="air_pressure_at_sea_level")
 
     tn10 = xclim.core.calendar.percentile_doy(ds.tasmin, per=10)
     t10 = xclim.core.calendar.percentile_doy(ds.tas, per=10)
