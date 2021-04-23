@@ -1,6 +1,7 @@
 import numpy as np
 import xarray
 
+from xclim.core.calendar import get_calendar
 from xclim.core.units import declare_units, rate2amount, to_agg_units
 
 from . import generic
@@ -122,7 +123,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
     # Compute doymax. Will return first time step if all snow depths are 0.
     out = generic.select_resample_op(snd, op=generic.doymax, freq=freq)
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)

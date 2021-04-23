@@ -11,6 +11,8 @@ from typing import Union
 import numpy as np
 import xarray as xr
 
+from xclim.core.calendar import get_calendar
+
 __all__ = [
     "select_time",
     "select_resample_op",
@@ -84,7 +86,7 @@ def doymax(da: xr.DataArray):
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(da))
     return out
 
 
@@ -92,7 +94,7 @@ def doymin(da: xr.DataArray):
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=True, calendar=get_calendar(da))
     return out
 
 

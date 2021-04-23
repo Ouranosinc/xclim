@@ -283,7 +283,7 @@ def test_keep_longest_run_synthetic():
 
 def test_keep_longest_run_data():
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    cond = era5.snd > 0.001
+    cond = era5.swe > 0.001
     lrun = rl.keep_longest_run(cond, "time")
     np.testing.assert_array_equal(
         lrun.isel(time=slice(651, 658), location=2),
