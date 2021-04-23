@@ -143,3 +143,28 @@ class TestDataCheck:
             datachecks.check_freq(da, "H")
 
         datachecks.check_freq(da, "H", strict=False)
+
+
+def test_generated_cfchecks():
+    with set_options(cf_compliance="raise"):
+        tas = xr.DataArray(
+            attrs=dict(
+                standard_name="air_temperature", cell_methods="time: mean within days"
+            )
+        )
+
+        cfchecks.generate_cfcheck("tas")(tas)
+
+        tas.attrs["standard_name"] = "air_feeling_of_heat"
+
+        with pytest.raises(ValidationError):
+            cfchecks.generate_cfcheck("tas")(tas)
+
+        sfcwind = xr.DataArray(
+            attrs=dict(
+                standard_name="wind_speed", cell_methods="time: max within hours"
+            )
+        )
+
+        with pytest.raises(ValidationError):
+            cfchecks.generate_cfcheck("sfcWind")(sfcwind)

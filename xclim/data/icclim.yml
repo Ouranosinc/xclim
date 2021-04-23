@@ -1,0 +1,312 @@
+realm: atmos
+doc: |
+  ==============
+  ICCLIM indices
+  ==============
+  The European Climate Assessment & Dataset project (`ECAD`_) defines
+  a set of 26 core climate indices. Those have been made accessible
+  directly in xclim through their ECAD name for compatibility. However,
+  the methods in this module are only wrappers around the corresponding
+  methods of  `xclim.indices`. Note that none of the checks performed by
+  the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
+  are performed in this module.
+
+  .. _ECAD: https://www.ecad.eu/
+references: European Climate Assessment & Dataset, https://www.ecad.eu/
+indices:
+  TG:
+    base: tg_mean
+  TX:
+    base: tx_mean
+  TN:
+    base: tn_mean
+  TG90p:
+    base: tg90p
+    output:
+      long_name: Days with TG>90th percentile of daily mean temperature (warm days)
+  TG10p:
+    base: tg10p
+    output:
+      long_name: Days with TG<10th percentile of daily mean temperature (cold days)
+  TGx:
+    base: tg_max
+  TGn:
+    base: tg_min
+  TX90p:
+    base: tx90p
+    ouput:
+      long_name: Days with TX>90th percentile of daily maximum temperature (warm day-times)
+  TX10p:
+    base: tx10p
+    output:
+      long_name: Days with TX<10th percentile of daily maximum temperature (cold day-times)
+  TXx:
+    base: tx_max
+  TXn:
+    base: tx_min
+  TN90p:
+    base: tn90p
+    output:
+      long_name: Days with TN>90th percentile of daily minimum temperature (warm nights)
+  TN10p:
+    base: tn10p
+    output:
+      long_name: Days with TN<10th percentile of daily minimum temperature (cold nights)
+  TNx:
+    base: tn_max
+  TNn:
+    base: tn_min
+  CSDI:
+    base: cold_spell_duration_index
+    output:
+      long_name: Cold-spell duration index
+    index_function:
+      parameters:
+        window:
+          data: 6
+  WSDI:
+    base: warm_spell_duration_index
+    output:
+      long_name: Warm-spell duration index
+    index_function:
+      parameters:
+        window:
+          data: 6
+  SU:
+    base: tx_days_above
+    output:
+      long_name: Summer days (TX>25◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 25 degC
+  CSU:
+    base: maximum_consecutive_warm_days
+    output:
+      long_name: Maximum number of consecutive summer day
+    index_function:
+      parameters:
+        thresh:
+          data: 25 degC
+
+  TR:
+    base: tropical_nights
+    output:
+      long_name: Tropical nights (TN>20◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 20 degC
+  GD4:
+    base: growing_degree_days
+    output:
+      long_name: Growing degree days (sum of TG>4◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 4 degC
+  FD:
+    base: frost_days
+    output:
+      long_name: Frost days (TN<0◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 0 degC
+  CFD:
+    base: consecutive_frost_days
+    output:
+      long_name: Maximum number of consecutive frost days (TN<0◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 0 degC
+  GSL:
+    base: growing_season_length
+    output:
+      long_name: Growing season length
+    index_function:
+      parameters:
+        thresh:
+          data: 5 degC
+        window:
+          data: 6
+  ID:
+    base: ice_days
+    output:
+      long_name: Ice days (TX<0◦C)
+    index_function:
+      parameters:
+        thresh:
+          data: 0 degC
+  HD17:
+    base: heating_degree_days
+    output:
+      long_name: Heating degree days (sum of17◦C - TG)
+    index_function:
+      parameters:
+        thresh:
+          data: 17 degC
+  CDD:
+    base: cdd
+    output:
+      long_name: Maximum number of consecutive dry days (RR<1 mm)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+  CWD:
+    base: cwd
+    output:
+      long_name: Maximum number of consecutive wet days (RR≥1 mm)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+  RR:
+    base: prcptot
+    output:
+      long_name: Precipitation sum
+  SDII:
+    base: sdii
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+  ETR:
+    base: etr
+    output:
+      long_name: Intra-period extreme temperature range
+  DTR:
+    base: dtr
+    output:
+      long_name: Mean of diurnal temperature range
+  vDTR:
+    base: dtrvar
+    output:
+      long_name: Mean absolute day-to-day difference in DTR
+  RR1:
+    base: wetdays
+    output:
+      long_name: Wet days (RR≥1 mm)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+  R10mm:
+    base: wetdays
+    ouput:
+      long_name: Heavy precipitation days (precipitation≥10 mm)
+    index_function:
+      parameters:
+        thresh:
+          data: 10 mm/day
+  R20mm:
+    base: wetdays
+    output:
+      long_name: Very heavy precipitation days (precipitation≥20 mm)
+    index_function:
+      parameters:
+        thresh:
+          data: 20 mm/day
+  RX1day:
+    base: rx1day
+    output:
+      long_name: Highest 1-day precipitation amount
+  RX5day:
+    base: max_n_day_precipitation_amount
+    output:
+      long_name: Highest 5-day precipitation amount
+    index_function:
+      parameters:
+        window:
+          data: 5
+  R75p:
+    base: days_over_precip_thresh
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 75th percentile of wet day precipitation flux.
+
+  R95p:
+    base: days_over_precip_thresh
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 95th percentile of wet day precipitation flux.
+  R99p:
+    base: days_over_precip_thresh
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 99th percentile of wet day precipitation flux.
+  R75pTOT:
+    base: fraction_over_precip_thresh
+    output:
+      long_name: Precipitation fraction due to moderate wet days (>75th percentile)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 75th percentile of wet day precipitation flux.
+
+  R95pTOT:
+    base: fraction_over_precip_thresh
+    output:
+      long_name: Precipitation fraction due to very wet days (>95th percentile)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 95th percentile of wet day precipitation flux.
+  R99pTOT:
+    base: fraction_over_precip_thresh
+    output:
+      long_name: Precipitation fraction due to extremely wet days (>99th percentile)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 99th percentile of wet day precipitation flux.
+  SD1:
+    realm: land
+    base: snow_cover_duration
+    output:
+      long_name: Snow days (SD≥1 cm)
+    index_function:
+      parameters:
+        thresh:
+          data: 1 cm
+  SD5cm:
+    realm: land
+    base: snow_cover_duration
+    output:
+      long_name: Snow days (SD≥5 cm)
+    index_function:
+      parameters:
+        thresh:
+          data: 5 cm
+  SD50cm:
+    realm: land
+    base: snow_cover_duration
+    output:
+      long_name: Snow days (SD≥50 cm)
+    index_function:
+      parameters:
+        thresh:
+          data: 50 cm

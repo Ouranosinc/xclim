@@ -23,6 +23,7 @@ import xarray as xr
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
+from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to
 from xclim.testing import open_dataset
 
@@ -1482,10 +1483,11 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        from xclim import icclim
+        from xclim.indicators import icclim
 
-        ind = xci.tg_mean(cmip3_day_tas)
-        icclim = icclim.TG(cmip3_day_tas)
+        with set_options(cf_compliance="log"):
+            ind = xci.tg_mean(cmip3_day_tas)
+            icclim = icclim.TG(cmip3_day_tas)
 
         np.testing.assert_array_equal(icclim, ind)
 
