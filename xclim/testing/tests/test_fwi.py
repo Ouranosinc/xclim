@@ -170,7 +170,7 @@ def test_fire_weather_ufunc_overwintering():
         pr=convert_units_to(ds.pr, "mm/d"),
     )
     season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
-    season_mask_all_LA08 = fire_season(ds.tas, snd=ds.snd, method="LA08")
+    season_mask_all_LA08 = fire_season(ds.tas, snd=ds.swe, method="LA08")
     season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
 
     # Mask is computed correctly and parameters are passed
@@ -189,7 +189,7 @@ def test_fire_weather_ufunc_overwintering():
     out2 = fire_weather_ufunc(
         tas=ds.tas,
         pr=ds.pr,
-        snd=ds.snd,
+        snd=ds.swe,
         lat=ds.lat,
         season_method="LA08",
         overwintering=True,

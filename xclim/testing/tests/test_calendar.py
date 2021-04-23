@@ -384,12 +384,18 @@ def test_datetime_to_decimal_year(source_cal, exp180):
 def test_doy_to_days_since():
     # simple test
     time = date_range("2020-07-01", "2022-07-01", freq="AS-JUL")
-    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time})
+    da = xr.DataArray(
+        [190, 360, 3],
+        dims=("time",),
+        coords={"time": time},
+        attrs={"is_dayofyear": True, "calendar": "default"},
+    )
 
     out = doy_to_days_since(da)
     np.testing.assert_array_equal(out, [7, 178, 186])
 
     assert out.attrs["units"] == "days after 07-01"
+    assert "is_dayofyear" not in out.attrs
 
     da2 = days_since_to_doy(out)
     xr.testing.assert_identical(da, da2)
@@ -403,11 +409,19 @@ def test_doy_to_days_since():
     np.testing.assert_array_equal(out, [8, 178, 186])
 
     da2 = days_since_to_doy(out)  # calendar read from attribute
+    da2.attrs.pop("calendar")  # drop for identicality
+    da.attrs.pop("calendar")  # drop for identicality
     xr.testing.assert_identical(da, da2)
 
     # with start
     time = date_range("2020-12-31", "2022-12-31", freq="Y")
-    da = xr.DataArray([190, 360, 3], dims=("time",), coords={"time": time}, name="da")
+    da = xr.DataArray(
+        [190, 360, 3],
+        dims=("time",),
+        coords={"time": time},
+        name="da",
+        attrs={"is_dayofyear": True, "calendar": "default"},
+    )
 
     out = doy_to_days_since(da, start="01-02")
     np.testing.assert_array_equal(out, [188, 358, 1])
@@ -418,7 +432,13 @@ def test_doy_to_days_since():
 
     # finer freq
     time = date_range("2020-01-01", "2020-03-01", freq="MS")
-    da = xr.DataArray([15, 33, 66], dims=("time",), coords={"time": time})
+    da = xr.DataArray(
+        [15, 33, 66],
+        dims=("time",),
+        coords={"time": time},
+        name="da",
+        attrs={"is_dayofyear": True, "calendar": "default"},
+    )
 
     out = doy_to_days_since(da)
     assert out.attrs["units"] == "days after time coordinate"
