@@ -388,7 +388,7 @@ def test_doy_to_days_since():
         [190, 360, 3],
         dims=("time",),
         coords={"time": time},
-        attrs={"is_dayofyear": True, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "default"},
     )
 
     out = doy_to_days_since(da)
@@ -420,7 +420,7 @@ def test_doy_to_days_since():
         dims=("time",),
         coords={"time": time},
         name="da",
-        attrs={"is_dayofyear": True, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "default"},
     )
 
     out = doy_to_days_since(da, start="01-02")
@@ -437,7 +437,7 @@ def test_doy_to_days_since():
         dims=("time",),
         coords={"time": time},
         name="da",
-        attrs={"is_dayofyear": True, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "default"},
     )
 
     out = doy_to_days_since(da)

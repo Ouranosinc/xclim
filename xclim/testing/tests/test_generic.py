@@ -141,4 +141,4 @@ def test_doyminmax(q_series):
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in da.attrs.keys()
         assert da.attrs["units"] == ""
-        assert da.attrs["is_dayofyear"]
+        assert da.attrs["is_dayofyear"] == 1
