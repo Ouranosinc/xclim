@@ -1,7 +1,7 @@
 import numpy as np
 import xarray
 
-from xclim.core.units import declare_units, rate2amount, to_agg_units
+from xclim.core.units import declare_units, rate2amount
 
 from . import generic
 
@@ -15,7 +15,9 @@ __all__ = [
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
+def base_flow_index(
+    q: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:  # noqa: D401
     r"""Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
@@ -59,7 +61,9 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
+def rb_flashiness_index(
+    q: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:  # noqa: D401
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
@@ -129,7 +133,9 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
 
 @declare_units(swe="[mass]/[area]")
-def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
+def snow_melt_we_max(
+    swe: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+) -> xarray.DataArray:
     """Maximum snow melt
 
     The maximum snow melt over a given number of days expressed in snow water equivalent.
@@ -140,6 +146,8 @@ def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
       Snow water equivalent.
     window : int
       Number of days during which the melt is accumulated.
+    freq : str
+      Resampling frequency.
 
     The maximum snow melt over a given number of days for each period. [mass/area]
     """
@@ -158,8 +166,8 @@ def snow_melt_we_max(swe: xarray.DataArray, window: int = 3, freq="AS-JUL"):
 
 @declare_units(swe="[mass]/[area]", pr="[precipitation]")
 def melt_and_precip_max(
-    swe: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq="AS-JUL"
-):
+    swe: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+) -> xarray.DataArray:
     """Maximum snow melt and precipitation
 
     The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.

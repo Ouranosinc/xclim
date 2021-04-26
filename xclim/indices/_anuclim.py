@@ -474,7 +474,7 @@ def prcptot_wetdry_period(
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray) -> xarray.DataArray:
-    r"""Calculate the annual coefficient of variation for ANUCLIM indices."""
+    """Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time="YS").std(dim="time")
     mu = arr.resample(time="YS").mean(dim="time")
     return std / mu
@@ -504,10 +504,10 @@ def _from_other_arg(
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
-    def get_other_op(ds):
-        all_nans = ds.criteria.isnull().all(dim=dim)
-        index = op(ds.criteria.where(~all_nans, 0), dim=dim)
-        return lazy_indexing(ds.output, index=index, dim=dim).where(~all_nans)
+    def get_other_op(dataset):
+        all_nans = dataset.criteria.isnull().all(dim=dim)
+        index = op(dataset.criteria.where(~all_nans, 0), dim=dim)
+        return lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
 
     return ds.resample(time=freq).map(get_other_op)
 

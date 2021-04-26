@@ -12,7 +12,7 @@ from .utils import ValidationError
 
 
 @datacheck
-def check_freq(var, freq, strict=True):
+def check_freq(var: xr.DataArray, freq: str, strict: bool = True):
     """Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
 
     Parameters
@@ -36,7 +36,7 @@ def check_freq(var, freq, strict=True):
 
 
 @datacheck
-def check_daily(var):
+def check_daily(var: xr.DataArray):
     """Raise an error if not series has a frequency other that daily, or is not monotonically increasing.
 
     Note that this does not check for gaps in the series.

@@ -159,7 +159,7 @@ def get_local_attrs(
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
     append_locale_name: bool = True,
-):
+) -> dict:
     """Get all attributes of an indicator in the requested locales.
 
     Parameters
@@ -180,7 +180,6 @@ def get_local_attrs(
     ------
     ValueError
         If `append_locale_name` is False and multiple `locales` are requested.
-        .
 
     Returns
     -------
@@ -209,7 +208,9 @@ def get_local_attrs(
     return attrs
 
 
-def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
+def get_local_formatter(
+    locale: Union[str, Sequence[str], Tuple[str, dict]]
+) -> AttrFormatter:
     """Return an AttrFormatter instance for the given locale.
 
     Parameters

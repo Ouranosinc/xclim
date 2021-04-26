@@ -39,7 +39,7 @@ from .units import convert_units_to, units
 from .utils import MissingVariableError, infer_kind_from_parameter
 
 # Indicators registry
-registry = {}  # Main class registry
+registry = dict()  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 

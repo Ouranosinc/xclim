@@ -428,14 +428,14 @@ def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
 
 
 def _fire_season(
-    tas,
-    snd=None,
-    method="WF93",
-    temp_start_thresh=12,
-    temp_end_thresh=5,
-    temp_condition_days=3,
-    snow_condition_days=3,
-    snow_thresh=0,
+    tas: np.ndarray,
+    snd: Optional[np.ndarray] = None,
+    method: str = "WF93",
+    temp_start_thresh: float = 12,
+    temp_end_thresh: float = 5,
+    temp_condition_days: int = 3,
+    snow_condition_days: int = 3,
+    snow_thresh: float = 0,
 ):
     """Compute the active fire season mask.
 
@@ -948,7 +948,7 @@ def overwintering_drought_code(
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
-    wDC = xr.apply_ufunc(
+    wDC = xr.apply_ufunc(  # noqa
         _overwintering_drought_code,
         last_dc,
         winter_pr,
@@ -986,7 +986,7 @@ def fire_weather_indexes(
     overwintering: bool = False,
     **params,
 ):
-    r"""Fire weather indexes.
+    """Fire weather indexes.
 
     Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
     the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
@@ -1015,8 +1015,8 @@ def fire_weather_indexes(
     season_mask : xr.DataArray, optional
         Boolean mask, True where/when the fire season is active.
     season_method : {None, "WF93", "LA08"}
-        How to compute the start up and shut down of the fire season.
-        If "None", no start ups or shud downs are computed, similar to the R fwi function.
+        How to compute the start-up and shutdown of the fire season.
+        If "None", no start-ups or shutdowns are computed, similar to the R fwi function.
         Ignored if `season_mask` is given.
     overwintering: bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
