@@ -66,3 +66,52 @@ seaIce: Sea ice
    </dl>
 
 .. _CF-Convention: http://cfconventions.org/
+
+
+Virtual submodules
+==================
+
+.. automodule:: xclim.indicators.cf
+
+.. raw:: html
+    <dl>
+   {% for indname, ind in indicators['cf'].items() %}
+     <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dd>
+     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
+     <b>Description: </b> {{ ind.abstract }} <br>
+     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     </dd>
+   {% endfor %}
+   </dl>
+
+.. automodule:: xclim.indicators.icclim
+
+.. raw:: html
+    <dl>
+   {% for indname, ind in indicators['icclim'].items() %}
+     <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dd>
+     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
+     <b>Description: </b> {{ ind.abstract }} <br>
+     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     </dd>
+   {% endfor %}
+   </dl>
+
+.. automodule:: xclim.indicators.anuclim
+
+.. raw:: html
+    <dl>
+   {% for indname, ind in indicators['anuclim'].items() %}
+     <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dd>
+     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
+     <b>Description: </b> {{ ind.abstract }} <br>
+     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     </dd>
+   {% endfor %}
+   </dl>

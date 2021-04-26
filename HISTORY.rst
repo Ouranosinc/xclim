@@ -8,6 +8,17 @@ History
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+* Virtual indicators modules can now be built from YAML files.
+* Indicators can now be built from dictionaries.
+* New generic indices, implementation of `clix-meta`'s index functions.
+* On-the-fly generation of cfchecks with `xc.core.cfchecks.generate_cfcheck`, for a few known variables only.
+* New `xc.indices.run_length.rle_statistics` for min, max, mean, std (etc) statistics on run lengths.
+* New virtual submodule `cf`, with CF standard indices defined in `clix-meta <https://github.com/clix-meta/clix-meta>`_.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Virtual submodules icclim and anuclim are not available at the top level anymore (only through `xclim.indicators`).
+* Virtual submodules icclim and anuclim now provide *Indicators* and not indices.
 
 Bug fixes
 ~~~~~~~~~

@@ -877,7 +877,7 @@ def doy_to_days_since(
       Passing `start` only makes sense if `da` has a yearly sampling frequency.
     calendar: str, optional
       The calendar to use when computing the new interval.
-      If None (default), the calendar of the `time` axis is used.
+      If None (default), the calendar attribute of the data or of its `time` axis is used.
       All time coordinates of `da` must exist in this calendar.
       No check is done to ensure doy values exist in this calendar.
 
@@ -902,7 +902,7 @@ def doy_to_days_since(
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
-    calendar = calendar or base_calendar
+    calendar = calendar or da.attrs.get("calendar", base_calendar)
     dac = convert_calendar(da, calendar)
 
     base_doy, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
@@ -921,6 +921,7 @@ def doy_to_days_since(
         else:
             out.attrs.update(units="days after time coordinate")
 
+    out.attrs.pop("is_dayofyear", None)
     out.attrs.update(calendar=calendar)
     return convert_calendar(out, base_calendar).rename(da.name)
 
@@ -980,4 +981,5 @@ def days_since_to_doy(
     out.attrs.update(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
     )
+    out.attrs.update(calendar=calendar, is_dayofyear=True)
     return convert_calendar(out, base_calendar).rename(da.name)

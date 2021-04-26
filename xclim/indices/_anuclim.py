@@ -79,7 +79,7 @@ def isothermality(
     Returns
     -------
     xarray.DataArray, [%]
-      The isothermality value.
+       Isothermality
 
     Notes
     -----
@@ -111,7 +111,7 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray, [%]
-      The Coefficient of Variation of mean temperature values.
+      Mean temperature coefficient of variation
 
     Examples
     --------
@@ -160,7 +160,7 @@ def precip_seasonality(
     Returns
     -------
     xarray.DataArray, [%]
-      The coefficient of variation of precipitation values.
+      Precipitation coefficient of variation
 
     Examples
     --------
@@ -223,7 +223,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the warmest/coldest quearter of each year.
+       Mean temperature values of the {op} quearter of each year.
 
     Examples
     --------
@@ -278,7 +278,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the wettest/driest quarter of each year.
+       Mean temperature values of the {op} quarter of each year.
 
     Notes
     -----
@@ -321,7 +321,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation values of the wettest/driest quarter of each year.
+       Total precipitation values of the {op} quarter of each year.
 
     Examples
     --------
@@ -383,7 +383,7 @@ def prcptot_warmcold_quarter(
     Returns
     -------
     xarray.DataArray : [mm]
-       Total precipitation values of the warmest/coldest quarter of each year
+       Total precipitation values of the {op} quarter of each year
 
     Notes
     -----
@@ -453,7 +453,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation of the wettest / driest period.
+       Total precipitation of the {op} period.
 
     Notes
     -----

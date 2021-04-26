@@ -103,6 +103,47 @@ def rle(
     return d
 
 
+def rle_statistics(
+    da: xr.DataArray,
+    reducer: str = "max",
+    dim: str = "time",
+    ufunc_1dim: Union[str, bool] = "auto",
+) -> xr.DataArray:
+    """Return the length of consecutive run of True values, according to a reducing operator.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      N-dimensional array (boolean)
+    reducer: str
+      Name of the reducing function.
+    dim : str
+      Dimension along which to calculate consecutive run; Default: 'time'.
+    ufunc_1dim : Union[str, bool]
+      Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+      usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+      for DataArray with a small number of grid points.
+
+    Returns
+    -------
+    xr.DataArray
+      Length of runs of True values along dimension, according to the reducing function (float)
+      If there are no runs (but the data is valid), returns 0.
+    """
+    if ufunc_1dim == "auto":
+        npts = get_npts(da)
+        ufunc_1dim = npts <= npts_opt
+
+    if ufunc_1dim:
+        rl_stat = statistics_run_ufunc(da, reducer)
+    else:
+        d = rle(da, dim=dim)
+        rl_stat = getattr(d.where(d > 0), reducer)(dim=dim)
+        rl_stat = xr.where((d.isnull() | (d == 0)).all(dim=dim), 0, rl_stat)
+
+    return rl_stat
+
+
 def longest_run(
     da: xr.DataArray, dim: str = "time", ufunc_1dim: Union[str, bool] = "auto"
 ) -> xr.DataArray:
@@ -124,17 +165,7 @@ def longest_run(
     xr.DataArray
       Length of longest run of True values along dimension (int).
     """
-    if ufunc_1dim == "auto":
-        npts = get_npts(da)
-        ufunc_1dim = npts <= npts_opt
-
-    if ufunc_1dim:
-        rl_long = longest_run_ufunc(da)
-    else:
-        d = rle(da, dim=dim)
-        rl_long = d.max(dim=dim)
-
-    return rl_long
+    return rle_statistics(da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim)
 
 
 def windowed_run_events(
@@ -769,8 +800,8 @@ def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
     return ind
 
 
-def longest_run_1d(arr: Sequence[bool]) -> int:
-    """Return the length of the longest consecutive run of identical values.
+def statistics_run_1d(arr: Sequence[bool], reducer: str) -> int:
+    """Return statistics on lengths of run of identical values.
 
     Parameters
     ----------
@@ -780,10 +811,13 @@ def longest_run_1d(arr: Sequence[bool]) -> int:
     Returns
     -------
     int
-      Length of longest run.
+      Statistics on length of runs.
     """
     v, rl = rle_1d(arr)[:2]
-    return np.where(v, rl, 0).max()
+    if not np.any(v):
+        return 0
+    func = getattr(np, f"nan{reducer}")
+    return func(np.where(v, rl, np.NaN))
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -878,13 +912,17 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     )
 
 
-def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> xr.DataArray:
-    """Dask-parallel version of longest_run_1d, ie: the maximum number of consecutive true values in array.
+def statistics_run_ufunc(
+    x: Union[xr.DataArray, Sequence[bool]], reducer: str
+) -> xr.DataArray:
+    """Dask-parallel version of statistics_run_1d, ie: the {reducer} number of consecutive true values in array.
 
     Parameters
     ----------
     x : Sequence[bool]
       Input array (bool)
+    reducer: {'min', 'max', 'mean', 'sum'}
+      Reducing function name.
 
     Returns
     -------
@@ -892,12 +930,13 @@ def longest_run_ufunc(x: Union[xr.DataArray, Sequence[bool]]) -> xr.DataArray:
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
-        longest_run_1d,
+        statistics_run_1d,
         x,
         input_core_dims=[["time"]],
+        kwargs={"reducer": reducer},
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[int],
+        output_dtypes=[float],
         keep_attrs=True,
     )
 
