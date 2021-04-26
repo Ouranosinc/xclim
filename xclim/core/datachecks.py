@@ -8,7 +8,7 @@ Utilities designed to check the validity of data inputs.
 import xarray as xr
 
 from .options import datacheck
-from .utils import ValidationError, wrapped_partial
+from .utils import ValidationError
 
 
 @datacheck
