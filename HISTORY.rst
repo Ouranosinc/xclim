@@ -14,6 +14,7 @@ New features and enhancements
 * On-the-fly generation of cfchecks with `xc.core.cfchecks.generate_cfcheck`, for a few known variables only.
 * New `xc.indices.run_length.rle_statistics` for min, max, mean, std (etc) statistics on run lengths.
 * New virtual submodule `cf`, with CF standard indices defined in `clix-meta <https://github.com/clix-meta/clix-meta>`_.
+* Indices returning day-of-year data add 2 new attributes to the output: `is_dayofyear` (=1) and `calendar`.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
