@@ -357,7 +357,8 @@ def _convert_datetime(
     Returns
     -------
     Union[cftime.datetime, datetime.datetime, np.nan]
-      A datetime object of the target calendar with the same year, month, day and time as the source (month and day according to `new_doy` if given).
+      A datetime object of the target calendar with the same year, month, day and time
+      as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
     if new_doy is not None:
@@ -385,7 +386,9 @@ def _convert_datetime(
 def ensure_cftime_array(
     time: Sequence,
 ) -> Union[CFTimeIndex, numpy.ndarray]:
-    """Convert an input 1D array to an array of cftime objects. Python's datetime are converted to cftime.DatetimeGregorian.
+    """Convert an input 1D array to an array of cftime objects.
+
+    Python's datetime are converted to cftime.DatetimeGregorian.
 
     Raises ValueError when unable to cast the input.
     """
