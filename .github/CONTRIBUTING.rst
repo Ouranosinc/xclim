@@ -95,7 +95,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # For Anaconda/Miniconda environments:
     $ conda install -c conda-forge black pytest pydocstyle xdoctest tox
 
-    $ black --check --target-version py36 xclim tests
+    $ black --check --target-version py37 xclim tests
     $ flake8 xclim tests
     $ pytest --nbval docs/notebooks
     $ pytest --root-dir xclim/testing/tests/ --xdoctest xclim
