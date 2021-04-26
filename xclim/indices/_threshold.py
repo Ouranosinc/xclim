@@ -951,7 +951,7 @@ def days_with_snow(
       Maximum threshold solid precipitation flux.
     freq : str
       Resampling frequency defining the periods as defined in
-      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html.
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
