@@ -358,6 +358,8 @@ def ice_days(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
+    thresh : str
+      Freezing temperature.
     freq : str
       Resampling frequency.
 

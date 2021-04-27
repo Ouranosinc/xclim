@@ -9,7 +9,7 @@ from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
 
-from xclim.core.calendar import _interpolate_doy_calendar
+from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
@@ -170,7 +170,7 @@ def invert(x: xr.DataArray, kind: Optional[str] = None):
         if kind == ADDITIVE:
             return -x
         if kind == MULTIPLICATIVE:
-            return 1 / x
+            return 1 / x  # type: ignore
         raise ValueError
 
 
@@ -215,7 +215,8 @@ def broadcast(
             if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
-                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
+                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor"
+                    " interpolation, not cubic. Using linear."
                 )
 
             grouped = grouped.interp(sel, method=interp)

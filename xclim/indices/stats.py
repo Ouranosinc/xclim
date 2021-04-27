@@ -73,7 +73,7 @@ def fit(
     method: str = "ML",
     dim: str = "time",
     **fitkwargs,
-):
+) -> xr.DataArray:
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -152,7 +152,7 @@ def fit(
     return out
 
 
-def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
+def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters

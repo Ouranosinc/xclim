@@ -1,0 +1,56 @@
+realm: atmos
+doc: |
+  ==============
+  Example module
+  ==============
+  This module is an example of YAML generated xclim submodule.
+references: xclim documentation https://xclim.readthedocs.io
+indices:
+  RX1day:
+    base: rx1day
+    output:
+      long_name: Highest 1-day precipitation amount
+  RX5day:
+    base: max_n_day_precipitation_amount
+    output:
+      long_name: Highest 5-day precipitation amount
+    index_function:
+      parameters:
+        window:
+          data: 5
+  R75p:
+    base: days_over_precip_thresh
+    index_function:
+      parameters:
+        thresh:
+          data: 1 mm/day
+        per:
+          data: {per}
+          description: Daily 75th percentile of wet day precipitation flux.
+  fd:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+        seasonal:
+        monthly:
+      default: annual
+    output:
+      var_name: "fd"
+      standard_name: number_of_days_with_air_temperature_below_threshold
+      long_name: "Number of Frost Days (Tmin < 0C)"
+      units: "1"
+      cell_methods:
+        - time: minimum within days
+        - time: sum over days
+    input:
+      data: tasmin
+    index_function:
+      name: count_occurrences
+      parameters:
+        threshold:
+          kind: quantity
+          data: 0
+          units: "degree_Celsius"
+        condition:
+          data: "<"

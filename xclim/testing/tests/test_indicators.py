@@ -91,22 +91,22 @@ def test_attrs(tas_series):
     txm = ind(a, thresh=5, freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["xclim_history"]
-    assert "tmin(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
+    assert "TMIN(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
     assert f"xclim version: {__version__}." in txm.attrs["xclim_history"]
     assert txm.name == "tmin5"
 
 
 def test_registering():
-    UniIndTemp()
-    assert "TMIN" in registry
+    UniIndTemp(module="test")
+    assert "test.TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
-    class Test123(registry["TMIN"]):
+    class Test123(registry["test.TMIN"]):
         identifier = "test123"
 
-    assert "TEST123" not in registry
-    Test123()
-    assert "TEST123" in registry
+    assert "test.TEST123" not in registry
+    Test123(module="test")
+    assert "test.TEST123" in registry
 
     # Confirm registries live in subclasses.
     class IndicatorNew(Indicator):
@@ -120,19 +120,22 @@ def test_registering():
     with pytest.raises(AttributeError, match="realm must be given"):
         IndicatorNew(identifier="i2d")
 
-    indnew = IndicatorNew(identifier="i2d", realm="atmos")
-    assert "I2D" in registry
-    assert registry["I2D"].get_instance() is indnew
+    indnew = IndicatorNew(identifier="i2d", realm="atmos", module="test")
+    assert "test.I2D" in registry
+    assert registry["test.I2D"].get_instance() is indnew
 
     del indnew
     gc.collect()
     with pytest.raises(ValueError, match="There is no existing instance"):
-        registry["I2D"].get_instance()
+        registry["test.I2D"].get_instance()
 
 
 def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
+    # Virtual module also are stored under xclim.indicators
+    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
+    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
 
 
 def test_temp_unit_conversion(tas_series):
@@ -246,7 +249,7 @@ def test_all_jsonable(official_indicators):
         indinst = ind.get_instance()
         try:
             json.dumps(indinst.json())
-        except TypeError:
+        except (TypeError, KeyError):
             problems.append(identifier)
     if problems:
         raise ValueError(
@@ -429,3 +432,40 @@ def test_input_dataset():
     dsx = ds.drop_vars("tasmin")
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
+
+
+def test_indicator_from_dict():
+    d = dict(
+        realm="atmos",
+        output=dict(
+            var_name="tmean{thresh}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods=[{"time": "mean within days"}],
+        ),
+        index_function=dict(
+            name="thresholded_statistics",
+            parameters=dict(
+                threshold={"data": {"thresh": None}, "description": "A threshold temp"},
+                condition={"data": "`<"},
+                reducer={"data": "mean"},
+            ),
+        ),
+        input={"data": "tas"},
+    )
+
+    ind = Daily.from_dict(d, identifier="tmean", module="test")
+
+    assert ind.realm == "atmos"
+    # Parameters metadata modification
+    assert ind.parameters["threshold"]["description"] == "A threshold temp"
+    # Injection of paramters
+    assert "condition" in ind.compute._injected
+    # Placeholders were translated to name in signature
+    assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
+    # Default value for input variable injected and meta injected
+    assert ind._sig.parameters["data"].default == "tas"
+    assert ind.parameters["data"]["units"] == "[temperature]"
+    # Cf checks were generated
+    assert ind.cfcheck is not Daily.cfcheck

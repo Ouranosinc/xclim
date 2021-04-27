@@ -44,7 +44,8 @@ wind_speed_from_vector = Converter(
     standard_name=["wind_speed", "wind_from_direction"],
     description=[
         "Wind speed computed as the magnitude of the (uas, vas) vector.",
-        "Wind direction computed as the angle of the (uas, vas) vector. A direction of 0° is attributed to winds with a speed under {calm_wind_thresh}.",
+        "Wind direction computed as the angle of the (uas, vas) vector."
+        " A direction of 0° is attributed to winds with a speed under {calm_wind_thresh}.",
     ],
     long_name=["Near-Surface Wind Speed", "Near-Surface Wind from Direction"],
     cell_methods="",

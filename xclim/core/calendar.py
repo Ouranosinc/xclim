@@ -11,6 +11,7 @@ import re
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
+import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -29,7 +30,7 @@ from xarray.core.resample import DataArrayResample
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
-datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
+datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -267,14 +268,16 @@ def interp_calendar(
     return out
 
 
-def date_range(*args, calendar="default", **kwargs):
+def date_range(
+    *args, calendar: str = "default", **kwargs
+) -> Union[pd.DatetimeIndex, CFTimeIndex]:
     """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
 
 
-def date_range_like(source, calendar):
+def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
     """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
 
     Parameters
@@ -337,7 +340,7 @@ def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
     calendar: str = "default",
-):
+) -> Union[cftime.datetime, pydt.datetime, np.int]:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
@@ -353,8 +356,9 @@ def _convert_datetime(
 
     Returns
     -------
-    Union[cftime.datetime, pydt.datetime, np.nan]
-      A datetime object of the target calendar with the same year, month, day and time as the source (month and day according to `new_doy` if given).
+    Union[cftime.datetime, datetime.datetime, np.nan]
+      A datetime object of the target calendar with the same year, month, day and time
+      as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
     if new_doy is not None:
@@ -379,8 +383,12 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(time: Sequence):
-    """Convert an input 1D array to an array of cftime objects. Python's datetime are converted to cftime.DatetimeGregorian.
+def ensure_cftime_array(
+    time: Sequence,
+) -> Union[CFTimeIndex, numpy.ndarray]:
+    """Convert an input 1D array to an array of cftime objects.
+
+    Python's datetime are converted to cftime.DatetimeGregorian.
 
     Raises ValueError when unable to cast the input.
     """
@@ -497,7 +505,7 @@ def percentile_doy(
     return p
 
 
-def compare_offsets(freqA: str, op: str, freqB: str):
+def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
     """Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
@@ -507,11 +515,11 @@ def compare_offsets(freqA: str, op: str, freqB: str):
 
     Parameters
     ----------
-    fA: str
+    freqA: str
       RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
     op : {'<', '<=', '==', '>', '>=', '!='}
       Operator to use.
-    fB: str
+    freqB: str
       LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
 
     Returns
@@ -522,21 +530,21 @@ def compare_offsets(freqA: str, op: str, freqB: str):
     from xclim.indices.generic import get_op
 
     # Get multiplicator and base frequency
-    tA, bA, _ = parse_offset(freqA)
-    tB, bB, _ = parse_offset(freqB)
+    t_a, b_a, _ = parse_offset(freqA)
+    t_b, b_b, _ = parse_offset(freqB)
 
-    if bA == bB:
+    if b_a == b_b:
         # Same base freq, compare mulitplicator only.
-        tA = int(tA or "1")
-        tB = int(tB or "1")
+        t_a = int(t_a or "1")
+        t_b = int(t_b or "1")
     else:
         # Different base freq, compare length of first period after beginning of time.
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
-        tA = (t[1] - t[0]).total_seconds()
+        t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
-        tB = (t[1] - t[0]).total_seconds()
+        t_b = (t[1] - t[0]).total_seconds()
 
-    return get_op(op)(tA, tB)
+    return get_op(op)(t_a, t_b)
 
 
 def parse_offset(freq: str) -> Tuple[str, str, Optional[str]]:
@@ -872,7 +880,7 @@ def doy_to_days_since(
       Passing `start` only makes sense if `da` has a yearly sampling frequency.
     calendar: str, optional
       The calendar to use when computing the new interval.
-      If None (default), the calendar of the `time` axis is used.
+      If None (default), the calendar attribute of the data or of its `time` axis is used.
       All time coordinates of `da` must exist in this calendar.
       No check is done to ensure doy values exist in this calendar.
 
@@ -897,7 +905,7 @@ def doy_to_days_since(
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
-    calendar = calendar or base_calendar
+    calendar = calendar or da.attrs.get("calendar", base_calendar)
     dac = convert_calendar(da, calendar)
 
     base_doy, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
@@ -916,6 +924,7 @@ def doy_to_days_since(
         else:
             out.attrs.update(units="days after time coordinate")
 
+    out.attrs.pop("is_dayofyear", None)
     out.attrs.update(calendar=calendar)
     return convert_calendar(out, base_calendar).rename(da.name)
 
@@ -975,4 +984,5 @@ def days_since_to_doy(
     out.attrs.update(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
     )
+    out.attrs.update(calendar=calendar, is_dayofyear=1)
     return convert_calendar(out, base_calendar).rename(da.name)

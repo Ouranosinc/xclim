@@ -575,18 +575,13 @@ class TestExtremeValues:
     def test_dask_julia(self):
 
         dsim = open_dataset(
-            "sdba/fermont_CanESM2_1950-2100.nc", branch="sdba-testfiles"
+            "sdba/CanESM2_1950-2100.nc", branch="sdba-testfiles"
         ).chunk()
-        dref = open_dataset(
-            "sdba/fermont_nrcan_1950-2013.nc", branch="sdba-testfiles"
-        ).chunk()
-        dexp = open_dataset(
-            "sdba/fermont_biasadjusted_external.nc", branch="sdba-testfiles"
-        )
+        dref = open_dataset("sdba/ahccd_1950-2013.nc", branch="sdba-testfiles").chunk()
+        dexp = open_dataset("sdba/adjusted_external.nc", branch="sdba-testfiles")
 
-        ref = convert_units_to(dref.sel(time=slice("1980", "2009")).pr, "mm/d")
-        hist = convert_units_to(dsim.sel(time=slice("1980", "2009")).pr, "mm/d")
-        sim = convert_units_to(dsim.sel(time=slice("2040", "2069")).pr, "mm/d")
+        ref = convert_units_to(dref.sel(time=slice("1950", "2009")).pr, "mm/d")
+        hist = convert_units_to(dsim.sel(time=slice("1950", "2009")).pr, "mm/d")
 
         quantiles = np.linspace(0.01, 0.99, num=50)
 
@@ -597,22 +592,21 @@ class TestExtremeValues:
         with xr.set_options(keep_attrs=True):
             ref = ref + uniform_noise_like(ref, low=1e-6, high=1e-3)
             hist = hist + uniform_noise_like(hist, low=1e-6, high=1e-3)
-            sim = sim + uniform_noise_like(sim, low=1e-6, high=1e-3)
 
         EQM.train(ref, hist)
-        scen = EQM.adjust(sim, interp="linear", extrapolation="constant")
+        scen = EQM.adjust(hist, interp="linear", extrapolation="constant")
 
-        EX = ExtremeValues(cluster_thresh="1 mm/day")
+        EX = ExtremeValues(cluster_thresh="1 mm/day", q_thresh=0.97)
         EX.train(ref, hist)
-        new_scen = EX.adjust(scen, sim, frac=0.000000001)
+        new_scen = EX.adjust(scen, hist, frac=0.000000001)
 
         new_scen.load()
 
-        exp_scen = dexp.julia_extremes_flat_pr
-        np.testing.assert_allclose(
-            (new_scen - exp_scen).where(new_scen != scen, drop=True),
-            0,
-            atol=0.01,
+        exp_scen = dexp.extreme_values_julia
+        xr.testing.assert_allclose(
+            new_scen.where(new_scen != scen).transpose("time", "location"),
+            exp_scen.where(new_scen != scen).transpose("time", "location"),
+            atol=0.005,
             rtol=2e-3,
         )
 

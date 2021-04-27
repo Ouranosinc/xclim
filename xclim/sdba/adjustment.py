@@ -151,7 +151,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
 
 class EmpiricalQuantileMapping(BaseAdjustment):
-    """Coventionnal quantile mapping adjustment."""
+    """Conventional quantile mapping adjustment."""
 
     @parse_group
     def __init__(
@@ -862,14 +862,14 @@ class PrincipalComponents(BaseAdjustment):
         hist = hist.stack({lbl_M: crds_M})
 
         # The real thing, acting on 2D numpy arrays
-        def _compute_transform_matrix(ref, hist):
+        def _compute_transform_matrix(reference, historical):
             """Return the transformation matrix converting simulation coordinates to observation coordinates."""
             # Get transformation matrix from PC coords to ref, dropping points with a NaN coord.
-            ref_na = np.isnan(ref).any(axis=0)
-            R = pc_matrix(ref[:, ~ref_na])
+            ref_na = np.isnan(reference).any(axis=0)
+            R = pc_matrix(reference[:, ~ref_na])
             # Get transformation matrix from PC coords to hist, dropping points with a NaN coord.
-            hist_na = np.isnan(hist).any(axis=0)
-            H = pc_matrix(hist[:, ~hist_na])
+            hist_na = np.isnan(historical).any(axis=0)
+            H = pc_matrix(historical[:, ~hist_na])
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
@@ -887,19 +887,19 @@ class PrincipalComponents(BaseAdjustment):
             # same-name dimensions, instead of reducing according to the dimension order,
             # as in numpy or normal maths. So crdX all refer to the same dimension,
             # but with names assuring correct matrix multiplication even if they are out of order.
-            ref = ds.ref.stack({lbl_P: dim})
-            hist = ds.hist.stack({lbl_P: dim})
-            trans = xr.apply_ufunc(
+            reference = ds.ref.stack({lbl_P: dim})
+            historical = ds.hist.stack({lbl_P: dim})
+            transformation = xr.apply_ufunc(
                 _compute_transform_matrix,
-                ref,
-                hist,
+                reference,
+                historical,
                 input_core_dims=[[lbl_R, lbl_P], [lbl_M, lbl_P]],
                 output_core_dims=[[lbl_R, lbl_M]],
                 vectorize=True,
                 dask="parallelized",
                 output_dtypes=[float],
             )
-            return trans
+            return transformation
 
         # Transformation matrix, from model coords to ref coords.
         trans = self.train_group.apply(
@@ -930,8 +930,8 @@ class PrincipalComponents(BaseAdjustment):
 
         def _compute_adjust(ds, dim):
             """Apply the mapping transformation."""
-            scen = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
-            return scen
+            scenario = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
+            return scenario
 
         scen = self.adj_group.apply(
             _compute_adjust,
