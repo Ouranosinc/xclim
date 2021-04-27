@@ -984,5 +984,5 @@ def days_since_to_doy(
     out.attrs.update(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
     )
-    out.attrs.update(calendar=calendar, is_dayofyear=True)
+    out.attrs.update(calendar=calendar, is_dayofyear=1)
     return convert_calendar(out, base_calendar).rename(da.name)

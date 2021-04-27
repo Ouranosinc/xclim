@@ -286,7 +286,7 @@ class TestLastSpringFrost:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
         assert lsf.attrs["units"] == ""
-        assert lsf.attrs["is_dayofyear"]
+        assert lsf.attrs["is_dayofyear"] == 1
 
 
 class TestFirstDayBelow:
@@ -306,7 +306,7 @@ class TestFirstDayBelow:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
         assert fdb.attrs["units"] == ""
-        assert fdb.attrs["is_dayofyear"]
+        assert fdb.attrs["is_dayofyear"] == 1
 
 
 class TestFirstDayAbove:
@@ -329,7 +329,7 @@ class TestFirstDayAbove:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
         assert fdb.attrs["units"] == ""
-        assert fdb.attrs["is_dayofyear"]
+        assert fdb.attrs["is_dayofyear"] == 1
 
 
 class TestDaysOverPrecipThresh:
@@ -394,7 +394,7 @@ class TestFreshetStart:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
-        assert out.attrs["is_dayofyear"]
+        assert out.attrs["is_dayofyear"] == 1
 
     def test_no_start(self, tas_series):
         tg = np.zeros(365) - 1
@@ -434,7 +434,7 @@ class TestGrowingSeasonEnd:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
         assert gs_end.attrs["units"] == ""
-        assert gs_end.attrs["is_dayofyear"]
+        assert gs_end.attrs["is_dayofyear"] == 1
 
 
 class TestGrowingSeasonLength:
@@ -1705,7 +1705,7 @@ def test_degree_days_exceedance_date(tas_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     assert out.attrs["units"] == ""
-    assert out.attrs["is_dayofyear"]
+    assert out.attrs["is_dayofyear"] == 1
 
 
 @pytest.mark.parametrize("method,exp", [("binary", [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])])
@@ -1735,7 +1735,7 @@ def test_first_snowfall(prsn_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     assert out.attrs["units"] == ""
-    assert out.attrs["is_dayofyear"]
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_last_snowfall(prsn_series):
@@ -1773,7 +1773,7 @@ def test_continous_snow_cover_start(snd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     assert out.attrs["units"] == ""
-    assert out.attrs["is_dayofyear"]
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_continuous_snow_cover_end(snd_series):
@@ -1794,7 +1794,7 @@ def test_continuous_snow_cover_end(snd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     assert out.attrs["units"] == ""
-    assert out.attrs["is_dayofyear"]
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_high_precip_low_temp(pr_series, tasmin_series):
