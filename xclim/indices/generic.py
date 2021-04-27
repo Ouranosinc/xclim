@@ -68,8 +68,8 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods as defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -165,8 +165,8 @@ def threshold_count(
     thresh : Union[float, int]
       Threshold value.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods as defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------

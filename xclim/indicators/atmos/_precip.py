@@ -295,7 +295,8 @@ days_with_snow = Prsn(
 days_over_precip_thresh = Pr(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above a daily percentile. Only days with at least {thresh} are counted.",
+    description="{freq} number of days with precipitation above a daily percentile."
+    " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
@@ -313,7 +314,8 @@ high_precip_low_temp = PrTasx(
 
 fraction_over_precip_thresh = Pr(
     identifier="fraction_over_precip_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile. Only days with at least {thresh} are included in the total.",
+    description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
+    " Only days with at least {thresh} are included in the total.",
     units="",
     cell_methods="",
     compute=indices.fraction_over_precip_thresh,
@@ -322,8 +324,10 @@ fraction_over_precip_thresh = Pr(
 
 liquid_precip_ratio = PrTasx(
     identifier="liquid_precip_ratio",
-    description="{freq} ratio of rainfall to total precipitation. Rainfall is estimated as precipitation on days where temperature is above {thresh}.",
-    abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is approximated from total precipitation on days where temperature is above a threshold.",
+    description="{freq} ratio of rainfall to total precipitation."
+    " Rainfall is estimated as precipitation on days where temperature is above {thresh}.",
+    abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is"
+    " approximated from total precipitation on days where temperature is above a threshold.",
     units="",
     compute=wrapped_partial(
         indices.liquid_precip_ratio, suggested={"tas": _empty}, prsn=None

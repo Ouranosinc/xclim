@@ -1288,9 +1288,9 @@ def winter_rain_ratio(
 )
 def blowing_snow(
     snd: xarray.DataArray,
-    sfcWind: xarray.DataArray,
+    sfcWind: xarray.DataArray,  # noqa
     snd_thresh: str = "5 cm",
-    sfcWind_thresh: str = "15 km/h",
+    sfcWind_thresh: str = "15 km/h",  # noqa
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1320,7 +1320,7 @@ def blowing_snow(
       Number of days where snowfall and wind speeds are above respective thresholds.
     """
     snd_thresh = convert_units_to(snd_thresh, snd)
-    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
+    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)  # noqa
 
     # Net snow accumulation over the last `window` days
     snow = snd.diff(dim="time").rolling(time=window, center=False).sum()

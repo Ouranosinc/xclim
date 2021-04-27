@@ -933,7 +933,7 @@ def last_snowfall(
 
 @declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
 def days_with_snow(
-    prsn: xarray.DataArray,
+    prsn: xarray.DataArray,  # noqa
     low: str = "0 kg m-2 s-1",
     high: str = "1E6 kg m-2 s-1",
     freq: str = "AS-JUL",
@@ -951,8 +951,8 @@ def days_with_snow(
     high : float
       Maximum threshold solid precipitation flux.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods as defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -977,7 +977,7 @@ def heat_wave_index(
     window: int = 5,
     freq: str = "YS",
 ):
-    r"""Heat wave index.
+    """Heat wave index.
 
     Number of days that are part of a heatwave, defined as five or more consecutive days over 25℃.
 
@@ -1049,7 +1049,7 @@ def hot_spell_max_length(
     window: int = 1,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Longest hot spell.
+    """Longest hot spell.
 
     Longest spell of high temperatures over a given period.
 
@@ -1107,7 +1107,7 @@ def hot_spell_frequency(
     window: int = 3,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Hot spell frequency.
+    """Hot spell frequency.
 
     Number of hot spells over a given period. A hot spell is defined as an event
     where the maximum daily temperature exceeds a specific threshold
@@ -1188,7 +1188,7 @@ def snow_cover_duration(
 def tn_days_below(
     tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
 ):  # noqa: D401
-    r"""Number of days with tmin below a threshold.
+    """Number of days with tmin below a threshold.
 
     Number of days where daily minimum temperature is below a threshold.
 
@@ -1224,7 +1224,7 @@ def tn_days_below(
 def tx_days_above(
     tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
 ):  # noqa: D401
-    r"""Number of summer days.
+    """Number of summer days.
 
     Number of days where daily maximum temperature exceed a threshold.
 
@@ -1260,7 +1260,7 @@ def tx_days_above(
 def warm_day_frequency(
     tasmax: xarray.DataArray, thresh: str = "30 degC", freq: str = "YS"
 ):
-    r"""Frequency of extreme warm days.
+    """Frequency of extreme warm days.
 
     Return the number of days with tasmax > thresh per period
 
@@ -1297,7 +1297,7 @@ def warm_day_frequency(
 def warm_night_frequency(
     tasmin: xarray.DataArray, thresh: str = "22 degC", freq: str = "YS"
 ):
-    r"""Frequency of extreme warm nights.
+    """Frequency of extreme warm nights.
 
     Return the number of days with tasmin > thresh per period
 
@@ -1322,7 +1322,7 @@ def warm_night_frequency(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def wetdays(pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"):
-    r"""Wet days.
+    """Wet days.
 
     Return the total number of days during period with precipitation over threshold.
 
@@ -1612,7 +1612,7 @@ def tropical_nights(
     thresh: str = "20.0 degC",
     freq: str = "YS",
 ):
-    r"""Tropical nights.
+    """Tropical nights.
 
     The number of days with minimum daily temperature above threshold.
 
@@ -1712,7 +1712,7 @@ def degree_days_exceedance_date(
         if (
             strt_idx.size == 0
         ):  # The date is not within the group. Happens at boundaries.
-            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")
+            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
 
         return rl.first_run_after_date(
             grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time") > sum_thresh,
