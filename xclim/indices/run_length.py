@@ -659,7 +659,7 @@ def run_end_after_date(
 def first_run_after_date(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr = "07-01",
+    date: Optional[DayOfYearStr] = "07-01",
     dim: str = "time",
     coord: Optional[Union[bool, str]] = "dayofyear",
 ) -> xr.DataArray:

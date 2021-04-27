@@ -138,7 +138,7 @@ from .utils import (
 )
 
 # Indicators registry
-registry = {}  # Main class registry
+registry = dict()  # Main class registry
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 

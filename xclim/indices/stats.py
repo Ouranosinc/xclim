@@ -43,7 +43,7 @@ _lm3_dist_map = {
 }
 
 
-def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
+def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML") -> xr.DataArray:
     """Fit an array to a univariate distribution along the time dimension.
 
     Parameters
@@ -134,7 +134,7 @@ def fit(da: xr.DataArray, dist: str = "norm", method: str = "ML"):
     return out
 
 
-def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]):
+def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters

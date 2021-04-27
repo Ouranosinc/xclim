@@ -20,6 +20,7 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * Virtual submodules icclim and anuclim are not available at the top level anymore (only through `xclim.indicators`).
 * Virtual submodules icclim and anuclim now provide *Indicators* and not indices.
+* Spatial analog methods KLDIV and Nearest Neighbor now require `scipy>=1.6.0`.
 
 Bug fixes
 ~~~~~~~~~
@@ -28,7 +29,8 @@ Bug fixes
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` now requires `xarray>=0.17` and no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
-
+* `pre-commit` linting checks now run formatting hook `black==21.4b0`.
+* Code cleaning (more accurate call signatures, more use of https links, docstring updates, and typo fixes).
 
 0.25.0 (2021-03-31)
 -------------------
