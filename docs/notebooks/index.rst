@@ -10,6 +10,6 @@ Examples
    ensembles-advanced
    frequency_analysis
    customize
-   mappings
+   extendxclim
    sdba
    sdba-advanced
