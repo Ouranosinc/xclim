@@ -247,3 +247,21 @@ def normalize(
         broadcast(invert(norm, kind), x, group=group, interp="nearest"),
         kind,
     )
+
+
+def uniform_noise_like(da: xr.DataArray, low: float = 1e-6, high: float = 1e-3):
+    """Return an unform noise array of the same shape as da.
+
+    Noise is uniformly distributed between low and high.
+    Alternative method to `jitter_under_thresh` for avoiding zeroes.
+    """
+    if isinstance(da.data, dsk.Array):
+        mod = dsk
+        kw = {"chunks": da.chunks}
+    else:
+        mod = np
+        kw = {}
+
+    return da.copy(
+        data=(high - low) * mod.random.random_sample(size=da.shape, **kw) + low
+    )

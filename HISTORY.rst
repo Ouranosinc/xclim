@@ -8,6 +8,7 @@ History
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+* New bias second-order adjustment method "ExtremeValues", intended for re-adjusting extreme precipitation values.
 * Virtual indicators modules can now be built from YAML files.
 * Indicators can now be built from dictionaries.
 * New generic indices, implementation of `clix-meta`'s index functions.
