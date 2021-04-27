@@ -19,6 +19,7 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * Virtual submodules icclim and anuclim are not available at the top level anymore (only through `xclim.indicators`).
 * Virtual submodules icclim and anuclim now provide *Indicators* and not indices.
+* Spatial analog methods KLDIV and Nearest Neighbor now require `scipy>=1.6.0`.
 
 Bug fixes
 ~~~~~~~~~
