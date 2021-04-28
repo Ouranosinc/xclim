@@ -76,8 +76,8 @@ All fields are optional. Other fields can be found in the yaml file, but they wi
 In the following, the section under `<identifier>` is refered to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the structure of `data`.
 
-Parameters
-~~~~~~~~~~
+Indicator parameters
+~~~~~~~~~~~~~~~~~~~~
 `clix-meta` defines three kinds of parameters:
 
     - "quantity", a quantity with a magnitude and some units, (equivalent to xclim.core.utils.InputKind.QUANTITY_STR)
