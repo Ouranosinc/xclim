@@ -68,7 +68,12 @@ Other utilities
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.core.checks
+.. automodule:: xclim.core.cfchecks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.datachecks
    :members:
    :undoc-members:
    :show-inheritance:

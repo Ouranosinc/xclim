@@ -8,7 +8,7 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the output object.
 
-There are many ways to construct indicators. A good place to start is `this notebook <notebooks/customize.ipynb#Defining-new-indicators>`_.
+There are many ways to construct indicators. A good place to start is `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
 
 Dictionary and YAML parser
 --------------------------
@@ -21,6 +21,8 @@ YAML file structure
 ~~~~~~~~~~~~~~~~~~~
 
 Indicator-defining yaml files are structured in the following way:
+
+.. code-block:: yaml
 
     module: <module name>  # Defaults to the file name
     realm: <realm>  # If given here, applies to all indicators that do no give it.

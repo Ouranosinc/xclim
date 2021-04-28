@@ -13,9 +13,9 @@
    :undoc-members:
    :imported-members:
 
-==================
-Virtual submodules
-==================
+============================
+Virtual indicator submodules
+============================
 
 .. automodule:: xclim.indicators.cf
    :members:
