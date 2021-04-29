@@ -121,8 +121,8 @@ class BaseAdjustment(ParametrizableWithDataset):
                 )
 
         ds = self._train(ref, hist)
-        self.set_dataset(ds)
         self["hist_calendar"] = get_calendar(hist)
+        self.set_dataset(ds)
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.

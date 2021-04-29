@@ -138,6 +138,16 @@ class Grouper(Parametrizable):
             interp=interp,
         )
 
+    @classmethod
+    def from_kwargs(cls, **kwargs):
+        kwargs["group"] = cls(
+            group=kwargs.pop("group"),
+            window=kwargs.pop("window", 1),
+            add_dims=kwargs.pop("add_dims", []),
+            interp=kwargs.get("interp", False),
+        )
+        return kwargs
+
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
 
@@ -393,23 +403,20 @@ def parse_group(func: Callable) -> Callable:
 
     Adds the possiblity to pass a window argument and a list of dimensions in group.
     """
-    default_group = signature(func).parameters["group"].default
+    sig = signature(func)
+    if "group" in sig.parameters:
+        default_group = sig.parameters["group"].default
+    else:
+        default_group = None
 
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        group = kwargs.setdefault("group", default_group)
-        if not isinstance(group, Grouper):
-            if not isinstance(group, str):
-                dim, *add_dims = group
-            else:
-                dim = group
-                add_dims = []
-            kwargs["group"] = Grouper(
-                group=dim,
-                window=kwargs.pop("window", 1),
-                add_dims=add_dims,
-                interp=kwargs.get("interp", False),
-            )
+        if default_group:
+            kwargs.setdefault("group", default_group)
+        elif "group" not in kwargs:
+            raise ValueError("'group' argument not given.")
+        if not isinstance(kwargs["group"], Grouper):
+            kwargs = Grouper.from_kwargs(**kwargs)
         return func(*args, **kwargs)
 
     return _parse_group
@@ -467,6 +474,7 @@ def map_blocks(reduces=None, **outvars):
     def _decorator(func):
 
         # @wraps(func, hide_wrapped=True)
+        @parse_group
         def _map_blocks(ds, **kwargs):
             if isinstance(ds, xr.Dataset):
                 ds = ds.unify_chunks()
@@ -485,7 +493,11 @@ def map_blocks(reduces=None, **outvars):
                     if isinstance(ds, xr.Dataset)
                     else dict(zip(ds.dims, ds.chunks))
                 )
-                if group is not None and len(chunks[group.dim]) > 1:
+                if (
+                    group is not None
+                    and group.dim in chunks
+                    and len(chunks[group.dim]) > 1
+                ):
                     raise ValueError(
                         f"The dimension over which we group cannot be chunked ({group.dim} has chunks {chunks[group.dim]})."
                     )

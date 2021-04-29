@@ -7,7 +7,7 @@ from xclim.core.utils import uses_dask
 
 from .base import map_groups
 from .nbutils import vecquantiles
-from .utils import ecdf
+from .utils import ADDITIVE, apply_correction, ecdf, invert
 
 
 @map_groups(sim_ad=["<DIM>"], pth=["<PROP>"], dP0=["<PROP>"])
@@ -168,6 +168,39 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
     else:
         jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
     return x.where(~((x > thresh) & (x.notnull())), jitter)
+
+
+@map_groups(reduces=["<PROP>"], data=[])
+def normalize(
+    ds,
+    *,
+    dim,
+    kind: str = ADDITIVE,
+):
+    """Normalize an array by removing its mean.
+    Normalization if performed group-wise.
+
+    Parameters
+    ----------
+    ds: Dataset
+      The variable `data` is normalized.
+      If a `norm` variable is present, is uses this one instead of computing the norm again.
+    group : Union[str, Grouper]
+      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+    kind : {'+', '*'}
+      How to apply the adjustment, either additively or multiplicatively.
+    Returns
+    -------
+    xr.Dataset
+      Group-wise anomaly of x
+    """
+
+    if "norm" in ds:
+        norm = invert(ds.norm, kind)
+    else:
+        norm = invert(ds.data.mean(dim=dim), kind)
+
+    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind)))
 
 
 def uniform_noise_like(da: xr.DataArray, low: float = 1e-6, high: float = 1e-3):
