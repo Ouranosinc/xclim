@@ -128,6 +128,7 @@ def change_significance(
         "welch-ttest": ["p_change"],
         "threshold": ["abs_thresh", "rel_thresh"],
     }
+    changed = None
     if ref is None:
         delta = fut
         n_valid_real = delta.notnull().sum("realization")
@@ -264,7 +265,7 @@ def robustness_coefficient(
     .. [knutti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
     """
 
-    def _knutti_sedlacek(ref, fut):
+    def _knutti_sedlacek(reference, future):
         def diff_cdf_sq_area_int(x1, x2):
             """Exact integral of the squared area between the non-parametric CDFs of 2 vectors."""
             # Non-parametric CDF on points x1 and x2
@@ -286,16 +287,16 @@ def robustness_coefficient(
             return np.sum(np.diff(x) * (y1_f - y2_f)[:-1] ** 2)
 
         # Get sorted vectors
-        v_fut = np.sort(fut.flatten())  # "cumulative" models distribution
-        v_favg = np.sort(fut.mean(axis=-1))  # Multi-model mean
-        v_ref = np.sort(ref)  # Historical values
+        v_fut = np.sort(future.flatten())  # "cumulative" models distribution
+        v_favg = np.sort(future.mean(axis=-1))  # Multi-model mean
+        v_ref = np.sort(reference)  # Historical values
 
-        A1 = diff_cdf_sq_area_int(v_fut, v_favg)
-        A2 = diff_cdf_sq_area_int(v_ref, v_favg)
+        A1 = diff_cdf_sq_area_int(v_fut, v_favg)  # noqa
+        A2 = diff_cdf_sq_area_int(v_ref, v_favg)  # noqa
 
         return 1 - A1 / A2
 
-    R = xr.apply_ufunc(
+    R = xr.apply_ufunc(  # noqa
         _knutti_sedlacek,
         ref,
         fut,

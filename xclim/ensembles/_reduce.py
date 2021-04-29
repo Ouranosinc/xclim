@@ -25,6 +25,7 @@ try:
 
 except ImportError:
     logging.info("Matplotlib not found. No graph data will be produced.")
+    plt = None
     MPL_INSTALLED = False
 
 

@@ -17,7 +17,9 @@ __all__ = [
     "heat_wave_index",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "tg_max",
     "tg_mean",
+    "tg_min",
     "tg10p",
     "tg90p",
     "tn_min",
@@ -660,7 +662,8 @@ degree_days_exceedance_date = Tas(
 
 warm_spell_duration_index = Tasmax(
     identifier="warm_spell_duration_index",
-    description="{freq} total number of days within spells of at least {window} days with tmax above the 90th daily percentile.",
+    description="{freq} total number of days within spells of at least {window} days"
+    " with tmax above the 90th daily percentile.",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     cell_methods="time: sum over days",

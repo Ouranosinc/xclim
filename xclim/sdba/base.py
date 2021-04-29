@@ -1,11 +1,10 @@
 """Base classes."""
-import re
-from ast import literal_eval
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union
 
 import dask.array as dsk
+import jsonpickle
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -18,77 +17,23 @@ from xclim.core.utils import uses_dask
 class Parametrizable(dict):
     """Helper base class resembling a dictionary.
 
-    Only parameters passed in the init or set using item access "[ ]" are considered as such and returned in the
-    :py:meth:`Parametrizable.parameters` dictionary, the copy method and the class representation.
+    This object is _completely_ defined by the content of its internal dictionary, accessible through item access
+    (`self['attr']`) or in `self.parameters`. When serializing and restoring this object, only members of that internal
+    dict are preserved. All other attributes set directly with `self.attr = value` will not be preserved upon serialization
+    and restoration of the object with `[json]pickle`.
+    dictionary. Other variables set with `self.var = data` will be lost in the serialization process.
+    This class is best serialized and restored with `jsonpickle`.
     """
 
-    @classmethod
-    def _get_subclasses(cls):
-        """Return a dict of all the subclasses of the current class and recursively for those subclasses."""
-        subcls = {cls.__name__: cls}
-        for sub in cls.__subclasses__():
-            subcls[sub.__name__] = sub
-            subcls.update(sub._get_subclasses())
-        return subcls
+    _repr_hide_params = []
 
-    @classmethod
-    def from_string(cls, defstr: str):
-        """Create an instance of this object from a string.
+    def __getstate__(self):
+        """For (json)pickle, a Parametrizable should be defined by its internal dict only."""
+        return self.parameters
 
-        The string must have been created with `str(object)` where object has the same type
-        as this object. The resulting instance might be slightly different than the original one.
-
-        Parameters
-        ----------
-        defstr : str
-          String providing the definition of the object.
-
-        Examples
-        --------
-        >>> obj = Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
-        >>> ss = str(obj)
-        >>> obj2 = Parametrizable.from_string(ss)
-        >>> obj
-        Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
-        >>> obj2
-        Parametrizable(anint=1, anobj=Parametrizable(astr='hello world'))
-        """
-        # This method is a basic and specific un-serializer for Parametrizable objects (and children)
-        # It uses the fact that Parametrizable classes DO NOT have real attributes: only methods and what is stored in the dict
-        # This allows for creating an empty obj with new, by passing the init and filling it with the dict method "update"
-
-        # regex pattern that fully matches a string produced by Parametrizable._repr__
-        match = re.fullmatch(r"(?P<class>[A-Za-z0-9_]+)\((?P<args>.*)\)", defstr)
-        if not match:
-            raise ValueError(
-                f"Received malformed string for creating a {cls.__name__} instance. ({defstr})"
-            )
-        if match.groupdict()["class"] != cls.__name__:
-            raise ValueError(
-                f"Wrong class : constructor of {cls.__name__} received a string for {match.groupdict()['class']}"
-            )
-
-        # Get a new instance of cls but bypassing the init, basically this returns an empty dict with the methods of cls
-        obj = cls.__new__(cls)
-        params = {}
-        # regex pattern that matches each argument in the repr of a Parametrizable obj, distinguishing other Parametrizable classes (and their arguments) from python literals
-        # Iterate over the matches
-        for argmatch in re.finditer(
-            r"(?P<name>[A-Za-z0-9_]+)=(?P<vstr>((?P<vcls>[A-Za-z0-9_]+)\((.*?)\))|.+?(?=, ))",
-            match.groupdict()["args"] + ", ",
-        ):
-            dd = argmatch.groupdict()
-            if dd["vcls"] is not None:
-                # Thus we matched another Parametrizable class repr, recursively call it "from _string"
-                params[dd["name"]] = Parametrizable._get_subclasses()[
-                    dd["vcls"]
-                ].from_string(dd["vstr"])
-            else:
-                # A normal python literal
-                params[dd["name"]] = literal_eval(dd["vstr"])
-        # Update the params (Parametrizable inherits this from dict
-        obj.update(params)
-        return obj
+    def __setstate__(self, state):
+        """For (json)pickle, a Parametrizable in only defined by its internal dict."""
+        self.update(state)
 
     def __getattr__(self, attr):
         """Get attributes."""
@@ -105,25 +50,30 @@ class Parametrizable(dict):
 
     def __repr__(self):
         """Return a string representation that allows eval to recreate it."""
-        params = ", ".join([f"{k}={repr(v)}" for k, v in self.items()])
+        params = ", ".join(
+            [
+                f"{k}={repr(v)}"
+                for k, v in self.items()
+                if k not in self._repr_hide_params
+            ]
+        )
         return f"{self.__class__.__name__}({params})"
 
 
 class ParametrizableWithDataset(Parametrizable):
     """Parametrizeable class that also has a `ds` attribute storing a dataset."""
 
-    _attribute = "params"
+    _attribute = "_xclim_parameters"
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset):
         """Create an instance from a dataset.
 
-        The dataset must have a global attribute with a name corresponding to `self.__attribute`,
-        and that attribute must be the result of `str(object)` where object is of the same type as
-        this object.
+        The dataset must have a global attribute with a name corresponding to `cls._attribute`,
+        and that attribute must be the result of `jsonpickle.encode(object)` where object is
+        of the same type as this object.
         """
-        defstr = ds.attrs[cls._attribute]
-        obj = cls.from_string(defstr)
+        obj = jsonpickle.decode(ds.attrs[cls._attribute])
         obj.set_dataset(ds)
         return obj
 
@@ -133,11 +83,13 @@ class ParametrizableWithDataset(Parametrizable):
         Useful with custom object initialization or if some external processing was performed.
         """
         self.ds = ds
-        self.ds.attrs[self._attribute] = str(self)
+        self.ds.attrs[self._attribute] = jsonpickle.encode(self)
 
 
 class Grouper(Parametrizable):
     """Helper object to perform grouping actions on DataArrays and Datasets."""
+
+    _repr_hide_params = ["dim", "prop"]  # For a concise repr
 
     def __init__(
         self,
@@ -252,6 +204,9 @@ class Grouper(Parametrizable):
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
+            if da.chunks is not None:
+                # Rechunk. There might be padding chunks.
+                da = da.chunk({self.dim: -1})
 
         if self.prop == "group":
             group = self.get_index(da)

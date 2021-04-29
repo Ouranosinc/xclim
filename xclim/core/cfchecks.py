@@ -8,8 +8,9 @@ Utilities designed to verify the compliance of metadata with the CF-Convention.
 import fnmatch
 from typing import Sequence, Union
 
+from .formatting import parse_cell_methods
 from .options import cfcheck
-from .utils import ValidationError
+from .utils import ValidationError, variables
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
 
@@ -29,6 +30,20 @@ def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
         raise ValidationError(
             f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
         )
+
+
+def generate_cfcheck(*varnames):
+    def _generated_check(*args):
+        for varname, var in zip(varnames, args):
+            data = variables[varname]
+            if "cell_methods" in data:
+                check_valid(
+                    var, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"
+                )
+            if "standard_name" in data:
+                check_valid(var, "standard_name", data["standard_name"])
+
+    return _generated_check
 
 
 def check_valid_temperature(var, units):

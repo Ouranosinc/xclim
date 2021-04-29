@@ -1,3 +1,4 @@
+import jsonpickle
 import numpy as np
 import pytest
 import xarray as xr
@@ -20,14 +21,12 @@ def test_param_class():
 
     assert repr(obj).startswith(
         "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
-        "group=Grouper(dim='time',"
+        "group=Grouper("
     )
 
-    s = str(obj)
-    obj2 = Parametrizable.from_string(s)
+    s = jsonpickle.encode(obj)
+    obj2 = jsonpickle.decode(s)
     assert obj.parameters == obj2.parameters
-
-    assert "ATestSubClass" in Parametrizable._get_subclasses()
 
 
 @pytest.mark.parametrize(

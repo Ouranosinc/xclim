@@ -11,6 +11,7 @@ import re
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
+import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -26,10 +27,10 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from xclim.core.utils import _calc_perc
+from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
-datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}
+datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -267,14 +268,16 @@ def interp_calendar(
     return out
 
 
-def date_range(*args, calendar="default", **kwargs):
+def date_range(
+    *args, calendar: str = "default", **kwargs
+) -> Union[pd.DatetimeIndex, CFTimeIndex]:
     """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
 
 
-def date_range_like(source, calendar):
+def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
     """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
 
     Parameters
@@ -337,7 +340,7 @@ def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
     calendar: str = "default",
-):
+) -> Union[cftime.datetime, pydt.datetime, np.int]:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
@@ -353,8 +356,9 @@ def _convert_datetime(
 
     Returns
     -------
-    Union[cftime.datetime, pydt.datetime, np.nan]
-      A datetime object of the target calendar with the same year, month, day and time as the source (month and day according to `new_doy` if given).
+    Union[cftime.datetime, datetime.datetime, np.nan]
+      A datetime object of the target calendar with the same year, month, day and time
+      as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
     if new_doy is not None:
@@ -379,8 +383,12 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(time: Sequence):
-    """Convert an input 1D array to an array of cftime objects. Python's datetime are converted to cftime.DatetimeGregorian.
+def ensure_cftime_array(
+    time: Sequence,
+) -> Union[CFTimeIndex, numpy.ndarray]:
+    """Convert an input 1D array to an array of cftime objects.
+
+    Python's datetime are converted to cftime.DatetimeGregorian.
 
     Raises ValueError when unable to cast the input.
     """
@@ -497,7 +505,7 @@ def percentile_doy(
     return p
 
 
-def compare_offsets(freqA: str, op: str, freqB: str):
+def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
     """Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
@@ -507,11 +515,11 @@ def compare_offsets(freqA: str, op: str, freqB: str):
 
     Parameters
     ----------
-    fA: str
+    freqA: str
       RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
     op : {'<', '<=', '==', '>', '>=', '!='}
       Operator to use.
-    fB: str
+    freqB: str
       LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
 
     Returns
@@ -522,21 +530,21 @@ def compare_offsets(freqA: str, op: str, freqB: str):
     from xclim.indices.generic import get_op
 
     # Get multiplicator and base frequency
-    tA, bA, _ = parse_offset(freqA)
-    tB, bB, _ = parse_offset(freqB)
+    t_a, b_a, _ = parse_offset(freqA)
+    t_b, b_b, _ = parse_offset(freqB)
 
-    if bA == bB:
+    if b_a == b_b:
         # Same base freq, compare mulitplicator only.
-        tA = int(tA or "1")
-        tB = int(tB or "1")
+        t_a = int(t_a or "1")
+        t_b = int(t_b or "1")
     else:
         # Different base freq, compare length of first period after beginning of time.
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
-        tA = (t[1] - t[0]).total_seconds()
+        t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
-        tB = (t[1] - t[0]).total_seconds()
+        t_b = (t[1] - t[0]).total_seconds()
 
-    return get_op(op)(tA, tB)
+    return get_op(op)(t_a, t_b)
 
 
 def parse_offset(freq: str) -> Tuple[str, str, Optional[str]]:
@@ -807,3 +815,174 @@ def time_bnds(group, freq):
     return tuple(
         zip(cfindex_start_time(cfindex, freq), cfindex_end_time(cfindex, freq))
     )
+
+
+def _doy_days_since_doys(base: xr.DataArray, start: Optional[DayOfYearStr] = None):
+    """Common calculation for doy to days since and inverse conversions.
+
+    Parameters
+    ----------
+    base: xr.DataArray
+      1D time coordinate.
+    start: DayOfYearStr, optional
+      A date to compute the offset relative to. If note given, start_doy is the same as base_doy.
+
+    Returns
+    -------
+    base_doy : xr.DataArray
+      Day of year for each element in base.
+    start_doy : xr.DataArray
+      Day of year of the "start" date.
+      The year used is the one the start date would take as a doy for the corresponding base element.
+    doy_max : xr.DataArray
+      Number of days (maximum doy) for the year of each value in base.
+    """
+    calendar = get_calendar(base)
+
+    base_doy = base.dt.dayofyear
+
+    doy_max = xr.apply_ufunc(
+        lambda y: days_in_year(y, calendar), base.dt.year, vectorize=True
+    )
+
+    if start is not None:
+        mm, dd = map(int, start.split("-"))
+        starts = xr.apply_ufunc(
+            lambda y: datetime_classes[calendar](y, mm, dd),
+            base.dt.year,
+            vectorize=True,
+        )
+        start_doy = starts.dt.dayofyear
+        start_doy = start_doy.where(start_doy >= base_doy, start_doy + doy_max)
+    else:
+        start_doy = base_doy
+
+    return base_doy, start_doy, doy_max
+
+
+def doy_to_days_since(
+    da: xr.DataArray,
+    start: Optional[DayOfYearStr] = None,
+    calendar: Optional[str] = None,
+):
+    """Convert day-of-year data to days since a given date
+
+    This is useful for computing meaningful statistics on doy data.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Array of "day-of-year", usually int dtype, must have a `time` dimension.
+      Sampling frequency should be finer or similar to yearly and coarser then daily.
+    start: date of year str, optional
+      A date in "MM-DD" format, the base day of the new array.
+      If None (default), the `time` axis is used.
+      Passing `start` only makes sense if `da` has a yearly sampling frequency.
+    calendar: str, optional
+      The calendar to use when computing the new interval.
+      If None (default), the calendar attribute of the data or of its `time` axis is used.
+      All time coordinates of `da` must exist in this calendar.
+      No check is done to ensure doy values exist in this calendar.
+
+    Returns
+    -------
+    xr.DataArray
+      Same shape as `da`, int dtype, day-of-year data translated to a number of days since a given date.
+      If start is not None, there might be negative values.
+
+    Notes
+    -----
+    The time coordinates of `da` are considered as the START of the period. For example, a doy value of
+    350 with a timestamp of '2020-12-31' is understood as '2021-12-16' (the 350th day of 2021).
+    Passing `start=None`, will use the time coordinate as the base, so in this case the converted value
+    will be 350 "days since time coordinate".
+
+    Examples
+    --------
+    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
+    >>> da = xr.DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
+    >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
+    array([-86, 92])
+    """
+    base_calendar = get_calendar(da)
+    calendar = calendar or da.attrs.get("calendar", base_calendar)
+    dac = convert_calendar(da, calendar)
+
+    base_doy, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
+
+    # 2cases:
+    # val is a day in the same year as its index : da - offset
+    # val is a day in the next year : da + doy_max - offset
+    out = xr.where(dac > base_doy, dac, dac + doy_max) - start_doy
+    out.attrs.update(da.attrs)
+    if start is not None:
+        out.attrs.update(units=f"days after {start}")
+    else:
+        starts = np.unique(out.time.dt.strftime("%m-%d"))
+        if len(starts) == 1:
+            out.attrs.update(units=f"days after {starts[0]}")
+        else:
+            out.attrs.update(units="days after time coordinate")
+
+    out.attrs.pop("is_dayofyear", None)
+    out.attrs.update(calendar=calendar)
+    return convert_calendar(out, base_calendar).rename(da.name)
+
+
+def days_since_to_doy(
+    da: xr.DataArray,
+    start: Optional[DayOfYearStr] = None,
+    calendar: Optional[str] = None,
+):
+    """Reverse the conversion made by :py:func:`doy_to_days_since`.
+
+    Converts data given in days since a specific date to day-of-year.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      The result of :py:func:`doy_to_days_since`.
+    start: DateOfYearStr, optional
+      `da` is considered as days since that start date (in the year of the time index).
+      If None (default), it is read from the attributes.
+    calendar: str, optional
+      Calendar the "days since" were computed in.
+      If None (default), it is read from the attributes.
+
+    Returns
+    -------
+    xr.DataArray
+      Same shape as `da`, values as `day of year`.
+
+    Examples
+    --------
+    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
+    >>> da = xr.DataArray(
+            [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
+        )
+    >>> days_since_to_doy(da).values
+    array([190, 2])
+    """
+    if start is None:
+        unitstr = da.attrs.get("units", "  time coordinate").split(" ", maxsplit=2)[-1]
+        if unitstr != "time coordinate":
+            start = unitstr
+
+    base_calendar = get_calendar(da)
+    calendar = calendar or da.attrs.get("calendar", base_calendar)
+
+    dac = convert_calendar(da, calendar)
+
+    _, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
+
+    # 2cases:
+    # val is a day in the same year as its index : da + offset
+    # val is a day in the next year : da + offset - doy_max
+    out = dac + start_doy
+    out = xr.where(out > doy_max, out - doy_max, out)
+
+    out.attrs.update(
+        {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
+    )
+    out.attrs.update(calendar=calendar, is_dayofyear=1)
+    return convert_calendar(out, base_calendar).rename(da.name)

@@ -1,0 +1,158 @@
+# The variables and structure are extended from auto-generated files of
+# https://bitbucket.org/cf-index-meta/cf-index-meta
+# Standard_names are CF-1.8
+# Dimensionalities are the default ones from pint and extended by xclim in xclim.core.units.
+---
+variables:
+  pr:
+    standard_name: precipitation_flux
+    cell_methods:
+      - time: mean
+    dimensionality: "[precipitation]"
+    description: Daily surface precipitation flux.
+    aliases:
+      - pradjust
+      - prec
+      - rr
+      - precip
+      - PREC
+      - Prec
+      - RR
+      - PRECIP
+      - Precip
+
+  tas:
+    standard_name: air_temperature
+    cell_methods:
+      - time: mean
+    dimensionality: "[temperature]"
+    description: Mean daily surface temperature.
+    aliases:
+      - tasadjust
+      - tmean
+      - tm
+      - tg
+      - meant
+      - TMEAN
+      - Tmean
+      - TM
+      - TG
+      - MEANT
+      - meanT
+      - tasmidpoint
+
+  tasmax:
+    standard_name: air_temperature
+    cell_methods:
+      - time: maximum
+    dimensionality: "[temperature]"
+    description: Maximum daily surface temperature.
+    aliases:
+      - tasmaxadjust
+      - tmax
+      - tx
+      - maxt
+      - TMAX
+      - Tmax
+      - TX
+      - MAXT
+      - maxT
+
+  tasmin:
+    standard_name: air_temperature
+    cell_methods:
+      - time: minimum
+    dimensionality: "[temperature]"
+    description: Minimum daily surface temperature.
+    aliases:
+      - tasminadjust
+      - tmin
+      - tn
+      - mint
+      - TMIN
+      - Tmin
+      - TN
+      - MINT
+      - minT
+
+  hurs:
+    standard_name: relative_humidity
+    cell_methods:
+      - time: mean
+    dimensionality: "[]"
+    description: Daily relative humidity.
+    aliases:
+      - hursadjust
+      - rh
+      - RH
+    comment: less well established
+
+  psl:
+    standard_name: air_pressure_at_sea_level
+    cell_methods:
+      - time: mean
+    dimensionality: "[pressure]"
+    description: Daily air pressure.
+    aliases:
+      - mslp
+      - slp
+      - pp
+      - MSLP
+      - SLP
+      - PP
+    comment: not well established
+
+  snd:
+    standard_name: surface_snow_thickness
+    cell_methods:
+      - time: mean
+    dimensionality: "[length]"
+    description: Snow thickness.
+    aliases:
+      - sd
+      - SD
+    comment: not well established
+
+  sund:
+    standard_name: duration_of_sunshine
+    cell_methods:
+      - time: mean
+    dimensionality: "[time]"
+    description: Daily duration of sunshine.
+    aliases:
+      - ss
+      - SS
+    comment: not well established
+
+  wsgsmax:
+    standard_name: wind_speed_of_gust
+    cell_methods:
+      - time: maximum
+    dimensionality: "[speed]"
+    description: Daily maximum surface wind speed.
+    aliases:
+      - fx
+      - FX
+    comment: not well established
+
+  sfcWind:
+    standard_name: wind_speed
+    cell_methods:
+      - time: mean
+    dimensionality: "[speed]"
+    description: Daily mean surface wind speed.
+    aliases:
+      - sfcwind
+      - fg
+      - FG
+    comment: not well established
+
+  snw:
+    standard_name: surface_snow_amount
+    cell_methods:
+      - time: mean
+    dimensionality: "[mass]/[length]^2"
+    aliases:
+      - swe
+      - SWE
+    comment: not well established

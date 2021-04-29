@@ -1,7 +1,9 @@
 """Pre and post processing for bias adjustment."""
+import dask.array as dsk
 import numpy as np
 import xarray as xr
-from dask import array as dsk
+
+from xclim.core.utils import uses_dask
 
 from .base import map_groups
 from .nbutils import vecquantiles
@@ -129,7 +131,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     If thresh is high, this will change the mean value of x.
     """
     epsilon = np.finfo(x.dtype).eps
-    if isinstance(x.data, dsk.Array):
+    if uses_dask(x):
         jitter = dsk.random.uniform(
             low=epsilon, high=thresh, size=x.shape, chunks=x.chunks
         )
@@ -159,10 +161,28 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
     -----
     If thresh is low, this will change the mean value of x.
     """
-    if isinstance(x.data, dsk.Array):
+    if uses_dask(x):
         jitter = dsk.random.uniform(
             low=thresh, high=upper_bnd, size=x.shape, chunks=x.chunks
         )
     else:
         jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
     return x.where(~((x > thresh) & (x.notnull())), jitter)
+
+
+def uniform_noise_like(da: xr.DataArray, low: float = 1e-6, high: float = 1e-3):
+    """Return an unform noise array of the same shape as da.
+
+    Noise is uniformly distributed between low and high.
+    Alternative method to `jitter_under_thresh` for avoiding zeroes.
+    """
+    if uses_dask(da):
+        mod = dsk
+        kw = {"chunks": da.chunks}
+    else:
+        mod = np
+        kw = {}
+
+    return da.copy(
+        data=(high - low) * mod.random.random_sample(size=da.shape, **kw) + low
+    )

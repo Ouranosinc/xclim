@@ -8,7 +8,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import _calc_perc
+from xclim.core.utils import _calc_perc  # noqa
 
 
 def create_ensemble(
@@ -218,14 +218,14 @@ def ensemble_percentiles(
             )
         if keep_chunk_size:
             # Smart rechunk on dimension where chunks are the largest
-            chkDim, chks = max(
+            chk_dim, chks = max(
                 enumerate(ens.chunks),
                 key=lambda kv: 0
                 if kv[0] == ens.get_axis_num("realization")
                 else max(kv[1]),
             )
             ens = ens.chunk(
-                {"realization": -1, ens.dims[chkDim]: len(chks) * ens.realization.size}
+                {"realization": -1, ens.dims[chk_dim]: len(chks) * ens.realization.size}
             )
         else:
             ens = ens.chunk({"realization": -1})
