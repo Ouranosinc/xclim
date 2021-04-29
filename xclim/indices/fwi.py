@@ -956,7 +956,7 @@ def overwintering_drought_code(
         wetting_efficiency_fraction,
         min_dc,
         input_core_dims=[[]] * 5,
-        output_core_dims=[[]] * 5,
+        output_core_dims=[[]],
         dask="parallelized",
         output_dtypes=[last_dc.dtype],
     )

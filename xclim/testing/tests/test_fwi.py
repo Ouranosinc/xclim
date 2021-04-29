@@ -16,6 +16,7 @@ from xclim.indices.fwi import (
     fire_weather_index,
     fire_weather_ufunc,
     initial_spread_index,
+    overwintering_drought_code,
 )
 from xclim.indices.run_length import run_bounds
 from xclim.testing import open_dataset
@@ -106,6 +107,24 @@ def test_build_up_index():
 def test_overwintering_drought_code(inputs, exp):
     wDC = _overwintering_drought_code(*inputs)
     np.testing.assert_allclose(wDC, exp, rtol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "inputs,exp",
+    [
+        ([300, 110, 0.75, 0.75, 15], 109.4657),
+        ([300, 110, 1.0, 0.9, 15], 16.35315),
+        ([100, 50, 0.75, 0.75, 15], 105.176),
+        ([1, 550, 0.75, 0.75, 10], 10),
+    ],
+)
+def test_overwintering_drought_code_indice(inputs, exp):
+    last_dc = xr.DataArray([inputs[0]], dims=("x",))
+    winter_pr = xr.DataArray([inputs[1]], dims=("x",), attrs={"units": "mm"})
+
+    out = overwintering_drought_code(last_dc, winter_pr, *inputs[2:])
+
+    np.testing.assert_allclose(out, exp, rtol=1e-6)
 
 
 def test_fire_weather_index():
