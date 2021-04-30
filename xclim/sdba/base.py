@@ -525,7 +525,6 @@ def map_blocks(reduces=None, **outvars):
 
             # All dimensions of the output data, new_dims are added at the end on purpose.
             all_dims = base_dims + new_dims
-
             # The coordinates of the output data.
             coords = {}
             for dim in all_dims:
@@ -553,12 +552,18 @@ def map_blocks(reduces=None, **outvars):
 
             def _transpose_on_exit(dsblock, **kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
-                return func(dsblock, **kwargs).transpose(*all_dims)
+                out = func(dsblock, **kwargs).transpose(*all_dims)
+                for name, crd in dsblock.coords.items():
+                    if name not in out.coords and set(crd.dims).issubset(out.dims):
+                        out = out.assign_coords({name: dsblock[name]})
+                return out
 
             # Fancy patching for explicit dask task names
             _transpose_on_exit.__name__ = f"block_{func.__name__}"
 
-            return ds.map_blocks(_transpose_on_exit, template=tmpl, kwargs=kwargs)
+            out = ds.map_blocks(_transpose_on_exit, template=tmpl, kwargs=kwargs)
+
+            return out
 
         return _map_blocks
 

@@ -26,19 +26,11 @@ from .base import Grouper, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
 from .utils import (
     ADDITIVE,
-    MULTIPLICATIVE,
-    apply_correction,
     best_pc_orientation,
-    broadcast,
     equally_spaced_nodes,
-    extrapolate_qm,
     get_clusters,
     get_clusters_1d,
-    get_correction,
-    interp_on_quantiles,
-    map_cdf,
     pc_matrix,
-    rank,
 )
 
 __all__ = [
@@ -583,7 +575,8 @@ class ExtremeValues(BaseAdjustment):
             long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
             description=f"Mean of the {self.q_thresh * 100}th percentile of large values (x > {self.cluster_thresh}) of ref and hist.",
         )
-        return ds
+        self["hist_calendar"] = get_calendar(hist)
+        self.set_dataset(ds)
 
     def adjust(
         self,
