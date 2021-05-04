@@ -2,6 +2,11 @@
 History
 =======
 
+0.26.1 (2021-05-04)
+-------------------
+* Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.
+
+
 0.26.0 (2021-04-30)
 -------------------
 
