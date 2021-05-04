@@ -236,6 +236,40 @@ def test_fire_weather_ufunc_overwintering():
     )
     np.testing.assert_array_equal(out3["DC"].notnull(), season_mask_yr)
 
+    # Dry start
+    out4 = fire_weather_ufunc(
+        tas=ds.tas,
+        pr=ds.pr,
+        rh=ds.rh,
+        lat=ds.lat,
+        season_mask=season_mask_yr,
+        overwintering=False,
+        dry_start=True,
+        indexes=["DC", "DMC"],
+        dmc_dry_factor=5,
+    )
+    out5 = fire_weather_ufunc(
+        tas=ds.tas,
+        pr=ds.pr,
+        rh=ds.rh,
+        lat=ds.lat,
+        season_mask=season_mask_yr,
+        overwintering=False,
+        dry_start=False,
+        indexes=["DC", "DMC"],
+    )
+
+    # I know season of 1992 is a "wet" start.
+    xr.testing.assert_identical(
+        out4["DC"].sel(location="Montréal", time="1992"),
+        out5["DC"].sel(location="Montréal", time="1992"),
+    )
+    xr.testing.assert_identical(
+        out4["DMC"].sel(location="Montréal", time="1992"),
+        out5["DMC"].sel(location="Montréal", time="1992"),
+    )
+    # Our thing is too different from GFWED for proper testing yet.
+
 
 def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
     tas = tas_series(np.ones(100), start="2017-01-01")
