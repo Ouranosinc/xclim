@@ -39,20 +39,20 @@ References
 ----------
 Codes:
 
-[CFS2015] Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
-[cffdrs] Cantin, A., Wang, X., Parisien M-A., Wotton, M., Anderson, K., Moore, B., Schiks, T., Flannigan, M., Canadian Forest Fire Danger Rating System, R package, CRAN, https://cran.r-project.org/package=cffdrs
+.. [CFS2015] Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+.. [cffdrs] Cantin, A., Wang, X., Parisien M-A., Wotton, M., Anderson, K., Moore, B., Schiks, T., Flannigan, M., Canadian Forest Fire Danger Rating System, R package, CRAN, https://cran.r-project.org/package=cffdrs
 
 https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
 
 Fire season determination methods:
 
-[WF93] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
-[LA08] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
+.. [WF93] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
+.. [LA08] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
 
 Drought Code overwintering:
 
-[VW85] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pd
-[ME19] McElhinny, M., Beckers, J. F., Hanes, C., Flannigan, M., and Jain, P.: A high-resolution reanalysis of global fire weather from 1979 to 2018 – overwintering the Drought Code, Earth Syst. Sci. Data, 12, 1823–1833, https://doi.org/10.5194/essd-12-1823-2020, 2020.
+.. [VW85] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pd
+.. [ME19] McElhinny, M., Beckers, J. F., Hanes, C., Flannigan, M., and Jain, P.: A high-resolution reanalysis of global fire weather from 1979 to 2018 – overwintering the Drought Code, Earth Syst. Sci. Data, 12, 1823–1833, https://doi.org/10.5194/essd-12-1823-2020, 2020.
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -682,12 +682,11 @@ def fire_weather_ufunc(
     """Fire Weather Indexes computation using xarray's apply_ufunc.
 
     No unit handling. Meant to be used by power users only. Please prefer using the
-    :py:indicator:`drought_code` and :py:indicator:`fire_weather_indexes` indicators or
+    :py:indicator:`DC` and :py:indicator:`FWI` indicators or
     the :py:func:`drought_code` and :py:func:`fire_weather_indexes` indices defined in the same
     submodule.
 
     Dask arrays must have only one chunk along the "time" dimension.
-
     User can control which indexes are computed with the `indexes` argument.
 
     Parameters
