@@ -35,6 +35,7 @@ __all__ = [
     "BaseAdjustment",
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
+    "ExtremeValues",
     "LOCI",
     "PrincipalComponents",
     "QuantileDeltaMapping",
