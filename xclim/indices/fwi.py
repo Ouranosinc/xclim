@@ -551,6 +551,7 @@ def _fire_weather_calc(
     tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr, **params
 ):
     """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead."""
+    # Dear code reader, sorry.
     outputs = params["outputs"]
     ind_prevs = {"DC": dc0.copy(), "DMC": dmc0.copy(), "FFMC": ffmc0.copy()}
 
@@ -613,24 +614,26 @@ def _fire_weather_calc(
     # Iterate on all days.
     for it in range(tas.shape[-1]):
         if season_method is not None:
-            # Not in the always on mode - we must care about start up and shut downs of the fire season.
+            # Not in the always on mode, thus we must care about start up and shut downs of the fire season.
             if it == 0:
                 if params["initial_start_up"]:
                     # As if the previous iteration was all 0s
                     delta = season_mask[..., it]
                 else:
                     # Continue the previous state
+                    # Meant for special corner cases when we use the season mask but some points are already "on" on the first day AND we know previous DC DMC and FFMC.
                     delta = 0 * season_mask[..., it]
             else:
                 delta = season_mask[..., it] - season_mask[..., it - 1]
 
+            # In [ME19], there are the 4 cases (in order), no need for the last one, it is implicit.
             shut_down = delta == -1
             winter = (delta == 0) & (season_mask[..., it] == 0)
             start_up = delta == 1
             # active_season = (delta == 0) & (season_mask[it] == 1)
 
             if dry_start:
-                # When we use special values for dry cells
+                # When we use special start values for dry cells
                 # Cells where the current precipitation is significant
                 wetpts = pr[..., it] > params["prec_thresh"]
 
@@ -658,6 +661,7 @@ def _fire_weather_calc(
 
             if "DC" in ind_prevs:
                 if overwintering:
+                    # Store end of season DC.
                     ow_DC[shut_down] = ind_prevs["DC"][shut_down]
                     # Fist day of winter, put current precip.
                     out["winter_pr"][shut_down] = pr[shut_down, it]
@@ -678,9 +682,11 @@ def _fire_weather_calc(
                             params["dc_start"],
                         ),
                     )
+                    # Put NaN to be explicit.
                     ow_DC[start_up] = np.nan
                     out["winter_pr"][start_up] = np.nan
                 elif dry_start:
+                    # Dry start up for DC is overrided by overwintering.
                     ow_DC[shut_down] = params["dc_start"]
 
                     if "GFWED" in dry_start:
@@ -852,7 +858,7 @@ def fire_weather_ufunc(
         Whether to activate the DC and DMC "dry start" mechanism and which method to use. See Notes.
         If overwintering is activated, it overrides this parameter : only DMC is handled through the dry start mechanism.
     initial_start_up : bool
-        If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
+        If True (default), gridpoints where the fire season is active on the first timestep go through a start up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.
     carry_over_fraction: float
     wetting_efficiency_fraction: float
@@ -916,9 +922,10 @@ def fire_weather_ufunc(
 
         DC_0 = F_{dry-dc} * N_{dry}
 
-    Finally, for this "GFWED" mode, if snow cover is provided, a second check is performed: the dry start procedure is skipped and conventionnal start
-    up values are used for cells where the snow cover of the last `snow_cover_days` was above `snow_thresh` for at least
-    `snow_cover_days` * `snow_min_cover_frac` days and where the mean snow cover over the same period was greater of equal to `snow_min_mean_depth`.
+    Where the current day is also included in the determination of :math:`N_{dry}` (:math:`DC_0` can thus be 0). Finally, for this "GFWED" mode,
+    if snow cover is provided, a second check is performed: the dry start procedure is skipped and conventionnal start up values are used for cells
+    where the snow cover of the last `snow_cover_days` was above `snow_thresh` for at least `snow_cover_days` * `snow_min_cover_frac` days and
+    where the mean snow cover over the same period was greater of equal to `snow_min_mean_depth`.
     """
     indexes = set(indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"])
 

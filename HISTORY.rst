@@ -2,6 +2,14 @@
 History
 =======
 
+0.27.0 (unreleased)
+-------------------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
+
+
 0.26.1 (2021-05-04)
 -------------------
 * Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.
