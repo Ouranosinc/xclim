@@ -629,7 +629,7 @@ def _fire_weather_calc(
             start_up = delta == 1
             # active_season = (delta == 0) & (season_mask[it] == 1)
 
-            if dry_start is not False:
+            if dry_start:
                 # When we use special values for dry cells
                 # Cells where the current precipitation is significant
                 wetpts = pr[..., it] > params["prec_thresh"]
@@ -690,7 +690,7 @@ def _fire_weather_calc(
                             ow_DC[(start_up | winter) & ~wetpts]
                             + params["dc_dry_factor"]
                         )
-                    else:
+                    else:  # "CFS"
                         ow_DC[winter & wetpts] = params["dc_start"]
                         ow_DC[winter & ~wetpts] = (
                             ow_DC[winter & ~wetpts] + params["dc_dry_factor"]
@@ -717,7 +717,7 @@ def _fire_weather_calc(
                             ow_DMC[(start_up | winter) & ~wetpts]
                             + params["dmc_dry_factor"]
                         )
-                    else:
+                    else:  # "CFS"
                         ow_DMC[winter & wetpts] = params["dmc_start"]
                         ow_DMC[winter & ~wetpts] = (
                             ow_DMC[winter & ~wetpts] + params["dmc_dry_factor"]
@@ -801,7 +801,7 @@ def fire_weather_ufunc(
     indexes: Sequence[str] = None,
     season_method: Optional[str] = None,
     overwintering: bool = False,
-    dry_start: Union[bool, str] = False,
+    dry_start: Optional[str] = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -848,8 +848,8 @@ def fire_weather_ufunc(
         Ignored if `season_mask` is given.
     overwintering: bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {False, True, 'GFWED'}
-        Whether to activate the DC and DMC "dry start" mechanism or not, see Notes.
+    dry_start: {None, 'CFS', 'GFWED'}
+        Whether to activate the DC and DMC "dry start" mechanism and which method to use. See Notes.
         If overwintering is activated, it overrides this parameter : only DMC is handled through the dry start mechanism.
     initial_start_up : bool
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
@@ -898,7 +898,7 @@ def fire_weather_ufunc(
     on the day before the first day of FWI computation. They will default to their respective start values.
     This "always on" mode replicates the R "fwi" code.
 
-    If the "dry start" mechanism is activated (but not overwintering), the arguments `dc0` and `dmc0` are
+    If the "dry start" mechanism is set to "CFS" (but there is no overwintering), the arguments `dc0` and `dmc0` are
     understood as the potential start up values from last season. With :math:`DC_{start}` the conventionnal start up value,
     :math:`F_{dry-dc}` the `dc_dry_factor` and  :math:`N_{dry}` the number of days since the last significative precipitation event,
     the start up value :math:`DC_0` is computed as:
@@ -967,10 +967,8 @@ def fire_weather_ufunc(
         args[4] = snd
         input_core_dims[4] = ["time"]
         dry_start = "GFWED+SNOW"
-    if dry_start is True:
-        dry_start = "NORMAL"
-    elif dry_start is False:
-        dry_start = ""
+    elif dry_start not in [None, "CFS", "GFWED"]:
+        raise ValueError("'dry_start' must be one of None, 'CFS' or 'GFWED'.")
 
     # Always pass the previous codes.
     if dc0 is None:
@@ -1172,7 +1170,7 @@ def fire_weather_indexes(
     season_mask: Optional[xr.DataArray] = None,
     season_method: Optional[str] = None,
     overwintering: bool = False,
-    dry_start: Union[bool, str] = False,
+    dry_start: Optional[str] = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -1210,7 +1208,7 @@ def fire_weather_indexes(
         Ignored if `season_mask` is given.
     overwintering: bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {False, True, 'GFWED'}
+    dry_start: {None, 'CFS', 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism or not, see :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
@@ -1276,7 +1274,7 @@ def drought_code(
     season_mask: Optional[xr.DataArray] = None,
     season_method: Optional[str] = None,
     overwintering: bool = False,
-    dry_start: Union[bool, str] = False,
+    dry_start: Optional[str] = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -1305,8 +1303,9 @@ def drought_code(
       Ignored if `season_mask` is given.
     overwintering: bool
       Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {False, True, 'GFWED'}
-        Whether to activate the DC and DMC "dry start" mechanism or not, see :py:func:`fire_weather_ufunc`.
+    dry_start: {None, "CFS", 'GFWED'}
+        Whether to activate the DC and DMC "dry start" mechanism and which method to use.
+        , see :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.

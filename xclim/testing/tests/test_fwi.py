@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
+from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fwi import (
     _day_length,
@@ -26,7 +27,7 @@ fwi_url = "FWI/cffdrs_test_fwi.nc"
 
 
 def test_fine_fuel_moisture_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     ffmc = np.full(fwi_data.time.size + 1, np.nan)
     ffmc[0] = 85
     for i, t in enumerate(fwi_data.time):
@@ -42,7 +43,7 @@ def test_fine_fuel_moisture_code():
 
 
 def test_duff_moisture_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dmc = np.full(fwi_data.time.size + 1, np.nan)
     dmc[0] = 6
     for i, t in enumerate(fwi_data.time):
@@ -59,7 +60,7 @@ def test_duff_moisture_code():
 
 
 def test_drought_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dc = np.full(fwi_data.time.size + 1, np.nan)
     dc[0] = 15
     for i, t in enumerate(fwi_data.time):
@@ -75,7 +76,7 @@ def test_drought_code():
 
 
 def test_initial_spread_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     isi = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         isi[i] = initial_spread_index(
@@ -86,7 +87,7 @@ def test_initial_spread_index():
 
 
 def test_build_up_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     bui = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         bui[i] = build_up_index(
@@ -129,7 +130,7 @@ def test_overwintering_drought_code_indice(inputs, exp):
 
 
 def test_fire_weather_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     fwi = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         fwi[i] = fire_weather_index(
@@ -148,7 +149,7 @@ def test_day_lengh_factor():
 
 
 def test_fire_weather_indicator():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
@@ -255,7 +256,7 @@ def test_fire_weather_ufunc_drystart():
         lat=ds.lat,
         season_mask=season_mask_yr,
         overwintering=False,
-        dry_start=True,
+        dry_start="CFS",
         indexes=["DC", "DMC"],
         dmc_dry_factor=5,
     )
@@ -266,7 +267,7 @@ def test_fire_weather_ufunc_drystart():
         lat=ds.lat,
         season_mask=season_mask_yr,
         overwintering=False,
-        dry_start=False,
+        dry_start=None,
         indexes=["DC", "DMC"],
     )
 
@@ -372,7 +373,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
 )
 def test_fire_season_R(key, kwargs):
     expected = _get_cffdrs_fire_season(key)
-    in_ds = open_dataset("FWI/cffdrs_test_wDC.nc", branch="cffdrs-data")
+    in_ds = open_dataset("FWI/cffdrs_test_wDC.nc")
     nid = int(key[2])
 
     mask = fire_season(tas=in_ds.where(in_ds.id == nid, drop=True).tasmax, **kwargs)
@@ -431,33 +432,34 @@ def test_gfwed_and_indicators():
 
     ds2 = ds.isel(time=slice(1, None))
 
-    mask = atmos.fire_season(
-        tas=ds2.tas,
-        snd=ds2.snow_depth,
-        method="GFWED",
-        temp_condition_days=3,
-        snow_condition_days=3,
-        temp_start_thresh="6 degC",
-        temp_end_thresh="6 degC",
-    )
-    # 3 first days are false by default assume same as 4th day.
-    mask = mask.where(mask.time > mask.time[2]).bfill("time")
+    with set_options(cf_compliance="log"):
+        mask = atmos.fire_season(
+            tas=ds2.tas,
+            snd=ds2.snow_depth,
+            method="GFWED",
+            temp_condition_days=3,
+            snow_condition_days=3,
+            temp_start_thresh="6 degC",
+            temp_end_thresh="6 degC",
+        )
+        # 3 first days are false by default assume same as 4th day.
+        mask = mask.where(mask.time > mask.time[2]).bfill("time")
 
-    outs = atmos.fire_weather_indexes(
-        tas=ds2.tas,
-        pr=ds2.prbc,
-        snd=ds2.snow_depth,
-        rh=ds2.rh,
-        ws=ds2.sfcwind,
-        lat=ds2.lat,
-        dc0=ds.DC.isel(time=0),
-        dmc0=ds.DMC.isel(time=0),
-        ffmc0=ds.FFMC.isel(time=0),
-        season_mask=mask,
-        overwintering=False,
-        dry_start="GFWED",
-        initial_start_up=False,
-    )
+        outs = atmos.fire_weather_indexes(
+            tas=ds2.tas,
+            pr=ds2.prbc,
+            snd=ds2.snow_depth,
+            rh=ds2.rh,
+            ws=ds2.sfcwind,
+            lat=ds2.lat,
+            dc0=ds.DC.isel(time=0),
+            dmc0=ds.DMC.isel(time=0),
+            ffmc0=ds.FFMC.isel(time=0),
+            season_mask=mask,
+            overwintering=False,
+            dry_start="GFWED",
+            initial_start_up=False,
+        )
 
     for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs):
         np.testing.assert_allclose(out, exp, rtol=0.03)
