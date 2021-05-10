@@ -1,4 +1,4 @@
-name: xclim
+name: xclim-demo
 channels:
  - conda-forge
  - defaults
@@ -10,6 +10,8 @@ dependencies:
   - nc-time-axis
   - distributed>=2.0
   - pooch
+  # For visualisation
+  - hvplot
   # For finch
   - birdy
   - cftime

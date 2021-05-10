@@ -1,5 +1,5 @@
 set -ex
 
-finch start --daemon
+mkdir -p ../docs/notebooks/earthcube_data
 
-export WPS_URL="http://localhost:5000"
+python download_ccma.py
