@@ -1,0 +1,5 @@
+set -ex
+
+finch start --daemon
+
+export WPS_URL="http://localhost:5000"
