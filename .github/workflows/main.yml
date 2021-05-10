@@ -43,11 +43,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37-xarray
+          - tox-env: py37-xarray-lm3
             python-version: 3.7
-          - tox-env: py38-slow
+          - tox-env: py38-slow-lm3
             python-version: 3.8
-          - tox-env: py39
+          - tox-env: py39-lm3
             python-version: 3.9
     steps:
     - uses: actions/checkout@v2
