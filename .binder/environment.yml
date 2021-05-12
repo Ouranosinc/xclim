@@ -5,10 +5,15 @@ channels:
 dependencies:
   - notebook
   # xclim[docs]
+  - xclim
+  - jsonpickle
+  - numba
   - matplotlib
   - nc-time-axis
   - distributed>=2.0
   - pooch
+  - pint
+  - scikit-learn
   # For visualisation
   - hvplot
   # For postbuild downloads

@@ -1,7 +1,5 @@
 set -ex
 
-python -m pip install -e .
-
 mkdir -p docs/notebooks/earthcube_data
 
 python download_ccma.py
