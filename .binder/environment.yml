@@ -3,9 +3,8 @@ channels:
  - conda-forge
  - defaults
 dependencies:
-  - jupyter
+  - notebook
   # xclim[docs]
-  - xclim==0.26
   - matplotlib
   - nc-time-axis
   - distributed>=2.0
