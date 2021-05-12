@@ -12,6 +12,8 @@ dependencies:
   - pooch
   # For visualisation
   - hvplot
+  # For postbuild downloads
+  - threddsclient
   # For finch
   - birdy
   - cftime
