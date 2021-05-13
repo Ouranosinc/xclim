@@ -70,18 +70,15 @@ def corn_heat_units(
 
     .. math::
         CHU_i = \frac{YX_{i} + YN_{i}}{2}
-    where
+    with
 
     .. math::
-        \begin{cases}
-        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
-        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
-        \end{cases}
 
-        \begin{cases}
+        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C \\
+
         YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
-        \end{cases}
 
+    where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
     """
 
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmax)
