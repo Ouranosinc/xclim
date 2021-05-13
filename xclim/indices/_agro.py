@@ -69,14 +69,19 @@ def corn_heat_units(
     corn heat unit is:
 
     .. math::
+        CHU_i = \frac{YX_{i} + YN_{i}}{2}
+    where
 
-        CHU_i = (YX_{i} + YN_{i}) / 2
+    .. math::
+        \begin{cases}
+        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
+        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
+        \end{cases}
 
-        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, \text{if } TX_i > 10°C \\
-             & = 0, & \text{if } TX_i \leq 10°C
+        \begin{cases}
+        YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
+        \end{cases}
 
-        YN_i & = 1.8(TN_i -4.44), \text{if } TN_i > 4.44°C \\
-             & = 0, & \text{if } TN_i \leq 4.44°C
     """
 
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmax)

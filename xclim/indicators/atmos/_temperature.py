@@ -59,6 +59,7 @@ __all__ = [
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
+    "corn_heat_units",
 ]
 
 
@@ -692,10 +693,11 @@ corn_heat_units = TasminTasmax(
     identifier="corn_heat_units",
     units="",
     standard_name="",
-    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
-    "specific thresholds : (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
     cell_methods="",
+    missing="skip",
     compute=indices.corn_heat_units,
 )
