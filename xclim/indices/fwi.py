@@ -48,6 +48,76 @@ the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the 
 GFWED use a more complex approach with an added check on the previous day's snow cover for determining "dry" points. Moreover,
 there, the start values are only the multiplication of a factor to the number of dry days, the conventionnal
 
+Examples
+--------
+The current litterature seems to agree that climate-oriented series of the fire weather indexes should be computed
+using only the longest fire season of each year and activatting the overwintering of the drought code and
+the "dry start" for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
+
+
+**Note:** here the example snippets use the _indices_ defined in this very module, but we always recommend using the _indicators_
+defined in the `xc.atmos` module.
+
+>>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+>>> ds = ds.assign(
+        rh=xc.atmos.relative_humidity_from_dewpoint(ds=ds),
+        tas=xc.core.units.convert_units_to(ds.tas, "degC"),
+        pr=xc.core.units.convert_units_to(ds.pr, "mm/d"),
+        sfcWind=xc.atmos.wind_speed_from_vectors(ds=ds)[0]
+    )
+>>> season_mask = fire_season(
+        tas=ds.tas,
+        method="WF93",
+        freq="YS",
+        # Parameters below are at their default values, but listed here for explicitness.
+        temp_start_thresh="12 degC",
+        temp_end_thresh="5 degC",
+        temp_condition_days=3,
+    )
+>>> out_fwi = fire_weather_indexes(
+        tas=ds.tas,
+        pr=ds.pr,
+        rh=ds.rh,
+        ws=ds.sfcWind,
+        lat=ds.lat,
+        season_mask=season_mask,
+        overwintering=True,
+        dry_start="CFS",
+        prec_thresh=1.5,
+        dmc_dry_factor=1.2,
+        # Parameters below are at their default values, but listed here for explicitness.
+        carry_over_fraction=0.75,
+        wetting_efficiency_fraction=0.75,
+        dc_start=15,
+        dmc_start=6,
+        ffmc_start=85,
+    )
+
+Similarly, the next lines calculate the fire weather indexes, but according to the parameters and options
+used in NASA's GFWED datasets. Here, no need to split the fire season mask from the rest of the computation
+as _all_ seasons are used, even the very short shoulder seasons.
+
+>>> ds = xr.open_dataset("FWI/GFWED_sample_2017.nc")
+>>> out_fwi = fire_weather_indexes(
+        tas=ds.tas,
+        pr=ds.prbc,
+        snd=ds.snow_depth,
+        rh=ds.rh,
+        ws=ds.sfcWind,
+        lat=ds.lat,
+        season_method="GFWED",
+        overwintering=False,
+        dry_start="GFWED",
+        temp_start_thresh="6 degC",
+        temp_end_thresh="6 degC",
+        # Parameters below are at their default values, but listed here for explicitness.
+        temp_condition_days=3,
+        snow_condition_days=3,
+        dc_start=15,
+        dmc_start=6,
+        ffmc_start=85,
+        dmc_dry_factor=2,
+    )
 
 References
 ----------
