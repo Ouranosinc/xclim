@@ -5,7 +5,7 @@ channels:
 dependencies:
   - notebook
   # xclim[docs]
-  - xclim
+  - xclim==0.26
   - jsonpickle
   - numba
   - matplotlib
@@ -16,6 +16,7 @@ dependencies:
   - scikit-learn
   # For visualisation
   - hvplot
+  - cartopy
   # For postbuild downloads
   - threddsclient
   # For finch

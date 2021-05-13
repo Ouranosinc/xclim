@@ -1,5 +1,0 @@
-set -ex
-
-mkdir -p docs/notebooks/earthcube_data
-
-python download_ccma.py
