@@ -692,7 +692,6 @@ fire_season = Tasx(
 corn_heat_units = TasminTasmax(
     identifier="corn_heat_units",
     units="",
-    standard_name="",
     long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
