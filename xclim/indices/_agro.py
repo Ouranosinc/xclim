@@ -70,11 +70,12 @@ def corn_heat_units(
 
     .. math::
         CHU_i = \frac{YX_{i} + YN_{i}}{2}
+
     with
 
     .. math::
 
-        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C \\
+        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
 
         YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
 
