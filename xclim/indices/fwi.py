@@ -58,7 +58,7 @@ the "dry start" for the duff-moisture code. The following example uses reasonabl
 **Note:** here the example snippets use the _indices_ defined in this very module, but we always recommend using the _indicators_
 defined in the `xc.atmos` module.
 
->>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+>>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
         rh=xc.atmos.relative_humidity_from_dewpoint(ds=ds),
         tas=xc.core.units.convert_units_to(ds.tas, "degC"),
