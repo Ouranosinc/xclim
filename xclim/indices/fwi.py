@@ -58,12 +58,12 @@ the "dry start" for the duff-moisture code. The following example uses reasonabl
 **Note:** here the example snippets use the _indices_ defined in this very module, but we always recommend using the _indicators_
 defined in the `xc.atmos` module.
 
->>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+>>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-        rh=xc.atmos.relative_humidity_from_dewpoint(ds=ds),
-        tas=xc.core.units.convert_units_to(ds.tas, "degC"),
-        pr=xc.core.units.convert_units_to(ds.pr, "mm/d"),
-        sfcWind=xc.atmos.wind_speed_from_vectors(ds=ds)[0]
+        rh=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+        tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
+        pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
+        sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0]
     )
 >>> season_mask = fire_season(
         tas=ds.tas,
@@ -83,7 +83,7 @@ defined in the `xc.atmos` module.
         season_mask=season_mask,
         overwintering=True,
         dry_start="CFS",
-        prec_thresh=1.5,
+        prec_thresh="1.5 mm/d",
         dmc_dry_factor=1.2,
         # Parameters below are at their default values, but listed here for explicitness.
         carry_over_fraction=0.75,
@@ -97,13 +97,13 @@ Similarly, the next lines calculate the fire weather indexes, but according to t
 used in NASA's GFWED datasets. Here, no need to split the fire season mask from the rest of the computation
 as _all_ seasons are used, even the very short shoulder seasons.
 
->>> ds = xr.open_dataset("FWI/GFWED_sample_2017.nc")
+>>> ds = open_dataset("FWI/GFWED_sample_2017.nc")
 >>> out_fwi = fire_weather_indexes(
         tas=ds.tas,
         pr=ds.prbc,
         snd=ds.snow_depth,
         rh=ds.rh,
-        ws=ds.sfcWind,
+        ws=ds.sfcwind,
         lat=ds.lat,
         season_method="GFWED",
         overwintering=False,
