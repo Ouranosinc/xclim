@@ -25,18 +25,74 @@ from .generic import select_resample_op, threshold_count
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = [
-    "corn_heat_units"
-]
+__all__ = ["corn_heat_units"]
 
-@declare_units(tasmin="[temperature]", tasmax="[temperature]", thresh_tasmin="[temperature]", thresh_tasmax="[temperature]")
-def corn_heat_units(tasmin: xarray.DataArray, tasmax: xarray.DataArray, thresh_tasmin: str, thresh_tasmax: str
+
+@declare_units(
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def corn_heat_units(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    thresh_tasmin: str = "4.44 degC",
+    thresh_tasmax: str = "10 degC",
 ) -> xarray.DataArray:
+    r"""Corn heat units.
 
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
+    Temperature-based index used to estimate the development of corn crops.
 
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    thresh_tasmin : str
+      The minimum temperature threshold needed for corn growth.
+    thresh_tasmax : str
+      The maximum temperature threshold needed for corn growth.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Daily corn heat units.
+
+    Notes
+    -----
+    The thresholds of 4.44°C for minimum temperatures and 10°C for maximum temperatures were selected following
+    the assumption that no growth occurs below these values.
+
+    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`. Then the daily
+    corn heat unit is:
+
+    .. math::
+
+        CHU_i = (YX_{i} + YN_{i}) / 2
+
+        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, \text{if } TX_i > 10°C \\
+             & = 0, & \text{if } TX_i \leq 10°C
+
+        YN_i & = 1.8(TN_i -4.44), \text{if } TN_i > 4.44°C \\
+             & = 0, & \text{if } TN_i \leq 4.44°C
+    """
+
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmax)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmin)
+
+    mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
 
-    chu = mask_tasmax
+    chu = (
+        xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
+        + xarray.where(
+            mask_tasmax,
+            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
+            0,
+        )
+    ) / 2
+
+    chu.attrs["units"] = ""
     return chu

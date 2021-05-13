@@ -798,5 +798,11 @@
     "abstract": "Masque binaire de la saison des incendies, défini selon des conditions de températures quotidiennes consécutives et, optionnellement, d'épaisseurs du couvert de neige.",
     "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
     "long_name": "Saison des incendies"
+  },
+    "CORN_HEAT_UNITS": {
+    "title": "Unités thermiques maïs.",
+    "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
+    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_min} et {thresh_mas}, respectivement.)",
+    "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
   }
 }
