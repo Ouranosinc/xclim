@@ -5,7 +5,7 @@ channels:
 dependencies:
   - notebook
   # xclim[docs]
-  - xclim
+  - xclim==0.26
   - jsonpickle
   - numba
   - matplotlib
