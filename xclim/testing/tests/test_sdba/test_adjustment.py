@@ -399,7 +399,7 @@ class TestQM:
 
         # Test predict
         # Accept discrepancies near extremes
-        middle = (x > 1e-2) * (x < 0.99)
+        middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
