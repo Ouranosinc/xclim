@@ -1,0 +1,12 @@
+set -ex
+
+## We create a second environment for finch, from the latest release.
+
+# Get finch's env file
+curl -o env_finch.yml https://raw.githubusercontent.com/bird-house/finch/master/environment.yml
+
+# Create finch's env
+conda env create -f env_finch.yml -n finch-demo
+
+# Install finch in its env
+conda run -n finch-demo python -m pip install https://github.com/bird-house/finch.git@master#egg=finch

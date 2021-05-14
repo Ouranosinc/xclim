@@ -3,43 +3,9 @@ channels:
  - conda-forge
  - defaults
 dependencies:
-  - notebook
-  # xclim[docs]
-  - xclim==0.26
-  - jsonpickle
-  - numba
-  - matplotlib
-  - nc-time-axis
-  - distributed>=2.0
-  - pooch
-  - pint
-  - scikit-learn
-  # For visualisation
-  - hvplot
-  - cartopy
-  # For postbuild downloads
-  - threddsclient
-  # For finch
-  - birdy
-  - cftime
-  - pywps==4.4
-  - xarray==0.17.0
-  - xesmf>=0.5.3
-  - clisops>=0.6.1
-  - geopandas
-  - jinja2
-  - click
-  - psutil
-  - bottleneck
-  - netcdf4
-  - numpy
-  - unidecode
-  - dask[complete]
-  - scipy
-  - requests
-  - sentry-sdk
-  - siphon
-  - parse
-  - pip
-  - pip:
-    - git+https://github.com/bird-house/finch.git@v0.7.4#egg=finch
+ - xclim>=0.26
+ - notebook
+ - matplotlib
+ - nc-time-axis
+ - birdy
+ - cartopy>=0.19
