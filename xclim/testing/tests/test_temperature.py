@@ -1239,19 +1239,18 @@ def test_corn_heat_units():
     tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
     tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
 
-    tnC = tn - K2C
-    tnC.attrs["units"] = "C"
-    txC = tx - K2C
-    txC.attrs["units"] = "C"
+    with xr.set_options(keep_attrs=True):
+        tnC = tn - K2C
+        tnC.attrs["units"] = "C"
 
     chu = atmos.corn_heat_units(
         tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
     )
     chuC = atmos.corn_heat_units(
-        tasmin=tnC, tasmax=txC, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+        tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
     )
 
-    np.testing.assert_allclose(chu[0, 180:185], chuC[0, 180:185], rtol=1e-4)
+    np.testing.assert_allclose(chu, chuC, rtol=1e-3)
 
     np.testing.assert_allclose(
         chu[0, 180:185], np.array([13.777, 12.368, 11.966, 14.674, 16.797]), rtol=1e-4

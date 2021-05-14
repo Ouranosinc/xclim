@@ -82,8 +82,8 @@ def corn_heat_units(
     where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
     """
 
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmax)
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmin)
+    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
+    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
     mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
