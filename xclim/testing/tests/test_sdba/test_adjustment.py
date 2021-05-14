@@ -520,6 +520,7 @@ class TestPrincipalComponents:
         assert (ref - scen).mean() < 5e-3
 
 
+@pytest.mark.slow
 class TestExtremeValues:
     @pytest.mark.parametrize(
         "c_thresh,q_thresh,frac,power",

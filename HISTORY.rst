@@ -2,6 +2,18 @@
 History
 =======
 
+0.27.0 (unreleased)
+-------------------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+
+
 0.26.1 (2021-05-04)
 -------------------
 * Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.

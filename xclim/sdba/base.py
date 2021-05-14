@@ -214,7 +214,7 @@ class Grouper(Parametrizable):
             da = da.rolling(center=True, **{self.dim: self.window}).construct(
                 window_dim="window"
             )
-            if da.chunks is not None:
+            if uses_dask(da):
                 # Rechunk. There might be padding chunks.
                 da = da.chunk({self.dim: -1})
 
@@ -342,7 +342,7 @@ class Grouper(Parametrizable):
                 [
                     d.chunks[d.get_axis_num(self.dim)]
                     for d in da.values()
-                    if d.chunks and self.dim in d.dims
+                    if uses_dask(d) and self.dim in d.dims
                 ]
                 or [[]],  # pass [[]] if no dataarrays have chunks so min doesnt fail
                 key=len,
@@ -352,7 +352,7 @@ class Grouper(Parametrizable):
             # Get chunking to rechunk is the operation is non-grouping
             # To match the behaviour of the case above, an empty list signifies that dask is not used for the input.
             dim_chunks = (
-                [] if da.chunks is None else da.chunks[da.get_axis_num(self.dim)]
+                [] if not uses_dask(da) else da.chunks[da.get_axis_num(self.dim)]
             )
 
         dims = self.dim
@@ -388,10 +388,10 @@ class Grouper(Parametrizable):
         if self.dim in out.dims:
             out = out.sortby(self.dim)
             # The expected behavior for downstream methods would be to conserve chunking along dim
-            if out.chunks:
+            if uses_dask(out):
                 # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
-        if self.prop in out.dims and out.chunks:
+        if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
 
