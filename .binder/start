@@ -1,1 +1,0 @@
-conda run -n finch-demo finch start --daemon
