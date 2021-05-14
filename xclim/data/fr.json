@@ -802,7 +802,7 @@
     "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs.",
     "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
-    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_min} et {thresh_mas}, respectivement.)",
+    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
   }
 }
