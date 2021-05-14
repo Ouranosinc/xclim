@@ -80,10 +80,21 @@ def corn_heat_units(
         YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
 
     where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
+
+    References
+    ----------
+    Equations from Bootsma, A., G. Tremblay et P. Filion. 1999: Analyse sur les risques associés aux unités thermiques
+    disponibles pour la production de maïs et de soya au Québec. Centre de recherches de l’Est sur les céréales et
+    oléagineux, Ottawa, 28 p.
+
+    Can be found in Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation
+    des opportunités et des risques agroclimatiques dans un climat en évolution.
     """
 
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
     mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
