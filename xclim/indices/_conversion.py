@@ -271,7 +271,7 @@ def relative_humidity(
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
-    """Relative humidity.
+    r"""Relative humidity.
 
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through
     the saturation vapor pressure.

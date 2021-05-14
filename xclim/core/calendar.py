@@ -131,7 +131,7 @@ def convert_calendar(
       If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
       If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped, but missing dates are not inserted.
       If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are inferred and
-         the output is reindexed to that a new array.
+      the output is reindexed to that a new array.
 
     Notes
     -----
