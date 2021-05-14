@@ -3,13 +3,9 @@ channels:
  - conda-forge
  - defaults
 dependencies:
- - xclim==0.26
+ - xclim>=0.26
  - notebook
  - matplotlib
  - nc-time-axis
  - birdy
  - cartopy>=0.19
- - clisops
- - pip
- - pip:
-   - git+https://github.com/bird-house/finch.git@master#egg=finch
