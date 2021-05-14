@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
+import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
@@ -263,5 +264,47 @@ def list_input_variables(
             if meta["kind"] in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                 var = meta.get("default") or varname
                 variables[var].append(ind)
+
+    return variables
+
+
+def get_all_CMIP6_variables():
+    data = pd.read_excel(
+        "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
+        sheet_name=None,
+    )
+    data.pop("Notes")
+
+    variables = {}
+
+    def remove_empty_cell_methods(rawstr):
+        words = rawstr.split(" ")
+        iskey = [word.endswith(":") for word in words]
+        cms = []
+        for i in range(len(words)):
+            if i + 1 == len(words) and iskey[i]:
+                continue
+            elif i + 1 < len(words) and iskey[i] and iskey[i + 1]:
+                continue
+            else:
+                cms.append(words[i])
+        return " ".join(cms)
+
+    for table, df in data.items():
+        print(f">> Table {table}")
+        for i, row in df.iterrows():
+            varname = row["Variable Name"]
+            vardata = (
+                row["CF Standard Name"],
+                row["units"],
+                remove_empty_cell_methods(row["cell_methods"]),
+            )
+            if varname in variables:
+                if variables[varname] != vardata:
+                    print(f"Differences found for {varname}, table {table}")
+                    print(f"   Stored: {variables[varname]}")
+                    print(f"   Found: {vardata}")
+            else:
+                variables[varname] = vardata
 
     return variables
