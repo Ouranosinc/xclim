@@ -1,1 +1,2 @@
-conda run -n finch-demo finch start -d &
+# Binder specific way to start finch with no bugs
+$(conda run -n finch-demo which finch) start -d
