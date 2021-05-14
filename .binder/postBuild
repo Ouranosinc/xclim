@@ -1,3 +1,4 @@
+#!/bin/bash
 set -ex
 
 # ## We create a second environment for finch, from the latest release.

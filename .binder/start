@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Something fishy with conda run when the called process doesn't fully exit.
+# So we get the executable path and then call it directly.
+$(conda run -n finch-demo which finch) start --daemon
+
+# Needed line as said in the config.
+exec "$@"
