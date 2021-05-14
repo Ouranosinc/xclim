@@ -9,4 +9,4 @@ curl -o env_finch.yml https://raw.githubusercontent.com/bird-house/finch/master/
 conda env create -f env_finch.yml -n finch-demo
 
 # Install finch in its env
-conda run -n finch-demo python -m pip install https://github.com/bird-house/finch.git@master#egg=finch
+conda run -n finch-demo python -m pip install git+https://github.com/bird-house/finch.git@master#egg=finch
