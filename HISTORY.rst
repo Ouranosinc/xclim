@@ -13,6 +13,10 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 
+New indicators
+~~~~~~~~~~~~~~
+* `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+
 
 0.26.1 (2021-05-04)
 -------------------

@@ -203,6 +203,16 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
+def test_corn_heat_units(tasmin_series, tasmax_series):
+    tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
+    tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
+
+    out = xci.corn_heat_units(
+        tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+    )
+    np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+
+
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
         mn = np.zeros(365)

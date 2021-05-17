@@ -1233,3 +1233,29 @@ def test_maximum_consecutive_warm_days():
         "Annual longest spell of consecutive days with tmax above 25 degc."
         in out.description
     )
+
+
+def test_corn_heat_units():
+    tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+    tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+
+    with xr.set_options(keep_attrs=True):
+        tnC = tn - K2C
+        tnC.attrs["units"] = "C"
+
+    chu = atmos.corn_heat_units(
+        tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+    )
+    chuC = atmos.corn_heat_units(
+        tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+    )
+
+    np.testing.assert_allclose(chu, chuC, rtol=1e-3)
+
+    np.testing.assert_allclose(
+        chu[0, 180:185], np.array([13.777, 12.368, 11.966, 14.674, 16.797]), rtol=1e-4
+    )
+
+    assert (
+        "specific thresholds : tmin > 4.44 degc and tmax > 10 degc." in chu.description
+    )
