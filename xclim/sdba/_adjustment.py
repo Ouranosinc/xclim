@@ -8,11 +8,13 @@ import xarray as xr
 
 from . import nbutils as nbu
 from . import utils as u
-from .base import map_blocks, map_groups
+from .base import Grouper, map_blocks, map_groups
 
 
 @map_groups(
-    af=["<PROP>", "quantiles"], hist_q=["<PROP>", "quantiles"], scaling=["<PROP>"]
+    af=[Grouper.PROP, "quantiles"],
+    hist_q=[Grouper.PROP, "quantiles"],
+    scaling=[Grouper.PROP],
 )
 def dqm_train(ds, *, dim, kind, quantiles):
     """DQM: Train step on one group.
@@ -37,8 +39,8 @@ def dqm_train(ds, *, dim, kind, quantiles):
 
 
 @map_groups(
-    af=["<PROP>", "quantiles"],
-    hist_q=["<PROP>", "quantiles"],
+    af=[Grouper.PROP, "quantiles"],
+    hist_q=[Grouper.PROP, "quantiles"],
 )
 def eqm_train(ds, *, dim, kind, quantiles):
     """EQM: Train step on one group.
@@ -55,7 +57,7 @@ def eqm_train(ds, *, dim, kind, quantiles):
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-@map_blocks(reduces=["<PROP>", "quantiles"], scen=[])
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
 def qm_adjust(ds, *, group, interp, extrapolation, kind):
     """QM (DQM and EQM): Adjust step on one block.
 
@@ -71,7 +73,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind):
     return scen.to_dataset()
 
 
-@map_blocks(reduces=["<PROP>"], sim=[])
+@map_blocks(reduces=[Grouper.PROP], sim=[])
 def dqm_scale_sim(ds, *, group, interp, kind):
     """DQM: Sim preprocessing on one block
 
@@ -92,7 +94,7 @@ def dqm_scale_sim(ds, *, group, interp, kind):
     return sim.rename("sim").to_dataset()
 
 
-@map_blocks(reduces=["<PROP>", "quantiles"], scen=[])
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
 def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     """QDM: Adjust process on one block.
 
@@ -112,7 +114,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     return scen.rename("scen").to_dataset()
 
 
-@map_blocks(reduces=["<DIM>"], af=["<PROP>"], hist_thresh=["<PROP>"])
+@map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
 def loci_train(ds, *, group, thresh):
     """LOCI: Train on one block.
 
@@ -135,7 +137,7 @@ def loci_train(ds, *, group, thresh):
     return xr.Dataset({"af": af, "hist_thresh": s_thresh})
 
 
-@map_blocks(reduces=["<PROP>"], scen=[])
+@map_blocks(reduces=[Grouper.PROP], scen=[])
 def loci_adjust(ds, *, group, thresh, interp):
     """LOCI: Adjust on one block.
 
@@ -150,7 +152,7 @@ def loci_adjust(ds, *, group, thresh, interp):
     return scen.rename("scen").to_dataset()
 
 
-@map_groups(af=["<PROP>"])
+@map_groups(af=[Grouper.PROP])
 def scaling_train(ds, *, dim, kind):
     """Scaling: Train on one group.
 
@@ -164,7 +166,7 @@ def scaling_train(ds, *, dim, kind):
     return af.rename("af").to_dataset()
 
 
-@map_blocks(reduces=["<PROP>"], scen=[])
+@map_blocks(reduces=[Grouper.PROP], scen=[])
 def scaling_adjust(ds, *, group, interp, kind):
     """Scaling: Adjust on one block.
 

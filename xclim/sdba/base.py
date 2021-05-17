@@ -90,6 +90,10 @@ class Grouper(Parametrizable):
     """Helper object to perform grouping actions on DataArrays and Datasets."""
 
     _repr_hide_params = ["dim", "prop"]  # For a concise repr
+    # Two constants for use of `map_blocks` and `map_groups`.
+    # They provide better code readability, nothing more
+    PROP = "<PROP>"
+    DIM = "<DIM>"
 
     def __init__(
         self,
@@ -483,7 +487,9 @@ def map_blocks(reduces=None, **outvars):
             group = kwargs.get("group")
 
             # Ensure group is given as it might not be in the signature of the wrapped func
-            if {"<PROP>", "<DIM>"}.intersection(out_dims + red_dims) and group is None:
+            if {Grouper.PROP, Grouper.DIM}.intersection(
+                out_dims + red_dims
+            ) and group is None:
                 raise ValueError("Missing required `group` argument.")
 
             if uses_dask(ds):
@@ -506,7 +512,7 @@ def map_blocks(reduces=None, **outvars):
 
             # Make translation dict
             if group is not None:
-                placeholders = {"<PROP>": group.prop, "<DIM>": group.dim}
+                placeholders = {Grouper.PROP: group.prop, Grouper.DIM: group.dim}
             else:
                 placeholders = {}
 
@@ -550,7 +556,7 @@ def map_blocks(reduces=None, **outvars):
                 # duck empty calls dask if chunks is not None
                 tmpl[var] = duck_empty(dims, sizes, chunks)
 
-            def _transpose_on_exit(dsblock, **kwargs):
+            def _call_and_transpose_on_exit(dsblock, **kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
                 out = func(dsblock, **kwargs).transpose(*all_dims)
                 for name, crd in dsblock.coords.items():
@@ -559,9 +565,11 @@ def map_blocks(reduces=None, **outvars):
                 return out
 
             # Fancy patching for explicit dask task names
-            _transpose_on_exit.__name__ = f"block_{func.__name__}"
+            _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
-            out = ds.map_blocks(_transpose_on_exit, template=tmpl, kwargs=kwargs)
+            out = ds.map_blocks(
+                _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
+            )
 
             return out
 
@@ -570,7 +578,7 @@ def map_blocks(reduces=None, **outvars):
     return _decorator
 
 
-def map_groups(reduces=["<DIM>"], main_only=False, **outvars):
+def map_groups(reduces=[Grouper.DIM], main_only=False, **outvars):
     """
     Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
     See :py:func:`map_blocks`.
