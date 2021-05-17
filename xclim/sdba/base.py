@@ -45,7 +45,7 @@ class Parametrizable(dict):
 
     @property
     def parameters(self):
-        """All parameters as a dictionary."""
+        """All parameters as a dictionary. Read-only."""
         return dict(**self)
 
     def __repr__(self):

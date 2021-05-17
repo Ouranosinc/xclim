@@ -58,10 +58,9 @@ class BaseAdjustment(ParametrizableWithDataset):
     Children classes should implement these methods:
 
     __init__(**kwargs)
-      For fully functioning `Parametrizable` subclasses, the init should only pass kwargs the
-      base class. It could set some, after the super().__init__(), but only through bracket
-      access (self['abc'] = abc). All parameters should be simple python literals or other
-      `Parametrizable` subclasses instances.
+      Patameters should be set either by passing kwargs to the base class. with super().__init__(**kwarga),
+      or through bracket access (self['abc'] = abc). All parameters should be simple python literals or other
+      `Parametrizable` subclasses instances. See doc of :py:class:`Parametrizable`.
 
     _train(ref, hist)
       Receiving the training target and data, returning a training dataset.
