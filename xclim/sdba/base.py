@@ -438,7 +438,7 @@ def map_blocks(reduces=None, **outvars):
     Decorator for declaring functions and wrapping them into a map_blocks. It takes care of constructing
     the template dataset.
 
-    If `group` in the kwargs, it is assumed that `group.dim` is the only dimension reduced or modified,
+    If `group` is in the kwargs, it is assumed that `group.dim` is the only dimension reduced or modified,
     and that some other dimensions might be added, but no other existing dimension will be modified.
 
     Arguments to the decorator are mappings from variable name in the output to its *new* dimensions.

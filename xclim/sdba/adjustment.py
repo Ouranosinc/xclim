@@ -55,7 +55,7 @@ def _raise_on_multiple_chunk(da, main_dim):
 class BaseAdjustment(ParametrizableWithDataset):
     """Base class for adjustment objects.
 
-    Children classes should implement:
+    Children classes should implement these methods:
 
     __init__(**kwargs)
       For fully functioning `Parametrizable` subclasses, the init should only pass kwargs the
