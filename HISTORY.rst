@@ -2,6 +2,13 @@
 History
 =======
 
+0.27.0 (unreleased)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+
 0.26.1 (2021-05-04)
 -------------------
 * Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.
