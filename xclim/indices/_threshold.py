@@ -1190,7 +1190,7 @@ def snow_cover_duration(
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
-    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
 ):  # noqa: D401
     """Number of days with tasmin above a threshold (number of tropical nights).
 
@@ -1226,7 +1226,7 @@ def tn_days_above(
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_below(
-    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
 ):  # noqa: D401
     """Number of days with tasmin below a threshold.
 
@@ -1639,7 +1639,7 @@ def maximum_consecutive_frost_free_days(
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray, thresh: str = "25 degC", freq: str = "YS"
 ):
-    r"""Maximum number of consecutive summer days.
+    r"""Maximum number of consecutive days with tasmax above a threshold (summer days).
 
     Return the maximum number of consecutive days within the period where
     the maximum temperature is above a certain threshold.
@@ -1656,7 +1656,7 @@ def maximum_consecutive_tx_days(
     Returns
     -------
     xarray.DataArray, [time]
-      The maximum number of consecutive summer days.
+      The maximum number of days with tasmax > thresh per periods (summer days).
 
     Notes
     -----
