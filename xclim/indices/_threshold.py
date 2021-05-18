@@ -48,8 +48,13 @@ __all__ = [
     "hot_spell_frequency",
     "hot_spell_max_length",
     "snow_cover_duration",
+    "tn_days_above",
     "tn_days_below",
+    "tg_days_above",
+    "tg_days_below",
     "tx_days_above",
+    "tx_days_below",
+    "tropical_nights",
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
@@ -62,7 +67,6 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "sea_ice_area",
     "sea_ice_extent",
-    "tropical_nights",
 ]
 
 
@@ -1185,10 +1189,46 @@ def snow_cover_duration(
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
-def tn_days_below(
-    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
+def tn_days_above(
+    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
 ):  # noqa: D401
-    """Number of days with tmin below a threshold.
+    """Number of days with tasmin above a threshold (number of tropical nights).
+
+    Number of days where daily minimum temperature exceeds a threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where Tasmin > threshold.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} > Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    f = threshold_count(tasmin, ">", thresh, freq)
+    return to_agg_units(f, tasmin, "count")
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def tn_days_below(
+    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of days with tasmin below a threshold.
 
     Number of days where daily minimum temperature is below a threshold.
 
@@ -1196,6 +1236,150 @@ def tn_days_below(
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where Tasmin < threshold.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} < Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    f1 = threshold_count(tasmin, "<", thresh, freq)
+    return to_agg_units(f1, tasmin, "count")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def tg_days_above(
+    tas: xarray.DataArray, thresh: str = "10.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of days with tas above a threshold.
+
+    Number of days where daily mean temperature exceeds a threshold.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where Tas > threshold.
+
+    Notes
+    -----
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TG_{ij} > Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tas)
+    f = threshold_count(tas, ">", thresh, freq)
+    return to_agg_units(f, tas, "count")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def tg_days_below(
+    tas: xarray.DataArray, thresh: str = "10.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of days with tas below a threshold.
+
+    Number of days where daily mean temperature is below a threshold.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where Tas < threshold.
+
+    Notes
+    -----
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TG_{ij} < Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tas)
+    f1 = threshold_count(tas, "<", thresh, freq)
+    return to_agg_units(f1, tas, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def tx_days_above(
+    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of days with tasmax above a threshold (number of summer days).
+
+    Number of days where daily maximum temperature exceeds a threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days where Tas < threshold.
+
+    Notes
+    -----
+    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TX_{ij} > Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    f = threshold_count(tasmax, ">", thresh, freq)
+    return to_agg_units(f, tasmax, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def tx_days_below(
+    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of days with tmax below a threshold.
+
+    Number of days where daily maximum temperature is below a threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
     thresh : str
       Threshold temperature on which to base evaluation.
     freq : str
@@ -1215,81 +1399,9 @@ def tn_days_below(
 
         TN_{ij} < Threshold [℃]
     """
-    thresh = convert_units_to(thresh, tasmin)
-    f1 = threshold_count(tasmin, "<", thresh, freq)
-    return to_agg_units(f1, tasmin, "count")
-
-
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
-def tn_days_above(
-    tasmin: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
-):  # noqa: D401
-    """Number of summer days.
-
-    Number of days where daily minimum temperature exceeds a threshold.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature.
-    thresh : str
-      Threshold temperature on which to base evaluation.
-    freq : str
-      Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-      umber of days Tmin > threshold.
-
-    Notes
-    -----
-    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TN_{ij} > Threshold [℃]
-    """
-    thresh = convert_units_to(thresh, tasmin)
-    f = threshold_count(tasmin, ">", thresh, freq)
-    return to_agg_units(f, tasmin, "count")
-
-
-@declare_units(tasmax="[temperature]", thresh="[temperature]")
-def tx_days_above(
-    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
-):  # noqa: D401
-    """Number of summer days.
-
-    Number of days where daily maximum temperature exceeds a threshold.
-
-    Parameters
-    ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature.
-    thresh : str
-      Threshold temperature on which to base evaluation.
-    freq : str
-      Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-      Number of summer days.
-
-    Notes
-    -----
-    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TX_{ij} > Threshold [℃]
-    """
     thresh = convert_units_to(thresh, tasmax)
-    f = threshold_count(tasmax, ">", thresh, freq)
-    return to_agg_units(f, tasmax, "count")
+    f1 = threshold_count(tasmax, "<", thresh, freq)
+    return to_agg_units(f1, tasmax, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")

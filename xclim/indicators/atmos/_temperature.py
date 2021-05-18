@@ -8,8 +8,12 @@ from xclim.core.units import check_units
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
+    "tn_days_above",
     "tn_days_below",
+    "tg_days_above",
+    "tg_days_below",
     "tx_days_above",
+    "tx_days_below",
     "tx_tn_days_above",
     "heat_wave_frequency",
     "heat_wave_max_length",
@@ -112,6 +116,16 @@ class TasminTasmax(Daily2D):
         check_units(tasmax, tasmin.attrs["units"])
 
 
+tn_days_above = Tasmin(
+    identifier="tn_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tmin > {thresh}",
+    description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
+    cell_methods="time: minimum within days time: sum over days",
+    compute=indices.tn_days_above,
+)
+
 tn_days_below = Tasmin(
     identifier="tn_days_below",
     units="days",
@@ -122,6 +136,26 @@ tn_days_below = Tasmin(
     compute=indices.tn_days_below,
 )
 
+tg_days_above = Tas(
+    identifier="tg_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tavg > {thresh}",
+    description="{freq} number of days where daily mean temperature exceeds {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_above,
+)
+
+tg_days_below = Tas(
+    identifier="tg_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tavg < {thresh}",
+    description="{freq} number of days where daily mean temperature is below {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_below,
+)
+
 tx_days_above = Tasmax(
     identifier="tx_days_above",
     units="days",
@@ -130,6 +164,16 @@ tx_days_above = Tasmax(
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.tx_days_above,
+)
+
+tx_days_below = Tasmin(
+    identifier="tx_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tmax < {thresh}",
+    description="{freq} number of days where daily max temperature is below {thresh}.",
+    cell_methods="time: max within days time: sum over days",
+    compute=indices.tx_days_below,
 )
 
 tx_tn_days_above = TasminTasmax(
@@ -143,15 +187,6 @@ tx_tn_days_above = TasminTasmax(
     compute=indices.tx_tn_days_above,
 )
 
-tn_days_above = Tasmin(
-    identifier="tn_days_above",
-    units="days",
-    standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with Tmin > {thresh}",
-    description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
-    cell_methods="time: minimum within days time: sum over days",
-    compute=indices.tn_days_above,
-)
 
 heat_wave_frequency = TasminTasmax(
     identifier="heat_wave_frequency",
