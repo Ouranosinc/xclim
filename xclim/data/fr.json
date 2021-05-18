@@ -192,6 +192,13 @@
     "comment": "",
     "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
   },
+  "TN_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmin > {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmin au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est au-dessus d'un seuil."
+  },
   "TN_DAYS_BELOW": {
     "long_name": "Nombre de jours avec Tmin < {thresh}",
     "description": "Nombre {freq:m} de jours où la température journalière minimale est sous {thresh}",
@@ -199,12 +206,33 @@
     "comment": "",
     "abstract": "Nombre de jours où la température journalière minimale est sous un seuil."
   },
+  "TG_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmoy > {thresh}",
+    "description": "Nombre {freq:m} de jours où la moyenne de température journalière est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmoy au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la moyenne de température journalière est au-dessus d'un seuil."
+  },
+  "TG_DAYS_BELOW": {
+    "long_name": "Nombre de jours avec Tmoy < {thresh}",
+    "description": "Nombre {freq:m} de jours où la moyenne de température journalière est sous {thresh}",
+    "title": "Nombre de jours avec tmoy sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la moyenne de température journalière est sous un seuil."
+  },
   "TX_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh}",
     "description": "Nombre {freq:m} de jours où la température journalière maximale est au-dessus de {thresh}",
     "title": "Nombre de jours avec tmax au-dessus d'un certain seuil",
     "comment": "",
     "abstract": "Nombre de jours où la température journalière maximale est au-dessus d'un seuil."
+  },
+  "TX_DAYS_BELOW": {
+    "long_name": "Nombre de jours avec Tmax < {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous {thresh}",
+    "title": "Nombre de jours avec tmax sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est sous un seuil."
   },
   "TX_TN_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
