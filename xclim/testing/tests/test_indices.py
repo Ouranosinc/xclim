@@ -718,10 +718,10 @@ class TestTxDays:
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a + K2C)
 
-        out = xci.tg_days_below(mx, thresh="-10 C")
+        out = xci.tx_days_below(mx, thresh="-10 C")
         np.testing.assert_array_equal(out[:1], [6])
         np.testing.assert_array_equal(out[1:], [0])
-        out = xci.tg_days_below(mx, thresh="-30 C")
+        out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
