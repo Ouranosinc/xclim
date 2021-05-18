@@ -1220,7 +1220,7 @@ def tn_days_below(
     return to_agg_units(f1, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", thresh="[temperature]")
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
     tasmin: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
 ):  # noqa: D401
