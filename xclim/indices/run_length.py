@@ -12,6 +12,7 @@ from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
 import numpy as np
+import xarray
 import xarray as xr
 from dask import array as dsk
 
@@ -26,7 +27,7 @@ def get_npts(da: xr.DataArray) -> int:
     Parameters
     ----------
     da : xarray.DataArray
-      N-dimensional input array
+      N-dimensional input array.
 
     Returns
     -------
@@ -114,7 +115,7 @@ def rle_statistics(
     Parameters
     ----------
     da : xr.DataArray
-      N-dimensional array (boolean)
+      N-dimensional array (boolean).
     reducer: str
       Name of the reducing function.
     dim : str
@@ -179,7 +180,7 @@ def windowed_run_events(
     Parameters
     ----------
     da: xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum run length.
     dim : str
@@ -230,7 +231,7 @@ def windowed_run_count(
     Returns
     -------
     xr.DataArray
-      Total number of true values part of a consecutive runs of at least `window` long.
+      Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     if ufunc_1dim == "auto":
         npts = get_npts(da)
@@ -256,7 +257,7 @@ def first_run(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
     dim : str
@@ -273,7 +274,8 @@ def first_run(
     Returns
     -------
     xr.DataArray
-      Index (or coordinate if `coord` is not False) of first item in first valid run. Returns np.nan if there are no valid run.
+      Index (or coordinate if `coord` is not False) of first item in first valid run.
+      Returns np.nan if there are no valid runs.
     """
     if ufunc_1dim == "auto":
         if isinstance(da.data, dsk.Array) and len(da.chunks[da.dims.index(dim)]) > 1:
@@ -322,7 +324,7 @@ def last_run(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
     dim : str
@@ -339,7 +341,8 @@ def last_run(
     Returns
     -------
     xr.DataArray
-      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+      Index (or coordinate if `coord` is not False) of last item in last valid run.
+      Returns np.nan if there are no valid runs.
     """
     reversed_da = da.sortby(dim, ascending=False)
     out = first_run(
@@ -421,7 +424,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      Boolean array
+      Boolean array.
     dim : str
       Dimension along which to check for the longest run.
 
@@ -458,7 +461,7 @@ def season(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive values to start and end the season.
     date: DayOfYearStr, optional
@@ -575,7 +578,7 @@ def season_length(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive values to start and end the season.
     date: DayOfYearStr, optional
@@ -616,7 +619,7 @@ def run_end_after_date(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
     date : str
@@ -631,7 +634,8 @@ def run_end_after_date(
     Returns
     -------
     xr.DataArray
-      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+      Index (or coordinate if `coord` is not False) of last item in last valid run.
+      Returns np.nan if there are no valid runs.
     """
     mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
@@ -668,7 +672,7 @@ def first_run_after_date(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
     date : DayOfYearStr
@@ -683,7 +687,8 @@ def first_run_after_date(
     Returns
     -------
     xr.DataArray
-      Index (or coordinate if `coord` is not False) of first item in the first valid run. Returns np.nan if there are no valid run.
+      Index (or coordinate if `coord` is not False) of first item in the first valid run.
+      Returns np.nan if there are no valid runs.
     """
     mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
@@ -709,7 +714,7 @@ def last_run_before_date(
     Parameters
     ----------
     da : xr.DataArray
-      Input N-dimensional DataArray (boolean)
+      Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
     date : DayOfYearStr
@@ -724,7 +729,8 @@ def last_run_before_date(
     Returns
     -------
     xr.DataArray
-      Index (or coordinate if `coord` is not False) of last item in last valid run. Returns np.nan if there are no valid run.
+      Index (or coordinate if `coord` is not False) of last item in last valid run.
+      Returns np.nan if there are no valid runs.
     """
     mid_idx = index_of_date(da.time, date, default=-1)
 
@@ -748,11 +754,11 @@ def rle_1d(
     Returns
     -------
     values : np.array
-      The values taken by arr over each run
+      The values taken by arr over each run.
     run lengths : np.array
-      The length of each run
+      The length of each run.
     start position : np.array
-      The starting index of each run
+      The starting index of each run.
 
     Examples
     --------
@@ -783,14 +789,15 @@ def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
     Parameters
     ----------
     arr : Sequence[Union[int, float]]
-      Input array
+      Input array.
     window : int
       Minimum duration of consecutive run to accumulate values.
 
     Returns
     -------
     int
-      Index of first item in first valid run. Returns np.nan if there are no valid run.
+      Index of first item in first valid run.
+      Returns np.nan if there are no valid runs.
     """
     v, rl, pos = rle_1d(arr)
     ind = np.where(v * rl >= window, pos, np.inf).min()
@@ -807,6 +814,8 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str) -> int:
     ----------
     arr : Sequence[bool]
       Input array (bool)
+    reducer: {'min', 'max', 'mean', 'sum'}
+      Reducing function name.
 
     Returns
     -------
@@ -826,7 +835,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     Parameters
     ----------
     arr : Sequence[bool]
-      Input array (bool)
+      Input array (bool).
     window : int
       Minimum duration of consecutive run to accumulate values.
 
@@ -839,19 +848,19 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def windowed_run_events_1d(arr: Sequence[bool], window: int):
+def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray:
     """Return the number of runs of a minimum length.
 
     Parameters
     ----------
     arr : Sequence[bool]
-      Input array (bool)
+      Input array (bool).
     window : int
       Minimum run length.
 
     Returns
     -------
-    func
+    xarray.DataArray
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle_1d(arr)
@@ -864,13 +873,13 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     Parameters
     ----------
     x : Sequence[bool]
-      Input array (bool)
+      Input array (bool).
     window : int
       Minimum duration of consecutive run to accumulate values.
 
     Returns
     -------
-    out : func
+    xarray.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -891,13 +900,13 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     Parameters
     ----------
     x : Sequence[bool]
-      Input array (bool)
+      Input array (bool).
     window : int
-      Minimum run length
+      Minimum run length.
 
     Returns
     -------
-    out : func
+    xarray.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -926,7 +935,7 @@ def statistics_run_ufunc(
 
     Returns
     -------
-    out : func
+    xarray.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -951,13 +960,15 @@ def first_run_ufunc(
     Parameters
     ----------
     x : Union[xr.DataArray, Sequence[bool]]
-      Input array (bool)
+      Input array (bool).
     window : int
-    dim: Optional[str]
+      Minimum run length.
+    dim : str
+      Dimension along which to index (default: "time").
 
     Returns
     -------
-    out : func
+    xarray.DataArray
       A function operating along the time dimension of a dask-array.
     """
     ind = xr.apply_ufunc(
@@ -994,7 +1005,7 @@ def lazy_indexing(
     Returns
     -------
     xr.DataArray
-      Values of `da` at indices `index`
+      Values of `da` at indices `index`.
     """
     if da.ndim == 1:
         # Case where da is 1D and index is N-D
@@ -1076,7 +1087,7 @@ def index_of_date(
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
       1D array of integers, indexes of `date` in `time`.
     """
     if date is None:
