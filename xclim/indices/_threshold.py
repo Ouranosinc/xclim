@@ -1213,11 +1213,47 @@ def tn_days_below(
 
     .. math::
 
-        TX_{ij} < Threshold [℃]
+        TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
     f1 = threshold_count(tasmin, "<", thresh, freq)
     return to_agg_units(f1, tasmin, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def tn_days_above(
+    tasmin: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+):  # noqa: D401
+    """Number of summer days.
+
+    Number of days where daily minimum temperature exceeds a threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      umber of days Tmin > threshold.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        TN_{ij} > Threshold [℃]
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    f = threshold_count(tasmin, ">", thresh, freq)
+    return to_agg_units(f, tasmin, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -1226,7 +1262,7 @@ def tx_days_above(
 ):  # noqa: D401
     """Number of summer days.
 
-    Number of days where daily maximum temperature exceed a threshold.
+    Number of days where daily maximum temperature exceeds a threshold.
 
     Parameters
     ----------
