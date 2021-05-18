@@ -208,17 +208,17 @@
   },
   "TG_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmoy > {thresh}",
-    "description": "Nombre {freq:m} de jours où la moyenne de température journalière est au-dessus de {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière moyenne est au-dessus de {thresh}",
     "title": "Nombre de jours avec tmoy au-dessus d'un certain seuil",
     "comment": "",
-    "abstract": "Nombre de jours où la moyenne de température journalière est au-dessus d'un seuil."
+    "abstract": "Nombre de jours où la température journalière moyenne est au-dessus d'un seuil."
   },
   "TG_DAYS_BELOW": {
     "long_name": "Nombre de jours avec Tmoy < {thresh}",
-    "description": "Nombre {freq:m} de jours où la moyenne de température journalière est sous {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière moyenne est sous {thresh}",
     "title": "Nombre de jours avec tmoy sous un certain seuil",
     "comment": "",
-    "abstract": "Nombre de jours où la moyenne de température journalière est sous un seuil."
+    "abstract": "Nombre de jours où la température journalière moyenne est sous un seuil."
   },
   "TX_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh}",
