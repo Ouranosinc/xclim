@@ -19,7 +19,7 @@ New indicators
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `run_length.rle_statistics` now accepts a `window` argument.
-* Common argument to parameter `op` now have better adjective and noun formattings.
+* Common arguments to the `op` parameter now have better adjective and noun formattings.
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 
 0.26.1 (2021-05-04)

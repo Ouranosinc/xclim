@@ -937,7 +937,7 @@ def statistics_run_ufunc(
       Input array (bool)
     reducer: {'min', 'max', 'mean', 'sum', 'std'}
       Reducing function name.
-    window
+    window : int
       Minimal length of runs.
 
     Returns

@@ -237,7 +237,7 @@ def freezethaw_spell(
     r"""Statistics of spells of diurnal freeze-thaw events.
 
     A diurnal freeze-thaw event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This
-    finds all spells of consecutive freeze-thaw says and computes some statistics over the length of the spells.
+    finds all spells of consecutive freeze-thaw days and computes statistics over the length and frequency of the spells.
 
     Parameters
     ----------
