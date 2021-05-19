@@ -5,12 +5,12 @@ import xarray as xr
 
 from xclim.core.utils import uses_dask
 
-from .base import map_groups
+from .base import Grouper, map_groups
 from .nbutils import vecquantiles
 from .utils import ADDITIVE, apply_correction, ecdf, invert
 
 
-@map_groups(sim_ad=["<DIM>"], pth=["<PROP>"], dP0=["<PROP>"])
+@map_groups(sim_ad=[Grouper.DIM], pth=[Grouper.PROP], dP0=[Grouper.PROP])
 def adapt_freq(
     ds: xr.Dataset,
     *,
@@ -170,7 +170,7 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
     return x.where(~((x > thresh) & (x.notnull())), jitter)
 
 
-@map_groups(reduces=["<PROP>"], data=[])
+@map_groups(reduces=[Grouper.PROP], data=[])
 def normalize(
     ds,
     *,
