@@ -30,6 +30,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "daily_freezethaw_cycles",
+    "freezethaw_spell",
     "daily_temperature_range",
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
@@ -215,6 +216,77 @@ def daily_freezethaw_cycles(
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
     out = ft.resample(time=freq).sum(dim="time")
+    return to_agg_units(out, tasmin, "count")
+
+
+@declare_units(
+    tasmax="[temperature]",
+    tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+)
+def freezethaw_spell(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    thresh_tasmax: str = "0 degC",
+    thresh_tasmin: str = "0 degC",
+    window: int = 1,
+    op: str = "mean",
+    freq: str = "YS",
+) -> xarray.DataArray:  # noqa: D401
+    r"""Statistics of spells of diurnal freeze-thaw events.
+
+    A diurnal freeze-thaw event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This
+    finds all spells of consecutive freeze-thaw says and computes some statistics over the length of the spells.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    thresh_tasmax : str
+      The temperature threshold needed to trigger a thaw event.
+    thresh_tasmin : str
+      The temperature threshold needed to trigger a freeze event.
+    window : int
+      The minimal length of spells to be included in the statistics.
+    op : {'mean', 'sum', 'max', 'min', 'std', 'count'}
+      The statistical operation to use when reducing the list of spell lengths.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      {freq} {op} length of freeze-thaw spells.
+
+    Notes
+    -----
+    Let :math:`TX_{i}` be the maximum temperature at day :math:`i` and :math:`TN_{i}` be
+    the daily minimum temperature at day :math:`i`. Then freeze thaw spells during a given
+    period are consecutive days where:
+
+    .. math::
+
+        TX_{i} > 0℃ \land TN_{i} <  0℃
+
+    This indice returns a given statistic of the found lengths, optionnally dropping those shorter
+    than the `window` argument. For example, `window=1` and `op='sum'` returns the same value as
+    :py:func:`daily_freezethaw_cycles`.
+    """
+    thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
+    freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
+
+    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
+    if op == "count":
+        out = ft.resample(time=freq).map(
+            rl.windowed_run_events, window=window, dim="time"
+        )
+    else:
+        out = ft.resample(time=freq).map(
+            rl.rle_statistics, reducer=op, window=window, dim="time"
+        )
     return to_agg_units(out, tasmin, "count")
 
 

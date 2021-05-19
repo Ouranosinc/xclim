@@ -8,6 +8,13 @@ History
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length`, statistics on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
+
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `run_length.rle_statistics` now accepts a `window` argument.
+* Common argument to parameter `op` now have better adjective and noun formattings.
 
 0.26.1 (2021-05-04)
 -------------------
