@@ -158,7 +158,7 @@ def test_xclim_translations(locale, official_indicators):
 
     if len(untranslated) > 0:
         pytest.fail(
-            f"Indicators {','.join(untranslated)} do not have translations for official locale {locale}."
+            f"Indicators {', '.join(untranslated)} do not have translations for official locale {locale}."
         )
 
 

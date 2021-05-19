@@ -5,9 +5,14 @@ History
 0.27.0 (unreleased)
 -------------------
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
 * `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length`, statistics on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
 
 
@@ -15,6 +20,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 * `run_length.rle_statistics` now accepts a `window` argument.
 * Common argument to parameter `op` now have better adjective and noun formattings.
+* Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 
 0.26.1 (2021-05-04)
 -------------------

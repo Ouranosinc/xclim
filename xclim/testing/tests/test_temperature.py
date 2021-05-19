@@ -873,8 +873,8 @@ class TestTnDaysBelow:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + -10
-        fd = atmos.tn_days_below(tas, freq="YS")
-        fdC = atmos.tn_days_below(tasC, freq="YS")
+        fd = atmos.tn_days_below(tas, thresh="-10 degC", freq="YS")
+        fdC = atmos.tn_days_below(tasC, thresh="-10 degC", freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
@@ -919,10 +919,14 @@ class TestTxDaysAbove:
         assert np.isnan(fd.values[0, -1, -1])
 
 
-class TestTropicalNights:
+class TestTnDaysAbove:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    @pytest.mark.parametrize(
+        "tn_indice, kwargs",
+        [("tn_days_above", dict(thresh="20 degC")), ("tropical_nights", dict())],
+    )
+    def test_3d_data_with_nans(self, tn_indice, kwargs):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmin
         tasC = open_dataset(self.nc_file).tasmin
@@ -933,8 +937,9 @@ class TestTropicalNights:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 20
-        out = atmos.tropical_nights(tas, freq="YS")
-        outC = atmos.tropical_nights(tasC, freq="YS")
+
+        out = getattr(atmos, tn_indice)(tas, **kwargs, freq="YS")
+        outC = getattr(atmos, tn_indice)(tasC, **kwargs, freq="YS")
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
@@ -944,9 +949,7 @@ class TestTropicalNights:
         np.testing.assert_array_equal(out, outC)
 
         assert np.allclose(out1, out.values[0, 0, 0])
-
         assert np.isnan(out.values[0, 1, 0])
-
         assert np.isnan(out.values[0, -1, -1])
 
 
