@@ -1,6 +1,6 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
 
-from typing import Optional, Sequence, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import dask.array
 import numpy as np
@@ -87,6 +87,8 @@ def fit(
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
       The PWM method is usually more robust to outliers.
+    dim : str
+      The dimension upon which to perform the indexing (default: "time").
     **fitkwargs
       Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
@@ -158,10 +160,11 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
     Parameters
     ----------
     p : xr.DataArray
-      Distribution parameters returned by the `fit` function. The array should have dimension `dparams` storing the
-      distribution parameters, and attribute `scipy_dist`, storing the name of the distribution.
+      Distribution parameters returned by the `fit` function.
+      The array should have dimension `dparams` storing the distribution parameters,
+      and attribute `scipy_dist`, storing the name of the distribution.
     q : Union[float, Sequence]
-      Quantile to compute, which must be between 0 and 1 inclusive.
+      Quantile to compute, which must be between `0` and `1`, inclusive.
 
     Returns
     -------
@@ -218,7 +221,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
 
 def fa(
     da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "max"
-):
+) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
     Parameters
@@ -270,7 +273,7 @@ def frequency_analysis(
     window: int = 1,
     freq: Optional[str] = None,
     **indexer,
-):
+) -> xr.DataArray:
     """Return the value corresponding to a return period.
 
     Parameters
@@ -343,7 +346,7 @@ def get_lm3_dist(dist):
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
-def _fit_start(x, dist, **fitkwargs):
+def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
     """Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
@@ -355,6 +358,10 @@ def _fit_start(x, dist, **fitkwargs):
     dist : str
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
       (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+
+    Returns
+    -------
+    tuple, dict
 
     References
     ----------
@@ -392,7 +399,7 @@ def _fit_start(x, dist, **fitkwargs):
 
 def _dist_method_1D(
     params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs
-):
+) -> xr.DataArray:
     """Statistical function for given argument on given distribution initialized with params.
 
     See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
@@ -426,7 +433,7 @@ def dist_method(
     fit_params: xr.DataArray,
     arg: Optional[xr.DataArray] = None,
     **kwargs,
-):
+) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
     See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.

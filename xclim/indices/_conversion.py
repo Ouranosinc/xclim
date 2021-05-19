@@ -117,9 +117,9 @@ def sfcwind_2_uas_vas(
     Returns
     -------
     uas : xr.DataArray, [m s-1]
-      Eastward wind velocity
+      Eastward wind velocity.
     vas : xr.DataArray, [m s-1]
-      Northward wind velocity
+      Northward wind velocity.
 
     """
     # Converts the wind speed to m s-1
@@ -147,14 +147,14 @@ def sfcwind_2_uas_vas(
 
 @declare_units(tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
-    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
+    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
 ) -> xr.DataArray:
     """Saturation vapor pressure from temperature.
 
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature array.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
@@ -164,7 +164,7 @@ def saturation_vapor_pressure(
     Returns
     -------
     xarray.DataArray, [Pa]
-      Saturation vapor pressure
+      Saturation vapor pressure.
 
     Notes
     -----
@@ -279,13 +279,13 @@ def relative_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature array.
     dtas : xr.DataArray
-      Dewpoint temperature, if specified, overrides huss and ps.
+      Dewpoint temperature (if specified, overrides huss and ps).
     huss : xr.DataArray
-      Specific Humidity
+      Specific Humidity.
     ps : xr.DataArray
-      Air Pressure
+      Air Pressure.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
@@ -293,12 +293,12 @@ def relative_humidity(
       Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
       What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
-      if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
+      if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
 
     Returns
     -------
     xr.DataArray, [%]
-      Relative humidity
+      Relative humidity.
 
     Notes
     -----
@@ -393,10 +393,11 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature.
     rh : xr.DataArrsay
+      Relative Humidity.
     ps : xr.DataArray
-      Air Pressure
+      Air Pressure.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
@@ -411,7 +412,7 @@ def specific_humidity(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Specific humidity
+      Specific humidity.
 
     Notes
     -----
@@ -459,7 +460,7 @@ def snowfall_approximation(
     tas: xr.DataArray,
     thresh: str = "0 degC",
     method: str = "binary",
-):
+) -> xr.DataArray:
     """Snowfall approximation from total precipitation and temperature.
 
     Solid precipitation estimated from precipitation and temperature according to a given method.
@@ -469,7 +470,7 @@ def snowfall_approximation(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum or minimum daily temperature.
+      Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
     method : {"binary"}
@@ -478,7 +479,7 @@ def snowfall_approximation(
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Solid precipitation flux
+      Solid precipitation flux.
 
     Notes
     -----
@@ -505,7 +506,7 @@ def rain_approximation(
     tas: xr.DataArray,
     thresh: str = "0 degC",
     method: str = "binary",
-):
+) -> xr.DataArray:
     """Rainfall approximation from total precipitation and temperature.
 
     Liquid precipitation estimated from precipitation and temperature according to a given method.
@@ -516,7 +517,7 @@ def rain_approximation(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum or minimum daily temperature.
+      Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
     method : {"binary"}
@@ -525,7 +526,7 @@ def rain_approximation(
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Liquid precipitation rate
+      Liquid precipitation rate.
 
     Notes
     -----

@@ -657,27 +657,71 @@ class TestHotSpellMaxLength:
         np.testing.assert_allclose(hsml.values, expected)
 
 
-class TestTnDaysBelow:
-    def test_simple(self, tasmin_series):
+class TestTnDays:
+    def test_above_simple(self, tasmin_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_above(mn, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmin_series):
         a = np.zeros(365)
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
-        mx = tasmin_series(a + K2C)
+        mn = tasmin_series(a + K2C)
 
-        out = xci.tn_days_below(mx, thresh="-10 C")
+        out = xci.tn_days_below(mn, thresh="-10 C")
         np.testing.assert_array_equal(out[:1], [6])
         np.testing.assert_array_equal(out[1:], [0])
-        out = xci.tn_days_below(mx, thresh="-30 C")
+        out = xci.tn_days_below(mn, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
 
-class TestTxDaysAbove:
-    def test_simple(self, tasmax_series):
+class TestTgDays:
+    def test_above_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_above(mg, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_below(mg, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tg_days_below(mg, thresh="-30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
+class TestTxDays:
+    def test_above_simple(self, tasmax_series):
         a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a + K2C)
 
         out = xci.tx_days_above(mx, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a + K2C)
+
+        out = xci.tx_days_below(mx, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -1493,7 +1537,7 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        from xclim.indicators import icclim
+        from xclim.indicators import icclim  # noqa
 
         with set_options(cf_compliance="log"):
             ind = xci.tg_mean(cmip3_day_tas)

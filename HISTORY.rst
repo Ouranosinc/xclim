@@ -11,11 +11,17 @@ New features and enhancements
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 
 
 0.26.1 (2021-05-04)

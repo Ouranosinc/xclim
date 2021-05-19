@@ -242,7 +242,7 @@ def daily_temperature_range(
 
     Returns
     -------
-    xarray.DataArray, [same as tasmin]
+    xarray.DataArray, [same units as tasmin]
       The average variation in daily temperature range for the given time period.
 
     Notes
@@ -283,7 +283,7 @@ def daily_temperature_range_variability(
 
     Returns
     -------
-    xarray.DataArray, [same as tasmin]
+    xarray.DataArray, [same units as tasmin]
       The average day-to-day variation in daily temperature range for the given time period.
 
     Notes
@@ -323,7 +323,7 @@ def extreme_temperature_range(
 
     Returns
     -------
-    xarray.DataArray, [same as tasmin]
+    xarray.DataArray, [same units as tasmin]
       Extreme intra-period temperature range for the given time period.
 
     Notes
@@ -383,7 +383,7 @@ def heat_wave_frequency(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Number of heatwave at the wanted frequency
+      Number of heatwave at the requested frequency.
 
     Notes
     -----
@@ -452,7 +452,7 @@ def heat_wave_max_length(
     Returns
     -------
     xarray.DataArray, [time]
-      Maximum length of heatwave at the wanted frequency
+      Maximum length of heatwave at the requested frequency.
 
     Notes
     -----
@@ -519,7 +519,7 @@ def heat_wave_total_length(
     Returns
     -------
     xarray.DataArray, [time]
-      Total length of heatwave at the wanted frequency
+      Total length of heatwave at the requested frequency.
 
     Notes
     -----
@@ -567,7 +567,7 @@ def liquid_precip_ratio(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Ratio of rainfall to total precipitation
+      Ratio of rainfall to total precipitation.
 
     Notes
     -----
@@ -684,7 +684,7 @@ def rain_on_frozen_ground_days(
     Returns
     -------
     xarray.DataArray, [time]
-      The number of rain on frozen ground events per period
+      The number of rain on frozen ground events per period.
 
     Notes
     -----
@@ -796,7 +796,7 @@ def days_over_precip_thresh(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily precipitation above the given percentile [days]
+      Count of days with daily precipitation above the given percentile [days].
 
     Examples
     --------
@@ -886,7 +886,7 @@ def tg90p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily mean temperature below the 10th percentile [days]
+      Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -930,7 +930,7 @@ def tg10p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily mean temperature below the 10th percentile [days]
+      Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -974,7 +974,7 @@ def tn90p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily minimum temperature below the 10th percentile [days]
+      Count of days with daily minimum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1018,7 +1018,7 @@ def tn10p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily minimum temperature below the 10th percentile [days]
+      Count of days with daily minimum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1062,7 +1062,7 @@ def tx90p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily maximum temperature below the 10th percentile [days]
+      Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1106,7 +1106,7 @@ def tx10p(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily maximum temperature below the 10th percentile [days]
+      Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1163,9 +1163,7 @@ def tx_tn_days_above(
     Returns
     -------
     xarray.DataArray, [time]
-      the number of days with tasmin > thresh_tasmin and
-      tasmax > thresh_tasamax per period
-
+      the number of days with tasmin > thresh_tasmin and tasmax > thresh_tasmax per period.
 
     Notes
     -----
@@ -1216,7 +1214,7 @@ def warm_spell_duration_index(
     Returns
     -------
     xarray.DataArray, [time]
-      Warm spell duration index
+      Warm spell duration index.
 
     Examples
     --------
@@ -1276,7 +1274,7 @@ def winter_rain_ratio(
     Returns
     -------
     xarray.DataArray
-      Ratio of rainfall to total precipitation during winter months (DJF)
+      Ratio of rainfall to total precipitation during winter months (DJF).
     """
     ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
