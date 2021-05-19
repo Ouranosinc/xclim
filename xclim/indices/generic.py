@@ -394,7 +394,7 @@ def diurnal_temperature_range(
     return out
 
 
-def first_occurence(
+def first_occurrence(
     data: xr.DataArray, threshold: str, condition: str, freq: str
 ) -> xr.DataArray:
     """Calculate the first time some condition is met.
@@ -431,7 +431,7 @@ def first_occurence(
     return out
 
 
-def last_occurence(
+def last_occurrence(
     data: xr.DataArray, threshold: str, condition: str, freq: str
 ) -> xr.DataArray:
     """Calculate the last time some condition is met.

@@ -5,9 +5,14 @@ History
 0.27.0 (unreleased)
 -------------------
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
