@@ -618,7 +618,7 @@ tropical_nights = Tasmin(
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
     " above {thresh}",
     cell_methods="time: minimum within days time: sum over days",
-    compute=indices.tropical_nights,
+    compute=wrapped_partial(indices.tn_days_above, thresh="20 degC"),
 )
 
 tg90p = Tas(

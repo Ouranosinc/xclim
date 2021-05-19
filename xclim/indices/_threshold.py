@@ -1,4 +1,5 @@
 # noqa: D100
+import warnings
 from typing import Optional
 
 import numpy as np
@@ -1192,7 +1193,7 @@ def snow_cover_duration(
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
-    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
 ):  # noqa: D401
     """Number of days with tasmin above a threshold (number of tropical nights).
 
@@ -1792,10 +1793,20 @@ def tropical_nights(
     .. math::
 
         TN_{ij} > Threshold [℃]
+
+    Warnings
+    --------
+    The `tropical_nights` indicator is being deprecated in favour of `tn_days_above` with `thresh="20 degC" by default.
+    This change will be effectuated in a future version of xclim.
     """
-    thresh = convert_units_to(thresh, tasmin)
-    out = threshold_count(tasmin, ">", thresh, freq)
-    return to_agg_units(out, tasmin, "count")
+    warnings.warn(
+        "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'. "
+        "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
+        UserWarning,
+        stacklevel=3,
+    )
+
+    return tn_days_above(tasmin, thresh=thresh, freq=freq)
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
