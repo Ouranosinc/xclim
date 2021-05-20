@@ -214,9 +214,9 @@ def daily_freezethaw_cycles(
 
     Warnings
     --------
-    The `daily_freezethaw_cycles` indicator is being deprecated in favour of `multiday_temperature_swing` with
-    `thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default.
-    This change will be effectuated in a future version of xclim.
+    The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing` with
+    `thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default. The indicator reflects this change.
+    This indice will be removed in a future version of xclim.
     """
     warnings.warn(
         "The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing` with "
@@ -289,9 +289,8 @@ def multiday_temperature_swing(
 
         TX_{i} > 0℃ \land TN_{i} <  0℃
 
-    This indice returns a given statistic of the found lengths, optionally dropping those shorter
-    than the `window` argument. For example, `window=1` and `op='sum'` returns the same value as
-    :py:func:`daily_freezethaw_cycles`.
+    This indice returns a given statistic of the found lengths, optionally dropping those shorter than the `window`
+    argument. For example, `window=1` and `op='sum'` returns the same value as :py:func:`daily_freezethaw_cycles`.
     """
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
@@ -792,7 +791,6 @@ def rain_on_frozen_ground_days(
         TG_{i} ≤ 0℃
 
     is true for continuous periods where :math:`i ≥ 7`
-
     """
     t = convert_units_to(thresh, pr)
     frz = convert_units_to("0 C", tas)

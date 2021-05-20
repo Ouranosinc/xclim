@@ -1796,8 +1796,8 @@ def tropical_nights(
 
     Warnings
     --------
-    The `tropical_nights` indicator is being deprecated in favour of `tn_days_above` with `thresh="20 degC"` by default.
-    This change will be effectuated in a future version of xclim.
+    The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"` by default.
+    The indicator reflects this change. This indice will be removed in a future version of xclim.
     """
     warnings.warn(
         "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'`. "
