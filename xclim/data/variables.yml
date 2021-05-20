@@ -7,6 +7,8 @@ variables:
     standard_name: relative_humidity
   huss:
     canonical_units: '1'
+    cell_methods:
+    - time: mean
     description: Specific humidity.
     standard_name: specific_humidity
   lat:
@@ -17,14 +19,18 @@ variables:
     canonical_units: kg m-2 s-1
     cell_methods:
     - time: mean
-    description: Daily surface precipitation flux.
+    description: Surface precipitation flux (all phases).
     standard_name: precipitation_flux
   prsn:
     canonical_units: kg m-2 s-1
-    description: Mass flux of snowfall
+    cell_methods:
+    - time: mean
+    description: Surface snowfall flux.
     standard_name: snowfall_flux
   ps:
     canonical_units: Pa
+    cell_methods:
+    - time: mean
     description: Air pressure at surface
     standard_name: surface_air_pressure
   psl:
@@ -61,31 +67,35 @@ variables:
     canonical_units: K
     cell_methods:
     - time: mean
-    description: Mean daily surface temperature.
+    description: Mean surface temperature.
     standard_name: air_temperature
   tasmax:
     canonical_units: K
     cell_methods:
     - time: maximum
-    description: Maximum daily surface temperature.
+    description: Maximum surface temperature.
     standard_name: air_temperature
   tasmin:
     canonical_units: K
     cell_methods:
     - time: minimum
-    description: Minimum daily surface temperature.
+    description: Minimum surface temperature.
     standard_name: air_temperature
   uas:
     canonical_units: m s-1
-    description: Eastward component of the wind velocity
+    cell_methods:
+    - time: mean
+    description: Eastward component of the wind velocity.
     standard_name: eastward_wind
   vas:
     canonical_units: m s-1
-    description: Northward component of the wind velocity
+    cell_methods:
+    - time: mean
+    description: Northward component of the wind velocity.
     standard_name: northward_wind
   wsgsmax:
     canonical_units: m s-1
     cell_methods:
     - time: maximum
-    description: Daily maximum surface wind speed.
+    description: Maximum surface wind speed.
     standard_name: wind_speed_of_gust
