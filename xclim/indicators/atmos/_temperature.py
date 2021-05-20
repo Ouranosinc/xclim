@@ -435,7 +435,7 @@ cold_spell_days = Tas(
     long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -447,7 +447,7 @@ cold_spell_frequency = Tas(
     long_name="Number of cold spell events",
     description="{freq} number cold spell events, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )
