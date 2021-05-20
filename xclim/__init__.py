@@ -9,7 +9,7 @@ from xclim.indicators import atmos, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.26.1"
+__version__ = "0.26.3-beta"
 
 
 # Virtual modules creation:

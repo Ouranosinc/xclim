@@ -433,6 +433,7 @@ def prcptot(
     return pram.resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
+# FIXME: src_timestep is not used here.
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_period(
     pr: xarray.DataArray, *, op: str, src_timestep: str, freq: str = "YS"
@@ -481,7 +482,7 @@ def _anuclim_coeff_var(arr: xarray.DataArray) -> xarray.DataArray:
 
 
 def _from_other_arg(
-    criteria: xarray.DataArray, output: xarray.DataArray, op, freq
+    criteria: xarray.DataArray, output: xarray.DataArray, op, freq: str
 ) -> xarray.DataArray:
     """Pick values from output based on operation returning an index from criteria.
 
