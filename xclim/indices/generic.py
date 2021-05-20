@@ -594,3 +594,19 @@ def extreme_temperature_range(
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
     return out
+
+
+def aggregate_between_dates(data: xr.DataArray, start, end):
+    data_groups = list(data.resample(time="YS"))
+
+    start = list(zip(*data_groups))[0] + start.astype("timedelta64[D]")
+    end = list(zip(*data_groups))[0] + end.astype("timedelta64[D]")
+
+    out = xr.zeros_like(start, dtype="int")
+
+    for i in range(len(data_groups)):
+        out[..., i] = data.where(
+            np.logical_and(start[..., i] <= data.time, data.time <= end[..., i])
+        ).sum(dim="time")
+
+    return out
