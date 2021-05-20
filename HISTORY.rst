@@ -13,13 +13,14 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing`` with temp thresholds at 0 degC and `window=1, op="sum"`. The indicator remains valid, now wrapping this new indice.
 
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
-* `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length`, statistics on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
-
+* `multiday_temperature_swing` indice for returning general statistics based on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
+* New indicators `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length` for statistics of Tmin < 0 degC and Tmax > 0 deg C days now available (wrapped from `multiday_temperature_swing`).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
