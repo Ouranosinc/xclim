@@ -788,7 +788,7 @@ class TestDailyFreezeThaw:
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < 0) * (max1 > 0) * 1.0).sum()
+        frzthw1 = (((min1 < 0) & (max1 > 0)) * 1.0).sum()
 
         assert (
             "This index calculation will soon require user-specified thresholds."
