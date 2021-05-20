@@ -760,7 +760,7 @@ class TestDailyFreezeThaw:
 
         frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
 
-        assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
+        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
 
         assert np.isnan(frzthw.values[0, 1, 0])
 
@@ -780,8 +780,8 @@ class TestDailyFreezeThaw:
             frzthw = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
-                thresh_tasmax="0 degC",
                 thresh_tasmin="0 degC",
+                thresh_tasmax="0 degC",
                 freq="YS",
             )
 
@@ -795,7 +795,7 @@ class TestDailyFreezeThaw:
             not in [str(q.message) for q in record]
         )
 
-        assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
+        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
 
         assert np.isnan(frzthw.values[0, 1, 0])
 

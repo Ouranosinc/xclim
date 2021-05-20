@@ -166,16 +166,16 @@ def cold_and_dry_days(
 
 
 @declare_units(
-    tasmax="[temperature]",
     tasmin="[temperature]",
-    thresh_tasmax="[temperature]",
+    tasmax="[temperature]",
     thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
 )
 def daily_freezethaw_cycles(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmax: str = "0 degC",
     thresh_tasmin: str = "0 degC",
+    thresh_tasmax: str = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with a diurnal freeze-thaw cycle.
@@ -188,10 +188,10 @@ def daily_freezethaw_cycles(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmax : str
-      The temperature threshold needed to trigger a thaw event.
     thresh_tasmin : str
       The temperature threshold needed to trigger a freeze event.
+    thresh_tasmax : str
+      The temperature threshold needed to trigger a thaw event.
     freq : str
       Resampling frequency.
 
@@ -227,10 +227,10 @@ def daily_freezethaw_cycles(
     )
 
     return multiday_temperature_swing(
-        tasmax=tasmax,
         tasmin=tasmin,
-        thresh_tasmax=thresh_tasmax,
+        tasmax=tasmax,
         thresh_tasmin=thresh_tasmin,
+        thresh_tasmax=thresh_tasmax,
         window=1,
         op="sum",
         freq=freq,
@@ -238,16 +238,16 @@ def daily_freezethaw_cycles(
 
 
 @declare_units(
-    tasmax="[temperature]",
     tasmin="[temperature]",
-    thresh_tasmax="[temperature]",
+    tasmax="[temperature]",
     thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
 )
 def multiday_temperature_swing(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmax: str = "0 degC",
     thresh_tasmin: str = "0 degC",
+    thresh_tasmax: str = "0 degC",
     window: int = 1,
     op: str = "mean",
     freq: str = "YS",
@@ -263,10 +263,10 @@ def multiday_temperature_swing(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmax : str
-      The temperature threshold needed to trigger a thaw event.
     thresh_tasmin : str
       The temperature threshold needed to trigger a freeze event.
+    thresh_tasmax : str
+      The temperature threshold needed to trigger a thaw event.
     window : int
       The minimal length of spells to be included in the statistics.
     op : {'mean', 'sum', 'max', 'min', 'std', 'count'}
@@ -296,7 +296,7 @@ def multiday_temperature_swing(
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
-    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
+    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold)
     if op == "count":
         out = ft.resample(time=freq).map(
             rl.windowed_run_events, window=window, dim="time"

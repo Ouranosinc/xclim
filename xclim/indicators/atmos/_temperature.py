@@ -498,8 +498,7 @@ freezethaw_spell_mean_length = TasminTasmax(
     compute=wrapped_partial(
         indices.multiday_temperature_swing,
         op="mean",
-        thresh_tasmax="0 degC",
-        thresh_tasmin="0 degC",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
     ),
 )
 
