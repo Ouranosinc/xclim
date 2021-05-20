@@ -14,6 +14,7 @@ DATA_VALIDATION = "data_validation"
 CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
+RUN_LENGTH_UFUNC = "run_length_ufunc"
 
 MISSING_METHODS: Dict[str, Callable] = dict()
 
@@ -23,9 +24,11 @@ OPTIONS = {
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
     MISSING_OPTIONS: dict(),
+    RUN_LENGTH_UFUNC: "auto",
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
+_RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
 
 
 def _valid_missing_options(mopts):
@@ -48,6 +51,7 @@ _VALIDATORS = {
     CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
     CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
     MISSING_OPTIONS: _valid_missing_options,
+    RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
 }
 
 
@@ -118,7 +122,7 @@ class set_options:
 
     Currently supported options:
 
-    - ``metadata_locales"``:  List of IETF language tags or
+    - ``metadata_locales``:  List of IETF language tags or
         tuples of language tags and a translation dict, or
         tuples of language tags and a path to a json file defining translation
         of attributes.
@@ -135,6 +139,8 @@ class set_options:
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
+    - ``run_length_ufunc``: Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
+        Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
 
     Examples
     --------

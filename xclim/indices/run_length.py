@@ -16,25 +16,34 @@ import xarray
 import xarray as xr
 from dask import array as dsk
 
-from xclim.core.utils import DateStr, DayOfYearStr
+from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
+from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
 npts_opt = 9000
 
 
-def get_npts(da: xr.DataArray) -> int:
+def use_ufunc(
+    ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time"
+) -> bool:
     """Return the number of gridpoints in a DataArray.
 
     Parameters
     ----------
+    ufunc_1dim: {'auto', True, False}
     da : xarray.DataArray
       N-dimensional input array.
+    dim: str
+      The dimension along which to find runs.
 
     Returns
     -------
-    int
-      Product of input DataArray coordinate sizes excluding the dimension 'time'
+    bool
+      If ufunc_1dim is "auto", returns True if the array is on dask or too large.
+      Otherwise, returns ufunc_1dim.
     """
-    return da.size // da.time.size
+    if ufunc_1dim == "auto":
+        return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+    return ufunc_1dim
 
 
 def rle(
@@ -56,6 +65,10 @@ def rle(
       and are NaN on the other days of the runs.
     """
     use_dask = isinstance(da.data, dsk.Array)
+
+    # Ensure boolean
+    da = da.astype(bool)
+
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
     i = xr.DataArray(np.arange(da[dim].size), dims=dim)
@@ -108,7 +121,7 @@ def rle_statistics(
     da: xr.DataArray,
     reducer: str = "max",
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "auto",
+    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
 ) -> xr.DataArray:
     """Return the length of consecutive run of True values, according to a reducing operator.
 
@@ -131,12 +144,10 @@ def rle_statistics(
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
-    if ufunc_1dim == "auto":
-        npts = get_npts(da)
-        ufunc_1dim = npts <= npts_opt
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     if ufunc_1dim:
-        rl_stat = statistics_run_ufunc(da, reducer)
+        rl_stat = statistics_run_ufunc(da, reducer, dim)
     else:
         d = rle(da, dim=dim)
         rl_stat = getattr(d.where(d > 0), reducer)(dim=dim)
@@ -146,7 +157,9 @@ def rle_statistics(
 
 
 def longest_run(
-    da: xr.DataArray, dim: str = "time", ufunc_1dim: Union[str, bool] = "auto"
+    da: xr.DataArray,
+    dim: str = "time",
+    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
 
@@ -195,12 +208,10 @@ def windowed_run_events(
     xr.DataArray
       Number of distinct runs of a minimum length (int).
     """
-    if ufunc_1dim == "auto":
-        npts = get_npts(da)
-        ufunc_1dim = npts <= npts_opt
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     if ufunc_1dim:
-        out = windowed_run_events_ufunc(da, window)
+        out = windowed_run_events_ufunc(da, window, dim)
     else:
         d = rle(da, dim=dim)
         out = (d >= window).sum(dim=dim)
@@ -211,7 +222,7 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "auto",
+    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
@@ -233,12 +244,10 @@ def windowed_run_count(
     xr.DataArray
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    if ufunc_1dim == "auto":
-        npts = get_npts(da)
-        ufunc_1dim = npts <= npts_opt
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     if ufunc_1dim:
-        out = windowed_run_count_ufunc(da, window)
+        out = windowed_run_count_ufunc(da, window, dim)
     else:
         d = rle(da, dim=dim)
         out = d.where(d >= window, 0).sum(dim=dim)
@@ -250,7 +259,7 @@ def first_run(
     window: int,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = "auto",
+    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
 ) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
@@ -277,12 +286,7 @@ def first_run(
       Index (or coordinate if `coord` is not False) of first item in first valid run.
       Returns np.nan if there are no valid runs.
     """
-    if ufunc_1dim == "auto":
-        if isinstance(da.data, dsk.Array) and len(da.chunks[da.dims.index(dim)]) > 1:
-            ufunc_1dim = False
-        else:
-            npts = get_npts(da)
-            ufunc_1dim = npts <= npts_opt
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
 
@@ -295,7 +299,7 @@ def first_run(
         ind = xr.broadcast(i, da)[0].transpose(*da.dims)
         if isinstance(da.data, dsk.Array):
             ind = ind.chunk(da.chunks)
-        wind_sum = da.rolling(time=window).sum(skipna=False)
+        wind_sum = da.rolling({dim: window}).sum(skipna=False)
         out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
         # remove window - 1 as rolling result index is last element of the moving window
 
@@ -317,7 +321,7 @@ def last_run(
     window: int,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = "auto",
+    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
 ) -> xr.DataArray:
     """Return the index of the last item of the last run of at least a given length.
 
@@ -375,7 +379,7 @@ def run_bounds(
     xr.DataArray
       With ``dim`` reduced to "events" and "bounds". The events dim is as long as needed, padded with NaN or NaT.
     """
-    if isinstance(mask.data, dsk.Array):
+    if uses_dask(mask):
         raise NotImplementedError(
             "Dask arrays not supported as we can't know the final event number before computing."
         )
@@ -690,12 +694,12 @@ def first_run_after_date(
       Index (or coordinate if `coord` is not False) of first item in the first valid run.
       Returns np.nan if there are no valid runs.
     """
-    mid_idx = index_of_date(da.time, date, max_idxs=1, default=0)
+    mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+        return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
 
     return first_run(
-        da.where(da.time >= da.time[mid_idx][0]),
+        da.where(da[dim] >= da[dim][mid_idx][0]),
         window=window,
         dim=dim,
         coord=coord,
@@ -732,12 +736,12 @@ def last_run_before_date(
       Index (or coordinate if `coord` is not False) of last item in last valid run.
       Returns np.nan if there are no valid runs.
     """
-    mid_idx = index_of_date(da.time, date, default=-1)
+    mid_idx = index_of_date(da[dim], date, default=-1)
 
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-        return xr.full_like(da.isel(time=0), np.nan, float).drop_vars("time")
+        return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
 
-    run = da.where(da.time <= da.time[mid_idx][0])
+    run = da.where(da[dim] <= da[dim][mid_idx][0])
     return last_run(run, window=window, dim=dim, coord=coord)
 
 
@@ -867,7 +871,9 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray
     return (v * rl >= window).sum()
 
 
-def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
+def windowed_run_count_ufunc(
+    x: Union[xr.DataArray, Sequence[bool]], window: int, dim: str
+) -> xr.DataArray:
     """Dask-parallel version of windowed_run_count_1d, ie: the number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
@@ -885,7 +891,7 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     return xr.apply_ufunc(
         windowed_run_count_1d,
         x,
-        input_core_dims=[["time"]],
+        input_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[int],
@@ -894,7 +900,9 @@ def windowed_run_count_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     )
 
 
-def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
+def windowed_run_events_ufunc(
+    x: Union[xr.DataArray, Sequence[bool]], window: int, dim: str
+) -> xr.DataArray:
     """Dask-parallel version of windowed_run_events_1d, ie: the number of runs at least as long as given duration.
 
     Parameters
@@ -912,7 +920,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
     return xr.apply_ufunc(
         windowed_run_events_1d,
         x,
-        input_core_dims=[["time"]],
+        input_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[int],
@@ -922,7 +930,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
 
 
 def statistics_run_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]], reducer: str
+    x: Union[xr.DataArray, Sequence[bool]], reducer: str, dim: str
 ) -> xr.DataArray:
     """Dask-parallel version of statistics_run_1d, ie: the {reducer} number of consecutive true values in array.
 
@@ -941,7 +949,7 @@ def statistics_run_ufunc(
     return xr.apply_ufunc(
         statistics_run_1d,
         x,
-        input_core_dims=[["time"]],
+        input_core_dims=[[dim]],
         kwargs={"reducer": reducer},
         vectorize=True,
         dask="parallelized",
@@ -953,7 +961,7 @@ def statistics_run_ufunc(
 def first_run_ufunc(
     x: Union[xr.DataArray, Sequence[bool]],
     window: int,
-    dim: str = "time",
+    dim: str,
 ) -> xr.DataArray:
     """Dask-parallel version of first_run_1d, ie: the first entry in array of consecutive true values.
 
