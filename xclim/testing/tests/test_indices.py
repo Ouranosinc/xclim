@@ -1888,7 +1888,7 @@ def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
     tasmax = tasmax_series(tmax + K2C)
     tasmin = tasmin_series(tmin + K2C)
 
-    out = xci.freezethaw_spell(
+    out = xci.multiday_temperature_swing(
         tasmin=tasmin, tasmax=tasmax, freq="AS-JUL", window=3, op=op
     )
     np.testing.assert_array_equal(out, exp)

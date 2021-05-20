@@ -1,4 +1,5 @@
 # noqa: D100
+import warnings
 from typing import Optional
 
 import numpy as np
@@ -30,7 +31,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "daily_freezethaw_cycles",
-    "freezethaw_spell",
+    "multiday_temperature_swing",
     "daily_temperature_range",
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
@@ -154,7 +155,7 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    raise NotImplementedError
+    raise NotImplementedError()
     # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
     #
     # c1 = tas < convert_units_to(tgin25, tas)
@@ -210,13 +211,30 @@ def daily_freezethaw_cycles(
         \sum_{i \in \phi} [ TX_{i} > 0℃ ] [ TN_{i} <  0℃ ]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
-    """
-    thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
-    freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
-    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold) * 1
-    out = ft.resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tasmin, "count")
+    Warnings
+    --------
+    The `daily_freezethaw_cycles` indicator is being deprecated in favour of `multiday_temperature_swing` with
+    `thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default.
+    This change will be effectuated in a future version of xclim.
+    """
+    warnings.warn(
+        "The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing` with "
+        "`thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default. "
+        "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
+        UserWarning,
+        stacklevel=3,
+    )
+
+    return multiday_temperature_swing(
+        tasmax=tasmax,
+        tasmin=tasmin,
+        thresh_tasmax=thresh_tasmax,
+        thresh_tasmin=thresh_tasmin,
+        window=1,
+        op="sum",
+        freq=freq,
+    )
 
 
 @declare_units(
@@ -225,7 +243,7 @@ def daily_freezethaw_cycles(
     thresh_tasmax="[temperature]",
     thresh_tasmin="[temperature]",
 )
-def freezethaw_spell(
+def multiday_temperature_swing(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
     thresh_tasmax: str = "0 degC",
@@ -234,10 +252,10 @@ def freezethaw_spell(
     op: str = "mean",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
-    r"""Statistics of spells of diurnal freeze-thaw events.
+    r"""Statistics of consecutive diurnal temperature swing events.
 
-    A diurnal freeze-thaw event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This
-    finds all spells of consecutive freeze-thaw days and computes statistics over the length and frequency of the spells.
+    A diurnal swing of max and min temperature event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This indice
+    finds all days that constitute these events and computes statistics over the length and frequency of these events.
 
     Parameters
     ----------
@@ -259,7 +277,7 @@ def freezethaw_spell(
     Returns
     -------
     xarray.DataArray, [time]
-      {freq} {op} length of freeze-thaw spells.
+      {freq} {op} length of diurnal temperature cycles exceeding thresholds.
 
     Notes
     -----
@@ -271,7 +289,7 @@ def freezethaw_spell(
 
         TX_{i} > 0℃ \land TN_{i} <  0℃
 
-    This indice returns a given statistic of the found lengths, optionnally dropping those shorter
+    This indice returns a given statistic of the found lengths, optionally dropping those shorter
     than the `window` argument. For example, `window=1` and `op='sum'` returns the same value as
     :py:func:`daily_freezethaw_cycles`.
     """
