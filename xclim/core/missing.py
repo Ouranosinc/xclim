@@ -24,8 +24,9 @@ To define another missing value algorithm, subclass :class:`MissingBase` and dec
 `xclim.core.options.register_missing_method`.
 
 """
+from typing import Any, Tuple, Union
+
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from xclim.core.calendar import date_range, get_calendar
@@ -102,10 +103,10 @@ class MissingBase:
           Input data.
         freq : str
           Resampling frequency defining the periods defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+          https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
         src_timestep : {"D", "H"}
           Expected input frequency.
-        **indexer : {dim: indexer, }, optional
+        **indexer : {dim: indexer}, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
           values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
           all values are considered.
@@ -210,7 +211,7 @@ class MissingAny(MissingBase):
       A boolean array set to True if period has missing values.
     """
 
-    def is_missing(self, null, count):
+    def is_missing(self, null, count):  # noqa
         cond0 = null.count(dim="time") != count  # Check total number of days
         cond1 = null.sum(dim="time") > 0  # Check if any is missing
         return cond0 | cond1

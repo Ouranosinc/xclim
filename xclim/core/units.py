@@ -17,6 +17,7 @@ import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
 from packaging import version
+from pint.definitions import UnitDefinition
 
 from .calendar import parse_offset
 from .options import datacheck
@@ -27,6 +28,7 @@ __all__ = [
     "declare_units",
     "pint_multiply",
     "pint2cfunits",
+    "rate2amount",
     "str2pint",
     "units",
     "units2pint",
@@ -161,7 +163,7 @@ def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-def pint2cfunits(value: Union[units.Unit, units.Quantity]) -> str:
+def pint2cfunits(value: UnitDefinition) -> str:
     """Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
@@ -202,7 +204,7 @@ def pint2cfunits(value: Union[units.Unit, units.Quantity]) -> str:
 def ensure_cf_units(ustr: str) -> str:
     """Ensure the passed unit string is CF-compliant.
 
-    The string will be parsed to pint then recasted to a string by xclim's `pint2cfunits`.
+    The string will be parsed to pint then recast to a string by xclim's `pint2cfunits`.
     """
     return pint2cfunits(units2pint(ustr))
 
@@ -219,7 +221,7 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
     out_units : Optional[str]
       Units the output array should be converted into.
     """
-    a = 1 * units2pint(da)
+    a = 1 * units2pint(da)  # noqa
     f = a * q.to_base_units()
     if out_units:
         f = f.to(out_units)
@@ -301,7 +303,7 @@ def convert_units_to(
 
         with units.context(context or "none"):
             out = xr.DataArray(
-                data=units.convert(source.data, fu, tu),
+                data=units.convert(source.data, fu, tu),  # noqa
                 coords=source.coords,
                 attrs=source.attrs,
                 name=source.name,
@@ -336,9 +338,29 @@ FREQ_UNITS = {
     "M": "month",
     "A": "yr",
 }
+"""
+Resampling frequency units for :py:func:`infer_sampling_units`.
+
+Mapping from offset base to CF-compliant unit.
+"""
 
 
-def infer_sampling_units(da: xr.DataArray, deffreq: str = "D") -> Tuple[int, str]:
+FREQ_NAMES = {
+    "annual": ("A", "YS"),  # A is the same as Y
+    "seasonal": ("Q", "QS-DEC"),
+    "monthly": ("M", "MS"),
+    "weekly": ("W", "W-SUN"),
+}
+"""
+Resampling frequency names for the "period" element of the YAML definition of indicators.
+
+Mapping from english name to a tuple of offset base and default freq value.
+"""
+
+
+def infer_sampling_units(
+    da: xr.DataArray, deffreq: Optional[str] = "D"
+) -> Tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
     If `xr.infer_freq` fails, returns `deffreq`.
@@ -355,7 +377,7 @@ def infer_sampling_units(da: xr.DataArray, deffreq: str = "D") -> Tuple[int, str
 
 
 def to_agg_units(
-    out: xr.DataArray, orig: xr.DataArray, op: str, dim="time"
+    out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
 ) -> xr.DataArray:
     """Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
@@ -514,7 +536,7 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
     # Check if there is a transformation available
     start = pint.util.to_units_container(expected)
     end = pint.util.to_units_container(val_dim)
-    graph = units._active_ctx.graph
+    graph = units._active_ctx.graph  # noqa
     if pint.util.find_shortest_path(graph, start, end):
         return
 

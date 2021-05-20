@@ -37,15 +37,15 @@ def _get_indicators(module):
 
     out = {}
     for key, val in module.__dict__.items():
-        if hasattr(val, "identifier") and val.identifier.upper() in registry:
+        if hasattr(val, "_registry_id") and val._registry_id in registry:
             out[key] = val
 
     return OrderedDict(sorted(out.items()))
 
 
-def _indicator_table(realm):
+def _indicator_table(module):
     """Return a sequence of dicts storing metadata about all available indices in xclim."""
-    inds = _get_indicators(getattr(xclim, realm))
+    inds = _get_indicators(getattr(xclim.indicators, module))
     table = {}
     for indname, ind in inds.items():
         # Apply default values
@@ -61,12 +61,17 @@ def _indicator_table(realm):
             )
         else:
             table[indname]["doc"] = ind.__doc__
-            table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
+            if ind.compute.__module__.endswith("generic"):
+                table[indname][
+                    "function"
+                ] = f"xclim.indices.generic.{ind.compute.__name__}"
+            else:
+                table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
-realms = ("atmos", "land", "seaIce")
-indicators = {realm: _indicator_table(realm) for realm in realms}
+modules = ("atmos", "land", "seaIce", "cf", "icclim", "anuclim")
+indicators = {module: _indicator_table(module) for module in modules}
 
 # -- General configuration ---------------------------------------------
 
@@ -96,7 +101,10 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-intersphinx_mapping = {"clisops": ("https://clisops.readthedocs.io/en/latest/", None)}
+intersphinx_mapping = {
+    "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+}
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""

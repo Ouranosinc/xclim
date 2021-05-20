@@ -23,6 +23,7 @@ import xarray as xr
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
+from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to
 from xclim.testing import open_dataset
 
@@ -202,6 +203,16 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
+def test_corn_heat_units(tasmin_series, tasmax_series):
+    tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
+    tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
+
+    out = xci.corn_heat_units(
+        tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+    )
+    np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+
+
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
         mn = np.zeros(365)
@@ -282,6 +293,10 @@ class TestLastSpringFrost:
 
         lsf = xci.last_spring_frost(tas)
         assert lsf == 180
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in lsf.attrs.keys()
+        assert lsf.attrs["units"] == ""
+        assert lsf.attrs["is_dayofyear"] == 1
 
 
 class TestFirstDayBelow:
@@ -298,6 +313,10 @@ class TestFirstDayBelow:
 
         fdb = xci.first_day_below(tas)
         assert np.isnan(fdb)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in fdb.attrs.keys()
+        assert fdb.attrs["units"] == ""
+        assert fdb.attrs["is_dayofyear"] == 1
 
 
 class TestFirstDayAbove:
@@ -317,6 +336,10 @@ class TestFirstDayAbove:
 
         fdb = xci.first_day_above(tas)
         assert np.isnan(fdb)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in fdb.attrs.keys()
+        assert fdb.attrs["units"] == ""
+        assert fdb.attrs["is_dayofyear"] == 1
 
 
 class TestDaysOverPrecipThresh:
@@ -378,6 +401,10 @@ class TestFreshetStart:
         tg = tas_series(tg + K2C, start="1/1/2000")
         out = xci.freshet_start(tg, window=w)
         assert out[0] == tg.indexes["time"][20].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
 
     def test_no_start(self, tas_series):
         tg = np.zeros(365) - 1
@@ -414,6 +441,10 @@ class TestGrowingSeasonEnd:
         tas = tas.where(~tas.time.isin(warm_period.time), 280)
         gs_end = xci.growing_season_end(tas, mid_date=mid_date)
         np.testing.assert_array_equal(gs_end, expected)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in gs_end.attrs.keys()
+        assert gs_end.attrs["units"] == ""
+        assert gs_end.attrs["is_dayofyear"] == 1
 
 
 class TestGrowingSeasonLength:
@@ -626,27 +657,71 @@ class TestHotSpellMaxLength:
         np.testing.assert_allclose(hsml.values, expected)
 
 
-class TestTnDaysBelow:
-    def test_simple(self, tasmin_series):
+class TestTnDays:
+    def test_above_simple(self, tasmin_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_above(mn, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmin_series):
         a = np.zeros(365)
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
-        mx = tasmin_series(a + K2C)
+        mn = tasmin_series(a + K2C)
 
-        out = xci.tn_days_below(mx, thresh="-10 C")
+        out = xci.tn_days_below(mn, thresh="-10 C")
         np.testing.assert_array_equal(out[:1], [6])
         np.testing.assert_array_equal(out[1:], [0])
-        out = xci.tn_days_below(mx, thresh="-30 C")
+        out = xci.tn_days_below(mn, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
 
-class TestTxDaysAbove:
-    def test_simple(self, tasmax_series):
+class TestTgDays:
+    def test_above_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_above(mg, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_below(mg, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tg_days_below(mg, thresh="-30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
+class TestTxDays:
+    def test_above_simple(self, tasmax_series):
         a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a + K2C)
 
         out = xci.tx_days_above(mx, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a + K2C)
+
+        out = xci.tx_days_below(mx, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -1462,10 +1537,11 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        from xclim import icclim
+        from xclim.indicators import icclim  # noqa
 
-        ind = xci.tg_mean(cmip3_day_tas)
-        icclim = icclim.TG(cmip3_day_tas)
+        with set_options(cf_compliance="log"):
+            ind = xci.tg_mean(cmip3_day_tas)
+            icclim = icclim.TG(cmip3_day_tas)
 
         np.testing.assert_array_equal(icclim, ind)
 
@@ -1680,6 +1756,11 @@ def test_degree_days_exceedance_date(tas_series):
     )
     assert out[0] == 256
 
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
+
 
 @pytest.mark.parametrize("method,exp", [("binary", [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])])
 def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
@@ -1705,6 +1786,10 @@ def test_first_snowfall(prsn_series):
     prsn = prsn_series(30 - abs(np.arange(366) - 180), start="2000-01-01")
     out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
     assert out[0] == 166
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_last_snowfall(prsn_series):
@@ -1739,6 +1824,10 @@ def test_continous_snow_cover_start(snd_series):
     out = xci.continuous_snow_cover_start(snd)
     assert len(out) == 2
     np.testing.assert_array_equal(out, [snd.time.dt.dayofyear[0].data + 2, np.nan])
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_continuous_snow_cover_end(snd_series):
@@ -1756,6 +1845,10 @@ def test_continuous_snow_cover_end(snd_series):
     assert len(out) == 2
     doy = snd.time.dt.dayofyear[0].data
     np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
 
 
 def test_high_precip_low_temp(pr_series, tasmin_series):

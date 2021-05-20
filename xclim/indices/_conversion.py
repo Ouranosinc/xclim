@@ -100,7 +100,7 @@ def uas_vas_2_sfcwind(
 
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_2_uas_vas(
-    sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray
+    sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray  # noqa
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """Eastward and northward wind components from the wind speed and direction.
 
@@ -117,18 +117,18 @@ def sfcwind_2_uas_vas(
     Returns
     -------
     uas : xr.DataArray, [m s-1]
-      Eastward wind velocity
+      Eastward wind velocity.
     vas : xr.DataArray, [m s-1]
-      Northward wind velocity
+      Northward wind velocity.
 
     """
     # Converts the wind speed to m s-1
-    sfcWind = convert_units_to(sfcWind, "m/s")
+    sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
     windfromdir_math = (-sfcWindfromdir + 270) % 360.0
 
-    # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere
+    # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere.
     # if resample is not None:
     #     wind = wind.resample(time=resample).mean(dim='time', keep_attrs=True)
     #
@@ -147,14 +147,14 @@ def sfcwind_2_uas_vas(
 
 @declare_units(tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
-    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"
+    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
 ) -> xr.DataArray:
     """Saturation vapor pressure from temperature.
 
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature array.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
@@ -164,7 +164,7 @@ def saturation_vapor_pressure(
     Returns
     -------
     xarray.DataArray, [Pa]
-      Saturation vapor pressure
+      Saturation vapor pressure.
 
     Notes
     -----
@@ -182,7 +182,7 @@ def saturation_vapor_pressure(
     .. [goffgratch46] Goff, J. A., and S. Gratch (1946) Low-pressure properties of water from -160 to 212 °F, in Transactions of the American Society of Heating and Ventilating Engineers, pp 95-122, presented at the 52nd annual meeting of the American Society of Heating and Ventilating Engineers, New York, 1946.
     .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
-    .. [voemel] http://cires1.colorado.edu/~voemel/vp.html
+    .. [voemel] https://cires1.colorado.edu/~voemel/vp.html
     .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     if ice_thresh is not None:
@@ -196,17 +196,17 @@ def saturation_vapor_pressure(
             ref_is_water,
             100
             * np.exp(  # Where ref_is_water is True, x100 is to convert hPa to Pa
-                -6096.9385 / tas
+                -6096.9385 / tas  # type: ignore
                 + 16.635794
-                + -2.711193e-2 * tas
+                + -2.711193e-2 * tas  # type: ignore
                 + 1.673952e-5 * tas ** 2
                 + 2.433502 * np.log(tas)  # numpy's log is ln
             ),
             100
             * np.exp(  # Where ref_is_water is False (thus ref is ice)
-                -6024.5282 / tas
+                -6024.5282 / tas  # type: ignore
                 + 24.7219
-                + 1.0613868e-2 * tas
+                + 1.0613868e-2 * tas  # type: ignore
                 + -1.3198825e-5 * tas ** 2
                 + -0.49382577 * np.log(tas)
             ),
@@ -227,16 +227,16 @@ def saturation_vapor_pressure(
             eb
             * 10
             ** (
-                -7.90298 * ((Tb / tas) - 1)
-                + 5.02808 * np.log10(Tb / tas)
+                -7.90298 * ((Tb / tas) - 1)  # type: ignore
+                + 5.02808 * np.log10(Tb / tas)  # type: ignore
                 + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
-                + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)
+                + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)  # type: ignore
             ),
             ep
             * 10
             ** (
-                -9.09718 * ((Tp / tas) - 1)
-                + -3.56654 * np.log10(Tp / tas)
+                -9.09718 * ((Tp / tas) - 1)  # type: ignore
+                + -3.56654 * np.log10(Tp / tas)  # type: ignore
                 + 0.876793 * (1 - tas / Tp)
             ),
         )
@@ -271,21 +271,21 @@ def relative_humidity(
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
-    r"""
-    Relative humidity.
+    r"""Relative humidity.
 
-    Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through the saturation vapor pressure.
+    Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through
+    the saturation vapor pressure.
 
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature array.
     dtas : xr.DataArray
-      Dewpoint temperature, if specified, overrides huss and ps.
+      Dewpoint temperature (if specified, overrides huss and ps).
     huss : xr.DataArray
-      Specific Humidity
+      Specific Humidity.
     ps : xr.DataArray
-      Air Pressure
+      Air Pressure.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
@@ -293,12 +293,12 @@ def relative_humidity(
       Which method to use, see notes of this function and of `saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
       What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
-      if "mask", replaces values outside the range by np.nan, and if `None` , does nothing.
+      if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
 
     Returns
     -------
     xr.DataArray, [%]
-      Relative humidity
+      Relative humidity.
 
     Notes
     -----
@@ -383,7 +383,7 @@ def relative_humidity(
 def specific_humidity(
     tas: xr.DataArray,
     rh: xr.DataArray,
-    ps: xr.DataArray = None,
+    ps: xr.DataArray,
     ice_thresh: str = None,
     method: str = "sonntag90",
     invalid_values: str = None,
@@ -393,10 +393,11 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+      Temperature.
     rh : xr.DataArrsay
+      Relative Humidity.
     ps : xr.DataArray
-      Air Pressure
+      Air Pressure.
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
@@ -411,7 +412,7 @@ def specific_humidity(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Specific humidity
+      Specific humidity.
 
     Notes
     -----
@@ -439,7 +440,7 @@ def specific_humidity(
 
     e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
-    w_sat = 0.62198 * e_sat / (ps - e_sat)
+    w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
     w = w_sat * rh
     q = w / (1 + w)
 
@@ -459,7 +460,7 @@ def snowfall_approximation(
     tas: xr.DataArray,
     thresh: str = "0 degC",
     method: str = "binary",
-):
+) -> xr.DataArray:
     """Snowfall approximation from total precipitation and temperature.
 
     Solid precipitation estimated from precipitation and temperature according to a given method.
@@ -469,7 +470,7 @@ def snowfall_approximation(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum or minimum daily temperature.
+      Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
     method : {"binary"}
@@ -478,7 +479,7 @@ def snowfall_approximation(
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Solid precipitation flux
+      Solid precipitation flux.
 
     Notes
     -----
@@ -505,7 +506,7 @@ def rain_approximation(
     tas: xr.DataArray,
     thresh: str = "0 degC",
     method: str = "binary",
-):
+) -> xr.DataArray:
     """Rainfall approximation from total precipitation and temperature.
 
     Liquid precipitation estimated from precipitation and temperature according to a given method.
@@ -516,7 +517,7 @@ def rain_approximation(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum or minimum daily temperature.
+      Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
     method : {"binary"}
@@ -525,7 +526,7 @@ def rain_approximation(
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Liquid precipitation rate
+      Liquid precipitation rate.
 
     Notes
     -----

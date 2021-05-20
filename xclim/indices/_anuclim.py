@@ -79,7 +79,7 @@ def isothermality(
     Returns
     -------
     xarray.DataArray, [%]
-      The isothermality value.
+       Isothermality
 
     Notes
     -----
@@ -111,7 +111,7 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray, [%]
-      The Coefficient of Variation of mean temperature values.
+      Mean temperature coefficient of variation
 
     Examples
     --------
@@ -160,7 +160,7 @@ def precip_seasonality(
     Returns
     -------
     xarray.DataArray, [%]
-      The coefficient of variation of precipitation values.
+      Precipitation coefficient of variation
 
     Examples
     --------
@@ -223,7 +223,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the warmest/coldest quearter of each year.
+       Mean temperature values of the {op} quearter of each year.
 
     Examples
     --------
@@ -278,7 +278,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the wettest/driest quarter of each year.
+       Mean temperature values of the {op} quarter of each year.
 
     Notes
     -----
@@ -321,7 +321,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation values of the wettest/driest quarter of each year.
+       Total precipitation values of the {op} quarter of each year.
 
     Examples
     --------
@@ -383,7 +383,7 @@ def prcptot_warmcold_quarter(
     Returns
     -------
     xarray.DataArray : [mm]
-       Total precipitation values of the warmest/coldest quarter of each year
+       Total precipitation values of the {op} quarter of each year
 
     Notes
     -----
@@ -433,6 +433,7 @@ def prcptot(
     return pram.resample(time=freq).sum(dim="time", keep_attrs=True)
 
 
+# FIXME: src_timestep is not used here.
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_period(
     pr: xarray.DataArray, *, op: str, src_timestep: str, freq: str = "YS"
@@ -453,7 +454,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation of the wettest / driest period.
+       Total precipitation of the {op} period.
 
     Notes
     -----
@@ -474,14 +475,14 @@ def prcptot_wetdry_period(
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray) -> xarray.DataArray:
-    r"""Calculate the annual coefficient of variation for ANUCLIM indices."""
+    """Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time="YS").std(dim="time")
     mu = arr.resample(time="YS").mean(dim="time")
     return std / mu
 
 
 def _from_other_arg(
-    criteria: xarray.DataArray, output: xarray.DataArray, op, freq
+    criteria: xarray.DataArray, output: xarray.DataArray, op, freq: str
 ) -> xarray.DataArray:
     """Pick values from output based on operation returning an index from criteria.
 
@@ -504,10 +505,10 @@ def _from_other_arg(
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
-    def get_other_op(ds):
-        all_nans = ds.criteria.isnull().all(dim=dim)
-        index = op(ds.criteria.where(~all_nans, 0), dim=dim)
-        return lazy_indexing(ds.output, index=index, dim=dim).where(~all_nans)
+    def get_other_op(dataset):
+        all_nans = dataset.criteria.isnull().all(dim=dim)
+        index = op(dataset.criteria.where(~all_nans, 0), dim=dim)
+        return lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
 
     return ds.resample(time=freq).map(get_other_op)
 

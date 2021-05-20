@@ -63,6 +63,8 @@ from typing import Sequence, Union
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
+from pkg_resources import parse_version
+from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
@@ -107,6 +109,12 @@ def spatial_analogs(
     xr.DataArray
         The dissimilarity statistic over the union of candidates' and target's dimensions.
     """
+    if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
+        "kldiv",
+        "nearest_neighbor",
+    ]:
+        raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
+
     if isinstance(dist_dim, str):
         dist_dim = [dist_dim]
 

@@ -17,21 +17,6 @@ Indices
 
    indices
 
-Indices submodules
-------------------
-
-
-.. automodule:: xclim.indices.generic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.indices.run_length
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
 Ensembles module
 ================
 
@@ -83,7 +68,12 @@ Other utilities
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.core.checks
+.. automodule:: xclim.core.cfchecks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.datachecks
    :members:
    :undoc-members:
    :show-inheritance:

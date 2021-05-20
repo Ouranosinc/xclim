@@ -2,21 +2,67 @@
 History
 =======
 
-0.26.0 (unreleased)
+0.27.0 (unreleased)
 -------------------
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+* Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
 
-Bug fixes
-~~~~~~~~~
-* Remove `from_string` object creation in sdba, replace with use of new dependency `jsonpickle`.
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+
+New indicators
+~~~~~~~~~~~~~~
+* `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
-* `xclim` now requires `xarray>=0.17` and no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+* Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 
+
+0.26.1 (2021-05-04)
+-------------------
+* Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.
+
+
+0.26.0 (2021-04-30)
+-------------------
+
+Announcements
+~~~~~~~~~~~~~
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* `core.calendar.doy_to_days_since` and `days_since_to_doy` to allow meaningful statistics on doy data.
+* New bias second-order adjustment method "ExtremeValues", intended for re-adjusting extreme precipitation values.
+* Virtual indicators modules can now be built from YAML files.
+* Indicators can now be built from dictionaries.
+* New generic indices, implementation of `clix-meta`'s index functions.
+* On-the-fly generation of climate and forecasting convention (CF) checks with `xc.core.cfchecks.generate_cfcheck`, for a few known variables only.
+* New `xc.indices.run_length.rle_statistics` for min, max, mean, std (etc) statistics on run lengths.
+* New virtual submodule `cf`, with CF standard indices defined in `clix-meta <https://github.com/clix-meta/clix-meta>`_.
+* Indices returning day-of-year data add two new attributes to the output: `is_dayofyear` (=1) and `calendar`.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* `xclim` now requires `xarray>=0.17`.
+* Virtual submodules `icclim` and `anuclim` are not available at the top level anymore (only through `xclim.indicators`).
+* Virtual submodules `icclim` and `anuclim` now provide *Indicators* and not indices.
+* Spatial analog methods "KLDIV" and "Nearest Neighbor" now require `scipy>=1.6.0`.
+
+Bug fixes
+~~~~~~~~~
+* `from_string` object creation in sdba has been removed. Now replaced with use of a new dependency, `jsonpickle`.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `pre-commit` linting checks now run formatting hook `black==21.4b2`.
+* Code cleaning (more accurate call signatures, more use of https links, docstring updates, and typo fixes).
 
 0.25.0 (2021-03-31)
 -------------------

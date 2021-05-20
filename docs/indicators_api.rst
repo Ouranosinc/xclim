@@ -12,3 +12,22 @@
    :members:
    :undoc-members:
    :imported-members:
+
+============================
+Virtual indicator submodules
+============================
+
+.. automodule:: xclim.indicators.cf
+   :members:
+   :imported-members:
+   :undoc-members:
+
+.. automodule:: xclim.indicators.icclim
+   :members:
+   :imported-members:
+   :undoc-members:
+
+.. automodule:: xclim.indicators.anuclim
+   :members:
+   :imported-members:
+   :undoc-members:

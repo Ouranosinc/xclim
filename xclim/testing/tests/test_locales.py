@@ -10,8 +10,8 @@ import pytest
 from xclim import atmos
 from xclim.core import locales as xloc
 from xclim.core.formatting import default_formatter
+from xclim.core.locales import generate_local_dict
 from xclim.core.options import set_options
-from xclim.locales import generate_local_dict
 
 esperanto = (
     "eo",
@@ -153,9 +153,12 @@ def test_xclim_translations(locale, official_indicators):
             # Only translatable attributes are translated
             assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
 
-    if bool(registry):
+    # Remove virtual modules' indicators, those have a dotted name.
+    untranslated = [k for k in registry.keys() if "." not in k]
+
+    if len(untranslated) > 0:
         pytest.fail(
-            f"Indicators {','.join(registry.keys())} do not have translations for official locale {locale}."
+            f"Indicators {', '.join(untranslated)} do not have translations for official locale {locale}."
         )
 
 

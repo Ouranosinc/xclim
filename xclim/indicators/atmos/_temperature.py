@@ -8,8 +8,12 @@ from xclim.core.units import check_units
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
+    "tn_days_above",
     "tn_days_below",
+    "tg_days_above",
+    "tg_days_below",
     "tx_days_above",
+    "tx_days_below",
     "tx_tn_days_above",
     "heat_wave_frequency",
     "heat_wave_max_length",
@@ -17,7 +21,9 @@ __all__ = [
     "heat_wave_index",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "tg_max",
     "tg_mean",
+    "tg_min",
     "tg10p",
     "tg90p",
     "tn_min",
@@ -57,6 +63,7 @@ __all__ = [
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
+    "corn_heat_units",
 ]
 
 
@@ -109,6 +116,16 @@ class TasminTasmax(Daily2D):
         check_units(tasmax, tasmin.attrs["units"])
 
 
+tn_days_above = Tasmin(
+    identifier="tn_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tmin > {thresh}",
+    description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
+    cell_methods="time: minimum within days time: sum over days",
+    compute=indices.tn_days_above,
+)
+
 tn_days_below = Tasmin(
     identifier="tn_days_below",
     units="days",
@@ -117,6 +134,26 @@ tn_days_below = Tasmin(
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_below,
+)
+
+tg_days_above = Tas(
+    identifier="tg_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tavg > {thresh}",
+    description="{freq} number of days where daily mean temperature exceeds {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_above,
+)
+
+tg_days_below = Tas(
+    identifier="tg_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tavg < {thresh}",
+    description="{freq} number of days where daily mean temperature is below {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_below,
 )
 
 tx_days_above = Tasmax(
@@ -129,6 +166,16 @@ tx_days_above = Tasmax(
     compute=indices.tx_days_above,
 )
 
+tx_days_below = Tasmin(
+    identifier="tx_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tmax < {thresh}",
+    description="{freq} number of days where daily max temperature is below {thresh}.",
+    cell_methods="time: max within days time: sum over days",
+    compute=indices.tx_days_below,
+)
+
 tx_tn_days_above = TasminTasmax(
     identifier="tx_tn_days_above",
     units="days",
@@ -139,6 +186,7 @@ tx_tn_days_above = TasminTasmax(
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
+
 
 heat_wave_frequency = TasminTasmax(
     identifier="heat_wave_frequency",
@@ -570,7 +618,7 @@ tropical_nights = Tasmin(
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
     " above {thresh}",
     cell_methods="time: minimum within days time: sum over days",
-    compute=indices.tropical_nights,
+    compute=wrapped_partial(indices.tn_days_above, suggested=dict(thresh="20 degC")),
 )
 
 tg90p = Tas(
@@ -660,7 +708,8 @@ degree_days_exceedance_date = Tas(
 
 warm_spell_duration_index = Tasmax(
     identifier="warm_spell_duration_index",
-    description="{freq} total number of days within spells of at least {window} days with tmax above the 90th daily percentile.",
+    description="{freq} total number of days within spells of at least {window} days"
+    " with tmax above the 90th daily percentile.",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     cell_methods="time: sum over days",
@@ -683,4 +732,16 @@ fire_season = Tasx(
     description="Fire season mask, computed with method {method}.",
     units="",
     compute=indices.fire_season,
+)
+
+corn_heat_units = TasminTasmax(
+    identifier="corn_heat_units",
+    units="",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    description="Temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
+    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
+    cell_methods="",
+    missing="skip",
+    compute=indices.corn_heat_units,
 )

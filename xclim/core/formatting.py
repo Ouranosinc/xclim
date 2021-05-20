@@ -380,7 +380,7 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(names, parameters):
+def _gen_parameters_section(names, parameters, allowed_periods=None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
@@ -400,6 +400,10 @@ def _gen_parameters_section(names, parameters):
         else:
             param = parameters[name]
             descstr = param["description"]
+            if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
+                descstr += (
+                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
+                )
             if param["kind"] == InputKind.VARIABLE:
                 defstr = f"Default : `ds.{param['default']}`. "
             elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
@@ -443,36 +447,45 @@ def _gen_returns_section(cfattrs):
     return section
 
 
-def generate_indicator_docstring(kwds):
+def generate_indicator_docstring(ind):
     """Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
-    kwds : dict
-      The dict of all class attributes and init keywords as generated in the indicator's __new__ method.
-      It should have at least:
-        "compute", "_parameters", "parameters", "cf_attrs".
+    ind: Indicator class
     """
-    header = f"{kwds.get('title','')} (realm: {kwds.get('realm')})\n\n{kwds.get('abstract', '')}\n"
+    header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
-    special = f"This indicator will check for missing values according to the method \"{kwds.get('missing', 'from_context')}\".\n"
-    if hasattr(kwds["compute"], "__func__") and hasattr(
-        kwds["compute"].__func__, "__module__"
-    ):
-        special += f"Based on indice :py:func:`{kwds['compute'].__func__.__module__}.{kwds['compute'].__func__.__name__}`.\n"
-    if "keywords" in kwds:
-        special += f"Keywords : {kwds['keywords']}.\n"
+    special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
+    if hasattr(ind.compute, "__module__"):
+        special += f"Based on indice :py:func:`{ind.compute.__module__}.{ind.compute.__name__}`.\n"
+        if hasattr(ind.compute, "_injected"):
+            special += "With injected parameters: "
+            special += (
+                ", ".join([f"{k}={v}" for k, v in ind.compute._injected.items()])
+                + ".\n"
+            )
+    if ind.keywords:
+        special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(kwds["_parameters"], kwds["parameters"])
+    parameters = _gen_parameters_section(
+        ind._parameters, ind.parameters, ind.allowed_periods
+    )
 
-    returns = _gen_returns_section(kwds["cf_attrs"])
+    returns = _gen_returns_section(ind.cf_attrs)
 
     extras = ""
     for section in ["notes", "references"]:
-        if section in kwds:
-            extras += (
-                f"{section.capitalize()}\n{'-' * len(section)}\n{kwds[section]}\n\n"
-            )
+        if getattr(ind, section):
+            extras += f"{section.capitalize()}\n{'-' * len(section)}\n{getattr(ind, section)}\n\n"
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
+
+
+def parse_cell_methods(cell_methods: Sequence[Mapping[str, str]]) -> str:
+    """Parse cell methods as YAML reads them into a string."""
+    methods = []
+    for cell_method in cell_methods:
+        methods.append("".join([f"{dim}: {meth}" for dim, meth in cell_method.items()]))
+    return " ".join(methods)

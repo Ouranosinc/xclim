@@ -9,21 +9,27 @@ Helper functions for the indices computation, indicator construction and other t
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from importlib.resources import open_text
 from inspect import Parameter
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
+import numpy
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
+from yaml import safe_load
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
+
+# Official variables definitions
+variables = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
 
 def wrapped_partial(
@@ -64,6 +70,11 @@ def wrapped_partial(
     fully_wrapped = update_wrapper(
         partial_func, func, injected=list(fixed.keys()), hide_wrapped=True
     )
+
+    # Store all injected params,
+    injected = getattr(func, "_injected", {})
+    injected.update(fixed)
+    fully_wrapped._injected = injected
     return fully_wrapped
 
 
@@ -104,7 +115,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -118,7 +129,7 @@ def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
     """
-    if not isinstance(da.data, dsk.Array):
+    if not uses_dask(da):
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
@@ -152,7 +163,17 @@ def ensure_chunk_size(da: xr.DataArray, max_iter: int = 10, **minchunks: int):
     return da
 
 
-def _calc_perc(arr, p=[50]):
+def uses_dask(da):
+    if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
+        return True
+    if isinstance(da, xr.Dataset) and any(
+        isinstance(var.data, dsk.Array) for var in da.variables.values()
+    ):
+        return True
+    return False
+
+
+def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
     """Ufunc-like computing a percentile over the last axis of the array.
 
     Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
@@ -168,6 +189,9 @@ def _calc_perc(arr, p=[50]):
     -------
     np.array
     """
+    if p is None:
+        p = [50]
+
     nan_count = np.isnan(arr).sum(axis=-1)
     out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
     nans = (nan_count > 0) & (nan_count < arr.shape[-1])
@@ -188,7 +212,7 @@ class InputKind(IntEnum):
     On the creation of an indicator, the appropriate constant is stored in :py:attr:`xclim.core.indicator.Indicator.parameters`.
     The integer value is what gets stored in the output of :py:meth:`xclim.core.indicator.Indicator.json`.
 
-    For developpers : for each constant, the docstring specifies the annotation a parameter of an indice function
+    For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
     should use in order to be picked up by the indicator constructor.
     """
 
@@ -216,7 +240,7 @@ class InputKind(IntEnum):
     NUMBER = 4
     """A number.
 
-       Annotation : ``int``, ``float`` and Union's and optional's thereof.
+       Annotation : ``int``, ``float`` and Unions and Optionals thereof.
     """
     STRING = 5
     """A simple string.
@@ -247,7 +271,7 @@ class InputKind(IntEnum):
     KWARGS = 50
     """A mapping from argument name to value.
 
-       Developpers : maps the ``**kwargs``. Please use as little as possible.
+       Developers : maps the ``**kwargs``. Please use as little as possible.
     """
     DATASET = 70
     """An xarray dataset.
@@ -273,7 +297,7 @@ def _typehint_is_in(hint, hints):
 
 
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
-    """Returns the approprite InputKind constant from an ``inspect.Parameter`` object.
+    """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the inspect object is whether the parameter

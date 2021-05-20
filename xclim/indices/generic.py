@@ -11,16 +11,24 @@ from typing import Union
 import numpy as np
 import xarray as xr
 
-__all__ = [
-    "select_time",
-    "select_resample_op",
-    "doymax",
-    "doymin",
-    "default_freq",
-    "threshold_count",
-    "get_daily_events",
-    "daily_downsampler",
-]
+from xclim.core.calendar import get_calendar
+from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
+
+from . import run_length as rl
+
+# __all__ = [
+#     "select_time",
+#     "select_resample_op",
+#     "doymax",
+#     "doymin",
+#     "default_freq",
+#     "threshold_count",
+#     "get_daily_events",
+#     "daily_downsampler",
+# ]
+
+
+binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
 
 def select_time(da: xr.DataArray, **indexer):
@@ -60,8 +68,8 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
       Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods as defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -80,23 +88,23 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     return r.map(op)
 
 
-def doymax(da: xr.DataArray):
+def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
 
-def doymin(da: xr.DataArray):
+def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
     out = da.time.dt.dayofyear[i]
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
 
-def default_freq(**indexer):
+def default_freq(**indexer) -> str:
     """Return the default frequency."""
     freq = "AS-JAN"
     if indexer:
@@ -107,9 +115,6 @@ def default_freq(**indexer):
             raise NotImplementedError
 
     return freq
-
-
-binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
 
 def get_op(op: str):
@@ -160,8 +165,8 @@ def threshold_count(
     thresh : Union[float, int]
       Threshold value.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods as defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -290,3 +295,354 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
     # return groupby according to tags
     return buffer.groupby("tags")
+
+
+# CF-INDEX-META Indices
+
+
+def count_level_crossings(
+    low_data: xr.DataArray, high_data: xr.DataArray, threshold: str, freq: str
+) -> xr.DataArray:
+    """Calculate the number of times low_data is below threshold while high_data is above threshold.
+
+    First, the threshold is transformed to the same standard_name and units as the input data,
+    then the thresholding is performed, and finally, the number of occurrences is counted.
+
+    Parameters
+    ----------
+    low_data: xr.DataArray
+      Variable that must be under the threshold.
+    high_data: xr.DataArray
+      Variable that must be above the threshold.
+    threshold: str
+      Quantity.
+    freq: str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    # Convert units to low_data
+    high_data = convert_units_to(high_data, low_data)
+    threshold = convert_units_to(threshold, low_data)
+
+    lower = compare(low_data, "<", threshold)
+    higher = compare(high_data, ">=", threshold)
+
+    out = (lower & higher).resample(time=freq).sum()
+    return to_agg_units(out, low_data, "count", dim="time")
+
+
+def count_occurrences(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
+    """Calculate the number of times some condition is met.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold),
+    i.e. if condition is `<`, then this counts the number of times `data < threshold`.
+    Finally, count the number of occurrences when condition is met.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity.
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator.
+    freq: str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+
+    out = cond.resample(time=freq).sum()
+    return to_agg_units(out, data, "count", dim="time")
+
+
+def diurnal_temperature_range(
+    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+) -> xr.DataArray:
+    """Calculate the average diurnal temperature range.
+
+    Parameters
+    ----------
+    low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
+    high_data : xr.DataArray
+      Highest daily temperature (tasmax).
+    freq: str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    high_data = convert_units_to(high_data, low_data)
+
+    dtr = high_data - low_data
+    out = dtr.resample(time=freq).mean()
+
+    u = str2pint(low_data.units)
+    out.attrs["units"] = pint2cfunits(u - u)
+    return out
+
+
+def first_occurrence(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
+    """Calculate the first time some condition is met.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+    Finally, locate the first occurrence when condition is met.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+
+    out = cond.resample(time=freq).map(
+        rl.first_run,
+        window=1,
+        dim="time",
+        coord="dayofyear",
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+def last_occurrence(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
+    """Calculate the last time some condition is met.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+    Finally, locate the last occurrence when condition is met.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+
+    out = cond.resample(time=freq).map(
+        rl.last_run,
+        window=1,
+        dim="time",
+        coord="dayofyear",
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+def spell_length(
+    data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
+) -> xr.DataArray:
+    """Calculate statistics on lengths of spells.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+    Then the spells are determined, and finally the statistics according to the specified reducer are calculated.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity.
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator
+    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+      Reducer.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+
+    out = cond.resample(time=freq).map(
+        rl.rle_statistics,
+        reducer=reducer,
+        dim="time",
+    )
+    return to_agg_units(out, data, "count")
+
+
+def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
+    """Calculate a simple statistic of the data.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+      Reducer.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    out = getattr(data.resample(time=freq), reducer)()
+    out.attrs["units"] = data.attrs["units"]
+    return out
+
+
+def thresholded_statistics(
+    data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
+) -> xr.DataArray:
+    """Calculate a simple statistic of the data for which some condition is met.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+    Finally, the statistic is calculated for those data values that fulfil the condition.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity.
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator
+    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+      Reducer.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+
+    out = getattr(data.where(cond).resample(time=freq), reducer)()
+    out.attrs["units"] = data.attrs["units"]
+    return out
+
+
+def temperature_sum(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
+    """Calculate the temperature sum above/below a threshold.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+    Finally, the sum is calculated for those data values that fulfil the condition after subtraction of the threshold value.
+    If the sum is for values below the threshold the result is multiplied by -1.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+    threshold : str
+      Quantity
+    condition : {">", "<", ">=", "<=", "==", "!="}
+      Operator
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, condition, threshold)
+    direction = -1 if "<" in condition else 1
+
+    out = (data - threshold).where(cond).resample(time=freq).sum()
+    out = direction * out
+    return to_agg_units(out, data, "delta_prod")
+
+
+def interday_diurnal_temperature_range(
+    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+) -> xr.DataArray:
+    """Calculate the average absolute day-to-day difference in diurnal temperature range.
+
+    Parameters
+    ----------
+    low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
+    high_data : xr.DataArray
+      Highest daily temperature (tasmax).
+    freq: str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    high_data = convert_units_to(high_data, low_data)
+
+    vdtr = abs((high_data - low_data).diff(dim="time"))
+    out = vdtr.resample(time=freq).mean(dim="time")
+
+    u = str2pint(low_data.units)
+    out.attrs["units"] = pint2cfunits(u - u)
+    return out
+
+
+def extreme_temperature_range(
+    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+) -> xr.DataArray:
+    """Calculate the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
+
+    Parameters
+    ----------
+    low_data : xr.DataArray
+      Lowest daily temperature (tasmin).
+    high_data : xr.DataArray
+      Highest daily temperature (tasmax).
+    freq: str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    high_data = convert_units_to(high_data, low_data)
+
+    out = (high_data - low_data).resample(time=freq).mean()
+
+    u = str2pint(low_data.units)
+    out.attrs["units"] = pint2cfunits(u - u)
+    return out

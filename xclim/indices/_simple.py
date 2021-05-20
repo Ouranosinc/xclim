@@ -31,7 +31,7 @@ __all__ = [
 
 
 @declare_units(tas="[temperature]")
-def tg_max(tas: xarray.DataArray, freq: str = "YS"):
+def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest mean temperature.
 
     The maximum of daily mean temperature.
@@ -61,7 +61,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tas="[temperature]")
-def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
+def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
@@ -101,7 +101,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tas="[temperature]")
-def tg_min(tas: xarray.DataArray, freq: str = "YS"):
+def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest mean temperature.
 
     Minimum of daily mean temperature.
@@ -131,7 +131,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmin="[temperature]")
-def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
+def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest minimum temperature.
 
     The maximum of daily minimum temperature.
@@ -161,7 +161,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmin="[temperature]")
-def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
+def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean minimum temperature.
 
     Mean of daily minimum temperature.
@@ -192,7 +192,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmin="[temperature]")
-def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
+def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest minimum temperature.
 
     Minimum of daily minimum temperature.
@@ -222,7 +222,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmax="[temperature]")
-def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
+def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest max temperature.
 
     The maximum value of daily maximum temperature.
@@ -252,7 +252,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmax="[temperature]")
-def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
+def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean max temperature.
 
     The mean of daily maximum temperature.
@@ -283,7 +283,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmax="[temperature]")
-def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
+def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest max temperature.
 
     The minimum of daily maximum temperature.
@@ -313,7 +313,9 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
-def frost_days(tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"):
+def frost_days(
+    tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+) -> xarray.DataArray:
     r"""Frost days index.
 
     Number of days where daily minimum temperatures are below 0℃.
@@ -349,7 +351,7 @@ def frost_days(tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
     tasmax: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
-):  # noqa: D401
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
     Number of days where daily maximum temperatures are below 0℃.
@@ -358,6 +360,8 @@ def ice_days(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
+    thresh : str
+      Freezing temperature.
     freq : str
       Resampling frequency.
 
@@ -381,7 +385,9 @@ def ice_days(
 
 
 @declare_units(pr="[precipitation]")
-def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
+def max_1day_precipitation_amount(
+    pr: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
@@ -421,7 +427,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
 @declare_units(pr="[precipitation]")
 def max_n_day_precipitation_amount(
     pr: xarray.DataArray, window: int = 1, freq: str = "YS"
-):
+) -> xarray.DataArray:
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
@@ -460,7 +466,9 @@ def max_n_day_precipitation_amount(
 
 
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS"):
+def max_pr_intensity(
+    pr: xarray.DataArray, window: int = 1, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest precipitation intensity over a n-hour moving window.
 
     Calculate the n-hour rolling average of the original hourly total precipitation series

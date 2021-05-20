@@ -2,14 +2,13 @@
 from typing import Callable, List, Mapping, Optional, Union
 from warnings import warn
 
-import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
 
-from xclim.core.calendar import _interpolate_doy_calendar
+from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
@@ -19,66 +18,54 @@ ADDITIVE = "+"
 loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
-@parse_group
+def _ecdf_1d(x, value):
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
+
+
+def map_cdf_1d(x, y, y_value):
+    """Return the value in `x` with the same CDF as `y_value` in `y`."""
+    q = _ecdf_1d(y, y_value)
+    _func = np.nanquantile
+    return _func(x, q=q)
+
+
 def map_cdf(
-    x: xr.DataArray,
-    y: xr.DataArray,
-    y_value: xr.DataArray,
+    ds: xr.Dataset,
     *,
-    group: Union[str, Grouper] = "time",
-    skipna: bool = False,
+    y_value: xr.DataArray,
+    dim,
 ):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
+    This function is meant to be wrapped in a `Grouper.apply`.
+
     Parameters
     ----------
-    x : xr.DataArray
-      Values from which to pick
-    y : xr.DataArray
-      Reference values giving the ranking
+    ds : xr.Dataset
+      Variables: x, Values from which to pick,
+      y, Reference values giving the ranking
     y_value : float, array
       Value within the support of `y`.
     dim : str
       Dimension along which to compute quantile.
-    group: Union[str, Grouper]
-    skipna: bool
 
     Returns
     -------
     array
       Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-
-    def _map_cdf_1d(x, y, y_value, skipna=False):
-        q = _ecdf_1d(y, y_value)
-        _func = np.nanquantile if skipna else np.quantile
-        return _func(x, q=q)
-
-    def _map_cdf_group(gr, y_value, dim=["time"], skipna=False):
-        return xr.apply_ufunc(
-            _map_cdf_1d,
-            gr.x,
-            gr.y,
-            input_core_dims=[dim] * 2,
-            output_core_dims=[["x"]],
-            vectorize=True,
-            keep_attrs=True,
-            kwargs={"y_value": y_value, "skipna": skipna},
-            dask="parallelized",
-            output_dtypes=[gr.x.dtype],
-        )
-
-    return group.apply(
-        _map_cdf_group,
-        {"x": x, "y": y},
-        y_value=np.atleast_1d(y_value),
-        skipna=skipna,
+    return xr.apply_ufunc(
+        map_cdf_1d,
+        ds.x,
+        ds.y,
+        input_core_dims=[dim] * 2,
+        output_core_dims=[["x"]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"y_value": np.atleast_1d(y_value)},
+        output_dtypes=[ds.x.dtype],
     )
-
-
-def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
-    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
 def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
@@ -170,7 +157,7 @@ def invert(x: xr.DataArray, kind: Optional[str] = None):
         if kind == ADDITIVE:
             return -x
         if kind == MULTIPLICATIVE:
-            return 1 / x
+            return 1 / x  # type: ignore
         raise ValueError
 
 
@@ -201,7 +188,7 @@ def broadcast(
     if sel is None:
         sel = {}
 
-    if group.prop is not None and group.prop not in sel:
+    if group.prop != "group" and group.prop not in sel:
         sel.update({group.prop: group.get_index(x, interp=interp)})
 
     if sel:
@@ -209,13 +196,14 @@ def broadcast(
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
-            if group.prop is not None:
+            if group.prop != "group":
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
             if interp == "cubic" and len(sel.keys()) > 1:
                 interp = "linear"
                 warn(
-                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor interpolation, not cubic. Using linear."
+                    "Broadcasting operations in multiple dimensions can only be done with linear and nearest-neighbor"
+                    " interpolation, not cubic. Using linear."
                 )
 
             grouped = grouped.interp(sel, method=interp)
@@ -224,6 +212,8 @@ def broadcast(
             if var in grouped.coords and var not in grouped.dims:
                 grouped = grouped.drop_vars(var)
 
+    if group.prop == "group" and "group" in grouped.dims:
+        grouped = grouped.squeeze("group", drop=True)
     return grouped
 
 
@@ -401,7 +391,7 @@ def interp_on_quantiles(
     dim = group.dim
     prop = group.prop
 
-    if prop is None:
+    if prop == "group":
         fill_value = "extrapolate" if method == "nearest" else np.nan
 
         def _interp_quantiles_1D(newx, oldx, oldy):
@@ -412,8 +402,8 @@ def interp_on_quantiles(
         return xr.apply_ufunc(
             _interp_quantiles_1D,
             newx,
-            xq,
-            yq,
+            xq.squeeze("group", drop=True),
+            yq.squeeze("group", drop=True),
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
@@ -464,10 +454,12 @@ def interp_on_quantiles(
     )
 
 
+# TODO is this useless?
 def rank(da, dim="time", pct=False):
-    """Ranks data.
+    """Ranks data along a dimension.
 
-    Replicates `xr.DataArray.rank` but with support for dask-stored data. Xarray's docstring is below:
+    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
+    Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that
     would have been otherwise assigned to all of the values within that
@@ -489,23 +481,7 @@ def rank(da, dim="time", pct=False):
     ranked : DataArray
         DataArray with the same coordinates and dtype 'float64'.
     """
-
-    def _nanrank(data):
-        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
-        ranked = func(data, axis=-1)
-        if pct:
-            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
-            ranked /= count
-        return ranked
-
-    return xr.apply_ufunc(
-        _nanrank,
-        da,
-        input_core_dims=[[dim]],
-        output_core_dims=[[dim]],
-        dask="parallelized",
-        output_dtypes=[da.dtype],
-    )
+    return da.rank(dim, pct=pct)
 
 
 def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
@@ -586,3 +562,123 @@ def best_pc_orientation(A, Binv, val=1000):
             # New orientation is better, keep and remember error.
             err = new_err
     return orient
+
+
+def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
+    """Get clusters of a 1D array.
+
+    A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
+
+    Parameters
+    ----------
+    data: 1D ndarray
+      Values to get clusters from.
+    u1 : float
+      Extreme value threshold, at least one value in the cluster must exceed this.
+    u2 : float
+      Cluster threshold, values above this can be part of a cluster.
+
+    Reference
+    ---------
+    `getcluster` of Extremes.jl (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
+    """
+    # Boolean array, True where data is over u2
+    # We pad with values under u2, so that clusters never start or end at boundaries.
+    exce = np.concatenate(([u2 - 1], data, [u2 - 1])) > u2
+
+    # 1 just before the start of the cluster
+    # -1 on the last element of the cluster
+    bounds = np.diff(exce.astype(np.int32))
+    # We add 1 to get the first element and sub 1 to get the same index as in data
+    starts = np.where(bounds == 1)[0]
+    # We sub 1 to get the same index as in data and add 1 to get the element after (for python slicing)
+    ends = np.where(bounds == -1)[0]
+
+    cl_maxpos = []
+    cl_maxval = []
+    cl_start = []
+    cl_end = []
+    for start, end in zip(starts, ends):
+        cluster_max = data[start:end].max()
+        if cluster_max > u1:
+            cl_maxval.append(cluster_max)
+            cl_maxpos.append(start + np.argmax(data[start:end]))
+            cl_start.append(start)
+            cl_end.append(end - 1)
+
+    return (
+        np.array(cl_start),
+        np.array(cl_end),
+        np.array(cl_maxpos),
+        np.array(cl_maxval),
+    )
+
+
+def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
+    """Get cluster count, maximum and position along a given dim.
+
+    See `get_clusters_1d`. Used by `adjustment.ExtremeValues`.
+
+    Returns
+    -------
+    xr.Dataset
+      With variables,
+        - `nclusters` : Number of clusters for each point (with `dim` reduced), int
+        - `start` : First index in the cluster (`dim` reduced, new `cluster`), int
+        - `end` : Last index in the cluster, inclusive (`dim` reduced, new `cluster`), int
+        - `maxpos` : Index of the maximal value within the cluster (`dim` reduced, new `cluster`), int
+        - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
+
+      For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
+      The length along `cluster` is half the size of "dim", the maximal theoritical number of clusters.
+    """
+
+    def _get_clusters(arr, u1, u2, N):
+        st, ed, mp, mv = get_clusters_1d(arr, u1, u2)
+        count = len(st)
+        pad = [-1] * (N - count)
+        return (
+            np.append(st, pad),
+            np.append(ed, pad),
+            np.append(mp, pad),
+            np.append(mv, [np.NaN] * (N - count)),
+            count,
+        )
+
+    # The largest possible number of clusters. Ex: odd positions are < u2, even positions are > u1.
+    N = data[dim].size // 2
+
+    starts, ends, maxpos, maxval, nclusters = xr.apply_ufunc(
+        _get_clusters,
+        data,
+        u1,
+        u2,
+        input_core_dims=[[dim], [], []],
+        output_core_dims=[["cluster"], ["cluster"], ["cluster"], ["cluster"], []],
+        kwargs={"N": N},
+        output_dtypes=[int, int, int, data.dtype, int],
+        dask="parallelized",
+        vectorize=True,
+        dask_gufunc_kwargs={
+            "meta": (
+                np.array((), dtype=int),
+                np.array((), dtype=int),
+                np.array((), dtype=int),
+                np.array((), dtype=data.dtype),
+                np.array((), dtype=int),
+            ),
+            "output_sizes": {"cluster": N},
+        },
+    )
+
+    ds = xr.Dataset(
+        {
+            "start": starts,
+            "end": ends,
+            "maxpos": maxpos,
+            "maximum": maxval,
+            "nclusters": nclusters,
+        }
+    )
+
+    return ds

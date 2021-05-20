@@ -53,12 +53,11 @@ TRANSLATABLE_ATTRS
 """
 import json
 import warnings
+from importlib.resources import contents, open_text
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
-import pkg_resources
-
-from .formatting import AttrFormatter
+from .formatting import AttrFormatter, default_formatter
 
 TRANSLATABLE_ATTRS = [
     "long_name",
@@ -72,7 +71,7 @@ TRANSLATABLE_ATTRS = [
 
 def list_locales():
     """Return a list of available locales in xclim."""
-    locale_list = pkg_resources.resource_listdir("xclim.locales", "")
+    locale_list = contents("xclim.data")
     return [locale.split(".")[0] for locale in locale_list if locale.endswith(".json")]
 
 
@@ -146,7 +145,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
         return (
             locale,
-            json.load(pkg_resources.resource_stream("xclim.locales", f"{locale}.json")),
+            json.load(open_text("xclim.data", f"{locale}.json")),
         )
     if isinstance(locale[1], dict):
         return locale
@@ -159,7 +158,7 @@ def get_local_attrs(
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
     append_locale_name: bool = True,
-):
+) -> dict:
     """Get all attributes of an indicator in the requested locales.
 
     Parameters
@@ -180,7 +179,6 @@ def get_local_attrs(
     ------
     ValueError
         If `append_locale_name` is False and multiple `locales` are requested.
-        .
 
     Returns
     -------
@@ -209,7 +207,9 @@ def get_local_attrs(
     return attrs
 
 
-def get_local_formatter(locale: Union[str, Sequence[str], Tuple[str, dict]]):
+def get_local_formatter(
+    locale: Union[str, Sequence[str], Tuple[str, dict]]
+) -> AttrFormatter:
     """Return an AttrFormatter instance for the given locale.
 
     Parameters
@@ -232,3 +232,58 @@ class UnavailableLocaleError(ValueError):
         super().__init__(
             f"Locale {locale} not available. Use `xclim.core.locales.list_locales()` to see available languages."
         )
+
+
+def generate_local_dict(locale: str, init_english: bool = False):
+    """Generate a dictionary with keys for each indicators and translatable attributes.
+
+    Parameters
+    ----------
+    locale : str
+        Locale in the IETF format
+    init_english : bool
+        If True, fills the initial dictionary with the english versions of the attributes.
+        Defaults to False.
+    """
+    from xclim.core.indicator import registry
+
+    best_locale = get_best_locale(locale)
+    if best_locale is not None:
+        locname, attrs = get_local_dict(best_locale)
+        for ind_name in attrs.copy().keys():
+            if ind_name != "attrs_mapping" and ind_name not in registry:
+                attrs.pop(ind_name)
+    else:
+        attrs = {}
+
+    attrs_mapping = attrs.setdefault("attrs_mapping", {})
+    attrs_mapping.setdefault("modifiers", [""])
+    for key, value in default_formatter.mapping.items():
+        attrs_mapping.setdefault(key, [value[0]])
+
+    eng_attr = ""
+    for ind_name, indicator in registry.items():
+        ind_attrs = attrs.setdefault(ind_name, {})
+        for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
+            set(indicator._cf_names)
+        ):
+            if init_english:
+                eng_attr = getattr(indicator, translatable_attr)
+                if not isinstance(eng_attr, str):
+                    eng_attr = ""
+            ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+
+        for var_attrs in indicator.cf_attrs:
+            # In the case of single output, put var attrs in main dict
+            if len(indicator.cf_attrs) > 1:
+                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+
+            for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
+                set(indicator._cf_names)
+            ):
+                if init_english:
+                    eng_attr = var_attrs.get(translatable_attr)
+                    if not isinstance(eng_attr, str):
+                        eng_attr = ""
+                ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
+    return attrs

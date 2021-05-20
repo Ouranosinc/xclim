@@ -18,11 +18,11 @@ MISSING_OPTIONS = "missing_options"
 MISSING_METHODS: Dict[str, Callable] = dict()
 
 OPTIONS = {
-    METADATA_LOCALES: [],
+    METADATA_LOCALES: list(),
     DATA_VALIDATION: "raise",
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
-    MISSING_OPTIONS: {},
+    MISSING_OPTIONS: dict(),
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])

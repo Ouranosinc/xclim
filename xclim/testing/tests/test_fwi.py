@@ -24,7 +24,7 @@ fwi_url = "FWI/cffdrs_test_fwi.nc"
 
 
 def test_fine_fuel_moisture_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     ffmc = np.full(fwi_data.time.size + 1, np.nan)
     ffmc[0] = 85
     for i, t in enumerate(fwi_data.time):
@@ -40,7 +40,7 @@ def test_fine_fuel_moisture_code():
 
 
 def test_duff_moisture_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dmc = np.full(fwi_data.time.size + 1, np.nan)
     dmc[0] = 6
     for i, t in enumerate(fwi_data.time):
@@ -57,7 +57,7 @@ def test_duff_moisture_code():
 
 
 def test_drought_code():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dc = np.full(fwi_data.time.size + 1, np.nan)
     dc[0] = 15
     for i, t in enumerate(fwi_data.time):
@@ -73,7 +73,7 @@ def test_drought_code():
 
 
 def test_initial_spread_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     isi = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         isi[i] = initial_spread_index(
@@ -84,7 +84,7 @@ def test_initial_spread_index():
 
 
 def test_build_up_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     bui = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         bui[i] = build_up_index(
@@ -109,7 +109,7 @@ def test_overwintering_drought_code(inputs, exp):
 
 
 def test_fire_weather_index():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     fwi = np.full(fwi_data.time.size, np.nan)
     for i, t in enumerate(fwi_data.time):
         fwi[i] = fire_weather_index(
@@ -128,7 +128,7 @@ def test_day_lengh_factor():
 
 
 def test_fire_weather_indicator():
-    fwi_data = open_dataset(fwi_url, branch="cffdrs-data")
+    fwi_data = open_dataset(fwi_url)
     dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
@@ -170,7 +170,7 @@ def test_fire_weather_ufunc_overwintering():
         pr=convert_units_to(ds.pr, "mm/d"),
     )
     season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
-    season_mask_all_LA08 = fire_season(ds.tas, snd=ds.snd, method="LA08")
+    season_mask_all_LA08 = fire_season(ds.tas, snd=ds.swe, method="LA08")
     season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
 
     # Mask is computed correctly and parameters are passed
@@ -189,7 +189,7 @@ def test_fire_weather_ufunc_overwintering():
     out2 = fire_weather_ufunc(
         tas=ds.tas,
         pr=ds.pr,
-        snd=ds.snd,
+        snd=ds.swe,
         lat=ds.lat,
         season_method="LA08",
         overwintering=True,
@@ -309,7 +309,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
 )
 def test_fire_season_R(key, kwargs):
     expected = _get_cffdrs_fire_season(key)
-    in_ds = open_dataset("FWI/cffdrs_test_wDC.nc", branch="cffdrs-data")
+    in_ds = open_dataset("FWI/cffdrs_test_wDC.nc")
     nid = int(key[2])
 
     mask = fire_season(tas=in_ds.where(in_ds.id == nid, drop=True).tasmax, **kwargs)
