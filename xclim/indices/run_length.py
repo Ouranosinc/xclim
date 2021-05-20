@@ -20,16 +20,24 @@ from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
 npts_opt = 9000
+"""
+Arrays with less than this number of data points per slice will trigger
+the use of the ufunc version of run lengths algorithms.
+"""
 
 
 def use_ufunc(
     ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time"
 ) -> bool:
-    """Return the number of gridpoints in a DataArray.
+    """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
+
+    If ufunc_1dim is 'from_context', the parameter is read from xclim's global (or context) options.
+    If it is 'auto', this returns False for dask-backed array and for arrays with more than :py:const:`npts_opt`
+    points per slice along `dim`.
 
     Parameters
     ----------
-    ufunc_1dim: {'auto', True, False}
+    ufunc_1dim: {'from_context', 'auto', True, False}
     da : xarray.DataArray
       N-dimensional input array.
     dim: str
@@ -41,6 +49,9 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
+    if ufunc_1dim == "from_context":
+        ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
+
     if ufunc_1dim == "auto":
         return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
     return ufunc_1dim
@@ -121,7 +132,7 @@ def rle_statistics(
     da: xr.DataArray,
     reducer: str = "max",
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
+    ufunc_1dim: Union[str, bool] = "from_context",
 ) -> xr.DataArray:
     """Return the length of consecutive run of True values, according to a reducing operator.
 
@@ -159,7 +170,7 @@ def rle_statistics(
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
+    ufunc_1dim: Union[str, bool] = "from_context",
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
 
@@ -222,7 +233,7 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
+    ufunc_1dim: Union[str, bool] = "from_context",
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
@@ -259,7 +270,7 @@ def first_run(
     window: int,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
+    ufunc_1dim: Union[str, bool] = "from_context",
 ) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
@@ -289,7 +300,6 @@ def first_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-
     if ufunc_1dim:
         out = first_run_ufunc(x=da, window=window, dim=dim)
 
@@ -321,7 +331,7 @@ def last_run(
     window: int,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = OPTIONS[RUN_LENGTH_UFUNC],
+    ufunc_1dim: Union[str, bool] = "from_context",
 ) -> xr.DataArray:
     """Return the index of the last item of the last run of at least a given length.
 

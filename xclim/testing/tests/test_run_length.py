@@ -21,7 +21,7 @@ def ufunc(request):
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_rle(ufunc, use_dask):
     if use_dask and ufunc:
-        pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        pytest.xfail("rle_1d is not implemented for dask arrays.")
 
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")
@@ -143,15 +143,15 @@ class TestFirstRun:
     )
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_simple(self, tas_series, coord, expected, use_dask, ufunc):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(60)
         t[30:40] = 2
         tas = tas_series(t, start="2000-01-01")
         runs = xr.concat((tas, tas), dim="dim0")
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.first_run(runs, window=1, dim="time", coord=coord)
         np.testing.assert_array_equal(out.load(), expected)
@@ -180,15 +180,15 @@ class TestLastRun:
     )
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_simple(self, tas_series, coord, expected, use_dask, ufunc):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(60)
         t[30:40] = 2
         tas = tas_series(t, start="2000-01-01")
         runs = xr.concat((tas, tas), dim="dim0")
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.last_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=ufunc)
         np.testing.assert_array_equal(out.load(), expected)
@@ -255,8 +255,8 @@ class TestRunsWithDates:
     )
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_season_length(self, tas_series, date, end, expected, use_dask, ufunc):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(360)
         t[140:end] = 1
         tas = tas_series(t, start="2000-01-01")
@@ -264,7 +264,7 @@ class TestRunsWithDates:
         runs = runs == 1
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.season_length(
             runs,
@@ -287,8 +287,8 @@ class TestRunsWithDates:
     def test_run_end_after_date(
         self, tas_series, coord, date, end, expected, use_dask, ufunc
     ):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
 
         t = np.zeros(360)
         t[140:end] = 1
@@ -297,7 +297,7 @@ class TestRunsWithDates:
         runs = runs == 1
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.run_end_after_date(runs, window=1, date=date, dim="time", coord=coord)
         np.testing.assert_array_equal(np.mean(out.load()), expected)
@@ -315,8 +315,8 @@ class TestRunsWithDates:
     def test_first_run_after_date(
         self, tas_series, coord, date, beg, expected, use_dask, ufunc
     ):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(365)
         if beg:
             t[beg:] = 1
@@ -325,7 +325,7 @@ class TestRunsWithDates:
         runs = runs == 1
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.first_run_after_date(
             runs, window=1, date=date, dim="time", coord=coord
@@ -345,8 +345,8 @@ class TestRunsWithDates:
     def test_last_run_before_date(
         self, tas_series, coord, date, end, expected, use_dask, ufunc
     ):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(360)
         t[140:end] = 1
         tas = tas_series(t, start="2000-01-01")
@@ -354,7 +354,7 @@ class TestRunsWithDates:
         runs = runs == 1
 
         if use_dask:
-            runs = runs.chunk({"time": 10, "dim0": 1})
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
         out = rl.last_run_before_date(
             runs, window=1, date=date, dim="time", coord=coord
@@ -367,8 +367,8 @@ class TestRunsWithDates:
     )
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_run_with_dates_no_date(self, tas_series, use_dask, func, ufunc):
-        if use_dask and ufunc:
-            pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+        # if use_dask and ufunc:
+        #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.ones(90)
         tas = tas_series(t, start="2000-01-01")
         runs = xr.concat((tas, tas), dim="dim0")
@@ -454,8 +454,8 @@ def test_lazy_indexing_special_cases(use_dask):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_season(use_dask, tas_series, ufunc):
-    if use_dask and ufunc:
-        pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
+    # if use_dask and ufunc:
+    #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
     t = np.zeros(360)
     t[140:150] = 1
     tas = tas_series(t, start="2000-01-01")
@@ -463,7 +463,7 @@ def test_season(use_dask, tas_series, ufunc):
     runs = runs >= 1
 
     if use_dask:
-        runs = runs.chunk({"time": 10, "dim0": 1})
+        runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
     out = rl.season(runs, window=2)
     np.testing.assert_array_equal(out.start.load(), [140, 140])
