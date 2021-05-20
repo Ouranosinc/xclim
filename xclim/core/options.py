@@ -1,4 +1,9 @@
-"""Global or contextual options for xclim, similar to xarray.set_options."""
+"""
+Options submodule
+=================
+
+Global or contextual options for xclim, similar to xarray.set_options.
+"""
 import logging
 from inspect import signature
 from typing import Callable, Dict
@@ -122,35 +127,39 @@ class set_options:
 
     Currently supported options:
 
-    - ``metadata_locales``:  List of IETF language tags or
-        tuples of language tags and a translation dict, or
-        tuples of language tags and a path to a json file defining translation
-        of attributes.
+    - ``metadata_locales``:
+      List of IETF language tags or tuples of language tags and a translation dict, or
+      tuples of language tags and a path to a json file defining translation of attributes.
       Default: ``[]``.
-    - ``data_validation``: Whether to 'log',  'raise' an error or
-        'warn' the user on inputs that fail the data checks in `xclim.core.datachecks`.
+    - ``data_validation``:
+      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the data checks in `xclim.core.datachecks`.
       Default: ``'raise'``.
-    - ``cf_compliance``: Whether to 'log',  'raise' an error or
-        'warn' the user on inputs that fail the CF compliance checks in `xclim.core.cfchecks`.
+    - ``cf_compliance``:
+      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the CF compliance checks in `xclim.core.cfchecks`.
       Default: ``'warn'``.
-    - ``check_missing``: How to check for missing data and flag computed indicators.
-        Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
-        Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
+    - ``check_missing``:
+      How to check for missing data and flag computed indicators.
+      Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
+      Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
       Default: ``'any'``
-    - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of
-        missing method and values must be mappings from option names to values.
-    - ``run_length_ufunc``: Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
-        Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
+    - ``missing_options``:
+      Dictionary of options to pass to the missing method. Keys must the name of
+      missing method and values must be mappings from option names to values.
+    - ``run_length_ufunc``:
+      Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
+      Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
 
     Examples
     --------
-    # You can use ``set_options`` either as a context manager:
+    You can use ``set_options`` either as a context manager:
+
     >>> import xclim
     >>> ds  = xr.open_dataset(path_to_tas_file).tas
     >>> with xclim.set_options(metadata_locales=['fr']):
     ...     out = xclim.atmos.tg_mean(ds)
 
-    # Or to set global options:
+    Or to set global options:
+
     >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})  # doctest: +SKIP
     <xclim.core.options.set_options object at ...>
     """
@@ -168,13 +177,13 @@ class set_options:
 
             self.old[k] = OPTIONS[k]
 
-        self.update(kwargs)
+        self._update(kwargs)
 
     def __enter__(self):
         """Context management."""
         return
 
-    def update(self, kwargs):
+    def _update(self, kwargs):
         """Update values."""
         for k, v in kwargs.items():
             if k in _SETTERS:
@@ -184,4 +193,4 @@ class set_options:
 
     def __exit__(self, type, value, traceback):
         """Context management."""
-        self.update(self.old)
+        self._update(self.old)
