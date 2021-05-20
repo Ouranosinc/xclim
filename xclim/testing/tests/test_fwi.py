@@ -182,13 +182,10 @@ def test_fire_weather_indicator():
     xr.testing.assert_allclose(fwi2, fwi_data.fwi.isel(test=1), rtol=1e-6)
 
 
-def test_fire_weather_ufunc_overwintering():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    ds = ds.assign(
-        rh=atmos.relative_humidity_from_dewpoint(ds=ds),
-        ws=convert_units_to(atmos.wind_speed_from_vector(ds=ds)[0], "km/h"),
-        tas=convert_units_to(ds.tas, "degC"),
-        pr=convert_units_to(ds.pr, "mm/d"),
+def test_fire_weather_ufunc_overwintering(atmosds):
+    ds = atmosds.assign(
+        tas=convert_units_to(atmosds.tas, "degC"),
+        pr=convert_units_to(atmosds.pr, "mm/d"),
     )
     season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
     season_mask_all_LA08 = fire_season(ds.tas, snd=ds.swe, method="LA08")
