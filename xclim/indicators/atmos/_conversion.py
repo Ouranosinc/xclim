@@ -106,7 +106,7 @@ relative_humidity_from_dewpoint = Converter(
     ),
     compute=wrapped_partial(
         indices.relative_humidity,
-        suggested={"dtas": _empty},
+        suggested={"tdps": _empty},
         huss=None,
         ps=None,
         invalid_values="mask",
@@ -132,7 +132,7 @@ relative_humidity = Converter(
         else ""
     ),
     compute=wrapped_partial(
-        indices.relative_humidity, dtas=None, invalid_values="mask"
+        indices.relative_humidity, tdps=None, invalid_values="mask"
     ),
 )
 

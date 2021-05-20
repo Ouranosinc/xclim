@@ -464,14 +464,14 @@ class Indicator(IndicatorRegistrar):
             for varname, name in data["input"].items():
                 # Indicator's new will put the name of the variable as its default,
                 # we override this with the real variable name.
-                # Also take the dimensionaliy and description from the yaml of official variables.
+                # Also take the canonical units and description from the yaml of official variables.
                 # Description overrides the one parsed from the generic compute docstring
-                # Dimensionality goes into the declare_units wrapper.
+                # Canonical units go into the declare_units wrapper.
                 params[varname] = {
                     "default": name,
                     "description": variables[name]["description"],
                 }
-                input_units[varname] = variables[name]["dimensionality"]
+                input_units[varname] = variables[name]["canonical_units"]
 
             cfcheck = generate_cfcheck(*[varname for varname in data["input"].values()])
         else:

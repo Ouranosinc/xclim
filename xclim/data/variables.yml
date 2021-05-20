@@ -45,6 +45,17 @@ variables:
     - time: mean
     description: Surface wind speed.
     standard_name: wind_speed
+  sfcWindfromdir:
+    canonical_units: degree
+    cell_methods:
+    description: Surface wind direction of provenance.
+    standard_name: wind_from_direction
+  siconc:
+    canonical_units: '%'
+    cell_methods:
+    - time: mean
+    description: Sea ice concentration (area fraction).
+    standard_name: sea_ice_area_fraction
   snd:
     canonical_units: m
     cell_methods:
@@ -81,6 +92,12 @@ variables:
     - time: minimum
     description: Minimum surface temperature.
     standard_name: air_temperature
+  tdps:
+    canonical_units: K
+    cell_methods:
+    - time: mean
+    description: Mean surface dew point temperaure.
+    standard_name: dew_point_temperature
   uas:
     canonical_units: m s-1
     cell_methods:
