@@ -147,7 +147,9 @@ class TestDQM:
         expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(DQM.ds.af[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(
+            DQM.ds.af[:, 2:-2], expected[np.newaxis, 2:-2], 1
+        )
 
         # Test predict
         # Accept discrepancies near extremes
@@ -203,6 +205,7 @@ class TestDQM:
         sim = series(apply_correction(x, trend, kind), name)
 
         if add_dims:
+            ref = ref.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
             hist = hist.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
             sim = sim.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
             ref_t = ref_t.expand_dims(lat=[0, 1, 2])
@@ -215,7 +218,7 @@ class TestDQM:
         if add_dims:
             mqm = mqm.isel(lat=0)
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
-        np.testing.assert_allclose(p, ref_t, rtol=0.1, atol=0.5)
+        np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path):
         ref, hist, sim = cannon_2015_rvs(15000)
@@ -271,10 +274,10 @@ class TestQDM:
         p = QDM.adjust(sim, interp="linear")
 
         q = QDM.ds.coords["quantiles"]
-        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
+        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QDM.ds.af.T, expected, 1)
+        np.testing.assert_array_almost_equal(QDM.ds.af, expected, 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -306,17 +309,17 @@ class TestQDM:
         y = yd.ppf(u) + noise.ppf(u)
 
         # Test train
+        ref = mon_series(y, name)
         hist = sim = series(x, name)
         if use_dask:
             sim = sim.chunk({"time": -1})
         if add_dims:
+            ref = ref.expand_dims(site=[0, 1, 2, 3, 4])
             hist = hist.expand_dims(site=[0, 1, 2, 3, 4])
             sim = sim.expand_dims(site=[0, 1, 2, 3, 4])
             sel = {"site": 0}
         else:
             sel = {}
-
-        ref = mon_series(y, name)
 
         QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
         QDM.train(ref, hist)
@@ -333,8 +336,7 @@ class TestQDM:
         )
 
         # Test predict
-        np.testing.assert_allclose(p.isel(**sel), ref, rtol=0.1, atol=0.2)
-        # np.testing.assert_array_almost_equal(p.isel(**sel), ref, 1)
+        np.testing.assert_allclose(p, ref.transpose(*p.dims), rtol=0.1, atol=0.2)
 
     def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
@@ -392,10 +394,9 @@ class TestQM:
         p = QM.adjust(sim, interp="linear")
 
         q = QM.ds.coords["quantiles"]
-        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
-
+        expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(QM.ds.af[2:-2], expected[2:-2], 1)
+        np.testing.assert_array_almost_equal(QM.ds.af[:, 2:-2], expected[:, 2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -519,6 +520,7 @@ class TestPrincipalComponents:
         assert (ref - scen).mean() < 5e-3
 
 
+@pytest.mark.slow
 class TestExtremeValues:
     @pytest.mark.parametrize(
         "c_thresh,q_thresh,frac,power",
