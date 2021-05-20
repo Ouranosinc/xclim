@@ -5,9 +5,14 @@ History
 0.27.0 (unreleased)
 -------------------
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -17,6 +22,7 @@ New indicators
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
+
 
 0.26.1 (2021-05-04)
 -------------------
