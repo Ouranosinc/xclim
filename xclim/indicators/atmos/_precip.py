@@ -53,7 +53,7 @@ class PrTasx(Daily2D):
 
     @staticmethod
     def cfcheck(pr, tas):
-        cfchecks.generate_cfcheck("pr")(pr=pr)
+        cfchecks.generate_cfcheck("pr")(pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
