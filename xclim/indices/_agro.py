@@ -119,8 +119,11 @@ def corn_heat_units(
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
+    tas="[temperature]",
     thresh_tasmin="[temperature]",
     thresh_tasmax="[temperature]",
+    seas_start_thresh="[temperature]",
+    seas_end_thresh="[temperature]",
 )
 def corn_heat_units_accumulation(
     tasmin: xarray.DataArray,
@@ -128,10 +131,17 @@ def corn_heat_units_accumulation(
     tas: xarray.DataArray,
     thresh_tasmin: str = "4.44 degC",
     thresh_tasmax: str = "10 degC",
+    seas_start_window: int = 5,
+    seas_end_window: int = 1,
+    seas_start_thresh: str = "12.8 degC",
+    seas_end_thresh: str = "-2 degC",
+    freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Corn heat units accumulation.
 
-    Sum of the daily temperature-based index used to estimate the development of corn crops over the growing season.
+    Sum of the daily corn heat units over the corn growth season each year.
+
+    The default season start/end thresholds and windows are valid for the province of Quebec.
 
     Parameters
     ----------
@@ -145,16 +155,26 @@ def corn_heat_units_accumulation(
       The minimum temperature threshold needed for corn growth.
     thresh_tasmax : str
       The maximum temperature threshold needed for corn growth.
+    seas_start_window : int
+      Minimum number of days with temperature above threshold needed for the start of the growth season.
+    seas_end_window : int
+      Minimum number of days with temperature below threshold needed for the end of the growth season.
+    seas_start_thresh : str
+      The minimum temperature threshold needed for the start of the growth season.
+    seas_end_thresh : str
+      The minimum temperature threshold needed for the end of the growth season.
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Sum of daily corn heat units over the corn growth season.
+      Sum of daily corn heat units over the corn growth season each year.
 
     Notes
     -----
     Let :math:`CHU_{ij}` be the daily corn heat units at day :math:`i` and period :math:`j`. Then the corn heat unit
-    accumulation is the sum over a period between the start and the end dates of the corn growing season:
+    accumulation is the sum over a period between the start and the end dates of the corn growth season:
 
     .. math::
         CHU_j = \sum_i CHU_{ij}
@@ -164,10 +184,10 @@ def corn_heat_units_accumulation(
     """
 
     chu = corn_heat_units(tasmin, tasmax, thresh_tasmin, thresh_tasmax)
-    start = first_day_above(tas, "12.8 degC", window=5)
-    end = first_day_below(tasmin, "-2 degC", window=1)
+    start = first_day_above(tas, seas_start_thresh, window=seas_start_window, freq=freq)
+    end = first_day_below(tasmin, seas_end_thresh, window=seas_end_window, freq=freq)
 
-    out = aggregate_between_dates(chu, start, end)
+    out = aggregate_between_dates(chu, start, end, op="sum", freq=freq)
 
     out.attrs["units"] = ""
     return out
