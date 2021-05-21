@@ -2,7 +2,7 @@ import numpy as np
 import xarray
 
 from xclim.core.calendar import get_calendar
-from xclim.core.units import declare_units, rate2amount, to_agg_units
+from xclim.core.units import declare_units, rate2amount
 
 from . import generic
 
@@ -150,7 +150,10 @@ def snow_melt_we_max(
     freq : str
       Resampling frequency.
 
-    The maximum snow melt over a given number of days for each period. [mass/area]
+    Returns
+    -------
+    xarray.DataArray
+      The maximum snow melt over a given number of days for each period. [mass/area].
     """
 
     # Compute change in SWE. Set melt as a positive change.
@@ -187,7 +190,7 @@ def melt_and_precip_max(
     Returns
     -------
     xarray.DataArray
-      The maximum snow melt plus precipitation over a given number of days for each period. [mass/area]
+      The maximum snow melt plus precipitation over a given number of days for each period. [mass/area].
     """
 
     # Compute change in SWE. Set melt as a positive change.
