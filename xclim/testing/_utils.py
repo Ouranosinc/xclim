@@ -17,7 +17,12 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 
 LOGGER = logging.getLogger("xclim")
 
-__all__ = ["open_dataset", "list_input_variables", "update_variable_yaml"]
+__all__ = [
+    "open_dataset",
+    "list_input_variables",
+    "get_all_CMIP6_variables",
+    "update_variable_yaml",
+]
 
 
 def file_md5_checksum(fname):
