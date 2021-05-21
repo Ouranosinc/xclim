@@ -8,11 +8,12 @@ History
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+* "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
 * Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 
 New indicators
