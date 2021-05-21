@@ -8,9 +8,7 @@ Indices submodules
 ------------------
 
 .. automodule:: xclim.indices.fwi
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
 
 .. automodule:: xclim.indices.generic
    :members:

@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos
+from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fwi import (
     _day_length,
@@ -14,8 +15,10 @@ from xclim.indices.fwi import (
     build_up_index,
     fire_season,
     fire_weather_index,
+    fire_weather_indexes,
     fire_weather_ufunc,
     initial_spread_index,
+    overwintering_drought_code,
 )
 from xclim.indices.run_length import run_bounds
 from xclim.testing import open_dataset
@@ -108,6 +111,24 @@ def test_overwintering_drought_code(inputs, exp):
     np.testing.assert_allclose(wDC, exp, rtol=1e-6)
 
 
+@pytest.mark.parametrize(
+    "inputs,exp",
+    [
+        ([300, 110, 0.75, 0.75, 15], 109.4657),
+        ([300, 110, 1.0, 0.9, 15], 16.35315),
+        ([100, 50, 0.75, 0.75, 15], 105.176),
+        ([1, 550, 0.75, 0.75, 10], 10),
+    ],
+)
+def test_overwintering_drought_code_indice(inputs, exp):
+    last_dc = xr.DataArray([inputs[0]], dims=("x",))
+    winter_pr = xr.DataArray([inputs[1]], dims=("x",), attrs={"units": "mm"})
+
+    out = overwintering_drought_code(last_dc, winter_pr, *inputs[2:])
+
+    np.testing.assert_allclose(out, exp, rtol=1e-6)
+
+
 def test_fire_weather_index():
     fwi_data = open_dataset(fwi_url)
     fwi = np.full(fwi_data.time.size, np.nan)
@@ -161,13 +182,10 @@ def test_fire_weather_indicator():
     xr.testing.assert_allclose(fwi2, fwi_data.fwi.isel(test=1), rtol=1e-6)
 
 
-def test_fire_weather_ufunc_overwintering():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    ds = ds.assign(
-        rh=atmos.relative_humidity_from_dewpoint(ds=ds),
-        ws=convert_units_to(atmos.wind_speed_from_vector(ds=ds)[0], "km/h"),
-        tas=convert_units_to(ds.tas, "degC"),
-        pr=convert_units_to(ds.pr, "mm/d"),
+def test_fire_weather_ufunc_overwintering(atmosds):
+    ds = atmosds.assign(
+        tas=convert_units_to(atmosds.tas, "degC"),
+        pr=convert_units_to(atmosds.pr, "mm/d"),
     )
     season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
     season_mask_all_LA08 = fire_season(ds.tas, snd=ds.swe, method="LA08")
@@ -216,6 +234,49 @@ def test_fire_weather_ufunc_overwintering():
         out3["winter_pr"].isel(location=0), 261.27353647, rtol=1e-6
     )
     np.testing.assert_array_equal(out3["DC"].notnull(), season_mask_yr)
+
+
+def test_fire_weather_ufunc_drystart():
+    # This test is very shallow only tests if it runs.
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    ds = ds.assign(
+        rh=atmos.relative_humidity_from_dewpoint(ds=ds),
+        tas=convert_units_to(ds.tas, "degC"),
+        pr=convert_units_to(ds.pr, "mm/d"),
+    )
+    season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
+
+    out_ds = fire_weather_ufunc(
+        tas=ds.tas,
+        pr=ds.pr,
+        rh=ds.rh,
+        lat=ds.lat,
+        season_mask=season_mask_yr,
+        overwintering=False,
+        dry_start="CFS",
+        indexes=["DC", "DMC"],
+        dmc_dry_factor=5,
+    )
+    out_no = fire_weather_ufunc(
+        tas=ds.tas,
+        pr=ds.pr,
+        rh=ds.rh,
+        lat=ds.lat,
+        season_mask=season_mask_yr,
+        overwintering=False,
+        dry_start=None,
+        indexes=["DC", "DMC"],
+    )
+
+    # I know season of 1992 is a "wet" start.
+    xr.testing.assert_identical(
+        out_ds["DC"].sel(location="Montréal", time="1992"),
+        out_no["DC"].sel(location="Montréal", time="1992"),
+    )
+    xr.testing.assert_identical(
+        out_ds["DMC"].sel(location="Montréal", time="1992"),
+        out_no["DMC"].sel(location="Montréal", time="1992"),
+    )
 
 
 def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
@@ -339,3 +400,63 @@ cffdrs_fire_season = {
     ],
     "id1_start10_end3_YS": [["2013-03-12", "2014-03-09"], ["2013-11-23", "2014-11-15"]],
 }
+
+
+def test_gfwed_and_indicators():
+    # Also tests passing parameters as quantity strings
+    ds = open_dataset("FWI/GFWED_sample_2017.nc")
+
+    outs = fire_weather_indexes(
+        tas=ds.tas,
+        pr=ds.prbc,
+        snd=ds.snow_depth,
+        rh=ds.rh,
+        ws=ds.sfcwind,
+        lat=ds.lat,
+        season_method="GFWED",
+        overwintering=False,
+        dry_start="GFWED",
+        temp_condition_days=3,
+        snow_condition_days=3,
+        temp_start_thresh="6 degC",
+        temp_end_thresh="6 degC",
+    )
+
+    for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs):
+        np.testing.assert_allclose(
+            out.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03
+        )
+
+    ds2 = ds.isel(time=slice(1, None))
+
+    with set_options(cf_compliance="log"):
+        mask = atmos.fire_season(
+            tas=ds2.tas,
+            snd=ds2.snow_depth,
+            method="GFWED",
+            temp_condition_days=3,
+            snow_condition_days=3,
+            temp_start_thresh="6 degC",
+            temp_end_thresh="6 degC",
+        )
+        # 3 first days are false by default assume same as 4th day.
+        mask = mask.where(mask.time > mask.time[2]).bfill("time")
+
+        outs = atmos.fire_weather_indexes(
+            tas=ds2.tas,
+            pr=ds2.prbc,
+            snd=ds2.snow_depth,
+            rh=ds2.rh,
+            ws=ds2.sfcwind,
+            lat=ds2.lat,
+            dc0=ds.DC.isel(time=0),
+            dmc0=ds.DMC.isel(time=0),
+            ffmc0=ds.FFMC.isel(time=0),
+            season_mask=mask,
+            overwintering=False,
+            dry_start="GFWED",
+            initial_start_up=False,
+        )
+
+    for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs):
+        np.testing.assert_allclose(out, exp, rtol=0.03)

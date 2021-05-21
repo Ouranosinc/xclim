@@ -353,6 +353,7 @@ def add_imports(xdoctest_namespace):
     ns["np"] = np
     ns["xr"] = xclim.testing
     ns["xclim"] = xclim
+    ns["open_dataset"] = xclim.testing.open_dataset
 
 
 @pytest.fixture(autouse=True)

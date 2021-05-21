@@ -8,6 +8,7 @@ History
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+* "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -27,6 +28,7 @@ Internal Changes
 * `run_length.rle_statistics` now accepts a `window` argument.
 * Common arguments to the `op` parameter now have better adjective and noun formattings.
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
+>>>>>>> master
 
 
 0.26.1 (2021-05-04)
