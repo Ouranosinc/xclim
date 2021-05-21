@@ -94,7 +94,7 @@ def dqm_scale_sim(ds, *, group, interp, kind):
     return sim.rename("sim").to_dataset()
 
 
-@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
 def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     """QDM: Adjust process on one block.
 
@@ -111,7 +111,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     af = u.broadcast(af, ds.sim, group=group, interp=interp, sel=sel)
 
     scen = u.apply_correction(ds.sim, af, kind)
-    return scen.rename("scen").to_dataset()
+    return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
 
 @map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])

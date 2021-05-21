@@ -8,6 +8,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
+from xclim.core.options import OPTIONS, SDBA_DIAGNOSTICS
 from xclim.core.units import convert_units_to
 from xclim.indices import stats
 
@@ -147,13 +148,22 @@ class BaseAdjustment(ParametrizableWithDataset):
                     stacklevel=4,
                 )
 
-        scen = self._adjust(sim, **kwargs)
+        out = self._adjust(sim, **kwargs)
+
+        if isinstance(out, xr.Dataset):
+            scen = out.scen
+        else:
+            scen = out
+
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["xclim_history"] = update_history(
             f"Bias-adjusted with {infostr}", sim
         )
         scen.attrs["bias_adjustment"] = infostr
+
+        if OPTIONS[SDBA_DIAGNOSTICS]:
+            return out
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
@@ -423,6 +433,12 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         extrapolation : {'constant', 'nan'}
           The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
+        Extra diagnostics
+        -----------------
+        In adjustment:
+
+        quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+
         References
         ----------
         Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
@@ -430,14 +446,16 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         super().__init__(**kwargs)
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
-        scen = qdm_adjust(
+        out = qdm_adjust(
             xr.Dataset({"sim": sim, "af": self.ds.af, "hist_q": self.ds.hist_q}),
             group=self.group,
             interp=interp,
             extrapolation=extrapolation,
             kind=self.kind,
-        ).scen
-        return scen
+        )
+        if OPTIONS[SDBA_DIAGNOSTICS]:
+            return out
+        return out.scen
 
 
 class ExtremeValues(BaseAdjustment):
@@ -479,6 +497,12 @@ class ExtremeValues(BaseAdjustment):
           See Notes, ]0, 1].
         power: float
           Shape of the correction strength, see Notes.
+
+        Extra diagnostics
+        -----------------
+        In training:
+
+        nclusters : Number of extreme value clusters found for each gridpoint.
 
         Notes
         -----
@@ -576,6 +600,10 @@ class ExtremeValues(BaseAdjustment):
             description=f"Mean of the {self.q_thresh * 100}th percentile of large values (x > {self.cluster_thresh}) of ref and hist.",
         )
         self["hist_calendar"] = get_calendar(hist)
+
+        if OPTIONS[SDBA_DIAGNOSTICS] and ref_params is None:
+            ds = ds.assign(nclusters=ref_clusters.nclusters)
+
         self.set_dataset(ds)
 
     def adjust(

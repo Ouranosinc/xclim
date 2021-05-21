@@ -14,6 +14,7 @@ DATA_VALIDATION = "data_validation"
 CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
+SDBA_DIAGNOSTICS = "sdba_diagnostics"
 
 MISSING_METHODS: Dict[str, Callable] = dict()
 
@@ -23,6 +24,7 @@ OPTIONS = {
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
     MISSING_OPTIONS: dict(),
+    SDBA_DIAGNOSTICS: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -48,6 +50,7 @@ _VALIDATORS = {
     CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
     CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
     MISSING_OPTIONS: _valid_missing_options,
+    SDBA_DIAGNOSTICS: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -135,6 +138,11 @@ class set_options:
       Default: ``'any'``
     - ``missing_options``: Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
+    - ``sdba_diagnostics``: Whether to add diagnostic variables to output of train and adjust methods
+        of sdba' bias-adjustment objects, as well as some `processing` function. Additionnal variables
+        are listed in the object's docstring. When activated,  `adjust` _always_ returns a tuple of
+        `(scen, diag_ds)`. For `processing` function, see the doc, the output type might change, or not.
+      Default: ``False``.
 
     Examples
     --------
