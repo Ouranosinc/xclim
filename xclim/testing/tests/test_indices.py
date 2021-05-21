@@ -1546,52 +1546,6 @@ class TestTG:
         np.testing.assert_array_equal(icclim, ind)
 
 
-@pytest.mark.skip("Fire season computation is not the same as GFWED")
-class TestFireWeatherIndex:
-    nc_gfwed = os.path.join("FWI", "GFWED_sample_2017.nc")
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_fire_weather_indexes(self, use_dask):
-        ds = open_dataset(self.nc_gfwed)
-        if use_dask:
-            ds = ds.chunk({"loc": 1})
-        fwis = xci.fire_weather_indexes(
-            ds.tas.sel(time=slice("2017-03-03", None)),
-            ds.prbc.sel(time=slice("2017-03-03", None)),
-            ds.sfcwind.sel(time=slice("2017-03-03", None)),
-            ds.rh.sel(time=slice("2017-03-03", None)),
-            ds.lat,
-            ffmc0=ds.FFMC.sel(time="2017-03-02"),
-            dmc0=ds.DMC.sel(time="2017-03-02"),
-            dc0=ds.DC.sel(time="2017-03-02"),
-        )
-        for ind, name in zip(fwis, ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"]):
-            np.testing.assert_allclose(
-                ind.where(ds[name].notnull()).sel(time=slice("2017-06-01", None)),
-                ds[name].sel(time=slice("2017-06-01", None)),
-                rtol=1e-2,
-                atol=1e-2,
-            )
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_drought_code(self, use_dask):
-        ds = open_dataset(self.nc_gfwed)
-        if use_dask:
-            ds = ds.chunk({"loc": 1})
-        dc = xci.drought_code(
-            ds.tas.sel(time=slice("2017-03-03", None)),
-            ds.prbc.sel(time=slice("2017-03-03", None)),
-            ds.lat,
-            dc0=ds.DC.sel(time="2017-03-02"),
-        )
-        np.testing.assert_allclose(
-            dc.where(ds.DC.notnull()).sel(time=slice("2017-06-01", None)),
-            ds.DC.sel(time=slice("2017-06-01", None)),
-            rtol=1e-2,
-            atol=1e-2,
-        )
-
-
 @pytest.fixture(scope="session")
 def cmip3_day_tas():
     # xr.set_options(enable_cftimeindex=False)
@@ -1655,17 +1609,17 @@ class TestWindConversion:
     "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 151)]
 )
 def test_relative_humidity_dewpoint(
-    tas_series, rh_series, method, invalid_values, exp0
+    tas_series, hurs_series, method, invalid_values, exp0
 ):
     np.testing.assert_allclose(
         xci.relative_humidity(
             tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
-            dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
+            tdps=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
             method=method,
             invalid_values=invalid_values,
         ),
         # Expected values obtained by hand calculation
-        rh_series([exp0, 100, 93, 71, 52, 73, 94, 31, 20]),
+        hurs_series([exp0, 100, 93, 71, 52, 73, 94, 31, 20]),
         rtol=0.02,
         atol=1,
     )
@@ -1693,15 +1647,15 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0):
     "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)]
 )
 def test_relative_humidity(
-    tas_series, rh_series, huss_series, ps_series, method, invalid_values, exp0
+    tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
 ):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
     # Expected values obtained with the Sonntag90 method
-    rh_exp = rh_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
+    hurs_exp = hurs_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
     ps = ps_series([101325] * 8)
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 
-    rh = xci.relative_humidity(
+    hurs = xci.relative_humidity(
         tas=tas,
         huss=huss,
         ps=ps,
@@ -1709,7 +1663,7 @@ def test_relative_humidity(
         invalid_values=invalid_values,
         ice_thresh="0 degC",
     )
-    np.testing.assert_allclose(rh, rh_exp, atol=0.5, rtol=0.005)
+    np.testing.assert_allclose(hurs, hurs_exp, atol=0.5, rtol=0.005)
 
 
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
@@ -1717,10 +1671,10 @@ def test_relative_humidity(
     "invalid_values,exp0", [("clip", 1.4e-2), ("mask", np.nan), (None, 2.2e-2)]
 )
 def test_specific_humidity(
-    tas_series, rh_series, huss_series, ps_series, method, invalid_values, exp0
+    tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
 ):
     tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
-    rh = rh_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
+    hurs = hurs_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
     ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
     # Expected values obtained with the Sonntag90 method
     huss_exp = huss_series(
@@ -1729,7 +1683,7 @@ def test_specific_humidity(
 
     huss = xci.specific_humidity(
         tas=tas,
-        rh=rh,
+        hurs=hurs,
         ps=ps,
         method=method,
         invalid_values=invalid_values,
@@ -1859,9 +1813,9 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
     np.testing.assert_array_equal(out, [1])
 
 
-def test_blowing_snow(snd_series, ws_series):
+def test_blowing_snow(snd_series, sfcWind_series):
     snd = snd_series([0, 0.1, 0.2, 0, 0, 0.1, 0.3, 0.5, 0.7, 0])
-    w = ws_series([9, 0, 0, 0, 0, 1, 1, 0, 5, 0])
+    w = sfcWind_series([9, 0, 0, 0, 0, 1, 1, 0, 5, 0])
 
     out = xci.blowing_snow(snd, w, snd_thresh="50 cm", sfcWind_thresh="4 km/h")
     np.testing.assert_array_equal(out, [1])

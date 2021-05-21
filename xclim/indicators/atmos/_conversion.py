@@ -88,9 +88,10 @@ saturation_vapor_pressure = Converter(
 
 
 relative_humidity_from_dewpoint = Converter(
-    identifier="rh_fromdewpoint",
+    identifier="hurs_fromdewpoint",
     nvar=2,
     units="%",
+    var_name="hurs",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
     title="Relative humidity from temperature and dewpoint temperature.",
@@ -115,7 +116,7 @@ relative_humidity_from_dewpoint = Converter(
 
 
 relative_humidity = Converter(
-    identifier="rh",
+    identifier="hurs",
     nvar=3,
     units="%",
     long_name="Relative Humidity",

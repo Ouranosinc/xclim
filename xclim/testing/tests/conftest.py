@@ -84,7 +84,7 @@ def pr_series():
             name="pr",
             attrs={
                 "standard_name": "precipitation_flux",
-                "cell_methods": "time: sum over day",
+                "cell_methods": "time: mean within days",
                 "units": "kg m-2 s-1",
             },
         )
@@ -103,7 +103,7 @@ def prsn_series():
             name="pr",
             attrs={
                 "standard_name": "solid_precipitation_flux",
-                "cell_methods": "time: sum over day",
+                "cell_methods": "time: mean within days",
                 "units": "kg m-2 s-1",
             },
         )
@@ -124,7 +124,7 @@ def pr_hr_series():
             name="pr",
             attrs={
                 "standard_name": "precipitation_flux",
-                "cell_methods": "time: sum over hour",
+                "cell_methods": "time: mean within hours",
                 "units": "kg m-2 s-1",
             },
         )
@@ -146,7 +146,7 @@ def pr_ndseries():
             name="pr",
             attrs={
                 "standard_name": "precipitation_flux",
-                "cell_methods": "time: sum over day",
+                "cell_methods": "time: mean within days",
                 "units": "kg m-2 s-1",
             },
         )
@@ -242,39 +242,39 @@ areacello = areacella
 
 
 @pytest.fixture
-def rh_series():
-    def _rh_series(values, start="7/1/2000"):
+def hurs_series():
+    def _hurs_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(
             values,
             coords=[coords],
             dims="time",
-            name="rh",
+            name="hurs",
             attrs={
                 "standard_name": "relative humidity",
                 "units": "%",
             },
         )
 
-    return _rh_series
+    return _hurs_series
 
 
 @pytest.fixture
-def ws_series():
-    def _ws_series(values, start="7/1/2000"):
+def sfcWind_series():
+    def _sfcWind_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(
             values,
             coords=[coords],
             dims="time",
-            name="ws",
+            name="sfcWind",
             attrs={
                 "standard_name": "wind_speed",
                 "units": "km h-1",
             },
         )
 
-    return _ws_series
+    return _sfcWind_series
 
 
 @pytest.fixture
@@ -314,21 +314,21 @@ def snd_series():
 
 
 @pytest.fixture
-def swe_series():
-    def _swe_series(values, start="7/1/2000"):
+def snw_series():
+    def _snw_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(
             values,
             coords=[coords],
             dims="time",
-            name="swe",
+            name="snw",
             attrs={
-                "standard_name": "liquid_water_content_of_surface_snow",
+                "standard_name": "surface_snow_amount",
                 "units": "kg/m2",
             },
         )
 
-    return _swe_series
+    return _snw_series
 
 
 @pytest.fixture
@@ -439,12 +439,13 @@ def official_indicators():
 
 @pytest.fixture(scope="session")
 def atmosds():
-    ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").rename(
+        rh="hurs"
+    )
 
     sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
     sfcWind.attrs.update(cell_methods="time: mean within days")
     huss = xclim.atmos.specific_humidity(ds=ds)
-    hurs = ds.rh
     snw = ds.swe * 1000
     # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
     snd = snw / 300
@@ -471,7 +472,6 @@ def atmosds():
         sfcWind=sfcWind,
         sfcWindfromdir=sfcWindfromdir,
         huss=huss,
-        hurs=hurs,
         psl=psl,
         snw=snw,
         snd=snd,

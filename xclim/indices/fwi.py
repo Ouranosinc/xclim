@@ -60,7 +60,7 @@ defined in the `xc.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-        rh=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+        hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
         tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
         pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
         sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0]
@@ -77,8 +77,8 @@ defined in the `xc.atmos` module.
 >>> out_fwi = fire_weather_indexes(
         tas=ds.tas,
         pr=ds.pr,
-        rh=ds.rh,
-        ws=ds.sfcWind,
+        hurs=ds.hurs,
+        sfcWind=ds.sfcWind,
         lat=ds.lat,
         season_mask=season_mask,
         overwintering=True,
@@ -102,8 +102,8 @@ as _all_ seasons are used, even the very short shoulder seasons.
         tas=ds.tas,
         pr=ds.prbc,
         snd=ds.snow_depth,
-        rh=ds.rh,
-        ws=ds.sfcwind,
+        hurs=ds.rh,
+        sfcWind=ds.sfcwind,
         lat=ds.lat,
         season_method="GFWED",
         overwintering=False,
