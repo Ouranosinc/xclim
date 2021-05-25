@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+import xclim as xc
 from xclim.indices import generic
 
 
@@ -142,3 +143,39 @@ def test_doyminmax(q_series):
             assert attr in da.attrs.keys()
         assert da.attrs["units"] == ""
         assert da.attrs["is_dayofyear"] == 1
+
+
+def test_aggregate_between_dates():
+    # standard calendar
+    # generate test DataArray
+    time_std = pd.date_range("1991-07-01", "1993-06-29", freq="D")
+    data_std = xr.DataArray(
+        np.ones((time_std.size, 4)),
+        dims=("time", "lon"),
+        coords={"time": time_std, "lon": [-72, -71, -70, -69]},
+    )
+    # generate test start and end dates
+    start_v = [[200, 200, np.nan, np.nan], [200, 200, 60, 60]]
+    end_v = [[200, np.nan, 60, np.nan], [360, 60, 360, 80]]
+    start = xr.DataArray(
+        start_v,
+        dims=("time", "lon"),
+        coords={"time": [time_std[0], time_std[366]], "lon": data_std.lon},
+        attrs={"calendar": "standard", "is_dayofyear": 1},
+    )
+    end = xr.DataArray(
+        end_v,
+        dims=("time", "lon"),
+        coords={"time": [time_std[0], time_std[366]], "lon": data_std.lon},
+        attrs={"calendar": "standard", "is_dayofyear": 1},
+    )
+
+    out = generic.aggregate_between_dates(data_std, start, end, op="sum", freq="AS-JUL")
+
+    # expected output
+    s = xc.core.calendar.doy_to_days_since(start)
+    e = xc.core.calendar.doy_to_days_since(end)
+    expected = e - s
+    expected = xr.where(((s > e) | (s.isnull()) | (e.isnull())), np.nan, expected)
+
+    np.testing.assert_allclose(out, expected)

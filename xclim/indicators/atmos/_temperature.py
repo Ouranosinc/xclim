@@ -60,7 +60,6 @@ __all__ = [
     "maximum_consecutive_warm_days",
     "fire_season",
     "corn_heat_units",
-    "corn_heat_units_accumulation",
 ]
 
 
@@ -700,17 +699,4 @@ corn_heat_units = TasminTasmax(
     cell_methods="",
     missing="skip",
     compute=indices.corn_heat_units,
-)
-
-corn_heat_units_accumulation = TasminTasmax(
-    identifier="corn_heat_units_accumulation",
-    units="",
-    long_name="Corn heat units accumulation.",
-    description="Sum of the daily corn heat units over the corn growth season each year. "
-    "The corn growth season starts when the mean daily temperature exceeds the "
-    "threshold Tmean >= {seas_start_thresh} for {seas_start_window} days, and ends when the minimum daily "
-    "temperature reaches the threshold Tmin <= {seas_end_thresh} for {seas_end_window} day(s).",
-    cell_methods="",
-    missing="skip",
-    compute=indices.corn_heat_units_accumulation,
 )
