@@ -190,7 +190,9 @@ wind_chill_index = Converter(
     nvar=2,
     units="1",
     long_name="Wind chill index",
-    description=lambda **kws: ("Wind chill index.")
+    description=lambda **kws: (
+        "Wind chill index describing the temperature felt by the average person in response to cold wind."
+    )
     + (
         "A slow-wind version of the wind chill index was used for wind speeds under {min_wind_thresh}."
         if kws["slow_wind_calc"]

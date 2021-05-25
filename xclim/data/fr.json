@@ -827,10 +827,16 @@
     "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
     "long_name": "Saison des incendies"
   },
-    "CORN_HEAT_UNITS": {
+  "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs.",
     "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
     "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
+  },
+  "WIND_CHILL_INDEX": {
+    "title": "Facteur éolien.",
+    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisé pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
+    "description": "Refroiddissement éolien, équivalent à la sensation du froid due au vent par in individu moyen.",
+    "long_name": "Facteur éolien."
   }
 }
