@@ -646,3 +646,29 @@ def extreme_temperature_range(
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
     return out
+
+
+def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
+    """Calculate the degree days below/above the temperature threshold.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+      Mean daily temperature.
+    thresh : str
+      The temperature threshold.
+    condition : {"<", ">"}
+      Operator.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    if "<" in condition:
+        out = (thresh - tas).clip(0)
+    elif ">" in condition:
+        out = (tas - thresh).clip(0)
+
+    return out
