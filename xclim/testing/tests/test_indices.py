@@ -24,7 +24,7 @@ import xarray as xr
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import ValidationError, convert_units_to
+from xclim.core.units import ValidationError, convert_units_to, units
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -1871,3 +1871,27 @@ def test_winter_storm(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
     out = xci.winter_storm(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
+
+
+def test_humidex(tas_series):
+
+    tas = tas_series([15, 25, 35, 40])
+    tas.attrs["units"] = "C"
+
+    dtas = tas_series([10, 15, 25, 25])
+    dtas.attrs["units"] = "C"
+
+    # expected values from https://en.wikipedia.org/wiki/Humidex
+    expected = np.array([16, 29, 47, 52]) * units.degC
+
+    # Celcius
+    hc = xci.humidex(tas, dtas)
+    np.testing.assert_array_almost_equal(hc, expected, 0)
+
+    # Kelvin
+    hk = xci.humidex(convert_units_to(tas, "K"), dtas)
+    np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
+
+    # Fahrenheit
+    hf = xci.humidex(convert_units_to(tas, "fahrenheit"), dtas)
+    np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)

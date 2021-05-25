@@ -6,6 +6,7 @@ from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
+    "humidex",
     "tg",
     "wind_speed_from_vector",
     "wind_vector_from_speed",
@@ -22,6 +23,18 @@ class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
     missing = "skip"
+
+
+humidex = Converter(
+    identifier="humidex",
+    nvar=2,
+    units="C",
+    standard_name="air_temperature",
+    long_name="humidex index",
+    description="Humidex index describing the temperature felt by the average person in response to relative humidity.",
+    cell_methods="",
+    compute=indices.humidex,
+)
 
 
 tg = Converter(

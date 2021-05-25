@@ -4,9 +4,10 @@ from typing import Tuple
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to, declare_units
+from xclim.core.units import convert_units_to, declare_units, units2pint
 
 __all__ = [
+    "humidex",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -16,6 +17,67 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
 ]
+
+
+@declare_units(tas="[temperature]", dtas="[temperature]")
+def humidex(
+    tas: xr.DataArray,
+    dtas: xr.DataArray,
+) -> xr.DataArray:
+    r"""Humidex index.
+
+    The humidex indicates how hot the air feels to an average person, accounting for the effect of humidity. It
+    can be interpreted as the equivalent perceived temperature when the air is dry.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Air temperature.
+    dtas : xarray.DataArray,
+      Dewpoint temperature.
+
+    Returns
+    -------
+    xarray.DataArray, [temperature]
+      The humidex index.
+
+    Notes
+    -----
+    .. math::
+
+       T_{\text{air}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{273.15+T_{\text{dew}}}}\right)-10\right]
+
+    where :math:`T_{air}` and :math:`T_{dew}` are the air and dewpoint temperature in Celsius.
+
+    The humidex *comfort scale* can be interpreted as follows:
+
+    - 20 to 29 : no discomfort;
+    - 30 to 39 : some discomfort;
+    - 40 to 45 : great discomfort, avoid exertion;
+    - 46 and over : dangerous, possible heat stroke;
+
+    References
+    ----------
+    https://climate.weather.gc.ca/glossary_e.html
+    """
+    # Convert dewpoint temperature to Kelvins
+    dtas = convert_units_to(dtas, "kelvin")
+
+    # Vapour pressure in hPa
+    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / dtas))
+
+    # Temperature delta due to humidity in delta_degC
+    h = 5 / 9 * (e - 10)
+    h.attrs["units"] = "delta_degree_Celsius"
+
+    # Get delta_units for output
+    du = (1 * units2pint(tas) - 0 * units2pint(tas)).units
+    h = convert_units_to(h, du)
+
+    # Add the delta to the input temperature
+    out = h + tas
+    out.attrs["units"] = tas.units
+    return out
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")

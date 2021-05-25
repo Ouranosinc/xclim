@@ -832,5 +832,11 @@
     "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
     "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
+  },
+    "HUMIDEX": {
+    "title": "Indice humidex",
+    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
+    "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
+    "long_name": ""
   }
 }
