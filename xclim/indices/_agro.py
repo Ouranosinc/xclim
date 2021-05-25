@@ -184,7 +184,10 @@ def corn_heat_units_accumulation(
     """
 
     chu = corn_heat_units(tasmin, tasmax, thresh_tasmin, thresh_tasmax)
-    start = first_day_above(tas, seas_start_thresh, window=seas_start_window, freq=freq)
+    # last day of the window where tas >= {seas_start_thresh}
+    start = first_day_above(
+        tas, seas_start_thresh, window=seas_start_window, freq=freq
+    ) + (seas_start_window - 1)
     end = first_day_below(tasmin, seas_end_thresh, window=seas_end_window, freq=freq)
 
     out = aggregate_between_dates(chu, start, end, op="sum", freq=freq)
