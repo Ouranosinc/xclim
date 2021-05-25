@@ -171,4 +171,4 @@ def test_generated_cfchecks():
     )
 
     with pytest.raises(ValidationError):
-        cfchecks.generate_cfcheck("sfcWind")(sfcWind=sfcwind)
+        cfchecks.generate_cfcheck("sfcWind")(sfcwind)
