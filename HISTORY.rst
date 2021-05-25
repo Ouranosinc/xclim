@@ -19,6 +19,7 @@ New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+* `atmos.humidex` returns the Canadian *humidex*, an indicator of perceived temperature account for relative humidity.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
