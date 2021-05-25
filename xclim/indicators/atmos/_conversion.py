@@ -15,6 +15,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "wind_chill_index",
 ]
 
 
@@ -181,4 +182,19 @@ rain_approximation = Converter(
         " with method {method} and threshold temperature {thresh}."
     ),
     compute=indices.rain_approximation,
+)
+
+
+wind_chill_index = Converter(
+    identifier="wind_chill",
+    nvar=2,
+    units="1",
+    long_name="Wind chill index",
+    description=lambda **kws: ("Wind chill index.")
+    + (
+        "A slow-wind version of the wind chill index was used for wind speeds under {min_wind_thresh}."
+        if kws["slow_wind_calc"]
+        else ""
+    ),
+    compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
 )

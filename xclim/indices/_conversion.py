@@ -15,6 +15,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "wind_chill_index",
 ]
 
 
@@ -538,3 +539,98 @@ def rain_approximation(
     prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prlp.attrs["units"] = pr.attrs["units"]
     return prlp
+
+
+@declare_units(
+    tas="[temperature]",
+    sfcWind="[speed]",
+    max_temp_thresh="[temperature]",
+    min_wind_thresh="[speed]",
+)
+def wind_chill_index(
+    tas: xr.DataArray,
+    sfcWind: xr.DataArray,
+    slow_wind_calc: bool = True,
+    mask_invalid: bool = True,
+    max_temp_thresh: str = "0 degC",
+    min_wind_thresh: str = "5 km/h",
+):
+    """Wind chill index.
+
+    The Wind Chill Index is an estimation of how cold the weather feels to the average person.
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([ECCC]_),
+    two equations exist, the conventionnal one and one for slow winds (usually < 5 km/h), see Notes.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Surface air temperature.
+    sfcwind : xarray.DataArray
+      Suface wind speed (10 m).
+    slow_wind_calc : bool
+      If True (default), a "slow wind" equation is used where winds are slower than min_wind_thresh, see Notes.
+    mask_invalid : bool
+      Whether to mask values when the inputs are outside their validity range. or not.
+      If True (default), points where tas > max_temp_thresh are masked in the output.
+      If `slow_wind_calc` is also False, points where sfcWind < min_wind_thresh are masked.
+    max_temp_thresh : str
+      The maximal allowed temperature when computing the index. If mask_invalid is False,
+      points where tas is above this threshold are masked.
+    min_wind_thresh : str
+      The minimal wind speed for using the standard computation. If `slow_wind_calc` is True,
+      a slow-wind version of the index is used for points where sfcWind is below this threshold.
+      If it is False and `mask_invalid` is True, those points are simply masked.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Wind Chill Index.
+
+    Notes
+    -----
+    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
+    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
+    a temperature at suface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
+    is computed as:
+
+    .. math::
+
+        W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
+
+    Under slow winds, it becomes:
+
+    .. math::
+
+        W = T + \frac{-1.59 + 0.1345 * T}{5} * V
+
+    If `slow_wind_calc=True` is used with another wind speed threshold than 5 km/h, there will be a discontinuity at that
+    threshold.
+
+    To get the american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, pass
+    `slow_wind_calc=False`, `max_temp_thresh='50 degF'`, `min_wind_thresh='3 mph'`.
+
+    References
+    ----------
+    .. [ECCC] Wind Chill, Glossary of Environment and Climate Change Canada, retrieved 25-05-21. https://www.climate.weather.gc.ca/glossary_e.html#w
+    .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
+    """
+    tas = convert_units_to(tas, "degC")
+    sfcWind = convert_units_to(sfcWind, "km/h")
+    max_temp_thresh = convert_units_to(max_temp_thresh, "degC")
+    min_wind_thresh = convert_units_to(min_wind_thresh, "km/h")
+
+    V = sfcWind ** 0.16
+    W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
+
+    if slow_wind_calc:
+        W = xr.where(
+            sfcWind < min_wind_thresh, tas + sfcWind * (-1.59 + 0.1345 * tas) / 5, W
+        )
+    elif mask_invalid:
+        W = W.where(sfcWind >= min_wind_thresh)
+
+    if mask_invalid:
+        W = W.where(tas <= max_temp_thresh)
+
+    W.attrs["units"] = ""
+    return W

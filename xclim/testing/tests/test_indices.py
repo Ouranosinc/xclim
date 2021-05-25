@@ -1871,3 +1871,16 @@ def test_winter_storm(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
     out = xci.winter_storm(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
+
+
+def test_wind_chill(tas_series, sfcWind_series):
+    tas = tas_series(np.array([-1, -10, -20, 10, -15]) + K2C)
+    sfcWind = sfcWind_series([10, 60, 20, 6, 2])
+
+    out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind)
+    np.testing.assert_allclose(
+        out, [-4.509267, -22.619869, -30.478945, np.NaN, -16.443]
+    )
+
+    out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, slow_wind_calc=False)
+    assert np.isnan(out[-1])
