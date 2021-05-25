@@ -19,6 +19,7 @@ New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+* `atmos.wind_chill_index` computes the daily wind chill index. The default is similar to what Environment and Climate Change Canada does, options are tunable to get the version of the National Weather Service.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
