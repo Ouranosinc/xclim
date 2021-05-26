@@ -554,7 +554,7 @@ def wind_chill_index(
     """Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
-    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([ECCC]_),
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
     two equations exist, the conventionnal one and one for slow winds (usually < 5 km/h), see Notes.
 
     Parameters
@@ -601,8 +601,8 @@ def wind_chill_index(
 
     References
     ----------
+    .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
     Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
-    .. [ECCC] Wind Chill, Glossary of Environment and Climate Change Canada, retrieved 25-05-21. https://www.climate.weather.gc.ca/glossary_e.html#w
     .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
     """
     tas = convert_units_to(tas, "degC")
