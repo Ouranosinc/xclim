@@ -27,7 +27,7 @@ def humidex(
     r"""Humidex index.
 
     The humidex indicates how hot the air feels to an average person, accounting for the effect of humidity. It
-    can be interpreted as the equivalent perceived temperature when the air is dry.
+    can be loosely interpreted as the equivalent perceived temperature when the air is dry.
 
     Parameters
     ----------
@@ -43,13 +43,19 @@ def humidex(
 
     Notes
     -----
+    The humidex is usually computed using hourly observations of dry bulb and dewpoint temperatures. It is computed
+    using the formula based on [masterton79]_:
+
     .. math::
 
-       T_{\text{air}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{273.15+T_{\text{dew}}}}\right)-10\right]
+       T_{\text{dry bulb}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{
+       dewpoint}}}}\right)-10\right]
 
-    where :math:`T_{air}` and :math:`T_{dew}` are the air and dewpoint temperature in Celsius.
+    where :math:`T_{dry bulb}` is the dry bulb air temperature (°C), and :math:`T_{dewpoint}` the dewpoint
+    temperature (°K). The constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
+    and the universal gas constant ([mekis15]_).
 
-    The humidex *comfort scale* can be interpreted as follows:
+    The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
 
     - 20 to 29 : no discomfort;
     - 30 to 39 : some discomfort;
@@ -58,7 +64,9 @@ def humidex(
 
     References
     ----------
-    https://climate.weather.gc.ca/glossary_e.html
+    .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
+    .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [eccc] https://climate.weather.gc.ca/glossary_e.html
     """
     # Convert dewpoint temperature to Kelvins
     dtas = convert_units_to(dtas, "kelvin")
