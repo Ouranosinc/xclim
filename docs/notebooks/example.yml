@@ -18,7 +18,7 @@ indices:
       parameters:
         window:
           data: 5
-  R75p:
+  R75pdays:
     base: days_over_precip_thresh
     index_function:
       parameters:
@@ -29,12 +29,7 @@ indices:
           description: Daily 75th percentile of wet day precipitation flux.
   fd:
     reference: ETCCDI
-    period:
-      allowed:
-        annual:
-        seasonal:
-        monthly:
-      default: annual
+    period: annual
     output:
       var_name: "fd"
       standard_name: number_of_days_with_air_temperature_below_threshold
@@ -49,8 +44,23 @@ indices:
       name: count_occurrences
       parameters:
         threshold:
-          kind: quantity
-          data: 0
-          units: "degree_Celsius"
+          data: 0 degC
         condition:
           data: "<"
+  R95p:
+    reference: climdex
+    period : annual
+    output:
+      var_name: R95p
+      long_name: Annual total PRCP when RR > 95th percentile
+      units: m
+      cell_methods:
+        - time: sum within days
+        - time: sum over days
+    input:
+      pr: pr
+    index_function:
+      name: extreme_precip_accumulation
+      parameters:
+        perc:
+          data: 95
