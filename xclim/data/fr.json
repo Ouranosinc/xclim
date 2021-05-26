@@ -837,6 +837,6 @@
     "title": "Indice humidex",
     "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
-    "long_name": ""
+    "long_name": "indice humidex"
   }
 }
