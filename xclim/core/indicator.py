@@ -129,6 +129,7 @@ from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import FREQ_NAMES, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
+    InputKind,
     MissingVariableError,
     infer_kind_from_parameter,
     wrapped_partial,
@@ -352,6 +353,10 @@ class Indicator(IndicatorRegistrar):
         # We dump whatever the base class had and take what was parsed from the current compute function.
         kwds["parameters"] = params
 
+        # By default skip missing values handling if there is no resampling.
+        if "freq" not in params:
+            kwds["missing"] = "skip"
+
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
         # And before converting callables to staticmethods
@@ -456,6 +461,7 @@ class Indicator(IndicatorRegistrar):
                 params[varname] = {
                     "default": name,
                     "description": VARIABLES[name]["description"],
+                    "kind": InputKind.VARIABLE,
                 }
                 input_units[varname] = VARIABLES[name]["canonical_units"]
 
@@ -683,10 +689,9 @@ class Indicator(IndicatorRegistrar):
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.pop("ds")
-        for name, param in self._sig.parameters.items():
-            if param.annotation is Union[str, DataArray] and isinstance(
-                ba.arguments[name], str
-            ):
+        varkinds = [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+        for name, meta in self.parameters.items():
+            if meta["kind"] in varkinds and isinstance(ba.arguments[name], str):
                 if ds is not None:
                     try:
                         ba.arguments[name] = ds[ba.arguments[name]]
@@ -739,10 +744,10 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        das: tuple
-          Input arrays.
         ba: bound argument object
           Keyword arguments of the `compute` call.
+        das: mapping
+          Input arrays.
         attrs : Mapping[str, str]
           The attributes to format and update.
         var_id : str
@@ -1271,7 +1276,7 @@ def build_indicator_module_from_yaml(
         if indice_name is not None and indices is not None:
             indice_func = getattr(indices, indice_name, None)
             if indice_func is None and hasattr(indices, "__getitem__"):
-                indice_func = indices["indice_name"]
+                indice_func = indices[indice_name]
 
             if indice_func is not None:
                 data["index_function"]["name"] = indice_func

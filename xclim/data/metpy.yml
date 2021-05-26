@@ -1,0 +1,89 @@
+realm: atmos
+doc: |
+  =============
+  MetPy indices
+  =============
+
+  MetPy is a collection of tools in Python for reading, visualizing, and performing calculations with weather data.
+  This submodule wraps some of the indice-like computation it provides into xclim's Indicators.
+
+references: https://unidata.github.io/MetPy/latest/
+indices:
+    dewpoint_from_relative_humidity:
+        title: Dewpoint temperature from temperature and relative humidity.
+        abstract: Calculate the ambient dewpoint given air temperature and relative humidity.
+        output:
+          var_name: tdps
+          standard_name: dew_point_temperature
+          long_name: Dew point temperature
+          description: Dew points temperature computed from temperature and relative humidity.
+          units: K
+        index_function:
+          name: dewpoint_from_relative_humidity
+        input:
+          temperature: tas
+          relative_humidity: hurs
+    dewpoint_from_specific_humidity:
+        output:
+          var_name: tdps
+          standard_name: dew_point_temperature
+          long_name: Dew point temperature
+          description: Dew points temperature computed from temperature, pressure and specific humidity.
+          units: K
+        index_function:
+          name: dewpoint_from_specific_humidity
+        input:
+          pressure: ps
+          temperature: tas
+          specific_humidity: huss
+    potential_temperature:
+        output:
+            var_name: theta
+            standard_name: air_potential_temperature
+            long_name: Potential temperature
+            description: Potential temperature of the atmosphere using the Poisson equation.
+            units: K
+        index_function:
+            name: potential_temperature
+        input:
+           pressure: ps
+           temperature: tas
+    equivalent_potential_temperature:
+        output:
+            var_name: theta_equiv
+            standard_name: air_equivalent_potential_temperature
+            long_name: Equivalent potential temperature
+            description: Equivalent potential temperature of the atmosphere.
+            units: K
+        index_function:
+            name: equivalent_potential_temperature
+        input:
+            pressure: ps
+            temperature: tas
+            dewpoint: tdps
+    windchill:
+        output:
+            long_name: Wind Chill Temperature Index
+            units: degC
+        index_function:
+            name: windchill
+            parameters:
+                face_level_winds:
+                    data: False
+                mask_undefined:
+                    data: True
+        input:
+            temperature: tas
+            speed: sfcWind
+    heat_index:
+         output:
+             long_name: Heat Index
+             units: degC
+         index_function:
+             name: heat_index
+             parameters:
+                 mask_undefined:
+                     data: True
+         input:
+             temperature: tas
+             relative_humidity: hurs
