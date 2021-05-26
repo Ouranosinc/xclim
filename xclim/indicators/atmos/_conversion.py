@@ -188,15 +188,16 @@ rain_approximation = Converter(
 wind_chill_index = Converter(
     identifier="wind_chill",
     nvar=2,
-    units="1",
+    units="degC",
     long_name="Wind chill index",
     description=lambda **kws: (
         "Wind chill index describing the temperature felt by the average person in response to cold wind."
     )
     + (
-        "A slow-wind version of the wind chill index was used for wind speeds under {min_wind_thresh}."
-        if kws["slow_wind_calc"]
-        else ""
+        "A slow-wind version of the wind chill index was used for wind speeds under 5 km/h and invalid "
+        "temperatures were masked (T > 0°C)."
+        if kws["method"] == "CAN"
+        else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
     ),
     compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
 )

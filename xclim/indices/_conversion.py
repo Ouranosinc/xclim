@@ -544,16 +544,12 @@ def rain_approximation(
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
-    max_temp_thresh="[temperature]",
-    min_wind_thresh="[speed]",
 )
 def wind_chill_index(
     tas: xr.DataArray,
     sfcWind: xr.DataArray,
-    slow_wind_calc: bool = True,
+    method: str = "CAN",
     mask_invalid: bool = True,
-    max_temp_thresh: str = "0 degC",
-    min_wind_thresh: str = "5 km/h",
 ):
     """Wind chill index.
 
@@ -567,23 +563,17 @@ def wind_chill_index(
       Surface air temperature.
     sfcwind : xarray.DataArray
       Suface wind speed (10 m).
-    slow_wind_calc : bool
-      If True (default), a "slow wind" equation is used where winds are slower than min_wind_thresh, see Notes.
+    method : {'CAN', 'US'}
+      If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
     mask_invalid : bool
       Whether to mask values when the inputs are outside their validity range. or not.
-      If True (default), points where tas > max_temp_thresh are masked in the output.
-      If `slow_wind_calc` is also False, points where sfcWind < min_wind_thresh are masked.
-    max_temp_thresh : str
-      The maximal allowed temperature when computing the index. If mask_invalid is False,
-      points where tas is above this threshold are masked.
-    min_wind_thresh : str
-      The minimal wind speed for using the standard computation. If `slow_wind_calc` is True,
-      a slow-wind version of the index is used for points where sfcWind is below this threshold.
-      If it is False and `mask_invalid` is True, those points are simply masked.
+      If True (default), points where the temperature is above a threshold are masked.
+      The threshold is 0°C for the canadian method and 50°F for the american one.
+      With the latter method, points where sfcWind < 3 mph are also masked.
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xarray.DataArray, [degC]
       Wind Chill Index.
 
     Notes
@@ -597,17 +587,17 @@ def wind_chill_index(
 
         W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
 
-    Under slow winds, it becomes:
+    Under slow winds (:math:`V < 5` km/h), and using the canadian method, it becomes:
 
     .. math::
 
         W = T + \frac{-1.59 + 0.1345 * T}{5} * V
 
-    If `slow_wind_calc=True` is used with another wind speed threshold than 5 km/h, there will be a discontinuity at that
-    threshold.
 
-    To get the american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, pass
-    `slow_wind_calc=False`, `max_temp_thresh='50 degF'`, `min_wind_thresh='3 mph'`.
+    Both equations are invalid for temperature over 0°C in the canadian method.
+
+    The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
+    `method='US'`. In that case, the maximual valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
 
     References
     ----------
@@ -617,21 +607,18 @@ def wind_chill_index(
     """
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "km/h")
-    max_temp_thresh = convert_units_to(max_temp_thresh, "degC")
-    min_wind_thresh = convert_units_to(min_wind_thresh, "km/h")
 
     V = sfcWind ** 0.16
     W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
 
-    if slow_wind_calc:
-        W = xr.where(
-            sfcWind < min_wind_thresh, tas + sfcWind * (-1.59 + 0.1345 * tas) / 5, W
-        )
-    elif mask_invalid:
-        W = W.where(sfcWind >= min_wind_thresh)
+    if method.upper() == "CAN":
+        W = xr.where(sfcWind < 5, tas + sfcWind * (-1.59 + 0.1345 * tas) / 5, W)
+    elif method.upper() != "US":
+        raise ValueError(f"`method` must be one of 'US' and 'CAN'. Got '{method}'.")
 
     if mask_invalid:
-        W = W.where(tas <= max_temp_thresh)
+        mask = {"CAN": tas <= 0, "US": (sfcWind > 4.828032) & (tas <= 10)}
+        W = W.where(mask[method.upper()])
 
-    W.attrs["units"] = ""
+    W.attrs["units"] = "degC"
     return W

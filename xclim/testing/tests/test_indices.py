@@ -1873,14 +1873,17 @@ def test_winter_storm(snd_series):
     np.testing.assert_array_equal(out, [3])
 
 
-def test_wind_chill(tas_series, sfcWind_series):
+def test_wind_chill(tas_series, ws_series):
     tas = tas_series(np.array([-1, -10, -20, 10, -15]) + K2C)
-    sfcWind = sfcWind_series([10, 60, 20, 6, 2])
+    sfcWind = ws_series([10, 60, 20, 6, 2])
 
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind)
+    # Expected values taken from the online calculator of the ECCC.
+    # The calculator was altered to remove the rounding of the output.
     np.testing.assert_allclose(
-        out, [-4.509267, -22.619869, -30.478945, np.NaN, -16.443]
+        out,
+        [-4.509267062481955, -22.619869069856854, -30.478945408950928, np.NaN, -16.443],
     )
 
-    out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, slow_wind_calc=False)
-    assert np.isnan(out[-1])
+    out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, method="US")
+    assert out[-1].isnull()
