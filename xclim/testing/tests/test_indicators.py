@@ -466,6 +466,6 @@ def test_indicator_from_dict():
     assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
-    assert ind.parameters["data"]["units"] == "[temperature]"
+    assert ind.parameters["data"]["units"] == "K"
     # Cf checks were generated
     assert ind.cfcheck is not Daily.cfcheck

@@ -60,7 +60,7 @@ defined in the `xc.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-        rh=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+        hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
         tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
         pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
         sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0]
@@ -77,8 +77,8 @@ defined in the `xc.atmos` module.
 >>> out_fwi = fire_weather_indexes(
         tas=ds.tas,
         pr=ds.pr,
-        rh=ds.rh,
-        ws=ds.sfcWind,
+        hurs=ds.hurs,
+        sfcWind=ds.sfcWind,
         lat=ds.lat,
         season_mask=season_mask,
         overwintering=True,
@@ -102,8 +102,8 @@ as _all_ seasons are used, even the very short shoulder seasons.
         tas=ds.tas,
         pr=ds.prbc,
         snd=ds.snow_depth,
-        rh=ds.rh,
-        ws=ds.sfcwind,
+        hurs=ds.rh,
+        sfcWind=ds.sfcwind,
         lat=ds.lat,
         season_method="GFWED",
         overwintering=False,
@@ -864,8 +864,8 @@ def fire_weather_ufunc(
     *,
     tas: xr.DataArray,
     pr: xr.DataArray,
-    rh: Optional[xr.DataArray] = None,
-    ws: Optional[xr.DataArray] = None,
+    hurs: Optional[xr.DataArray] = None,
+    sfcWind: Optional[xr.DataArray] = None,
     snd: Optional[xr.DataArray] = None,
     lat: Optional[xr.DataArray] = None,
     dc0: Optional[xr.DataArray] = None,
@@ -897,9 +897,9 @@ def fire_weather_ufunc(
         Noon surface temperature in °C
     pr : xr.DataArray
         Rainfall over previous 24h, at noon in mm/day
-    rh : xr.DataArray, optional
+    hurs : xr.DataArray, optional
         Noon surface relative humidity in %, not needed for DC
-    ws : xr.DataArray, optional
+    sfcWind : xr.DataArray, optional
         Noon surface wind speed in km/h, not needed for DC, DMC or BUI
     snd : xr.DataArray, optional
         Noon snow depth in m, only needed if `season_method` is "LA08"
@@ -1018,14 +1018,14 @@ def fire_weather_ufunc(
     needed_args = (
         (tas, "tas", ["DC", "DMC", "FFMC", "WF93", "LA08"], True),
         (pr, "pr", ["DC", "DMC", "FFMC"], True),
-        (rh, "rh", ["DMC", "FFMC"], True),
-        (ws, "ws", ["FFMC"], True),
+        (hurs, "hurs", ["DMC", "FFMC"], True),
+        (sfcWind, "sfcWind", ["FFMC"], True),
         (snd, "snd", ["LA08"], True),
         (tas.time.dt.month, "month", ["DC", "DMC"], True),
         (lat, "lat", ["DC", "DMC"], False),
     )
-    # Arg order : tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr
-    #              0   1   2   3    4   5    6    7             8    9     10    11
+    # Arg order : tas, pr, hurs, sfcWind, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr
+    #              0   1    2      3        4   5    6    7             8    9     10    11
     args = [None] * 12
     input_core_dims = [[]] * 12
 
@@ -1230,15 +1230,15 @@ def _convert_parameters(
 @declare_units(
     tas="[temperature]",
     pr="[precipitation]",
-    ws="[speed]",
-    rh="[]",
+    sfcWind="[speed]",
+    hurs="[]",
     snd="[length]",
 )
 def fire_weather_indexes(
     tas: xr.DataArray,
     pr: xr.DataArray,
-    ws: xr.DataArray,
-    rh: xr.DataArray,
+    sfcWind: xr.DataArray,
+    hurs: xr.DataArray,
     lat: xr.DataArray,
     snd: Optional[xr.DataArray] = None,
     ffmc0: Optional[xr.DataArray] = None,
@@ -1263,9 +1263,9 @@ def fire_weather_indexes(
       Noon temperature.
     pr : xr.DataArray
       Rain fall in open over previous 24 hours, at noon.
-    ws : xr.DataArray
+    sfcWind : xr.DataArray
       Noon wind speed.
-    rh : xr.DataArray
+    hurs : xr.DataArray
       Noon relative humidity.
     lat : xr.DataArray
       Latitude coordinate
@@ -1313,16 +1313,16 @@ def fire_weather_indexes(
     """
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
-    ws = convert_units_to(ws, "km/h")
-    rh = convert_units_to(rh, "pct")
+    sfcWind = convert_units_to(sfcWind, "km/h")
+    hurs = convert_units_to(hurs, "pct")
     if snd is not None:
         snd = convert_units_to(snd, "m")
 
     out = fire_weather_ufunc(
         tas=tas,
         pr=pr,
-        rh=rh,
-        ws=ws,
+        hurs=hurs,
+        sfcWind=sfcWind,
         lat=lat,
         dc0=dc0,
         dmc0=dmc0,

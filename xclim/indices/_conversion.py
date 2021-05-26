@@ -257,14 +257,14 @@ def saturation_vapor_pressure(
 
 @declare_units(
     tas="[temperature]",
-    dtas="[temperature]",
+    tdps="[temperature]",
     huss="[]",
     ps="[pressure]",
     ice_thresh="[temperature]",
 )
 def relative_humidity(
     tas: xr.DataArray,
-    dtas: xr.DataArray = None,
+    tdps: xr.DataArray = None,
     huss: xr.DataArray = None,
     ps: xr.DataArray = None,
     ice_thresh: str = None,
@@ -279,9 +279,9 @@ def relative_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array.
-    dtas : xr.DataArray
-      Dewpoint temperature (if specified, overrides huss and ps).
+      Temperature array
+    tdps : xr.DataArray
+      Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
       Specific Humidity.
     ps : xr.DataArray
@@ -340,21 +340,21 @@ def relative_humidity(
     .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
     """
     if method in ("bohren98", "BA90"):
-        if dtas is None:
+        if tdps is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
-        dtas = convert_units_to(dtas, "degK")
+        tdps = convert_units_to(tdps, "degK")
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
-        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))  # type: ignore
-    elif dtas is not None:
+        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore
+    elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
-            tas=dtas, ice_thresh=ice_thresh, method=method
+            tas=tdps, ice_thresh=ice_thresh, method=method
         )
         e_sat_t = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method
         )
-        rh = 100 * e_sat_dt / e_sat_t  # type: ignore
+        hurs = 100 * e_sat_dt / e_sat_t  # type: ignore
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -364,25 +364,25 @@ def relative_humidity(
 
         w = huss / (1 - huss)
         w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
-        rh = 100 * w / w_sat
+        hurs = 100 * w / w_sat
 
     if invalid_values == "clip":
-        rh = rh.clip(0, 100)
+        hurs = hurs.clip(0, 100)
     elif invalid_values == "mask":
-        rh = rh.where((rh <= 100) & (rh >= 0))
-    rh.attrs["units"] = "%"
-    return rh
+        hurs = hurs.where((hurs <= 100) & (hurs >= 0))
+    hurs.attrs["units"] = "%"
+    return hurs
 
 
 @declare_units(
     tas="[temperature]",
-    rh="[]",
+    hurs="[]",
     ps="[pressure]",
     ice_thresh="[temperature]",
 )
 def specific_humidity(
     tas: xr.DataArray,
-    rh: xr.DataArray,
+    hurs: xr.DataArray,
     ps: xr.DataArray,
     ice_thresh: str = None,
     method: str = "sonntag90",
@@ -393,8 +393,8 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature.
-    rh : xr.DataArrsay
+      Temperature array
+    hurs : xr.DataArrsay
       Relative Humidity.
     ps : xr.DataArray
       Air Pressure.
@@ -416,14 +416,14 @@ def specific_humidity(
 
     Notes
     -----
-    In the following, let :math:`T`, :math:`rh` (in %) and :math:`p` be the temperature,
+    In the following, let :math:`T`, :math:`hurs` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
 
     .. math::
 
         w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
-        w = w_{sat} * rh / 100
+        w = w_{sat} * hurs / 100
         q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
@@ -435,13 +435,13 @@ def specific_humidity(
         q_{sat} = w_{sat} / (1 + w_{sat})
     """
     ps = convert_units_to(ps, "Pa")
-    rh = convert_units_to(rh, "")
+    hurs = convert_units_to(hurs, "")
     tas = convert_units_to(tas, "degK")
 
     e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
     w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
-    w = w_sat * rh
+    w = w_sat * hurs
     q = w / (1 + w)
 
     if invalid_values is not None:
@@ -535,6 +535,6 @@ def rain_approximation(
     the liquid rain precipitation.
 
     """
-    prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
-    prlp.attrs["units"] = pr.attrs["units"]
-    return prlp
+    prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+    prra.attrs["units"] = pr.attrs["units"]
+    return prra

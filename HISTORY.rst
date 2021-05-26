@@ -16,6 +16,14 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
+
+    - `swe` is now `snw` (`snw` is the snow amount [kg / m²] and `swe` the liquid water equivalent thickness [m])
+    - `rh` is now `hurs`
+    - `dtas` is now `tdps`
+    - `ws` (in FWI) is now `sfcWind`
+    - `sic` is now `siconc`
+    - `area` (of sea ice indicators) is now `areacello`
 
 New indicators
 ~~~~~~~~~~~~~~

@@ -128,9 +128,9 @@ from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
 from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import FREQ_NAMES, convert_units_to, declare_units, units
 from .utils import (
+    VARIABLES,
     MissingVariableError,
     infer_kind_from_parameter,
-    variables,
     wrapped_partial,
 )
 
@@ -450,14 +450,14 @@ class Indicator(IndicatorRegistrar):
             for varname, name in data["input"].items():
                 # Indicator's new will put the name of the variable as its default,
                 # we override this with the real variable name.
-                # Also take the dimensionaliy and description from the yaml of official variables.
+                # Also take the canonical units and description from the yaml of official variables.
                 # Description overrides the one parsed from the generic compute docstring
-                # Dimensionality goes into the declare_units wrapper.
+                # Canonical units go into the declare_units wrapper.
                 params[varname] = {
                     "default": name,
-                    "description": variables[name]["description"],
+                    "description": VARIABLES[name]["description"],
                 }
-                input_units[varname] = variables[name]["dimensionality"]
+                input_units[varname] = VARIABLES[name]["canonical_units"]
 
             cfcheck = generate_cfcheck(*[varname for varname in data["input"].values()])
         else:
@@ -981,7 +981,7 @@ class Indicator(IndicatorRegistrar):
 
         When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
         """
-        return True
+        pass
 
     @staticmethod
     def datacheck(**das):
@@ -994,7 +994,7 @@ class Indicator(IndicatorRegistrar):
          - assert no precipitation is negative
          - assert no temperature has the same value 5 days in a row
         """
-        return True
+        pass
 
 
 class Indicator2D(Indicator):
