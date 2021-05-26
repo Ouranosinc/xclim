@@ -636,8 +636,12 @@ def aggregate_between_dates(data: xr.DataArray, start, end, op="sum", freq=None)
         # get group slice
         group = data.isel(time=indexes)
         # convert bounds for this group
-        start_d = start.sel(time=base_time)
-        end_d = end.sel(time=base_time)
+        if (base_time in start.time) and (base_time in end.time):
+            start_d = start.sel(time=base_time)
+            end_d = end.sel(time=base_time)
+        else:
+            start_d = np.nan
+            end_d = np.nan
 
         days = (group.time - base_time).dt.days
         days[days < 0] = np.nan
