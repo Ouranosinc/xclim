@@ -535,8 +535,13 @@ class Indicator(IndicatorRegistrar):
         if "period" in data:
             if isinstance(data["period"], str):
                 deffreq = data["period"]
-            else:
+            elif "default" in data["period"]:
+                # old-clix-meta version where multiple allowed values can be listed.
+                # Kept in xclim.
                 deffreq = data["period"]["default"]
+            else:
+                # clix-meta when a special season specification exists : xclim doesn't support it.
+                deffreq = list(data["period"].keys())[0]
             params["freq"] = {"default": FREQ_NAMES[deffreq][1]}
             if "allowed" in data["period"]:
                 allowed_periods = []
@@ -1131,13 +1136,16 @@ def _parse_indice(indice: Callable, passed=None, **new_kwargs):
 
 
 def add_iter_indicators(module):
-    def iter_indicators():
-        for indname, ind in module.__dict__.items():
-            if isinstance(ind, Indicator):
-                yield indname, ind
+    if not hasattr(module, "iter_indicators"):
 
-    iter_indicators.__doc__ = "Iterated over the (name, indicator) pairs in the {module.__name__} indicator module."
-    module.__dict__["iter_indicators"] = iter_indicators
+        def iter_indicators():
+            for indname, ind in module.__dict__.items():
+                if isinstance(ind, Indicator):
+                    yield indname, ind
+
+        iter_indicators.__doc__ = f"Iterated over the (name, indicator) pairs in the {module.__name__} indicator module."
+
+        module.__dict__["iter_indicators"] = iter_indicators
 
 
 def build_indicator_module(
@@ -1145,7 +1153,7 @@ def build_indicator_module(
     objs: Mapping[str, Indicator],
     doc: Optional[str] = None,
 ) -> ModuleType:
-    """Create a module from imported objects.
+    """Create or update a module from imported objects.
 
     The module is inserted as a submodule of `xclim.indicators`.
 

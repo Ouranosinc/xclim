@@ -8,10 +8,14 @@ references: xclim documentation https://xclim.readthedocs.io
 indices:
   RX1day:
     base: rx1day
+    period:
+      seasonal: [DJFMA, MJJ, ASON]
     output:
       long_name: Highest 1-day precipitation amount
   RX5day:
     base: max_n_day_precipitation_amount
+    period:
+        monthly
     output:
       long_name: Highest 5-day precipitation amount
     index_function:
@@ -29,7 +33,7 @@ indices:
           description: Daily 75th percentile of wet day precipitation flux.
   fd:
     reference: ETCCDI
-    period: annual
+    period: weekly
     output:
       var_name: "fd"
       standard_name: number_of_days_with_air_temperature_below_threshold
@@ -49,7 +53,11 @@ indices:
           data: "<"
   R95p:
     reference: climdex
-    period : annual
+    period:
+      allowed:
+        - annual
+        - seasonal
+      default: annual
     output:
       var_name: R95p
       long_name: Annual total PRCP when RR > 95th percentile

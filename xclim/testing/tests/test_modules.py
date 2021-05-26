@@ -8,12 +8,16 @@ from xclim.core.utils import InputKind
 def test_default_modules_exist():
     from xclim.indicators import anuclim, cf, icclim
 
-    assert getattr(icclim, "TG", None) is not None
+    assert hasattr(icclim, "TG")
 
-    assert getattr(anuclim, "P1_AnnMeanTemp", None) is not None
-    assert getattr(anuclim, "P19_PrecipColdestQuarter", None) is not None
+    assert hasattr(anuclim, "P1_AnnMeanTemp")
+    assert hasattr(anuclim, "P19_PrecipColdestQuarter")
 
-    assert getattr(cf, "fg", None) is not None
+    assert hasattr(cf, "fg")
+
+    assert len(list(icclim.iter_indicators())) == 47
+    assert len(list(anuclim.iter_indicators())) == 19
+    # Not testing cf because many indices are waiting to be implemented.
 
 
 @pytest.mark.slow
