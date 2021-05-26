@@ -611,6 +611,7 @@ def wind_chill_index(
 
     References
     ----------
+    Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
     .. [ECCC] Wind Chill, Glossary of Environment and Climate Change Canada, retrieved 25-05-21. https://www.climate.weather.gc.ca/glossary_e.html#w
     .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
     """
