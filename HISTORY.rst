@@ -16,12 +16,13 @@ Breaking changes
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 * CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
 
-    - `swe` is now `snw` (`snw` is the snow amount [kg / m²] and `swe` the liquid water equivalent thickness [m])
-    - `rh` is now `hurs`
-    - `dtas` is now `tdps`
-    - `ws` (in FWI) is now `sfcWind`
-    - `sic` is now `siconc`
-    - `area` (of sea ice indicators) is now `areacello`
+    - ``swe`` is now ``snw`` (``snw`` is the snow amount [kg / m²] and ``swe`` the liquid water equivalent thickness [m])
+    - ``rh`` is now ``hurs``
+    - ``dtas`` is now ``tdps``
+    - ``ws`` (in FWI) is now ``sfcWind``
+    - ``sic`` is now ``siconc``
+    - ``area`` (of sea ice indicators) is now ``areacello``
+    - Indicators ``RH`` and ``RH_FROMDEWPOINT`` have be renamed to ``HURS`` and ``HURS_FROMDEWPOINT``. These are changes in the _identifiers_, the python names (``relative_humidity[...]``) are unchanged.
 
 New indicators
 ~~~~~~~~~~~~~~

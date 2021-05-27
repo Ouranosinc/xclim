@@ -552,23 +552,6 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
     raise ValidationError(
         f"Data units {val_units} are not compatible with requested {dim}."
     )
-    # if dim == "[precipitation]":
-    #     tu = "mmday"
-    # elif dim == "[discharge]":
-    #     tu = "cms"
-    # elif dim == "[length]":
-    #     tu = "m"
-    # elif dim == "[speed]":
-    #     tu = "m s-1"
-    # else:
-    #     raise NotImplementedError(f"Dimension `{dim}` is not supported.")
-
-    # try:
-    #     units.Quantity(1, units=units2pint(val)).to(tu, "hydro")
-    # except (pint.UndefinedUnitError, pint.DimensionalityError):
-    #     raise ValidationError(
-    #         f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
-    #     )
 
 
 def declare_units(
