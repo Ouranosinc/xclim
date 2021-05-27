@@ -41,7 +41,8 @@ def test_adapt_freq(use_dask):
 
     prsim = xr.where(pr < 20, pr / 20, pr)
     prref = xr.where(pr < 10, pr / 20, pr)
-    ds_ad = adapt_freq(prsim, prref, thresh=1, group=group)
+    ds_in = xr.Dataset({"sim": prsim, "ref": prref})
+    ds_ad = adapt_freq(ds_in, thresh=1, group=group)
 
     # Where the input is considered zero
     input_zeros = ds_ad.sim_ad.where(prsim <= 1)
@@ -61,7 +62,10 @@ def test_adapt_freq(use_dask):
 
     # Assert that non-corrected values are untouched
     # Again we add a 0.5 tol because of randomness.
-    xr.testing.assert_equal(ds_ad.sim_ad.where(prsim > 20.1), prsim.where(prsim > 20.5))
+    xr.testing.assert_equal(
+        ds_ad.sim_ad.where(prsim > 20.1),
+        prsim.where(prsim > 20.5).transpose("lat", "time"),
+    )
     # Assert that Pth and dP0 are approx the good values
     np.testing.assert_allclose(ds_ad.pth, 20, rtol=0.05)
     np.testing.assert_allclose(ds_ad.dP0, 0.5, atol=0.14)
