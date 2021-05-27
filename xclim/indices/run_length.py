@@ -107,6 +107,7 @@ def rle(
 def rle_statistics(
     da: xr.DataArray,
     reducer: str = "max",
+    window: int = 1,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "auto",
 ) -> xr.DataArray:
@@ -118,6 +119,8 @@ def rle_statistics(
       N-dimensional array (boolean).
     reducer: str
       Name of the reducing function.
+    window : int
+      Minimal length of consecutive runs to be included in the statistics.
     dim : str
       Dimension along which to calculate consecutive run; Default: 'time'.
     ufunc_1dim : Union[str, bool]
@@ -136,11 +139,11 @@ def rle_statistics(
         ufunc_1dim = npts <= npts_opt
 
     if ufunc_1dim:
-        rl_stat = statistics_run_ufunc(da, reducer)
+        rl_stat = statistics_run_ufunc(da, reducer, window)
     else:
         d = rle(da, dim=dim)
-        rl_stat = getattr(d.where(d > 0), reducer)(dim=dim)
-        rl_stat = xr.where((d.isnull() | (d == 0)).all(dim=dim), 0, rl_stat)
+        rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
+        rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
 
     return rl_stat
 
@@ -807,15 +810,17 @@ def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
     return ind
 
 
-def statistics_run_1d(arr: Sequence[bool], reducer: str) -> int:
+def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int = 1) -> int:
     """Return statistics on lengths of run of identical values.
 
     Parameters
     ----------
     arr : Sequence[bool]
       Input array (bool)
-    reducer: {'min', 'max', 'mean', 'sum'}
+    reducer : {'mean', 'sum', 'min', 'max', 'std'}
       Reducing function name.
+    window: int
+      Minimal length of runs to be included in the statistics
 
     Returns
     -------
@@ -823,10 +828,10 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str) -> int:
       Statistics on length of runs.
     """
     v, rl = rle_1d(arr)[:2]
-    if not np.any(v):
+    if not np.any(v) or np.all(v * rl < window):
         return 0
     func = getattr(np, f"nan{reducer}")
-    return func(np.where(v, rl, np.NaN))
+    return func(np.where(v * rl >= window, rl, np.NaN))
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -922,7 +927,7 @@ def windowed_run_events_ufunc(x: Sequence[bool], window: int) -> xr.DataArray:
 
 
 def statistics_run_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]], reducer: str
+    x: Union[xr.DataArray, Sequence[bool]], reducer: str, window: int = 1
 ) -> xr.DataArray:
     """Dask-parallel version of statistics_run_1d, ie: the {reducer} number of consecutive true values in array.
 
@@ -930,8 +935,10 @@ def statistics_run_ufunc(
     ----------
     x : Sequence[bool]
       Input array (bool)
-    reducer: {'min', 'max', 'mean', 'sum'}
+    reducer: {'min', 'max', 'mean', 'sum', 'std'}
       Reducing function name.
+    window : int
+      Minimal length of runs.
 
     Returns
     -------
@@ -942,7 +949,7 @@ def statistics_run_ufunc(
         statistics_run_1d,
         x,
         input_core_dims=[["time"]],
-        kwargs={"reducer": reducer},
+        kwargs={"reducer": reducer, "window": window},
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
