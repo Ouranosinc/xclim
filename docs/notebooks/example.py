@@ -25,10 +25,10 @@ def extreme_precip_accumulation(pr: xr.DataArray, perc: float = 95, freq: str = 
     xarray.DataArray
       Precipitation accumulated during events where pr was above the {perc}th percentile of the whole series.
     """
-    pr_thresh = pr.quantiles(perc / 100, dim="time")
+    pr_thresh = pr.quantile(perc / 100, dim="time")
 
     pr_extreme = rate2amount(pr).where(pr >= pr_thresh)
 
-    out = pr_extreme.resampling(time=freq).sum()
+    out = pr_extreme.resample(time=freq).sum()
     out.attrs["units"] = pr_extreme.units
     return out

@@ -1222,8 +1222,9 @@ def build_indicator_module_from_yaml(
     doc : str, optional
       The docstring of the new submodule. Defaults to a very minimal header with the submodule's name.
     indices : Mapping of callables or module, optional
-      A dictionary or module of indice functions. When creating the indicator, the name in the `index_function` field is
-      first sought here, then in xclim.indices.generic and finally in xclim.indices.
+      A mapping or module of indice functions. When creating the indicator, the name in the `index_function` field is
+      first sought here, then in xclim.indices.generic and finally in xclim.indices. The only restriction on the type
+      of `indices` is to provide the indices through `getattr` or through `__getitem__`.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
     realm: str, optional
@@ -1271,7 +1272,10 @@ def build_indicator_module_from_yaml(
         if indice_name is not None and indices is not None:
             indice_func = getattr(indices, indice_name, None)
             if indice_func is None and hasattr(indices, "__getitem__"):
-                indice_func = indices["indice_name"]
+                try:
+                    indice_func = indices[indice_name]
+                except KeyError:
+                    pass
 
             if indice_func is not None:
                 data["index_function"]["name"] = indice_func
