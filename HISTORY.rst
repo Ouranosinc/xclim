@@ -10,6 +10,8 @@ New features and enhancements
 * Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
 * "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
 * Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array : the 1D version is used with non-dask arrays with less than 9000 points per slice).
+* Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
+* Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~

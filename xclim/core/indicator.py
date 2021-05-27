@@ -38,13 +38,7 @@ Indicator-defining yaml files are structured in the following way:
         notes: <notes>
         title: <title>
         abstract: <abstract>
-        period:  # If given, both "allowed" and "default" must also be given.
-          allowed:  # A list of allowed periods (resampling frequencies)
-            annual:  # Translates to "A" (includes "Y")
-            seasonal:  # Translates to "Q"
-            monthly:  # Translates to "M"
-            weekly:  # Translates to "W"
-          default: annual  #  Translates to "YS", "QS-DEC", "MS" or "W-SUN". See xclim.core.units.FREQ_NAMES.
+        period: annual  # Becomes the default value for `freq`. Translates to "YS", "QS-DEC", "MS" or "W-SUN". See xclim.core.units.FREQ_NAMES.
         output:
           var_name: <var_name>  # Defaults to "identifier",
           standard_name: <standard_name>
@@ -57,7 +51,8 @@ Indicator-defining yaml files are structured in the following way:
             ...
 
         index_function:
-          name: <function name>  # Refering to a function in xclim.indices.generic or xclim.indices
+          name: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
+          # When using Indicator.from_dict, the "name" field can also be a function (instead of a string)
           parameters:  # See below for details on that section.
             <param name>  # Refering to a parameter of the function above.
               kind: <param kind>  # Optional, one of quantity, operator or reducer
@@ -428,10 +423,6 @@ class Indicator(IndicatorRegistrar):
         data: dict,
         identifier: str,
         module: Optional[str] = None,
-        realm: Optional[str] = None,
-        keywords: Optional[str] = None,
-        references: Optional[str] = None,
-        notes: Optional[str] = None,
     ):
         """Create an indicator subclass and instance from a dictionary of parameters.
 
@@ -444,11 +435,6 @@ class Indicator(IndicatorRegistrar):
         module : str
           The module name of the indicator. This is meant to be used only if the indicator
           is part of a dynamically generated submodule, to override the module of the base class.
-        realm: str, optional
-        keywords: str, optional
-        references str, optional
-        notes: str, optional
-          Other indicator attributes to fill in for missing values in the individual definition.
         """
         # Make cell methods. YAML will generate a list-of-dict structure, put it back in a space-divided string
         if data.get("output", {}).get("cell_methods") is not None:
@@ -483,11 +469,14 @@ class Indicator(IndicatorRegistrar):
         if "index_function" in data:
             # Generate compute function
             # data.index_function.name refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
+            # It can also directly be a function.
             # data.index_function.parameters is a list of injected arguments.
             funcname = data["index_function"].get("name")
             if funcname is None:
                 # No index function given, reuse the one from the base class.
                 compute = cls.compute
+            elif callable(funcname):
+                compute = funcname
             else:
                 compute = getattr(
                     indices.generic, funcname, getattr(indices, funcname, None)
@@ -542,22 +531,31 @@ class Indicator(IndicatorRegistrar):
             compute = None
 
         # Allowed resampling frequencies
+        allowed_periods = None
         if "period" in data:
-            params["freq"] = {"default": FREQ_NAMES[data["period"]["default"]][1]}
-            allowed_periods = []
-            for period_name in data["period"]["allowed"]:
-                allowed_periods.append(FREQ_NAMES[period_name][0])
-        else:
-            allowed_periods = None
+            if isinstance(data["period"], str):
+                deffreq = data["period"]
+            elif "default" in data["period"]:
+                # old-clix-meta version where multiple allowed values can be listed.
+                # Kept in xclim.
+                deffreq = data["period"]["default"]
+            else:
+                # clix-meta when a special season specification exists : xclim doesn't support it.
+                deffreq = list(data["period"].keys())[0]
+            params["freq"] = {"default": FREQ_NAMES[deffreq][1]}
+            if "allowed" in data["period"]:
+                allowed_periods = []
+                for period_name in data["period"]["allowed"]:
+                    allowed_periods.append(FREQ_NAMES[period_name][0])
 
         kwargs = dict(
             # General
             identifier=identifier,
             module=module,
-            realm=data.get("realm", realm),
-            keywords=data.get("keywords", keywords),
-            references=data.get("references", data.get("reference", references)),
-            notes=data.get("notes", notes),
+            realm=data.get("realm"),
+            keywords=data.get("keywords"),
+            references=data.get("references", data.get("reference")),
+            notes=data.get("notes"),
             # Indicator-specific metadata
             title=data.get("title"),
             abstract=data.get("abstract"),
@@ -1137,12 +1135,25 @@ def _parse_indice(indice: Callable, passed=None, **new_kwargs):
     return indice_wrapper, parsed, params
 
 
+def add_iter_indicators(module):
+    if not hasattr(module, "iter_indicators"):
+
+        def iter_indicators():
+            for indname, ind in module.__dict__.items():
+                if isinstance(ind, Indicator):
+                    yield indname, ind
+
+        iter_indicators.__doc__ = f"Iterated over the (name, indicator) pairs in the {module.__name__} indicator module."
+
+        module.__dict__["iter_indicators"] = iter_indicators
+
+
 def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
     doc: Optional[str] = None,
 ) -> ModuleType:
-    """Create a module from imported objects.
+    """Create or update a module from imported objects.
 
     The module is inserted as a submodule of `xclim.indicators`.
 
@@ -1178,6 +1189,7 @@ def build_indicator_module(
         indicators.__dict__[name] = out
 
     out.__dict__.update(objs)
+    add_iter_indicators(out)
     return out
 
 
@@ -1186,6 +1198,7 @@ def build_indicator_module_from_yaml(
     name: Optional[str] = None,
     base: Type[Indicator] = Daily,
     doc: Optional[str] = None,
+    indices: Optional[Union[Mapping[str, Callable], ModuleType]] = None,
     mode: str = "raise",
     realm: Optional[str] = None,
     keywords: Optional[str] = None,
@@ -1208,6 +1221,10 @@ def build_indicator_module_from_yaml(
       the class given in the yaml file or in individual indicator definitions (see submodule's doc).
     doc : str, optional
       The docstring of the new submodule. Defaults to a very minimal header with the submodule's name.
+    indices : Mapping of callables or module, optional
+      A mapping or module of indice functions. When creating the indicator, the name in the `index_function` field is
+      first sought here, then in xclim.indices.generic and finally in xclim.indices. The only restriction on the type
+      of `indices` is to provide the indices through `getattr` or through `__getitem__`.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
     realm: str, optional
@@ -1242,26 +1259,47 @@ def build_indicator_module_from_yaml(
 
     # Module-wide default values for some attributes
     defkwargs = {
-        # We can override the module of indicators in their init (weird but cool)
-        # This way, submodule indicators are prefixed with the module name in the registry.
-        "module": module_name,
         # Other default argument, only given in case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
         "keywords": keywords or yml.get("keywords"),
         "references": references or yml.get("references"),
         "notes": notes or yml.get("notes"),
     }
+
+    def _put_indice_as_function(data):
+        # If data.index_function.name refers to a function in `indices`, replace that field by the function.
+        indice_name = data.get("index_function", {}).get("name", None)
+        if indice_name is not None and indices is not None:
+            indice_func = getattr(indices, indice_name, None)
+            if indice_func is None and hasattr(indices, "__getitem__"):
+                try:
+                    indice_func = indices[indice_name]
+                except KeyError:
+                    pass
+
+            if indice_func is not None:
+                data["index_function"]["name"] = indice_func
+
+        return data
+
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
         # clix-meta has illegal characters in the identifiers.
         clean_id = identifier.replace("{", "").replace("}", "")
+        # Workaround for clix-meta (we name it references, they name it reference)
+        data.setdefault("references", data.get("reference"))
+        for k, v in defkwargs.items():
+            data.setdefault(k, v)
         try:
             if "base" in data:
                 base = registry[data["base"].upper()]
             else:
                 base = default_base
-            mapping[clean_id] = base.from_dict(data, clean_id, **defkwargs)
+            data = _put_indice_as_function(data)
+            mapping[clean_id] = base.from_dict(
+                data, identifier=clean_id, module=module_name
+            )
         except Exception as err:
             msg = f"Constructing {identifier} failed with {err!r}"
             if mode == "ignore":
