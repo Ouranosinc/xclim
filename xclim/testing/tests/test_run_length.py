@@ -116,8 +116,8 @@ class TestStatisticsRun:
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min")
         assert lt == 35
 
-        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="mean")
-        assert lt == 182
+        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="mean", window=36)
+        assert lt == 329
 
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std")
         assert lt == 147

@@ -87,10 +87,12 @@ class AttrFormatter(string.Formatter):
 # Tag mappings between keyword arguments and long-form text.
 default_formatter = AttrFormatter(
     {
+        # Arguments to "freq"
         "YS": ["annual", "years"],
         "AS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
+        # Arguments to "indexer"
         "DJF": ["winter"],
         "MAM": ["spring"],
         "JJA": ["summer"],
@@ -108,6 +110,12 @@ default_formatter = AttrFormatter(
         "m10": ["october"],
         "m11": ["november"],
         "m12": ["december"],
+        # Arguments to "op / reducer"
+        "mean": ["average"],
+        "max": ["maximal", "maximum"],
+        "min": ["minimal", "minimum"],
+        "sum": ["total", "sum"],
+        "std": ["standard deviation"],
     },
     ["adj", "noun"],
 )
