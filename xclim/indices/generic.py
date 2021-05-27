@@ -596,16 +596,18 @@ def extreme_temperature_range(
     return out
 
 
-def aggregate_between_dates(data: xr.DataArray, start, end, op="sum", freq=None):
+def aggregate_between_dates(
+    data: xr.DataArray, start: xr.DataArray, end: xr.DataArray, op="sum", freq=None
+):
     """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
 
     Parameters
     ----------
     data : xr.DataArray
       Data to aggregate between start and end dates.
-    start
+    start : xr.DataArray
       Start dates (as day-of-year) for the aggregation periods.
-    end
+    end : xr.DataArray
       End (as day-of-year) dates for the aggregation periods.
     op : {'min', 'max', 'sum', 'mean', 'std'}
       Operator.
