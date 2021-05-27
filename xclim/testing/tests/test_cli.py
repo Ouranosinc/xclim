@@ -21,8 +21,9 @@ except ImportError:
     [
         ([xclim.atmos.tg_mean], ["tg_mean"]),
         (
-            [xclim.atmos.tn_mean, xclim.atmos.daily_freezethaw_cycles],
-            ["tn_mean", "dlyfrzthw"],
+            # Note: This test is dependent on indicator name length and terminal dimensions.
+            [xclim.atmos.tn_mean, xclim.atmos.ice_days],
+            ["tn_mean", "ice_days"],
         ),
     ],
 )
