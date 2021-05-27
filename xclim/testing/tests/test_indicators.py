@@ -359,7 +359,7 @@ def test_parsed_doc():
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["snd"]["units"] == "[length]"
     assert params["season_method"]["kind"] is InputKind.STRING
-    assert params["season_method"]["choices"] == {None, "WF93", "LA08"}
+    assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
 
 
 def test_default_formatter():
