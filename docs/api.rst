@@ -83,6 +83,9 @@ Other utilities
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: xclim.core.options
+   :members: set_options
+
 .. automodule:: xclim.core.utils
    :members:
    :undoc-members:

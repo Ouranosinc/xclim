@@ -21,13 +21,13 @@ class Test_FA:
         out = land.freq_analysis(
             ndq_series, mode="max", t=[2, 5], dist="gamma", season="DJF"
         )
-        assert out.long_name == "N-year return period max winter 1-day flow"
+        assert out.long_name == "N-year return period maximal winter 1-day flow"
         assert out.shape == (2, 2, 3)  # nrt, nx, ny
         np.testing.assert_array_equal(out.isnull(), False)
 
     def test_no_indexer(self, ndq_series):
         out = land.freq_analysis(ndq_series, mode="max", t=[2, 5], dist="gamma")
-        assert out.long_name == "N-year return period max annual 1-day flow"
+        assert out.long_name == "N-year return period maximal annual 1-day flow"
         assert out.shape == (2, 2, 3)  # nrt, nx, ny
         np.testing.assert_array_equal(out.isnull(), False)
 
