@@ -1873,6 +1873,27 @@ def test_winter_storm(snd_series):
     np.testing.assert_array_equal(out, [3])
 
 
+@pytest.mark.parametrize(
+    "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
+)
+def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
+    tmin = np.ones(365)
+    tmax = np.ones(365)
+
+    tmin[3:5] = -1
+    tmin[10:15] = -1
+    tmin[20:31] = -1
+    tmin[50:55] = -1
+
+    tasmax = tasmax_series(tmax + K2C)
+    tasmin = tasmin_series(tmin + K2C)
+
+    out = xci.multiday_temperature_swing(
+        tasmin=tasmin, tasmax=tasmax, freq="AS-JUL", window=3, op=op
+    )
+    np.testing.assert_array_equal(out, exp)
+
+
 def test_humidex(tas_series):
 
     tas = tas_series([15, 25, 35, 40])
