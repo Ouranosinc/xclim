@@ -454,6 +454,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
             kind=self.kind,
         )
         if OPTIONS[SDBA_DIAGNOSTICS]:
+            out.sim_q.attrs.update(long_name="Group-wise quantiles of `sim`.")
             return out
         return out.scen
 

@@ -153,8 +153,8 @@ class set_options:
       Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
     - ``sdba_diagnostics``: Whether to add diagnostic variables to output of train and adjust methods
         of sdba' bias-adjustment objects, as well as some `processing` function. Additionnal variables
-        are listed in the object's docstring. When activated,  `adjust` _always_ returns a tuple of
-        `(scen, diag_ds)`. For `processing` function, see the doc, the output type might change, or not.
+        are listed in the object's docstring. When activated,  `adjust` will return a Dataset with `scen`
+         and those extra diagnostics. For `processing` function, see the doc, the output type might change, or not.
       Default: ``False``.
 
     Examples
