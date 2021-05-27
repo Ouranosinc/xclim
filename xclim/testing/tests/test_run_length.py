@@ -166,9 +166,9 @@ class TestStatisticsRun:
         assert lt == 35
 
         lt = da.resample(time="YS").map(
-            rl.rle_statistics, reducer="mean", ufunc_1dim=ufunc_1dim
+            rl.rle_statistics, reducer="mean", ufunc_1dim=ufunc_1dim, window=36
         )
-        assert lt == 182
+        assert lt == 329
 
         lt = da.resample(time="YS").map(
             rl.rle_statistics, reducer="std", ufunc_1dim=ufunc_1dim

@@ -340,7 +340,7 @@ def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
     calendar: str = "default",
-) -> Union[cftime.datetime, pydt.datetime, np.int]:
+) -> Union[cftime.datetime, pydt.datetime, float]:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
@@ -786,9 +786,9 @@ def time_bnds(group, freq):
 
     Examples
     --------
-    >>> import xarray as xr
+    >>> from xarray import cftime_range
     >>> from xclim.core.calendar import time_bnds
-    >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
+    >>> index = cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
     >>> time_bnds(index, '2Q')
     ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999)),
     (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999)),
@@ -899,8 +899,9 @@ def doy_to_days_since(
 
     Examples
     --------
+    >>> from xarray import DataArray
     >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = xr.DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
+    >>> da = DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
     >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
     array([-86, 92])
     """
@@ -956,8 +957,9 @@ def days_since_to_doy(
 
     Examples
     --------
+    >>> from xarray import DataArray
     >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = xr.DataArray(
+    >>> da = DataArray(
             [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
         )
     >>> days_since_to_doy(da).values

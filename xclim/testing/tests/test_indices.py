@@ -203,6 +203,16 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
+def test_corn_heat_units(tasmin_series, tasmax_series):
+    tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
+    tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
+
+    out = xci.corn_heat_units(
+        tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+    )
+    np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+
+
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
         mn = np.zeros(365)
@@ -647,27 +657,71 @@ class TestHotSpellMaxLength:
         np.testing.assert_allclose(hsml.values, expected)
 
 
-class TestTnDaysBelow:
-    def test_simple(self, tasmin_series):
+class TestTnDays:
+    def test_above_simple(self, tasmin_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_above(mn, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmin_series):
         a = np.zeros(365)
         a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
-        mx = tasmin_series(a + K2C)
+        mn = tasmin_series(a + K2C)
 
-        out = xci.tn_days_below(mx, thresh="-10 C")
+        out = xci.tn_days_below(mn, thresh="-10 C")
         np.testing.assert_array_equal(out[:1], [6])
         np.testing.assert_array_equal(out[1:], [0])
-        out = xci.tn_days_below(mx, thresh="-30 C")
+        out = xci.tn_days_below(mn, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
 
-class TestTxDaysAbove:
-    def test_simple(self, tasmax_series):
+class TestTgDays:
+    def test_above_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_above(mg, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tas_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mg = tas_series(a + K2C)
+
+        out = xci.tg_days_below(mg, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tg_days_below(mg, thresh="-30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
+class TestTxDays:
+    def test_above_simple(self, tasmax_series):
         a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
         mx = tasmax_series(a + K2C)
 
         out = xci.tx_days_above(mx, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+    def test_below_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a + K2C)
+
+        out = xci.tx_days_below(mx, thresh="-10 C")
+        np.testing.assert_array_equal(out[:1], [6])
+        np.testing.assert_array_equal(out[1:], [0])
+        out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
@@ -1483,7 +1537,7 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        from xclim.indicators import icclim
+        from xclim.indicators import icclim  # noqa
 
         with set_options(cf_compliance="log"):
             ind = xci.tg_mean(cmip3_day_tas)
@@ -1817,3 +1871,24 @@ def test_winter_storm(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
     out = xci.winter_storm(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
+
+
+@pytest.mark.parametrize(
+    "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
+)
+def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
+    tmin = np.ones(365)
+    tmax = np.ones(365)
+
+    tmin[3:5] = -1
+    tmin[10:15] = -1
+    tmin[20:31] = -1
+    tmin[50:55] = -1
+
+    tasmax = tasmax_series(tmax + K2C)
+    tasmin = tasmin_series(tmin + K2C)
+
+    out = xci.multiday_temperature_swing(
+        tasmin=tasmin, tasmax=tasmax, freq="AS-JUL", window=3, op=op
+    )
+    np.testing.assert_array_equal(out, exp)

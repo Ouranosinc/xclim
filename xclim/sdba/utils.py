@@ -2,7 +2,6 @@
 from typing import Callable, List, Mapping, Optional, Union
 from warnings import warn
 
-import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -19,66 +18,54 @@ ADDITIVE = "+"
 loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
-@parse_group
+def _ecdf_1d(x, value):
+    sx = np.r_[-np.inf, np.sort(x)]
+    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
+
+
+def map_cdf_1d(x, y, y_value):
+    """Return the value in `x` with the same CDF as `y_value` in `y`."""
+    q = _ecdf_1d(y, y_value)
+    _func = np.nanquantile
+    return _func(x, q=q)
+
+
 def map_cdf(
-    x: xr.DataArray,
-    y: xr.DataArray,
-    y_value: xr.DataArray,
+    ds: xr.Dataset,
     *,
-    group: Union[str, Grouper] = "time",
-    skipna: bool = False,
+    y_value: xr.DataArray,
+    dim,
 ):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
+    This function is meant to be wrapped in a `Grouper.apply`.
+
     Parameters
     ----------
-    x : xr.DataArray
-      Values from which to pick
-    y : xr.DataArray
-      Reference values giving the ranking
+    ds : xr.Dataset
+      Variables: x, Values from which to pick,
+      y, Reference values giving the ranking
     y_value : float, array
       Value within the support of `y`.
     dim : str
       Dimension along which to compute quantile.
-    group: Union[str, Grouper]
-    skipna: bool
 
     Returns
     -------
     array
       Quantile of `x` with the same CDF as `y_value` in `y`.
     """
-
-    def _map_cdf_1d(x, y, y_value, skipna=False):
-        q = _ecdf_1d(y, y_value)
-        _func = np.nanquantile if skipna else np.quantile
-        return _func(x, q=q)
-
-    def _map_cdf_group(gr, y_value, dim=["time"], skipna=False):
-        return xr.apply_ufunc(
-            _map_cdf_1d,
-            gr.x,
-            gr.y,
-            input_core_dims=[dim] * 2,
-            output_core_dims=[["x"]],
-            vectorize=True,
-            keep_attrs=True,
-            kwargs={"y_value": y_value, "skipna": skipna},
-            dask="parallelized",
-            output_dtypes=[gr.x.dtype],
-        )
-
-    return group.apply(
-        _map_cdf_group,
-        {"x": x, "y": y},
-        y_value=np.atleast_1d(y_value),
-        skipna=skipna,
+    return xr.apply_ufunc(
+        map_cdf_1d,
+        ds.x,
+        ds.y,
+        input_core_dims=[dim] * 2,
+        output_core_dims=[["x"]],
+        vectorize=True,
+        keep_attrs=True,
+        kwargs={"y_value": np.atleast_1d(y_value)},
+        output_dtypes=[ds.x.dtype],
     )
-
-
-def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
-    return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
 def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
@@ -201,7 +188,7 @@ def broadcast(
     if sel is None:
         sel = {}
 
-    if group.prop is not None and group.prop not in sel:
+    if group.prop != "group" and group.prop not in sel:
         sel.update({group.prop: group.get_index(x, interp=interp)})
 
     if sel:
@@ -209,7 +196,7 @@ def broadcast(
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
-            if group.prop is not None:
+            if group.prop != "group":
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
             if interp == "cubic" and len(sel.keys()) > 1:
@@ -225,6 +212,8 @@ def broadcast(
             if var in grouped.coords and var not in grouped.dims:
                 grouped = grouped.drop_vars(var)
 
+    if group.prop == "group" and "group" in grouped.dims:
+        grouped = grouped.squeeze("group", drop=True)
     return grouped
 
 
@@ -402,7 +391,7 @@ def interp_on_quantiles(
     dim = group.dim
     prop = group.prop
 
-    if prop is None:
+    if prop == "group":
         fill_value = "extrapolate" if method == "nearest" else np.nan
 
         def _interp_quantiles_1D(newx, oldx, oldy):
@@ -413,8 +402,8 @@ def interp_on_quantiles(
         return xr.apply_ufunc(
             _interp_quantiles_1D,
             newx,
-            xq,
-            yq,
+            xq.squeeze("group", drop=True),
+            yq.squeeze("group", drop=True),
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
@@ -465,10 +454,12 @@ def interp_on_quantiles(
     )
 
 
+# TODO is this useless?
 def rank(da, dim="time", pct=False):
-    """Ranks data.
+    """Ranks data along a dimension.
 
-    Replicates `xr.DataArray.rank` but with support for dask-stored data. Xarray's docstring is below:
+    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
+    Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that
     would have been otherwise assigned to all of the values within that
@@ -490,23 +481,7 @@ def rank(da, dim="time", pct=False):
     ranked : DataArray
         DataArray with the same coordinates and dtype 'float64'.
     """
-
-    def _nanrank(data):
-        func = bn.nanrankdata if data.dtype.kind == "f" else bn.rankdata
-        ranked = func(data, axis=-1)
-        if pct:
-            count = np.sum(~np.isnan(data), axis=-1, keepdims=True)
-            ranked /= count
-        return ranked
-
-    return xr.apply_ufunc(
-        _nanrank,
-        da,
-        input_core_dims=[[dim]],
-        output_core_dims=[[dim]],
-        dask="parallelized",
-        output_dtypes=[da.dtype],
-    )
+    return da.rank(dim, pct=pct)
 
 
 def pc_matrix(arr: Union[np.ndarray, dsk.Array]):

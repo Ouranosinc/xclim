@@ -22,3 +22,4 @@ Contributors
 
 * David Caron `@davidcaron <https://github.com/davidcaron>`_
 * Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
+* Marie-Pier Labonté `@marielabonte <https://github.com/marielabonte>`_

@@ -8,8 +8,12 @@ from xclim.core.units import check_units
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
+    "tn_days_above",
     "tn_days_below",
+    "tg_days_above",
+    "tg_days_below",
     "tx_days_above",
+    "tx_days_below",
     "tx_tn_days_above",
     "heat_wave_frequency",
     "heat_wave_max_length",
@@ -40,6 +44,9 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_freezethaw_cycles",
+    "freezethaw_spell_frequency",
+    "freezethaw_spell_max_length",
+    "freezethaw_spell_mean_length",
     "cooling_degree_days",
     "heating_degree_days",
     "growing_degree_days",
@@ -59,6 +66,7 @@ __all__ = [
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
+    "corn_heat_units",
 ]
 
 
@@ -111,6 +119,16 @@ class TasminTasmax(Daily2D):
         check_units(tasmax, tasmin.attrs["units"])
 
 
+tn_days_above = Tasmin(
+    identifier="tn_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tmin > {thresh}",
+    description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
+    cell_methods="time: minimum within days time: sum over days",
+    compute=indices.tn_days_above,
+)
+
 tn_days_below = Tasmin(
     identifier="tn_days_below",
     units="days",
@@ -119,6 +137,26 @@ tn_days_below = Tasmin(
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_below,
+)
+
+tg_days_above = Tas(
+    identifier="tg_days_above",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_above_threshold",
+    long_name="Number of days with Tavg > {thresh}",
+    description="{freq} number of days where daily mean temperature exceeds {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_above,
+)
+
+tg_days_below = Tas(
+    identifier="tg_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tavg < {thresh}",
+    description="{freq} number of days where daily mean temperature is below {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.tg_days_below,
 )
 
 tx_days_above = Tasmax(
@@ -131,6 +169,16 @@ tx_days_above = Tasmax(
     compute=indices.tx_days_above,
 )
 
+tx_days_below = Tasmin(
+    identifier="tx_days_below",
+    units="days",
+    standard_name="number_of_days_with_air_temperature_below_threshold",
+    long_name="Number of days with Tmax < {thresh}",
+    description="{freq} number of days where daily max temperature is below {thresh}.",
+    cell_methods="time: max within days time: sum over days",
+    compute=indices.tx_days_below,
+)
+
 tx_tn_days_above = TasminTasmax(
     identifier="tx_tn_days_above",
     units="days",
@@ -141,6 +189,7 @@ tx_tn_days_above = TasminTasmax(
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
+
 
 heat_wave_frequency = TasminTasmax(
     identifier="heat_wave_frequency",
@@ -386,7 +435,7 @@ cold_spell_days = Tas(
     long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -398,7 +447,7 @@ cold_spell_frequency = Tas(
     long_name="Number of cold spell events",
     description="{freq} number cold spell events, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )
@@ -407,13 +456,69 @@ cold_spell_frequency = Tas(
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",
     units="days",
-    standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
-    compute=indices.daily_freezethaw_cycles,
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="sum",
+        window=1,
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
 )
+
+
+freezethaw_spell_frequency = TasminTasmax(
+    identifier="freezethaw_spell_frequency",
+    title="Frequency of freeze-thaw spells",
+    units="days",
+    long_name="{freq} number of freeze-thaw spells.",
+    description="{freq} number of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="count",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_mean_length = TasminTasmax(
+    identifier="freezethaw_spell_mean_length",
+    title="Averge length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} average length of freeze-thaw spells.",
+    description="{freq} average length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="mean",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_max_length = TasminTasmax(
+    identifier="freezethaw_spell_max_length",
+    title="Maximal length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} maximal length of freeze-thaw spells.",
+    description="{freq} maximal length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="max",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
 
 cooling_degree_days = Tas(
     identifier="cooling_degree_days",
@@ -572,7 +677,7 @@ tropical_nights = Tasmin(
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
     " above {thresh}",
     cell_methods="time: minimum within days time: sum over days",
-    compute=indices.tropical_nights,
+    compute=wrapped_partial(indices.tn_days_above, suggested=dict(thresh="20 degC")),
 )
 
 tg90p = Tas(
@@ -686,4 +791,16 @@ fire_season = Tasx(
     description="Fire season mask, computed with method {method}.",
     units="",
     compute=indices.fire_season,
+)
+
+corn_heat_units = TasminTasmax(
+    identifier="corn_heat_units",
+    units="",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    description="Temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
+    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
+    cell_methods="",
+    missing="skip",
+    compute=indices.corn_heat_units,
 )
