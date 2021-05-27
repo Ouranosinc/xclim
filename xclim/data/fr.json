@@ -104,9 +104,13 @@
     ],
     "m12": [
       "decembre"
-    ]
+    ],
+    "mean": ["moyen", "moyenne", "moyens", "moyennes", "moyenne"],
+    "max": ["maximal",  "maximale", "maximaux", "maximales", "maximum"],
+    "min": ["minimal", "minimale", "minimaux", "minimales", "minimum"],
+    "sum": ["total", "totale", "totaux", "totales", "somme"],
+    "std": ["écart-type"]
   },
-
   "RAIN_FRZGR": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
@@ -827,10 +831,28 @@
     "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
     "long_name": "Saison des incendies"
   },
-    "CORN_HEAT_UNITS": {
+  "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs.",
     "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
     "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
+  },
+  "FREEZETHAW_SPELL_FREQUENCY": {
+    "title": "Fréquence des événements de gel-dégel quotidien.",
+    "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Fréquence {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Fréquence {freq:f} des événements de gel-dégel quotidien."
+  },
+  "FREEZETHAW_SPELL_MAX_LENGTH": {
+    "title": "Longueur maximale des événements de gel-dégel quotidien.",
+    "abstract": "Longueur maximale des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Longueur maximale {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Longueur maximale {freq:f} des événements de gel-dégel quotidien."
+  },
+  "FREEZETHAW_SPELL_MEAN_LENGTH": {
+    "title": "Longueur moyenne des événements de gel-dégel quotidien.",
+    "abstract": "Longueur moyenne des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien."
   }
 }
