@@ -44,6 +44,9 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_freezethaw_cycles",
+    "freezethaw_spell_frequency",
+    "freezethaw_spell_max_length",
+    "freezethaw_spell_mean_length",
     "cooling_degree_days",
     "heating_degree_days",
     "growing_degree_days",
@@ -432,7 +435,7 @@ cold_spell_days = Tas(
     long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -444,7 +447,7 @@ cold_spell_frequency = Tas(
     long_name="Number of cold spell events",
     description="{freq} number cold spell events, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )
@@ -453,13 +456,69 @@ cold_spell_frequency = Tas(
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",
     units="days",
-    standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
-    compute=indices.daily_freezethaw_cycles,
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="sum",
+        window=1,
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
 )
+
+
+freezethaw_spell_frequency = TasminTasmax(
+    identifier="freezethaw_spell_frequency",
+    title="Frequency of freeze-thaw spells",
+    units="days",
+    long_name="{freq} number of freeze-thaw spells.",
+    description="{freq} number of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="count",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_mean_length = TasminTasmax(
+    identifier="freezethaw_spell_mean_length",
+    title="Averge length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} average length of freeze-thaw spells.",
+    description="{freq} average length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="mean",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_max_length = TasminTasmax(
+    identifier="freezethaw_spell_max_length",
+    title="Maximal length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} maximal length of freeze-thaw spells.",
+    description="{freq} maximal length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="max",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
 
 cooling_degree_days = Tas(
     identifier="cooling_degree_days",
