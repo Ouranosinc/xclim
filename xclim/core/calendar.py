@@ -340,7 +340,7 @@ def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
     calendar: str = "default",
-) -> Union[cftime.datetime, pydt.datetime, np.int]:
+) -> Union[cftime.datetime, pydt.datetime, float]:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
