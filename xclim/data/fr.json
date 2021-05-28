@@ -675,13 +675,13 @@
     "title": "Pression de vapeur saturante (e_sat)",
     "abstract": "Calcul de la pression de vapeur saturante à partir de la température, selon une méthode donnée. Si ice_thresh est donné, le calcul se fait en référence à la glace pour les températures sous ce seuil."
   },
-  "RH_FROMDEWPOINT": {
+  "HURS_FROMDEWPOINT": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité relative à partir du point de rosée",
     "abstract": "Calcul de l'humidité relative à partir de la température et du point de rosée à l'aire de la pression de vapeur saturante."
   },
-  "RH": {
+  "HURS": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}",
     "title": "Humidité relative à partir de l'humidité spécifique et de la pression",

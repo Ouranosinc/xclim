@@ -13,12 +13,22 @@ New features and enhancements
 * Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
 * Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
 * The indicator string formatter now accepts a "r" modifier which passes the raw strings instead of the adjective version.
+* Addition of the `sdba_extra_output` option to adds extra diagnostic variables to the outputs of Adjustment objects. Implementation of `sim_q` in QuantileDeltaMapping and `nclusters` in ExtremeValues.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 * The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing`` with temp thresholds at 0 degC and `window=1, op="sum"`. The indicator remains valid, now wrapping this new indice.
+* CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
+
+    - ``swe`` is now ``snw`` (``snw`` is the snow amount [kg / m²] and ``swe`` the liquid water equivalent thickness [m])
+    - ``rh`` is now ``hurs``
+    - ``dtas`` is now ``tdps``
+    - ``ws`` (in FWI) is now ``sfcWind``
+    - ``sic`` is now ``siconc``
+    - ``area`` (of sea ice indicators) is now ``areacello``
+    - Indicators ``RH`` and ``RH_FROMDEWPOINT`` have be renamed to ``HURS`` and ``HURS_FROMDEWPOINT``. These are changes in the _identifiers_, the python names (``relative_humidity[...]``) are unchanged.
 
 New indicators
 ~~~~~~~~~~~~~~

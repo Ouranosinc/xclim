@@ -97,19 +97,19 @@ def test_qdoy_max(ndq_series, q_series):
     assert out[0] == 101
 
 
-def test_snow_melt_we_max(swe_series):
+def test_snow_melt_we_max(snw_series):
     a = np.zeros(365)
     a[10] = 5
-    swe = swe_series(a)
-    out = land.snow_melt_we_max(swe)
+    snw = snw_series(a)
+    out = land.snow_melt_we_max(snw)
     assert out[0] == 5
 
 
-def test_blowing_snow(snd_series, ws_series):
+def test_blowing_snow(snd_series, sfcWind_series):
     a = np.zeros(366)
     a[10:20] = np.arange(10)
     snd = snd_series(a, start="2001-07-1")
-    ws = ws_series(a, start="2001-07-1")
+    ws = sfcWind_series(a, start="2001-07-1")
 
     out = land.blowing_snow(snd, ws, snd_thresh="50 cm", sfcWind_thresh="5 km/h")
     np.testing.assert_array_equal(out, [5, np.nan])

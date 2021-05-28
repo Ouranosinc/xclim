@@ -29,7 +29,7 @@ DateStr = NewType("DateStr", str)
 DayOfYearStr = NewType("DayOfYearStr", str)
 
 # Official variables definitions
-variables = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
 
 def wrapped_partial(

@@ -20,6 +20,7 @@ CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
+SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 
 MISSING_METHODS: Dict[str, Callable] = dict()
 
@@ -30,6 +31,7 @@ OPTIONS = {
     CHECK_MISSING: "any",
     MISSING_OPTIONS: dict(),
     RUN_LENGTH_UFUNC: "auto",
+    SDBA_EXTRA_OUTPUT: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -57,6 +59,7 @@ _VALIDATORS = {
     CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
     MISSING_OPTIONS: _valid_missing_options,
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
+    SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -148,6 +151,12 @@ class set_options:
     - ``run_length_ufunc``:
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
+    - ``sdba_extra_output``:
+      Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
+      and `processing` operations.  Details about these additional variables are given in the object's
+      docstring. When activated,  `adjust` will return a Dataset with `scen`  and those extra diagnostics
+      For `processing` functions, see the doc, the output type might change, or not depending on the
+      algorithm. Default: ``False``.
 
     Examples
     --------

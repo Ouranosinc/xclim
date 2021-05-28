@@ -3,6 +3,7 @@ import pytest
 import xarray as xr
 from scipy.stats import genpareto, norm, uniform
 
+from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.sdba.adjustment import (
     LOCI,
@@ -338,13 +339,19 @@ class TestQDM:
         # Test predict
         np.testing.assert_allclose(p, ref.transpose(*p.dims), rtol=0.1, atol=0.2)
 
-    def test_cannon(self, cannon_2015_dist, cannon_2015_rvs):
+    def test_cannon_and_diagnostics(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
 
         # Quantile mapping
-        QDM = QuantileDeltaMapping(kind="*", group="time", nquantiles=50)
-        QDM.train(ref, hist)
-        bc_sim = QDM.adjust(sim)
+        with set_options(sdba_extra_output=True):
+            QDM = QuantileDeltaMapping(kind="*", group="time", nquantiles=50)
+            QDM.train(ref, hist)
+            scends = QDM.adjust(sim)
+
+        assert isinstance(scends, xr.Dataset)
+
+        sim_q_exp = sim.rank(dim="time", pct=True)
+        np.testing.assert_array_equal(sim_q_exp, scends.sim_q)
 
         # Theoretical results
         # ref, hist, sim = cannon_2015_dist
@@ -357,7 +364,7 @@ class TestQDM:
         # mean = np.trapz(pdf * pu, pu)
         # mom2 = np.trapz(pdf * pu ** 2, pu)
         # std = np.sqrt(mom2 - mean ** 2)
-
+        bc_sim = scends.scen
         np.testing.assert_almost_equal(bc_sim.mean(), 41.5, 1)
         np.testing.assert_almost_equal(bc_sim.std(), 16.7, 0)
 
@@ -523,14 +530,14 @@ class TestPrincipalComponents:
 @pytest.mark.slow
 class TestExtremeValues:
     @pytest.mark.parametrize(
-        "c_thresh,q_thresh,frac,power",
+        "c_thresh,q_thresh,frac,power,diags",
         [
-            ["1 mm/d", 0.95, 0.25, 1],
-            ["1 mm/d", 0.90, 1e-6, 1],
-            ["0.007 m/week", 0.95, 0.25, 2],
+            ["1 mm/d", 0.95, 0.25, 1, True],
+            ["1 mm/d", 0.90, 1e-6, 1, False],
+            ["0.007 m/week", 0.95, 0.25, 2, False],
         ],
     )
-    def test_simple(self, c_thresh, q_thresh, frac, power):
+    def test_simple(self, c_thresh, q_thresh, frac, power, diags):
         n = 45 * 365
 
         def gen_testdata(c, s):
@@ -554,10 +561,16 @@ class TestExtremeValues:
 
         EQM = EmpiricalQuantileMapping(group="time.dayofyear", nquantiles=15, kind="*")
         EQM.train(ref, hist)
+
         scen = EQM.adjust(sim)
 
         EX = ExtremeValues(c_thresh, q_thresh=q_thresh)
-        EX.train(ref, hist)
+
+        with set_options(sdba_extra_output=diags):
+            EX.train(ref, hist)
+
+        if diags:
+            assert "nclusters" in EX.ds
 
         qv = (ref.thresh + hist.thresh) / 2
         np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.5, rtol=0.1)
@@ -574,7 +587,7 @@ class TestExtremeValues:
         # ONLY extreme values have been touched (but some might not have been modified)
         assert (((scen != scen2) | exval) == exval).all()
 
-    def test_dask_julia(self):
+    def test_dask_julia_diags(self):
 
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()

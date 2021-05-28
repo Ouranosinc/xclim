@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-import pytest
-import xarray as xr
 
 from xclim import indices as xci
 
@@ -25,29 +22,29 @@ class TestRBIndex:
 
 
 class TestSnowMeltWEMax:
-    def test_simple(self, swe_series):
+    def test_simple(self, snw_series):
         a = np.zeros(365)
         a[10:20] = np.arange(0, 10)
         a[20:25] = np.arange(10, 0, -2)
-        swe = swe_series(a, start="1999-07-01")
-        out = xci.snow_melt_we_max(swe)
+        snw = snw_series(a, start="1999-07-01")
+        out = xci.snow_melt_we_max(snw)
         np.testing.assert_array_equal(out, 6)
         assert out.units == "kg m-2"
 
 
 class TestMeltandPrecipMax:
-    def test_simple(self, swe_series, pr_series):
+    def test_simple(self, snw_series, pr_series):
         a = np.zeros(365)
 
         # 1 km / m2 of melt on day 11.
         a[10] = 1
-        swe = swe_series(a, start="1999-07-01")
+        snw = snw_series(a, start="1999-07-01")
 
         # 1 kg/ m2 /d of rain on day 11
         b = np.zeros(365)
         b[11] = 1.0 / 60 ** 2 / 24
         pr = pr_series(b, start="1999-07-01")
 
-        out = xci.melt_and_precip_max(swe, pr)
+        out = xci.melt_and_precip_max(snw, pr)
         np.testing.assert_array_equal(out, 2)
         assert out.units == "kg m-2"
