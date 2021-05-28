@@ -837,12 +837,15 @@
     "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
   },
+<<<<<<< HEAD
     "HUMIDEX": {
     "title": "Indice humidex",
     "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
   },
+=======
+>>>>>>> b875a53ecbb8306cb4fdcb1db1d1f62987743e1d
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des événements de gel-dégel quotidien.",
     "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
@@ -861,10 +864,18 @@
     "description": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
     "long_name": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien."
   },
+<<<<<<< HEAD
   "WIND_CHILL": {
     "title": "Facteur éolien.",
     "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisé pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
     "description": "Refroiddissement éolien, équivalent à la sensation du froid due au vent par in individu moyen.",
     "long_name": "Facteur éolien."
+=======
+  "HUMIDEX": {
+    "title": "Indice humidex",
+    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
+    "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
+    "long_name": "indice humidex"
+>>>>>>> b875a53ecbb8306cb4fdcb1db1d1f62987743e1d
   }
 }
