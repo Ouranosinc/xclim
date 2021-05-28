@@ -151,10 +151,11 @@ class set_options:
     - ``run_length_ufunc``:
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
-    - ``sdba_diagnostics``: Whether to add diagnostic variables to output of train and adjust methods
-        of sdba' bias-adjustment objects, as well as some `processing` function. Additionnal variables
-        are listed in the object's docstring. When activated,  `adjust` will return a Dataset with `scen`
-         and those extra diagnostics. For `processing` function, see the doc, the output type might change, or not.
+    - ``sdba_diagnostics``: Whether to add diagnostic variables to outputs of sdba's `train`, `adjust` 
+       and `processing` operations.  Details about these additional variables are given in the object's 
+       docstring. When activated,  `adjust` will return a Dataset with `scen`  and those extra diagnostics. 
+       For `processing` functions, see the doc, the output type might change, or not depending on the 
+       algorithm.
       Default: ``False``.
 
     Examples
