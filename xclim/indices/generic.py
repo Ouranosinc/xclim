@@ -6,12 +6,12 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
 from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
 
 from . import run_length as rl
@@ -645,4 +645,79 @@ def extreme_temperature_range(
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
+    return out
+
+
+def aggregate_between_dates(
+    data: xr.DataArray,
+    start: xr.DataArray,
+    end: xr.DataArray,
+    op: str = "sum",
+    freq: Optional[str] = None,
+):
+    """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      Data to aggregate between start and end dates.
+    start : xr.DataArray
+      Start dates (as day-of-year) for the aggregation periods.
+    end : xr.DataArray
+      End (as day-of-year) dates for the aggregation periods.
+    op : {'min', 'max', 'sum', 'mean', 'std'}
+      Operator.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
+      If there is no start and/or end date, returns np.nan.
+    """
+    if freq is None:
+        # Get freq
+        freq = xr.infer_freq(start.time)
+        end_freq = xr.infer_freq(end.time)
+        # check for consistency
+        if freq != end_freq or freq is None:
+            raise ValueError(
+                f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
+            )
+    start = convert_calendar(start, get_calendar(data, dim="time"))
+    start.attrs["calendar"] = str(get_calendar(data, dim="time"))
+    end = convert_calendar(end, get_calendar(data, dim="time"))
+    end.attrs["calendar"] = str(get_calendar(data, dim="time"))
+
+    start = doy_to_days_since(start)
+    end = doy_to_days_since(end)
+
+    out = []
+    for base_time, indexes in data.resample(time=freq).groups.items():
+        # get group slice
+        group = data.isel(time=indexes)
+        # convert bounds for this group
+        if (base_time in start.time) and (base_time in end.time):
+            start_d = start.sel(time=base_time)
+            end_d = end.sel(time=base_time)
+
+            days = (group.time - base_time).dt.days
+            days[days < 0] = np.nan
+
+            masked = group.where((days >= start_d) & (days <= end_d - 1))
+            res = getattr(masked, op)(dim="time", skipna=True)
+            res = xr.where(
+                ((start_d > end_d) | (start_d.isnull()) | (end_d.isnull())), np.nan, res
+            )
+            # Re-add the time dimension with the period's base time.
+            res = res.expand_dims(time=[base_time])
+            out.append(res)
+        else:
+            # Get an array with the good shape, put nans and add the new time.
+            res = (group.isel(time=0) * np.nan).expand_dims(time=[base_time])
+            out.append(res)
+            continue
+
+    out = xr.concat(out, dim="time")
     return out
