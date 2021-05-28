@@ -151,7 +151,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         out = self._adjust(sim, **kwargs)
 
         if isinstance(out, xr.DataArray):
-            out = out.to_dataset()
+            out = out.rename("scen").to_dataset()
 
         scen = out.scen
 
