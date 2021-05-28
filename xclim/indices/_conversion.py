@@ -15,6 +15,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "wind_chill_index",
 ]
 
 
@@ -538,3 +539,86 @@ def rain_approximation(
     prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prlp.attrs["units"] = pr.attrs["units"]
     return prlp
+
+
+@declare_units(
+    tas="[temperature]",
+    sfcWind="[speed]",
+)
+def wind_chill_index(
+    tas: xr.DataArray,
+    sfcWind: xr.DataArray,
+    method: str = "CAN",
+    mask_invalid: bool = True,
+):
+    """Wind chill index.
+
+    The Wind Chill Index is an estimation of how cold the weather feels to the average person.
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
+    two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Surface air temperature.
+    sfcwind : xarray.DataArray
+      Suface wind speed (10 m).
+    method : {'CAN', 'US'}
+      If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
+    mask_invalid : bool
+      Whether to mask values when the inputs are outside their validity range. or not.
+      If True (default), points where the temperature is above a threshold are masked.
+      The threshold is 0°C for the canadian method and 50°F for the american one.
+      With the latter method, points where sfcWind < 3 mph are also masked.
+
+    Returns
+    -------
+    xarray.DataArray, [degC]
+      Wind Chill Index.
+
+    Notes
+    -----
+    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
+    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
+    a temperature at suface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
+    is computed as:
+
+    .. math::
+
+        W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
+
+    Under slow winds (:math:`V < 5` km/h), and using the canadian method, it becomes:
+
+    .. math::
+
+        W = T + \frac{-1.59 + 0.1345 * T}{5} * V
+
+
+    Both equations are invalid for temperature over 0°C in the canadian method.
+
+    The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
+    `method='US'`. In that case, the maximual valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
+
+    References
+    ----------
+    .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
+    .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
+    """
+    tas = convert_units_to(tas, "degC")
+    sfcWind = convert_units_to(sfcWind, "km/h")
+
+    V = sfcWind ** 0.16
+    W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
+
+    if method.upper() == "CAN":
+        W = xr.where(sfcWind < 5, tas + sfcWind * (-1.59 + 0.1345 * tas) / 5, W)
+    elif method.upper() != "US":
+        raise ValueError(f"`method` must be one of 'US' and 'CAN'. Got '{method}'.")
+
+    if mask_invalid:
+        mask = {"CAN": tas <= 0, "US": (sfcWind > 4.828032) & (tas <= 10)}
+        W = W.where(mask[method.upper()])
+
+    W.attrs["units"] = "degC"
+    return W
