@@ -155,3 +155,17 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
         pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C"
     )
     np.testing.assert_array_equal(out, [1])
+
+
+def test_wind_chill_index(atmosds):
+    out = atmos.wind_chill_index(ds=atmosds)
+
+    np.testing.assert_allclose(
+        out.isel(time=0), [np.nan, -6.116, -36.064, -7.153, np.nan], rtol=1e-3
+    )
+
+    out_us = atmos.wind_chill_index(ds=atmosds, method="US")
+
+    np.testing.assert_allclose(
+        out_us.isel(time=0), [-1.041, -6.116, -36.064, -7.153, 2.951], rtol=1e-3
+    )

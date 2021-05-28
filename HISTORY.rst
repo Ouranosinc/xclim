@@ -10,6 +10,9 @@ New features and enhancements
 * Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
 * "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
 * Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array : the 1D version is used with non-dask arrays with less than 9000 points per slice).
+* Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
+* Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
+* The indicator string formatter now accepts a "r" modifier which passes the raw strings instead of the adjective version.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -23,6 +26,7 @@ New indicators
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
 * `multiday_temperature_swing` indice for returning general statistics based on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
 * New indicators `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length` for statistics of Tmin < 0 degC and Tmax > 0 deg C days now available (wrapped from `multiday_temperature_swing`).
+* `atmos.wind_chill_index` computes the daily wind chill index. The default is similar to what Environment and Climate Change Canada does, options are tunable to get the version of the National Weather Service.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
