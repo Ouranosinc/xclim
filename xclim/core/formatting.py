@@ -34,7 +34,7 @@ class AttrFormatter(string.Formatter):
         mapping : Mapping[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`. Cannot include reserver modifier 'r'.
+            The list of modifiers, must be the as long as the longest value of `mapping`. Cannot include reserved modifier 'r'.
         """
         super().__init__()
         if "r" in modifiers:
@@ -77,7 +77,7 @@ class AttrFormatter(string.Formatter):
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
         elif format_spec == "r":
-            return value
+            return super().format_field(value, "")
         return super().format_field(value, format_spec)
 
     def _match_value(self, value):
