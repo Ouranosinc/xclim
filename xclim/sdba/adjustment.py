@@ -8,7 +8,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.options import OPTIONS, SDBA_DIAGNOSTICS
+from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT
 from xclim.core.units import convert_units_to
 from xclim.indices import stats
 
@@ -150,10 +150,10 @@ class BaseAdjustment(ParametrizableWithDataset):
 
         out = self._adjust(sim, **kwargs)
 
-        if isinstance(out, xr.Dataset):
-            scen = out.scen
-        else:
-            scen = out
+        if isinstance(out, xr.DataArray):
+            out = out.to_dataset()
+
+        scen = out.scen
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
@@ -162,7 +162,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         )
         scen.attrs["bias_adjustment"] = infostr
 
-        if OPTIONS[SDBA_DIAGNOSTICS]:
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
         return scen
 
@@ -453,7 +453,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
             extrapolation=extrapolation,
             kind=self.kind,
         )
-        if OPTIONS[SDBA_DIAGNOSTICS]:
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
             out.sim_q.attrs.update(long_name="Group-wise quantiles of `sim`.")
             return out
         return out.scen
@@ -602,7 +602,7 @@ class ExtremeValues(BaseAdjustment):
         )
         self["hist_calendar"] = get_calendar(hist)
 
-        if OPTIONS[SDBA_DIAGNOSTICS] and ref_params is None:
+        if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
             ds = ds.assign(nclusters=ref_clusters.nclusters)
 
         self.set_dataset(ds)

@@ -343,7 +343,7 @@ class TestQDM:
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
 
         # Quantile mapping
-        with set_options(sdba_diagnostics=True):
+        with set_options(sdba_extra_output=True):
             QDM = QuantileDeltaMapping(kind="*", group="time", nquantiles=50)
             QDM.train(ref, hist)
             scends = QDM.adjust(sim)
@@ -566,7 +566,7 @@ class TestExtremeValues:
 
         EX = ExtremeValues(c_thresh, q_thresh=q_thresh)
 
-        with set_options(sdba_diagnostics=diags):
+        with set_options(sdba_extra_output=diags):
             EX.train(ref, hist)
 
         if diags:
