@@ -3,8 +3,6 @@
 Sea ice indicators
 ------------------
 """
-import abc
-
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Indicator2D

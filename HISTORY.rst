@@ -12,6 +12,7 @@ New features and enhancements
 * Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array : the 1D version is used with non-dask arrays with less than 9000 points per slice).
 * Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
 * Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
+* The indicator string formatter now accepts a "r" modifier which passes the raw strings instead of the adjective version.
 * Addition of te `sdba_diagnostics` option to adds extra diagnostics variables to the outputs of Adjustment objects. Implementation of `sim_q` in QuantileDeltaMapping and `nclusters` in ExtremeValues.
 
 Breaking changes
