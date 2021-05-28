@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 import xarray as xr
 
+from xclim.core.calendar import datetime_to_decimal_year
 from xclim.core.units import convert_units_to, declare_units
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "potential_evapotranspiration",
 ]
 
 
@@ -538,3 +540,59 @@ def rain_approximation(
     prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prlp.attrs["units"] = pr.attrs["units"]
     return prlp
+
+
+@declare_units(tasmin="[temperature]", tasmax="[temperature]")
+def potential_evapotranspiration(
+    tasmin: xr.DataArray, tasmax: xr.DataArray
+) -> xr.DataArray:
+    """Potential evapotranspiration.
+
+    The potential for water evaporation from soil and transpiration by plants if the water supply is sufficient.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum (daily) temperature.
+    tasmax : xarray.DataArray
+        Maximum (daily) temperature.
+
+    Returns
+    -------
+    xarray.DataArray
+        Potential evapotranspiration.
+
+    References
+    ----------
+    Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations.
+    Canadian journal of plant science, 45(3), 276-284.
+    """
+    tasmin = convert_units_to(tasmin, "degF")
+    tasmax = convert_units_to(tasmax, "degF")
+
+    ### Baier et Robertson(1965) formula
+    latr = (tasmin.lat * np.pi) / 180
+    gsc = 0.082  # MJ/m2/min
+
+    # julian day fraction
+    jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+
+    ds = 0.409 * np.sin(jd_frac - 1.39)
+    dr = 1 + 0.033 * np.cos(jd_frac)
+    omega = np.arccos(-np.tan(latr) * np.tan(ds))
+    re = (
+        (24 * 60 / np.pi)
+        * gsc
+        * dr
+        * (
+            omega * np.sin(latr) * np.sin(ds)
+            + np.cos(latr) * np.cos(ds) * np.sin(omega)
+        )
+    )  # MJ/m2/day
+    re = re / 4.1864e-2  # cal/cm2/day
+
+    # pet formula
+    out = 0.094 * (-87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re)
+
+    out.attrs["units"] = "mm/day"
+    return out
