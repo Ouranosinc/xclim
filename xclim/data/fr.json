@@ -860,5 +860,11 @@
     "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisé pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
     "description": "Refroiddissement éolien, équivalent à la sensation du froid due au vent par in individu moyen.",
     "long_name": "Facteur éolien."
+  },
+  "HUMIDEX": {
+    "title": "Indice humidex",
+    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
+    "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
+    "long_name": "indice humidex"
   }
 }
