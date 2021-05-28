@@ -1848,9 +1848,9 @@ def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
     np.testing.assert_array_equal(out, exp)
 
 
-def test_wind_chill(tas_series, ws_series):
+def test_wind_chill(tas_series, sfcWind_series):
     tas = tas_series(np.array([-1, -10, -20, 10, -15]) + K2C)
-    sfcWind = ws_series([10, 60, 20, 6, 2])
+    sfcWind = sfcWind_series([10, 60, 20, 6, 2])
 
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind)
     # Expected values taken from the online calculator of the ECCC.
