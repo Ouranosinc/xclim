@@ -555,7 +555,7 @@ def wind_chill_index(
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
     It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
-    two equations exist, the conventionnal one and one for slow winds (usually < 5 km/h), see Notes.
+    two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
 
     Parameters
     ----------
