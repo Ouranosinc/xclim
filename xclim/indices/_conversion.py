@@ -20,10 +20,10 @@ __all__ = [
 ]
 
 
-@declare_units(tas="[temperature]", dtas="[temperature]")
+@declare_units(tas="[temperature]", tdps="[temperature]")
 def humidex(
     tas: xr.DataArray,
-    dtas: xr.DataArray,
+    tdps: xr.DataArray,
 ) -> xr.DataArray:
     r"""Humidex index.
 
@@ -34,7 +34,7 @@ def humidex(
     ----------
     tas : xarray.DataArray
       Air temperature.
-    dtas : xarray.DataArray,
+    tdps : xarray.DataArray,
       Dewpoint temperature.
 
     Returns
@@ -70,10 +70,10 @@ def humidex(
     .. [eccc] https://climate.weather.gc.ca/glossary_e.html
     """
     # Convert dewpoint temperature to Kelvins
-    dtas = convert_units_to(dtas, "kelvin")
+    tdps = convert_units_to(tdps, "kelvin")
 
     # Vapour pressure in hPa
-    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / dtas))
+    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
 
     # Temperature delta due to humidity in delta_degC
     h = 5 / 9 * (e - 10)
