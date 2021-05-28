@@ -1,6 +1,5 @@
 import logging
 from collections import namedtuple
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,15 @@ from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15
 
-set_options(cf_compliance="raise", data_validation="raise")
+
+def setup_module(module):
+    set_options(cf_compliance="raise", data_validation="raise")
+
+
+def teardown_module(module):
+    set_options(cf_compliance="warn", data_validation="raise")
+
+
 TestObj = namedtuple("TestObj", ["test"])
 
 
@@ -146,25 +153,22 @@ class TestDataCheck:
 
 
 def test_generated_cfchecks():
-    with set_options(cf_compliance="raise"):
-        tas = xr.DataArray(
-            attrs=dict(
-                standard_name="air_temperature", cell_methods="time: mean within days"
-            )
+    tas = xr.DataArray(
+        attrs=dict(
+            standard_name="air_temperature", cell_methods="time: mean within days"
         )
+    )
 
+    cfchecks.generate_cfcheck("tas")(tas)
+
+    tas.attrs["standard_name"] = "air_feeling_of_heat"
+
+    with pytest.raises(ValidationError):
         cfchecks.generate_cfcheck("tas")(tas)
 
-        tas.attrs["standard_name"] = "air_feeling_of_heat"
+    sfcwind = xr.DataArray(
+        attrs=dict(standard_name="wind_speed", cell_methods="time: max within hours")
+    )
 
-        with pytest.raises(ValidationError):
-            cfchecks.generate_cfcheck("tas")(tas)
-
-        sfcwind = xr.DataArray(
-            attrs=dict(
-                standard_name="wind_speed", cell_methods="time: max within hours"
-            )
-        )
-
-        with pytest.raises(ValidationError):
-            cfchecks.generate_cfcheck("sfcWind")(sfcwind)
+    with pytest.raises(ValidationError):
+        cfchecks.generate_cfcheck("sfcWind")(sfcwind)

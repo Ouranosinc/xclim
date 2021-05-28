@@ -4,7 +4,6 @@
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
-from xclim.core.units import check_units
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -70,39 +69,26 @@ __all__ = [
 ]
 
 
-# TODO: Should we reference the standard vocabulary we're using ?
-# E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
-
-
 class Tas(Daily):
     """Class for univariate indices using mean daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tas):
-        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
-        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tas"))
 
 
 class Tasmin(Daily):
     """Class for univariate indices using min daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tasmin):
-        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmin"))
 
 
 class Tasmax(Daily):
     """Class for univariate indices using max daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tasmax):
-        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmax"))
 
 
 class Tasx(Daily):
-    """Class for univariate indices using mean daily temperature as the input."""
+    """Class for univariate indices using mean, max or min daily temperature as the input."""
 
     @staticmethod
     def cfcheck(tas):
@@ -110,13 +96,9 @@ class Tasx(Daily):
 
 
 class TasminTasmax(Daily2D):
-    @staticmethod
-    def cfcheck(tasmin, tasmax):
-        for da in (tasmin, tasmax):
-            cfchecks.check_valid(da, "standard_name", "air_temperature")
-        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        check_units(tasmax, tasmin.attrs["units"])
+    """Class for bivariate indices using max and min daily temperature as inputs."""
+
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmin", "tasmax"))
 
 
 tn_days_above = Tasmin(

@@ -153,16 +153,16 @@ def test_fire_weather_indicator():
     dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
-        rh=fwi_data.rh,
-        ws=fwi_data.ws,
+        hurs=fwi_data.rh,
+        sfcWind=fwi_data.ws,
         lat=fwi_data.lat,
     )
 
     dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.fire_weather_indexes(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
-        rh=fwi_data.rh,
-        ws=fwi_data.ws,
+        hurs=fwi_data.rh,
+        sfcWind=fwi_data.ws,
         lat=fwi_data.lat,
         ffmc0=ffmc[-1],
         dmc0=dmc[-1],
@@ -236,20 +236,18 @@ def test_fire_weather_ufunc_overwintering(atmosds):
     np.testing.assert_array_equal(out3["DC"].notnull(), season_mask_yr)
 
 
-def test_fire_weather_ufunc_drystart():
+def test_fire_weather_ufunc_drystart(atmosds):
     # This test is very shallow only tests if it runs.
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    ds = ds.assign(
-        rh=atmos.relative_humidity_from_dewpoint(ds=ds),
-        tas=convert_units_to(ds.tas, "degC"),
-        pr=convert_units_to(ds.pr, "mm/d"),
+    ds = atmosds.assign(
+        tas=convert_units_to(atmosds.tas, "degC"),
+        pr=convert_units_to(atmosds.pr, "mm/d"),
     )
     season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
 
     out_ds = fire_weather_ufunc(
         tas=ds.tas,
         pr=ds.pr,
-        rh=ds.rh,
+        hurs=ds.hurs,
         lat=ds.lat,
         season_mask=season_mask_yr,
         overwintering=False,
@@ -260,7 +258,7 @@ def test_fire_weather_ufunc_drystart():
     out_no = fire_weather_ufunc(
         tas=ds.tas,
         pr=ds.pr,
-        rh=ds.rh,
+        hurs=ds.hurs,
         lat=ds.lat,
         season_mask=season_mask_yr,
         overwintering=False,
@@ -279,11 +277,11 @@ def test_fire_weather_ufunc_drystart():
     )
 
 
-def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
+def test_fire_weather_ufunc_errors(tas_series, pr_series, hurs_series, sfcWind_series):
     tas = tas_series(np.ones(100), start="2017-01-01")
     pr = pr_series(np.ones(100), start="2017-01-01")
-    rh = rh_series(np.ones(100), start="2017-01-01")
-    ws = ws_series(np.ones(100), start="2017-01-01")
+    hurs = hurs_series(np.ones(100), start="2017-01-01")
+    sfcWind = sfcWind_series(np.ones(100), start="2017-01-01")
 
     snd = xr.full_like(tas, 0)
     lat = xr.full_like(tas.isel(time=0), 45)
@@ -296,7 +294,7 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
         fire_weather_ufunc(
             tas=tas,
             pr=pr,
-            rh=rh,
+            hurs=hurs,
             lat=lat,
             dc0=DC0,
             indexes=["DC", "ISI"],
@@ -335,8 +333,8 @@ def test_fire_weather_ufunc_errors(tas_series, pr_series, rh_series, ws_series):
     out = fire_weather_ufunc(
         tas=tas,
         pr=pr,
-        rh=rh,
-        ws=ws,
+        hurs=hurs,
+        sfcWind=sfcWind,
         lat=lat,
         snd=snd,
         dc0=DC0,
@@ -410,8 +408,8 @@ def test_gfwed_and_indicators():
         tas=ds.tas,
         pr=ds.prbc,
         snd=ds.snow_depth,
-        rh=ds.rh,
-        ws=ds.sfcwind,
+        hurs=ds.rh,
+        sfcWind=ds.sfcwind,
         lat=ds.lat,
         season_method="GFWED",
         overwintering=False,
@@ -446,8 +444,8 @@ def test_gfwed_and_indicators():
             tas=ds2.tas,
             pr=ds2.prbc,
             snd=ds2.snow_depth,
-            rh=ds2.rh,
-            ws=ds2.sfcwind,
+            hurs=ds2.rh,
+            sfcWind=ds2.sfcwind,
             lat=ds2.lat,
             dc0=ds.DC.isel(time=0),
             dmc0=ds.DMC.isel(time=0),
