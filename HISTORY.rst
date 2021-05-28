@@ -2,7 +2,7 @@
 History
 =======
 
-0.27.0 (unreleased)
+0.27.0 (2021-05-28)
 -------------------
 
 New features and enhancements
