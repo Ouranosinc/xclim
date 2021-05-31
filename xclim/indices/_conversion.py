@@ -593,6 +593,6 @@ def potential_evapotranspiration(
 
     # pet formula
     out = 0.094 * (-87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re)
-
+    out = out.clip(0)
     out.attrs["units"] = "mm/day"
     return out
