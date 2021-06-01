@@ -12,7 +12,13 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.calendar import get_calendar
-from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint2cfunits,
+    str2pint,
+    to_agg_units,
+)
 
 from . import run_length as rl
 
@@ -648,6 +654,7 @@ def extreme_temperature_range(
     return out
 
 
+@declare_units(tas="[temperature]")
 def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
     """Calculate the degree days below/above the temperature threshold.
 
@@ -671,4 +678,5 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
     elif ">" in condition:
         out = (tas - thresh).clip(0)
 
+    out = to_agg_units(out, tas, op="delta_prod")
     return out
