@@ -573,12 +573,13 @@ def potential_evapotranspiration(
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_.
     - "hargreaves85" or "HG85", based on [hargreaves85]_.
-    - "thornthwaite48" or "TW48"
+    - "thornthwaite48" or "TW48", based on [thornthwaite48]_.
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
     .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
 
     if method in ["baierrobertson65", "BR65"]:
@@ -610,6 +611,7 @@ def potential_evapotranspiration(
             -87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re
         )
         out = out.clip(0)
+        out.attrs["units"] = "mm/day"
 
     elif method in ["hargreaves85", "HG85"]:
         tasmin = convert_units_to(tasmin, "degC")
@@ -639,6 +641,42 @@ def potential_evapotranspiration(
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
+        out.attrs["units"] = "mm/day"
 
-    out.attrs["units"] = "mm/day"
+    elif method in ["thornthwaite48", "TW48"]:
+        tas = convert_units_to(tas, "degC")
+        tas = tas.clip(0)
+
+        latr = (tas.lat * np.pi) / 180  # rad
+
+        # julian day fraction
+        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
+
+        ds = 0.409 * np.sin(jd_frac - 1.39)
+        omega = np.arccos(-np.tan(latr) * np.tan(ds)) * 180 / np.pi  # degrees
+
+        # monthly-mean daytime length (multiples of 12 hours)
+        dl = 2 * omega / (15 * 12)
+        dl_m = dl.resample(time="MS").mean(dim="time")
+
+        # annual heat index
+        tas_m = tas.resample(time="MS").mean(dim="time")
+        id_m = (tas_m / 5) ** 1.514
+        id_y = id_m.resample(time="YS").sum(dim="time")
+
+        tas_idy_a = []
+        for base_time, indexes in tas_m.resample(time="YS").groups.items():
+            tas_y = tas_m.isel(time=indexes)
+            id_v = id_y.sel(time=base_time)
+            a = 6.75e-7 * id_v ** 3 - 7.71e-5 * id_v ** 2 + 0.01791 * id_v + 0.49239
+
+            frac = (10 * tas_y / id_v) ** a
+            tas_idy_a.append(frac)
+
+        tas_idy_a = xr.concat(tas_idy_a, dim="time")
+
+        # Thornthwaite(1948) formula
+        out = 1.6 * dl_m * tas_idy_a
+        out.attrs["units"] = "mm/month"
+
     return out
