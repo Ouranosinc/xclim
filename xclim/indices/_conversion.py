@@ -544,7 +544,7 @@ def rain_approximation(
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
 def potential_evapotranspiration(
-    tasmin: xr.DataArray, tasmax: xr.DataArray, method: str = "BR65"
+    tasmin: xr.DataArray, tasmax: xr.DataArray, tas: xr.DataArray, method: str = "BR65"
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 
@@ -554,9 +554,11 @@ def potential_evapotranspiration(
     Parameters
     ----------
     tasmin : xarray.DataArray
-        Minimum (daily) temperature.
+      Minimum daily temperature.
     tasmax : xarray.DataArray
-        Maximum (daily) temperature.
+      Maximum daily temperature.
+    tas : xarray.DataArray
+      Mean daily temperature.
     method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
       Which method to use, see notes.
 
@@ -570,12 +572,13 @@ def potential_evapotranspiration(
     Available methods are:
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_.
-    - "hargreaves85" or "HG85"
+    - "hargreaves85" or "HG85", based on [hargreaves85]_.
     - "thornthwaite48" or "TW48"
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
+    .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
     """
 
     if method in ["baierrobertson65", "BR65"]:
@@ -607,9 +610,35 @@ def potential_evapotranspiration(
             -87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re
         )
         out = out.clip(0)
-        out.attrs["units"] = "mm/day"
-        return out
 
-    elif method in ["hargreaves85" or "HG85"]:
+    elif method in ["hargreaves85", "HG85"]:
         tasmin = convert_units_to(tasmin, "degC")
         tasmax = convert_units_to(tasmax, "degC")
+        tas = convert_units_to(tas, "degC")
+
+        latr = (tasmin.lat * np.pi) / 180
+        gsc = 0.082  # MJ/m2/min
+        lv = 2.5  # MJ/kg
+
+        # julian day fraction
+        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+
+        ds = 0.409 * np.sin(jd_frac - 1.39)
+        dr = 1 + 0.033 * np.cos(jd_frac)
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))
+        ra = (
+            (24 * 60 / np.pi)
+            * gsc
+            * dr
+            * (
+                omega * np.sin(latr) * np.sin(ds)
+                + np.cos(latr) * np.cos(ds) * np.sin(omega)
+            )
+        )  # MJ/m2/day
+
+        # Hargreaves and Samani(1985) formula
+        out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
+        out = out.clip(0)
+
+    out.attrs["units"] = "mm/day"
+    return out
