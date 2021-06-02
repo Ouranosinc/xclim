@@ -142,3 +142,13 @@ def test_doyminmax(q_series):
             assert attr in da.attrs.keys()
         assert da.attrs["units"] == ""
         assert da.attrs["is_dayofyear"] == 1
+
+
+def test_degree_days(tas_series):
+    tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
+
+    out = generic.degree_days(tas, thresh="10 degC", condition=">")
+    outK = generic.degree_days(tas, thresh="283.15 degK", condition=">")
+
+    np.testing.assert_allclose(out, [0, 5, 10, 0, 0])
+    np.testing.assert_allclose(out, outK)
