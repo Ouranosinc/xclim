@@ -4,9 +4,10 @@ from typing import Tuple
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to, declare_units
+from xclim.core.units import convert_units_to, declare_units, units2pint
 
 __all__ = [
+    "humidex",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -17,6 +18,75 @@ __all__ = [
     "rain_approximation",
     "wind_chill_index",
 ]
+
+
+@declare_units(tas="[temperature]", tdps="[temperature]")
+def humidex(
+    tas: xr.DataArray,
+    tdps: xr.DataArray,
+) -> xr.DataArray:
+    r"""Humidex index.
+
+    The humidex indicates how hot the air feels to an average person, accounting for the effect of humidity. It
+    can be loosely interpreted as the equivalent perceived temperature when the air is dry.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Air temperature.
+    tdps : xarray.DataArray,
+      Dewpoint temperature.
+
+    Returns
+    -------
+    xarray.DataArray, [temperature]
+      The humidex index.
+
+    Notes
+    -----
+    The humidex is usually computed using hourly observations of dry bulb and dewpoint temperatures. It is computed
+    using the formula based on [masterton79]_:
+
+    .. math::
+
+       T_{\text{dry bulb}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{
+       dewpoint}}}}\right)-10\right]
+
+    where :math:`T_{dry bulb}` is the dry bulb air temperature (°C), and :math:`T_{dewpoint}` the dewpoint
+    temperature (°K). The constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
+    and the universal gas constant ([mekis15]_).
+
+    The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
+
+    - 20 to 29 : no discomfort;
+    - 30 to 39 : some discomfort;
+    - 40 to 45 : great discomfort, avoid exertion;
+    - 46 and over : dangerous, possible heat stroke;
+
+    References
+    ----------
+    .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
+    .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [eccc] https://climate.weather.gc.ca/glossary_e.html
+    """
+    # Convert dewpoint temperature to Kelvins
+    tdps = convert_units_to(tdps, "kelvin")
+
+    # Vapour pressure in hPa
+    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+
+    # Temperature delta due to humidity in delta_degC
+    h = 5 / 9 * (e - 10)
+    h.attrs["units"] = "delta_degree_Celsius"
+
+    # Get delta_units for output
+    du = (1 * units2pint(tas) - 0 * units2pint(tas)).units
+    h = convert_units_to(h, du)
+
+    # Add the delta to the input temperature
+    out = h + tas
+    out.attrs["units"] = tas.units
+    return out
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")

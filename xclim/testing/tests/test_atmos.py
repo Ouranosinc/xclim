@@ -69,6 +69,20 @@ def test_relative_humidity_dewpoint(tas_series, hurs_series):
     )
 
 
+def test_humidex(tas_series):
+
+    tas = tas_series([15, 25, 35, 40])
+    tas.attrs["units"] = "C"
+
+    dtas = tas_series([10, 15, 25, 25])
+    dtas.attrs["units"] = "C"
+
+    # expected values from https://en.wikipedia.org/wiki/Humidex
+    h = atmos.humidex(tas, dtas)
+    np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
+    assert h.name == "humidex"
+
+
 def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]

@@ -2,7 +2,7 @@
 History
 =======
 
-0.27.0 (unreleased)
+0.27.0 (2021-05-28)
 -------------------
 
 New features and enhancements
@@ -34,6 +34,7 @@ New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+* `atmos.humidex` returns the Canadian *humidex*, an indicator of perceived temperature account for relative humidity.
 * `multiday_temperature_swing` indice for returning general statistics based on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
 * New indicators `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length` for statistics of Tmin < 0 degC and Tmax > 0 deg C days now available (wrapped from `multiday_temperature_swing`).
 * `atmos.wind_chill_index` computes the daily wind chill index. The default is similar to what Environment and Climate Change Canada does, options are tunable to get the version of the National Weather Service.
