@@ -631,7 +631,7 @@ def _get_number_of_elements_by_year(time):
             f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
         )
 
-    return N_in_year
+    return int(N_in_year)
 
 
 def construct_moving_yearly_window(
@@ -676,7 +676,7 @@ def construct_moving_yearly_window(
 
     i_start = N_in_year * step
     # This is the first time I use `while` in real python code. What an event.
-    while i_start + N < da.time.size:
+    while i_start + N <= da.time.size:
         # Cut and add _full_ slices only, partial window are thrown out
         # Use isel so that we don't need to deal with a starting date.
         slc = da.isel(time=slice(i_start, i_start + N))
@@ -717,24 +717,22 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
         )
 
     # Get step in number of years
-    step = np.unique(
-        da.window_start.diff(dim).values.astype("timedelta64[D]").astype(int)
-        / max_doy[get_calendar(da)]
-    )
+    days_in_year = max_doy[get_calendar(da)]
+    step = np.unique(da[dim].diff(dim).dt.days / days_in_year)
     if len(step) > 1:
         raise ValueError("The spacing between the windows is not equal.")
     step = int(step[0])
 
     # Which years to keep: length step, in the middle of window
-    left = (window - step) // 2  # first year to keep
+    left = int((window - step) // 2)  # first year to keep
 
     # Keep only the middle years
-    da = da.isel(time=slice(left * days_in_year, (left + step) * days_in_year))
+    da = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
 
     out = []
     for win_start in da[dim]:
         slc = da.sel({dim: win_start}).drop_vars(dim)
-        dt = win_start.values - da.window_start[0].values
+        dt = win_start.values - da[dim][0].values
         slc["time"] = slc.time + dt
         out.append(slc)
 
