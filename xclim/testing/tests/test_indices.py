@@ -1893,3 +1893,17 @@ class TestPotentialEvapotranspiration:
 
         out = xci.potential_evapotranspiration(tn, tx, tm, method="HG85")
         np.testing.assert_allclose(out[2, 0], [3.962589], rtol=1e-2)
+
+    def test_thornthwaite(self, tas_series):
+        time_std = date_range("1990-01-01", "1990-12-31", freq="D", calendar="standard")
+        tm = xr.DataArray(
+            np.ones((time_std.size, 1)),
+            dims=("time", "lat"),
+            coords={"time": time_std, "lat": [45]},
+            attrs={"units": "degC"},
+        )
+
+        out = xci.potential_evapotranspiration(
+            tasmin=None, tasmax=None, tas=tm, method="TW48"
+        )
+        np.testing.assert_allclose(out[0, 1], [4.27619242], rtol=1e-2)
