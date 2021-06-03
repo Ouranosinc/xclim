@@ -15,6 +15,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "potential_evapotranspiration",
 ]
 
 
@@ -181,4 +182,16 @@ rain_approximation = Converter(
         " with method {method} and threshold temperature {thresh}."
     ),
     compute=indices.rain_approximation,
+)
+
+potential_evapotranspiration = Converter(
+    identifier="pet",
+    units="mm day-1",
+    standard_name="water_evapotranspiration_flux",
+    long_name="Potential evapotranspiration",
+    description=(
+        "The daily or monthly potential for water evaporation from soil and transpiration by plants if the water "
+        "supply is sufficient, with the method {method}."
+    ),
+    compute=indices.potential_evapotranspiration,
 )

@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos
+from xclim.testing import open_dataset
 
 K2C = 273.16
 
@@ -155,3 +156,46 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
         pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C"
     )
     np.testing.assert_array_equal(out, [1])
+
+
+class TestPotentialEvapotranspiration:
+    def test_convert_units(self):
+        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+
+        with xr.set_options(keep_attrs=True):
+            tnC = tn - K2C
+            tnC.attrs["units"] = "degC"
+            tmC = tm - K2C
+            tmC.attrs["units"] = "degC"
+
+        pet_br65 = atmos.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
+        pet_br65C = atmos.potential_evapotranspiration(tnC, tx, tas=None, method="BR65")
+        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, tm, method="HG85")
+        pet_hg85C = atmos.potential_evapotranspiration(tnC, tx, tm, method="HG85")
+        pet_tw48 = atmos.potential_evapotranspiration(tn, tx, tm, method="TW48")
+        pet_tw48C = atmos.potential_evapotranspiration(tn, tx, tmC, method="TW48")
+
+        np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
+        np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
+        np.testing.assert_allclose(pet_tw48, pet_tw48C, atol=1)
+
+    def test_nan_values(self):
+        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+
+        tn[0, 100] = np.nan
+        tx[0, 101] = np.nan
+
+        pet_br65 = atmos.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
+        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, tm, method="HG85")
+
+        tm[0, 0:31] = np.nan
+
+        pet_tw48 = atmos.potential_evapotranspiration(tn, tx, tm, method="TW48")
+
+        np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
+        np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
+        np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
