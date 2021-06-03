@@ -22,7 +22,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to
 from xclim.testing import open_dataset
@@ -1871,3 +1871,25 @@ def test_winter_storm(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
     out = xci.winter_storm(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
+
+
+class TestPotentialEvapotranspiration:
+    def test_baier_robertson(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
+        np.testing.assert_allclose(out[0, 2], [3.861079], rtol=1e-2)
+
+    def test_hargreaves(self, tasmin_series, tasmax_series, tas_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+        tm = tas_series(np.array([5, 10, 15]) + 273.15)
+        tm = tm.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, tm, method="HG85")
+        np.testing.assert_allclose(out[2, 0], [3.962589], rtol=1e-2)
