@@ -68,18 +68,16 @@ TRANSLATABLE_ATTRS = [
     "keywords",
 ]
 
-
-def list_locales():
-    """Return a list of available locales in xclim."""
-    locale_list = contents("xclim.data")
-    return [locale.split(".")[0] for locale in locale_list if locale.endswith(".json")]
+_LOCALES = {}
 
 
-def _valid_locales(locales):
+def _valid_locales(*locales):
     return all(
         [
-            (isinstance(locale, str) and get_best_locale(locale) is not None)
+            # A locale is valid if it is a string from the list
+            (isinstance(locale, str) and locale in _LOCALES)
             or (
+                # Or if it is a tuple of a string and either a file or a dict.
                 not isinstance(locale, str)
                 and isinstance(locale[0], str)
                 and (Path(locale[1]).is_file() or isinstance(locale[1], dict))
@@ -87,33 +85,6 @@ def _valid_locales(locales):
             for locale in locales
         ]
     )
-
-
-def get_best_locale(locale: str):
-    """Get the best fitting available locale.
-
-    for existing locales : ['fr', 'fr-BE', 'en-US'],
-    'fr-CA' returns 'fr', 'en' -> 'en-US' and 'en-GB' -> 'en-US'.
-
-    Parameters
-    ----------
-    locale : str
-        The requested locale, as an IETF language tag (lang or lang-territory)
-
-    Returns
-    -------
-    str or None:
-        The best available locale. None is none are available.
-    """
-    available = list_locales()
-    if locale in available:
-        return locale
-    locale = locale.split("-")[0]
-    if locale in available:
-        return locale
-    if locale in [av.split("-")[0] for av in available]:
-        return [av for av in available if av.split("-")[0] == locale][0]
-    return None
 
 
 def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
@@ -138,15 +109,14 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
     dict
         The available translations in this locale.
     """
+    _valid_locales(locale)
+
     if isinstance(locale, str):
-        locale = get_best_locale(locale)
-        if locale is None:
+        if locale not in _LOCALES:
             raise UnavailableLocaleError(locale)
 
-        return (
-            locale,
-            json.load(open_text("xclim.data", f"{locale}.json")),
-        )
+        return (locale, _LOCALES[locale])
+
     if isinstance(locale[1], dict):
         return locale
     with open(locale[1], encoding="utf-8") as locf:
@@ -247,7 +217,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     """
     from xclim.core.indicator import registry
 
-    best_locale = get_best_locale(locale)
+    best_locale = None  # get_best_locale(locale)
     if best_locale is not None:
         locname, attrs = get_local_dict(best_locale)
         for ind_name in attrs.copy().keys():
