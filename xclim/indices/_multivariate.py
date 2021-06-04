@@ -1,6 +1,6 @@
 # noqa: D100
 from typing import Optional
-
+from xclim.core.bootstrapping import BootstrapConfig, compute_bootstrapped_exceedance_rate
 import numpy as np
 import xarray
 
@@ -1044,7 +1044,7 @@ def tn10p(
 
 @declare_units(tasmax="[temperature]", t90="[temperature]")
 def tx90p(
-    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
+    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS", bootstrap_config: BootstrapConfig = None
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1076,6 +1076,9 @@ def tx90p(
     >>> t90 = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tx90p(tas, t90)
     """
+    if bootstrap_config != None:
+        return compute_bootstrapped_exceedance_rate(tasmax, bootstrap_config)
+
     t90 = convert_units_to(t90, tasmax)
 
     # Create time series out of doy values.
