@@ -125,7 +125,7 @@ from .formatting import (
     update_history,
 )
 from .locales import TRANSLATABLE_ATTRS, get_local_attrs, get_local_formatter
-from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
+from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import FREQ_NAMES, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
@@ -761,7 +761,7 @@ class Indicator(IndicatorRegistrar):
         """
         args = ba.arguments
         out = cls._format(attrs, args)
-        for locale in OPTIONS["metadata_locales"]:
+        for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 cls._format(
                     get_local_attrs(

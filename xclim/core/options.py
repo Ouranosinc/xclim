@@ -68,7 +68,17 @@ def _set_missing_options(mopts):
         OPTIONS[MISSING_OPTIONS][meth].update(opts)
 
 
-_SETTERS = {MISSING_OPTIONS: _set_missing_options}
+def _set_metadata_locales(locales):
+    if isinstance(locales, str):
+        OPTIONS[METADATA_LOCALES] = [locales]
+    else:
+        OPTIONS[METADATA_LOCALES] = locales
+
+
+_SETTERS = {
+    MISSING_OPTIONS: _set_missing_options,
+    METADATA_LOCALES: _set_metadata_locales,
+}
 
 
 def register_missing_method(name: str) -> Callable:

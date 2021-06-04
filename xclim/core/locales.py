@@ -53,7 +53,6 @@ TRANSLATABLE_ATTRS
 """
 import json
 import warnings
-from importlib.resources import contents, open_text
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
@@ -71,7 +70,13 @@ TRANSLATABLE_ATTRS = [
 _LOCALES = {}
 
 
-def _valid_locales(*locales):
+def list_locales():
+    return list(_LOCALES.keys())
+
+
+def _valid_locales(locales):
+    if isinstance(locales, str):
+        locales = [locales]
     return all(
         [
             # A locale is valid if it is a string from the list
@@ -118,9 +123,18 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         return (locale, _LOCALES[locale])
 
     if isinstance(locale[1], dict):
-        return locale
-    with open(locale[1], encoding="utf-8") as locf:
-        return locale[0], json.load(locf)
+        trans = locale[1]
+    else:
+        # Thus a string pointing to a json file
+        with open(locale[1], encoding="utf-8") as locf:
+            trans = json.load(locf)
+
+    if locale[0] in _LOCALES:
+        loaded_trans = _LOCALES[locale[0]]
+        # Passed translations have priority
+        loaded_trans.update(trans)
+        trans = loaded_trans
+    return (locale[0], trans)
 
 
 def get_local_attrs(
@@ -190,9 +204,15 @@ def get_local_formatter(
         of attributes.
     """
     loc_name, loc_dict = get_local_dict(locale)
-    attrs_mapping = loc_dict["attrs_mapping"].copy()
-    mods = attrs_mapping.pop("modifiers")
-    return AttrFormatter(attrs_mapping, mods)
+    if "attrs_mapping" in loc_dict:
+        attrs_mapping = loc_dict["attrs_mapping"].copy()
+        mods = attrs_mapping.pop("modifiers")
+        return AttrFormatter(attrs_mapping, mods)
+
+    warnings.warn(
+        "No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter."
+    )
+    return default_formatter
 
 
 class UnavailableLocaleError(ValueError):
@@ -202,6 +222,24 @@ class UnavailableLocaleError(ValueError):
         super().__init__(
             f"Locale {locale} not available. Use `xclim.core.locales.list_locales()` to see available languages."
         )
+
+
+def load_locale(filename, locale=None):
+    filename = Path(filename)
+    if locale is None:
+        locale = filename.stem
+        if len(locale) != 2:
+            raise ValueError(
+                "Either the locale 2-char string must be given of the json filename must be <locale>.json."
+            )
+
+    with filename.open() as f:
+        loc_dict = json.load(f)
+
+    if locale in _LOCALES:
+        _LOCALES[locale].update(loc_dict)
+    else:
+        _LOCALES[locale] = loc_dict
 
 
 def generate_local_dict(locale: str, init_english: bool = False):
