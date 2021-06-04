@@ -7,7 +7,6 @@ import xarray as xr
 from xclim.core.calendar import datetime_to_decimal_year
 from xclim.core.units import convert_units_to, declare_units, units2pint
 
-
 __all__ = [
     "humidex",
     "tas",
@@ -699,7 +698,7 @@ def wind_chill_index(
     W.attrs["units"] = "degC"
     return W
 
-  
+
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
 def potential_evapotranspiration(
     tasmin: xr.DataArray, tasmax: xr.DataArray, tas: xr.DataArray, method: str = "BR65"
