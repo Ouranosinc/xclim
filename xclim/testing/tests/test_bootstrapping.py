@@ -14,6 +14,6 @@ test_da = DataArray(["2021-05-05", "2021-06-05"],
 
 class TestBootstrapping:
     def test_bootstrapping(self):
-        bootstrapping.bootstrap_period(test_da)
+        bootstrapping._bootstrap_period(test_da)
         # TODO see how to make the U.T work
         pass

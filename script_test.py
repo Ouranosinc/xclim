@@ -40,6 +40,12 @@ xlog.setLevel(logging.DEBUG)
 # TODO Delete this file once U.T are ok
 #############
 
+# TODO list
+# - Fix the issue with the result, it is not exactly equal to what icclim 4.x provides
+# - add logs
+# - add unit tests
+# - make it run in parallel with dask
+
 def netcdf_processing():
 
     ds = xr.open_dataset("tasmax_day_MIROC6_ssp585_r1i1p1f1_gn_20150101-20241231.nc")
@@ -70,10 +76,17 @@ def netcdf_processing():
     time_start = time.perf_counter()
     ds = xr.open_dataset(
         "tasmax_day_MIROC6_ssp585_r1i1p1f1_gn_20150101-20241231.nc")
-    # ds = ds.sel(time=slice("2015-01-01", "2018-12-31"))
+    # ds = ds.sel(time=slice("2015-01-01", "2015-12-31"))
     # t90 = percentile_doy(ds.tasmax, window=1, per=90).sel(percentiles=90)
-    result = bootstrapping.bootstrap_period(ds.tasmax, 90)
-    result.to_netcdf('bootstrap_results_xclim.nc')
+    config = bootstrapping.BootstrapConfig(
+        operator='>',
+        percentile=90,
+        window=1,
+        in_base_slice=slice("2015-01-01", "2017-12-31"),
+        out_of_base_slice=slice("2018-01-01", "2024-12-31")
+    )
+    result = bootstrapping.compute_bootstrapped_exceedance_rate(ds.tasmax, config)
+    result.to_netcdf('bootstrap_results_xclim_2.nc')
     time_elapsed = (time.perf_counter() - time_start)
     print(time_elapsed, ' secs')
 
