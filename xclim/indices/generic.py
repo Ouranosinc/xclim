@@ -653,6 +653,7 @@ def extreme_temperature_range(
     out.attrs["units"] = pint2cfunits(u - u)
     return out
 
+
 def aggregate_between_dates(
     data: xr.DataArray,
     start: xr.DataArray,
@@ -726,8 +727,8 @@ def aggregate_between_dates(
 
     out = xr.concat(out, dim="time")
     return out
-  
-  
+
+
 @declare_units(tas="[temperature]")
 def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
     """Calculate the degree days below/above the temperature threshold.

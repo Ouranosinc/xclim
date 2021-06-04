@@ -186,6 +186,7 @@ snowfall_approximation = Converter(
     compute=indices.snowfall_approximation,
 )
 
+
 rain_approximation = Converter(
     identifier="prlp",
     nvar=2,
@@ -198,6 +199,7 @@ rain_approximation = Converter(
     ),
     compute=indices.rain_approximation,
 )
+
 
 wind_chill_index = Converter(
     identifier="wind_chill",
@@ -215,6 +217,7 @@ wind_chill_index = Converter(
     ),
     compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
 )
+
 
 potential_evapotranspiration = Converter(
     identifier="potential_evapotranspiration",

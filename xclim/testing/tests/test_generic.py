@@ -320,7 +320,7 @@ class TestAggregateBetweenDates:
         with pytest.raises(ValueError):
             generic.aggregate_between_dates(data, start, end_m)
 
-            
+
 def test_degree_days(tas_series):
     tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
 

@@ -185,7 +185,7 @@ def test_wind_chill_index(atmosds):
         out_us.isel(time=0), [-1.041, -6.116, -36.064, -7.153, 2.951], rtol=1e-3
     )
 
-    
+
 class TestPotentialEvapotranspiration:
     def test_convert_units(self):
         tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin

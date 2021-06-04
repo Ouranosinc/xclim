@@ -1887,7 +1887,7 @@ def test_wind_chill(tas_series, sfcWind_series):
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, method="US")
     assert out[-1].isnull()
 
-    
+
 class TestPotentialEvapotranspiration:
     def test_baier_robertson(self, tasmin_series, tasmax_series):
         tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
