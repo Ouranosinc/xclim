@@ -869,8 +869,8 @@
   },
   "POTENTIAL_EVAPOTRANSPIRATION": {
     "title": "Évapotranspiration potentielle.",
-    "abstract": "Le potentiel journalier ou mensuel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
-    "description": "Le potentiel journalier ou mensuel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
     "long_name": "Évapotranspiration potentielle."
   }
 }

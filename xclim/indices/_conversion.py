@@ -1,11 +1,16 @@
 # noqa: D100
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import xarray as xr
 
 from xclim.core.calendar import datetime_to_decimal_year
-from xclim.core.units import convert_units_to, declare_units, units2pint
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    infer_sampling_units,
+    units2pint,
+)
 
 __all__ = [
     "humidex",
@@ -699,13 +704,16 @@ def wind_chill_index(
     return W
 
 
-@declare_units(tasmin="[temperature]", tasmax="[temperature]")
+@declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
 def potential_evapotranspiration(
-    tasmin: xr.DataArray, tasmax: xr.DataArray, tas: xr.DataArray, method: str = "BR65"
+    tasmin: Optional[xr.DataArray] = None,
+    tasmax: Optional[xr.DataArray] = None,
+    tas: Optional[xr.DataArray] = None,
+    method: str = "BR65",
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 
-    The daily or monthly potential for water evaporation from soil and transpiration by plants if the water supply is
+    The potential for water evaporation from soil and transpiration by plants if the water supply is
     sufficient, according to a given method.
 
     Parameters
@@ -728,9 +736,9 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on [baierrobertson65]_.
-    - "hargreaves85" or "HG85", based on [hargreaves85]_.
-    - "thornthwaite48" or "TW48", based on [thornthwaite48]_.
+    - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax.
+    - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax. (optional: tas can be given in addition of tasmin and tasmax).
+    - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax. (optional: tas can be given instead of tasmin and tasmax).
 
     References
     ----------
@@ -768,12 +776,14 @@ def potential_evapotranspiration(
             -87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re
         )
         out = out.clip(0)
-        out.attrs["units"] = "mm/day"
 
     elif method in ["hargreaves85", "HG85"]:
         tasmin = convert_units_to(tasmin, "degC")
         tasmax = convert_units_to(tasmax, "degC")
-        tas = convert_units_to(tas, "degC")
+        if tas is None:
+            tas = (tasmin + tasmax) / 2
+        else:
+            tas = convert_units_to(tas, "degC")
 
         latr = (tasmin.lat * np.pi) / 180
         gsc = 0.082  # MJ/m2/min
@@ -798,10 +808,14 @@ def potential_evapotranspiration(
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
-        out.attrs["units"] = "mm/day"
 
     elif method in ["thornthwaite48", "TW48"]:
-        tas = convert_units_to(tas, "degC")
+        if tas is None:
+            tasmin = convert_units_to(tasmin, "degC")
+            tasmax = convert_units_to(tasmax, "degC")
+            tas = (tasmin + tasmax) / 2
+        else:
+            tas = convert_units_to(tas, "degC")
         tas = tas.clip(0)
 
         latr = (tas.lat * np.pi) / 180  # rad
@@ -834,6 +848,7 @@ def potential_evapotranspiration(
 
         # Thornthwaite(1948) formula
         out = 1.6 * dl_m * tas_idy_a
-        out.attrs["units"] = "mm/month"
 
+    m, freq = infer_sampling_units(out)
+    out.attrs["units"] = "mm/" + freq
     return out

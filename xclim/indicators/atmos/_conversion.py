@@ -221,11 +221,12 @@ wind_chill_index = Converter(
 
 potential_evapotranspiration = Converter(
     identifier="potential_evapotranspiration",
+    var_name="water_evaporation_flux",
     units="mm day-1",
     standard_name="water_evapotranspiration_flux",
     long_name="Potential evapotranspiration",
     description=(
-        "The daily or monthly potential for water evaporation from soil and transpiration by plants if the water "
+        "The potential for water evaporation from soil and transpiration by plants if the water "
         "supply is sufficient, with the method {method}."
     ),
     compute=indices.potential_evapotranspiration,
