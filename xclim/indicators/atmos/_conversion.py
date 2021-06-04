@@ -185,7 +185,7 @@ rain_approximation = Converter(
 )
 
 potential_evapotranspiration = Converter(
-    identifier="pet",
+    identifier="potential_evapotranspiration",
     units="mm day-1",
     standard_name="water_evapotranspiration_flux",
     long_name="Potential evapotranspiration",
