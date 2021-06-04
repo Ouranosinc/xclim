@@ -10,7 +10,7 @@ from typing import Sequence, Union
 
 from .formatting import parse_cell_methods
 from .options import cfcheck
-from .utils import ValidationError, variables
+from .utils import VARIABLES, ValidationError
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
 
@@ -35,7 +35,7 @@ def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
 def generate_cfcheck(*varnames):
     def _generated_check(*args):
         for varname, var in zip(varnames, args):
-            data = variables[varname]
+            data = VARIABLES[varname]
             if "cell_methods" in data:
                 check_valid(
                     var, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"

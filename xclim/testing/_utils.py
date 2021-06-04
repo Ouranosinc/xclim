@@ -8,14 +8,21 @@ from urllib.error import HTTPError
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
+import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
+from yaml import safe_dump, safe_load
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
 LOGGER = logging.getLogger("xclim")
 
-__all__ = ["open_dataset", "list_input_variables"]
+__all__ = [
+    "open_dataset",
+    "list_input_variables",
+    "get_all_CMIP6_variables",
+    "update_variable_yaml",
+]
 
 
 def file_md5_checksum(fname):
@@ -265,3 +272,69 @@ def list_input_variables(
                 variables[var].append(ind)
 
     return variables
+
+
+def get_all_CMIP6_variables(get_cell_methods=True):
+    data = pd.read_excel(
+        "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
+        sheet_name=None,
+    )
+    data.pop("Notes")
+
+    variables = {}
+
+    def summarize_cell_methods(rawstr):
+        words = str(rawstr).split(" ")
+        iskey = [word.endswith(":") for word in words]
+        cms = {}
+        for i in range(len(words)):
+            if iskey[i] and i + 1 < len(words) and not iskey[i + 1]:
+                cms[words[i][:-1]] = words[i + 1]
+        return cms
+
+    for table, df in data.items():
+        for i, row in df.iterrows():
+            varname = row["Variable Name"]
+            vardata = {
+                "standard_name": row["CF Standard Name"],
+                "canonical_units": row["units"],
+            }
+            if get_cell_methods:
+                vardata["cell_methods"] = [summarize_cell_methods(row["cell_methods"])]
+            if varname in variables and get_cell_methods:
+                if vardata["cell_methods"] not in variables[varname]["cell_methods"]:
+                    variables[varname]["cell_methods"].append(vardata["cell_methods"])
+            else:
+                variables[varname] = vardata
+
+    return variables
+
+
+def update_variable_yaml(filename=None, xclim_needs_only=True):
+    print("Downloading CMIP6 variables.")
+    allvars = get_all_CMIP6_variables(get_cell_methods=False)
+
+    if xclim_needs_only:
+        print("Filtering with xclim-implemented variables.")
+        xcvars = list_input_variables()
+        allvars = {k: v for k, v in allvars.items() if k in xcvars}
+
+    filepath = Path(
+        filename or (Path(__file__).parent.parent / "data" / "variables.yml")
+    )
+
+    if filepath.exists():
+        with filepath.open() as f:
+            stdvars = safe_load(f)
+
+        for var, data in allvars.items():
+            if var not in stdvars["variables"]:
+                print(f"Added {var}")
+                new_data = data.copy()
+                new_data.update(description="")
+                stdvars["variables"][var] = new_data
+    else:
+        stdvars = allvars
+
+    with filepath.open("w") as f:
+        safe_dump(stdvars, f)

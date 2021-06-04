@@ -133,9 +133,9 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
     return out.where(~valid)
 
 
-@declare_units(swe="[mass]/[area]")
+@declare_units(snw="[mass]/[area]")
 def snow_melt_we_max(
-    swe: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+    snw: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     """Maximum snow melt
 
@@ -143,8 +143,8 @@ def snow_melt_we_max(
 
     Parameters
     ----------
-    swe : xarray.DataArray
-      Snow water equivalent.
+    snw : xarray.DataArray
+      Snow amount (mass per area).
     window : int
       Number of days during which the melt is accumulated.
     freq : str
@@ -157,20 +157,20 @@ def snow_melt_we_max(
     """
 
     # Compute change in SWE. Set melt as a positive change.
-    dswe = swe.diff(dim="time") * -1
+    dsnw = snw.diff(dim="time") * -1
 
     # Sum over window
-    agg = dswe.rolling(time=window).sum()
+    agg = dsnw.rolling(time=window).sum()
 
     # Max over period
     out = agg.resample(time=freq).max(dim="time")
-    out.attrs["units"] = swe.units
+    out.attrs["units"] = snw.units
     return out
 
 
-@declare_units(swe="[mass]/[area]", pr="[precipitation]")
+@declare_units(snw="[mass]/[area]", pr="[precipitation]")
 def melt_and_precip_max(
-    swe: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     """Maximum snow melt and precipitation
 
@@ -178,8 +178,8 @@ def melt_and_precip_max(
 
     Parameters
     ----------
-    swe : xarray.DataArray
-      Snow water equivalent.
+    snw : xarray.DataArray
+      Snow amount (mass per area).
     pr : xarray.DataArray
       Daily precipitation flux.
     window : int
@@ -194,15 +194,15 @@ def melt_and_precip_max(
     """
 
     # Compute change in SWE. Set melt as a positive change.
-    dswe = swe.diff(dim="time") * -1
+    dsnw = snw.diff(dim="time") * -1
 
     # Add precipitation total
-    total = rate2amount(pr) + dswe
+    total = rate2amount(pr) + dsnw
 
     # Sum over window
     agg = total.rolling(time=window).sum()
 
     # Max over period
     out = agg.resample(time=freq).max(dim="time")
-    out.attrs["units"] = swe.units
+    out.attrs["units"] = snw.units
     return out

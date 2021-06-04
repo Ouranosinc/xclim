@@ -1683,9 +1683,9 @@ def maximum_consecutive_tx_days(
     return to_agg_units(out, tasmax, "count")
 
 
-@declare_units(sic="[]", area="[area]", thresh="[]")
+@declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_area(
-    sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: str = "15 pct"
 ) -> xarray.DataArray:
     """Total sea ice area.
 
@@ -1694,10 +1694,10 @@ def sea_ice_area(
 
     Parameters
     ----------
-    sic : xarray.DataArray
-      Sea ice concentration [0, 1].
-    area : xarray.DataArray
-      Grid cell area.
+    siconc : xarray.DataArray
+      Sea ice concentration (area fraction).
+    areacello : xarray.DataArray
+      Grid cell area (usually over the ocean).
     thresh : str
       Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
 
@@ -1716,16 +1716,16 @@ def sea_ice_area(
     <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
 
     """
-    t = convert_units_to(thresh, sic)
-    factor = convert_units_to("100 pct", sic)
-    out = xarray.dot(sic.where(sic >= t, 0), area) / factor
-    out.attrs["units"] = area.units
+    t = convert_units_to(thresh, siconc)
+    factor = convert_units_to("100 pct", siconc)
+    out = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
+    out.attrs["units"] = areacello.units
     return out
 
 
-@declare_units(sic="[]", area="[area]", thresh="[]")
+@declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_extent(
-    sic: xarray.DataArray, area: xarray.DataArray, thresh: str = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: str = "15 pct"
 ) -> xarray.DataArray:
     """Total sea ice extent.
 
@@ -1734,9 +1734,9 @@ def sea_ice_extent(
 
     Parameters
     ----------
-    sic : xarray.DataArray
-      Sea ice concentration [0, 1].
-    area : xarray.DataArray
+    siconc : xarray.DataArray
+      Sea ice concentration (area fraction).
+    areacello : xarray.DataArray
       Grid cell area.
     thresh : str
       Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
@@ -1755,9 +1755,9 @@ def sea_ice_extent(
     `What is the difference between sea ice area and extent
     <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
     """
-    t = convert_units_to(thresh, sic)
-    out = xarray.dot(sic >= t, area)
-    out.attrs["units"] = area.units
+    t = convert_units_to(thresh, siconc)
+    out = xarray.dot(siconc >= t, areacello)
+    out.attrs["units"] = areacello.units
     return out
 
 
@@ -1796,11 +1796,11 @@ def tropical_nights(
 
     Warnings
     --------
-    The `tropical_nights` indicator is being deprecated in favour of `tn_days_above` with `thresh="20 degC" by default.
-    This change will be effectuated in a future version of xclim.
+    The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"` by default.
+    The indicator reflects this change. This indice will be removed in a future version of xclim.
     """
     warnings.warn(
-        "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'. "
+        "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'`. "
         "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
         UserWarning,
         stacklevel=3,

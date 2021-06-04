@@ -6,6 +6,7 @@ from xclim.core.indicator import Indicator
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
+    "humidex",
     "tg",
     "wind_speed_from_vector",
     "wind_vector_from_speed",
@@ -15,6 +16,7 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "wind_chill_index",
     "potential_evapotranspiration",
 ]
 
@@ -23,6 +25,18 @@ class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
     missing = "skip"
+
+
+humidex = Converter(
+    identifier="humidex",
+    nvar=2,
+    units="C",
+    standard_name="air_temperature",
+    long_name="humidex index",
+    description="Humidex index describing the temperature felt by the average person in response to relative humidity.",
+    cell_methods="",
+    compute=indices.humidex,
+)
 
 
 tg = Converter(
@@ -89,9 +103,10 @@ saturation_vapor_pressure = Converter(
 
 
 relative_humidity_from_dewpoint = Converter(
-    identifier="rh_fromdewpoint",
+    identifier="hurs_fromdewpoint",
     nvar=2,
     units="%",
+    var_name="hurs",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
     title="Relative humidity from temperature and dewpoint temperature.",
@@ -107,7 +122,7 @@ relative_humidity_from_dewpoint = Converter(
     ),
     compute=wrapped_partial(
         indices.relative_humidity,
-        suggested={"dtas": _empty},
+        suggested={"tdps": _empty},
         huss=None,
         ps=None,
         invalid_values="mask",
@@ -116,7 +131,7 @@ relative_humidity_from_dewpoint = Converter(
 
 
 relative_humidity = Converter(
-    identifier="rh",
+    identifier="hurs",
     nvar=3,
     units="%",
     long_name="Relative Humidity",
@@ -133,7 +148,7 @@ relative_humidity = Converter(
         else ""
     ),
     compute=wrapped_partial(
-        indices.relative_humidity, dtas=None, invalid_values="mask"
+        indices.relative_humidity, tdps=None, invalid_values="mask"
     ),
 )
 
@@ -182,6 +197,23 @@ rain_approximation = Converter(
         " with method {method} and threshold temperature {thresh}."
     ),
     compute=indices.rain_approximation,
+)
+
+wind_chill_index = Converter(
+    identifier="wind_chill",
+    nvar=2,
+    units="degC",
+    long_name="Wind chill index",
+    description=lambda **kws: (
+        "Wind chill index describing the temperature felt by the average person in response to cold wind."
+    )
+    + (
+        "A slow-wind version of the wind chill index was used for wind speeds under 5 km/h and invalid "
+        "temperatures were masked (T > 0°C)."
+        if kws["method"] == "CAN"
+        else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
+    ),
+    compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
 )
 
 potential_evapotranspiration = Converter(

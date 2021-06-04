@@ -4,7 +4,6 @@
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
-from xclim.core.units import check_units
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -44,6 +43,9 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_freezethaw_cycles",
+    "freezethaw_spell_frequency",
+    "freezethaw_spell_max_length",
+    "freezethaw_spell_mean_length",
     "cooling_degree_days",
     "heating_degree_days",
     "growing_degree_days",
@@ -67,39 +69,26 @@ __all__ = [
 ]
 
 
-# TODO: Should we reference the standard vocabulary we're using ?
-# E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/
-
-
 class Tas(Daily):
     """Class for univariate indices using mean daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tas):
-        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
-        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tas"))
 
 
 class Tasmin(Daily):
     """Class for univariate indices using min daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tasmin):
-        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        cfchecks.check_valid(tasmin, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmin"))
 
 
 class Tasmax(Daily):
     """Class for univariate indices using max daily temperature as the input."""
 
-    @staticmethod
-    def cfcheck(tasmax):
-        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        cfchecks.check_valid(tasmax, "standard_name", "air_temperature")
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmax"))
 
 
 class Tasx(Daily):
-    """Class for univariate indices using mean daily temperature as the input."""
+    """Class for univariate indices using mean, max or min daily temperature as the input."""
 
     @staticmethod
     def cfcheck(tas):
@@ -107,13 +96,9 @@ class Tasx(Daily):
 
 
 class TasminTasmax(Daily2D):
-    @staticmethod
-    def cfcheck(tasmin, tasmax):
-        for da in (tasmin, tasmax):
-            cfchecks.check_valid(da, "standard_name", "air_temperature")
-        cfchecks.check_valid(tasmin, "cell_methods", "*time: minimum within days*")
-        cfchecks.check_valid(tasmax, "cell_methods", "*time: maximum within days*")
-        check_units(tasmax, tasmin.attrs["units"])
+    """Class for bivariate indices using max and min daily temperature as inputs."""
+
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("tasmin", "tasmax"))
 
 
 tn_days_above = Tasmin(
@@ -432,7 +417,7 @@ cold_spell_days = Tas(
     long_name="Number of days part of a cold spell",
     description="{freq} number of days that are part of a cold spell, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -444,7 +429,7 @@ cold_spell_frequency = Tas(
     long_name="Number of cold spell events",
     description="{freq} number cold spell events, defined as {window} "
     "or more consecutive days with mean daily "
-    "temperature below  {thresh}.",
+    "temperature below {thresh}.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )
@@ -453,13 +438,69 @@ cold_spell_frequency = Tas(
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",
     units="days",
-    standard_name="daily_freezethaw_cycles",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
-    compute=indices.daily_freezethaw_cycles,
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="sum",
+        window=1,
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
 )
+
+
+freezethaw_spell_frequency = TasminTasmax(
+    identifier="freezethaw_spell_frequency",
+    title="Frequency of freeze-thaw spells",
+    units="days",
+    long_name="{freq} number of freeze-thaw spells.",
+    description="{freq} number of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="count",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_mean_length = TasminTasmax(
+    identifier="freezethaw_spell_mean_length",
+    title="Averge length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} average length of freeze-thaw spells.",
+    description="{freq} average length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="mean",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
+
+freezethaw_spell_max_length = TasminTasmax(
+    identifier="freezethaw_spell_max_length",
+    title="Maximal length of freeze-thaw spells.",
+    units="days",
+    long_name="{freq} maximal length of freeze-thaw spells.",
+    description="{freq} maximal length of freeze-thaw spells"
+    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    "for at least {window} consecutive day(s).",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.multiday_temperature_swing,
+        op="max",
+        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+    ),
+)
+
 
 cooling_degree_days = Tas(
     identifier="cooling_degree_days",

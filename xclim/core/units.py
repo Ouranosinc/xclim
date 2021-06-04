@@ -525,38 +525,33 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
     if isinstance(val, (int, float)):
         return
 
-    expected = units.get_dimensionality(dim.replace("dimensionless", ""))
+    # This is needed if dim is units in the CF-syntax,
+    try:
+        dim = str2pint(dim)
+        expected = dim.dimensionality
+    except pint.UndefinedUnitError:
+        # Raised when it is not understood, we assume it was a dimensionlity
+        expected = units.get_dimensionality(dim.replace("dimensionless", ""))
+
     if isinstance(val, str):
-        val_dim = str2pint(val).dimensionality
+        val_units = str2pint(val)
     else:  # a DataArray
-        val_dim = units2pint(val).dimensionality
+        val_units = units2pint(val)
+    val_dim = val_units.dimensionality
+
     if val_dim == expected:
         return
 
     # Check if there is a transformation available
-    start = pint.util.to_units_container(expected)
-    end = pint.util.to_units_container(val_dim)
+    start = pint.util.to_units_container(val_dim)
+    end = pint.util.to_units_container(expected)
     graph = units._active_ctx.graph  # noqa
     if pint.util.find_shortest_path(graph, start, end):
         return
 
-    if dim == "[precipitation]":
-        tu = "mmday"
-    elif dim == "[discharge]":
-        tu = "cms"
-    elif dim == "[length]":
-        tu = "m"
-    elif dim == "[speed]":
-        tu = "m s-1"
-    else:
-        raise NotImplementedError(f"Dimension `{dim}` is not supported.")
-
-    try:
-        units.Quantity(1, units=units2pint(val)).to(tu, "hydro")
-    except (pint.UndefinedUnitError, pint.DimensionalityError):
-        raise ValidationError(
-            f"Value's dimension `{val_dim}` does not match expected units `{expected}`."
-        )
+    raise ValidationError(
+        f"Data units {val_units} are not compatible with requested {dim}."
+    )
 
 
 def declare_units(
