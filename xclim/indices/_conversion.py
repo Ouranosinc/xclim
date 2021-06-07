@@ -4,9 +4,10 @@ from typing import Tuple
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to, declare_units
+from xclim.core.units import convert_units_to, declare_units, units2pint
 
 __all__ = [
+    "humidex",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -15,7 +16,77 @@ __all__ = [
     "specific_humidity",
     "snowfall_approximation",
     "rain_approximation",
+    "wind_chill_index",
 ]
+
+
+@declare_units(tas="[temperature]", tdps="[temperature]")
+def humidex(
+    tas: xr.DataArray,
+    tdps: xr.DataArray,
+) -> xr.DataArray:
+    r"""Humidex index.
+
+    The humidex indicates how hot the air feels to an average person, accounting for the effect of humidity. It
+    can be loosely interpreted as the equivalent perceived temperature when the air is dry.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Air temperature.
+    tdps : xarray.DataArray,
+      Dewpoint temperature.
+
+    Returns
+    -------
+    xarray.DataArray, [temperature]
+      The humidex index.
+
+    Notes
+    -----
+    The humidex is usually computed using hourly observations of dry bulb and dewpoint temperatures. It is computed
+    using the formula based on [masterton79]_:
+
+    .. math::
+
+       T_{\text{dry bulb}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{
+       dewpoint}}}}\right)-10\right]
+
+    where :math:`T_{dry bulb}` is the dry bulb air temperature (°C), and :math:`T_{dewpoint}` the dewpoint
+    temperature (°K). The constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
+    and the universal gas constant ([mekis15]_).
+
+    The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
+
+    - 20 to 29 : no discomfort;
+    - 30 to 39 : some discomfort;
+    - 40 to 45 : great discomfort, avoid exertion;
+    - 46 and over : dangerous, possible heat stroke;
+
+    References
+    ----------
+    .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
+    .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [eccc] https://climate.weather.gc.ca/glossary_e.html
+    """
+    # Convert dewpoint temperature to Kelvins
+    tdps = convert_units_to(tdps, "kelvin")
+
+    # Vapour pressure in hPa
+    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+
+    # Temperature delta due to humidity in delta_degC
+    h = 5 / 9 * (e - 10)
+    h.attrs["units"] = "delta_degree_Celsius"
+
+    # Get delta_units for output
+    du = (1 * units2pint(tas) - 0 * units2pint(tas)).units
+    h = convert_units_to(h, du)
+
+    # Add the delta to the input temperature
+    out = h + tas
+    out.attrs["units"] = tas.units
+    return out
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
@@ -257,14 +328,14 @@ def saturation_vapor_pressure(
 
 @declare_units(
     tas="[temperature]",
-    dtas="[temperature]",
+    tdps="[temperature]",
     huss="[]",
     ps="[pressure]",
     ice_thresh="[temperature]",
 )
 def relative_humidity(
     tas: xr.DataArray,
-    dtas: xr.DataArray = None,
+    tdps: xr.DataArray = None,
     huss: xr.DataArray = None,
     ps: xr.DataArray = None,
     ice_thresh: str = None,
@@ -279,9 +350,9 @@ def relative_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array.
-    dtas : xr.DataArray
-      Dewpoint temperature (if specified, overrides huss and ps).
+      Temperature array
+    tdps : xr.DataArray
+      Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
       Specific Humidity.
     ps : xr.DataArray
@@ -340,21 +411,21 @@ def relative_humidity(
     .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
     """
     if method in ("bohren98", "BA90"):
-        if dtas is None:
+        if tdps is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
-        dtas = convert_units_to(dtas, "degK")
+        tdps = convert_units_to(tdps, "degK")
         tas = convert_units_to(tas, "degK")
         L = 2.501e6
         Rw = (461.5,)
-        rh = 100 * np.exp(-L * (tas - dtas) / (Rw * tas * dtas))  # type: ignore
-    elif dtas is not None:
+        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore
+    elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
-            tas=dtas, ice_thresh=ice_thresh, method=method
+            tas=tdps, ice_thresh=ice_thresh, method=method
         )
         e_sat_t = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method
         )
-        rh = 100 * e_sat_dt / e_sat_t  # type: ignore
+        hurs = 100 * e_sat_dt / e_sat_t  # type: ignore
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -364,25 +435,25 @@ def relative_humidity(
 
         w = huss / (1 - huss)
         w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
-        rh = 100 * w / w_sat
+        hurs = 100 * w / w_sat
 
     if invalid_values == "clip":
-        rh = rh.clip(0, 100)
+        hurs = hurs.clip(0, 100)
     elif invalid_values == "mask":
-        rh = rh.where((rh <= 100) & (rh >= 0))
-    rh.attrs["units"] = "%"
-    return rh
+        hurs = hurs.where((hurs <= 100) & (hurs >= 0))
+    hurs.attrs["units"] = "%"
+    return hurs
 
 
 @declare_units(
     tas="[temperature]",
-    rh="[]",
+    hurs="[]",
     ps="[pressure]",
     ice_thresh="[temperature]",
 )
 def specific_humidity(
     tas: xr.DataArray,
-    rh: xr.DataArray,
+    hurs: xr.DataArray,
     ps: xr.DataArray,
     ice_thresh: str = None,
     method: str = "sonntag90",
@@ -393,8 +464,8 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature.
-    rh : xr.DataArrsay
+      Temperature array
+    hurs : xr.DataArrsay
       Relative Humidity.
     ps : xr.DataArray
       Air Pressure.
@@ -416,14 +487,14 @@ def specific_humidity(
 
     Notes
     -----
-    In the following, let :math:`T`, :math:`rh` (in %) and :math:`p` be the temperature,
+    In the following, let :math:`T`, :math:`hurs` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
 
     .. math::
 
         w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
-        w = w_{sat} * rh / 100
+        w = w_{sat} * hurs / 100
         q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
@@ -435,13 +506,13 @@ def specific_humidity(
         q_{sat} = w_{sat} / (1 + w_{sat})
     """
     ps = convert_units_to(ps, "Pa")
-    rh = convert_units_to(rh, "")
+    hurs = convert_units_to(hurs, "")
     tas = convert_units_to(tas, "degK")
 
     e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
     w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
-    w = w_sat * rh
+    w = w_sat * hurs
     q = w / (1 + w)
 
     if invalid_values is not None:
@@ -535,6 +606,92 @@ def rain_approximation(
     the liquid rain precipitation.
 
     """
+    prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+    prra.attrs["units"] = pr.attrs["units"]
+    return prra
     prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prlp.attrs["units"] = pr.attrs["units"]
     return prlp
+
+
+@declare_units(
+    tas="[temperature]",
+    sfcWind="[speed]",
+)
+def wind_chill_index(
+    tas: xr.DataArray,
+    sfcWind: xr.DataArray,
+    method: str = "CAN",
+    mask_invalid: bool = True,
+):
+    """Wind chill index.
+
+    The Wind Chill Index is an estimation of how cold the weather feels to the average person.
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
+    two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Surface air temperature.
+    sfcwind : xarray.DataArray
+      Suface wind speed (10 m).
+    method : {'CAN', 'US'}
+      If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
+    mask_invalid : bool
+      Whether to mask values when the inputs are outside their validity range. or not.
+      If True (default), points where the temperature is above a threshold are masked.
+      The threshold is 0°C for the canadian method and 50°F for the american one.
+      With the latter method, points where sfcWind < 3 mph are also masked.
+
+    Returns
+    -------
+    xarray.DataArray, [degC]
+      Wind Chill Index.
+
+    Notes
+    -----
+    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
+    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
+    a temperature at suface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
+    is computed as:
+
+    .. math::
+
+        W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
+
+    Under slow winds (:math:`V < 5` km/h), and using the canadian method, it becomes:
+
+    .. math::
+
+        W = T + \frac{-1.59 + 0.1345 * T}{5} * V
+
+
+    Both equations are invalid for temperature over 0°C in the canadian method.
+
+    The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
+    `method='US'`. In that case, the maximual valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
+
+    References
+    ----------
+    .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
+    .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
+    """
+    tas = convert_units_to(tas, "degC")
+    sfcWind = convert_units_to(sfcWind, "km/h")
+
+    V = sfcWind ** 0.16
+    W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
+
+    if method.upper() == "CAN":
+        W = xr.where(sfcWind < 5, tas + sfcWind * (-1.59 + 0.1345 * tas) / 5, W)
+    elif method.upper() != "US":
+        raise ValueError(f"`method` must be one of 'US' and 'CAN'. Got '{method}'.")
+
+    if mask_invalid:
+        mask = {"CAN": tas <= 0, "US": (sfcWind > 4.828032) & (tas <= 10)}
+        W = W.where(mask[method.upper()])
+
+    W.attrs["units"] = "degC"
+    return W

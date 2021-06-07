@@ -16,7 +16,8 @@ from xclim.core.units import (
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
-from .generic import select_resample_op, threshold_count
+from ._threshold import first_day_above, first_day_below
+from .generic import aggregate_between_dates
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -25,7 +26,10 @@ from .generic import select_resample_op, threshold_count
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["corn_heat_units", "biologically_effective_degree_days"]
+__all__ = [
+  "corn_heat_units",
+  "biologically_effective_degree_days"
+]
 
 
 @declare_units(

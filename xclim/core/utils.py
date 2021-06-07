@@ -29,7 +29,7 @@ DateStr = NewType("DateStr", str)
 DayOfYearStr = NewType("DayOfYearStr", str)
 
 # Official variables definitions
-variables = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
 
 def wrapped_partial(
@@ -129,7 +129,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
     """
-    if not isinstance(da.data, dsk.Array):
+    if not uses_dask(da):
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
@@ -161,6 +161,16 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
     if chunking:
         return da.chunk(chunks=chunking)
     return da
+
+
+def uses_dask(da):
+    if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
+        return True
+    if isinstance(da, xr.Dataset) and any(
+        isinstance(var.data, dsk.Array) for var in da.variables.values()
+    ):
+        return True
+    return False
 
 
 def _calc_perc(arr: numpy.array, p: Sequence[float] = None):

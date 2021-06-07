@@ -57,16 +57,30 @@ def test_wind_vector_from_speed():
     np.testing.assert_array_equal(vas.isnull(), [True, True, False])
 
 
-def test_relative_humidity_dewpoint(tas_series, rh_series):
+def test_relative_humidity_dewpoint(tas_series, hurs_series):
     np.testing.assert_allclose(
         atmos.relative_humidity_from_dewpoint(
             tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
-            dtas=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
+            tdps=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
         ),
-        rh_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
+        hurs_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
         rtol=0.02,
         atol=1,
     )
+
+
+def test_humidex(tas_series):
+
+    tas = tas_series([15, 25, 35, 40])
+    tas.attrs["units"] = "C"
+
+    dtas = tas_series([10, 15, 25, 25])
+    dtas.attrs["units"] = "C"
+
+    # expected values from https://en.wikipedia.org/wiki/Humidex
+    h = atmos.humidex(tas, dtas)
+    np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
+    assert h.name == "humidex"
 
 
 def test_saturation_vapor_pressure(tas_series):
@@ -81,26 +95,26 @@ def test_saturation_vapor_pressure(tas_series):
     assert e_sat.name == "e_sat"
 
 
-def test_relative_humidity(tas_series, rh_series, huss_series, ps_series):
+def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
-    rh_exp = rh_series([np.nan, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
+    hurs_exp = hurs_series([np.nan, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
     ps = ps_series([101325] * 8)
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 
-    rh = atmos.relative_humidity(
+    hurs = atmos.relative_humidity(
         tas=tas,
         huss=huss,
         ps=ps,
         method="sonntag90",
         ice_thresh="0 degC",
     )
-    np.testing.assert_allclose(rh, rh_exp, atol=0.5, rtol=0.005)
-    assert rh.name == "rh"
+    np.testing.assert_allclose(hurs, hurs_exp, atol=0.5, rtol=0.005)
+    assert hurs.name == "hurs"
 
 
-def test_specific_humidity(tas_series, rh_series, huss_series, ps_series):
+def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
     tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
-    rh = rh_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
+    hurs = hurs_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
     ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
     huss_exp = huss_series(
         [np.nan, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1]
@@ -108,7 +122,7 @@ def test_specific_humidity(tas_series, rh_series, huss_series, ps_series):
 
     huss = atmos.specific_humidity(
         tas=tas,
-        rh=rh,
+        hurs=hurs,
         ps=ps,
         method="sonntag90",
         ice_thresh="0 degC",
@@ -155,3 +169,17 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
         pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C"
     )
     np.testing.assert_array_equal(out, [1])
+
+
+def test_wind_chill_index(atmosds):
+    out = atmos.wind_chill_index(ds=atmosds)
+
+    np.testing.assert_allclose(
+        out.isel(time=0), [np.nan, -6.116, -36.064, -7.153, np.nan], rtol=1e-3
+    )
+
+    out_us = atmos.wind_chill_index(ds=atmosds, method="US")
+
+    np.testing.assert_allclose(
+        out_us.isel(time=0), [-1.041, -6.116, -36.064, -7.153, 2.951], rtol=1e-3
+    )

@@ -54,3 +54,7 @@ dt var {
 .xr-attrs dt {
   display: inline !important;
 }
+
+ul.simple li {
+ list-style: circle;
+}
