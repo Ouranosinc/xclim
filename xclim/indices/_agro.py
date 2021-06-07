@@ -1,23 +1,8 @@
 # noqa: D100
-from typing import Optional
 
-import numpy as np
 import xarray
 
-from xclim.core.calendar import resample_doy
-from xclim.core.units import (
-    convert_units_to,
-    declare_units,
-    pint2cfunits,
-    rate2amount,
-    str2pint,
-    to_agg_units,
-)
-
-from . import run_length as rl
-from ._conversion import rain_approximation, snowfall_approximation
-from ._threshold import first_day_above, first_day_below
-from .generic import aggregate_between_dates
+from xclim.core.units import convert_units_to, declare_units
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -26,10 +11,7 @@ from .generic import aggregate_between_dates
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = [
-  "corn_heat_units",
-  "biologically_effective_degree_days"
-]
+__all__ = ["corn_heat_units", "biologically_effective_degree_days"]
 
 
 @declare_units(
@@ -168,8 +150,8 @@ def biologically_effective_degree_days(
             # This needs to cross the year-line for consistent growing seasons
             # return (time>=10) & (time <=4)
 
-    def tasmax_limited(tasmax, thresh_tasmax):
-        return xarray.where((tasmax > thresh_tasmax).any(), thresh_tasmax, tasmax)
+    def tasmax_limited(tx, thresh_tx):
+        return xarray.where((tx > thresh_tx).any(), thresh_tx, tx)
 
     date_mask = tasmin.sel(time=sel_months(tasmin["time.month"]))
 
