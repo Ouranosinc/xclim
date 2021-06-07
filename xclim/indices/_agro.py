@@ -25,7 +25,7 @@ from .generic import select_resample_op, threshold_count
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["corn_heat_units"]
+__all__ = ["corn_heat_units", "biologically_effective_degree_days"]
 
 
 @declare_units(
@@ -110,3 +110,80 @@ def corn_heat_units(
 
     chu.attrs["units"] = ""
     return chu
+
+
+@declare_units(
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+    thresh_tasmax="[temperature]",
+)
+def biologically_effective_degree_days(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    thresh_tasmin: str = "10 degC",
+    thresh_tasmax: str = "19 degC",
+    lat_dim: str = "lat",
+    hemisphere: str = "north",
+) -> xarray.DataArray:
+    """
+
+    Parameters
+    ----------
+    tasmin: str
+      Minimum daily temperature.
+    tasmax: str
+      Maximum daily temperature.
+    thresh_tasmin: str
+      The minimum temperature threshold.
+    thresh_tasmax: str
+      The maximum temperature threshold.
+    lat_dim: str
+    hemisphere: {"north", "south"}
+      The hemisphere-based growing season to consider (north = April - October, south = October - April).
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+
+    mask_tasmin = tasmin > thresh_tasmin
+
+    lat_mask = (abs(tasmin[lat_dim]) >= 40) & (abs(tasmin[lat_dim]) <= 50)
+    lat_constant = xarray.where(lat_mask, (abs(tasmin[lat_dim]) / 50) * 0.06, 0)
+
+    def sel_months(time):
+        if hemisphere.lower() == "north":
+            return (time >= 4) & (time <= 7)
+        elif hemisphere.lower() == "south":
+            raise NotImplementedError()
+            # This needs to cross the year-line for consistent growing seasons
+            # return (time>=10) & (time <=4)
+
+    def tasmax_limited(tasmax, thresh_tasmax):
+        return xarray.where((tasmax > thresh_tasmax).any(), thresh_tasmax, tasmax)
+
+    date_mask = tasmin.sel(time=sel_months(tasmin["time.month"]))
+
+    bedd = (
+        (
+            (
+                xarray.where(mask_tasmin, (tasmin - thresh_tasmin), 0)
+                + xarray.where(
+                    mask_tasmin,
+                    tasmax_limited(tasmax, thresh_tasmax) - thresh_tasmin,
+                    0,
+                )
+            )
+            / 2
+        )
+        * (1 + lat_constant)
+        * date_mask
+    )
+
+    bedd.attrs["units"] = "degC"
+    return bedd
