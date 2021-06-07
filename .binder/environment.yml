@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - nc-time-axis=1.2
-  - matplotlib==3.2.4
+  - matplotlib
   - cartopy[version='>=0.19']
   - notebook
   - xclim==0.27
