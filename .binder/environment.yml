@@ -1,11 +1,13 @@
 name: xclim-demo
 channels:
- - conda-forge
- - defaults
+  - conda-forge
+  - defaults
 dependencies:
- - xclim>=0.26
- - notebook
- - matplotlib
- - nc-time-axis
- - birdy
- - cartopy>=0.19
+  - nc-time-axis=1.2
+  - matplotlib==3.2.4
+  - cartopy[version='>=0.19']
+  - notebook
+  - xclim==0.27
+  - birdy
+  - xarray==0.18.2
+  - cftime==1.4.1
