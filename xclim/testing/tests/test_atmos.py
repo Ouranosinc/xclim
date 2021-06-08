@@ -198,12 +198,12 @@ class TestPotentialEvapotranspiration:
             tmC = tm - K2C
             tmC.attrs["units"] = "degC"
 
-        pet_br65 = atmos.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
-        pet_br65C = atmos.potential_evapotranspiration(tnC, tx, tas=None, method="BR65")
-        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, tm, method="HG85")
-        pet_hg85C = atmos.potential_evapotranspiration(tnC, tx, tm, method="HG85")
-        pet_tw48 = atmos.potential_evapotranspiration(tn, tx, tm, method="TW48")
-        pet_tw48C = atmos.potential_evapotranspiration(tn, tx, tmC, method="TW48")
+        pet_br65 = atmos.potential_evapotranspiration(tn, tx, method="BR65")
+        pet_br65C = atmos.potential_evapotranspiration(tnC, tx, method="BR65")
+        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, method="HG85")
+        pet_hg85C = atmos.potential_evapotranspiration(tnC, tx, method="HG85")
+        pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
+        pet_tw48C = atmos.potential_evapotranspiration(tas=tmC, method="TW48")
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
@@ -217,12 +217,12 @@ class TestPotentialEvapotranspiration:
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        pet_br65 = atmos.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
-        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, tm, method="HG85")
+        pet_br65 = atmos.potential_evapotranspiration(tn, tx, method="BR65")
+        pet_hg85 = atmos.potential_evapotranspiration(tn, tx, method="HG85")
 
         tm[0, 0:31] = np.nan
 
-        pet_tw48 = atmos.potential_evapotranspiration(tn, tx, tm, method="TW48")
+        pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
         np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
