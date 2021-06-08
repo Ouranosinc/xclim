@@ -1922,3 +1922,36 @@ class TestPotentialEvapotranspiration:
 
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [4.27619242], rtol=1e-2)
+
+
+def test_water_budget(pr_series, tasmin_series, tasmax_series):
+    pr = pr_series(np.array([10, 10, 10]))
+    pr.attrs["units"] = "mm/day"
+    pr = pr.expand_dims(lat=[45])
+    tn = tasmin_series(np.array([0, 5, 10]) + K2C)
+    tn = tn.expand_dims(lat=[45])
+    tx = tasmax_series(np.array([10, 15, 20]) + K2C)
+    tx = tx.expand_dims(lat=[45])
+
+    out = xci.water_budget(pr, tn, tx, method="BR65")
+    np.testing.assert_allclose(out[0, 2], [6.138921], rtol=1e-3)
+
+    out = xci.water_budget(pr, tn, tx, method="HG85")
+    np.testing.assert_allclose(out[0, 2], [6.037411], rtol=1e-3)
+
+    time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
+    tm = xr.DataArray(
+        np.ones((time_std.size, 1)),
+        dims=("time", "lat"),
+        coords={"time": time_std, "lat": [45]},
+        attrs={"units": "degC"},
+    )
+    prm = xr.DataArray(
+        np.ones((time_std.size, 1)) * 10,
+        dims=("time", "lat"),
+        coords={"time": time_std, "lat": [45]},
+        attrs={"units": "mm/day"},
+    )
+
+    out = xci.water_budget(prm, tas=tm, method="TW48")
+    np.testing.assert_allclose(out[1, 0], [5.723808], rtol=1e-3)

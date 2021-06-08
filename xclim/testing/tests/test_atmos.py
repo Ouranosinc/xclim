@@ -227,3 +227,47 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
         np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
+
+
+class TestWaterBudget:
+    def test_convert_units(self):
+        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+
+        with xr.set_options(keep_attrs=True):
+            tnC = tn - K2C
+            tnC.attrs["units"] = "degC"
+            prR = pr * 86400
+            prR.attrs["units"] = "mm/day"
+
+        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
+        p_pet_br65C = atmos.water_budget(prR, tnC, tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
+        p_pet_hg85C = atmos.water_budget(prR, tnC, tx, method="HG85")
+        p_pet_tw48 = atmos.water_budget(pr, tn, tx, method="TW48")
+        p_pet_tw48C = atmos.water_budget(prR, tnC, tx, method="TW48")
+
+        np.testing.assert_allclose(p_pet_br65, p_pet_br65C, atol=1)
+        np.testing.assert_allclose(p_pet_hg85, p_pet_hg85C, atol=1)
+        np.testing.assert_allclose(p_pet_tw48, p_pet_tw48C, atol=1)
+
+    def test_nan_values(self):
+        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+
+        tn[0, 100] = np.nan
+        tx[0, 101] = np.nan
+
+        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
+
+        tm[0, 0:31] = np.nan
+
+        p_pet_tw48 = atmos.water_budget(pr, tas=tm, method="TW48")
+
+        np.testing.assert_allclose(p_pet_br65[0, 100:102], [np.nan, np.nan])
+        np.testing.assert_allclose(p_pet_hg85[0, 100:102], [np.nan, np.nan])
+        np.testing.assert_allclose(p_pet_tw48[0, 0], [np.nan])
