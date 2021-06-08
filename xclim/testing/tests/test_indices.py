@@ -1895,7 +1895,7 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
         tx = tx.expand_dims(lat=[45])
 
-        out = xci.potential_evapotranspiration(tn, tx, tas=None, method="BR65")
+        out = xci.potential_evapotranspiration(tn, tx, method="BR65")
         np.testing.assert_allclose(out[0, 2], [3.861079], rtol=1e-2)
 
     def test_hargreaves(self, tasmin_series, tasmax_series, tas_series):
@@ -1910,7 +1910,9 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(out[2, 0], [3.962589], rtol=1e-2)
 
     def test_thornthwaite(self, tas_series):
-        time_std = date_range("1990-01-01", "1990-12-31", freq="D", calendar="standard")
+        time_std = date_range(
+            "1990-01-01", "1990-12-01", freq="MS", calendar="standard"
+        )
         tm = xr.DataArray(
             np.ones((time_std.size, 1)),
             dims=("time", "lat"),
@@ -1918,7 +1920,5 @@ class TestPotentialEvapotranspiration:
             attrs={"units": "degC"},
         )
 
-        out = xci.potential_evapotranspiration(
-            tasmin=None, tasmax=None, tas=tm, method="TW48"
-        )
+        out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [4.27619242], rtol=1e-2)
