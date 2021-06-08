@@ -819,31 +819,31 @@ def potential_evapotranspiration(
         else:
             tas = convert_units_to(tas, "degC")
         tas = tas.clip(0)
+        tas = tas.resample(time="MS").mean(dim="time")
 
         latr = (tas.lat * np.pi) / 180  # rad
 
-        if xr.infer_freq(tas.time) == "D":
-            time_v = tas.time
-            tas = tas.resample(time="MS").mean(dim="time")
+        start = "-".join(
+            [
+                str(tas.time[0].dt.year.values),
+                "{:02d}".format(tas.time[0].dt.month.values),
+                "01",
+            ]
+        )
 
-        elif xr.infer_freq(tas.time) == "MS":
-            last_d = monthrange(
-                int(tas.time[-1].dt.year.values), int(tas.time[-1].dt.month.values)
-            )[1]
-            end = "-".join(
-                [
-                    str(tas.time[-1].dt.year.values),
-                    str(tas.time[-1].dt.month.values),
-                    str(last_d),
-                ]
-            )
+        end = "-".join(
+            [
+                str(tas.time[-1].dt.year.values),
+                "{:02d}".format(tas.time[-1].dt.month.values),
+                str(tas.time[-1].dt.daysinmonth.values),
+            ]
+        )
 
-            time_v = xr.DataArray(
-                date_range(tas.time[0].values, end, freq="D"),
-                dims="time",
-                coords={"time": date_range(tas.time[0].values, end, freq="D")},
-                attrs={"calendar": "standard"},
-            )
+        time_v = xr.DataArray(
+            date_range(start, end, freq="D", calendar="standard"),
+            dims="time",
+            name="time",
+        )
 
         # julian day fraction
         jd_frac = (datetime_to_decimal_year(time_v) % 1) * 2 * np.pi
