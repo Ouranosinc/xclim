@@ -157,9 +157,6 @@ def biologically_effective_degree_days(
         ((tasmin - thresh_tasmin) + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin))
         / 2
     ) * (1 + lat_constant)
-
-    # TODO: It would be useful if we could aggregate between dates using MM and MMDD strings (e.g. "04-01" - "10-31").
-    raise NotImplementedError()
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
     bedd.attrs["units"] = "degC"

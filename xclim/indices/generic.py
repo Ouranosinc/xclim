@@ -6,6 +6,7 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -660,9 +661,9 @@ def aggregate_between_dates(
     ----------
     data : xr.DataArray
       Data to aggregate between start and end dates.
-    start : xr.DataArray
+    start : xr.DataArray or DayOfYearStr
       Start dates (as day-of-year) for the aggregation periods.
-    end : xr.DataArray
+    end : xr.DataArray or DayOfYearStr
       End (as day-of-year) dates for the aggregation periods.
     op : {'min', 'max', 'sum', 'mean', 'std'}
       Operator.
@@ -677,15 +678,33 @@ def aggregate_between_dates(
     """
     if freq is None:
         if isinstance(start, str) and isinstance(end, str):
-            raise NotImplementedError("This is preposterous.")
+            raise ValueError("Cannot infer freq from DayOfYear strings.")
+
         # Get freq
-        freq = xr.infer_freq(start.time)
-        end_freq = xr.infer_freq(end.time)
-        # check for consistency
-        if freq != end_freq or freq is None:
-            raise ValueError(
-                f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
+        if isinstance(start, str) or isinstance(end, str):
+            for t in [start, end]:
+                try:
+                    freq = xr.infer_freq(t.time)
+                except AttributeError:
+                    continue
+            if freq is None:
+                raise ValueError(
+                    "Non-inferrable resampling frequency for datetime object. Consider supplying freq manually."
+                )
+            warnings.warn(
+                f"Freq ({freq}) determined from single-sided boundary. Unable to determine validity of series freq.",
+                UserWarning,
+                stacklevel=4,
             )
+
+        else:
+            freq = xr.infer_freq(start.time)
+            end_freq = xr.infer_freq(end.time)
+            # check for consistency
+            if freq != end_freq or freq is None:
+                raise ValueError(
+                    f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
+                )
 
     cal = get_calendar(data, dim="time")
 
@@ -705,7 +724,9 @@ def aggregate_between_dates(
 
         if isinstance(start, str):
             start_i = rl.index_of_date(group.time, start, max_idxs=1)  # noqa
-            start_d = (group.time.isel(time=start_i) - group.time.isel(time=0)).dt.days
+            start_d = (
+                group.time.isel(time=start_i)[0] - group.time.isel(time=0)
+            ).dt.days
         elif base_time in start.time:
             start_d = start.sel(time=base_time)
         else:
@@ -713,7 +734,7 @@ def aggregate_between_dates(
 
         if isinstance(end, str):
             end_i = rl.index_of_date(group.time, end, max_idxs=1)  # noqa
-            end_d = (group.time.isel(time=end_i) - group.time.isel(time=0)).dt.days
+            end_d = (group.time.isel(time=end_i)[0] - group.time.isel(time=0)).dt.days
         elif base_time in end.time:
             end_d = end.sel(time=base_time)
         else:
