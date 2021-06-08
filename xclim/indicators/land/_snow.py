@@ -1,6 +1,5 @@
 from xclim import indices as xci
-from xclim.core.cfchecks import generate_cfcheck
-from xclim.core.indicator import Daily, Daily2D
+from xclim.core.indicator import Daily
 
 __all__ = [
     "blowing_snow",
@@ -13,27 +12,14 @@ __all__ = [
 ]
 
 
-class SnowDepth(Daily):
-    cfcheck = staticmethod(generate_cfcheck("snd"))
+# We need to declare the base class here so the `land` module is detected automatically.
+class Snow(Daily):
+    """Indicators dealing with snow variables."""
+
+    pass
 
 
-class SnowCover(Daily):
-    cfcheck = staticmethod(generate_cfcheck("snc"))
-
-
-class SnowAmount(Daily):
-    cfcheck = staticmethod(generate_cfcheck("snw"))
-
-
-class SnwPr(Daily2D):
-    cfcheck = staticmethod(generate_cfcheck("snw", "pr"))
-
-
-class SndWs(Daily2D):
-    cfcheck = staticmethod(generate_cfcheck("snd", "sfcWind"))
-
-
-snow_cover_duration = SnowDepth(
+snow_cover_duration = Snow(
     identifier="snow_cover_duration",
     units="days",
     long_name="Number of days with snow depth above threshold",
@@ -41,7 +27,7 @@ snow_cover_duration = SnowDepth(
     compute=xci.snow_cover_duration,
 )
 
-continuous_snow_cover_start = SnowDepth(
+continuous_snow_cover_start = Snow(
     identifier="continuous_snow_cover_start",
     standard_name="day_of_year",
     long_name="Start date of continuous snow cover",
@@ -50,7 +36,7 @@ continuous_snow_cover_start = SnowDepth(
     compute=xci.continuous_snow_cover_start,
 )
 
-continuous_snow_cover_end = SnowDepth(
+continuous_snow_cover_end = Snow(
     identifier="continuous_snow_cover_end",
     standard_name="day_of_year",
     long_name="Start date of continuous snow cover",
@@ -59,7 +45,7 @@ continuous_snow_cover_end = SnowDepth(
     compute=xci.continuous_snow_cover_end,
 )
 
-snd_max_doy = SnowDepth(
+snd_max_doy = Snow(
     identifier="snd_max_doy",
     var_name="{freq}_snd_max_doy",
     long_name="Date when snow depth reaches its maximum value.",
@@ -69,7 +55,7 @@ snd_max_doy = SnowDepth(
     compute=xci.snd_max_doy,
 )
 
-snow_melt_we_max = SnowAmount(
+snow_melt_we_max = Snow(
     identifier="snow_melt_we_max",
     standard_name="change_over_time_in_surface_snow_amount",
     var_name="{freq}_snow_melt_we_max",
@@ -79,7 +65,7 @@ snow_melt_we_max = SnowAmount(
 )
 
 
-melt_and_precip_max = SnwPr(
+melt_and_precip_max = Snow(
     identifier="melt_and_precip_max",
     var_name="{freq}_melt_and_precip_max",
     description="{freq} maximum precipitation flux and negative change in snow amount over {window} days.",
@@ -88,7 +74,7 @@ melt_and_precip_max = SnwPr(
 )
 
 
-winter_storm = SnowDepth(
+winter_storm = Snow(
     identifier="winter_storm",
     var_name="{freq}_winter_storm",
     description="{freq} number of days with snowfall accumulation above {thresh}.",
@@ -97,7 +83,7 @@ winter_storm = SnowDepth(
 )
 
 
-blowing_snow = SndWs(
+blowing_snow = Snow(
     identifier="blowing_snow",
     var_name="{freq}_blowing_snow",
     description="{freq} number of days with snowfall over last {window} days above {snd_thresh} and wind speed above "

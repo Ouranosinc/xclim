@@ -55,6 +55,7 @@ variables:
     cmip6: False
     canonical_units: degree
     cell_methods:
+    - time: mean
     description: Surface wind direction of provenance.
     standard_name: wind_from_direction
   siconc:

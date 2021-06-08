@@ -114,7 +114,7 @@ from yaml import safe_load
 from .. import indices
 from . import datachecks
 from .calendar import parse_offset
-from .cfchecks import generate_cfcheck
+from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
     default_formatter,
@@ -129,6 +129,7 @@ from .options import MISSING_METHODS, MISSING_OPTIONS, OPTIONS
 from .units import FREQ_NAMES, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
+    InputKind,
     MissingVariableError,
     infer_kind_from_parameter,
     wrapped_partial,
@@ -253,11 +254,6 @@ class Indicator(IndicatorRegistrar):
     or parse all available instances.
 
     """
-
-    #: Number of input DataArray variables. Should be updated by subclasses if needed.
-    #: This number sets which inputs are passed to the tests.
-    nvar = 1
-
     # Allowed metadata attributes on the output variables
     _cf_names = [
         "var_name",
@@ -351,6 +347,10 @@ class Indicator(IndicatorRegistrar):
         # The input parameters' metadata
         # We dump whatever the base class had and take what was parsed from the current compute function.
         kwds["parameters"] = params
+
+        # By default skip missing values handling if there is no resampling.
+        if "freq" not in params:
+            kwds["missing"] = "skip"
 
         # Parse kwds to organize cf_attrs
         # Must be done after parsing var_name
@@ -446,7 +446,6 @@ class Indicator(IndicatorRegistrar):
         if "input" in data:
             # Override input metadata
             input_units = {}
-            nvar = len(data["input"])
             for varname, name in data["input"].items():
                 # Indicator's new will put the name of the variable as its default,
                 # we override this with the real variable name.
@@ -458,11 +457,7 @@ class Indicator(IndicatorRegistrar):
                     "description": VARIABLES[name]["description"],
                 }
                 input_units[varname] = VARIABLES[name]["canonical_units"]
-
-            cfcheck = generate_cfcheck(*[varname for varname in data["input"].values()])
         else:
-            nvar = None
-            cfcheck = None
             input_units = None
 
         metadata_placeholders = {}
@@ -569,10 +564,8 @@ class Indicator(IndicatorRegistrar):
             cell_methods=cell_methods,
             # Input data, override defaults given in generic compute's signature.
             parameters=params or None,  # None if an empty dict
-            nvar=nvar,
             compute=compute,
             # Checks
-            cfcheck=cfcheck,
             allowed_periods=allowed_periods,
         )
 
@@ -583,7 +576,7 @@ class Indicator(IndicatorRegistrar):
 
         # Remove kwargs passed as "None", they will be taken from the base class instead.
         # For most parameters it would be ok to pass a None anyway (we figure that out in __new__),
-        # but some (like nvar) would not like that.
+        # but some would not like that.
         return cls(**{k: v for k, v in kwargs.items() if v is not None})
 
     def __init__(self, **kwds):
@@ -619,11 +612,16 @@ class Indicator(IndicatorRegistrar):
         # Assign inputs passed as strings from ds.
         self._assign_named_args(ba)
 
-        # Assume the first arguments are always the DataArrays.
-        # Only the first nvar inputs are checked (data + cf checks)
+        # Put the variables in `das`, parse them according to the annotations
         das = OrderedDict()
-        for name in self._parameters[: self.nvar]:
-            das[name] = ba.arguments.pop(name)
+        for name in self._parameters:
+            kind = self.parameters[name]["kind"]
+            # If a variable pop the arg
+            if kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE):
+                data = ba.arguments.pop(name)
+                # If a non-optional variable OR None, store the arg
+                if kind == InputKind.VARIABLE or data is not None:
+                    das[name] = data
 
         # Metadata attributes from templates
         var_id = None
@@ -632,7 +630,9 @@ class Indicator(IndicatorRegistrar):
             if n_outs > 1:
                 var_id = f"{self._registry_id}.{attrs['var_name']}"
             var_attrs.append(
-                self._update_attrs(ba, das, attrs, names=self._cf_names, var_id=var_id)
+                self._update_attrs(
+                    ba.arguments.copy(), das, attrs, names=self._cf_names, var_id=var_id
+                )
             )
 
         # Pre-computation validation checks on DataArray arguments
@@ -649,8 +649,14 @@ class Indicator(IndicatorRegistrar):
                 f"Resampling frequency {kwds['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
             )
 
+        # Remove **kwargs from bind object and put all those params in "kwargs" to be passed to compute.
+        params = ba.arguments.copy()
+        for param in self._sig.parameters.values():
+            if param.kind == param.VAR_KEYWORD:
+                kwargs = params.pop(param.name)
+                params.update(**kwargs)
         # Compute the indicator values, ignoring NaNs and missing values.
-        outs = self.compute(**das, **ba.kwargs)
+        outs = self.compute(**das, **params)
         if isinstance(outs, DataArray):
             outs = [outs]
         if len(outs) != n_outs:
@@ -670,10 +676,11 @@ class Indicator(IndicatorRegistrar):
             out.attrs.update(attrs)
             out.name = var_name
 
-        # Mask results that do not meet criteria defined by the `missing` method.
-        # This means all variables must have the same dimensions...
-        mask = self._mask(*das.values(), **ba.arguments)
-        outs = [out.where(~mask) for out in outs]
+        if self.missing != "skip":
+            # Mask results that do not meet criteria defined by the `missing` method.
+            # This means all variables must have the same dimensions...
+            mask = self._mask(*das.values(), **ba.arguments)
+            outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if n_outs == 1:
@@ -731,7 +738,7 @@ class Indicator(IndicatorRegistrar):
             return func(*ba.args, **ba.kwargs)
 
     @classmethod
-    def _update_attrs(cls, ba, das, attrs, var_id=None, names=None):
+    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and xclim_history attributes are updated, adding to existing values. The language of the string is
@@ -741,7 +748,7 @@ class Indicator(IndicatorRegistrar):
         ----------
         das: tuple
           Input arrays.
-        ba: bound argument object
+        args: Mapping[str, Any]
           Keyword arguments of the `compute` call.
         attrs : Mapping[str, str]
           The attributes to format and update.
@@ -759,7 +766,6 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `xclim_history`.
           `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
-        args = ba.arguments
         out = cls._format(attrs, args)
         for locale in OPTIONS["metadata_locales"]:
             out.update(
@@ -781,7 +787,7 @@ class Indicator(IndicatorRegistrar):
         callstr = []
         for (k, v) in das.items():
             callstr.append(f"{k}=<array>")
-        for (k, v) in ba.arguments.items():
+        for (k, v) in args.items():
             if isinstance(v, (float, int, str)):
                 callstr.append(f"{k}={v!r}")  # repr so strings have ' '
             else:
@@ -961,9 +967,12 @@ class Indicator(IndicatorRegistrar):
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
-        # We flag periods according to the missing method.
-        miss = (self._missing(da, freq, self.freq, options, indexer) for da in args)
-
+        # We flag periods according to the missing method. skip variables without a time coordinate.
+        miss = (
+            self._missing(da, freq, self.freq, options, indexer)
+            for da in args
+            if "time" in da.coords
+        )
         return reduce(np.logical_or, miss)
 
     # The following static methods are meant to be replaced to define custom indicators.
@@ -979,9 +988,18 @@ class Indicator(IndicatorRegistrar):
     def cfcheck(**das):
         """Compare metadata attributes to CF-Convention standards.
 
+        Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
+        assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
+        Variables absent from these default specs are silently ignored.
+
         When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
         """
-        pass
+        for varname, vardata in das.items():
+            try:
+                cfcheck_from_name(varname, vardata)
+            except KeyError:
+                # Silently ignore unknown variables.
+                pass
 
     @staticmethod
     def datacheck(**das):
@@ -997,12 +1015,6 @@ class Indicator(IndicatorRegistrar):
         pass
 
 
-class Indicator2D(Indicator):
-    """Indicator using two dimensions."""
-
-    nvar = 2
-
-
 class Daily(Indicator):
     """Indicator defined for inputs at daily frequency."""
 
@@ -1011,13 +1023,8 @@ class Daily(Indicator):
     @staticmethod
     def datacheck(**das):  # noqa
         for key, da in das.items():
-            datachecks.check_daily(da)
-
-
-class Daily2D(Daily):
-    """Indicator using two dimensions at daily frequency."""
-
-    nvar = 2
+            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
+                datachecks.check_daily(da)
 
 
 class Hourly(Indicator):
