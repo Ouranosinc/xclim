@@ -724,8 +724,11 @@ def aggregate_between_dates(
 
         if isinstance(start, str):
             start_i = rl.index_of_date(group.time, start, max_idxs=1)  # noqa
+            # NOTE: Dow we append a NaN or return early if the date is not valid?
+            if not len(start_i):
+                continue
             start_d = (
-                group.time.isel(time=start_i)[0] - group.time.isel(time=0)
+                group.time.isel(time=start_i[0]) - group.time.isel(time=0)
             ).dt.days
         elif base_time in start.time:
             start_d = start.sel(time=base_time)
@@ -734,7 +737,10 @@ def aggregate_between_dates(
 
         if isinstance(end, str):
             end_i = rl.index_of_date(group.time, end, max_idxs=1)  # noqa
-            end_d = (group.time.isel(time=end_i)[0] - group.time.isel(time=0)).dt.days
+            # NOTE: Dow we append a NaN or return early if the date is not valid?
+            if not len(end_i):
+                continue
+            end_d = (group.time.isel(time=end_i[0]) - group.time.isel(time=0)).dt.days
         elif base_time in end.time:
             end_d = end.sel(time=base_time)
         else:
