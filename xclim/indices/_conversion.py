@@ -738,9 +738,9 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax.
-    - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax. (optional: tas can be given in addition of tasmin and tasmax).
-    - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax. (optional: tas can be given instead of tasmin and tasmax).
+    - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
+    - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
     References
     ----------
