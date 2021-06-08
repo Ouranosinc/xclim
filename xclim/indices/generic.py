@@ -14,8 +14,6 @@ import xarray as xr
 from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
 from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
 
-from . import run_length as rl
-
 # __all__ = [
 #     "select_time",
 #     "select_resample_op",
@@ -26,7 +24,8 @@ from . import run_length as rl
 #     "get_daily_events",
 #     "daily_downsampler",
 # ]
-
+from ..core.utils import DayOfYearStr
+from . import run_length as rl
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
@@ -650,8 +649,8 @@ def extreme_temperature_range(
 
 def aggregate_between_dates(
     data: xr.DataArray,
-    start: xr.DataArray,
-    end: xr.DataArray,
+    start: Union[xr.DataArray, DayOfYearStr],
+    end: Union[xr.DataArray, DayOfYearStr],
     op: str = "sum",
     freq: Optional[str] = None,
 ):
@@ -677,6 +676,8 @@ def aggregate_between_dates(
       If there is no start and/or end date, returns np.nan.
     """
     if freq is None:
+        if isinstance(start, str) and isinstance(end, str):
+            raise NotImplementedError("This is preposterous.")
         # Get freq
         freq = xr.infer_freq(start.time)
         end_freq = xr.infer_freq(end.time)
@@ -685,22 +686,41 @@ def aggregate_between_dates(
             raise ValueError(
                 f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
             )
-    start = convert_calendar(start, get_calendar(data, dim="time"))
-    start.attrs["calendar"] = str(get_calendar(data, dim="time"))
-    end = convert_calendar(end, get_calendar(data, dim="time"))
-    end.attrs["calendar"] = str(get_calendar(data, dim="time"))
 
-    start = doy_to_days_since(start)
-    end = doy_to_days_since(end)
+    cal = get_calendar(data, dim="time")
 
-    out = []
+    if not isinstance(start, str):
+        start = convert_calendar(start, cal)
+        start.attrs["calendar"] = cal
+        start = doy_to_days_since(start)
+    if not isinstance(end, str):
+        end = convert_calendar(end, cal)
+        end.attrs["calendar"] = cal
+        end = doy_to_days_since(end)
+
+    out = list()
     for base_time, indexes in data.resample(time=freq).groups.items():
         # get group slice
         group = data.isel(time=indexes)
-        # convert bounds for this group
-        if (base_time in start.time) and (base_time in end.time):
+
+        if isinstance(start, str):
+            start_i = rl.index_of_date(group.time, start, max_idxs=1)  # noqa
+            start_d = (group.time.isel(time=start_i) - group.time.isel(time=0)).dt.days
+        elif base_time in start.time:
             start_d = start.sel(time=base_time)
+        else:
+            start_d = None
+
+        if isinstance(end, str):
+            end_i = rl.index_of_date(group.time, end, max_idxs=1)  # noqa
+            end_d = (group.time.isel(time=end_i) - group.time.isel(time=0)).dt.days
+        elif base_time in end.time:
             end_d = end.sel(time=base_time)
+        else:
+            end_d = None
+
+        # convert bounds for this group
+        if start_d is not None and end_d is not None:
 
             days = (group.time - base_time).dt.days
             days[days < 0] = np.nan

@@ -113,7 +113,7 @@ def biologically_effective_degree_days(
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "10-31",
+    end_date: DayOfYearStr = "11-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
     """
@@ -133,7 +133,7 @@ def biologically_effective_degree_days(
     start_date: DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
     end_date: DayOfYearStr
-      The hemisphere-based start date to consider (north = October, south = April).
+      The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
       Resampling frequency.
 
