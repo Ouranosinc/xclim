@@ -112,7 +112,7 @@ def biologically_effective_degree_days(
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "10-01",
+    end_date: DayOfYearStr = "10-31",
     freq: str = "YS",
 ) -> xarray.DataArray:
     """
