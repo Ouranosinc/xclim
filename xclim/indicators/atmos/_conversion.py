@@ -18,6 +18,7 @@ __all__ = [
     "rain_approximation",
     "wind_chill_index",
     "potential_evapotranspiration",
+    "water_budget",
 ]
 
 
@@ -230,4 +231,15 @@ potential_evapotranspiration = Converter(
         "supply is sufficient, with the method {method}."
     ),
     compute=indices.potential_evapotranspiration,
+)
+
+water_budget = Converter(
+    identifier="water_budget",
+    units="mm day-1",
+    long_name="Water budget",
+    description=(
+        "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
+        "where the potential evapotranspiration is calculated with the method {method}."
+    ),
+    compute=indices.water_budget,
 )

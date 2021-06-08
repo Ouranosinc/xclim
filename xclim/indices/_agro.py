@@ -4,10 +4,12 @@ from typing import Optional
 import numpy as np
 import xarray
 
+import xclim.indices as xci
 from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    infer_sampling_units,
     pint2cfunits,
     rate2amount,
     str2pint,
@@ -26,9 +28,7 @@ from .generic import aggregate_between_dates
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = [
-    "corn_heat_units",
-]
+__all__ = ["corn_heat_units", "water_budget"]
 
 
 @declare_units(
@@ -113,3 +113,59 @@ def corn_heat_units(
 
     chu.attrs["units"] = ""
     return chu
+
+
+@declare_units(
+    pr="[precipitation]",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+)
+def water_budget(
+    pr: xarray.DataArray,
+    tasmin: Optional[xarray.DataArray] = None,
+    tasmax: Optional[xarray.DataArray] = None,
+    tas: Optional[xarray.DataArray] = None,
+    method: str = "BR65",
+) -> xarray.DataArray:
+    r"""Precipitation minus potential evapotranspiration.
+
+    Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
+    where the potential evapotranspiration is calculated with a given method.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    tas : xarray.DataArray
+      Mean daily temperature.
+    method : str
+      Method to use to calculate the potential evapotranspiration.
+
+    Notes
+    -----
+    Available methods are listed in the description of xclim.indicators.atmos.potential_evapotranspiration.
+
+    Returns
+    -------
+    xarray.DataArray,
+      Precipitation minus potential evapotranspiration.
+    """
+    pr = convert_units_to(pr, "mm/day")
+
+    pet = xci.potential_evapotranspiration(
+        tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
+    )
+
+    if xarray.infer_freq(pet.time) == "MS":
+        with xarray.set_options(keep_attrs=True):
+            pr = pr.resample(time="MS").mean(dim="time")
+
+    out = pr - pet
+
+    out.attrs["units"] = pr.attrs["units"]
+    return out
