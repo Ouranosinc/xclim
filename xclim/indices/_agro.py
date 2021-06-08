@@ -3,6 +3,7 @@
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units
+from xclim.indices.generic import aggregate_between_dates
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -110,7 +111,8 @@ def biologically_effective_degree_days(
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     lat_dim: str = "lat",
-    hemisphere: str = "north",
+    start_date: str = "4",
+    end_date: str = "10",
 ) -> xarray.DataArray:
     """
 
@@ -125,8 +127,10 @@ def biologically_effective_degree_days(
     thresh_tasmax: str
       The maximum temperature threshold.
     lat_dim: str
-    hemisphere: {"north", "south"}
-      The hemisphere-based growing season to consider (north = April - October, south = October - April).
+    start_date: str
+      The hemisphere-based start date to consider (north = April, south = October).
+    end_date: str
+      The hemisphere-based start date to consider (north = October, south = April).
 
     Returns
     -------
@@ -138,38 +142,20 @@ def biologically_effective_degree_days(
     thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
     mask_tasmin = tasmin > thresh_tasmin
+    tasmin = tasmin.where(mask_tasmin)
+    tasmax = tasmax.where(mask_tasmin)
 
     lat_mask = (abs(tasmin[lat_dim]) >= 40) & (abs(tasmin[lat_dim]) <= 50)
     lat_constant = xarray.where(lat_mask, (abs(tasmin[lat_dim]) / 50) * 0.06, 0)
 
-    def sel_months(time):
-        if hemisphere.lower() == "north":
-            return (time >= 4) & (time <= 7)
-        elif hemisphere.lower() == "south":
-            raise NotImplementedError()
-            # This needs to cross the year-line for consistent growing seasons
-            # return (time>=10) & (time <=4)
-
-    def tasmax_limited(tx, thresh_tx):
-        return xarray.where((tx > thresh_tx).any(), thresh_tx, tx)
-
-    date_mask = tasmin.sel(time=sel_months(tasmin["time.month"]))
-
     bedd = (
-        (
-            (
-                xarray.where(mask_tasmin, (tasmin - thresh_tasmin), 0)
-                + xarray.where(
-                    mask_tasmin,
-                    tasmax_limited(tasmax, thresh_tasmax) - thresh_tasmin,
-                    0,
-                )
-            )
-            / 2
-        )
-        * (1 + lat_constant)
-        * date_mask
-    )
+        ((tasmin - thresh_tasmin) + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin))
+        / 2
+    ) * (1 + lat_constant)
+
+    # TODO: It would be useful if we could aggregate between dates using MM and MMDD strings (e.g. "04-01" - "10-31").
+    raise NotImplementedError()
+    bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq="YS")
 
     bedd.attrs["units"] = "degC"
     return bedd
