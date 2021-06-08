@@ -3,6 +3,7 @@
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units
+from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -108,12 +109,11 @@ def corn_heat_units(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat : xr.DataArray,
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "10-01",
-    freq: str = "YS"
+    freq: str = "YS",
 ) -> xarray.DataArray:
     """
 
@@ -127,11 +127,12 @@ def biologically_effective_degree_days(
       The minimum temperature threshold.
     thresh_tasmax: str
       The maximum temperature threshold.
-    lat_dim: str
     start_date: str
       The hemisphere-based start date to consider (north = April, south = October).
     end_date: str
       The hemisphere-based start date to consider (north = October, south = April).
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
@@ -146,8 +147,8 @@ def biologically_effective_degree_days(
     tasmin = tasmin.where(mask_tasmin)
     tasmax = tasmax.where(mask_tasmin)
 
-    lat_mask = (abs(tasmin[lat_dim]) >= 40) & (abs(tasmin[lat_dim]) <= 50)
-    lat_constant = xarray.where(lat_mask, (abs(tasmin[lat_dim]) / 50) * 0.06, 0)
+    lat_mask = (abs(tasmin.lat) >= 40) & (abs(tasmin.lat) <= 50)
+    lat_constant = xarray.where(lat_mask, (abs(tasmin.lat) / 50) * 0.06, 0)
 
     bedd = (
         ((tasmin - thresh_tasmin) + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin))
@@ -156,7 +157,7 @@ def biologically_effective_degree_days(
 
     # TODO: It would be useful if we could aggregate between dates using MM and MMDD strings (e.g. "04-01" - "10-31").
     raise NotImplementedError()
-    bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq="YS")
+    bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
     bedd.attrs["units"] = "degC"
     return bedd
