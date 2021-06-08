@@ -108,11 +108,12 @@ def corn_heat_units(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
+    lat : xr.DataArray,
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
-    lat_dim: str = "lat",
-    start_date: str = "4",
-    end_date: str = "10",
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "10-01",
+    freq: str = "YS"
 ) -> xarray.DataArray:
     """
 
