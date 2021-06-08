@@ -109,6 +109,7 @@ def corn_heat_units(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
+    lat: xarray.DataArray,
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     start_date: DayOfYearStr = "04-01",
@@ -119,17 +120,19 @@ def biologically_effective_degree_days(
 
     Parameters
     ----------
-    tasmin: str
+    tasmin: xarray.DataArray
       Minimum daily temperature.
-    tasmax: str
+    tasmax: xarray.DataArray
       Maximum daily temperature.
+    lat: xarray.DataArray
+      Latitude coordinate.
     thresh_tasmin: str
       The minimum temperature threshold.
     thresh_tasmax: str
       The maximum temperature threshold.
-    start_date: str
+    start_date: DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
-    end_date: str
+    end_date: DayOfYearStr
       The hemisphere-based start date to consider (north = October, south = April).
     freq : str
       Resampling frequency.
@@ -147,8 +150,8 @@ def biologically_effective_degree_days(
     tasmin = tasmin.where(mask_tasmin)
     tasmax = tasmax.where(mask_tasmin)
 
-    lat_mask = (abs(tasmin.lat) >= 40) & (abs(tasmin.lat) <= 50)
-    lat_constant = xarray.where(lat_mask, (abs(tasmin.lat) / 50) * 0.06, 0)
+    lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
+    lat_constant = xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
 
     bedd = (
         ((tasmin - thresh_tasmin) + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin))
