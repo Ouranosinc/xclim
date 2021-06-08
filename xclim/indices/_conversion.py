@@ -1,10 +1,12 @@
 # noqa: D100
+from calendar import monthrange
 from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
-from xclim.core.calendar import datetime_to_decimal_year
+from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -820,8 +822,31 @@ def potential_evapotranspiration(
 
         latr = (tas.lat * np.pi) / 180  # rad
 
+        if xr.infer_freq(tas.time) == "D":
+            time_v = tas.time
+            tas = tas.resample(time="MS").mean(dim="time")
+
+        elif xr.infer_freq(tas.time) == "MS":
+            last_d = monthrange(
+                int(tas.time[-1].dt.year.values), int(tas.time[-1].dt.month.values)
+            )[1]
+            end = "-".join(
+                [
+                    str(tas.time[-1].dt.year.values),
+                    str(tas.time[-1].dt.month.values),
+                    str(last_d),
+                ]
+            )
+
+            time_v = xr.DataArray(
+                date_range(tas.time[0].values, end, freq="D"),
+                dims="time",
+                coords={"time": date_range(tas.time[0].values, end, freq="D")},
+                attrs={"calendar": "standard"},
+            )
+
         # julian day fraction
-        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
+        jd_frac = (datetime_to_decimal_year(time_v) % 1) * 2 * np.pi
 
         ds = 0.409 * np.sin(jd_frac - 1.39)
         omega = np.arccos(-np.tan(latr) * np.tan(ds)) * 180 / np.pi  # degrees
@@ -831,13 +856,12 @@ def potential_evapotranspiration(
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index
-        tas_m = tas.resample(time="MS").mean(dim="time")
-        id_m = (tas_m / 5) ** 1.514
+        id_m = (tas / 5) ** 1.514
         id_y = id_m.resample(time="YS").sum(dim="time")
 
         tas_idy_a = []
-        for base_time, indexes in tas_m.resample(time="YS").groups.items():
-            tas_y = tas_m.isel(time=indexes)
+        for base_time, indexes in tas.resample(time="YS").groups.items():
+            tas_y = tas.isel(time=indexes)
             id_v = id_y.sel(time=base_time)
             a = 6.75e-7 * id_v ** 3 - 7.71e-5 * id_v ** 2 + 0.01791 * id_v + 0.49239
 
