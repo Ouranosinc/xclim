@@ -158,12 +158,14 @@ def biologically_effective_degree_days(
     .. math::
         BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}}max( min( \frac{\left( TX_i - 10 \right)\left( TN_i -10 \right)}{2}), 0) * k * TR_{adj}, 9)
 
-        Tr_adj = TR_{adj} = f(TX_{i}, TN_{i}) = \{ \begin{array}{cl}
+    .. math::
+        Tr_adj = TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
                                 0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
                                 0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
                                 0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-                            \end{array}.
+                            \end{array} \right\}
 
+    .. math::
         k = f(lat) = 1 + (\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0)
 
     References
