@@ -22,7 +22,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
 from xclim.testing import open_dataset
@@ -203,14 +203,59 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
-def test_corn_heat_units(tasmin_series, tasmax_series):
-    tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
-    tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
+class TestAgroclimaticIndices:
+    def test_corn_heat_units(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
+        tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
 
-    out = xci.corn_heat_units(
-        tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
-    )
-    np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+        out = xci.corn_heat_units(
+            tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+        )
+        np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+
+    def test_bedd(self, tasmin_series, tasmax_series):
+        time_data = date_range(
+            "1992-01-01", "1995-06-01", freq="D", calendar="standard"
+        )
+        tn = xr.DataArray(
+            np.zeros(time_data.size) + 10 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        tx = xr.DataArray(
+            np.zeros(time_data.size) + 22 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        tx_hot = xr.DataArray(
+            np.zeros(time_data.size) + 45 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        lat = np.array([45])
+        high_lat = np.array([48])
+
+        max_val = xci.biologically_effective_degree_days(
+            tasmin=tn, tasmax=tx, lat=lat, freq="YS"
+        )
+        max_hot = xci.biologically_effective_degree_days(
+            tasmin=tn, tasmax=tx_hot, lat=lat, freq="YS"
+        )
+        max_val_high_lat = xci.biologically_effective_degree_days(
+            tasmin=tn, tasmax=tx, lat=high_lat, freq="YS"
+        )
+
+        np.testing.assert_allclose(
+            max_val, np.array([1015.002, 1015.002, 1015.002, np.NaN])
+        )
+        np.testing.assert_array_equal(max_val, max_hot)
+        np.testing.assert_array_less(max_val, max_val_high_lat)
 
 
 class TestDailyFreezeThawCycles:

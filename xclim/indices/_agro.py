@@ -1,5 +1,8 @@
 # noqa: D100
 
+from typing import Union
+
+import numpy as np
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units
@@ -109,7 +112,7 @@ def corn_heat_units(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat: xarray.DataArray,
+    lat: Union[xarray.DataArray, np.array],
     thresh_tasmin: str = "10 degC",
     thresh_tasmax: str = "19 degC",
     start_date: DayOfYearStr = "04-01",
@@ -159,7 +162,7 @@ def biologically_effective_degree_days(
         BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}}max( min( \frac{\left( TX_i - 10 \right)\left( TN_i -10 \right)}{2}), 0) * k * TR_{adj}, 9)
 
     .. math::
-        Tr_adj = TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
+        TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
                                 0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
                                 0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
                                 0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
@@ -179,7 +182,7 @@ def biologically_effective_degree_days(
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = tasmin > thresh_tasmin
+    mask_tasmin = tasmin >= thresh_tasmin
     tasmin = tasmin.where(mask_tasmin)
     tasmax = tasmax.where(mask_tasmin)
 
