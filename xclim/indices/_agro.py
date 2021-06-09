@@ -116,11 +116,12 @@ def biologically_effective_degree_days(
     end_date: DayOfYearStr = "11-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Biologically effective growing degree days.
+    r"""Biologically effective growing degree days.
 
     Growing-degree days with a base of 10°C and an upper limit of 19°C and adjusted for latitudes between 40°N and 50°N
-    for April to October (Northern Hemisphere; October to April in Southern Hemisphere). Used as a heat-summation metric
-    in viticulture climatology.
+    for April to October (Northern Hemisphere; October to April in Southern Hemisphere). A temperature range adjustment
+    also promotes small and large swings in daily temperature range. Used as a heat-summation metric in viticulture
+    agroclimatology.
 
     Parameters
     ----------
@@ -146,13 +147,30 @@ def biologically_effective_degree_days(
     xarray.DataArray
       Biologically effective growing degree days (BEDD).
 
+    Notes
+    -----
+    The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
+    occur.
 
+    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i` and :math:`lat`
+    the latitude of the point of interest. Then the daily biologically effective growing degree day (BEDD) unit is:
+
+    .. math::
+        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}}max( min( \frac{\left( TX_i - 10 \right)\left( TN_i -10 \right)}{2}), 0) * k * TR_{adj}, 9)
+
+        Tr_adj = TR_{adj} = f(TX_{i}, TN_{i}) = \{ \begin{array}{cl}
+                                0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
+                                0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
+                                0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
+                            \end{array}.
+
+        k = f(lat) = 1 + (\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0)
 
     References
     ----------
-    Indice originally from Gladstones, J. S.  (1992).  Viticulture and environment : a study of the effects of
+    Indice originally from Gladstones, J.S. (1992). Viticulture and environment: a study of the effects of
     environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes
-    in Australia.  Adelaide :  Winetitles.
+    in Australia. Adelaide:  Winetitles.
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -173,11 +191,15 @@ def biologically_effective_degree_days(
 
     bedd = (
         (
-            (tasmin.clip(max=thresh_tasmax) - thresh_tasmin)
-            + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin)
+            (
+                (tasmin.clip(max=thresh_tasmax) - thresh_tasmin)
+                + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin)
+            )
+            / 2
         )
-        / 2
-    ) * (1 + lat_constant) + tr_adj
+        * (1 + lat_constant)
+        + tr_adj
+    ).clip(max=(thresh_tasmax - thresh_tasmin))
 
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
