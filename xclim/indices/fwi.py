@@ -1118,7 +1118,6 @@ def fire_weather_ufunc(
         input_core_dims=input_core_dims,
         output_core_dims=output_core_dims,
         dask="parallelized",
-        output_dtypes=output_dtypes,
         dask_gufunc_kwargs={
             "meta": tuple(np.array((), dtype=dtype) for dtype in output_dtypes)
         },
