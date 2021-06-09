@@ -144,7 +144,7 @@ def parse_doc(doc: str) -> Dict[str, str]:
             out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
 
     for i in range(0, len(sections), 2):
-        header, content = sections[i : i + 2]
+        header, content = sections[i: i + 2]
 
         if header in ["Notes", "References"]:
             out[header.lower()] = content.replace("\n    ", "\n").strip()
@@ -375,6 +375,7 @@ KIND_ANNOTATION = {
     InputKind.DATE: "date (string, YYYY-MM-DD)",
     InputKind.BOOL: "boolean",
     InputKind.DATASET: "Dataset, optional",
+    InputKind.BOOTSTRAP_CONFIG: "BooststrapConfig, optional",
     InputKind.KWARGS: "",
     InputKind.OTHER_PARAMETER: "Any",
 }

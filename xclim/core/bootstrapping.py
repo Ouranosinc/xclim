@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from typing import Callable, Optional
+from xclim.core.bootstrap_config import BootstrapConfig, NO_BOOTSRAP
 
 import pandas as pd
 import xarray as xr
@@ -39,7 +40,7 @@ def percentile_bootstrap(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         bound_args = signature(func).bind(*args, **kwargs)
-        config = None
+        config = NO_BOOTSRAP
         indice_window = None
         for name, val in bound_args.arguments.items():
             if name == "window":
@@ -50,7 +51,7 @@ def percentile_bootstrap(func):
                 da = val
             elif isinstance(val, BootstrapConfig):
                 config = val
-        if config != None:
+        if config != NO_BOOTSRAP:
             config.indice_window = indice_window
             config.freq = freq
             return compute_bootstrapped_exceedance_rate(exceedance_function=func, da=da, config=config)
@@ -59,16 +60,6 @@ def percentile_bootstrap(func):
 
 
 ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataArray]
-
-
-@dataclass
-class BootstrapConfig:
-    percentile: int  # ]0, 100[
-    in_base_slice: slice
-    out_of_base_slice: slice = None  # When None, only the in-base will be computed
-    percentile_window: Optional[int] = 5
-    indice_window: int = None
-    freq: str = "MS"
 
 
 def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction) -> DataArray:

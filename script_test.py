@@ -25,11 +25,7 @@ import dask
 from distributed import Client
 from xclim.indicators import icclim
 
-from xclim.core.bootstrapping import BootstrapConfig
-
-xlog = logging.getLogger("xclim")
-xlog.disabled = False
-xlog.setLevel(logging.DEBUG)
+from xclim.core.bootstrap_config import BootstrapConfig
 
 
 #############
@@ -39,7 +35,7 @@ xlog.setLevel(logging.DEBUG)
 # TODO list
 # - Fix the issue with the result, it is not exactly equal to what icclim 4.x provides
 #       See what rclimdex gives
-# - add logs
+# - add logs and delete prints
 # - add unit tests
 # - make it run in parallel with dask
 
@@ -68,7 +64,7 @@ def netcdf_processing():
                             freq="MS",
                             bootstrap_config=config
                             )
-    result.to_netcdf('tx90p-no-bs.nc')
+    result.to_netcdf('aaaaa-no-bs.nc')
     time_elapsed = (time.perf_counter() - time_start)
     print(time_elapsed, ' secs')
 

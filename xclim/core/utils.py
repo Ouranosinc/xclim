@@ -13,6 +13,7 @@ from importlib.resources import open_text
 from inspect import Parameter
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
+from xclim.core.bootstrap_config import BootstrapConfig
 
 import numpy
 import numpy as np
@@ -145,7 +146,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
             # Many chunks are too small, merge them by groups
             fac = np.ceil(minchunk / min(chunks)).astype(int)
             chunking[dim] = tuple(
-                sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac)
+                sum(chunks[i: i + fac]) for i in range(0, len(chunks), fac)
             )
             # Reset counter is case the last chunks are still too small
             chunks = chunking[dim]
@@ -258,6 +259,11 @@ class InputKind(IntEnum):
 
        Annotation : ``bool``, or optional thereof.
     """
+    BOOTSTRAP_CONFIG = 10
+    """A configuration object to bootstrap percentile based indices.
+
+       Annotation : ``BootstrapConfig``, or optional thereof.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -332,6 +338,9 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     if _typehint_is_in(param.annotation, (None, bool)):
         return InputKind.BOOL
+
+    if _typehint_is_in(param.annotation, (None, BootstrapConfig)):
+        return InputKind.BOOTSTRAP_CONFIG
 
     if _typehint_is_in(param.annotation, (None, Dataset)):
         return InputKind.DATASET
