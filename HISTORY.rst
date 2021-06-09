@@ -19,7 +19,7 @@ New indicators
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
-* `aggregate_between_dates` now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
+* `aggregate_between_dates` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
 
 
 0.27.0 (2021-05-28)
