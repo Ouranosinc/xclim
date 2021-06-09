@@ -222,9 +222,9 @@ wind_chill_index = Converter(
 
 potential_evapotranspiration = Converter(
     identifier="potential_evapotranspiration",
-    var_name="water_evaporation_flux",
-    units="mm day-1",
-    standard_name="water_evapotranspiration_flux",
+    var_name="evspsblpot",
+    units="kg m-2 s-1",
+    standard_name="water_potential_evapotranspiration_flux",
     long_name="Potential evapotranspiration",
     description=(
         "The potential for water evaporation from soil and transpiration by plants if the water "
@@ -235,7 +235,7 @@ potential_evapotranspiration = Converter(
 
 water_budget = Converter(
     identifier="water_budget",
-    units="mm day-1",
+    units="kg m-2 s-1",
     long_name="Water budget",
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
