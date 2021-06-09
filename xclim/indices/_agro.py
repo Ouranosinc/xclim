@@ -159,7 +159,7 @@ def biologically_effective_degree_days(
     the latitude of the point of interest. Then the daily biologically effective growing degree day (BEDD) unit is:
 
     .. math::
-        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}}max( min( \frac{\left( TX_i - 10 \right)\left( TN_i -10 \right)}{2}), 0) * k * TR_{adj}, 9)
+        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0\right) * k * TR_{adj}, 9\right)
 
     .. math::
         TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
@@ -169,7 +169,7 @@ def biologically_effective_degree_days(
                             \end{array} \right\}
 
     .. math::
-        k = f(lat) = 1 + (\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0)
+        k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     References
     ----------
@@ -187,24 +187,16 @@ def biologically_effective_degree_days(
     tasmax = tasmax.where(mask_tasmin)
 
     lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
-    lat_constant = xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
+    k = 1 + xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
 
     dtr = tasmax - tasmin
     tr_adj = 0.25 * xarray.where(
         dtr > 13, dtr - 13, xarray.where(dtr < 10, dtr - 10, 0)
     )
 
-    bedd = (
-        (
-            (
-                (tasmin.clip(max=thresh_tasmax) - thresh_tasmin)
-                + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin)
-            )
-            / 2
-        )
-        * (1 + lat_constant)
-        + tr_adj
-    ).clip(max=(thresh_tasmax - thresh_tasmin))
+    bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+        max=(thresh_tasmax - thresh_tasmin)
+    )
 
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
