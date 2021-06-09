@@ -116,7 +116,11 @@ def biologically_effective_degree_days(
     end_date: DayOfYearStr = "11-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """
+    """Biologically effective growing degree days.
+
+    Growing-degree days with a base of 10°C and an upper limit of 19°C and adjusted for latitudes between 40°N and 50°N
+    for April to October (Northern Hemisphere; October to April in Southern Hemisphere). Used as a heat-summation metric
+    in viticulture climatology.
 
     Parameters
     ----------
@@ -140,6 +144,15 @@ def biologically_effective_degree_days(
     Returns
     -------
     xarray.DataArray
+      Biologically effective growing degree days (BEDD).
+
+
+
+    References
+    ----------
+    Indice originally from Gladstones, J. S.  (1992).  Viticulture and environment : a study of the effects of
+    environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes
+    in Australia.  Adelaide :  Winetitles.
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -153,10 +166,22 @@ def biologically_effective_degree_days(
     lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
     lat_constant = xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
 
+    def tas_range_adjust(tmax, tmin):
+        if (tmax - tmin) > 13:
+            return 0.25 * (tmax - tmin - 13)
+        elif (tmax - tmin) < 10:
+            return 0.25 * (tmax - tmin - 10)
+        else:
+            return 0
+
     bedd = (
-        ((tasmin - thresh_tasmin) + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin))
+        (
+            (tasmin.clip(max=thresh_tasmax) - thresh_tasmin)
+            + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin)
+        )
         / 2
-    ) * (1 + lat_constant)
+    ) * (1 + lat_constant) + tas_range_adjust(tasmax, tasmin)
+
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
     bedd.attrs["units"] = "degC"
