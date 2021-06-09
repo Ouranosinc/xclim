@@ -732,7 +732,7 @@ def potential_evapotranspiration(
     Returns
     -------
     xarray.DataArray
-        Potential evapotranspiration (daily or monthly).
+        Potential evapotranspiration.
 
     Notes
     -----
@@ -871,8 +871,9 @@ def potential_evapotranspiration(
         tas_idy_a = xr.concat(tas_idy_a, dim="time")
 
         # Thornthwaite(1948) formula
-        out = 1.6 * dl_m * tas_idy_a
+        out = 1.6 * dl_m * tas_idy_a  # cm/month
+        out = 10 * out  # mm/month
 
     m, freq = infer_sampling_units(out)
     out.attrs["units"] = "mm/" + freq
-    return out
+    return convert_units_to(out, "kg m-2 s-1")
