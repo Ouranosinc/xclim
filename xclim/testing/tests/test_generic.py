@@ -323,7 +323,7 @@ class TestAggregateBetweenDates:
     def test_day_of_year_strings(self):
         # generate test DataArray
         time_data = date_range(
-            "1991-01-01", "1995-06-01", freq="D", calendar="standard"
+            "1990-08-01", "1995-06-01", freq="D", calendar="standard"
         )
         data = xr.DataArray(
             np.ones(time_data.size),
@@ -336,7 +336,7 @@ class TestAggregateBetweenDates:
 
         out = generic.aggregate_between_dates(data, start, end, op="sum", freq="YS")
 
-        np.testing.assert_allclose(out, np.array([272, 273, 272, 272]))
+        np.testing.assert_allclose(out, np.array([np.nan, 272, 273, 272, 272, np.nan]))
 
         # given no freq and only strings for start and end dates
         with pytest.raises(ValueError):
