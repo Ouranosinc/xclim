@@ -1,32 +1,77 @@
 from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
-from typing import Callable
-
-from xclim.core.indicator import Daily
+from typing import Callable, Optional
 
 import pandas as pd
 import xarray as xr
 from xarray.core.dataarray import DataArray
 
-from xclim.core.calendar import percentile_doy, resample_doy
-from xclim.core.units import convert_units_to, declare_units, to_agg_units
-from xclim.indices.generic import threshold_count
+from xclim.core.calendar import percentile_doy
 
 
-ExceedanceFunction = Callable[[DataArray, DataArray, str], DataArray]
+def percentile_bootstrap(func):
+    """ Decorator for indices which can be bootstrapped.
+
+        Only the percentile based indices may benefit from bootstrapping.
+
+        When the indices function is called with a BootstrapConfig parameter, 
+        the decarator will take over the computation to iterate over the base period in this configuration.
+        @see compute_bootstrapped_exceedance_rate for the full Algorithm.
+
+        Example of declaration:
+        @declare_units(tas="[temperature]", t90="[temperature]")
+        @percentile_bootstrap
+        def tg90p(
+            tas: xarray.DataArray,
+            t90: xarray.DataArray,
+            freq: str = "YS",
+            bootstrap_config: BootstrapConfig = None,
+        ) -> xarray.DataArray: 
+
+        Example when called:
+        >>> config = BootstrapConfig(percentile=90,
+                                    percentile_window=5,
+                                    in_base_slice=slice("2015-01-01", "2018-12-31"),
+                                    out_of_base_slice=slice("2019-01-01", "2024-12-31"))
+        >>> tg90p(tas = da, t90=None, freq="MS", bootstrap_config=config)
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        bound_args = signature(func).bind(*args, **kwargs)
+        config = None
+        indice_window = None
+        for name, val in bound_args.arguments.items():
+            if name == "window":
+                indice_window = val
+            elif name == "freq":
+                freq = val
+            elif isinstance(val, DataArray):
+                da = val
+            elif isinstance(val, BootstrapConfig):
+                config = val
+        if config != None:
+            config.indice_window = indice_window
+            config.freq = freq
+            return compute_bootstrapped_exceedance_rate(exceedance_function=func, da=da, config=config)
+        return func(*args, **kwargs)
+    return wrapper
+
+
+ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataArray]
 
 
 @dataclass
 class BootstrapConfig:
     percentile: int  # ]0, 100[
     in_base_slice: slice
-    exceedance_function: Daily
-    out_of_base_slice: slice = None  # when None, only the in-base will be computed
-    window: int = 5
+    out_of_base_slice: slice = None  # When None, only the in-base will be computed
+    percentile_window: Optional[int] = 5
+    indice_window: int = None
+    freq: str = "MS"
 
 
-def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction, *args, **kwargs) -> DataArray:
+def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction) -> DataArray:
     """ Bootsrap function for percentiles.
 
         Parameters
@@ -74,18 +119,7 @@ def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig,
 
         7. Repeat the whole process for each year of the base period
 
-        Example :
-        ds = xr.open_dataset(
-            "tasmax_day_MIROC6_ssp585_r1i1p1f1_gn_20150101-20241231.nc")
-        config = bootstrapping.BootstrapConfig(
-            operator='>',
-            percentile=90,
-            window=1,
-            in_base_slice=slice("2015-01-01", "2017-12-31"),
-            out_of_base_slice=slice("2018-01-01", "2024-12-31")
-        )
-        result = bootstrapping.compute_bootstrapped_exceedance_rate(ds.tasmax, config)
-        result.to_netcdf('bootstrap_results_xclim.nc')
+        TODO: show how to bootstrap a custom indice
 
     """
     in_base_period = da.sel(time=config.in_base_slice)
@@ -96,30 +130,30 @@ def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig,
         return in_base_exceedance_rates
     out_of_base_period = da.sel(time=config.out_of_base_slice)
     in_base_threshold = _calculate_thresholds(in_base_period, config)
-    out_of_base_exceedance = exceedance_function(
-        out_of_base_period, in_base_threshold, *args, **kwargs)
+    out_of_base_exceedance = _calculate_exceedances(config,
+                                                    exceedance_function,
+                                                    out_of_base_period,
+                                                    in_base_threshold)
     return xr.concat([in_base_exceedance_rates, out_of_base_exceedance], dim="time")
 
 
 def _bootstrap_period(ds_in_base_period: DataArray,
                       config: BootstrapConfig,
-                      exceedance_function: ExceedanceFunction,
-                      *args, **kwargs) -> DataArray:
+                      exceedance_function: ExceedanceFunction) -> DataArray:
     period_exceedance_rates = []
     for year_ds in ds_in_base_period.groupby("time.year"):
         period_exceedance_rates.append(
-            _bootstrap_year(ds_in_base_period, year_ds[0], config, exceedance_function, *args, **kwargs))
-    out = xr.concat(period_exceedance_rates, dim="time")\
-        .resample(time="M")\
-        .sum(dim="time")
-    return to_agg_units(out, period_exceedance_rates[0], "count")
+            _bootstrap_year(ds_in_base_period, year_ds[0], config, exceedance_function))
+    out = xr.concat(period_exceedance_rates, dim="time")
+    # workaround to ensure unit is really "days"
+    out.attrs["units"] = 'd'
+    return out
 
 
 def _bootstrap_year(ds_in_base_period: DataArray,
                     out_base_year: int,
                     config: BootstrapConfig,
-                    exceedance_function: ExceedanceFunction,
-                    *args, **kwargs) -> DataArray:
+                    exceedance_function: ExceedanceFunction) -> DataArray:
     print("out base :", out_base_year)
     in_base = _build_virtual_in_base_period(ds_in_base_period, out_base_year)
     out_base = ds_in_base_period.sel(time=str(out_base_year))
@@ -133,21 +167,26 @@ def _bootstrap_year(ds_in_base_period: DataArray,
             pd.Timedelta(str(out_base_year - year_ds[0]) + 'y')
         completed_in_base = xr.concat([in_base, replicated_year], dim="time")
         thresholds = _calculate_thresholds(completed_in_base, config)
-        exceedance_rate = exceedance_function(out_base, thresholds, *args, **kwargs)
+        exceedance_rate = _calculate_exceedances(config,
+                                                 exceedance_function,
+                                                 out_base,
+                                                 thresholds)
         exceedance_rates.append(exceedance_rate)
-    out = xr.concat(exceedance_rates, dim="time")\
+    if(len(exceedance_rates) == 1):
+        return exceedance_rates[0]
+    return xr.concat(exceedance_rates, dim="time")\
         .groupby('time')\
         .mean()
-    return to_agg_units(out, exceedance_rates[0], "count")
 
 
-# Does not handle computation on a in_base_period of a single year, because there would be no out of base year
+# Does not handle computation on a in_base_period of a single year,
+# because there would be no out_base_year to exclude
 def _build_virtual_in_base_period(in_base_period: DataArray, out_base_year: int) -> DataArray:
     in_base_first_year = in_base_period[0].time.dt.year.item()
     in_base_last_year = in_base_period[-1].time.dt.year.item()
     if in_base_first_year == in_base_last_year:
         raise ValueError(
-            f"The in_base_period given to _build_virtual_in_base_period must be of at least two years."
+            "The in_base_period given to _build_virtual_in_base_period must be of at least two years."
         )
     elif in_base_first_year == out_base_year:
         return in_base_period.sel(time=slice(str(in_base_first_year + 1), str(in_base_last_year)))
@@ -161,21 +200,21 @@ def _build_virtual_in_base_period(in_base_period: DataArray, out_base_year: int)
 
 
 def _calculate_thresholds(in_base_period: DataArray, config: BootstrapConfig) -> DataArray:
-    return percentile_doy(in_base_period, config.window, config.percentile)\
+    return percentile_doy(in_base_period, config.percentile_window, config.percentile)\
         .sel(percentiles=config.percentile)
 
 
-def percentile_bootstrap(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        bound_args = signature(func).bind(*args, **kwargs)
-        config = None
-        for _, val in bound_args.arguments.items():
-            if isinstance(val, DataArray):
-                da = val
-            elif isinstance(val, BootstrapConfig):
-                config = val
-        if config != None:
-            return compute_bootstrapped_exceedance_rate(exceedance_function=func, da=da, config=config, *args, **kwargs)
-        return func(*args, **kwargs)
-    return wrapper
+def _calculate_exceedances(config: BootstrapConfig,
+                           exceedance_function: ExceedanceFunction,
+                           out_of_base_period: DataArray,
+                           in_base_threshold: DataArray) -> DataArray:
+    if(config.indice_window != None):
+        out_of_base_exceedance = exceedance_function(out_of_base_period,
+                                                     in_base_threshold,
+                                                     freq=config.freq,
+                                                     window=config.indice_window)
+    else:
+        out_of_base_exceedance = exceedance_function(out_of_base_period,
+                                                     in_base_threshold,
+                                                     freq=config.freq)
+    return out_of_base_exceedance
