@@ -1896,7 +1896,7 @@ class TestPotentialEvapotranspiration:
         tx = tx.expand_dims(lat=[45])
 
         out = xci.potential_evapotranspiration(tn, tx, method="BR65")
-        np.testing.assert_allclose(out[0, 2], [3.861079], rtol=1e-2)
+        np.testing.assert_allclose(out[0, 2], [3.861079 / 86400], rtol=1e-2)
 
     def test_hargreaves(self, tasmin_series, tasmax_series, tas_series):
         tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
@@ -1907,7 +1907,7 @@ class TestPotentialEvapotranspiration:
         tm = tm.expand_dims(lat=[45])
 
         out = xci.potential_evapotranspiration(tn, tx, tm, method="HG85")
-        np.testing.assert_allclose(out[2, 0], [3.962589], rtol=1e-2)
+        np.testing.assert_allclose(out[2, 0], [3.962589 / 86400], rtol=1e-2)
 
     def test_thornthwaite(self, tas_series):
         time_std = date_range(
@@ -1921,7 +1921,7 @@ class TestPotentialEvapotranspiration:
         )
 
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
-        np.testing.assert_allclose(out[0, 1], [4.27619242], rtol=1e-2)
+        np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):
@@ -1934,10 +1934,10 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     tx = tx.expand_dims(lat=[45])
 
     out = xci.water_budget(pr, tn, tx, method="BR65")
-    np.testing.assert_allclose(out[0, 2], [6.138921], rtol=1e-3)
+    np.testing.assert_allclose(out[0, 2], [6.138921 / 86400], rtol=1e-3)
 
     out = xci.water_budget(pr, tn, tx, method="HG85")
-    np.testing.assert_allclose(out[0, 2], [6.037411], rtol=1e-3)
+    np.testing.assert_allclose(out[0, 2], [6.037411 / 86400], rtol=1e-3)
 
     time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
     tm = xr.DataArray(
@@ -1954,4 +1954,4 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     )
 
     out = xci.water_budget(prm, tas=tm, method="TW48")
-    np.testing.assert_allclose(out[1, 0], [5.723808], rtol=1e-3)
+    np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
