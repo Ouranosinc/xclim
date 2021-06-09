@@ -6,11 +6,14 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import os
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
+from pathlib import Path
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
@@ -101,6 +104,29 @@ def walk_map(d: dict, func: FunctionType):
         else:
             out[k] = func(v)
     return out
+
+
+def load_module(path: os.PathLike):
+    """Load a python module from a single .py file.
+
+    The two following snippets are equivalent, the second uses this method.
+
+    >>> os.chdir(path.parent)
+    >>> import example as mod
+    >>> os.chdir(previous_working_dir)
+
+    >>> mod = load_module(path)
+    """
+    path = Path(path)
+    pwd = Path(os.getcwd())
+    os.chdir(path.parent)
+    try:
+        mod = import_module(path.stem)
+    except ModuleNotFoundError as err:
+        raise err
+    finally:
+        os.chdir(pwd)
+    return mod
 
 
 class ValidationError(ValueError):

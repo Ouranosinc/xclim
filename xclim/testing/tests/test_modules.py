@@ -34,7 +34,10 @@ def test_cf(indname, atmosds):
         # skip when missing default values
         ind = registry[indname].get_instance()
         for name, param in ind.parameters.items():
-            if param["kind"] is not InputKind.DATASET and param["default"] is None:
+            if param["kind"] is not InputKind.DATASET and param["default"] in (
+                None,
+                name,
+            ):
                 pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
         ind(ds=atmosds)
 
@@ -47,7 +50,7 @@ def test_icclim(indname, atmosds):
     # skip when missing default values
     ind = registry[indname].get_instance()
     for name, param in ind.parameters.items():
-        if param["kind"] is not InputKind.DATASET and param["default"] is None:
+        if param["kind"] is not InputKind.DATASET and param["default"] in (None, name):
             pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
     ind(ds=atmosds)
 
@@ -63,7 +66,10 @@ def test_anuclim(indname, atmosds):
     for name, param in ind.parameters.items():
         if name == "src_timestep":
             kws["src_timestep"] = "D"
-        elif param["kind"] is not InputKind.DATASET and param["default"] is None:
+        elif param["kind"] is not InputKind.DATASET and param["default"] in (
+            None,
+            name,
+        ):
             pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
     ind(ds=atmosds, **kws)
 

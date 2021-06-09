@@ -54,7 +54,7 @@ TRANSLATABLE_ATTRS
 import json
 import warnings
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Mapping, Optional, Sequence, Tuple, Union
 
 from .formatting import AttrFormatter, default_formatter
 
@@ -76,7 +76,7 @@ def list_locales():
 
 def _valid_locales(locales):
     if isinstance(locales, str):
-        locales = [locales]
+        return True
     return all(
         [
             # A locale is valid if it is a string from the list
@@ -85,7 +85,7 @@ def _valid_locales(locales):
                 # Or if it is a tuple of a string and either a file or a dict.
                 not isinstance(locale, str)
                 and isinstance(locale[0], str)
-                and (Path(locale[1]).is_file() or isinstance(locale[1], dict))
+                and (isinstance(locale[1], dict) or Path(locale[1]).is_file())
             )
             for locale in locales
         ]
@@ -114,7 +114,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
     dict
         The available translations in this locale.
     """
-    _valid_locales(locale)
+    _valid_locales([locale])
 
     if isinstance(locale, str):
         if locale not in _LOCALES:
@@ -126,8 +126,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         trans = locale[1]
     else:
         # Thus a string pointing to a json file
-        with open(locale[1], encoding="utf-8") as locf:
-            trans = json.load(locf)
+        trans = read_locale_file(locale[1])
 
     if locale[0] in _LOCALES:
         loaded_trans = _LOCALES[locale[0]]
@@ -138,7 +137,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
 
 
 def get_local_attrs(
-    indicator: str,
+    indicator: Union[str, Sequence[str]],
     *locales: Union[str, Sequence[str], Tuple[str, dict]],
     names: Optional[Sequence[str]] = None,
     append_locale_name: bool = True,
@@ -147,8 +146,9 @@ def get_local_attrs(
 
     Parameters
     ----------
-    indicator : str
+    indicator : str or sequence of strings
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
+        If multiple names are passed, te attrs from each indicators are merged, with highest priority to the first name.
     *locales : str
         IETF language tag or a tuple of the language tag and a translation dict, or
         a tuple of the language tag and a path to a json file defining translation
@@ -170,6 +170,9 @@ def get_local_attrs(
         All CF attributes available for given indicator and locales.
         Warns and returns an empty dict if none were available.
     """
+    if isinstance(indicator, str):
+        indicator = [indicator]
+
     if not append_locale_name and len(locales) > 1:
         raise ValueError(
             "`append_locale_name` cannot be False if multiple locales are requested."
@@ -179,10 +182,12 @@ def get_local_attrs(
     for locale in locales:
         loc_name, loc_dict = get_local_dict(locale)
         loc_name = f"_{loc_name}" if append_locale_name else ""
-        local_attrs = loc_dict.get(indicator)
-        if local_attrs is None:
+        local_attrs = loc_dict.get(indicator[-1], {})
+        for other_ind in indicator[-2::-1]:
+            local_attrs.update(loc_dict.get(other_ind, {}))
+        if not local_attrs:
             warnings.warn(
-                f"Attributes of indicator {indicator} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {', '.join(indicator)} in language {locale} were requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:
@@ -224,22 +229,36 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def load_locale(filename, locale=None):
-    filename = Path(filename)
-    if locale is None:
-        locale = filename.stem
-        if len(locale) != 2:
-            raise ValueError(
-                "Either the locale 2-char string must be given of the json filename must be <locale>.json."
-            )
+def read_locale_file(filename, module=None):
+    with open(filename, "r", encoding="utf-8") as f:
+        locdict = json.load(f)
 
-    with filename.open() as f:
-        loc_dict = json.load(f)
+    if module is not None:
+        locdict = {
+            (k if k == "attrs_mapping" else f"{module}.{k}"): v
+            for k, v in locdict.items()
+        }
+    return locdict
+
+
+def load_locale(locdata: Union[str, Path, Mapping[str, dict]], locale: str):
+    """Load translations from a json file into xclim.
+
+    Parameters
+    ----------
+    locdata : str or dictionary
+      Either a loaded locale dictionary or a path to a json file.
+    locale : str
+      The locale name (IETF tag).
+    """
+    if isinstance(locdata, (str, Path)):
+        filename = Path(locdata)
+        locdata = read_locale_file(filename)
 
     if locale in _LOCALES:
-        _LOCALES[locale].update(loc_dict)
+        _LOCALES[locale].update(locdata)
     else:
-        _LOCALES[locale] = loc_dict
+        _LOCALES[locale] = locdata
 
 
 def generate_local_dict(locale: str, init_english: bool = False):
@@ -255,9 +274,8 @@ def generate_local_dict(locale: str, init_english: bool = False):
     """
     from xclim.core.indicator import registry
 
-    best_locale = None  # get_best_locale(locale)
-    if best_locale is not None:
-        locname, attrs = get_local_dict(best_locale)
+    if locale in _LOCALES:
+        locname, attrs = get_local_dict(locale)
         for ind_name in attrs.copy().keys():
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)

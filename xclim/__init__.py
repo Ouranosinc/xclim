@@ -15,17 +15,18 @@ __version__ = "0.27.0"
 
 # Load official locales
 for filename in contents("xclim.data"):
-    # Only select <locale>.json (2 char for the language spec)
-    if filename.endswith(".json") and len(filename) == 7:
+    # Only select <locale>.json and not <module>.<locale>.json
+    if filename.endswith(".json") and filename.count(".") == 1:
+        locale = filename.split(".")[0]
         with path("xclim.data", filename) as f:
-            load_locale(f)
+            load_locale(f, locale)
 
 
 # Virtual modules creation:
 with path("xclim.data", "icclim.yml") as f:
-    build_indicator_module_from_yaml(f, mode="raise")
+    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
 with path("xclim.data", "anuclim.yml") as f:
-    build_indicator_module_from_yaml(f, mode="raise")
+    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
 with path("xclim.data", "cf.yml") as f:
     # ignore because some generic function are missing.
-    build_indicator_module_from_yaml(f, mode="ignore")
+    build_indicator_module_from_yaml(f.with_suffix(""), mode="ignore")

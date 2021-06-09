@@ -2,6 +2,13 @@
 History
 =======
 
+0.28.0 (unreleased)
+-------------------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Automatic load of translations on import and possibility to pass translations for virtual modules.
+
 0.27.0 (2021-05-28)
 -------------------
 
