@@ -155,7 +155,7 @@ def water_budget(
     xarray.DataArray,
       Precipitation minus potential evapotranspiration.
     """
-    pr = convert_units_to(pr, "mm/day")
+    pr = convert_units_to(pr, "kg m-2 s-1")
 
     pet = xci.potential_evapotranspiration(
         tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
