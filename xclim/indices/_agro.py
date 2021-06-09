@@ -166,13 +166,10 @@ def biologically_effective_degree_days(
     lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
     lat_constant = xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
 
-    def tas_range_adjust(tmax, tmin):
-        if (tmax - tmin) > 13:
-            return 0.25 * (tmax - tmin - 13)
-        elif (tmax - tmin) < 10:
-            return 0.25 * (tmax - tmin - 10)
-        else:
-            return 0
+    dtr = tasmax - tasmin
+    tr_adj = 0.25 * xarray.where(
+        dtr > 13, dtr - 13, xarray.where(dtr < 10, dtr - 10, 0)
+    )
 
     bedd = (
         (
@@ -180,7 +177,7 @@ def biologically_effective_degree_days(
             + (tasmax.clip(max=thresh_tasmax) - thresh_tasmin)
         )
         / 2
-    ) * (1 + lat_constant) + tas_range_adjust(tasmax, tasmin)
+    ) * (1 + lat_constant) + tr_adj
 
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
