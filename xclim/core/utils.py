@@ -109,13 +109,21 @@ def walk_map(d: dict, func: FunctionType):
 def load_module(path: os.PathLike):
     """Load a python module from a single .py file.
 
-    The two following snippets are equivalent, the second uses this method.
+    Examples
+    --------
+    Given a path to a module file (.py)
 
+    >>> from pathlib import Path
+    >>> path = Path(path_to_example_py)
+
+    The two following imports are equivalent, the second uses this method.
+
+    >>> # xdoctest: +SKIP
     >>> os.chdir(path.parent)
-    >>> import example as mod
+    >>> import example as mod1
     >>> os.chdir(previous_working_dir)
-
-    >>> mod = load_module(path)
+    >>> mod2 = load_module(path)
+    >>> mod1 == mod2
     """
     path = Path(path)
     pwd = Path(os.getcwd())
