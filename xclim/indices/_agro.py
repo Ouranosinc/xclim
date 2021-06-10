@@ -171,7 +171,7 @@ def biologically_effective_degree_days(
     31 October is:
 
     .. math::
-        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( max\left( \left( \frac{TX_i  + TN_i)}{2} - 10, 0\right) * k \right) + TR_{adj}, degdays_{max}\right)
+        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
 
     .. math::
         TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
@@ -228,5 +228,5 @@ def biologically_effective_degree_days(
 
     bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
 
-    bedd.attrs["units"] = "degC"
+    bedd.attrs["units"] = "K days"
     return bedd
