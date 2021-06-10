@@ -16,7 +16,7 @@ def percentile_bootstrap(func):
 
         Only the percentile based indices may benefit from bootstrapping.
 
-        When the indices function is called with a BootstrapConfig parameter, 
+        When the indices function is called with a BootstrapConfig parameter,
         the decarator will take over the computation to iterate over the base period in this configuration.
         @see compute_bootstrapped_exceedance_rate for the full Algorithm.
 
@@ -37,6 +37,7 @@ def percentile_bootstrap(func):
                                     out_of_base_slice=slice("2019-01-01", "2024-12-31"))
         >>> tg90p(tas = da, t90=None, freq="MS", bootstrap_config=config)
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         bound_args = signature(func).bind(*args, **kwargs)
@@ -54,15 +55,20 @@ def percentile_bootstrap(func):
         if config != NO_BOOTSRAP:
             config.indice_window = indice_window
             config.freq = freq
-            return compute_bootstrapped_exceedance_rate(exceedance_function=func, da=da, config=config)
+            return compute_bootstrapped_exceedance_rate(
+                exceedance_function=func, da=da, config=config
+            )
         return func(*args, **kwargs)
+
     return wrapper
 
 
 ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataArray]
 
 
-def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction) -> DataArray:
+def compute_bootstrapped_exceedance_rate(
+    da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction
+) -> DataArray:
     """ Bootsrap function for percentiles.
 
         Parameters
@@ -114,37 +120,41 @@ def compute_bootstrapped_exceedance_rate(da: DataArray, config: BootstrapConfig,
 
     """
     in_base_period = da.sel(time=config.in_base_slice)
-    in_base_exceedance_rates = _bootstrap_period(in_base_period,
-                                                 config,
-                                                 exceedance_function)
-    if config.out_of_base_slice == None:
+    in_base_exceedance_rates = _bootstrap_period(
+        in_base_period, config, exceedance_function
+    )
+    if config.out_of_base_slice is None:
         return in_base_exceedance_rates
     out_of_base_period = da.sel(time=config.out_of_base_slice)
     in_base_threshold = _calculate_thresholds(in_base_period, config)
-    out_of_base_exceedance = _calculate_exceedances(config,
-                                                    exceedance_function,
-                                                    out_of_base_period,
-                                                    in_base_threshold)
+    out_of_base_exceedance = _calculate_exceedances(
+        config, exceedance_function, out_of_base_period, in_base_threshold
+    )
     return xr.concat([in_base_exceedance_rates, out_of_base_exceedance], dim="time")
 
 
-def _bootstrap_period(ds_in_base_period: DataArray,
-                      config: BootstrapConfig,
-                      exceedance_function: ExceedanceFunction) -> DataArray:
+def _bootstrap_period(
+    ds_in_base_period: DataArray,
+    config: BootstrapConfig,
+    exceedance_function: ExceedanceFunction,
+) -> DataArray:
     period_exceedance_rates = []
     for year_ds in ds_in_base_period.groupby("time.year"):
         period_exceedance_rates.append(
-            _bootstrap_year(ds_in_base_period, year_ds[0], config, exceedance_function))
+            _bootstrap_year(ds_in_base_period, year_ds[0], config, exceedance_function)
+        )
     out = xr.concat(period_exceedance_rates, dim="time")
     # workaround to ensure unit is really "days"
-    out.attrs["units"] = 'd'
+    out.attrs["units"] = "d"
     return out
 
 
-def _bootstrap_year(ds_in_base_period: DataArray,
-                    out_base_year: int,
-                    config: BootstrapConfig,
-                    exceedance_function: ExceedanceFunction) -> DataArray:
+def _bootstrap_year(
+    ds_in_base_period: DataArray,
+    out_base_year: int,
+    config: BootstrapConfig,
+    exceedance_function: ExceedanceFunction,
+) -> DataArray:
     print("out base :", out_base_year)
     in_base = _build_virtual_in_base_period(ds_in_base_period, out_base_year)
     out_base = ds_in_base_period.sel(time=str(out_base_year))
@@ -154,25 +164,25 @@ def _bootstrap_year(ds_in_base_period: DataArray,
         replicated_year = in_base.sel(time=str(year_ds[0]))
         # it is necessary to change the time of the replicated year
         # in order to not skip it in percentile calculation
-        replicated_year["time"] = replicated_year.time + \
-            pd.Timedelta(str(out_base_year - year_ds[0]) + 'y')
+        replicated_year["time"] = replicated_year.time + pd.Timedelta(
+            str(out_base_year - year_ds[0]) + "y"
+        )
         completed_in_base = xr.concat([in_base, replicated_year], dim="time")
         thresholds = _calculate_thresholds(completed_in_base, config)
-        exceedance_rate = _calculate_exceedances(config,
-                                                 exceedance_function,
-                                                 out_base,
-                                                 thresholds)
+        exceedance_rate = _calculate_exceedances(
+            config, exceedance_function, out_base, thresholds
+        )
         exceedance_rates.append(exceedance_rate)
-    if(len(exceedance_rates) == 1):
+    if len(exceedance_rates) == 1:
         return exceedance_rates[0]
-    return xr.concat(exceedance_rates, dim="time")\
-        .groupby('time')\
-        .mean()
+    return xr.concat(exceedance_rates, dim="time").groupby("time").mean()
 
 
 # Does not handle computation on a in_base_period of a single year,
 # because there would be no out_base_year to exclude
-def _build_virtual_in_base_period(in_base_period: DataArray, out_base_year: int) -> DataArray:
+def _build_virtual_in_base_period(
+    in_base_period: DataArray, out_base_year: int
+) -> DataArray:
     in_base_first_year = in_base_period[0].time.dt.year.item()
     in_base_last_year = in_base_period[-1].time.dt.year.item()
     if in_base_first_year == in_base_last_year:
@@ -180,32 +190,47 @@ def _build_virtual_in_base_period(in_base_period: DataArray, out_base_year: int)
             "The in_base_period given to _build_virtual_in_base_period must be of at least two years."
         )
     elif in_base_first_year == out_base_year:
-        return in_base_period.sel(time=slice(str(in_base_first_year + 1), str(in_base_last_year)))
+        return in_base_period.sel(
+            time=slice(str(in_base_first_year + 1), str(in_base_last_year))
+        )
     elif in_base_last_year == out_base_year:
-        return in_base_period.sel(time=slice(str(in_base_first_year), str(in_base_last_year - 1)))
+        return in_base_period.sel(
+            time=slice(str(in_base_first_year), str(in_base_last_year - 1))
+        )
     in_base_time_slice_begin = slice(str(in_base_first_year), str(out_base_year - 1))
     in_base_time_slice_end = slice(str(out_base_year + 1), str(in_base_last_year))
-    return xr.concat([in_base_period.sel(time=in_base_time_slice_begin),
-                      in_base_period.sel(time=in_base_time_slice_end)],
-                     dim="time")
+    return xr.concat(
+        [
+            in_base_period.sel(time=in_base_time_slice_begin),
+            in_base_period.sel(time=in_base_time_slice_end),
+        ],
+        dim="time",
+    )
 
 
-def _calculate_thresholds(in_base_period: DataArray, config: BootstrapConfig) -> DataArray:
-    return percentile_doy(in_base_period, config.percentile_window, config.percentile)\
-        .sel(percentiles=config.percentile)
+def _calculate_thresholds(
+    in_base_period: DataArray, config: BootstrapConfig
+) -> DataArray:
+    return percentile_doy(
+        in_base_period, config.percentile_window, config.percentile
+    ).sel(percentiles=config.percentile)
 
 
-def _calculate_exceedances(config: BootstrapConfig,
-                           exceedance_function: ExceedanceFunction,
-                           out_of_base_period: DataArray,
-                           in_base_threshold: DataArray) -> DataArray:
-    if(config.indice_window != None):
-        out_of_base_exceedance = exceedance_function(out_of_base_period,
-                                                     in_base_threshold,
-                                                     freq=config.freq,
-                                                     window=config.indice_window)
+def _calculate_exceedances(
+    config: BootstrapConfig,
+    exceedance_function: ExceedanceFunction,
+    out_of_base_period: DataArray,
+    in_base_threshold: DataArray,
+) -> DataArray:
+    if config.indice_window is not None:
+        out_of_base_exceedance = exceedance_function(
+            out_of_base_period,
+            in_base_threshold,
+            freq=config.freq,
+            window=config.indice_window,
+        )
     else:
-        out_of_base_exceedance = exceedance_function(out_of_base_period,
-                                                     in_base_threshold,
-                                                     freq=config.freq)
+        out_of_base_exceedance = exceedance_function(
+            out_of_base_period, in_base_threshold, freq=config.freq
+        )
     return out_of_base_exceedance

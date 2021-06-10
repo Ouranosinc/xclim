@@ -970,9 +970,9 @@ def fraction_over_precip_thresh(
 @percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
-     t90: xarray.DataArray,
-     freq: str = "YS",
-     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
+    t90: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -1066,9 +1066,9 @@ def tg10p(
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-     t90: xarray.DataArray,
-     freq: str = "YS",
-     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
+    t90: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 

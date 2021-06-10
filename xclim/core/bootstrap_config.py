@@ -14,4 +14,5 @@ class BootstrapConfig:
     freq: str = "MS"
 
 
-NO_BOOTSRAP: BootstrapConfig = "null"
+# FIXME it's a bit ugly to type with BootstrapConfig but assign a string...
+NO_BOOTSRAP: BootstrapConfig = "NO_BOOTSRAP"
