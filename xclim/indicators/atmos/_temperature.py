@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Temperature indicator definitions."""
 
+from inspect import _empty  # noqa
+
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
@@ -66,6 +68,7 @@ __all__ = [
     "maximum_consecutive_warm_days",
     "fire_season",
     "corn_heat_units",
+    "biologically_effective_degree_days",
 ]
 
 
@@ -785,4 +788,31 @@ corn_heat_units = TasminTasmax(
     cell_methods="",
     missing="skip",
     compute=indices.corn_heat_units,
+)
+
+biologically_effective_degree_days = TasminTasmax(
+    identifier="biologically_effective_degree_days",
+    units="K days",
+    long_name="Biologically effective degree days computed with {method} formula (Summation of min((max((Tmin + Tmax)/2"
+    " - {thresh_tasmin}, 0) * k) + TR_adg, 9°C), for days between {start_date} and {end_date}).",
+    description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
+    "Considers daily Tmin and Tmax with a base of {thresh_tasmin} between 1 April and 31 October, with a maximum daily "
+    "value for degree days (typically 9°C). It also integrates a modification coefficient for latitudes "
+    "between 40°N and 50°N as well as swings in daily temperature range.",
+    cell_methods="",
+    comment="Original formula published in Gladstones, 1992.",
+    var_name="bedd",
+    compute=wrapped_partial(
+        indices.biologically_effective_degree_days,
+        method="gladstones",
+        suggested=dict(
+            thresh_tasmin="10 degC",
+            low_dtr="10 degC",
+            high_dtr="13 degC",
+            max_daily_degree_days="9 degC",
+            start_date="04-01",
+            end_date="11-01",
+            lat=_empty,
+        ),
+    ),
 )
