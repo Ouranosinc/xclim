@@ -605,23 +605,11 @@ class Indicator(IndicatorRegistrar):
         # For convenience
         n_outs = len(self.cf_attrs)
 
-        # Bind call arguments to `compute` arguments and set defaults.
-        ba = self._sig.bind(*args, **kwds)
-        ba.apply_defaults()
-
-        # Assign inputs passed as strings from ds.
-        self._assign_named_args(ba)
-
         # Put the variables in `das`, parse them according to the annotations
-        das = OrderedDict()
-        for name in self._parameters:
-            kind = self.parameters[name]["kind"]
-            # If a variable pop the arg
-            if kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE):
-                data = ba.arguments.pop(name)
-                # If a non-optional variable OR None, store the arg
-                if kind == InputKind.VARIABLE or data is not None:
-                    das[name] = data
+        # das : OrderedDict of variables (required + non-None optionals)
+        # params : OrderedDict of parameters INCLUDING unpacked kwargs
+        # bound_kwargs: OrderedDict of parameters with PACKED kwargs. <- this is needed by _update_attrs and _mask because of `indexer`.
+        das, params, bound_kwargs = self._parse_variables_from_call(args, kwds)
 
         # Metadata attributes from templates
         var_id = None
@@ -631,7 +619,7 @@ class Indicator(IndicatorRegistrar):
                 var_id = f"{self._registry_id}.{attrs['var_name']}"
             var_attrs.append(
                 self._update_attrs(
-                    ba.arguments.copy(), das, attrs, names=self._cf_names, var_id=var_id
+                    bound_kwargs.copy(), das, attrs, names=self._cf_names, var_id=var_id
                 )
             )
 
@@ -649,16 +637,12 @@ class Indicator(IndicatorRegistrar):
                 f"Resampling frequency {kwds['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
             )
 
-        # Remove **kwargs from bind object and put all those params in "kwargs" to be passed to compute.
-        params = ba.arguments.copy()
-        for param in self._sig.parameters.values():
-            if param.kind == param.VAR_KEYWORD:
-                kwargs = params.pop(param.name)
-                params.update(**kwargs)
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**das, **params)
+
         if isinstance(outs, DataArray):
             outs = [outs]
+
         if len(outs) != n_outs:
             raise ValueError(
                 f"Indicator {self.identifier} was wrongly defined. Expected {n_outs} outputs, got {len(outs)}."
@@ -679,7 +663,7 @@ class Indicator(IndicatorRegistrar):
         if self.missing != "skip":
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all variables must have the same dimensions...
-            mask = self._mask(*das.values(), **ba.arguments)
+            mask = self._mask(*das.values(), **bound_kwargs)
             outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
@@ -705,6 +689,34 @@ class Indicator(IndicatorRegistrar):
                     raise ValueError(
                         f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
                     )
+
+    def _parse_variables_from_call(self, args, kwds):
+        """Extract variable and optional variables from call arguments."""
+        # Bind call arguments to `compute` arguments and set defaults.
+        ba = self._sig.bind(*args, **kwds)
+        ba.apply_defaults()
+
+        # Assign inputs passed as strings from ds.
+        self._assign_named_args(ba)
+
+        das = OrderedDict()
+        for name, param in self.parameters.items():
+            kind = param["kind"]
+            # If a variable pop the arg
+            if kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE):
+                data = ba.arguments.pop(name)
+                # If a non-optional variable OR None, store the arg
+                if kind == InputKind.VARIABLE or data is not None:
+                    das[name] = data
+
+        # Remove **kwargs from bind object and put all those params in "kwargs" to be passed to compute.
+        params = ba.arguments.copy()
+        for param in self._sig.parameters.values():
+            if param.kind == param.VAR_KEYWORD:
+                kwargs = params.pop(param.name)
+                params.update(**kwargs)
+
+        return das, params, ba.arguments
 
     def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
