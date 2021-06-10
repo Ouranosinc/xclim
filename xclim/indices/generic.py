@@ -676,35 +676,33 @@ def aggregate_between_dates(
       Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
       If there is no start and/or end date, returns np.nan.
     """
+
+    def _get_days(bound, group, base_time):
+        """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
+        if isinstance(bound, str):
+            b_i = rl.index_of_date(group.time, bound, max_idxs=1)  # noqa
+            if not len(b_i):
+                return None
+            return (group.time.isel(time=b_i[0]) - group.time.isel(time=0)).dt.days
+        if base_time in bound.time:
+            return bound.sel(time=base_time)
+        return None
+
     if freq is None:
-        if isinstance(start, str) and isinstance(end, str):
-            raise ValueError("Cannot infer freq from DayOfYear strings.")
+        freqs = []
+        for i, bound in enumerate([start, end], start=1):
+            try:
+                freqs.append(xr.infer_freq(bound.time))
+            except AttributeError:
+                freqs.append(None)
 
-        # Get freq
-        if isinstance(start, str) or isinstance(end, str):
-            for t in [start, end]:
-                try:
-                    freq = xr.infer_freq(t.time)
-                except AttributeError:
-                    continue
-            if freq is None:
-                raise ValueError(
-                    "Non-inferrable resampling frequency for datetime object. Consider supplying freq manually."
-                )
-            warnings.warn(
-                f"Freq ({freq}) determined from single-sided boundary. Unable to determine validity of series freq.",
-                UserWarning,
-                stacklevel=4,
+        good_freq = set(freqs) - {None}
+
+        if len(good_freq) != 1:
+            raise ValueError(
+                "Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freqs}. Please consider providing `freq` manually."
             )
-
-        else:
-            freq = xr.infer_freq(start.time)
-            end_freq = xr.infer_freq(end.time)
-            # check for consistency
-            if freq != end_freq or freq is None:
-                raise ValueError(
-                    f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
-                )
+        freq = good_freq.pop()
 
     cal = get_calendar(data, dim="time")
 
@@ -722,31 +720,8 @@ def aggregate_between_dates(
         # get group slice
         group = data.isel(time=indexes)
 
-        if isinstance(start, str):
-            start_i = rl.index_of_date(group.time, start, max_idxs=1)  # noqa
-            if not len(start_i):
-                nan = (group.isel(time=0) * np.nan).expand_dims(time=[base_time])
-                out.append(nan)
-                continue
-            start_d = (
-                group.time.isel(time=start_i[0]) - group.time.isel(time=0)
-            ).dt.days
-        elif base_time in start.time:
-            start_d = start.sel(time=base_time)
-        else:
-            start_d = None
-
-        if isinstance(end, str):
-            end_i = rl.index_of_date(group.time, end, max_idxs=1)  # noqa
-            if not len(end_i):
-                nan = (group.isel(time=0) * np.nan).expand_dims(time=[base_time])
-                out.append(nan)
-                continue
-            end_d = (group.time.isel(time=end_i[0]) - group.time.isel(time=0)).dt.days
-        elif base_time in end.time:
-            end_d = end.sel(time=base_time)
-        else:
-            end_d = None
+        start_d = _get_days(start, group, base_time)
+        end_d = _get_days(end, group, base_time)
 
         # convert bounds for this group
         if start_d is not None and end_d is not None:

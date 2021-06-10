@@ -62,6 +62,7 @@ indices:
       long_name: Biologically effective growing degree days (Summation of min((max((Tmin + Tmax)/2 - {thresh_tasmin}, 0)), 9°C), for days between 1 April and 30 September)
       comment: Revised formula published by ECAD/KNMI for ICCLIM, 2013.
     index_function:
+      name: biologically_effective_degree_days
       parameters:
         method:
           data: icclim
@@ -73,6 +74,12 @@ indices:
           data: 04-01
         end_date:
           data: 10-01
+        low_dtr:
+          data: null
+        high_dtr:
+          data: null
+        lat:
+          data: null
   CSDI:
     base: cold_spell_duration_index
     output:
