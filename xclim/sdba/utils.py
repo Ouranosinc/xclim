@@ -656,7 +656,6 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
         input_core_dims=[[dim], [], []],
         output_core_dims=[["cluster"], ["cluster"], ["cluster"], ["cluster"], []],
         kwargs={"N": N},
-        output_dtypes=[int, int, int, data.dtype, int],
         dask="parallelized",
         vectorize=True,
         dask_gufunc_kwargs={
