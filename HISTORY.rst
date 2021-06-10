@@ -2,12 +2,49 @@
 History
 =======
 
-0.27.0 (unreleased)
+0.27.0 (2021-05-28)
 -------------------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+* "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
+* Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array : the 1D version is used with non-dask arrays with less than 9000 points per slice).
+* Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
+* Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
+* The indicator string formatter now accepts a "r" modifier which passes the raw strings instead of the adjective version.
+* Addition of the `sdba_extra_output` option to adds extra diagnostic variables to the outputs of Adjustment objects. Implementation of `sim_q` in QuantileDeltaMapping and `nclusters` in ExtremeValues.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
+* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing`` with temp thresholds at 0 degC and `window=1, op="sum"`. The indicator remains valid, now wrapping this new indice.
+* CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
+
+    - ``swe`` is now ``snw`` (``snw`` is the snow amount [kg / m²] and ``swe`` the liquid water equivalent thickness [m])
+    - ``rh`` is now ``hurs``
+    - ``dtas`` is now ``tdps``
+    - ``ws`` (in FWI) is now ``sfcWind``
+    - ``sic`` is now ``siconc``
+    - ``area`` (of sea ice indicators) is now ``areacello``
+    - Indicators ``RH`` and ``RH_FROMDEWPOINT`` have be renamed to ``HURS`` and ``HURS_FROMDEWPOINT``. These are changes in the _identifiers_, the python names (``relative_humidity[...]``) are unchanged.
 
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
+* New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+* `atmos.humidex` returns the Canadian *humidex*, an indicator of perceived temperature account for relative humidity.
+* `multiday_temperature_swing` indice for returning general statistics based on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
+* New indicators `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length` for statistics of Tmin < 0 degC and Tmax > 0 deg C days now available (wrapped from `multiday_temperature_swing`).
+* `atmos.wind_chill_index` computes the daily wind chill index. The default is similar to what Environment and Climate Change Canada does, options are tunable to get the version of the National Weather Service.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `run_length.rle_statistics` now accepts a `window` argument.
+* Common arguments to the `op` parameter now have better adjective and noun formattings.
+* Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
+
 
 0.26.1 (2021-05-04)
 -------------------

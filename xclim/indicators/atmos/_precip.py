@@ -33,49 +33,42 @@ __all__ = [
 
 
 class Pr(Daily):
+    """Indicator involving daily pr series."""
+
     context = "hydro"
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr"))
 
 
 class HrPr(Hourly):
+    """Indicator involving hourly pr series,"""
+
     context = "hydro"
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr"))
 
 
 class PrTasx(Daily2D):
     """Indicator involving pr and one of tas, tasmin or tasmax."""
 
-    nvar = 2
     context = "hydro"
 
     @staticmethod
     def cfcheck(pr, tas):
-        cfchecks.check_valid(tas, "cell_methods", "*time: * within days*")
+        cfchecks.generate_cfcheck("pr")(pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
-        cfchecks.check_valid(
-            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
-        )
 
 
 class PrTas(Daily2D):
     """Indicator involving pr and one of tas, tasmin or tasmax."""
 
-    nvar = 2
     context = "hydro"
-
-    @staticmethod
-    def cfcheck(pr, tas):
-        cfchecks.check_valid(tas, "cell_methods", "*time: mean within days*")
-        cfchecks.check_valid(tas, "standard_name", "air_temperature")
-        cfchecks.check_valid(
-            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
-        )
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr", "tas"))
 
 
 class Prsn(Daily):
-    context = "hydro"
+    """Indicator involving daily prsn series."""
 
-    @staticmethod
-    def cfcheck(prsn):
-        cfchecks.check_valid(prsn, "standard_name", "solid_precipitation_flux")
+    context = "hydro"
+    cfcheck = staticmethod(cfchecks.generate_cfcheck("prsn"))
 
 
 rain_on_frozen_ground_days = PrTasx(

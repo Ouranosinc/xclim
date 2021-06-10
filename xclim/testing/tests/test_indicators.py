@@ -359,7 +359,7 @@ def test_parsed_doc():
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["snd"]["units"] == "[length]"
     assert params["season_method"]["kind"] is InputKind.STRING
-    assert params["season_method"]["choices"] == {None, "WF93", "LA08"}
+    assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
 
 
 def test_default_formatter():
@@ -466,6 +466,6 @@ def test_indicator_from_dict():
     assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
-    assert ind.parameters["data"]["units"] == "[temperature]"
+    assert ind.parameters["data"]["units"] == "K"
     # Cf checks were generated
     assert ind.cfcheck is not Daily.cfcheck

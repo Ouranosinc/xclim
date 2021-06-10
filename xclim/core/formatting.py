@@ -34,9 +34,11 @@ class AttrFormatter(string.Formatter):
         mapping : Mapping[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`.
+            The list of modifiers, must be the as long as the longest value of `mapping`. Cannot include reserved modifier 'r'.
         """
         super().__init__()
+        if "r" in modifiers:
+            raise ValueError("Modifier 'r' is reserved for default raw formatting.")
         self.modifiers = modifiers
         self.mapping = mapping
 
@@ -44,8 +46,8 @@ class AttrFormatter(string.Formatter):
         """Format a value given a formatting spec.
 
         If `format_spec` is in this Formatter's modifiers, the corresponding variation
-        of value is given. If `format_spec` is not specified but `value` is in the
-        mapping, the first variation is returned.
+        of value is given. If `format_spec` is 'r' (raw), the value is returned unmodified.
+        If `format_spec` is not specified but `value` is in the mapping, the first variation is returned.
 
         Examples
         --------
@@ -54,9 +56,9 @@ class AttrFormatter(string.Formatter):
         In french, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
-        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante']}, ['m', 'f'])
-        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}", adj1='nice', adj2='evil')
-        "Le chien est beau, l'oie est méchante"
+        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante'], 'smart': ['intelligent', 'intelligente']}, ['m', 'f'])
+        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}, le gecko est {adj3:r}", adj1='nice', adj2='evil', adj3='smart')
+        "Le chien est beau, l'oie est méchante, le gecko est smart"
 
         The base values may be given using unix shell-like patterns:
 
@@ -74,6 +76,8 @@ class AttrFormatter(string.Formatter):
             raise ValueError(
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
+        elif format_spec == "r":
+            return super().format_field(value, "")
         return super().format_field(value, format_spec)
 
     def _match_value(self, value):
@@ -87,10 +91,12 @@ class AttrFormatter(string.Formatter):
 # Tag mappings between keyword arguments and long-form text.
 default_formatter = AttrFormatter(
     {
+        # Arguments to "freq"
         "YS": ["annual", "years"],
         "AS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
+        # Arguments to "indexer"
         "DJF": ["winter"],
         "MAM": ["spring"],
         "JJA": ["summer"],
@@ -108,6 +114,12 @@ default_formatter = AttrFormatter(
         "m10": ["october"],
         "m11": ["november"],
         "m12": ["december"],
+        # Arguments to "op / reducer"
+        "mean": ["average"],
+        "max": ["maximal", "maximum"],
+        "min": ["minimal", "minimum"],
+        "sum": ["total", "sum"],
+        "std": ["standard deviation"],
     },
     ["adj", "noun"],
 )

@@ -760,7 +760,7 @@ class TestDailyFreezeThaw:
 
         frzthw1 = ((min1 < K2C) * (max1 > K2C) * 1.0).sum()
 
-        assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
+        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
 
         assert np.isnan(frzthw.values[0, 1, 0])
 
@@ -780,22 +780,22 @@ class TestDailyFreezeThaw:
             frzthw = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
-                thresh_tasmax="0 degC",
                 thresh_tasmin="0 degC",
+                thresh_tasmax="0 degC",
                 freq="YS",
             )
 
         min1 = tasmin.values[:, 0, 0]
         max1 = tasmax.values[:, 0, 0]
 
-        frzthw1 = ((min1 < 0) * (max1 > 0) * 1.0).sum()
+        frzthw1 = (((min1 < 0) & (max1 > 0)) * 1.0).sum()
 
         assert (
             "This index calculation will soon require user-specified thresholds."
             not in [str(q.message) for q in record]
         )
 
-        assert np.allclose(frzthw1, frzthw.values[0, 0, 0])
+        np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
 
         assert np.isnan(frzthw.values[0, 1, 0])
 
@@ -873,8 +873,8 @@ class TestTnDaysBelow:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + -10
-        fd = atmos.tn_days_below(tas, freq="YS")
-        fdC = atmos.tn_days_below(tasC, freq="YS")
+        fd = atmos.tn_days_below(tas, thresh="-10 degC", freq="YS")
+        fdC = atmos.tn_days_below(tasC, thresh="-10 degC", freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
@@ -919,10 +919,14 @@ class TestTxDaysAbove:
         assert np.isnan(fd.values[0, -1, -1])
 
 
-class TestTropicalNights:
+class TestTnDaysAbove:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    @pytest.mark.parametrize(
+        "tn_indice, kwargs",
+        [("tn_days_above", dict(thresh="20 degC")), ("tropical_nights", dict())],
+    )
+    def test_3d_data_with_nans(self, tn_indice, kwargs):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmin
         tasC = open_dataset(self.nc_file).tasmin
@@ -933,8 +937,9 @@ class TestTropicalNights:
         tasC.values[180, 1, 0] = np.nan
         # compute with both skipna options
         thresh = 273.16 + 20
-        out = atmos.tropical_nights(tas, freq="YS")
-        outC = atmos.tropical_nights(tasC, freq="YS")
+
+        out = getattr(atmos, tn_indice)(tas, **kwargs, freq="YS")
+        outC = getattr(atmos, tn_indice)(tasC, **kwargs, freq="YS")
         # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
@@ -944,9 +949,7 @@ class TestTropicalNights:
         np.testing.assert_array_equal(out, outC)
 
         assert np.allclose(out1, out.values[0, 0, 0])
-
         assert np.isnan(out.values[0, 1, 0])
-
         assert np.isnan(out.values[0, -1, -1])
 
 
@@ -1259,3 +1262,63 @@ def test_corn_heat_units():
     assert (
         "specific thresholds : tmin > 4.44 degc and tmax > 10 degc." in chu.description
     )
+
+
+def test_freezethaw_spell_frequency():
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+    out = atmos.freezethaw_spell_frequency(
+        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+    )
+    np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
+
+    # At location -1, year 2 has no spells of length >=2
+    out = atmos.freezethaw_spell_frequency(
+        tasmin=convert_units_to(ds.tasmin, "degF"),
+        tasmax=ds.tasmax,
+        window=2,
+        freq="YS",
+    )
+    np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
+
+    assert out.attrs["long_name"] == "Annual number of freeze-thaw spells."
+
+
+def test_freezethaw_spell_mean_length():
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+    out = atmos.freezethaw_spell_mean_length(
+        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+    )
+    np.testing.assert_allclose(out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666])
+
+    # At location -1, year 2 has no spells of length >=2
+    out = atmos.freezethaw_spell_mean_length(
+        tasmin=convert_units_to(ds.tasmin, "degF"),
+        tasmax=ds.tasmax,
+        window=2,
+        freq="YS",
+    )
+    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+
+    assert out.attrs["long_name"] == "Annual average length of freeze-thaw spells."
+
+
+def test_freezethaw_spell_max_length():
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+    out = atmos.freezethaw_spell_max_length(
+        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+    )
+    np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
+
+    # At location -1, year 2 has no spells of length >=2
+    out = atmos.freezethaw_spell_max_length(
+        tasmin=convert_units_to(ds.tasmin, "degF"),
+        tasmax=ds.tasmax,
+        window=2,
+        freq="YS",
+    )
+    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+
+    assert out.attrs["long_name"] == "Annual maximal length of freeze-thaw spells."

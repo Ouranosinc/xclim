@@ -6,12 +6,12 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
 from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
 
 from . import run_length as rl
@@ -88,7 +88,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     return r.map(op)
 
 
-def doymax(da: xr.DataArray):
+def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear[i]
@@ -96,7 +96,7 @@ def doymax(da: xr.DataArray):
     return out
 
 
-def doymin(da: xr.DataArray):
+def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
     out = da.time.dt.dayofyear[i]
@@ -104,7 +104,7 @@ def doymin(da: xr.DataArray):
     return out
 
 
-def default_freq(**indexer):
+def default_freq(**indexer) -> str:
     """Return the default frequency."""
     freq = "AS-JAN"
     if indexer:
@@ -302,7 +302,7 @@ def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
 def count_level_crossings(
     low_data: xr.DataArray, high_data: xr.DataArray, threshold: str, freq: str
-):
+) -> xr.DataArray:
     """Calculate the number of times low_data is below threshold while high_data is above threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data,
@@ -318,6 +318,10 @@ def count_level_crossings(
       Quantity.
     freq: str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     # Convert units to low_data
     high_data = convert_units_to(high_data, low_data)
@@ -330,7 +334,9 @@ def count_level_crossings(
     return to_agg_units(out, low_data, "count", dim="time")
 
 
-def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: str):
+def count_occurrences(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
     """Calculate the number of times some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -347,6 +353,10 @@ def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: 
       Operator.
     freq: str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -358,7 +368,7 @@ def count_occurrences(data: xr.DataArray, threshold: str, condition: str, freq: 
 
 def diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
-):
+) -> xr.DataArray:
     """Calculate the average diurnal temperature range.
 
     Parameters
@@ -369,6 +379,10 @@ def diurnal_temperature_range(
       Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -380,7 +394,9 @@ def diurnal_temperature_range(
     return out
 
 
-def first_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str):
+def first_occurrence(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
     """Calculate the first time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -396,6 +412,10 @@ def first_occurence(data: xr.DataArray, threshold: str, condition: str, freq: st
       Operator
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -411,7 +431,9 @@ def first_occurence(data: xr.DataArray, threshold: str, condition: str, freq: st
     return out
 
 
-def last_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str):
+def last_occurrence(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
     """Calculate the last time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -427,6 +449,10 @@ def last_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str
       Operator
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -444,7 +470,7 @@ def last_occurence(data: xr.DataArray, threshold: str, condition: str, freq: str
 
 def spell_length(
     data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
-):
+) -> xr.DataArray:
     """Calculate statistics on lengths of spells.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -462,6 +488,10 @@ def spell_length(
       Reducer.
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -475,7 +505,7 @@ def spell_length(
     return to_agg_units(out, data, "count")
 
 
-def statistics(data: xr.DataArray, reducer: str, freq: str):
+def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     """Calculate a simple statistic of the data.
 
     Parameters
@@ -485,6 +515,10 @@ def statistics(data: xr.DataArray, reducer: str, freq: str):
       Reducer.
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     out = getattr(data.resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
@@ -493,7 +527,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str):
 
 def thresholded_statistics(
     data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
-):
+) -> xr.DataArray:
     """Calculate a simple statistic of the data for which some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -511,6 +545,10 @@ def thresholded_statistics(
       Reducer.
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -521,7 +559,9 @@ def thresholded_statistics(
     return out
 
 
-def temperature_sum(data: xr.DataArray, threshold: str, condition: str, freq: str):
+def temperature_sum(
+    data: xr.DataArray, threshold: str, condition: str, freq: str
+) -> xr.DataArray:
     """Calculate the temperature sum above/below a threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
@@ -538,6 +578,10 @@ def temperature_sum(data: xr.DataArray, threshold: str, condition: str, freq: st
       Operator
     freq : str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -551,7 +595,7 @@ def temperature_sum(data: xr.DataArray, threshold: str, condition: str, freq: st
 
 def interday_diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
-):
+) -> xr.DataArray:
     """Calculate the average absolute day-to-day difference in diurnal temperature range.
 
     Parameters
@@ -562,6 +606,10 @@ def interday_diurnal_temperature_range(
       Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -575,7 +623,7 @@ def interday_diurnal_temperature_range(
 
 def extreme_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
-):
+) -> xr.DataArray:
     """Calculate the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
 
     Parameters
@@ -586,6 +634,10 @@ def extreme_temperature_range(
       Highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -593,4 +645,79 @@ def extreme_temperature_range(
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
+    return out
+
+
+def aggregate_between_dates(
+    data: xr.DataArray,
+    start: xr.DataArray,
+    end: xr.DataArray,
+    op: str = "sum",
+    freq: Optional[str] = None,
+):
+    """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      Data to aggregate between start and end dates.
+    start : xr.DataArray
+      Start dates (as day-of-year) for the aggregation periods.
+    end : xr.DataArray
+      End (as day-of-year) dates for the aggregation periods.
+    op : {'min', 'max', 'sum', 'mean', 'std'}
+      Operator.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
+      If there is no start and/or end date, returns np.nan.
+    """
+    if freq is None:
+        # Get freq
+        freq = xr.infer_freq(start.time)
+        end_freq = xr.infer_freq(end.time)
+        # check for consistency
+        if freq != end_freq or freq is None:
+            raise ValueError(
+                f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
+            )
+    start = convert_calendar(start, get_calendar(data, dim="time"))
+    start.attrs["calendar"] = str(get_calendar(data, dim="time"))
+    end = convert_calendar(end, get_calendar(data, dim="time"))
+    end.attrs["calendar"] = str(get_calendar(data, dim="time"))
+
+    start = doy_to_days_since(start)
+    end = doy_to_days_since(end)
+
+    out = []
+    for base_time, indexes in data.resample(time=freq).groups.items():
+        # get group slice
+        group = data.isel(time=indexes)
+        # convert bounds for this group
+        if (base_time in start.time) and (base_time in end.time):
+            start_d = start.sel(time=base_time)
+            end_d = end.sel(time=base_time)
+
+            days = (group.time - base_time).dt.days
+            days[days < 0] = np.nan
+
+            masked = group.where((days >= start_d) & (days <= end_d - 1))
+            res = getattr(masked, op)(dim="time", skipna=True)
+            res = xr.where(
+                ((start_d > end_d) | (start_d.isnull()) | (end_d.isnull())), np.nan, res
+            )
+            # Re-add the time dimension with the period's base time.
+            res = res.expand_dims(time=[base_time])
+            out.append(res)
+        else:
+            # Get an array with the good shape, put nans and add the new time.
+            res = (group.isel(time=0) * np.nan).expand_dims(time=[base_time])
+            out.append(res)
+            continue
+
+    out = xr.concat(out, dim="time")
     return out

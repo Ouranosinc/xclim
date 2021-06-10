@@ -8,27 +8,30 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
+from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT
 from xclim.core.units import convert_units_to
 from xclim.indices import stats
 
+from ._adjustment import (
+    dqm_scale_sim,
+    dqm_train,
+    eqm_train,
+    loci_adjust,
+    loci_train,
+    qdm_adjust,
+    qm_adjust,
+    scaling_adjust,
+    scaling_train,
+)
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
-from .processing import normalize
 from .utils import (
     ADDITIVE,
-    MULTIPLICATIVE,
-    apply_correction,
     best_pc_orientation,
-    broadcast,
     equally_spaced_nodes,
-    extrapolate_qm,
     get_clusters,
     get_clusters_1d,
-    get_correction,
-    interp_on_quantiles,
-    map_cdf,
     pc_matrix,
-    rank,
 )
 
 __all__ = [
@@ -51,7 +54,22 @@ def _raise_on_multiple_chunk(da, main_dim):
 
 
 class BaseAdjustment(ParametrizableWithDataset):
-    """Base class for adjustment objects."""
+    """Base class for adjustment objects.
+
+    Children classes should implement these methods:
+
+    __init__(**kwargs)
+      Patameters should be set either by passing kwargs to the base class. with super().__init__(**kwarga),
+      or through bracket access (self['abc'] = abc). All parameters should be simple python literals or other
+      `Parametrizable` subclasses instances. See doc of :py:class:`Parametrizable`.
+
+    _train(ref, hist)
+      Receiving the training target and data, returning a training dataset.
+
+    _adjust(sim, **kwargs)
+      Receiving the projected data and some arguments, returning the `scen` dataarray.
+
+    """
 
     _attribute = "_xclim_adjustment"
     _repr_hide_params = ["hist_calendar"]
@@ -82,9 +100,9 @@ class BaseAdjustment(ParametrizableWithDataset):
             _raise_on_multiple_chunk(ref, self.group.dim)
             _raise_on_multiple_chunk(hist, self.group.dim)
 
-            if self.group.prop == "dayofyear" and get_calendar(ref) != get_calendar(
-                hist
-            ):
+            if self.group.prop == "dayofyear" and get_calendar(
+                ref, self.group.dim
+            ) != get_calendar(hist, self.group.dim):
                 warn(
                     (
                         "Input ref and hist are defined on different calendars, "
@@ -95,8 +113,9 @@ class BaseAdjustment(ParametrizableWithDataset):
                     stacklevel=4,
                 )
 
+        ds = self._train(ref, hist)
         self["hist_calendar"] = get_calendar(hist)
-        self._train(ref, hist)
+        self.set_dataset(ds)
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -129,11 +148,22 @@ class BaseAdjustment(ParametrizableWithDataset):
                     stacklevel=4,
                 )
 
-        scen = self._adjust(sim, **kwargs)
+        out = self._adjust(sim, **kwargs)
+
+        if isinstance(out, xr.DataArray):
+            out = out.rename("scen").to_dataset()
+
+        scen = out.scen
+
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {str(self)}.adjust(sim, {params})", sim
+            f"Bias-adjusted with {infostr}", sim
         )
+        scen.attrs["bias_adjustment"] = infostr
+
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
+            return out
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
@@ -206,30 +236,32 @@ class EmpiricalQuantileMapping(BaseAdjustment):
             quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
         else:
             quantiles = self.nquantiles
-        ref_q = self.group.apply("quantile", ref, q=quantiles).rename(
-            quantile="quantiles"
-        )
-        hist_q = self.group.apply("quantile", hist, q=quantiles).rename(
-            quantile="quantiles"
+
+        ds = eqm_train(
+            xr.Dataset({"ref": ref, "hist": hist}),
+            group=self.group,
+            kind=self.kind,
+            quantiles=quantiles,
         )
 
-        af = get_correction(hist_q, ref_q, self.kind)
-
-        af.attrs.update(
+        ds.af.attrs.update(
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        hist_q.attrs.update(
+        ds.hist_q.attrs.update(
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        self.set_dataset(xr.Dataset(dict(af=af, hist_q=hist_q)))
+        return ds
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
-        af, hist_q = extrapolate_qm(self.ds.af, self.ds.hist_q, method=extrapolation)
-        af = interp_on_quantiles(sim, hist_q, af, group=self.group, method=interp)
-
-        return apply_correction(sim, af, self.kind)
+        return qm_adjust(
+            xr.Dataset({"af": self.ds.af, "hist_q": self.ds.hist_q, "sim": sim}),
+            group=self.group,
+            interp=interp,
+            extrapolation=extrapolation,
+            kind=self.kind,
+        ).scen
 
 
 class DetrendedQuantileMapping(EmpiricalQuantileMapping):
@@ -296,25 +328,42 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         ----------
         .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
         """
+        if group.prop not in ["group", "dayofyear"]:
+            warn(
+                f"Using DQM with a grouping other than 'dayofyear' is not recommended (received {group.name})."
+            )
+
         super().__init__(
             nquantiles=nquantiles,
             kind=kind,
             group=group,
         )
-        self["norm_group"] = Grouper("time.dayofyear", window=norm_window)
 
     def _train(self, ref, hist):
-        refn = normalize(ref, group=self.norm_group, kind=self.kind)
-        histn = normalize(hist, group=self.norm_group, kind=self.kind)
-        super()._train(refn, histn)
+        quantiles = np.array(
+            equally_spaced_nodes(self.nquantiles, eps=1e-6), dtype="float32"
+        )
 
-        mu_ref = self.group.apply("mean", ref)
-        mu_hist = self.group.apply("mean", hist)
-        self.ds["scaling"] = get_correction(mu_hist, mu_ref, kind=self.kind)
-        self.ds.scaling.attrs.update(
+        ds = dqm_train(
+            xr.Dataset({"ref": ref, "hist": hist}),
+            group=self.group,
+            quantiles=quantiles,
+            kind=self.kind,
+        )
+
+        ds.af.attrs.update(
+            standard_name="Adjustment factors",
+            long_name="Quantile mapping adjustment factors",
+        )
+        ds.hist_q.attrs.update(
+            standard_name="Model quantiles",
+            long_name="Quantiles of model on the reference period",
+        )
+        ds.scaling.attrs.update(
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
+        return ds
 
     def _adjust(
         self,
@@ -322,45 +371,32 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         interp="nearest",
         extrapolation="constant",
         detrend=1,
-        normalize_sim=False,
     ):
 
-        # Apply preliminary scaling from obs to hist
-        sim = apply_correction(
-            sim,
-            broadcast(self.ds.scaling, sim, group=self.group, interp=interp),
-            self.kind,
-        )
+        scaled_sim = dqm_scale_sim(
+            xr.Dataset({"scaling": self.ds.scaling, "sim": sim}),
+            group=self.group,
+            kind=self.kind,
+            interp=interp,
+        ).sim
 
-        if normalize_sim:
-            sim_norm = self.norm_group.apply("mean", sim)
-            sim = normalize(sim, group=self.norm_group, kind=self.kind, norm=sim_norm)
-
-        # Find trend on sim
         if isinstance(detrend, int):
-            detrend = PolyDetrend(
-                degree=detrend,
-                kind=self.kind,
-                group=self.group if normalize_sim else self.norm_group,
-            )
+            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
 
-        sim_fit = detrend.fit(sim)
-        sim_detrended = sim_fit.detrend(sim)
+        detrend = detrend.fit(scaled_sim)
+        sim_detrended = detrend.detrend(scaled_sim)
 
-        # Adjust using `EmpiricalQuantileMapping.adjust`
-        scen_detrended = super()._adjust(
-            sim_detrended, extrapolation=extrapolation, interp=interp
-        )
-        # Retrend
-        scen = sim_fit.retrend(scen_detrended)
+        scen = qm_adjust(
+            xr.Dataset(
+                {"af": self.ds.af, "hist_q": self.ds.hist_q, "sim": sim_detrended}
+            ),
+            group=self.group,
+            interp=interp,
+            extrapolation=extrapolation,
+            kind=self.kind,
+        ).scen
 
-        if normalize_sim:
-            return apply_correction(
-                scen,
-                broadcast(sim_norm, scen, group=self.norm_group, interp="nearest"),
-                self.kind,
-            )
-        return scen
+        return detrend.retrend(scen)
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
@@ -397,6 +433,12 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         extrapolation : {'constant', 'nan'}
           The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
+        Extra diagnostics
+        -----------------
+        In adjustment:
+
+        quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
+
         References
         ----------
         Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
@@ -404,14 +446,17 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         super().__init__(**kwargs)
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
-        af, _ = extrapolate_qm(self.ds.af, self.ds.hist_q, method=extrapolation)
-
-        sim_q = self.group.apply(rank, sim, main_only=True, pct=True)
-        sel = {dim: sim_q[dim] for dim in set(af.dims).intersection(set(sim_q.dims))}
-        sel["quantiles"] = sim_q
-        af = broadcast(af, sim, group=self.group, interp=interp, sel=sel)
-
-        return apply_correction(sim, af, self.kind)
+        out = qdm_adjust(
+            xr.Dataset({"sim": sim, "af": self.ds.af, "hist_q": self.ds.hist_q}),
+            group=self.group,
+            interp=interp,
+            extrapolation=extrapolation,
+            kind=self.kind,
+        )
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
+            out.sim_q.attrs.update(long_name="Group-wise quantiles of `sim`.")
+            return out
+        return out.scen
 
 
 class ExtremeValues(BaseAdjustment):
@@ -453,6 +498,12 @@ class ExtremeValues(BaseAdjustment):
           See Notes, ]0, 1].
         power: float
           Shape of the correction strength, see Notes.
+
+        Extra diagnostics
+        -----------------
+        In training:
+
+        nclusters : Number of extreme value clusters found for each gridpoint.
 
         Notes
         -----
@@ -549,6 +600,11 @@ class ExtremeValues(BaseAdjustment):
             long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
             description=f"Mean of the {self.q_thresh * 100}th percentile of large values (x > {self.cluster_thresh}) of ref and hist.",
         )
+        self["hist_calendar"] = get_calendar(hist)
+
+        if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
+            ds = ds.assign(nclusters=ref_clusters.nclusters)
+
         self.set_dataset(ds)
 
     def adjust(
@@ -680,31 +736,22 @@ class LOCI(BaseAdjustment):
         super().__init__(group=group, thresh=thresh)
 
     def _train(self, ref, hist):
-        s_thresh = map_cdf(hist, ref, self.thresh, group=self.group).isel(
-            x=0
-        )  # Selecting the first threshold.
-        # Compute scaling factor on wet-day intensity
-        sth = broadcast(s_thresh, hist, group=self.group)
-        ws = xr.where(hist >= sth, hist, np.nan)
-        wo = xr.where(ref >= self.thresh, ref, np.nan)
-
-        ms = self.group.apply("mean", ws, skipna=True)
-        mo = self.group.apply("mean", wo, skipna=True)
-
-        # Adjustment factor
-        af = get_correction(ms - s_thresh, mo - self.thresh, MULTIPLICATIVE)
-        af.attrs.update(long_name="LOCI adjustment factors")
-        s_thresh.attrs.update(long_name="Threshold over modeled data")
-        self.set_dataset(
-            xr.Dataset(dict(hist_thresh=s_thresh, ref_thresh=self.thresh, af=af))
+        ds = loci_train(
+            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, thresh=self.thresh
         )
+        ds.af.attrs.update(long_name="LOCI adjustment factors")
+        ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
+        return ds
 
     def _adjust(self, sim, interp="linear"):
-        sth = broadcast(self.ds.hist_thresh, sim, group=self.group, interp=interp)
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
-        with xr.set_options(keep_attrs=True):
-            scen = (factor * (sim - sth) + self.ds.ref_thresh).clip(min=0)
-        return scen
+        return loci_adjust(
+            xr.Dataset(
+                {"hist_thresh": self.ds.hist_thresh, "af": self.ds.af, "sim": sim}
+            ),
+            group=self.group,
+            thresh=self.thresh,
+            interp=interp,
+        ).scen
 
 
 class Scaling(BaseAdjustment):
@@ -734,15 +781,19 @@ class Scaling(BaseAdjustment):
         super().__init__(group=group, kind=kind)
 
     def _train(self, ref, hist):
-        mean_hist = self.group.apply("mean", hist)
-        mean_ref = self.group.apply("mean", ref)
-        af = get_correction(mean_hist, mean_ref, self.kind)
-        af.attrs.update(long_name="Scaling adjustment factors")
-        self.set_dataset(xr.Dataset(dict(af=af)))
+        ds = scaling_train(
+            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, kind=self.kind
+        )
+        ds.af.attrs.update(long_name="Scaling adjustment factors")
+        return ds
 
     def _adjust(self, sim, interp="nearest"):
-        factor = broadcast(self.ds.af, sim, group=self.group, interp=interp)
-        return apply_correction(sim, factor, self.kind)
+        return scaling_adjust(
+            xr.Dataset({"sim": sim, "af": self.ds.af}),
+            group=self.group,
+            interp=interp,
+            kind=self.kind,
+        ).scen
 
 
 class PrincipalComponents(BaseAdjustment):
@@ -914,11 +965,11 @@ class PrincipalComponents(BaseAdjustment):
         hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
-        self.set_dataset(
-            xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
-        )
-        self.ds.attrs["_reference_coord"] = lbl_R
-        self.ds.attrs["_model_coord"] = lbl_M
+        ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
+
+        ds.attrs["_reference_coord"] = lbl_R
+        ds.attrs["_model_coord"] = lbl_M
+        return ds
 
     def _adjust(self, sim):
         lbl_R = self.ds.attrs["_reference_coord"]

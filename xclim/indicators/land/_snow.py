@@ -1,5 +1,5 @@
 from xclim import indices as xci
-from xclim.core.cfchecks import check_valid
+from xclim.core.cfchecks import generate_cfcheck
 from xclim.core.indicator import Daily, Daily2D
 
 __all__ = [
@@ -14,51 +14,23 @@ __all__ = [
 
 
 class SnowDepth(Daily):
-    @staticmethod
-    def cfcheck(snd):
-        check_valid(snd, "standard_name", "surface_snow_thickness")
+    cfcheck = staticmethod(generate_cfcheck("snd"))
 
 
 class SnowCover(Daily):
-    @staticmethod
-    def cfcheck(snc):
-        check_valid(snc, "standard_name", "surface_snow_area_fraction")
+    cfcheck = staticmethod(generate_cfcheck("snc"))
 
 
-class SnowWaterEq(Daily):
-    @staticmethod
-    def cfcheck(swe):
-        check_valid(
-            swe,
-            "standard_name",
-            [
-                "liquid_water_content_of_surface_snow",
-                "liquid_water_content_of_snow_layer",
-            ],
-        )
+class SnowAmount(Daily):
+    cfcheck = staticmethod(generate_cfcheck("snw"))
 
 
-class SWEPr(Daily2D):
-    @staticmethod
-    def cfcheck(swe, pr):
-        check_valid(
-            swe,
-            "standard_name",
-            [
-                "liquid_water_content_of_surface_snow",
-                "liquid_water_content_of_snow_layer",
-            ],
-        )
-        check_valid(
-            pr, "standard_name", ["precipitation_flux", "lwe_precipitation_rate"]
-        )
+class SnwPr(Daily2D):
+    cfcheck = staticmethod(generate_cfcheck("snw", "pr"))
 
 
 class SndWs(Daily2D):
-    @staticmethod
-    def cfcheck(snd, sfcWind):
-        check_valid(snd, "standard_name", "surface_snow_thickness")
-        check_valid(sfcWind, "standard_name", "wind_speed")
+    cfcheck = staticmethod(generate_cfcheck("snd", "sfcWind"))
 
 
 snow_cover_duration = SnowDepth(
@@ -97,20 +69,20 @@ snd_max_doy = SnowDepth(
     compute=xci.snd_max_doy,
 )
 
-snow_melt_we_max = SnowWaterEq(
+snow_melt_we_max = SnowAmount(
     identifier="snow_melt_we_max",
     standard_name="change_over_time_in_surface_snow_amount",
     var_name="{freq}_snow_melt_we_max",
-    description="{freq} maximum negative change in melt water equivalent over {window} days.",
+    description="{freq} maximum negative change in melt amount over {window} days.",
     units="kg m-2",
     compute=xci.snow_melt_we_max,
 )
 
 
-melt_and_precip_max = SWEPr(
+melt_and_precip_max = SnwPr(
     identifier="melt_and_precip_max",
     var_name="{freq}_melt_and_precip_max",
-    description="{freq} maximum precipitation flux and negative change in snow water equivalent over {window} days.",
+    description="{freq} maximum precipitation flux and negative change in snow amount over {window} days.",
     units="kg m-2",
     compute=xci.melt_and_precip_max,
 )
