@@ -187,7 +187,7 @@ def biologically_effective_degree_days(
     different end date (30 September). The simplified formula is as follows:
 
     .. math::
-        BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left( \left( \frac{TX_i  + TN_i)}{2} - 10, 0\right) \right), degdays_{max}\right)
+        BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
