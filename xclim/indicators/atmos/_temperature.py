@@ -799,16 +799,18 @@ biologically_effective_degree_days = TasminTasmax(
     "between 40°N and 50°N as well as swings in daily temperature range.",
     cell_methods="",
     comment="Original formula published in Gladstones, 1992.",
+    var_name='bedd',
     compute=wrapped_partial(
         indices.biologically_effective_degree_days,
+        method="gladstones",
         suggested=dict(
             thresh_tasmin="10 degC",
-            method="gladstones",
             low_dtr="10 degC",
             high_dtr="13 degC",
             max_daily_degree_days="9 degC",
             start_date="04-01",
             end_date="11-01",
+            lat=_empty,
         ),
     ),
 )

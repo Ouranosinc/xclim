@@ -111,7 +111,7 @@ def corn_heat_units(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat: Optional[Union[xarray.DataArray, np.array]] = None,
+    lat: Optional[xarray.DataArray] = None,
     thresh_tasmin: str = "10 degC",
     method: str = "gladstones",
     low_dtr: str = "10 degC",
