@@ -1,0 +1,12 @@
+{
+  "FD": {
+    "title": "Nombre de jours de gel",
+    "long_name" : "Nombre de jours de gel (Tmin < 0°C)",
+    "description": "Nombre de jours où la température minimale passe sous 0°C."
+  },
+  "R95P": {
+    "title": "Précpitations accumulées lors des jours de fortes pluies (> 95e percentile)",
+    "long_name": "Accumulation {freq:f} des précipitations lors des jours de fortes pluies (> 95e percentile)",
+    "description": "Épaisseur équivalent des précipitations accumulées lors des jours où la pluie est plus forte que le 95e percentile de la série."
+  }
+}
