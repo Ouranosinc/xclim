@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Temperature indicator definitions."""
 
+from inspect import _empty  # noqa
+
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Daily2D
@@ -799,7 +801,7 @@ biologically_effective_degree_days = TasminTasmax(
     "between 40°N and 50°N as well as swings in daily temperature range.",
     cell_methods="",
     comment="Original formula published in Gladstones, 1992.",
-    var_name='bedd',
+    var_name="bedd",
     compute=wrapped_partial(
         indices.biologically_effective_degree_days,
         method="gladstones",
