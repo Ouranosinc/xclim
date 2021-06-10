@@ -15,7 +15,8 @@ Breaking changes
 
 New indicators
 ~~~~~~~~~~~~~~
-* `biologically_effective_degree_days` computes degree-days between two specific dates and with a capped tasmax value (based on Gladstones, J. (1992)).
+* `biologically_effective_degree_days` (with ``method="gladstones"``) indice computes degree-days between two specific dates, with a capped daily max value as well as latitude and temperature range swing as modifying coefficients (based on Gladstones, J. (1992)). This has also been wrapped as an indicator.
+* An alternative implementation of `biologically_effective_degree_days` (with ``method="icclim"``, based on ICCLIM formula) ignores latitude and temperature range swing modifiers and uses an alternate ``end_date``. Wrapped and available as an ICCLIM indicator.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
