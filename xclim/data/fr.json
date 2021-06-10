@@ -463,12 +463,12 @@
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
   },
-  "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS":{
+  "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Degrés-jours biologiquement actifs",
     "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de longueur du jour dépendent de la laittude.",
     "title": "Degrés-jours biologiquement actifs",
     "comment": "Formule originale prise de Gladstones 1992.",
-    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures.",
+    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
   },
   "FRESHET_START": {
     "long_name": "Jour de l'année du début de la crue nivale",
