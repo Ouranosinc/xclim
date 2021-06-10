@@ -44,6 +44,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_spell_days",
     "cold_spell_frequency",
+    "cool_night_index",
     "daily_freezethaw_cycles",
     "freezethaw_spell_frequency",
     "freezethaw_spell_max_length",
@@ -437,6 +438,16 @@ cold_spell_frequency = Tas(
     compute=indices.cold_spell_frequency,
 )
 
+cool_night_index = Tasmin(
+    identifier="cool_night_index",
+    units="degC",
+    long_name="cool night index",
+    description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
+    cell_methods="time: min within days time: mean over days",
+    comment="Original formula published in Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
+    allowed_periods=["A"],
+    compute=wrapped_partial(indices.cool_night_index, suggested=dict(lat=_empty)),
+)
 
 daily_freezethaw_cycles = TasminTasmax(
     identifier="dlyfrzthw",
