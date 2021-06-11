@@ -9,7 +9,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 * The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
 * Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
-* ``Indicator.missing`` defaults to "skip" is ``freq`` is absent from the list of parameters.
+* ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
 
 0.27.0 (2021-05-28)
 -------------------
