@@ -7,7 +7,7 @@ History
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Nothing yet.
+* New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -21,6 +21,15 @@ New indicators
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `aggregate_between_dates` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
+
+
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in sdba :
+
+    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
+    - raise a proper error when ``ref``and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
 
 0.27.0 (2021-05-28)
