@@ -320,6 +320,32 @@ class TestAggregateBetweenDates:
         with pytest.raises(ValueError):
             generic.aggregate_between_dates(data, start, end_m)
 
+    def test_day_of_year_strings(self):
+        # generate test DataArray
+        time_data = date_range(
+            "1990-08-01", "1995-06-01", freq="D", calendar="standard"
+        )
+        data = xr.DataArray(
+            np.ones(time_data.size),
+            dims="time",
+            coords={"time": time_data},
+        )
+        # set start and end dates
+        start = "02-01"
+        end = "10-31"
+
+        out = generic.aggregate_between_dates(data, start, end, op="sum", freq="YS")
+
+        np.testing.assert_allclose(out, np.array([np.nan, 272, 273, 272, 272, np.nan]))
+
+        # given no freq and only strings for start and end dates
+        with pytest.raises(ValueError):
+            generic.aggregate_between_dates(data, start, end, op="sum")
+
+        # given a malformed date string
+        bad_start = "02-31"
+        with pytest.raises(ValueError):
+            generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
 
 def test_degree_days(tas_series):
     tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)

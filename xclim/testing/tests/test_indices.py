@@ -203,14 +203,85 @@ class TestCoolingDegreeDays:
         assert cdd == 10
 
 
-def test_corn_heat_units(tasmin_series, tasmax_series):
-    tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
-    tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
+class TestAgroclimaticIndices:
+    def test_corn_heat_units(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
+        tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
 
-    out = xci.corn_heat_units(
-        tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+        out = xci.corn_heat_units(
+            tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
+        )
+        np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+
+    @pytest.mark.parametrize(
+        "method, end_date, deg_days, max_deg_days",
+        [
+            ("gladstones", "11-01", 1127.78, 1926.0),
+            ("icclim", "10-01", 915.0, 1647.0),
+        ],
     )
-    np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
+    def test_bedd(
+        self, tasmin_series, tasmax_series, method, end_date, deg_days, max_deg_days
+    ):
+
+        time_data = date_range(
+            "1992-01-01", "1995-06-01", freq="D", calendar="standard"
+        )
+        tn = xr.DataArray(
+            np.zeros(time_data.size) + 10 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        tx = xr.DataArray(
+            np.zeros(time_data.size) + 20 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        tx_hot = xr.DataArray(
+            np.zeros(time_data.size) + 50 + K2C,
+            dims="time",
+            coords={"time": time_data},
+            attrs=dict(units="K"),
+        )
+
+        lat = np.array([45])
+        high_lat = np.array([48])
+
+        bedd = xci.biologically_effective_degree_days(
+            tasmin=tn, tasmax=tx, lat=lat, method=method, end_date=end_date, freq="YS"
+        )
+        bedd_hot = xci.biologically_effective_degree_days(
+            tasmin=tn,
+            tasmax=tx_hot,
+            lat=lat,
+            method=method,
+            end_date=end_date,
+            freq="YS",
+        )
+        bedd_high_lat = xci.biologically_effective_degree_days(
+            tasmin=tn,
+            tasmax=tx,
+            lat=high_lat,
+            method=method,
+            end_date=end_date,
+            freq="YS",
+        )
+
+        np.testing.assert_allclose(
+            bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+        )
+        np.testing.assert_array_equal(
+            bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+        )
+
+        if method == "gladstones":
+            np.testing.assert_array_less(bedd, bedd_high_lat)
+        if method == "icclim":
+            np.testing.assert_array_equal(bedd, bedd_high_lat)
 
 
 class TestDailyFreezeThawCycles:

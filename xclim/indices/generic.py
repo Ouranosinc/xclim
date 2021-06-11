@@ -6,6 +6,7 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -20,8 +21,6 @@ from xclim.core.units import (
     to_agg_units,
 )
 
-from . import run_length as rl
-
 # __all__ = [
 #     "select_time",
 #     "select_resample_op",
@@ -32,7 +31,8 @@ from . import run_length as rl
 #     "get_daily_events",
 #     "daily_downsampler",
 # ]
-
+from ..core.utils import DayOfYearStr
+from . import run_length as rl
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
@@ -656,8 +656,8 @@ def extreme_temperature_range(
 
 def aggregate_between_dates(
     data: xr.DataArray,
-    start: xr.DataArray,
-    end: xr.DataArray,
+    start: Union[xr.DataArray, DayOfYearStr],
+    end: Union[xr.DataArray, DayOfYearStr],
     op: str = "sum",
     freq: Optional[str] = None,
 ):
@@ -667,9 +667,9 @@ def aggregate_between_dates(
     ----------
     data : xr.DataArray
       Data to aggregate between start and end dates.
-    start : xr.DataArray
+    start : xr.DataArray or DayOfYearStr
       Start dates (as day-of-year) for the aggregation periods.
-    end : xr.DataArray
+    end : xr.DataArray or DayOfYearStr
       End (as day-of-year) dates for the aggregation periods.
     op : {'min', 'max', 'sum', 'mean', 'std'}
       Operator.
@@ -682,31 +682,55 @@ def aggregate_between_dates(
       Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
       If there is no start and/or end date, returns np.nan.
     """
+
+    def _get_days(bound, group, base_time):
+        """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
+        if isinstance(bound, str):
+            b_i = rl.index_of_date(group.time, bound, max_idxs=1)  # noqa
+            if not len(b_i):
+                return None
+            return (group.time.isel(time=b_i[0]) - group.time.isel(time=0)).dt.days
+        if base_time in bound.time:
+            return bound.sel(time=base_time)
+        return None
+
     if freq is None:
-        # Get freq
-        freq = xr.infer_freq(start.time)
-        end_freq = xr.infer_freq(end.time)
-        # check for consistency
-        if freq != end_freq or freq is None:
+        freqs = []
+        for i, bound in enumerate([start, end], start=1):
+            try:
+                freqs.append(xr.infer_freq(bound.time))
+            except AttributeError:
+                freqs.append(None)
+
+        good_freq = set(freqs) - {None}
+
+        if len(good_freq) != 1:
             raise ValueError(
-                f"Inconsistent or non-inferrable resampling frequency (found start->{freq} and end->{end_freq})."
+                "Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freqs}. Please consider providing `freq` manually."
             )
-    start = convert_calendar(start, get_calendar(data, dim="time"))
-    start.attrs["calendar"] = str(get_calendar(data, dim="time"))
-    end = convert_calendar(end, get_calendar(data, dim="time"))
-    end.attrs["calendar"] = str(get_calendar(data, dim="time"))
+        freq = good_freq.pop()
 
-    start = doy_to_days_since(start)
-    end = doy_to_days_since(end)
+    cal = get_calendar(data, dim="time")
 
-    out = []
+    if not isinstance(start, str):
+        start = convert_calendar(start, cal)
+        start.attrs["calendar"] = cal
+        start = doy_to_days_since(start)
+    if not isinstance(end, str):
+        end = convert_calendar(end, cal)
+        end.attrs["calendar"] = cal
+        end = doy_to_days_since(end)
+
+    out = list()
     for base_time, indexes in data.resample(time=freq).groups.items():
         # get group slice
         group = data.isel(time=indexes)
+
+        start_d = _get_days(start, group, base_time)
+        end_d = _get_days(end, group, base_time)
+
         # convert bounds for this group
-        if (base_time in start.time) and (base_time in end.time):
-            start_d = start.sel(time=base_time)
-            end_d = end.sel(time=base_time)
+        if start_d is not None and end_d is not None:
 
             days = (group.time - base_time).dt.days
             days[days < 0] = np.nan
