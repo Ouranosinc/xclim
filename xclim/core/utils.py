@@ -13,7 +13,6 @@ from importlib.resources import open_text
 from inspect import Parameter
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
-from xclim.core.bootstrap_config import BootstrapConfig
 
 import numpy
 import numpy as np
@@ -22,6 +21,8 @@ from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
 from yaml import safe_load
+
+from xclim.core.bootstrap_config import BootstrapConfig
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
@@ -146,7 +147,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
             # Many chunks are too small, merge them by groups
             fac = np.ceil(minchunk / min(chunks)).astype(int)
             chunking[dim] = tuple(
-                sum(chunks[i: i + fac]) for i in range(0, len(chunks), fac)
+                sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac)
             )
             # Reset counter is case the last chunks are still too small
             chunks = chunking[dim]

@@ -2,40 +2,40 @@ from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from typing import Callable, Optional
-from xclim.core.bootstrap_config import BootstrapConfig, NO_BOOTSRAP
 
 import pandas as pd
 import xarray as xr
 from xarray.core.dataarray import DataArray
 
+from xclim.core.bootstrap_config import NO_BOOTSRAP, BootstrapConfig
 from xclim.core.calendar import percentile_doy
 
 
 def percentile_bootstrap(func):
-    """ Decorator for indices which can be bootstrapped.
+    """Decorator for indices which can be bootstrapped.
 
-        Only the percentile based indices may benefit from bootstrapping.
+    Only the percentile based indices may benefit from bootstrapping.
 
-        When the indices function is called with a BootstrapConfig parameter,
-        the decarator will take over the computation to iterate over the base period in this configuration.
-        @see compute_bootstrapped_exceedance_rate for the full Algorithm.
+    When the indices function is called with a BootstrapConfig parameter,
+    the decarator will take over the computation to iterate over the base period in this configuration.
+    @see compute_bootstrapped_exceedance_rate for the full Algorithm.
 
-        Example of declaration:
-        @declare_units(tas="[temperature]", t90="[temperature]")
-        @percentile_bootstrap
-        def tg90p(
-            tas: xarray.DataArray,
-            t90: xarray.DataArray,
-            freq: str = "YS",
-            bootstrap_config: BootstrapConfig = None,
-        ) -> xarray.DataArray: 
+    Example of declaration:
+    @declare_units(tas="[temperature]", t90="[temperature]")
+    @percentile_bootstrap
+    def tg90p(
+        tas: xarray.DataArray,
+        t90: xarray.DataArray,
+        freq: str = "YS",
+        bootstrap_config: BootstrapConfig = None,
+    ) -> xarray.DataArray:
 
-        Example when called:
-        >>> config = BootstrapConfig(percentile=90,
-                                    percentile_window=5,
-                                    in_base_slice=slice("2015-01-01", "2018-12-31"),
-                                    out_of_base_slice=slice("2019-01-01", "2024-12-31"))
-        >>> tg90p(tas = da, t90=None, freq="MS", bootstrap_config=config)
+    Example when called:
+    >>> config = BootstrapConfig(percentile=90,
+                                percentile_window=5,
+                                in_base_slice=slice("2015-01-01", "2018-12-31"),
+                                out_of_base_slice=slice("2019-01-01", "2024-12-31"))
+    >>> tg90p(tas = da, t90=None, freq="MS", bootstrap_config=config)
     """
 
     @wraps(func)
@@ -69,54 +69,54 @@ ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataAr
 def compute_bootstrapped_exceedance_rate(
     da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction
 ) -> DataArray:
-    """ Bootsrap function for percentiles.
+    """Bootsrap function for percentiles.
 
-        Parameters
-        ----------
-        da : xr.DataArray
-        Input data, a daily frequency (or coarser) is required.
-        config : BootstrapConfig
-        bootstrap configuration, including :
-        - the percentile value
-        - the window size in days
-        - the comparison operator 
-        - the slices for in-base and out of base periodes
+    Parameters
+    ----------
+    da : xr.DataArray
+    Input data, a daily frequency (or coarser) is required.
+    config : BootstrapConfig
+    bootstrap configuration, including :
+    - the percentile value
+    - the window size in days
+    - the comparison operator
+    - the slices for in-base and out of base periodes
 
-        Returns
-        -------
-        xr.DataArray
-        The exceedance rates of a whole period
+    Returns
+    -------
+    xr.DataArray
+    The exceedance rates of a whole period
 
 
-        ref: Zhang et al https://doi.org/10.1175/JCLI3366.1
+    ref: Zhang et al https://doi.org/10.1175/JCLI3366.1
 
-        Note: in the text below the base period is choosen to be 30 years for the sake of simplicity,
-        In reality any period duration will introduce the same bias and can be fixed by the same algorithm.
+    Note: in the text below the base period is choosen to be 30 years for the sake of simplicity,
+    In reality any period duration will introduce the same bias and can be fixed by the same algorithm.
 
-        When computing percentile based indices on dataset for a long period,
-        we may want to calculate the percentiles of each day for a base periode, for example the first 30 years,
-        then we use theses percentiles to see how, in the whole periode, the daily exceedance rate evolves.
-        The exceedance rate of a year is the number of days where they individually exceed the thershold (the percentile) for this day of the year.
-        For example, if the 95 percentile for the 5 march is 10 °C it means 95% of 5 march in the base period have an averaged tempareture below 10°C.
-        Once this is estimated for each day of a year (eventually skipping the 29 feb), we can use theses values to calculate exceedane rate of eac year.
-        This can give for example, that the year 2021 has 50 days exceeding the 95 percentile.
-        Plotting the evolution of this count for each years gives a good view of how the extreme values are becoming more or less frequent.
+    When computing percentile based indices on dataset for a long period,
+    we may want to calculate the percentiles of each day for a base periode, for example the first 30 years,
+    then we use theses percentiles to see how, in the whole periode, the daily exceedance rate evolves.
+    The exceedance rate of a year is the number of days where they individually exceed the thershold (the percentile) for this day of the year.
+    For example, if the 95 percentile for the 5 march is 10 °C it means 95% of 5 march in the base period have an averaged tempareture below 10°C.
+    Once this is estimated for each day of a year (eventually skipping the 29 feb), we can use theses values to calculate exceedane rate of eac year.
+    This can give for example, that the year 2021 has 50 days exceeding the 95 percentile.
+    Plotting the evolution of this count for each years gives a good view of how the extreme values are becoming more or less frequent.
 
-        However this analysis introduces a bias because the percentile is computed using the data of the base period and is also used for the calculation of exceedance rates for the same base period.
-        Thus the years of the base period are affected by sampling variability.
+    However this analysis introduces a bias because the percentile is computed using the data of the base period and is also used for the calculation of exceedance rates for the same base period.
+    Thus the years of the base period are affected by sampling variability.
 
-        To workaround this issue in the in-base period, we can apply the following algorithm
-        The data set of in-base period will thereafter be called ds
-        1. Split ds in an in-base of 29 years and a single year of out of base period
-        2. Add a virtual year in the constructed in-base period by repeating one year.
-        3. Get the thershold (your percentile of interest) form this 30 years in-base period
-        4. Calculate the exceedance rate of the out base period (the single year)
-        5. Repeat 28 times the steps 2, 3, 4 but each time, the repeated year of step 2 must be another year of the in-base
-        6. To obtain the final time serie of exceedance rate for the out of base year, average the 29 estimates obtained
+    To workaround this issue in the in-base period, we can apply the following algorithm
+    The data set of in-base period will thereafter be called ds
+    1. Split ds in an in-base of 29 years and a single year of out of base period
+    2. Add a virtual year in the constructed in-base period by repeating one year.
+    3. Get the thershold (your percentile of interest) form this 30 years in-base period
+    4. Calculate the exceedance rate of the out base period (the single year)
+    5. Repeat 28 times the steps 2, 3, 4 but each time, the repeated year of step 2 must be another year of the in-base
+    6. To obtain the final time serie of exceedance rate for the out of base year, average the 29 estimates obtained
 
-        7. Repeat the whole process for each year of the base period
+    7. Repeat the whole process for each year of the base period
 
-        TODO: show how to bootstrap a custom indice
+    TODO: show how to bootstrap a custom indice
 
     """
     in_base_period = da.sel(time=config.in_base_slice)

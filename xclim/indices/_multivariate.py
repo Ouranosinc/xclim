@@ -1,13 +1,13 @@
 # noqa: D100
 import warnings
 from typing import Optional
-from xclim.core.bootstrap_config import BootstrapConfig, NO_BOOTSRAP
 
-from xarray.core.dataarray import DataArray
-from xclim.core.bootstrapping import percentile_bootstrap
 import numpy as np
 import xarray
+from xarray.core.dataarray import DataArray
 
+from xclim.core.bootstrap_config import NO_BOOTSRAP, BootstrapConfig
+from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,

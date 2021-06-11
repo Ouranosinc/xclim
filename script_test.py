@@ -1,32 +1,25 @@
-from icclim import icclim
-from icclim.util import read
 import logging
 import time
-import xclim as xc
+
+import dask
 import xarray as xr
-from xclim import indices
-from xclim.core.calendar import percentile_doy
+from distributed import Client
+from icclim import icclim
+from icclim.util import read
+from xarray.core.dataarray import DataArray
 
 import xclim
-from xclim import __version__, atmos
+import xclim as xc
+from xclim import __version__, atmos, indices
+from xclim.core import bootstrapping
+from xclim.core.bootstrap_config import BootstrapConfig
+from xclim.core.calendar import percentile_doy
 from xclim.core.indicator import Daily, Indicator, registry
 from xclim.core.units import units
-from xclim.core.utils import InputKind, MissingVariableError
+from xclim.core.utils import InputKind, MissingVariableError, ValidationError
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
 from xclim.testing import open_dataset
-
-from xclim.indicators import icclim
-from xarray.core.dataarray import DataArray
-from xclim.core import bootstrapping
-from xclim.core.utils import ValidationError
-
-import dask
-from distributed import Client
-from xclim.indicators import icclim
-
-from xclim.core.bootstrap_config import BootstrapConfig
-
 
 #############
 # TODO Delete this file once U.T are ok
@@ -38,6 +31,7 @@ from xclim.core.bootstrap_config import BootstrapConfig
 # - add logs and delete prints
 # - add unit tests
 # - make it run in parallel with dask
+
 
 def netcdf_processing():
 
@@ -54,19 +48,22 @@ def netcdf_processing():
     ds = xr.open_dataset("tasmax_day_MIROC6_ssp585_r1i1p1f1_gn_20150101-20241231.nc")
     # ds = ds.sel(time=slice("2015-01-01", "2015-12-31"))
     # t90 = percentile_doy(ds.tasmax, window=5, per=90).sel(percentiles=90)
-    config = BootstrapConfig(percentile=90,
-                             percentile_window=5,
-                             in_base_slice=slice("2015-01-01", "2018-12-31"),
-                             out_of_base_slice=slice("2019-01-01", "2024-12-31"))
-    result = xc.atmos.tx90p(tasmax=ds.tasmax,
-                            t90=None,
-                            # window=3,
-                            freq="MS",
-                            bootstrap_config=config
-                            )
-    result.to_netcdf('aaaaa-no-bs.nc')
-    time_elapsed = (time.perf_counter() - time_start)
-    print(time_elapsed, ' secs')
+    config = BootstrapConfig(
+        percentile=90,
+        percentile_window=5,
+        in_base_slice=slice("2015-01-01", "2018-12-31"),
+        out_of_base_slice=slice("2019-01-01", "2024-12-31"),
+    )
+    result = xc.atmos.tx90p(
+        tasmax=ds.tasmax,
+        t90=None,
+        # window=3,
+        freq="MS",
+        bootstrap_config=config,
+    )
+    result.to_netcdf("aaaaa-no-bs.nc")
+    time_elapsed = time.perf_counter() - time_start
+    print(time_elapsed, " secs")
 
 
 if __name__ == "__main__":
