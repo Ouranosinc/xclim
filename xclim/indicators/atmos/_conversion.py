@@ -17,6 +17,8 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
+    "potential_evapotranspiration",
+    "water_budget",
 ]
 
 
@@ -176,6 +178,7 @@ snowfall_approximation = Converter(
     compute=indices.snowfall_approximation,
 )
 
+
 rain_approximation = Converter(
     identifier="prlp",
     units="kg m-2 s-1",
@@ -203,4 +206,29 @@ wind_chill_index = Converter(
         else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
     ),
     compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
+)
+
+
+potential_evapotranspiration = Converter(
+    identifier="potential_evapotranspiration",
+    var_name="evspsblpot",
+    units="kg m-2 s-1",
+    standard_name="water_potential_evapotranspiration_flux",
+    long_name="Potential evapotranspiration",
+    description=(
+        "The potential for water evaporation from soil and transpiration by plants if the water "
+        "supply is sufficient, with the method {method}."
+    ),
+    compute=indices.potential_evapotranspiration,
+)
+
+water_budget = Converter(
+    identifier="water_budget",
+    units="kg m-2 s-1",
+    long_name="Water budget",
+    description=(
+        "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
+        "where the potential evapotranspiration is calculated with the method {method}."
+    ),
+    compute=indices.water_budget,
 )
