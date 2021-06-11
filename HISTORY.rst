@@ -7,7 +7,7 @@ History
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Nothing yet.
+* New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -24,6 +24,7 @@ Internal Changes
 * The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
 * Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
 * ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
+* Minor modification to the github PR template.
 
 
 0.27.0 (2021-05-28)
