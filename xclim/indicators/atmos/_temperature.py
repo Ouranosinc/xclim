@@ -444,7 +444,6 @@ cool_night_index = Tasmin(
     long_name="cool night index",
     description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
     cell_methods="time: min within days time: mean over days",
-    comment="Original formula published in Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
     allowed_periods=["A"],

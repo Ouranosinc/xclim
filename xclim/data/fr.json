@@ -436,10 +436,10 @@
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice  de  fraîcheur  des  nuits",
-    "description": "Moyenne {freq:f} de la température journalière minimale pendant septembre (hémisphère nord) ou mai (hémisphère sud)",
+    "description": "Moyenne {freq:f} de la température journalière minimale en septembre (hémisphère nord) ou en mars (hémisphère sud)",
     "title": "Indice  de  fraîcheur  des  nuits",
     "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
-    "abstract": "indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédents à la date de récolte potentielle."
+    "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
   },
   "DLYFRZTHW": {
     "long_name": "Cycles de gel-dégel quotidien",
