@@ -4,7 +4,7 @@ from inspect import _empty
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Daily2D, Hourly
+from xclim.core.indicator import Daily, Hourly
 from xclim.core.utils import wrapped_partial
 
 __all__ = [
@@ -32,43 +32,27 @@ __all__ = [
 ]
 
 
-class Pr(Daily):
+class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
-    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr"))
 
 
-class HrPr(Hourly):
-    """Indicator involving hourly pr series,"""
-
-    context = "hydro"
-    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr"))
-
-
-class PrTasx(Daily2D):
+class PrTasx(Daily):
     """Indicator involving pr and one of tas, tasmin or tasmax."""
 
     context = "hydro"
 
     @staticmethod
     def cfcheck(pr, tas):
-        cfchecks.generate_cfcheck("pr")(pr)
+        cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
-class PrTas(Daily2D):
-    """Indicator involving pr and one of tas, tasmin or tasmax."""
+class HrPrecip(Hourly):
+    """Indicator involving hourly pr series,"""
 
     context = "hydro"
-    cfcheck = staticmethod(cfchecks.generate_cfcheck("pr", "tas"))
-
-
-class Prsn(Daily):
-    """Indicator involving daily prsn series."""
-
-    context = "hydro"
-    cfcheck = staticmethod(cfchecks.generate_cfcheck("prsn"))
 
 
 rain_on_frozen_ground_days = PrTasx(
@@ -86,7 +70,7 @@ rain_on_frozen_ground_days = PrTasx(
     compute=indices.rain_on_frozen_ground_days,
 )
 
-max_1day_precipitation_amount = Pr(
+max_1day_precipitation_amount = Precip(
     identifier="rx1day",
     units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
@@ -96,7 +80,7 @@ max_1day_precipitation_amount = Pr(
     compute=indices.max_1day_precipitation_amount,
 )
 
-max_n_day_precipitation_amount = Pr(
+max_n_day_precipitation_amount = Precip(
     identifier="max_n_day_precipitation_amount",
     var_name="rx{window}day",
     units="mm",
@@ -107,7 +91,7 @@ max_n_day_precipitation_amount = Pr(
     compute=indices.max_n_day_precipitation_amount,
 )
 
-wetdays = Pr(
+wetdays = Precip(
     identifier="wetdays",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
@@ -117,7 +101,7 @@ wetdays = Pr(
     compute=indices.wetdays,
 )
 
-dry_days = Pr(
+dry_days = Precip(
     identifier="dry_days",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
@@ -127,7 +111,7 @@ dry_days = Pr(
     compute=indices.dry_days,
 )
 
-maximum_consecutive_wet_days = Pr(
+maximum_consecutive_wet_days = Precip(
     identifier="cwd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -139,7 +123,7 @@ maximum_consecutive_wet_days = Pr(
     compute=indices.maximum_consecutive_wet_days,
 )
 
-maximum_consecutive_dry_days = Pr(
+maximum_consecutive_dry_days = Precip(
     identifier="cdd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -151,7 +135,7 @@ maximum_consecutive_dry_days = Pr(
     compute=indices.maximum_consecutive_dry_days,
 )
 
-daily_pr_intensity = Pr(
+daily_pr_intensity = Precip(
     identifier="sdii",
     units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
@@ -163,7 +147,7 @@ daily_pr_intensity = Pr(
     compute=indices.daily_pr_intensity,
 )
 
-max_pr_intensity = HrPr(
+max_pr_intensity = HrPrecip(
     identifier="max_pr_intensity",
     units="mm/h",
     standard_name="precipitation",
@@ -175,7 +159,7 @@ max_pr_intensity = HrPr(
     keywords="IDF curves",
 )
 
-precip_accumulation = Pr(
+precip_accumulation = Precip(
     title="Accumulated total precipitation (solid and liquid)",
     identifier="prcptot",
     units="mm",
@@ -212,7 +196,7 @@ solid_precip_accumulation = PrTasx(
     ),
 )
 
-drought_code = PrTas(
+drought_code = Precip(
     identifier="dc",
     units="",
     standard_name="drought_code",
@@ -222,9 +206,7 @@ drought_code = PrTas(
     missing="skip",
 )
 
-fire_weather_indexes = Daily(
-    module="atmos",  # Hack because we aren't using a class defined within xclim.indicators.atmos.
-    nvar=4,
+fire_weather_indexes = Precip(
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
@@ -258,7 +240,7 @@ fire_weather_indexes = Daily(
 )
 
 
-last_snowfall = Prsn(
+last_snowfall = Precip(
     identifier="last_snowfall",
     standard_name="day_of_year",
     long_name="Date of last snowfall",
@@ -267,7 +249,7 @@ last_snowfall = Prsn(
     compute=indices.last_snowfall,
 )
 
-first_snowfall = Prsn(
+first_snowfall = Precip(
     identifier="first_snowfall",
     standard_name="day_of_year",
     long_name="Date of first snowfall",
@@ -276,7 +258,7 @@ first_snowfall = Prsn(
     compute=indices.first_snowfall,
 )
 
-days_with_snow = Prsn(
+days_with_snow = Precip(
     identifier="days_with_snow",
     title="Days with snowfall",
     long_name="Number of days with solid precipitation flux between low and high thresholds.",
@@ -285,7 +267,7 @@ days_with_snow = Prsn(
     compute=indices.days_with_snow,
 )
 
-days_over_precip_thresh = Pr(
+days_over_precip_thresh = Precip(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
     description="{freq} number of days with precipitation above a daily percentile."
@@ -305,7 +287,7 @@ high_precip_low_temp = PrTasx(
 )
 
 
-fraction_over_precip_thresh = Pr(
+fraction_over_precip_thresh = Precip(
     identifier="fraction_over_precip_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
