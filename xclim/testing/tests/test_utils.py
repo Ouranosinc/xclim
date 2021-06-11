@@ -107,10 +107,10 @@ def test_open_testdata():
 def test_list_datasets():
     out = list_datasets()
 
-    assert out.columns == ["size", "url"]
+    assert list(out.columns) == ["size", "url"]
     np.testing.assert_allclose(
-        out.loc[
-            "cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"
-        ].size,
-        0.825216,
+        out.loc["cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"][
+            "size"
+        ],
+        845.021484375,
     )
