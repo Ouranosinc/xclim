@@ -43,7 +43,12 @@ def test_wrapped_partial():
 
 
 def test_wrapped_indicator(tas_series):
-    def indice(tas, tas2=None, thresh=0, freq="YS"):
+    def indice(
+        tas: xr.DataArray,
+        tas2: xr.DataArray = None,
+        thresh: int = float,
+        freq: str = "YS",
+    ):
         if tas2 is None:
             out = tas < thresh
         else:
@@ -55,7 +60,6 @@ def test_wrapped_indicator(tas_series):
     ind1 = Daily(
         realm="atmos",
         identifier="test_ind1",
-        nvar=1,
         units="days",
         compute=wrapped_partial(indice, tas2=None),
     )
@@ -63,7 +67,6 @@ def test_wrapped_indicator(tas_series):
     ind2 = Daily(
         realm="atmos",
         identifier="test_ind2",
-        nvar=2,
         units="days",
         compute=wrapped_partial(indice, thresh=None),
     )

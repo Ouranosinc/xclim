@@ -463,6 +463,13 @@
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
   },
+  "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
+    "long_name": "Degrés-jours biologiquement actifs",
+    "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de longueur du jour dépendent de la laittude.",
+    "title": "Degrés-jours biologiquement actifs",
+    "comment": "Formule originale prise de Gladstones 1992.",
+    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
+  },
   "FRESHET_START": {
     "long_name": "Jour de l'année du début de la crue nivale",
     "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
@@ -518,12 +525,12 @@
     "comment": "",
     "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
   },
-    "RB_FLASHINESS_INDEX": {
-        "long_name": "Indice Richards-Baker de torrentialité",
-        "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
-        "title": "Indice Richards-Baker de torrentialité",
-        "comment": "",
-        "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
+  "RB_FLASHINESS_INDEX": {
+      "long_name": "Indice Richards-Baker de torrentialité",
+      "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+      "title": "Indice Richards-Baker de torrentialité",
+      "comment": "",
+      "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
     },
   "FREQ_ANALYSIS": {
     "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
@@ -866,5 +873,17 @@
     "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
+  },
+  "POTENTIAL_EVAPOTRANSPIRATION": {
+    "title": "Évapotranspiration potentielle.",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
+    "long_name": "Évapotranspiration potentielle."
+  },
+  "WATER_BUDGET": {
+    "title": "Bilan hydrique.",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
+    "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
+    "long_name": "Bilan hydrique."
   }
 }
