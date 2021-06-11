@@ -9,10 +9,11 @@
 - [ ] `bumpversion (major / minor / patch)` has been called on this branch
 - [ ] Tags have been pushed (`git push --tags`)
 
-* **What kind of change does this PR introduce?** <!--(Bug fix, feature, docs update, etc.)-->
+### What kind of change does this PR introduce?
+
+* ,,,
+
+### Does this PR introduce a breaking change?
 
 
-* **Does this PR introduce a breaking change?** <!--(Has there been an API change?)-->
-
-
-* **Other information**:
+### Other information:
