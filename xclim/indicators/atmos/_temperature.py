@@ -411,7 +411,7 @@ cold_spell_frequency = Temp(
     compute=indices.cold_spell_frequency,
 )
 
-cool_night_index = Tasmin(
+cool_night_index = Temp(
     identifier="cool_night_index",
     units="degC",
     long_name="cool night index",
@@ -420,7 +420,7 @@ cool_night_index = Tasmin(
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
     allowed_periods=["A"],
-    compute=wrapped_partial(indices.cool_night_index, suggested=dict(lat=_empty)),
+    compute=indices.cool_night_index,
 )
 
 daily_freezethaw_cycles = Temp(

@@ -1,8 +1,7 @@
 # noqa: D100
 
-from typing import Optional, Union
+from typing import Optional
 
-import numpy as np
 import xarray
 
 import xclim.indices as xci
@@ -18,10 +17,11 @@ from xclim.indices.generic import aggregate_between_dates
 # -------------------------------------------------- #
 
 __all__ = [
-  "corn_heat_units",
-  "biologically_effective_degree_days",
-  "cool_night_index",
-  "water_budget"
+    "corn_heat_units",
+    "biologically_effective_degree_days",
+    "cool_night_index",
+    "water_budget",
+]
 
 
 @declare_units(
