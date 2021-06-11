@@ -76,8 +76,6 @@ __all__ = [
 class Temp(Daily):
     """Indicators involving temperature."""
 
-    pass
-
 
 tn_days_above = Temp(
     identifier="tn_days_above",
@@ -775,7 +773,7 @@ corn_heat_units = Temp(
     compute=indices.corn_heat_units,
 )
 
-biologically_effective_degree_days = TasminTasmax(
+biologically_effective_degree_days = Temp(
     identifier="biologically_effective_degree_days",
     units="K days",
     long_name="Biologically effective degree days computed with {method} formula (Summation of min((max((Tmin + Tmax)/2"

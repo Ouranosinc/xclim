@@ -16,8 +16,6 @@ __all__ = [
 class Snow(Daily):
     """Indicators dealing with snow variables."""
 
-    pass
-
 
 snow_cover_duration = Snow(
     identifier="snow_cover_duration",
