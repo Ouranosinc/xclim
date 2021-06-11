@@ -5,11 +5,26 @@ History
 0.28.0 (unreleased)
 -------------------
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Nothing yet.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Nothing yet.
+
+New indicators
+~~~~~~~~~~~~~~
+* `biologically_effective_degree_days` (with ``method="gladstones"``) indice computes degree-days between two specific dates, with a capped daily max value as well as latitude and temperature range swing as modifying coefficients (based on Gladstones, J. (1992)). This has also been wrapped as an indicator.
+* An alternative implementation of `biologically_effective_degree_days` (with ``method="icclim"``, based on ICCLIM formula) ignores latitude and temperature range swing modifiers and uses an alternate ``end_date``. Wrapped and available as an ICCLIM indicator.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
+* `aggregate_between_dates` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
 * The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
 * Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
 * ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
+
 
 0.27.0 (2021-05-28)
 -------------------
@@ -28,7 +43,7 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
-* The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing`` with temp thresholds at 0 degC and `window=1, op="sum"`. The indicator remains valid, now wrapping this new indice.
+* The `daily_freezethaw_cycles` indice is being deprecated in favour of ``multiday_temperature_swing`` with temp thresholds at 0 degC and ``window=1, op="sum"``. The indicator remains valid, now wrapping this new indice.
 * CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
 
     - ``swe`` is now ``snw`` (``snw`` is the snow amount [kg / m²] and ``swe`` the liquid water equivalent thickness [m])
@@ -53,6 +68,7 @@ Internal Changes
 * `run_length.rle_statistics` now accepts a `window` argument.
 * Common arguments to the `op` parameter now have better adjective and noun formattings.
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
+* Added internal function ``aggregate_between_dates`` for array aggregation operations using xarray datetime arrays with start and end DayOfYear values.
 
 
 0.26.1 (2021-05-04)
