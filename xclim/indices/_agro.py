@@ -1,8 +1,7 @@
 # noqa: D100
 
-from typing import Optional, Union
+from typing import Optional
 
-import numpy as np
 import xarray
 
 import xclim.indices as xci
@@ -17,7 +16,12 @@ from xclim.indices.generic import aggregate_between_dates
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["corn_heat_units", "biologically_effective_degree_days", "water_budget"]
+__all__ = [
+    "corn_heat_units",
+    "biologically_effective_degree_days",
+    "cool_night_index",
+    "water_budget",
+]
 
 
 @declare_units(
@@ -135,7 +139,7 @@ def biologically_effective_degree_days(
       Minimum daily temperature.
     tasmax: xarray.DataArray
       Maximum daily temperature.
-    lat: xarray.DataArray or numpy.array, optional
+    lat: xarray.DataArray, optional
       Latitude coordinate.
     thresh_tasmin: str
       The minimum temperature threshold.
@@ -231,6 +235,56 @@ def biologically_effective_degree_days(
 
     bedd.attrs["units"] = "K days"
     return bedd
+
+
+@declare_units(tasmin="[temperature]")
+def cool_night_index(
+    tasmin: xarray.DataArray, lat: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
+    """Cool Night Index.
+
+    Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
+    Used in calculating the Géoviticulture Multicriteria Classification System.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    lat: xarray.DataArray, optional
+      Latitude coordinate.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [degC]
+      Mean of daily minimum temperature for month of interest.
+
+    Notes
+    -----
+    Given that this indice only examines September and March months, it possible to send in DataArrays containing only
+    these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets that
+    are missing several months will be flagged as invalid. This check can be ignored by setting the following context:
+
+    >>> with xclim.set_options(check_missing='skip', data_validation='log'):
+    >>>     cni = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
+
+    References
+    ----------
+    Indice originally published in Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system
+    or grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97.
+    https://doi.org/10.1016/j.agrformet.2003.06.001
+    """
+    tasmin = convert_units_to(tasmin, "degC")
+
+    # Use September in northern hemisphere, March in southern hemisphere.
+    months = tasmin.time.dt.month
+    month = xarray.where(lat > 0, 9, 3)
+    tasmin = tasmin.where(months == month, drop=True)
+
+    cni = tasmin.resample(time=freq).mean()
+    cni.attrs["units"] = "degC"
+    return cni
 
 
 @declare_units(

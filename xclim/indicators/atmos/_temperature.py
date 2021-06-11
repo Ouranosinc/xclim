@@ -44,6 +44,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_spell_days",
     "cold_spell_frequency",
+    "cool_night_index",
     "daily_freezethaw_cycles",
     "freezethaw_spell_frequency",
     "freezethaw_spell_max_length",
@@ -410,6 +411,17 @@ cold_spell_frequency = Temp(
     compute=indices.cold_spell_frequency,
 )
 
+cool_night_index = Temp(
+    identifier="cool_night_index",
+    units="degC",
+    long_name="cool night index",
+    description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
+    cell_methods="time: min within days time: mean over days",
+    abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
+    "month when ripening usually occurs beyond the ripening period.",
+    allowed_periods=["A"],
+    compute=indices.cool_night_index,
+)
 
 daily_freezethaw_cycles = Temp(
     identifier="dlyfrzthw",
