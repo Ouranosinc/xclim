@@ -4,18 +4,15 @@ Sea ice indicators
 ------------------
 """
 from xclim import indices
-from xclim.core.cfchecks import generate_cfcheck
-from xclim.core.indicator import Indicator2D
+from xclim.core.indicator import Indicator
 
 __all__ = ["sea_ice_area", "sea_ice_extent"]
 
 
-class SiconcAreacello(Indicator2D):
+class SiconcAreacello(Indicator):
     """Class for indicators having sea ice concentration and grid cell area inputs."""
 
     missing = "skip"
-
-    cfcheck = staticmethod(generate_cfcheck("siconc", "areacello"))
 
 
 sea_ice_extent = SiconcAreacello(
