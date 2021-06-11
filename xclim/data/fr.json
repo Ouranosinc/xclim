@@ -435,9 +435,9 @@
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COOL_NIGHT_INDEX": {
-    "long_name": "Indice  de  fraîcheur  des  nuits",
+    "long_name": "Indice de fraîcheur des nuits",
     "description": "Moyenne {freq:f} de la température journalière minimale en septembre (hémisphère nord) ou en mars (hémisphère sud)",
-    "title": "Indice  de  fraîcheur  des  nuits",
+    "title": "Indice de fraîcheur des nuits",
     "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
     "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
   },

@@ -262,7 +262,7 @@ def cool_night_index(
 
     Notes
     -----
-    Given that this indice only examines September and May months, it possible to send in DataArrays containing only
+    Given that this indice only examines September and March months, it possible to send in DataArrays containing only
     these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets that
     are missing several months will be flagged as invalid. This check can be ignored by setting the following context:
 
