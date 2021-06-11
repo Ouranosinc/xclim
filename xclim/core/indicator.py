@@ -94,7 +94,6 @@ the mapping of `data.input` simply links a variable name from the function in `d
 to one of those official variables.
 
 """
-import logging
 import re
 import warnings
 import weakref
@@ -139,6 +138,7 @@ from .utils import (
     MissingVariableError,
     infer_kind_from_parameter,
     load_module,
+    raise_warn_or_log,
     wrapped_partial,
 )
 
@@ -1367,48 +1367,27 @@ def build_indicator_module_from_yaml(
         "notes": notes or yml.get("notes"),
     }
 
-    def _put_indice_as_function(data):
-        # If data.index_function.name refers to a function in `indices`, replace that field by the function.
-        indice_name = data.get("index_function", {}).get("name", None)
-        if indice_name is not None and indices is not None:
-            indice_func = getattr(indices, indice_name, None)
-            if indice_func is None and hasattr(indices, "__getitem__"):
-                try:
-                    indice_func = indices[indice_name]
-                except KeyError:
-                    pass
-
-            if indice_func is not None:
-                data["index_function"]["name"] = indice_func
-
-        return data
-
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
-        # clix-meta has illegal characters in the identifiers.
-        clean_id = identifier.replace("{", "").replace("}", "")
-        # Workaround for clix-meta (we name it references, they name it reference)
-        data.setdefault("references", data.get("reference"))
-        for k, v in defkwargs.items():
-            data.setdefault(k, v)
         try:
+            clean_id, data = _cleanup_indicator_dict(
+                identifier, data, indices, defkwargs
+            )
+
             if "base" in data:
                 base = registry[data["base"].upper()]
             else:
                 base = default_base
-            data = _put_indice_as_function(data)
+
             mapping[clean_id] = base.from_dict(
                 data, identifier=clean_id, module=module_name
             )
+
         except Exception as err:
-            msg = f"Constructing {identifier} failed with {err!r}"
-            if mode == "ignore":
-                logging.info(msg)
-            elif mode == "warn":
-                warnings.warn(msg)
-            else:  # mode == "raise"
-                raise ValueError(msg) from err
+            raise_warn_or_log(
+                err, mode, msg=f"Constructing {identifier} failed with {err!r}"
+            )
 
     # Construct module
     mod = build_indicator_module(module_name, objs=mapping, doc=doc)
@@ -1419,3 +1398,29 @@ def build_indicator_module_from_yaml(
             load_locale(locdict, locale)
 
     return mod
+
+
+def _cleanup_indicator_dict(identifier, data, indices, defaults):
+    # Assign indice as func.
+    # If data.index_function.name refers to a function in `indices`, replace that field by the function.
+    indice_name = data.get("index_function", {}).get("name", None)
+    if indice_name is not None and indices is not None:
+        indice_func = getattr(indices, indice_name, None)
+        if indice_func is None and hasattr(indices, "__getitem__"):
+            try:
+                indice_func = indices[indice_name]
+            except KeyError:
+                pass
+
+        if indice_func is not None:
+            data["index_function"]["name"] = indice_func
+
+    # clix-meta has illegal characters in the identifiers.
+    clean_id = identifier.replace("{", "").replace("}", "")
+
+    # Workaround for clix-meta (we name it references, they name it reference)
+    data.setdefault("references", data.get("reference"))
+    for k, v in defaults.items():
+        data.setdefault(k, v)
+
+    return clean_id, data

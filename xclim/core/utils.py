@@ -6,7 +6,9 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import logging
 import os
+import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
@@ -237,6 +239,32 @@ def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
             np.nanpercentile(arr[nans], p, axis=-1), 0, -1
         ).ravel()
     return out
+
+
+def raise_warn_or_log(err, mode, msg=None, stacklevel=1):
+    """Raise, warn or log an error according.
+
+    Parameters
+    ----------
+    err : Exception
+      An error.
+    mode : {'ignore', 'log', 'warn', 'raise'}
+      What to do with the error.
+    msg : str, optional
+      The string used when logging or warning.
+      Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    stacklevel : int
+      Stacklevel when warning. Relative to the call of this function (1 is added).
+    """
+    msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    if mode == "ignore":
+        pass
+    elif mode == "log":
+        logging.info(msg)
+    elif mode == "warn":
+        warnings.warn(msg, stacklevel=stacklevel + 1)
+    else:  # mode == "raise"
+        raise err
 
 
 class InputKind(IntEnum):
