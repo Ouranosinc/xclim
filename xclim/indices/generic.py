@@ -13,7 +13,13 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
-from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint2cfunits,
+    str2pint,
+    to_agg_units,
+)
 
 # __all__ = [
 #     "select_time",
@@ -744,4 +750,32 @@ def aggregate_between_dates(
             continue
 
     out = xr.concat(out, dim="time")
+    return out
+
+
+@declare_units(tas="[temperature]")
+def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
+    """Calculate the degree days below/above the temperature threshold.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+      Mean daily temperature.
+    thresh : str
+      The temperature threshold.
+    condition : {"<", ">"}
+      Operator.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    if "<" in condition:
+        out = (thresh - tas).clip(0)
+    elif ">" in condition:
+        out = (tas - thresh).clip(0)
+
+    out = to_agg_units(out, tas, op="delta_prod")
     return out

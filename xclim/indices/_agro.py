@@ -5,6 +5,7 @@ from typing import Optional, Union
 import numpy as np
 import xarray
 
+import xclim.indices as xci
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates
@@ -16,7 +17,11 @@ from xclim.indices.generic import aggregate_between_dates
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
 
-__all__ = ["corn_heat_units", "biologically_effective_degree_days", "cool_night_index"]
+__all__ = [
+  "corn_heat_units",
+  "biologically_effective_degree_days",
+  "cool_night_index",
+  "water_budget"
 
 
 @declare_units(
@@ -280,3 +285,59 @@ def cool_night_index(
     cni = tasmin.resample(time=freq).mean()
     cni.attrs["units"] = "degC"
     return cni
+
+
+@declare_units(
+    pr="[precipitation]",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+)
+def water_budget(
+    pr: xarray.DataArray,
+    tasmin: Optional[xarray.DataArray] = None,
+    tasmax: Optional[xarray.DataArray] = None,
+    tas: Optional[xarray.DataArray] = None,
+    method: str = "BR65",
+) -> xarray.DataArray:
+    r"""Precipitation minus potential evapotranspiration.
+
+    Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
+    where the potential evapotranspiration is calculated with a given method.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    tas : xarray.DataArray
+      Mean daily temperature.
+    method : str
+      Method to use to calculate the potential evapotranspiration.
+
+    Notes
+    -----
+    Available methods are listed in the description of xclim.indicators.atmos.potential_evapotranspiration.
+
+    Returns
+    -------
+    xarray.DataArray,
+      Precipitation minus potential evapotranspiration.
+    """
+    pr = convert_units_to(pr, "kg m-2 s-1")
+
+    pet = xci.potential_evapotranspiration(
+        tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
+    )
+
+    if xarray.infer_freq(pet.time) == "MS":
+        with xarray.set_options(keep_attrs=True):
+            pr = pr.resample(time="MS").mean(dim="time")
+
+    out = pr - pet
+
+    out.attrs["units"] = pr.attrs["units"]
+    return out

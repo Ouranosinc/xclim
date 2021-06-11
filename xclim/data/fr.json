@@ -879,5 +879,17 @@
     "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
+  },
+  "POTENTIAL_EVAPOTRANSPIRATION": {
+    "title": "Évapotranspiration potentielle.",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
+    "long_name": "Évapotranspiration potentielle."
+  },
+  "WATER_BUDGET": {
+    "title": "Bilan hydrique.",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
+    "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
+    "long_name": "Bilan hydrique."
   }
 }

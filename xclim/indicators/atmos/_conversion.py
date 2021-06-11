@@ -17,6 +17,8 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
+    "potential_evapotranspiration",
+    "water_budget",
 ]
 
 
@@ -28,7 +30,6 @@ class Converter(Indicator):
 
 humidex = Converter(
     identifier="humidex",
-    nvar=2,
     units="C",
     standard_name="air_temperature",
     long_name="humidex index",
@@ -40,7 +41,6 @@ humidex = Converter(
 
 tg = Converter(
     identifier="tg",
-    nvar=2,
     units="K",
     standard_name="air_temperature",
     long_name="Daily mean temperature",
@@ -52,7 +52,6 @@ tg = Converter(
 
 wind_speed_from_vector = Converter(
     identifier="wind_speed_from_vector",
-    nvar=2,
     var_name=["sfcWind", "sfcWindfromdir"],
     units=["m s-1", "degree"],
     standard_name=["wind_speed", "wind_from_direction"],
@@ -69,7 +68,6 @@ wind_speed_from_vector = Converter(
 
 wind_vector_from_speed = Converter(
     identifier="wind_vector_from_speed",
-    nvar=2,
     var_name=["uas", "vas"],
     units=["m s-1", "m s-1"],
     standard_name=["eastward_wind", "northward_wind"],
@@ -85,7 +83,6 @@ wind_vector_from_speed = Converter(
 
 saturation_vapor_pressure = Converter(
     identifier="e_sat",
-    nvar=1,
     units="Pa",
     long_name="Saturation vapor pressure",
     description=lambda **kws: (
@@ -103,7 +100,6 @@ saturation_vapor_pressure = Converter(
 
 relative_humidity_from_dewpoint = Converter(
     identifier="hurs_fromdewpoint",
-    nvar=2,
     units="%",
     var_name="hurs",
     long_name="Relative Humidity",
@@ -131,7 +127,6 @@ relative_humidity_from_dewpoint = Converter(
 
 relative_humidity = Converter(
     identifier="hurs",
-    nvar=3,
     units="%",
     long_name="Relative Humidity",
     standard_name="relative_humidity",
@@ -154,7 +149,6 @@ relative_humidity = Converter(
 
 specific_humidity = Converter(
     identifier="huss",
-    nvar=3,
     units="",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
@@ -174,7 +168,6 @@ specific_humidity = Converter(
 
 snowfall_approximation = Converter(
     identifier="prsn",
-    nvar=2,
     units="kg m-2 s-1",
     standard_name="solid_precipitation_flux",
     long_name="Solid precipitation",
@@ -185,9 +178,9 @@ snowfall_approximation = Converter(
     compute=indices.snowfall_approximation,
 )
 
+
 rain_approximation = Converter(
     identifier="prlp",
-    nvar=2,
     units="kg m-2 s-1",
     standard_name="precipitation_flux",
     long_name="Liquid precipitation",
@@ -201,7 +194,6 @@ rain_approximation = Converter(
 
 wind_chill_index = Converter(
     identifier="wind_chill",
-    nvar=2,
     units="degC",
     long_name="Wind chill index",
     description=lambda **kws: (
@@ -214,4 +206,29 @@ wind_chill_index = Converter(
         else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
     ),
     compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
+)
+
+
+potential_evapotranspiration = Converter(
+    identifier="potential_evapotranspiration",
+    var_name="evspsblpot",
+    units="kg m-2 s-1",
+    standard_name="water_potential_evapotranspiration_flux",
+    long_name="Potential evapotranspiration",
+    description=(
+        "The potential for water evaporation from soil and transpiration by plants if the water "
+        "supply is sufficient, with the method {method}."
+    ),
+    compute=indices.potential_evapotranspiration,
+)
+
+water_budget = Converter(
+    identifier="water_budget",
+    units="kg m-2 s-1",
+    long_name="Water budget",
+    description=(
+        "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
+        "where the potential evapotranspiration is calculated with the method {method}."
+    ),
+    compute=indices.water_budget,
 )
