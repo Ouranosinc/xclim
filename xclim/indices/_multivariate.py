@@ -53,6 +53,7 @@ __all__ = [
     "tx_tn_days_above",
     "warm_spell_duration_index",
     "winter_rain_ratio",
+    "clausius_clapeyron_scaled_precipitation"
 ]
 
 
@@ -1417,3 +1418,36 @@ def blowing_snow(
     out = cond.resample(time=freq).sum(dim="time")
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
+
+@declare_units(
+    tmean_baseline="[temperature]", tmean_future="[temperature]", pr="[precipitation]"
+)
+def clausius_clapeyron_scaled_precipitation(
+    tmean_baseline: xarray.DataArray,
+    tmean_future: xarray.DataArray,
+    pr_baseline: xarray.DataArray,
+    cc_scale_factor: float = 1.07,
+) -> xarray.DataArray:
+    """
+    Future precipitation estimate, scaled via Clausius-Clapeyron
+    
+    Parameters
+    ----------
+    tmean_baseline : xarray.DataArray
+      Baseline average temperature climatology (climatological annual mean, or otherwise-justified value)
+    tmean_future : xarray.DataArray   
+      Future average temperature climatology (future equivalent to tmean_baseline)
+    pr_baseline : xarray.DataArray
+      Baseline precipitation metric value
+    cc_scale_factor : float (default  = 1.07)
+      Clausius Clapeyron scale factor
+    
+    Returns
+    -------
+    xarray.DataArray
+      Scaled estimated future precipitation metric, scaled using Clausius Clapeyron relationship       
+    """
+    dT=tmean_future-tmean_baseline
+    pr_future=pr_baseline*(cc_scale_factor**dT)
+    
+    return pr_future
