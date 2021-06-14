@@ -3,6 +3,7 @@ from functools import wraps
 from inspect import signature
 from typing import Callable, Optional
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 from xarray.core.dataarray import DataArray
@@ -139,9 +140,9 @@ def _bootstrap_period(
     exceedance_function: ExceedanceFunction,
 ) -> DataArray:
     period_exceedance_rates = []
-    for year_ds in ds_in_base_period.groupby("time.year"):
+    for year in np.unique(ds_in_base_period.time.dt.year):
         period_exceedance_rates.append(
-            _bootstrap_year(ds_in_base_period, year_ds[0], config, exceedance_function)
+            _bootstrap_year(ds_in_base_period, year, config, exceedance_function)
         )
     out = xr.concat(period_exceedance_rates, dim="time")
     # workaround to ensure unit is really "days"
@@ -159,13 +160,13 @@ def _bootstrap_year(
     in_base = _build_virtual_in_base_period(ds_in_base_period, out_base_year)
     out_base = ds_in_base_period.sel(time=str(out_base_year))
     exceedance_rates = []
-    for year_ds in in_base.groupby("time.year"):
-        print(year_ds[0])
-        replicated_year = in_base.sel(time=str(year_ds[0]))
+    for year in np.unique(in_base.time.dt.year):
+        print(year)
+        replicated_year = in_base.sel(time=str(year))
         # it is necessary to change the time of the replicated year
         # in order to not skip it in percentile calculation
         replicated_year["time"] = replicated_year.time + pd.Timedelta(
-            str(out_base_year - year_ds[0]) + "y"
+            str(out_base_year - year) + "y"
         )
         completed_in_base = xr.concat([in_base, replicated_year], dim="time")
         thresholds = _calculate_thresholds(completed_in_base, config)
@@ -175,7 +176,7 @@ def _bootstrap_year(
         exceedance_rates.append(exceedance_rate)
     if len(exceedance_rates) == 1:
         return exceedance_rates[0]
-    return xr.concat(exceedance_rates, dim="time").groupby("time").mean()
+    return xr.concat(exceedance_rates, dim="in_base_period").mean(dim="in_base_period")
 
 
 # Does not handle computation on a in_base_period of a single year,
