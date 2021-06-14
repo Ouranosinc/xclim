@@ -1,0 +1,72 @@
+{
+  "creators": [
+    {
+      "affiliation": "Ouranos",
+      "name": "Logan, Travis",
+      "orcid": ""
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Bourgault, Pascal",
+      "orcid": ""
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Smith, Trevor James",
+      "orcid": "0000-0001-5393-8359"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Huard, David",
+      "orcid": ""
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Sébastien, Biner",
+      "orcid": ""
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Marie-Pier, Labonté",
+      "orcid": ""
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Rondeau-Genesse, Gabriel",
+      "orcid": ""
+    },
+    {
+      "name": "Roy, Philippe",
+      "orcid": ""
+    },
+    {
+      "name": "Ehbrecht, Carsten"
+    },
+    {
+      "affiliation": "Jakarto",
+      "name": "Caron, David"
+    },
+    {
+      "affiliation": "STFC CEDA",
+      "name": "Stephens, Ag"
+    },
+    {
+      "name": "Whelan, Chistopher"
+    },
+    {
+      "name": "Low, Jwen-Fai"
+    }
+  ],
+  "keywords": [
+    "xclim",
+    "xarray",
+    "climate",
+    "climatology",
+    "climate change",
+    "indicators",
+    "prediction",
+    "analysis"
+  ],
+  "license": "Apache-2.0",
+  "upload_type": "software"
+}
