@@ -322,17 +322,12 @@ def rolling_drydays_events(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    out = []
-    for base_time, indexes in pr.resample(time=freq).groups.items():
-        events = rl.windowed_run_events(
-            da=(pr.rolling(time=window, center=True).sum() < thresh).isel(time=indexes),
-            window=1,
-        )
+    out = (
+        (pr.rolling(time=window, center=True).sum() < thresh)
+        .resample(time=freq)
+        .map(rl.windowed_run_events, window=1, dim="time")
+    )
 
-        events = events.expand_dims(time=[base_time])
-        out.append(events)
-
-    out = xarray.concat(out, dim="time")
     out.attrs["units"] = ""
     return out
 
