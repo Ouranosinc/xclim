@@ -1525,6 +1525,18 @@ class TestWinterRainRatio:
         np.testing.assert_almost_equal(out.isel(dim0=0), [10.0 / (31 + 31 + 28), 0])
 
 
+class TestClausiusClapeyronScaledPrecip:
+    def test_simple(self):
+        pr_baseline = xr.DataArray(np.array([1]), attrs={"units": "mmday"})
+        tmean_baseline = xr.DataArray(np.array([1]), attrs={"units": "C"})
+        tmean_future = xr.DataArray(np.array([2]), attrs={"units": "C"})
+        scale_factor = 1.07
+        pr_future = xci.clausius_clapeyron_scaled_precipitation(
+            tmean_baseline, tmean_future, pr_baseline, scale_factor
+        )
+        np.testing.assert_almost_equal(pr_future, 1.07)
+
+
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
     @pytest.mark.parametrize(
