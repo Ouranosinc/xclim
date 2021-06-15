@@ -1420,7 +1420,7 @@ def blowing_snow(
     return out
 
 @declare_units(
-    tmean_baseline="[temperature]", tmean_future="[temperature]", pr="[precipitation]"
+    tmean_baseline="[temperature]", tmean_future="[temperature]", pr_baseline="[precipitation]"
 )
 def clausius_clapeyron_scaled_precipitation(
     tmean_baseline: xarray.DataArray,
@@ -1447,7 +1447,9 @@ def clausius_clapeyron_scaled_precipitation(
     xarray.DataArray
       Scaled estimated future precipitation metric, scaled using Clausius Clapeyron relationship       
     """
+    
     dT=tmean_future-tmean_baseline
     pr_future=pr_baseline*(cc_scale_factor**dT)
+    pr_future.attrs["units"]=pr_baseline.attrs["units"]
     
     return pr_future
