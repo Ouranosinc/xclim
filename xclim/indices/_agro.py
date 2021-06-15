@@ -318,7 +318,7 @@ def rolling_drydays_events(
     Returns
     -------
     xarray.DataArray
-      The number of periods of minimum X days for each resampling period.
+      The number of periods of minimum {window} days for each resampling period.
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
@@ -354,11 +354,11 @@ def rolling_drydays_count(
     Returns
     -------
     xarray.DataArray
-      The number of days in periods of minimum X days for each resampling period.
+      The number of days in periods of minimum {window} days for each resampling period.
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
     mask = pr.rolling(time=window, center=True).sum() < thresh
-    out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time="YS").sum()
+    out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time=freq).sum()
 
     return to_agg_units(out, pr, "count")
