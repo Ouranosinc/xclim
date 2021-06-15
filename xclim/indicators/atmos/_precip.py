@@ -323,7 +323,7 @@ rolling_drydays_events = Precip(
 
 
 rolling_drydays_count = Precip(
-    identifier="rolling_drydays_events",
+    identifier="rolling_drydays_count",
     description="The number of days in periods of minimum {window} days during which the accumulated precipitation "
     "is under {thresh}, for each resampling period.",
     units="d",
