@@ -885,5 +885,17 @@
     "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
     "long_name": "Bilan hydrique."
+  },
+  "ROLLING_DRYDAYS_EVENTS": {
+    "title": "Événements de périodes séches.",
+    "abstract": "Le nombre de périodes de n jours minimum pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
+    "description": "Le nombre de périodes de {window} jours minimum pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
+    "long_name": "Événements de périodes séches de {window} jours."
+  },
+  "ROLLING_DRYDAYS_COUNT": {
+    "title": "Nombre de jours dans les périodes séches.",
+    "abstract": "Le nombre de jours dans les périodes de n jours minimum pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
+    "description": "Le nombre de jours dans les périodes de {window} jours minimum pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
+    "long_name": "Nombre de jours dans les périodes séches de {window} jours."
   }
 }
