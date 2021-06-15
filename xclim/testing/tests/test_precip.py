@@ -425,3 +425,16 @@ def test_liquid_precip_ratio():
             out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3
         )
         assert "where temperature is above 33 degf." in out.description
+
+
+def test_rolling_drydays():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+
+    events = atmos.rolling_drydays_events(pr, thresh="3 mm/day", window=7, freq="YS")
+    count = atmos.rolling_drydays_count(pr, thresh="3 mm/day", window=7, freq="YS")
+
+    np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
+    np.testing.assert_allclose(count[0:2, 0], [50, 67], rtol=1e-1)
+
+    assert "The number of periods of minimum 7 days" in events.description
+    assert "The number of days in periods of minimum 7 days" in count.description
