@@ -4,10 +4,10 @@ from inspect import signature
 from typing import Callable, Optional
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from xarray.core.dataarray import DataArray
 
+import xclim.core.calendar as calendar
 from xclim.core.bootstrap_config import NO_BOOTSRAP, BootstrapConfig
 from xclim.core.calendar import percentile_doy
 
@@ -162,13 +162,7 @@ def _bootstrap_year(
     exceedance_rates = []
     for year in np.unique(in_base.time.dt.year):
         print(year)
-        replicated_year = in_base.sel(time=str(year))
-        # it is necessary to change the time of the replicated year
-        # in order to not skip it in percentile calculation
-        replicated_year["time"] = replicated_year.time + pd.Timedelta(
-            str(out_base_year - year) + "y"
-        )
-        completed_in_base = xr.concat([in_base, replicated_year], dim="time")
+        completed_in_base = _build_completed_in_base(in_base, out_base, year)
         thresholds = _calculate_thresholds(completed_in_base, config)
         exceedance_rate = _calculate_exceedances(
             config, exceedance_function, out_base, thresholds
@@ -177,6 +171,31 @@ def _bootstrap_year(
     if len(exceedance_rates) == 1:
         return exceedance_rates[0]
     return xr.concat(exceedance_rates, dim="in_base_period").mean(dim="in_base_period")
+
+
+def _build_completed_in_base(
+    in_base: DataArray,
+    out_base_year: DataArray,
+    year_to_replicate: int,
+):
+    out_of_base_calendar = int(out_base_year.time.dt.day.count())
+    replicated_year = in_base.sel(time=str(year_to_replicate))
+    replicated_year_calendar = int(replicated_year.time.dt.day.count())
+    # it is necessary to change the time of the replicated year
+    # in order to not skip it in percentile calculation
+    if replicated_year_calendar == out_of_base_calendar:
+        replicated_year["time"] = out_base_year.time
+    elif replicated_year_calendar == 365:
+        # TODO that's an ugly instruction to remove 29th Feb...
+        out_base_year = out_base_year.drop_sel(
+            time=np.datetime64(str(int(out_base_year.time.dt.year[0])) + "-02-29")
+        )
+        replicated_year["time"] = out_base_year.time
+    else:
+        replicated_year = calendar.convert_calendar(replicated_year, "noleap")
+        replicated_year["time"] = out_base_year.time
+    completed_in_base = xr.concat([in_base, replicated_year], dim="time")
+    return completed_in_base
 
 
 # Does not handle computation on a in_base_period of a single year,
