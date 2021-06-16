@@ -283,6 +283,22 @@ class TestAgroclimaticIndices:
         if method == "icclim":
             np.testing.assert_array_equal(bedd, bedd_high_lat)
 
+    def test_cool_night_index(self):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+        ds = ds.rename(dict(tas="tasmin"))
+
+        cni = xci.cool_night_index(tasmin=ds.tasmin, lat=ds.lat)
+        tasmin = convert_units_to(ds.tasmin, "degC")
+
+        cni_nh = cni.where(cni.lat >= 0, drop=True)
+        cni_sh = cni.where(cni.lat < 0, drop=True)
+
+        tn_nh = tasmin.where((tasmin.lat >= 0) & (tasmin.time.dt.month == 9), drop=True)
+        tn_sh = tasmin.where((tasmin.lat < 0) & (tasmin.time.dt.month == 3), drop=True)
+
+        np.testing.assert_array_equal(cni_nh, tn_nh)
+        np.testing.assert_array_equal(cni_sh, tn_sh)
+
 
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
