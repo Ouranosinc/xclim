@@ -38,7 +38,7 @@ indices:
       var_name: "fd"
       standard_name: number_of_days_with_air_temperature_below_threshold
       long_name: "Number of Frost Days (Tmin < 0C)"
-      units: "1"
+      units: "days"
       cell_methods:
         - time: minimum within days
         - time: sum over days
