@@ -376,6 +376,11 @@ def add_example_file_paths(xdoctest_namespace, tas_series):
 
     ns["path_to_shape_file"] = str(TD / "southern_qc_geojson.json")
 
+    # For core.utils.load_module example
+    ns["path_to_example_py"] = (
+        Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"
+    )
+
     time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     ns["temperature_datasets"] = [
         xr.DataArray(
