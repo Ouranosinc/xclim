@@ -71,10 +71,12 @@ _LOCALES = {}
 
 
 def list_locales():
+    """List of loaded locales. Includes all loaded locales, no matter how complete the translations are."""
     return list(_LOCALES.keys())
 
 
 def _valid_locales(locales):
+    """Check if the lcoales are valid."""
     if isinstance(locales, str):
         return True
     return all(
@@ -230,6 +232,10 @@ class UnavailableLocaleError(ValueError):
 
 
 def read_locale_file(filename, module=None):
+    """Read a locale file (*.json) and return its dictionary.
+
+    If module is a string, this module name is added to all identifiers translated in this file.
+    """
     with open(filename, "r", encoding="utf-8") as f:
         locdict = json.load(f)
 
