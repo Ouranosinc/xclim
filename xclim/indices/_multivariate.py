@@ -63,7 +63,7 @@ __all__ = [
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tn10: xarray.DataArray,
+    tn10: xarray.DataArray = None,
     window: int = 6,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
@@ -870,7 +870,7 @@ def high_precip_low_temp(
 @percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray,
+    per: xarray.DataArray = None,
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
@@ -920,7 +920,7 @@ def days_over_precip_thresh(
 @percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray,
+    per: xarray.DataArray = None,
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
@@ -970,7 +970,7 @@ def fraction_over_precip_thresh(
 @percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
-    t90: xarray.DataArray,
+    t90: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1018,7 +1018,7 @@ def tg90p(
 @percentile_bootstrap
 def tg10p(
     tas: xarray.DataArray,
-    t10: xarray.DataArray,
+    t10: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1066,7 +1066,7 @@ def tg10p(
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-    t90: xarray.DataArray,
+    t90: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1114,7 +1114,7 @@ def tn90p(
 @percentile_bootstrap
 def tn10p(
     tasmin: xarray.DataArray,
-    t10: xarray.DataArray,
+    t10: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1162,7 +1162,7 @@ def tn10p(
 @percentile_bootstrap
 def tx90p(
     tasmax: xarray.DataArray,
-    t90: xarray.DataArray,
+    t90: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1210,7 +1210,7 @@ def tx90p(
 @percentile_bootstrap
 def tx10p(
     tasmax: xarray.DataArray,
-    t10: xarray.DataArray,
+    t10: xarray.DataArray = None,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
@@ -1319,7 +1319,7 @@ def tx_tn_days_above(
 @percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tx90: xarray.DataArray,
+    tx90: xarray.DataArray = None,
     window: int = 6,
     freq: str = "YS",
     bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
