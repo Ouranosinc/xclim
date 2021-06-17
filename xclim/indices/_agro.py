@@ -304,7 +304,7 @@ def latitude_temperature_index(
     lat: xarray.DataArray
       Latitude coordinate.
     lat_factor: float
-      Latitude factor. Maximum poleward elevation. Default: 75.
+      Latitude factor. Maximum poleward latitude. Default: 75.
 
     Returns
     -------
