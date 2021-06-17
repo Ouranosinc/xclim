@@ -436,5 +436,11 @@ def test_dry_spell():
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
     np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
 
-    assert "The number of dry periods of minimum 7 days" in events.description
-    assert "The number of days in dry periods of minimum 7 days" in total_d.description
+    assert (
+        "The annual number of dry periods of 7 days and more, during which the accumulated "
+        "precipitation on a window of 7 days is under 3 mm."
+    ) in events.description
+    assert (
+        "The annual number of days in dry periods of 7 days and more"
+        in total_d.description
+    )
