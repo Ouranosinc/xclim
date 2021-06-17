@@ -294,6 +294,9 @@ def latitude_temperature_index(
 ) -> xarray.DataArray:
     """Latitude-Temperature Index.
 
+    Mean temperature of the warmest month with a latitude-based scaling factor.
+    Used for categorizing winegrowing regions.
+
     Parameters
     ----------
     tas: xarray.DataArray
@@ -307,6 +310,18 @@ def latitude_temperature_index(
     -------
     xarray.DataArray, [unitless]
       Latitude Temperature Index.
+
+    Notes
+    -----
+    The latitude factor of `75` is provided for examining the poleward expansion of winegrowing climates under scenarios
+    of climate change. For comparing 20th century/observed historical records, the original scale factor of `60` is more
+    appropriate.
+
+    Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
+    and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
+
+    .. math::
+        LTI = max(TN_{j}: j = 1..12)(lat_f - lat)
 
     References
     ----------
