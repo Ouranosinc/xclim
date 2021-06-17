@@ -3,6 +3,7 @@ from functools import wraps
 from inspect import signature
 from typing import Callable, Optional
 
+import click
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
@@ -44,22 +45,29 @@ def percentile_bootstrap(func):
         bound_args = signature(func).bind(*args, **kwargs)
         config = NO_BOOTSRAP
         indice_window = None
+        da_count = 0
         for name, val in bound_args.arguments.items():
             if name == "window":
                 indice_window = val
             elif name == "freq":
                 freq = val
+            elif name == "bootstrap_config" and isinstance(val, BootstrapConfig):
+                config = val
             elif isinstance(val, DataArray):
                 da = val
-            elif isinstance(val, BootstrapConfig):
-                config = val
-        if config != NO_BOOTSRAP:
-            config.indice_window = indice_window
-            config.freq = freq
-            return compute_bootstrapped_exceedance_rate(
-                exceedance_function=func, da=da, config=config
+                da_count += 1
+        if config == NO_BOOTSRAP:
+            return func(*args, **kwargs)
+        if da_count != 1:
+            raise click.BadArgumentUsage(
+                "Only one DataArray must be supllied when bootsrapping is wanted.\
+                 Do not supply the percentile DataArray."
             )
-        return func(*args, **kwargs)
+        config.indice_window = indice_window
+        config.freq = freq
+        return compute_bootstrapped_exceedance_rate(
+            exceedance_function=func, da=da, config=config
+        )
 
     return wrapper
 
@@ -121,6 +129,12 @@ def compute_bootstrapped_exceedance_rate(
 
     """
     in_base_period = da.sel(time=config.in_base_slice)
+    if in_base_period.size == 0:
+        raise click.BadOptionUsage(
+            "bootstrap_config",
+            f"The in base slice {config.in_base_slice} correspond to an empty period in the dataset.\
+              Make sure to use a slice of your dataset time serie",
+        )
     in_base_exceedance_rates = _bootstrap_period(
         in_base_period, config, exceedance_function
     )
