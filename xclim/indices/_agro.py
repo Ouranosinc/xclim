@@ -189,7 +189,7 @@ def biologically_effective_degree_days(
     .. math::
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
-    A second version of the BEDD (`method="icclim") does not consider :math:`TR_{adj}` and :math:`k` and employs a
+    A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September). The simplified formula is as follows:
 
     .. math::
