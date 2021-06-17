@@ -6,7 +6,7 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.units import convert_units_to, declare_units, to_agg_units
+from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates, compare
 
@@ -21,8 +21,8 @@ __all__ = [
     "biologically_effective_degree_days",
     "cool_night_index",
     "corn_heat_units",
-    "rolling_drydays_count",
-    "rolling_drydays_events",
+    "dry_spell_frequency",
+    "dry_spell_total_length",
     "water_budget",
 ]
 
@@ -346,9 +346,9 @@ def water_budget(
     return out
 
 
-@declare_units(pr="[precipitation]", thresh="[precipitation]")
-def rolling_drydays_events(
-    pr: xarray.DataArray, thresh: str = "1.0 mm/day", window: int = 3, freq: str = "YS"
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_frequency(
+    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
     Return the number of periods of minimum X days during which the accumulated precipitation is under the
@@ -359,7 +359,7 @@ def rolling_drydays_events(
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Precipitation value under which a period is considered dry.
+      Accumulated precipitation value under which a period is considered dry.
     window : int
       Minimum number of days where the accumulated precipitation is under threshold.
     freq : str
@@ -370,10 +370,11 @@ def rolling_drydays_events(
     xarray.DataArray
       The number of periods of minimum {window} days for each resampling period.
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    pram = rate2amount(convert_units_to(pr, "mm/day"))
+    thresh = convert_units_to(thresh, pram)
 
     out = (
-        (pr.rolling(time=window, center=True).sum() < thresh)
+        (pram.rolling(time=window, center=True).sum() < thresh)
         .resample(time=freq)
         .map(rl.windowed_run_events, window=1, dim="time")
     )
@@ -382,9 +383,9 @@ def rolling_drydays_events(
     return out
 
 
-@declare_units(pr="[precipitation]", thresh="[precipitation]")
-def rolling_drydays_count(
-    pr: xarray.DataArray, thresh: str = "1.0 mm/day", window: int = 3, freq: str = "YS"
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_total_length(
+    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
     Return the number of days in periods of minimum X days during which the accumulated precipitation
@@ -395,7 +396,7 @@ def rolling_drydays_count(
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Precipitation value under which a period is considered dry.
+      Accumulated precipitation value under which a period is considered dry.
     window : int
       Minimum number of days where the accumulated precipitation is under threshold.
     freq : str
@@ -406,9 +407,10 @@ def rolling_drydays_count(
     xarray.DataArray
       The number of days in periods of minimum {window} days for each resampling period.
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    pram = rate2amount(convert_units_to(pr, "mm/day"))
+    thresh = convert_units_to(thresh, pram)
 
-    mask = pr.rolling(time=window, center=True).sum() < thresh
+    mask = pram.rolling(time=window, center=True).sum() < thresh
     out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time=freq).sum()
 
-    return to_agg_units(out, pr, "count")
+    return to_agg_units(out, pram, "count")
