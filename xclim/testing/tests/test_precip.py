@@ -427,14 +427,16 @@ def test_liquid_precip_ratio():
         assert "where temperature is above 33 degf." in out.description
 
 
-def test_rolling_drydays():
+def test_dry_spell():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
-    events = atmos.rolling_drydays_events(pr, thresh="3 mm/day", window=7, freq="YS")
-    count = atmos.rolling_drydays_count(pr, thresh="3 mm/day", window=7, freq="YS")
+    events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+    total_d = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
 
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
-    np.testing.assert_allclose(count[0:2, 0], [50, 67], rtol=1e-1)
+    np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
 
-    assert "The number of periods of minimum 7 days" in events.description
-    assert "The number of days in periods of minimum 7 days" in count.description
+    assert "The annual number of periods of minimum 7 days" in events.description
+    assert (
+        "The annual number of days in periods of minimum 7 days" in total_d.description
+    )

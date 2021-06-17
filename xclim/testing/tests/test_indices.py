@@ -2044,7 +2044,7 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
 
 
-def test_rolling_drydays(pr_series):
+def test_dry_spell(pr_series):
     pr = pr_series(
         np.array(
             [1, 1, 1, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.75, 0.75, 0.5, 0, 0, 0, 1, 1, 1]
@@ -2052,8 +2052,8 @@ def test_rolling_drydays(pr_series):
     )
     pr.attrs["units"] = "mm/day"
 
-    events = xci.rolling_drydays_events(pr, thresh="3 mm/day", window=7, freq="YS")
-    count = xci.rolling_drydays_count(pr, thresh="3 mm/day", window=7, freq="YS")
+    events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+    total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
 
     np.testing.assert_allclose(events[0], [2], rtol=1e-1)
-    np.testing.assert_allclose(count[0], [12], rtol=1e-1)
+    np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
