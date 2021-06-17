@@ -302,12 +302,13 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "lat_factor, values",
         [
-            (60, [135.34, 922.24, 1498.31, 1221.80, 271.72]),
-            (75, [55.35, 1062.59, 1895.97, 1472.18, 298.74]),
+            (60, [135.34, 918.79, 1498.31, 1221.80, 271.72]),
+            (75, [55.35, 1058.55, 1895.97, 1472.18, 298.74]),
         ],
     )
     def test_lat_temperature_index(self, lat_factor, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+        ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
         lti = xci.latitude_temperature_index(
             tas=ds.tas, lat=ds.lat, lat_factor=lat_factor
@@ -318,7 +319,7 @@ class TestAgroclimaticIndices:
             lti.lon <= 35, drop=True
         )
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
-        np.testing.assert_array_almost_equal(lti.transpose(), np.array([values]), 2)
+        np.testing.assert_array_almost_equal(lti[0].transpose(), np.array([values]), 2)
 
 
 class TestDailyFreezeThawCycles:
