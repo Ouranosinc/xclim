@@ -19,6 +19,7 @@ from xclim.indices.generic import aggregate_between_dates
 __all__ = [
     "corn_heat_units",
     "biologically_effective_degree_days",
+    "huglin_index",
     "cool_night_index",
     "water_budget",
 ]
@@ -106,6 +107,118 @@ def corn_heat_units(
 
     chu.attrs["units"] = ""
     return chu
+
+
+@declare_units(
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    thresh_tasmin="[temperature]",
+)
+def huglin_index(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    lat: Optional[xarray.DataArray] = None,
+    thresh_tasmin: str = "10 degC",
+    method: str = "huglin",
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "10-01",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Huglin Heliothermal Index.
+
+    Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April to September
+    (Northern Hemisphere; October to March in Southern Hemisphere).
+    Used as a heat-summation metric in viticulture agroclimatology.
+
+    Parameters
+    ----------
+    tasmin: xarray.DataArray
+      Minimum daily temperature.
+    tasmax: xarray.DataArray
+      Maximum daily temperature.
+    lat: xarray.DataArray, optional
+      Latitude coordinate.
+    thresh_tasmin: str
+      The minimum temperature threshold.
+    method: {"huglin", "jones"}
+      The formula to use for the calculation.
+    start_date: DayOfYearStr
+      The hemisphere-based start date to consider (north = April, south = October).
+    end_date: DayOfYearStr
+      The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
+    freq : str
+      Resampling frequency (default: "YS"; For Southern Hemisphere, should be "AS-JUL").
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+      Huglin heliothermal index (HI).
+
+    Notes
+    -----
+    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i` and
+    :math:`TN_{thresh}` the base threshold needed for heat summation (typically, 10 degC). A day-length multiplication,
+    :math:`k`, based on latitude, :math:`lat`, is also considered. Then the Huglin heliothermal index for dates between
+    1 April and 30 September is:
+
+    .. math::
+        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \left( \frac{TX_i  + TN_i)}{2} - 10 \right) k \right)
+
+    For the `huglin` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
+
+    .. math::
+        K = f(lat) = \left\{ \begin{array}{cl}
+                                1.0, & \text{if } |lat| \lteq 40 \\
+                                1.02, & \text{if } 40 < |lat| \lteq 42 \\
+                                1.03, & \text{if } 42 < |lat| \lteq 44 \\
+                                1.04, & \text{if } 44 < |lat| \lteq 46 \\
+                                1.05, & \text{if } 46 < |lat| \lteq 48 \\
+                                1.06, & \text{if } 48 < |lat| \lteq 50 \\
+                            \end{array} \right\}
+
+    References
+    ----------
+    Huglin heliothermal index originally published in Huglin, P. (1978). Nouveau mode d’évaluation des possibilités
+    héliothermiques d’un milieu viticole. Dans Symposium International sur l’Écologie de la Vigne (p. 89‑98). Ministère
+    de l’Agriculture et de l’Industrie Alimentaire.
+
+    Modified day-length for Huglin heliothermal index published in Hall, A., & Jones, G. V. (2010). Spatial analysis of
+    climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404.
+    https://doi.org/10.1111/j.1755-0238.2010.00100.x
+    """
+    raise NotImplementedError()
+
+    # tasmin = convert_units_to(tasmin, "degC")
+    # tasmax = convert_units_to(tasmax, "degC")
+    # thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    # max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
+    #
+    # if method.lower() == "gladstones" and lat is not None:
+    #     low_dtr = convert_units_to(low_dtr, "degC")
+    #     high_dtr = convert_units_to(high_dtr, "degC")
+    #     dtr = tasmax - tasmin
+    #     tr_adj = 0.25 * xarray.where(
+    #         dtr > high_dtr,
+    #         dtr - high_dtr,
+    #         xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
+    #     )
+    #
+    #     lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
+    #     k = 1 + xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
+    # elif method.lower() == "icclim":
+    #     k = 1
+    #     tr_adj = 0
+    # else:
+    #     raise NotImplementedError()
+    #
+    # bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+    #     max=max_daily_degree_days
+    # )
+    #
+    # bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
+    #
+    # bedd.attrs["units"] = "K days"
+    # return bedd
 
 
 @declare_units(
