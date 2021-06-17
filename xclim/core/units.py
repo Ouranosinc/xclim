@@ -222,7 +222,7 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
       Units the output array should be converted into.
     """
     a = 1 * units2pint(da)  # noqa
-    f = a * q.to_base_units()
+    f = a * q
     if out_units:
         f = f.to(out_units)
     else:
