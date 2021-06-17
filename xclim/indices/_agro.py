@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+import numpy as np
 import xarray
 
 import xclim.indices as xci
@@ -119,7 +120,7 @@ def huglin_index(
     tasmax: xarray.DataArray,
     lat: Optional[xarray.DataArray] = None,
     thresh_tasmin: str = "10 degC",
-    method: str = "huglin",
+    method: str = "smoothed",
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "10-01",
     freq: str = "YS",
@@ -140,7 +141,7 @@ def huglin_index(
       Latitude coordinate.
     thresh_tasmin: str
       The minimum temperature threshold.
-    method: {"huglin", "jones"}
+    method: {"smoothed", "icclim", "jones"}
       The formula to use for the calculation.
     start_date: DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
@@ -186,39 +187,45 @@ def huglin_index(
     climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404.
     https://doi.org/10.1111/j.1755-0238.2010.00100.x
     """
-    raise NotImplementedError()
+    tasmin = convert_units_to(tasmin, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
 
-    # tasmin = convert_units_to(tasmin, "degC")
-    # tasmax = convert_units_to(tasmax, "degC")
-    # thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    # max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
-    #
-    # if method.lower() == "gladstones" and lat is not None:
-    #     low_dtr = convert_units_to(low_dtr, "degC")
-    #     high_dtr = convert_units_to(high_dtr, "degC")
-    #     dtr = tasmax - tasmin
-    #     tr_adj = 0.25 * xarray.where(
-    #         dtr > high_dtr,
-    #         dtr - high_dtr,
-    #         xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
-    #     )
-    #
-    #     lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
-    #     k = 1 + xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
-    # elif method.lower() == "icclim":
-    #     k = 1
-    #     tr_adj = 0
-    # else:
-    #     raise NotImplementedError()
-    #
-    # bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
-    #     max=max_daily_degree_days
-    # )
-    #
-    # bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
-    #
-    # bedd.attrs["units"] = "K days"
-    # return bedd
+    if method.lower() == "smoothed":
+        lat_mask = abs(lat) <= 50
+        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
+    elif method.lower() == "icclim":
+        k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
+
+        k = 1 + xarray.where(
+            abs(lat) <= 40,
+            k_f[0],
+            xarray.where(
+                abs(lat) <= 42,
+                k_f[1],
+                xarray.where(
+                    abs(lat) <= 44,
+                    k_f[2],
+                    xarray.where(
+                        abs(lat) <= 46,
+                        k_f[3],
+                        xarray.where(
+                            abs(lat) <= 48,
+                            k_f[4],
+                            xarray.where(abs(lat) <= 50, k_f[5], np.NaN),
+                        ),
+                    ),
+                ),
+            ),
+        )
+    else:
+        raise NotImplementedError()
+
+    hi = (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k
+    hi = aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
+
+    hi.attrs["units"] = ""
+    return hi
 
 
 @declare_units(
@@ -332,8 +339,8 @@ def biologically_effective_degree_days(
             xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
 
-        lat_mask = (abs(lat) >= 40) & (abs(lat) <= 50)
-        k = 1 + xarray.where(lat_mask, (abs(lat) / 50) * 0.06, 0)
+        lat_mask = abs(lat) <= 50
+        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
     elif method.lower() == "icclim":
         k = 1
         tr_adj = 0

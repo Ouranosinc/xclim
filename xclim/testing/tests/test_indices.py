@@ -216,7 +216,7 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "method, end_date, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1127.78, 1926.0),
+            ("gladstones", "11-01", 1102.1, 1926.0),
             ("icclim", "10-01", 915.0, 1647.0),
         ],
     )
