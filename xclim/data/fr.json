@@ -892,16 +892,16 @@
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
     "long_name": "Bilan hydrique."
   },
-  "ROLLING_DRYDAYS_EVENTS": {
-    "title": "Événements de périodes séches.",
-    "abstract": "Le nombre de périodes de n jours minimum pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
-    "description": "Le nombre de périodes de {window} jours minimum pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
-    "long_name": "Événements de périodes séches de {window} jours."
+  "DRY_SPELL_FREQUENCY": {
+    "title": "Fréquence des périodes sèches.",
+    "abstract": "Fréquence des périodes sèches de n jours et plus pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
+    "description": "Fréquence des périodes sèches de {window} jours et plus pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
+    "long_name": "Fréquence des périodes sèches de {window} jours et plus."
   },
-  "ROLLING_DRYDAYS_COUNT": {
-    "title": "Nombre de jours dans les périodes séches.",
-    "abstract": "Le nombre de jours dans les périodes de n jours minimum pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
-    "description": "Le nombre de jours dans les périodes de {window} jours minimum pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
-    "long_name": "Nombre de jours dans les périodes séches de {window} jours."
+  "DRY_SPELL_TOTAL_LENGTH": {
+    "title": "Durée totale en jours des périodes séches.",
+    "abstract": "Durée totale en jours des périodes séches de n jours et plus pendant lesquelles les précipitations accumulées sont inférieures à un seuil donné, pour chaque période de rééchantillonnage.",
+    "description": "Durée totale en jours des périodes séches de {window} jours et plus pendant lesquelles les précipitations accumulées sont inférieures à {thresh}, pour chaque période de rééchantillonnage.",
+    "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus."
   }
 }
