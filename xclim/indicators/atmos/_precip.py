@@ -29,8 +29,8 @@ __all__ = [
     "high_precip_low_temp",
     "fraction_over_precip_thresh",
     "liquid_precip_ratio",
-    "rolling_drydays_events",
-    "rolling_drydays_count",
+    "dry_spell_frequency",
+    "dry_spell_total_length",
 ]
 
 
@@ -312,21 +312,21 @@ liquid_precip_ratio = PrTasx(
 )
 
 
-rolling_drydays_events = Precip(
-    identifier="rolling_drydays_events",
-    description="The number of periods of minimum {window} days during which the accumulated precipitation is under"
-    "{thresh}, for each resampling period.",
+dry_spell_frequency = Precip(
+    identifier="dry_spell_frequency",
+    description="The number of dry periods of minimum {window} days during which the accumulated precipitation "
+    "is under {thresh}, for each resampling period.",
     units="",
     cell_methods="",
-    compute=indices.rolling_drydays_events,
+    compute=indices.dry_spell_frequency,
 )
 
 
-rolling_drydays_count = Precip(
-    identifier="rolling_drydays_count",
-    description="The number of days in periods of minimum {window} days during which the accumulated precipitation "
-    "is under {thresh}, for each resampling period.",
+dry_spell_total_length = Precip(
+    identifier="dry_spell_total_length",
+    description="The number of days in dry periods of minimum {window} days during which the accumulated "
+    "precipitation is under {thresh}, for each resampling period.",
     units="d",
     cell_methods="",
-    compute=indices.rolling_drydays_count,
+    compute=indices.dry_spell_total_length,
 )

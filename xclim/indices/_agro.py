@@ -351,7 +351,7 @@ def dry_spell_frequency(
     pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Return the number of periods of minimum X days during which the accumulated precipitation is under the
+    Return the number of dry periods of minimum n days during which the accumulated precipitation is under the
     threshold, for each resampling period.
 
     Parameters
@@ -368,7 +368,7 @@ def dry_spell_frequency(
     Returns
     -------
     xarray.DataArray
-      The number of periods of minimum {window} days for each resampling period.
+      The number of dry periods of minimum {window} days for each resampling period.
     """
     pram = rate2amount(convert_units_to(pr, "mm/day"))
     thresh = convert_units_to(thresh, pram)
@@ -388,7 +388,7 @@ def dry_spell_total_length(
     pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Return the number of days in periods of minimum X days during which the accumulated precipitation
+    Return the total length in days of dry periods of minimum n days during which the accumulated precipitation
     is under the threshold, for each resampling period.
 
     Parameters
@@ -405,7 +405,7 @@ def dry_spell_total_length(
     Returns
     -------
     xarray.DataArray
-      The number of days in periods of minimum {window} days for each resampling period.
+      The total length in days of dry periods of minimum {window} days for each resampling period.
     """
     pram = rate2amount(convert_units_to(pr, "mm/day"))
     thresh = convert_units_to(thresh, pram)
