@@ -351,8 +351,8 @@ def dry_spell_frequency(
     pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of minimum n days during which the accumulated precipitation is under the
-    threshold, for each resampling period.
+    Return the number of dry periods of n days and more, during which the accumulated precipitation on a window of
+    n days is under the threshold.
 
     Parameters
     ----------
@@ -361,14 +361,14 @@ def dry_spell_frequency(
     thresh : str
       Accumulated precipitation value under which a period is considered dry.
     window : int
-      Minimum number of days where the accumulated precipitation is under threshold.
+      Number of days where the accumulated precipitation is under threshold.
     freq : str
       Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The number of dry periods of minimum {window} days for each resampling period.
+      The {freq} number of dry periods of minimum {window} days.
     """
     pram = rate2amount(convert_units_to(pr, "mm/day"))
     thresh = convert_units_to(thresh, pram)
@@ -388,8 +388,8 @@ def dry_spell_total_length(
     pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Return the total length in days of dry periods of minimum n days during which the accumulated precipitation
-    is under the threshold, for each resampling period.
+    Return the total number of days in dry periods of n days and more, during which the accumulated precipitation
+    on a window of n days is under the threshold.
 
     Parameters
     ----------
@@ -398,14 +398,14 @@ def dry_spell_total_length(
     thresh : str
       Accumulated precipitation value under which a period is considered dry.
     window : int
-      Minimum number of days where the accumulated precipitation is under threshold.
+      Number of days where the accumulated precipitation is under threshold.
     freq : str
       Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The total length in days of dry periods of minimum {window} days for each resampling period.
+      The {freq} total number of days in dry periods of minimum {window} days.
     """
     pram = rate2amount(convert_units_to(pr, "mm/day"))
     thresh = convert_units_to(thresh, pram)

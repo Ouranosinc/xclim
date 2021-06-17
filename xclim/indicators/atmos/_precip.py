@@ -314,8 +314,8 @@ liquid_precip_ratio = PrTasx(
 
 dry_spell_frequency = Precip(
     identifier="dry_spell_frequency",
-    description="The number of dry periods of minimum {window} days during which the accumulated precipitation "
-    "is under {thresh}, for each resampling period.",
+    description="The {freq} number of dry periods of {window} days and more, during which the accumulated "
+    "precipitation on a window of {window} days is under {thresh}.",
     units="",
     cell_methods="",
     compute=indices.dry_spell_frequency,
@@ -324,8 +324,8 @@ dry_spell_frequency = Precip(
 
 dry_spell_total_length = Precip(
     identifier="dry_spell_total_length",
-    description="The number of days in dry periods of minimum {window} days during which the accumulated "
-    "precipitation is under {thresh}, for each resampling period.",
+    description="The {freq} number of days in dry periods of {window} days and more, during which the accumulated "
+    "precipitation on a window of {window} days is under {thresh}.",
     units="d",
     cell_methods="",
     compute=indices.dry_spell_total_length,
