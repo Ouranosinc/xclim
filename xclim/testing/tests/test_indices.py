@@ -2047,7 +2047,28 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
 def test_dry_spell(pr_series):
     pr = pr_series(
         np.array(
-            [1, 1, 1, 1, 1, 1, 0, 0, 0, 0.5, 0.5, 0.75, 0.75, 0.5, 0, 0, 0, 1, 1, 1]
+            [
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                0.01,
+                0.01,
+                0.01,
+                0.51,
+                0.51,
+                0.75,
+                0.75,
+                0.51,
+                0.01,
+                0.01,
+                0.01,
+                1.01,
+                1.01,
+                1.01,
+            ]
         )
     )
     pr.attrs["units"] = "mm/day"
