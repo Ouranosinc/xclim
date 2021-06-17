@@ -290,7 +290,10 @@ def cool_night_index(
 
 @declare_units(tas="[temperature]")
 def latitude_temperature_index(
-    tas: xarray.DataArray, lat: xarray.DataArray, lat_factor: float = 75
+    tas: xarray.DataArray,
+    lat: xarray.DataArray,
+    lat_factor: float = 75,
+    freq: str = "YS",
 ) -> xarray.DataArray:
     """Latitude-Temperature Index.
 
@@ -305,6 +308,8 @@ def latitude_temperature_index(
       Latitude coordinate.
     lat_factor: float
       Latitude factor. Maximum poleward latitude. Default: 75.
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
@@ -335,8 +340,7 @@ def latitude_temperature_index(
     tas = convert_units_to(tas, "degC")
 
     tas = tas.resample(time="MS").mean(dim="time")
-    warmest_month = tas.idxmax("time")
-    mtwm = tas.sel(time=warmest_month)
+    mtwm = tas.resample(time=freq).max(dim="time")
 
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
