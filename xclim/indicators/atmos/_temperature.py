@@ -70,6 +70,7 @@ __all__ = [
     "fire_season",
     "corn_heat_units",
     "biologically_effective_degree_days",
+    "latitude_temperature_index",
 ]
 
 
@@ -807,6 +808,27 @@ biologically_effective_degree_days = Temp(
             max_daily_degree_days="9 degC",
             start_date="04-01",
             end_date="11-01",
+            lat=_empty,
+        ),
+    ),
+)
+
+
+latitude_temperature_index = Temp(
+    identifier="latitude_temperature_index",
+    units="",
+    long_name="Latitude-temperature index computed with latitude factor of {lat_factor} (Mean temperature of warmest "
+    "month * (lat_factor - latitude)).",
+    description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
+    "account for longer day-length favouring growing conditions. Developed specifically for viticulture.",
+    cell_methods="",
+    allowed_periods=["A"],
+    comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
+    var_name="lti",
+    compute=wrapped_partial(
+        indices.latitude_temperature_index,
+        suggested=dict(
+            lat_factor=75,
             lat=_empty,
         ),
     ),
