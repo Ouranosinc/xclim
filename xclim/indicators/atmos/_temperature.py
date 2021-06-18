@@ -820,7 +820,7 @@ latitude_temperature_index = Temp(
     long_name="Latitude-temperature index",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
     "account for longer day-length favouring growing conditions. Developed specifically for viticulture. Mean temperature of warmest "
-    "month * ({lat_factor} - latitude)).",
+    "month * ({lat_factor} - latitude).",
     cell_methods="",
     allowed_periods=["A"],
     comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
