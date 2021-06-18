@@ -173,9 +173,9 @@ def huglin_index(
 
     .. math::
         k = f(lat) = \left\{ \begin{array}{cl}
-                                NaN, & \text{if } |lat| > 50 \\
-                                1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
                                 1,  \text{if } |lat| <= 40 \\
+                                1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
+                                NaN, & \text{if } |lat| > 50 \\
                             \end{array} \right\}
 
     For compatibility with icclim, the `icclim` method for the day-length multiplication factor, :math:`k`,
