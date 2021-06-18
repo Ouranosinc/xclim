@@ -420,7 +420,6 @@
     "comment": "",
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
   },
-
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de froid",
     "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
@@ -434,6 +433,13 @@
     "title": "Jours de vague de froid",
     "comment": "",
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+  },
+  "COOL_NIGHT_INDEX": {
+    "long_name": "Indice de fraîcheur des nuits",
+    "description": "Moyenne {freq:f} de la température journalière minimale en septembre (hémisphère nord) ou en mars (hémisphère sud)",
+    "title": "Indice de fraîcheur des nuits",
+    "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
+    "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
   },
   "DLYFRZTHW": {
     "long_name": "Cycles de gel-dégel quotidien",
@@ -873,5 +879,17 @@
     "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
+  },
+  "POTENTIAL_EVAPOTRANSPIRATION": {
+    "title": "Évapotranspiration potentielle.",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
+    "long_name": "Évapotranspiration potentielle."
+  },
+  "WATER_BUDGET": {
+    "title": "Bilan hydrique.",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
+    "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
+    "long_name": "Bilan hydrique."
   }
 }

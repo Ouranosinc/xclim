@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # Tests for `xclim.locales`
 import json
-import warnings
 
 import numpy as np
 import pytest
@@ -38,12 +37,6 @@ russian = (
         },
     },
 )
-
-
-def test_best_locale():
-    assert xloc.get_best_locale("fr") == "fr"
-    assert xloc.get_best_locale("fr-CA") == "fr"
-    assert xloc.get_best_locale("en") is None
 
 
 def test_local_dict(tmp_path):
@@ -106,7 +99,7 @@ def test_local_formatter():
 def test_indicator_output(tas_series):
     tas = tas_series(np.zeros(365))
 
-    with set_options(metadata_locales=["fr"]):
+    with set_options(metadata_locales="fr"):
         tgmean = atmos.tg_mean(tas, freq="YS")
 
     assert "long_name_fr" in tgmean.attrs
@@ -138,27 +131,26 @@ def test_xclim_translations(locale, official_indicators):
         default_formatter.mapping.keys()
     ) == {"modifiers"}
 
-    translated_inds = []
-    registry = official_indicators.copy()
-    for indicator, fields in dic.items():
-        if indicator != "attrs_mapping":
-            # Checking that the translated indicator does exist
-            # For translations of children of MultiIndicators, only check that the indicator exists
-            if "." in indicator:
-                indicator = indicator.split(".")[0]
-                assert indicator in registry or indicator in translated_inds
-            else:
-                assert registry.pop(indicator)
-                translated_inds.append(indicator)
-            # Only translatable attributes are translated
-            assert set(fields.keys()).issubset(xloc.TRANSLATABLE_ATTRS)
+    untranslated = []
+    incomplete = []
+    for indname, indcls in official_indicators.items():
+        is_complete = True
+        trans = indcls.translate_attrs(locale)
+        if trans == {"outputs": []}:
+            untranslated.append(indname)
+            continue
+        # Both global attrs are present
+        is_complete = not ({"title", "abstract"} - set(trans.keys()))
+        for attrs, transattrs in zip(indcls.cf_attrs, trans["outputs"]):
+            if {"long_name", "description"} - set(transattrs.keys()):
+                is_complete = False
 
-    # Remove virtual modules' indicators, those have a dotted name.
-    untranslated = [k for k in registry.keys() if "." not in k]
+        if not is_complete:
+            incomplete.append(indname)
 
-    if len(untranslated) > 0:
+    if len(untranslated) > 0 or len(incomplete) > 0:
         pytest.fail(
-            f"Indicators {', '.join(untranslated)} do not have translations for official locale {locale}."
+            f"Indicators {', '.join(untranslated)} do not have translations and {', '.join(incomplete)} have incomplete ones for official locale {locale}."
         )
 
 

@@ -6,11 +6,16 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import logging
+import os
+import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
+from pathlib import Path
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
@@ -101,6 +106,37 @@ def walk_map(d: dict, func: FunctionType):
         else:
             out[k] = func(v)
     return out
+
+
+def load_module(path: os.PathLike):
+    """Load a python module from a single .py file.
+
+    Examples
+    --------
+    Given a path to a module file (.py)
+
+    >>> from pathlib import Path
+    >>> path = Path(path_to_example_py)
+
+    The two following imports are equivalent, the second uses this method.
+
+    >>> # xdoctest: +SKIP
+    >>> os.chdir(path.parent)
+    >>> import example as mod1
+    >>> os.chdir(previous_working_dir)
+    >>> mod2 = load_module(path)
+    >>> mod1 == mod2
+    """
+    path = Path(path)
+    pwd = Path(os.getcwd())
+    os.chdir(path.parent)
+    try:
+        mod = import_module(path.stem)
+    except ModuleNotFoundError as err:
+        raise err
+    finally:
+        os.chdir(pwd)
+    return mod
 
 
 class ValidationError(ValueError):
@@ -203,6 +239,32 @@ def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
             np.nanpercentile(arr[nans], p, axis=-1), 0, -1
         ).ravel()
     return out
+
+
+def raise_warn_or_log(err, mode, msg=None, stacklevel=1):
+    """Raise, warn or log an error according.
+
+    Parameters
+    ----------
+    err : Exception
+      An error.
+    mode : {'ignore', 'log', 'warn', 'raise'}
+      What to do with the error.
+    msg : str, optional
+      The string used when logging or warning.
+      Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    stacklevel : int
+      Stacklevel when warning. Relative to the call of this function (1 is added).
+    """
+    msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    if mode == "ignore":
+        pass
+    elif mode == "log":
+        logging.info(msg)
+    elif mode == "warn":
+        warnings.warn(msg, stacklevel=stacklevel + 1)
+    else:  # mode == "raise"
+        raise err
 
 
 class InputKind(IntEnum):

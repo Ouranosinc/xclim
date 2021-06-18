@@ -7,6 +7,8 @@ History
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Automatic load of translations on import and possibility to pass translations for virtual modules.
+* New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
 * New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
 
 Breaking changes
@@ -17,10 +19,15 @@ New indicators
 ~~~~~~~~~~~~~~
 * `biologically_effective_degree_days` (with ``method="gladstones"``) indice computes degree-days between two specific dates, with a capped daily max value as well as latitude and temperature range swing as modifying coefficients (based on Gladstones, J. (1992)). This has also been wrapped as an indicator.
 * An alternative implementation of `biologically_effective_degree_days` (with ``method="icclim"``, based on ICCLIM formula) ignores latitude and temperature range swing modifiers and uses an alternate ``end_date``. Wrapped and available as an ICCLIM indicator.
+* `cool_night_index` indice returns the mean minimum temperature in September (``lat >= 0`` deg N) or March (``lat < 0`` deg N), based on Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001). Also available as an indicator (see indices `Notes` section on indicator usage recommendations).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `aggregate_between_dates` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
+* The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
+* Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
+* ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
+* Minor modification to the github PR template.
 
 
 Bug fixes

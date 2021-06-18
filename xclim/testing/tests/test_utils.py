@@ -5,11 +5,12 @@ import os
 from inspect import signature
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim.core.indicator import Daily
 from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
-from xclim.testing import open_dataset
+from xclim.testing import list_datasets, open_dataset
 
 
 def test_walk_map():
@@ -43,7 +44,12 @@ def test_wrapped_partial():
 
 
 def test_wrapped_indicator(tas_series):
-    def indice(tas, tas2=None, thresh=0, freq="YS"):
+    def indice(
+        tas: xr.DataArray,
+        tas2: xr.DataArray = None,
+        thresh: int = float,
+        freq: str = "YS",
+    ):
         if tas2 is None:
             out = tas < thresh
         else:
@@ -55,7 +61,6 @@ def test_wrapped_indicator(tas_series):
     ind1 = Daily(
         realm="atmos",
         identifier="test_ind1",
-        nvar=1,
         units="days",
         compute=wrapped_partial(indice, tas2=None),
     )
@@ -63,7 +68,6 @@ def test_wrapped_indicator(tas_series):
     ind2 = Daily(
         realm="atmos",
         identifier="test_ind2",
-        nvar=2,
         units="days",
         compute=wrapped_partial(indice, thresh=None),
     )
@@ -96,3 +100,17 @@ def test_open_testdata():
         os.path.join("cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
     )
     assert ds.lon.size == 128
+
+
+# Not that this test is super slow, but there is no need in spamming github's API for no reason.
+@pytest.mark.slow
+def test_list_datasets():
+    out = list_datasets()
+
+    assert list(out.columns) == ["size", "url"]
+    np.testing.assert_allclose(
+        out.loc["cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"][
+            "size"
+        ],
+        845.021484375,
+    )
