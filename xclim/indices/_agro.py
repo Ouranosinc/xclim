@@ -169,16 +169,27 @@ def huglin_index(
     .. math::
         HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \left( \frac{TX_i  + TN_i)}{2} - 10 \right) k \right)
 
-    For the `huglin` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
+    For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
-        K = f(lat) = \left\{ \begin{array}{cl}
+        k = f(lat) = \left\{ \begin{array}{cl}
+                                NaN, & \text{if } |lat| > 50 \\
+                                1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
+                                1,  \text{if } |lat| <= 40 \\
+                            \end{array} \right\}
+
+    For compatibility with icclim, the `icclim` method for the day-length multiplication factor, :math:`k`,
+    is calculated as follows:
+
+    .. math::
+        k = f(lat) = \left\{ \begin{array}{cl}
                                 1.0, & \text{if } |lat| \lteq 40 \\
                                 1.02, & \text{if } 40 < |lat| \lteq 42 \\
                                 1.03, & \text{if } 42 < |lat| \lteq 44 \\
                                 1.04, & \text{if } 44 < |lat| \lteq 46 \\
                                 1.05, & \text{if } 46 < |lat| \lteq 48 \\
                                 1.06, & \text{if } 48 < |lat| \lteq 50 \\
+                                NaN, & \text{if } |lat| > 50 \\
                             \end{array} \right\}
 
     References
@@ -197,7 +208,7 @@ def huglin_index(
 
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
-        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
+        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), np.NaN)
     elif method.lower() == "icclim":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
 
@@ -223,7 +234,7 @@ def huglin_index(
             ),
         )
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(f"{method} has not yet been implemented.")
 
     hi = (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k
     hi = aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
