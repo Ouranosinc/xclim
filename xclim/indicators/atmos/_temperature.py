@@ -826,10 +826,6 @@ latitude_temperature_index = Temp(
     comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
     var_name="lti",
     compute=wrapped_partial(
-        indices.latitude_temperature_index,
-        suggested=dict(
-            lat_factor=75,
-            lat=_empty,
-        ),
+        indices.latitude_temperature_index, suggested=dict(lat_factor=60, lat=_empty)
     ),
 )
