@@ -503,8 +503,8 @@
     "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
   },
   "LATITUDE_TEMPERATURE_INDEX": {
-    "long_name": "Indice latitude-température calculé avec le facteur de latitude de {lat_factor} (Moyenne de température du mois le plus chaud * (facteur_lat - latitude)).",
-    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude.",
+    "long_name": "Indice latitude-température",
+    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude  : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
     "title": "Indice de latitude-température",
     "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
     "abstract": "indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."

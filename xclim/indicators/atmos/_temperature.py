@@ -817,10 +817,10 @@ biologically_effective_degree_days = Temp(
 latitude_temperature_index = Temp(
     identifier="latitude_temperature_index",
     units="",
-    long_name="Latitude-temperature index computed with latitude factor of {lat_factor} (Mean temperature of warmest "
-    "month * (lat_factor - latitude)).",
+    long_name="Latitude-temperature index",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
-    "account for longer day-length favouring growing conditions. Developed specifically for viticulture.",
+    "account for longer day-length favouring growing conditions. Developed specifically for viticulture. Mean temperature of warmest "
+    "month * ({lat_factor} - latitude)).",
     cell_methods="",
     allowed_periods=["A"],
     comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
