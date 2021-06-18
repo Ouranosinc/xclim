@@ -8,7 +8,7 @@ import xarray
 import xclim.indices as xci
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import aggregate_between_dates, day_length_coefficient
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -118,7 +118,7 @@ def corn_heat_units(
 def huglin_index(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat: Optional[xarray.DataArray] = None,
+    lat: xarray.DataArray,
     thresh_tasmin: str = "10 degC",
     method: str = "smoothed",
     start_date: DayOfYearStr = "04-01",
@@ -137,7 +137,7 @@ def huglin_index(
       Minimum daily temperature.
     tasmax: xarray.DataArray
       Maximum daily temperature.
-    lat: xarray.DataArray, optional
+    lat: xarray.DataArray
       Latitude coordinate.
     thresh_tasmin: str
       The minimum temperature threshold.
@@ -204,7 +204,8 @@ def huglin_index(
 
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
-        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), np.NaN)
+        lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
+        k = 1 + xarray.where(lat_mask, lat_coefficient, np.NaN)
     elif method.lower() == "icclim":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
 
@@ -212,18 +213,18 @@ def huglin_index(
             abs(lat) <= 40,
             k_f[0],
             xarray.where(
-                abs(lat) <= 42,
+                40 < abs(lat) <= 42,
                 k_f[1],
                 xarray.where(
-                    abs(lat) <= 44,
+                    42 < abs(lat) <= 44,
                     k_f[2],
                     xarray.where(
-                        abs(lat) <= 46,
+                        44 < abs(lat) <= 46,
                         k_f[3],
                         xarray.where(
-                            abs(lat) <= 48,
+                            46 < abs(lat) <= 48,
                             k_f[4],
-                            xarray.where(abs(lat) <= 50, k_f[5], np.NaN),
+                            xarray.where(48 < abs(lat) <= 50, k_f[5], np.NaN),
                         ),
                     ),
                 ),

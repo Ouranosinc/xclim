@@ -6,10 +6,13 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+import math
 import warnings
 from typing import Optional, Union
 
 import numpy as np
+import scipy.stats
+import xarray
 import xarray as xr
 
 from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
@@ -779,3 +782,43 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
 
     out = to_agg_units(out, tas, op="delta_prod")
     return out
+
+
+def day_length_coefficient(
+    dates: xr.DataArray,
+    lat: xr.DataArray,
+    obliquity: float = 0.409,
+    start_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
+    end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
+    freq: str = "YS",
+) -> xr.DataArray:
+    """Day-length coefficient.
+
+    Parameters
+    ----------
+    dates: xr.DataArray
+    lat: xarray.DataArray
+    obliquity: float
+      Obliquity of the elliptic (rads). Default: 0.4091.
+    start_date: xarray.DataArray
+    end_date: xarray.DataArray
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    warnings.warn("This is untested.", UserWarning, stacklevel=4)
+    axis = xr.where(lat > 0, obliquity, -obliquity)
+    m_lat_dayofyear = 1 - np.tan(lat) * np.tan(
+        axis * (np.cos((np.pi * dates.dt.dayofyear) / 182.625))
+    )
+    day_length_multiplier = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
+
+    if start_date and end_date:
+        k = aggregate_between_dates(
+            day_length_multiplier, start=start_date, end=end_date, op="sum"
+        )
+    else:
+        k = day_length_multiplier
+
+    return k

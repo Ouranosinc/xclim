@@ -299,6 +299,15 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
 
+    @pytest.mark.skip()
+    def test_huglin_index(self):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+        tasmax, tasmin = ds.tas + 5, ds.tas - 5
+        tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
+        hi = xci.huglin_index(tasmax=tasmax, tasmin=tasmin, lat=ds.lat)
+        # TODO: Finish writing this test.
+        assert hi == 42
+
 
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
