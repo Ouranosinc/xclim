@@ -370,8 +370,7 @@ def dry_spell_frequency(
     xarray.DataArray
       The {freq} number of dry periods of minimum {window} days.
     """
-    pram = rate2amount(pr, "mm")
-    pram.attrs["units"] = "mm"
+    pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
     out = (
@@ -408,8 +407,7 @@ def dry_spell_total_length(
     xarray.DataArray
       The {freq} total number of days in dry periods of minimum {window} days.
     """
-    pram = rate2amount(pr, "mm")
-    pram.attrs["units"] = "mm"
+    pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
     mask = pram.rolling(time=window, center=True).sum() < thresh
