@@ -20,6 +20,7 @@ __all__ = [
     "corn_heat_units",
     "biologically_effective_degree_days",
     "cool_night_index",
+    "latitude_temperature_index",
     "water_budget",
 ]
 
@@ -188,7 +189,7 @@ def biologically_effective_degree_days(
     .. math::
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
-    A second version of the BEDD (`method="icclim") does not consider :math:`TR_{adj}` and :math:`k` and employs a
+    A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September). The simplified formula is as follows:
 
     .. math::
@@ -285,6 +286,68 @@ def cool_night_index(
     cni = tasmin.resample(time=freq).mean()
     cni.attrs["units"] = "degC"
     return cni
+
+
+@declare_units(tas="[temperature]")
+def latitude_temperature_index(
+    tas: xarray.DataArray,
+    lat: xarray.DataArray,
+    lat_factor: float = 75,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Latitude-Temperature Index.
+
+    Mean temperature of the warmest month with a latitude-based scaling factor.
+    Used for categorizing winegrowing regions.
+
+    Parameters
+    ----------
+    tas: xarray.DataArray
+      Mean daily temperature.
+    lat: xarray.DataArray
+      Latitude coordinate.
+    lat_factor: float
+      Latitude factor. Maximum poleward latitude. Default: 75.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+      Latitude Temperature Index.
+
+    Notes
+    -----
+    The latitude factor of `75` is provided for examining the poleward expansion of winegrowing climates under scenarios
+    of climate change. For comparing 20th century/observed historical records, the original scale factor of `60` is more
+    appropriate.
+
+    Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
+    and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
+
+    .. math::
+        LTI = max(TN_{j}: j = 1..12)(lat_f - lat)
+
+    References
+    ----------
+    Indice originally published in Jackson, D. I., & Cherry, N. J. (1988). Prediction of a District’s Grape-Ripening
+    Capacity Using a Latitude-Temperature Index (LTI). American Journal of Enology and Viticulture, 39(1), 19‑28.
+
+    Modified latitude factor from Kenny, G. J., & Shao, J. (1992). An assessment of a latitude-temperature index for
+    predicting climate suitability for grapes in Europe. Journal of Horticultural Science, 67(2), 239‑246.
+    https://doi.org/10.1080/00221589.1992.11516243
+    """
+    tas = convert_units_to(tas, "degC")
+
+    tas = tas.resample(time="MS").mean(dim="time")
+    mtwm = tas.resample(time=freq).max(dim="time")
+
+    lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
+    lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
+
+    lti = mtwm * lat_coeff
+    lti.attrs["units"] = ""
+    return lti
 
 
 @declare_units(
