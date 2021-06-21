@@ -137,7 +137,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
         )
     else:
         jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    return x.where(~((x < thresh) & (x.notnull())), jitter)
+    return x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
 
 
 def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
@@ -167,7 +167,7 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float):
         )
     else:
         jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
-    return x.where(~((x > thresh) & (x.notnull())), jitter)
+    return x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
 
 
 @map_groups(reduces=[Grouper.PROP], data=[])
