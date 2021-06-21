@@ -236,7 +236,7 @@ def kmeans_reduce_ensemble(
 
     # normalize the data matrix
     z = xarray.DataArray(
-        scipy.stats.zscore(data, axis=0, ddof=1), coords=data.coords
+        scipy.stats.zscore(data.data, axis=0, ddof=1), coords=data.coords
     )  # ddof=1 to be the same as Matlab's zscore
 
     if sample_weights is None:
