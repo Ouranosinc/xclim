@@ -6,9 +6,9 @@ import numpy as np
 import xarray
 from xarray.core.dataarray import DataArray
 
-from xclim.core.bootstrap_config import NO_BOOTSRAP, BootstrapConfig
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
+from xclim.core.percentile_config import PercentileConfig
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -63,10 +63,9 @@ __all__ = [
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tn10: xarray.DataArray = None,
+    tn10: PercentileConfig = None,
     window: int = 6,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -696,7 +695,7 @@ def liquid_precip_ratio(
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_accumulation(
     pr: xarray.DataArray,
-    tas: xarray.DataArray = None,
+    tas: PercentileConfig = None,
     phase: Optional[str] = None,
     thresh: str = "0 degC",
     freq: str = "YS",
@@ -870,10 +869,9 @@ def high_precip_low_temp(
 @percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray = None,
+    per: PercentileConfig = None,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -920,10 +918,9 @@ def days_over_precip_thresh(
 @percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray = None,
+    per: PercentileConfig = None,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -970,9 +967,8 @@ def fraction_over_precip_thresh(
 @percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
-    t90: xarray.DataArray = None,
+    t90: PercentileConfig = None,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -1018,9 +1014,8 @@ def tg90p(
 @percentile_bootstrap
 def tg10p(
     tas: xarray.DataArray,
-    t10: xarray.DataArray = None,
+    t10: PercentileConfig = None,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
@@ -1066,9 +1061,8 @@ def tg10p(
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-    t90: xarray.DataArray = None,
+    t90: PercentileConfig = None,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1114,9 +1108,8 @@ def tn90p(
 @percentile_bootstrap
 def tn10p(
     tasmin: xarray.DataArray,
-    t10: xarray.DataArray = None,
+    t10: PercentileConfig = None,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1158,13 +1151,10 @@ def tn10p(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", t90="[temperature]")
+@declare_units(tasmax="[temperature]")
 @percentile_bootstrap
 def tx90p(
-    tasmax: xarray.DataArray,
-    t90: xarray.DataArray = None,
-    freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
+    tasmax: xarray.DataArray, t90: PercentileConfig = None, freq: str = "YS"
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1210,9 +1200,8 @@ def tx90p(
 @percentile_bootstrap
 def tx10p(
     tasmax: xarray.DataArray,
-    t10: xarray.DataArray = None,
+    t10: PercentileConfig = None,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1266,7 +1255,6 @@ def tx_tn_days_above(
     thresh_tasmin: str = "22 degC",
     thresh_tasmax: str = "30 degC",
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
@@ -1319,10 +1307,9 @@ def tx_tn_days_above(
 @percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tx90: xarray.DataArray = None,
+    tx90: PercentileConfig = None,
     window: int = 6,
     freq: str = "YS",
-    bootstrap_config: BootstrapConfig = NO_BOOTSRAP,
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
@@ -1381,8 +1368,8 @@ def warm_spell_duration_index(
 def winter_rain_ratio(
     *,
     pr: xarray.DataArray,
-    prsn: xarray.DataArray = None,
-    tas: xarray.DataArray = None,
+    prsn: PercentileConfig = None,
+    tas: PercentileConfig = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     """Ratio of rainfall to total precipitation during winter.

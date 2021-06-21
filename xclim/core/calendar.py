@@ -8,13 +8,14 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 import re
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
+from numpy.lib.function_base import percentile
 from xarray.coding.cftime_offsets import (
     MonthBegin,
     MonthEnd,
@@ -25,8 +26,10 @@ from xarray.coding.cftime_offsets import (
     to_offset,
 )
 from xarray.coding.cftimeindex import CFTimeIndex
+from xarray.core.dataarray import DataArray
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.percentile_config import PercentileConfig
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
@@ -443,7 +446,9 @@ def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
     per: Union[float, Sequence[float]] = 10,
-) -> xr.DataArray:
+    in_base_slice: slice(str, str) = None,
+    out_of_base_slice: slice(str, str) = None,
+) -> PercentileConfig:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
@@ -464,6 +469,15 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
+    if in_base_slice is not None:
+        # We have to do a bootstrapping
+        if out_of_base_slice is not None:
+            # We compute now the percentiles of the in base to calculate the exceedance of the out of base period
+            arr = arr.sel(time=in_base_slice)
+        else:
+            # We have to bootstrap the whole period
+            return PercentileConfig(per, in_base_slice, out_of_base_slice, None, window)
+
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
     if compare_offsets(xr.infer_freq(arr.time) or "D", "<", "D"):
@@ -502,7 +516,15 @@ def percentile_doy(
         p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
 
     p.attrs.update(arr.attrs.copy())
-    return p
+    if len(per) == 1:
+        per = per[0]
+    return PercentileConfig(
+        percentile=per,
+        in_base_slice=in_base_slice,
+        out_of_base_slice=out_of_base_slice,
+        in_base_percentiles=p,
+        percentile_window=window,
+    )
 
 
 def compare_offsets(freqA: str, op: str, freqB: str):  # noqa

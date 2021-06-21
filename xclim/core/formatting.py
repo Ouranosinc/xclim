@@ -387,7 +387,7 @@ KIND_ANNOTATION = {
     InputKind.DATE: "date (string, YYYY-MM-DD)",
     InputKind.BOOL: "boolean",
     InputKind.DATASET: "Dataset, optional",
-    InputKind.BOOTSTRAP_CONFIG: "BooststrapConfig, optional",
+    InputKind.PERCENTILE_CONFIG: "BooststrapConfig, optional",
     InputKind.KWARGS: "",
     InputKind.OTHER_PARAMETER: "Any",
 }

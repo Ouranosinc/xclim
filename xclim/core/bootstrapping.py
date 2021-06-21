@@ -9,8 +9,8 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 
 import xclim.core.calendar as calendar
-from xclim.core.bootstrap_config import NO_BOOTSRAP, BootstrapConfig
 from xclim.core.calendar import percentile_doy
+from xclim.core.percentile_config import PercentileConfig
 
 
 def percentile_bootstrap(func):
@@ -18,7 +18,7 @@ def percentile_bootstrap(func):
 
     Only the percentile based indices may benefit from bootstrapping.
 
-    When the indices function is called with a BootstrapConfig parameter,
+    When the indices function is called with a PercentileConfig parameter which has an in base period,
     the decarator will take over the computation to iterate over the base period in this configuration.
     @see compute_bootstrapped_exceedance_rate for the full Algorithm.
 
@@ -27,42 +27,41 @@ def percentile_bootstrap(func):
     @percentile_bootstrap
     def tg90p(
         tas: xarray.DataArray,
-        t90: xarray.DataArray,
-        freq: str = "YS",
-        bootstrap_config: BootstrapConfig = None,
+        t90: PercentileConfig,
+        freq: str = "YS"
     ) -> xarray.DataArray:
 
     Example when called:
-    >>> config = BootstrapConfig(percentile=90,
-                                percentile_window=5,
-                                in_base_slice=slice("2015-01-01", "2018-12-31"),
-                                out_of_base_slice=slice("2019-01-01", "2024-12-31"))
-    >>> tg90p(tas = da, t90=None, freq="MS", bootstrap_config=config)
+    >>> t90 = percentile_doy(
+            ds.tmax,
+            window=5,
+            per=90,
+            in_base_slice=slice("1991-01-01", "2000-12-31"),
+            out_of_base_slice=slice("2001-01-01", "2010-12-31"),
+        ).in_base_percentiles.sel(percentiles=90)
+    >>> tg90p(tas = da, t90=t90, freq="MS")
     """
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         bound_args = signature(func).bind(*args, **kwargs)
-        config = NO_BOOTSRAP
         indice_window = None
-        da_count = 0
+        config = None
         for name, val in bound_args.arguments.items():
             if name == "window":
                 indice_window = val
             elif name == "freq":
                 freq = val
-            elif name == "bootstrap_config" and isinstance(val, BootstrapConfig):
-                config = val
             elif isinstance(val, DataArray):
                 da = val
-                da_count += 1
-        if config == NO_BOOTSRAP:
+            elif isinstance(val, PercentileConfig):
+                config = val
+            else:
+                raise click.BadParameter(
+                    f"Unexpected argument {name}: {val} for {func}"
+                )
+        if config.in_base_slice is None:
             return func(*args, **kwargs)
-        if da_count != 1:
-            raise click.BadArgumentUsage(
-                "Only one DataArray must be supllied when bootsrapping is wanted.\
-                 Do not supply the percentile DataArray."
-            )
         config.indice_window = indice_window
         config.freq = freq
         return compute_bootstrapped_exceedance_rate(
@@ -76,7 +75,7 @@ ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataAr
 
 
 def compute_bootstrapped_exceedance_rate(
-    da: DataArray, config: BootstrapConfig, exceedance_function: ExceedanceFunction
+    da: DataArray, config: PercentileConfig, exceedance_function: ExceedanceFunction
 ) -> DataArray:
     """Bootsrap function for percentiles.
 
@@ -84,7 +83,7 @@ def compute_bootstrapped_exceedance_rate(
     ----------
     da : xr.DataArray
     Input data, a daily frequency (or coarser) is required.
-    config : BootstrapConfig
+    config : PercentileConfig
     bootstrap configuration, including :
     - the percentile value
     - the window size in days
@@ -131,7 +130,7 @@ def compute_bootstrapped_exceedance_rate(
     in_base_period = da.sel(time=config.in_base_slice)
     if in_base_period.size == 0:
         raise click.BadOptionUsage(
-            "bootstrap_config",
+            "percentile_config",
             f"The in base slice {config.in_base_slice} correspond to an empty period in the dataset.\
               Make sure to use a slice of your dataset time serie",
         )
@@ -141,7 +140,7 @@ def compute_bootstrapped_exceedance_rate(
     if config.out_of_base_slice is None:
         return in_base_exceedance_rates
     out_of_base_period = da.sel(time=config.out_of_base_slice)
-    in_base_threshold = _calculate_thresholds(in_base_period, config)
+    in_base_threshold = config.in_base_percentiles
     out_of_base_exceedance = _calculate_exceedances(
         config, exceedance_function, out_of_base_period, in_base_threshold
     )
@@ -150,7 +149,7 @@ def compute_bootstrapped_exceedance_rate(
 
 def _bootstrap_period(
     ds_in_base_period: DataArray,
-    config: BootstrapConfig,
+    config: PercentileConfig,
     exceedance_function: ExceedanceFunction,
 ) -> DataArray:
     period_exceedance_rates = []
@@ -167,7 +166,7 @@ def _bootstrap_period(
 def _bootstrap_year(
     ds_in_base_period: DataArray,
     out_base_year: int,
-    config: BootstrapConfig,
+    config: PercentileConfig,
     exceedance_function: ExceedanceFunction,
 ) -> DataArray:
     print("out base :", out_base_year)
@@ -243,15 +242,15 @@ def _build_virtual_in_base_period(
 
 
 def _calculate_thresholds(
-    in_base_period: DataArray, config: BootstrapConfig
+    in_base_period: DataArray, config: PercentileConfig
 ) -> DataArray:
     return percentile_doy(
-        in_base_period, config.percentile_window, config.percentile
-    ).sel(percentiles=config.percentile)
+        arr=in_base_period, window=config.percentile_window, per=config.percentile
+    ).in_base_percentiles.sel(percentiles=config.percentile)
 
 
 def _calculate_exceedances(
-    config: BootstrapConfig,
+    config: PercentileConfig,
     exceedance_function: ExceedanceFunction,
     out_of_base_period: DataArray,
     in_base_threshold: DataArray,
