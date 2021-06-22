@@ -328,7 +328,7 @@ class TestAgroclimaticIndices:
         tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
         hi = xci.huglin_index(tasmax=tasmax, tasmin=tasmin, lat=ds.lat)
         # TODO: Finish writing this test.
-        assert hi == 42
+        assert hi == 43
 
 
 class TestDailyFreezeThawCycles:
