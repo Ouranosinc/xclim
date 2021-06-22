@@ -1,10 +1,18 @@
 # noqa: D100
-from typing import Tuple
+from calendar import monthrange
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
-from xclim.core.units import convert_units_to, declare_units, units2pint
+from xclim.core.calendar import date_range, datetime_to_decimal_year
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    infer_sampling_units,
+    units2pint,
+)
 
 __all__ = [
     "humidex",
@@ -18,6 +26,7 @@ __all__ = [
     "rain_approximation",
     "wind_chill_index",
     "clausius_clapeyron_scaled_precipitation",
+    "potential_evapotranspiration",
 ]
 
 
@@ -726,10 +735,6 @@ def clausius_clapeyron_scaled_precipitation(
 
     cc_scale_factor : float (default  = 1.07)
       Clausius Clapeyron scale factor
-
-    Returns
-    -------
-    xarray.DataArray
       Scaled estimated future precipitation metric, scaled using Clausius Clapeyron relationship.
     """
 
@@ -758,3 +763,174 @@ def clausius_clapeyron_scaled_precipitation(
     pr_future.attrs["units"] = pr_baseline.attrs["units"]
 
     return pr_future
+
+
+@declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
+def potential_evapotranspiration(
+    tasmin: Optional[xr.DataArray] = None,
+    tasmax: Optional[xr.DataArray] = None,
+    tas: Optional[xr.DataArray] = None,
+    method: str = "BR65",
+) -> xr.DataArray:
+    """Potential evapotranspiration.
+
+    The potential for water evaporation from soil and transpiration by plants if the water supply is
+    sufficient, according to a given method.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    tas : xarray.DataArray
+      Mean daily temperature.
+    method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
+      Which method to use, see notes.
+    Returns
+    -------
+    xarray.DataArray
+
+    Notes
+    -----
+    Available methods are:
+
+    - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
+    - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+
+    References
+    ----------
+    .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
+    .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
+    """
+
+    if method in ["baierrobertson65", "BR65"]:
+        tasmin = convert_units_to(tasmin, "degF")
+        tasmax = convert_units_to(tasmax, "degF")
+
+        latr = (tasmin.lat * np.pi) / 180
+        gsc = 0.082  # MJ/m2/min
+
+        # julian day fraction
+        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+
+        ds = 0.409 * np.sin(jd_frac - 1.39)
+        dr = 1 + 0.033 * np.cos(jd_frac)
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))
+        re = (
+            (24 * 60 / np.pi)
+            * gsc
+            * dr
+            * (
+                omega * np.sin(latr) * np.sin(ds)
+                + np.cos(latr) * np.cos(ds) * np.sin(omega)
+            )
+        )  # MJ/m2/day
+        re = re / 4.1864e-2  # cal/cm2/day
+
+        # Baier et Robertson(1965) formula
+        out = 0.094 * (
+            -87.03 + 0.928 * tasmax + 0.933 * (tasmax - tasmin) + 0.0486 * re
+        )
+        out = out.clip(0)
+
+    elif method in ["hargreaves85", "HG85"]:
+        tasmin = convert_units_to(tasmin, "degC")
+        tasmax = convert_units_to(tasmax, "degC")
+        if tas is None:
+            tas = (tasmin + tasmax) / 2
+        else:
+            tas = convert_units_to(tas, "degC")
+
+        latr = (tasmin.lat * np.pi) / 180
+        gsc = 0.082  # MJ/m2/min
+        lv = 2.5  # MJ/kg
+
+        # julian day fraction
+        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+
+        ds = 0.409 * np.sin(jd_frac - 1.39)
+        dr = 1 + 0.033 * np.cos(jd_frac)
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))
+        ra = (
+            (24 * 60 / np.pi)
+            * gsc
+            * dr
+            * (
+                omega * np.sin(latr) * np.sin(ds)
+                + np.cos(latr) * np.cos(ds) * np.sin(omega)
+            )
+        )  # MJ/m2/day
+
+        # Hargreaves and Samani(1985) formula
+        out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
+        out = out.clip(0)
+
+    elif method in ["thornthwaite48", "TW48"]:
+        if tas is None:
+            tasmin = convert_units_to(tasmin, "degC")
+            tasmax = convert_units_to(tasmax, "degC")
+            tas = (tasmin + tasmax) / 2
+        else:
+            tas = convert_units_to(tas, "degC")
+        tas = tas.clip(0)
+        tas = tas.resample(time="MS").mean(dim="time")
+
+        latr = (tas.lat * np.pi) / 180  # rad
+
+        start = "-".join(
+            [
+                str(tas.time[0].dt.year.values),
+                "{:02d}".format(tas.time[0].dt.month.values),
+                "01",
+            ]
+        )
+
+        end = "-".join(
+            [
+                str(tas.time[-1].dt.year.values),
+                "{:02d}".format(tas.time[-1].dt.month.values),
+                str(tas.time[-1].dt.daysinmonth.values),
+            ]
+        )
+
+        time_v = xr.DataArray(
+            date_range(start, end, freq="D", calendar="standard"),
+            dims="time",
+            name="time",
+        )
+
+        # julian day fraction
+        jd_frac = (datetime_to_decimal_year(time_v) % 1) * 2 * np.pi
+
+        ds = 0.409 * np.sin(jd_frac - 1.39)
+        omega = np.arccos(-np.tan(latr) * np.tan(ds)) * 180 / np.pi  # degrees
+
+        # monthly-mean daytime length (multiples of 12 hours)
+        dl = 2 * omega / (15 * 12)
+        dl_m = dl.resample(time="MS").mean(dim="time")
+
+        # annual heat index
+        id_m = (tas / 5) ** 1.514
+        id_y = id_m.resample(time="YS").sum(dim="time")
+
+        tas_idy_a = []
+        for base_time, indexes in tas.resample(time="YS").groups.items():
+            tas_y = tas.isel(time=indexes)
+            id_v = id_y.sel(time=base_time)
+            a = 6.75e-7 * id_v ** 3 - 7.71e-5 * id_v ** 2 + 0.01791 * id_v + 0.49239
+
+            frac = (10 * tas_y / id_v) ** a
+            tas_idy_a.append(frac)
+
+        tas_idy_a = xr.concat(tas_idy_a, dim="time")
+
+        # Thornthwaite(1948) formula
+        out = 1.6 * dl_m * tas_idy_a  # cm/month
+        out = 10 * out  # mm/month
+
+    m, freq = infer_sampling_units(out)
+    out.attrs["units"] = "mm/" + freq
+    return convert_units_to(out, "kg m-2 s-1")
