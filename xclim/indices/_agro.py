@@ -235,14 +235,11 @@ def huglin_index(
             ),
         )
     elif method.lower() == "jones":
-        total_season_day_length = day_length_coefficient(
+        day_length = day_length_coefficient(
             dates=tasmin.time,
             lat=lat,
-            start_date=start_date,
-            end_date=end_date,
-            freq=freq,
         )
-        k = 2.8311 * 10e-4 * total_season_day_length + 0.30834
+        k = 2.8311 * 10e-4 * day_length + 0.30834
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
