@@ -718,31 +718,43 @@ def clausius_clapeyron_scaled_precipitation(
     tmean_future: xr.DataArray,
     cc_scale_factor: float = 1.07,
 ) -> xr.DataArray:
-    """
-    Future precipitation estimate, scaled via Clausius-Clapeyron
+    """Scale precipitation according to the Clausius-Clapeyron relation.
+
+    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
+    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+
+    .. math::
+
+        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+
+    This function assumes that precipitation can be scaled by the same factor.
 
     Parameters
     ----------
     pr_baseline : xarray.DataArray
-      Baseline average precipitation climatology (climatological annual mean, or otherwise-justified value).
-      Time dimension can be either length 1, or nonexistent.
+      Baseline precipitation to adjust with Clausius-Clapeyron.
     tmean_baseline : xarray.DataArray
-      Baseline average temperature climatology (climatological annual mean, or otherwise-justified value).
-      Time dimension can be either length 1, or nonexistent.
+      Baseline temperature climatological mean.
     tmean_future : xarray.DataArray
-      Future average temperature climatology.
-
-
+      Future temperature climatological mean.
     cc_scale_factor : float (default  = 1.07)
-      Clausius Clapeyron scale factor
-      Scaled estimated future precipitation metric, scaled using Clausius Clapeyron relationship.
+      Clausius Clapeyron scale factor.
+
+    Returns
+    -------
+    DataArray
+        Scaled estimated future precipitation using Clausius-Clapeyron relationship.
+
+    Notes
+    -----
+    Make sure that `pr_baseline` and `tmean_baseline` are defined over the same period.
     """
 
     # Test to ensure that baseline temperature and precipitation are single values (i.e., climatologies)
     if "time" in pr_baseline.coords.keys():
         if len(pr_baseline.coords["time"]) != 1:
             raise ValueError(
-                "Precipitation baseline needs to be a single time slice (e.g., of a common climatologal period)."
+                "Precipitation baseline needs to be a single time slice (e.g., of a common climatological period)."
             )
         else:
             pr_baseline = pr_baseline.squeeze(dim=["time"], drop=True)

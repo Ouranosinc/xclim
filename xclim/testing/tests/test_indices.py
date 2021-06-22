@@ -2046,6 +2046,31 @@ class TestClausiusClapeyronScaledPrecip:
             ],
         )
 
+    def test_workflow(self, tas_series, pr_series):
+        """Test typical workflow."""
+        n = int(365.25 * 10)
+        tref = tas_series(np.random.rand(n), start="1961-01-01")
+        tfut = tas_series(np.random.rand(n) + 2, start="2051-01-01")
+        pr = pr_series(np.random.rand(n) * 10, start="1961-01-01")
+
+        # Compute climatologies
+        with xr.set_options(keep_attrs=True):
+            tref_m = tref.mean(dim="time")
+            tfut_m = tfut.mean(dim="time")
+            pr_m = pr.mean(dim="time")
+
+        pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(pr_m, tref_m, tfut_m)
+        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07 ** 2, 1)
+
+        # Compute monthly climatologies
+        with xr.set_options(keep_attrs=True):
+            tref_mm = tref.groupby("time.month").mean()
+            tfut_mm = tfut.groupby("time.month").mean()
+            pr_mm = pr.groupby("time.month").mean()
+
+        pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(pr_mm, tref_mm, tfut_mm)
+        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07 ** 2, 1)
+
 
 class TestPotentialEvapotranspiration:
     def test_baier_robertson(self, tasmin_series, tasmax_series):
