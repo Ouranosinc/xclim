@@ -1,4 +1,6 @@
 """Pre and post processing for bias adjustment."""
+from typing import Optional
+
 import dask.array as dsk
 import numpy as np
 import xarray as xr
@@ -219,3 +221,28 @@ def uniform_noise_like(da: xr.DataArray, low: float = 1e-6, high: float = 1e-3):
     return da.copy(
         data=(high - low) * mod.random.random_sample(size=da.shape, **kw) + low
     )
+
+
+def standardize(
+    da: xr.DataArray,
+    mean: Optional[xr.DataArray] = None,
+    std: Optional[xr.DataArray] = None,
+    dim: str = "time",
+):
+    """Standardize a DataArray by centering its mean and scaling it by its standard deviation.
+
+    Either of both of mean and std can be provided if need be.
+
+    Returns the standardized data, the mean and the standard deviation.
+    """
+    if mean is None:
+        mean = da.mean(dim)
+    if std is None:
+        std = da.std(dim)
+    with xr.set_options(keep_attrs=True):
+        return (da - mean) / std, mean, std
+
+
+def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
+    """Rescale a standardized array by performing the inverse operation of `standardize`."""
+    return (std * da) + mean

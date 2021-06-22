@@ -685,3 +685,50 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
     )
 
     return ds
+
+
+def rand_rot_matrix(crd: xr.DataArray, num: int = 1):
+    r"""Generate random rotation matrices.
+
+    Rotation matrices are members of the SO(n) group, where n is the matrix size (`crd.size`).
+    They can be characterized as orthogonal matrices with determinant 1. A square matrix :math:`R`
+    is a rotation matrix if and only if :math:`R^t = R^{−1}` and :math:`\mathrm{det} R = 1`.
+
+    Parameters
+    ----------
+    crd: DataArray
+      1D coordinate DataArray along which the rotation occurs.
+      The output will be square with the same coordinate replicated,
+      the second renamed to `crd.name + '_prime'`.
+    num : int
+      If larger than 1 (default), the number of matrices to generate, stacked along a "matrices" dimension.
+
+    Returns
+    -------
+    DataArray
+      float, NxN if num = 1, numxNxN otherwise, where N is the length of crd.
+
+    References
+    ----------
+    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    """
+    if num > 1:
+        return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")
+
+    N = crd.size
+    dim = crd.dims[0]
+    # Rename and rebuild second coordinate : "prime" axis.
+    dim2 = dim + "_prime"
+    crd2 = xr.DataArray(crd.values, dims=dim2, name=dim2, attrs=crd.attrs)
+
+    # Random floats from the standardized normal distribution
+    Z = np.random.standard_normal((N, N))
+
+    # QR decomposition and manipulation from Mezzadri 2006
+    Q, R = np.linalg.qr(Z)
+    num = np.diag(R)
+    denum = np.abs(num)
+    lam = np.diag(num / denum)  # "lambda"
+    return xr.DataArray(
+        Q @ lam, dims=(dim, dim2), coords={dim: crd, dim2: crd2}
+    ).astype("float32")

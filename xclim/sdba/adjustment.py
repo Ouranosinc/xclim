@@ -1,5 +1,5 @@
 """Adjustment objects."""
-from typing import Optional, Sequence, Union
+from typing import Any, Mapping, Optional, Sequence, Union
 from warnings import warn
 
 import numpy as np
@@ -997,3 +997,31 @@ class PrincipalComponents(BaseAdjustment):
         )
         scen[lbl_R] = sim.indexes[lbl_M]
         return scen.unstack(lbl_R)
+
+
+class NPDFTransfer(BaseAdjustment):
+    """Doc string"""
+
+    def __init__(
+        self,
+        base: BaseAdjustment = QuantileDeltaMapping,
+        base_kws: Optional[Mapping[str, Any]] = None,
+        n_escore: int = 0,
+        max_iter: int = 20,
+        tolerance: float = 0.01,
+    ):
+        if max_iter < 1 and (n_escore < 0 or tolerance <= 0):
+            raise ValueError(
+                "If max_iter is < 1, n_escore must be >= 0 and tolerance must be > 0."
+            )
+
+        super().__init__(
+            base=base,
+            base_kws=base_kws or {},
+            n_escore=n_escore,
+            max_iter=max_iter,
+            tolerance=tolerance,
+        )
+
+    def train_adjust(ref, hist, sim, *, kinds, adj_kws=None):
+        pass

@@ -737,3 +737,47 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
         out.append(slc)
 
     return xr.concat(out, "time")
+
+
+def stack_variables(ds):
+    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
+
+    Variable attributes are all added as lists of attributes.
+    """
+    attrs = {}
+    nvar = len(ds.data_vars)
+    for i, var in enumerate(ds.data_vars.values()):
+        for name, attr in var.attrs.items():
+            attrs.setdefault(name, [None] * nvar)[i] = attr
+
+    attrs["is_variables"] = True
+    var_crd = xr.DataArray(
+        list(ds.data_vars.keys()), dims=("variables"), name="variables", attrs=attrs
+    )
+
+    da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
+    da.attrs.update(ds.attrs)
+    return da
+
+
+def unstack_variables(da):
+    """Unstack a DataArray created by `stack_variables` to a dataset."""
+    for dim, crd in da.coords.items():
+        if crd.attrs.get("is_variables"):
+            break
+    else:
+        raise ValueError("No variable coordinate found, were attributes removed?")
+
+    ds = xr.Dataset(
+        {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
+        attrs=da.attrs,
+    )
+
+    for name, attr_list in da.variables.attrs.items():
+        if name == "is_variables":
+            continue
+        for attr, var in zip(attr_list, da.variables):
+            if attr is not None:
+                ds[var.item()].attrs[name] = attr
+
+    return ds
