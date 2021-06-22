@@ -63,7 +63,7 @@ __all__ = [
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tn10: PercentileConfig = None,
+    tn10: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -869,7 +869,7 @@ def high_precip_low_temp(
 @percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
-    per: PercentileConfig = None,
+    per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
@@ -918,7 +918,7 @@ def days_over_precip_thresh(
 @percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
-    per: PercentileConfig = None,
+    per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -963,11 +963,11 @@ def fraction_over_precip_thresh(
     return out
 
 
-@declare_units(tas="[temperature]", t90="[temperature]")
 @percentile_bootstrap
+@declare_units(tas="[temperature]", t90="[temperature]")
 def tg90p(
     tas: xarray.DataArray,
-    t90: PercentileConfig = None,
+    t90: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
@@ -1014,7 +1014,7 @@ def tg90p(
 @percentile_bootstrap
 def tg10p(
     tas: xarray.DataArray,
-    t10: PercentileConfig = None,
+    t10: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
@@ -1061,7 +1061,7 @@ def tg10p(
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-    t90: PercentileConfig = None,
+    t90: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
@@ -1108,7 +1108,7 @@ def tn90p(
 @percentile_bootstrap
 def tn10p(
     tasmin: xarray.DataArray,
-    t10: PercentileConfig = None,
+    t10: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
@@ -1154,7 +1154,7 @@ def tn10p(
 @declare_units(tasmax="[temperature]")
 @percentile_bootstrap
 def tx90p(
-    tasmax: xarray.DataArray, t90: PercentileConfig = None, freq: str = "YS"
+    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1200,7 +1200,7 @@ def tx90p(
 @percentile_bootstrap
 def tx10p(
     tasmax: xarray.DataArray,
-    t10: PercentileConfig = None,
+    t10: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
@@ -1303,11 +1303,11 @@ def tx_tn_days_above(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", tx90="[temperature]")
 @percentile_bootstrap
+@declare_units(tasmax="[temperature]", tx90="[temperature]")
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tx90: PercentileConfig = None,
+    tx90: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
 ) -> xarray.DataArray:

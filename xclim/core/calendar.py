@@ -29,6 +29,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.dataarray import DataArray
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.formatting import update_history
 from xclim.core.percentile_config import PercentileConfig
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
@@ -446,8 +447,6 @@ def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
     per: Union[float, Sequence[float]] = 10,
-    in_base_slice: slice(str, str) = None,
-    out_of_base_slice: slice(str, str) = None,
 ) -> PercentileConfig:
     """Percentile value for each day of the year.
 
@@ -469,14 +468,6 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
-    if in_base_slice is not None:
-        # We have to do a bootstrapping
-        if out_of_base_slice is not None:
-            # We compute now the percentiles of the in base to calculate the exceedance of the out of base period
-            arr = arr.sel(time=in_base_slice)
-        else:
-            # We have to bootstrap the whole period
-            return PercentileConfig(per, in_base_slice, out_of_base_slice, None, window)
 
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
@@ -516,15 +507,18 @@ def percentile_doy(
         p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
 
     p.attrs.update(arr.attrs.copy())
-    if len(per) == 1:
-        per = per[0]
-    return PercentileConfig(
-        percentile=per,
-        in_base_slice=in_base_slice,
-        out_of_base_slice=out_of_base_slice,
-        in_base_percentiles=p,
-        percentile_window=window,
+
+    # Saving percentile attributes
+    n = len(arr.time)
+    p.attrs["climatology_bounds"] = (
+        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
+    p.attrs["window"] = window
+
+    infostr = f"percentile_doy(arr, window={window}, per={per})"
+    p.attrs["xclim_history"] = update_history(infostr, arr, new_name="per")
+
+    return p
 
 
 def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
