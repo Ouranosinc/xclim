@@ -28,6 +28,8 @@ Internal Changes
 * Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
 * ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
 * Minor modifications to the GitHub Pull Requests template.
+* Simplification of some yaml elements for virtual modules.
+* Allow injecting `freq` without the missing checks failing.
 
 
 0.27.0 (2021-05-28)

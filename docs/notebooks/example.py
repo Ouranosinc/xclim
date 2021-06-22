@@ -29,6 +29,6 @@ def extreme_precip_accumulation(pr: xr.DataArray, perc: float = 95, freq: str = 
 
     pr_extreme = rate2amount(pr).where(pr >= pr_thresh)
 
-    out = pr_extreme.resample(time=freq).sum()
+    out = pr_extreme.resample(time=freq).sum().drop_vars("quantile")
     out.attrs["units"] = pr_extreme.units
     return out
