@@ -9,19 +9,20 @@ indices:
   RX1day:
     base: rx1day
     period:
-      seasonal: [DJFMA, MJJ, ASON]
+      allowed:
+      - seasonal
+      - annual
+      default: annual
     output:
       long_name: Highest 1-day precipitation amount
   RX5day:
     base: max_n_day_precipitation_amount
-    period:
-        monthly
     output:
       long_name: Highest 5-day precipitation amount
     index_function:
       parameters:
-        window:
-          data: 5
+        window: 5
+        freq: QS-DEC
   R75pdays:
     base: days_over_precip_thresh
     index_function:
@@ -47,20 +48,14 @@ indices:
     index_function:
       name: count_occurrences
       parameters:
-        threshold:
-          data: 0 degC
-        condition:
-          data: "<"
+        threshold: 0 degC
+        condition: "<"
   R95p:
     reference: climdex
-    period:
-      allowed:
-        - annual
-        - seasonal
-      default: annual
+    period: annual
     output:
       var_name: R95p
-      long_name: Annual total PRCP when RR > 95th percentile
+      long_name: Annual total PRCP when RR > {perc}th percentile
       units: m
       cell_methods:
         - time: sum within days
@@ -70,5 +65,10 @@ indices:
     index_function:
       name: extreme_precip_accumulation
       parameters:
-        perc:
-          data: 95
+        perc: 95
+  R99p:
+    base: .R95p
+    index_function:
+      name: extreme_precip_accumulation
+      parameters:
+        perc: 99
