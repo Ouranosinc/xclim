@@ -372,11 +372,10 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     ):
         return InputKind.VARIABLE
 
-    if (
-        Optional[param.annotation]
-        in [Optional[DataArray], Optional[Union[DataArray, str]]]
-        and param.default is None
-    ):
+    if Optional[param.annotation] in [
+        Optional[DataArray],
+        Optional[Union[DataArray, str]],
+    ]:
         return InputKind.OPTIONAL_VARIABLE
 
     if _typehint_is_in(param.annotation, (str, None)) and has_units:

@@ -694,8 +694,13 @@ class Indicator(IndicatorRegistrar):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.pop("ds")
         for name, param in self._sig.parameters.items():
-            if param.annotation is Union[str, DataArray] and isinstance(
-                ba.arguments[name], str
+            if (
+                self.parameters[name]["kind"]
+                in (
+                    InputKind.VARIABLE,
+                    InputKind.OPTIONAL_VARIABLE,
+                )
+                and isinstance(ba.arguments[name], str)
             ):
                 if ds is not None:
                     try:
