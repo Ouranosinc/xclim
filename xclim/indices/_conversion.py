@@ -734,9 +734,9 @@ def clausius_clapeyron_scaled_precipitation(
     pr_baseline : xarray.DataArray
       Baseline precipitation to adjust with Clausius-Clapeyron.
     tmean_baseline : xarray.DataArray
-      Baseline temperature climatological mean.
+      Baseline temperature climatological mean. Time dimension can be either length 1, or nonexistent.
     tmean_future : xarray.DataArray
-      Future temperature climatological mean.
+      Future temperature climatological mean. Time dimension can be either length 1, or nonexistent.
     cc_scale_factor : float (default  = 1.07)
       Clausius Clapeyron scale factor.
 
