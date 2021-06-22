@@ -4,15 +4,13 @@ Options submodule
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
-import logging
 from inspect import signature
 from typing import Callable, Dict
-from warnings import warn
 
 from boltons.funcutils import wraps
 
 from .locales import _valid_locales
-from .utils import ValidationError
+from .utils import ValidationError, raise_warn_or_log
 
 METADATA_LOCALES = "metadata_locales"
 DATA_VALIDATION = "data_validation"
@@ -68,7 +66,17 @@ def _set_missing_options(mopts):
         OPTIONS[MISSING_OPTIONS][meth].update(opts)
 
 
-_SETTERS = {MISSING_OPTIONS: _set_missing_options}
+def _set_metadata_locales(locales):
+    if isinstance(locales, str):
+        OPTIONS[METADATA_LOCALES] = [locales]
+    else:
+        OPTIONS[METADATA_LOCALES] = locales
+
+
+_SETTERS = {
+    MISSING_OPTIONS: _set_missing_options,
+    METADATA_LOCALES: _set_metadata_locales,
+}
 
 
 def register_missing_method(name: str) -> Callable:
@@ -94,12 +102,7 @@ def _run_check(func, option, *args, **kwargs):
     try:
         func(*args, **kwargs)
     except ValidationError as err:
-        if OPTIONS[option] == "log":
-            logging.info(err.msg)
-        elif OPTIONS[option] == "warn":
-            warn(err.msg, UserWarning, stacklevel=4)
-        else:
-            raise err
+        raise_warn_or_log(err, OPTIONS[option], stacklevel=4)
 
 
 def datacheck(func: Callable) -> Callable:

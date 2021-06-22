@@ -425,3 +425,22 @@ def test_liquid_precip_ratio():
             out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3
         )
         assert "where temperature is above 33 degf." in out.description
+
+
+def test_dry_spell():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+
+    events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+    total_d = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+
+    np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
+    np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
+
+    assert (
+        "The annual number of dry periods of 7 days and more, during which the accumulated "
+        "precipitation on a window of 7 days is under 3 mm."
+    ) in events.description
+    assert (
+        "The annual number of days in dry periods of 7 days and more"
+        in total_d.description
+    )

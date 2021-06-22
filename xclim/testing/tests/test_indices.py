@@ -299,6 +299,28 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
 
+    @pytest.mark.parametrize(
+        "lat_factor, values",
+        [
+            (60, [135.34, 918.79, 1498.31, 1221.80, 271.72]),
+            (75, [55.35, 1058.55, 1895.97, 1472.18, 298.74]),
+        ],
+    )
+    def test_lat_temperature_index(self, lat_factor, values):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+        ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
+
+        lti = xci.latitude_temperature_index(
+            tas=ds.tas, lat=ds.lat, lat_factor=lat_factor
+        )
+        assert lti.where(abs(lti.lat) > lat_factor).sum() == 0
+
+        lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(
+            lti.lon <= 35, drop=True
+        )
+        lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
+        np.testing.assert_array_almost_equal(lti[0].transpose(), np.array([values]), 2)
+
 
 class TestDailyFreezeThawCycles:
     def test_simple(self, tasmin_series, tasmax_series):
@@ -2042,3 +2064,39 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
 
     out = xci.water_budget(prm, tas=tm, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
+
+
+def test_dry_spell(pr_series):
+    pr = pr_series(
+        np.array(
+            [
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                0.01,
+                0.01,
+                0.01,
+                0.51,
+                0.51,
+                0.75,
+                0.75,
+                0.51,
+                0.01,
+                0.01,
+                0.01,
+                1.01,
+                1.01,
+                1.01,
+            ]
+        )
+    )
+    pr.attrs["units"] = "mm/day"
+
+    events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+    total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+
+    np.testing.assert_allclose(events[0], [2], rtol=1e-1)
+    np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)

@@ -105,11 +105,37 @@
     "m12": [
       "decembre"
     ],
-    "mean": ["moyen", "moyenne", "moyens", "moyennes", "moyenne"],
-    "max": ["maximal",  "maximale", "maximaux", "maximales", "maximum"],
-    "min": ["minimal", "minimale", "minimaux", "minimales", "minimum"],
-    "sum": ["total", "totale", "totaux", "totales", "somme"],
-    "std": ["écart-type"]
+    "mean": [
+      "moyen",
+      "moyenne",
+      "moyens",
+      "moyennes",
+      "moyenne"
+    ],
+    "max": [
+      "maximal",
+      "maximale",
+      "maximaux",
+      "maximales",
+      "maximum"
+    ],
+    "min": [
+      "minimal",
+      "minimale",
+      "minimaux",
+      "minimales",
+      "minimum"
+    ],
+    "sum": [
+      "total",
+      "totale",
+      "totaux",
+      "totales",
+      "somme"
+    ],
+    "std": [
+      "écart-type"
+    ]
   },
   "RAIN_FRZGR": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
@@ -133,12 +159,12 @@
     "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
   },
   "MAX_PR_INTENSITY": {
-      "long_name": "Intensité maximale de précipitation sur une durée de {window} h",
-      "description": "Intensité maximale {freq:f} de précipitation sur une fenêtre mobile de {window} h.",
-      "title": "Intensité de précipitation maximale sur une durée et période donnée.",
-      "comment": "",
-      "keywords": "courbes IDF",
-      "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
+    "long_name": "Intensité maximale de précipitation sur une durée de {window} h",
+    "description": "Intensité maximale {freq:f} de précipitation sur une fenêtre mobile de {window} h.",
+    "title": "Intensité de précipitation maximale sur une durée et période donnée.",
+    "comment": "",
+    "keywords": "courbes IDF",
+    "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
@@ -476,6 +502,13 @@
     "comment": "Formule originale prise de Gladstones 1992.",
     "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
   },
+  "LATITUDE_TEMPERATURE_INDEX": {
+    "long_name": "Indice latitude-température",
+    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude  : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
+    "title": "Indice de latitude-température",
+    "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
+    "abstract": "indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
+  },
   "FRESHET_START": {
     "long_name": "Jour de l'année du début de la crue nivale",
     "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
@@ -532,12 +565,12 @@
     "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
   },
   "RB_FLASHINESS_INDEX": {
-      "long_name": "Indice Richards-Baker de torrentialité",
-      "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
-      "title": "Indice Richards-Baker de torrentialité",
-      "comment": "",
-      "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
-    },
+    "long_name": "Indice Richards-Baker de torrentialité",
+    "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+    "title": "Indice Richards-Baker de torrentialité",
+    "comment": "",
+    "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
+  },
   "FREQ_ANALYSIS": {
     "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
     "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}",
@@ -629,32 +662,32 @@
     "title": "Fin de la saison de végétation",
     "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
   },
- "FWI":{
-  "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
-  "title": "Indices Forêt-Météo",
-  "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
- },
- "FWI.dc": {
+  "FWI": {
+    "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
+    "title": "Indices Forêt-Météo",
+    "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
+  },
+  "FWI.dc": {
     "long_name": "Indice de sécheresse",
     "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes. Calculée avec la méthode de mise en route '{start_up_mode}'"
   },
- "FWI.dmc": {
+  "FWI.dmc": {
     "long_name": "Indice d'humidité de l'humus",
     "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur. Calculée avec la méthode de mise en route '{start_up_mode}'"
   },
- "FWI.ffmc": {
+  "FWI.ffmc": {
     "long_name": "Indice du combustible léger (FFMC)",
     "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers. Calculée avec la méthode de mise en route '{start_up_mode}'"
   },
- "FWI.isi": {
+  "FWI.isi": {
     "long_name": "Indice de propagation initiale",
     "description": "Évaluation numérique du taux prévu de propagation du feu."
   },
- "FWI.bui": {
+  "FWI.bui": {
     "long_name": "Indice du combustible disponible",
     "description": "Évaluation numérique de la quantité totale de combustible disponible."
   },
- "FWI.fwi": {
+  "FWI.fwi": {
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
@@ -891,5 +924,17 @@
     "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {méthode}.",
     "long_name": "Bilan hydrique."
+  },
+  "DRY_SPELL_FREQUENCY": {
+    "title": "Fréquence des périodes sèches.",
+    "abstract": "Fréquence des périodes sèches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "long_name": "Fréquence {freq:f} des périodes sèches de {window} jours et plus."
+  },
+  "DRY_SPELL_TOTAL_LENGTH": {
+    "title": "Durée totale en jours des périodes séches.",
+    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus."
   }
 }
