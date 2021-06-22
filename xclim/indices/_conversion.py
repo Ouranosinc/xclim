@@ -17,6 +17,7 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
+    "clausius_clapeyron_scaled_precipitation",
 ]
 
 
@@ -695,3 +696,65 @@ def wind_chill_index(
 
     W.attrs["units"] = "degC"
     return W
+
+
+@declare_units(
+    tmean_baseline="[temperature]",
+    tmean_future="[temperature]",
+    pr_baseline="[precipitation]",
+)
+def clausius_clapeyron_scaled_precipitation(
+    pr_baseline: xr.DataArray,
+    tmean_baseline: xr.DataArray,
+    tmean_future: xr.DataArray,
+    cc_scale_factor: float = 1.07,
+) -> xr.DataArray:
+    """
+    Future precipitation estimate, scaled via Clausius-Clapeyron
+
+    Parameters
+    ----------
+    pr_baseline : xarray.DataArray
+      Baseline average precipitation climatology (climatological annual mean, or otherwise-justified value).
+      Time dimension can be either length 1, or nonexistent.
+    tmean_baseline : xarray.DataArray
+      Baseline average temperature climatology (climatological annual mean, or otherwise-justified value).
+      Time dimension can be either length 1, or nonexistent.
+    tmean_future : xarray.DataArray
+      Future average temperature climatology.
+
+
+    cc_scale_factor : float (default  = 1.07)
+      Clausius Clapeyron scale factor
+
+    Returns
+    -------
+    xarray.DataArray
+      Scaled estimated future precipitation metric, scaled using Clausius Clapeyron relationship.
+    """
+
+    # Test to ensure that baseline temperature and precipitation are single values (i.e., climatologies)
+    if "time" in pr_baseline.coords.keys():
+        if len(pr_baseline.coords["time"]) != 1:
+            raise ValueError(
+                "Precipitation baseline needs to be a single time slice (e.g., of a common climatologal period)."
+            )
+        else:
+            pr_baseline = pr_baseline.squeeze(dim=["time"], drop=True)
+
+    if "time" in tmean_baseline.coords.keys():
+        if len(tmean_baseline.coords["time"]) != 1:
+            raise ValueError(
+                "Temperature baseline needs to be a single time slice (e.g., of a common climatologal period)."
+            )
+        else:
+            tmean_baseline = tmean_baseline.squeeze(dim=["time"], drop=True)
+
+    # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
+    dT = tmean_future - tmean_baseline
+
+    # Calculate scaled precipitation.  Time-invariant baseline precipitation is broadcast.
+    pr_future = pr_baseline * (cc_scale_factor ** dT)
+    pr_future.attrs["units"] = pr_baseline.attrs["units"]
+
+    return pr_future

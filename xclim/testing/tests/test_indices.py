@@ -1525,18 +1525,6 @@ class TestWinterRainRatio:
         np.testing.assert_almost_equal(out.isel(dim0=0), [10.0 / (31 + 31 + 28), 0])
 
 
-class TestClausiusClapeyronScaledPrecip:
-    def test_simple(self):
-        pr_baseline = xr.DataArray(np.array([1]), attrs={"units": "mmday"})
-        tmean_baseline = xr.DataArray(np.array([1]), attrs={"units": "C"})
-        tmean_future = xr.DataArray(np.array([2]), attrs={"units": "C"})
-        scale_factor = 1.07
-        pr_future = xci.clausius_clapeyron_scaled_precipitation(
-            tmean_baseline, tmean_future, pr_baseline, scale_factor
-        )
-        np.testing.assert_almost_equal(pr_future, 1.07)
-
-
 # I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
 class TestTG:
     @pytest.mark.parametrize(
@@ -1898,3 +1886,75 @@ def test_wind_chill(tas_series, sfcWind_series):
 
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, method="US")
     assert out[-1].isnull()
+
+
+class TestClausiusClapeyronScaledPrecip:
+    def test_simple(self):
+        pr_baseline = xr.DataArray(
+            np.arange(4).reshape(1, 2, 2),
+            dims=["time", "lat", "lon"],
+            coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "mmday"},
+        )
+        tmean_baseline = xr.DataArray(
+            np.arange(4).reshape(1, 2, 2),
+            dims=["time", "lat", "lon"],
+            coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "C"},
+        )
+        tmean_future = xr.DataArray(
+            np.arange(40).reshape(10, 2, 2),
+            dims=["time", "lat", "lon"],
+            coords={"time": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "C"},
+        )
+        out = xci.clausius_clapeyron_scaled_precipitation(
+            pr_baseline, tmean_baseline, tmean_future
+        )
+
+        np.testing.assert_allclose(
+            out,
+            [
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [
+                        1.0,
+                        1.31079601,
+                        1.71818618,
+                        2.25219159,
+                        2.95216375,
+                        3.86968446,
+                        5.07236695,
+                        6.64883836,
+                        8.7152708,
+                        11.42394219,
+                    ],
+                ],
+                [
+                    [
+                        2.0,
+                        2.62159202,
+                        3.43637236,
+                        4.50438318,
+                        5.9043275,
+                        7.73936892,
+                        10.14473391,
+                        13.29767673,
+                        17.4305416,
+                        22.84788438,
+                    ],
+                    [
+                        3.0,
+                        3.93238803,
+                        5.15455854,
+                        6.75657477,
+                        8.85649125,
+                        11.60905339,
+                        15.21710086,
+                        19.94651509,
+                        26.1458124,
+                        34.27182657,
+                    ],
+                ],
+            ],
+        )
