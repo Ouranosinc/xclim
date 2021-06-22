@@ -210,6 +210,7 @@ def huglin_index(
         lat_mask = abs(lat) <= 50
         lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
         k = 1 + xarray.where(lat_mask, lat_coefficient, np.NaN)
+        k_aggregated = 1
     elif method.lower() == "icclim":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
 
@@ -217,34 +218,44 @@ def huglin_index(
             abs(lat) <= 40,
             k_f[0],
             xarray.where(
-                40 < abs(lat) <= 42,
+                (40 < abs(lat)) & (abs(lat) <= 42),
                 k_f[1],
                 xarray.where(
-                    42 < abs(lat) <= 44,
+                    (42 < abs(lat)) & (abs(lat) <= 44),
                     k_f[2],
                     xarray.where(
-                        44 < abs(lat) <= 46,
+                        (44 < abs(lat)) & (abs(lat) <= 46),
                         k_f[3],
                         xarray.where(
-                            46 < abs(lat) <= 48,
+                            (46 < abs(lat)) & (abs(lat) <= 48),
                             k_f[4],
-                            xarray.where(48 < abs(lat) <= 50, k_f[5], np.NaN),
+                            xarray.where(
+                                (48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.NaN
+                            ),
                         ),
                     ),
                 ),
             ),
         )
+        k_aggregated = 1
     elif method.lower() == "jones":
         day_length = day_length_coefficient(
             dates=tasmin.time,
             lat=lat,
+            start_date=start_date,
+            end_date=end_date,
+            freq=freq,
         )
-        k = 2.8311 * 10e-4 * day_length + 0.30834
+        k = 1
+        k_aggregated = 2.8311e-4 * day_length + 0.30834
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
     hi = (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k
-    hi = aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
+    hi = (
+        aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
+        * k_aggregated
+    )
 
     hi.attrs["units"] = ""
     return hi
