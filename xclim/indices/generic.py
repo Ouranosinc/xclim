@@ -779,6 +779,8 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
         out = (thresh - tas).clip(0)
     elif ">" in condition:
         out = (tas - thresh).clip(0)
+    else:
+        raise NotImplementedError(f"Condition not supported: '{condition}'.")
 
     out = to_agg_units(out, tas, op="delta_prod")
     return out
@@ -787,7 +789,7 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
 def day_length_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray,
-    obliquity: float = 0.409,
+    obliquity: float = 0.4091,
     start_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     freq: str = "YS",
@@ -798,27 +800,38 @@ def day_length_coefficient(
     ----------
     dates: xr.DataArray
     lat: xarray.DataArray
+      Latitude coordinate.
     obliquity: float
       Obliquity of the elliptic (rads). Default: 0.4091.
-    start_date: xarray.DataArray
-    end_date: xarray.DataArray
+    start_date: xarray.DataArray or DayOfYearStr, optional
+    end_date: xarray.DataArray or DayOfYearStr, optional
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
+      If start and end date provided, returns total sum of daylight-hour between dates at provided frequency.
+      If no start and end date provided, returns day-length in hours per individual day.
+
+    References
+    ----------
+    Modified day-length equations for Huglin heliothermal index published in Hall, A., & Jones, G. V. (2010). Spatial
+    analysis of climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3),
+    389‑404. https://doi.org/10.1111/j.1755-0238.2010.00100.x
+
+    Examples available from Glarner, 2006 (http://www.gandraxa.com/length_of_day.xml).
     """
     warnings.warn("This is untested.", UserWarning, stacklevel=4)
     axis = xr.where(lat > 0, obliquity, -obliquity)
-    m_lat_dayofyear = 1 - np.tan(lat) * np.tan(
-        axis * (np.cos((np.pi * dates.dt.dayofyear) / 182.625))
+    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
+        axis * (np.cos((2 * np.pi * dates.dt.dayofyear) / 365.25))
     )
     day_length_multiplier = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
 
     if start_date and end_date:
-        k = aggregate_between_dates(
-            day_length_multiplier, start=start_date, end=end_date, op="sum"
+        return aggregate_between_dates(
+            day_length_multiplier, start=start_date, end=end_date, op="sum", freq=freq
         )
     else:
-        k = day_length_multiplier
-
-    return k
+        return day_length_multiplier

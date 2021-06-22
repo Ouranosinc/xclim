@@ -234,8 +234,17 @@ def huglin_index(
                 ),
             ),
         )
+    elif method.lower() == "jones":
+        total_season_day_length = day_length_coefficient(
+            dates=tasmin.time,
+            lat=lat,
+            start_date=start_date,
+            end_date=end_date,
+            freq=freq,
+        )
+        k = 2.8311 * 10e-4 * total_season_day_length + 0.30834
     else:
-        raise NotImplementedError(f"{method} has not yet been implemented.")
+        raise NotImplementedError(f"'{method}' method is not implemented.")
 
     hi = (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k
     hi = aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
