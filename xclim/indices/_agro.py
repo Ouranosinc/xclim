@@ -5,9 +5,10 @@ from typing import Optional
 import xarray
 
 import xclim.indices as xci
-from xclim.core.units import convert_units_to, declare_units
+import xclim.indices.run_length as rl
+from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import aggregate_between_dates, compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -17,9 +18,11 @@ from xclim.indices.generic import aggregate_between_dates
 # -------------------------------------------------- #
 
 __all__ = [
-    "corn_heat_units",
     "biologically_effective_degree_days",
     "cool_night_index",
+    "corn_heat_units",
+    "dry_spell_frequency",
+    "dry_spell_total_length",
     "latitude_temperature_index",
     "water_budget",
 ]
@@ -404,3 +407,73 @@ def water_budget(
 
     out.attrs["units"] = pr.attrs["units"]
     return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_frequency(
+    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
+) -> xarray.DataArray:
+    """
+    Return the number of dry periods of n days and more, during which the accumulated precipitation on a window of
+    n days is under the threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    thresh : str
+      Accumulated precipitation value under which a period is considered dry.
+    window : int
+      Number of days where the accumulated precipitation is under threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The {freq} number of dry periods of minimum {window} days.
+    """
+    pram = rate2amount(pr, out_units="mm")
+    thresh = convert_units_to(thresh, pram)
+
+    out = (
+        (pram.rolling(time=window, center=True).sum() < thresh)
+        .resample(time=freq)
+        .map(rl.windowed_run_events, window=1, dim="time")
+    )
+
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_total_length(
+    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
+) -> xarray.DataArray:
+    """
+    Return the total number of days in dry periods of n days and more, during which the accumulated precipitation
+    on a window of n days is under the threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    thresh : str
+      Accumulated precipitation value under which a period is considered dry.
+    window : int
+      Number of days where the accumulated precipitation is under threshold.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The {freq} total number of days in dry periods of minimum {window} days.
+    """
+    pram = rate2amount(pr, out_units="mm")
+    thresh = convert_units_to(thresh, pram)
+
+    mask = pram.rolling(time=window, center=True).sum() < thresh
+    out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time=freq).sum()
+
+    return to_agg_units(out, pram, "count")
