@@ -16,7 +16,6 @@ from xclim import __version__, atmos, indices
 from xclim.core import bootstrapping
 from xclim.core.calendar import percentile_doy
 from xclim.core.indicator import Daily, Indicator, registry
-from xclim.core.percentile_config import PercentileConfig
 from xclim.core.units import units
 from xclim.core.utils import InputKind, MissingVariableError, ValidationError
 from xclim.indices import tg_mean
@@ -39,22 +38,16 @@ def netcdf_processing():
 
     time_start = time.perf_counter()
     ds = xr.open_dataset("climpact.sampledata.gridded.1991-2010.nc")
-    t90 = percentile_doy(
-        ds.tmax,
-        window=5,
-        per=90,
-        in_base_slice=slice("1991-01-01", "2000-12-31"),
-        out_of_base_slice=slice("2001-01-01", "2010-12-31"),
-    )
-    t90.in_base_percentiles = t90.in_base_percentiles.sel(percentiles=90)
-
+    ds_per = ds.sel(time=slice("1991-01-01", "2000-12-31"))
+    t90 = percentile_doy(ds_per.tmax, window=5, per=90)
     result = xc.atmos.tx90p(
         tasmax=ds.tmax,
         t90=t90,
         # window=3,
         freq="MS",
+        bootstrap=True,
     )
-    result.to_netcdf("australia/xclim_tx90-base-period-91-00.nc")
+    result.to_netcdf("australia/new_xclim_tx90-base-period-91-00.nc")
     time_elapsed = time.perf_counter() - time_start
     print(time_elapsed, " secs")
 

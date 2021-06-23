@@ -27,8 +27,6 @@ from dask import array as dsk
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
-from xclim.core.percentile_config import PercentileConfig
-
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
 
@@ -332,11 +330,6 @@ class InputKind(IntEnum):
 
        Annotation : ``bool``, or optional thereof.
     """
-    PERCENTILE_CONFIG = 10
-    """A configuration object to bootstrap percentile based indices.
-
-       Annotation : ``PercentileConfig``, or optional thereof.
-    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -411,9 +404,6 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     if _typehint_is_in(param.annotation, (None, bool)):
         return InputKind.BOOL
-
-    if _typehint_is_in(param.annotation, (None, PercentileConfig)):
-        return InputKind.PERCENTILE_CONFIG
 
     if _typehint_is_in(param.annotation, (None, Dataset)):
         return InputKind.DATASET

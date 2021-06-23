@@ -8,7 +8,6 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
-from xclim.core.percentile_config import PercentileConfig
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -695,7 +694,7 @@ def liquid_precip_ratio(
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_accumulation(
     pr: xarray.DataArray,
-    tas: PercentileConfig = None,
+    tas: xarray.DataArray = None,
     phase: Optional[str] = None,
     thresh: str = "0 degC",
     freq: str = "YS",
@@ -1154,7 +1153,7 @@ def tn10p(
 @declare_units(tasmax="[temperature]")
 @percentile_bootstrap
 def tx90p(
-    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
+    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS", bootstrap=False
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1368,8 +1367,8 @@ def warm_spell_duration_index(
 def winter_rain_ratio(
     *,
     pr: xarray.DataArray,
-    prsn: PercentileConfig = None,
-    tas: PercentileConfig = None,
+    prsn: xarray.DataArray = None,
+    tas: xarray.DataArray = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     """Ratio of rainfall to total precipitation during winter.

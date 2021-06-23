@@ -8,14 +8,13 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 import re
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
-from numpy.lib.function_base import percentile
 from xarray.coding.cftime_offsets import (
     MonthBegin,
     MonthEnd,
@@ -26,11 +25,9 @@ from xarray.coding.cftime_offsets import (
     to_offset,
 )
 from xarray.coding.cftimeindex import CFTimeIndex
-from xarray.core.dataarray import DataArray
 from xarray.core.resample import DataArrayResample
 
 from xclim.core.formatting import update_history
-from xclim.core.percentile_config import PercentileConfig
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
@@ -447,7 +444,7 @@ def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
     per: Union[float, Sequence[float]] = 10,
-) -> PercentileConfig:
+) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
