@@ -740,20 +740,20 @@ def clausius_clapeyron_scaled_precipitation(
 
     # Test to ensure that baseline temperature and precipitation are single values (i.e., climatologies)
     if "time" in pr_baseline.coords.keys():
-        if len(pr_baseline.coords["time"]) != 1:
+        if pr_baseline.coords["time"].size != 1:
             raise ValueError(
                 "Precipitation baseline needs to be a single time slice (e.g., of a common climatologal period)."
             )
-        else:
-            pr_baseline = pr_baseline.squeeze(dim=["time"], drop=True)
+        # else:
+        #    pr_baseline = pr_baseline.squeeze(dim=["time"], drop=True)
 
     if "time" in tmean_baseline.coords.keys():
-        if len(tmean_baseline.coords["time"]) != 1:
+        if tmean_baseline.coords["time"].size != 1:
             raise ValueError(
                 "Temperature baseline needs to be a single time slice (e.g., of a common climatologal period)."
             )
-        else:
-            tmean_baseline = tmean_baseline.squeeze(dim=["time"], drop=True)
+        # else:
+        #    tmean_baseline = tmean_baseline.squeeze(dim=["time"], drop=True)
 
     # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
     dT = tmean_future - tmean_baseline
