@@ -9,69 +9,187 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 
 import xclim.core.calendar as calendar
-from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
 from xclim.core.percentile_config import PercentileConfig
+
+# TODO: I'm not sure this matches all signatures (missing optional thresh argument)
+ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataArray]
 
 
 def percentile_bootstrap(func):
-    """Decorator for indices which can be bootstrapped.
+    """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
-    Only the percentile based indices may benefit from bootstrapping.
-
-    When the indices function is called with a PercentileConfig parameter which has an in base period,
-    the decarator will take over the computation to iterate over the base period in this configuration.
-    @see compute_bootstrapped_exceedance_rate for the full Algorithm.
+    Boostraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
+    computed, and "out of base" periods. See `bootstrap_func` for details.
 
     Example of declaration:
     @declare_units(tas="[temperature]", t90="[temperature]")
     @percentile_bootstrap
     def tg90p(
         tas: xarray.DataArray,
-        t90: PercentileConfig,
-        freq: str = "YS"
+        t90: xarray.DataArray,
+        freq: str = "YS",
+        bootstrap=False
     ) -> xarray.DataArray:
 
     Example when called:
-    >>> t90 = percentile_doy(
-            ds.tmax,
-            window=5,
-            per=90,
-            in_base_slice=slice("1991-01-01", "2000-12-31"),
-            out_of_base_slice=slice("2001-01-01", "2010-12-31"),
-        ).in_base_percentiles.sel(percentiles=90)
-    >>> tg90p(tas = da, t90=t90, freq="MS")
+    >>> t90 = percentile_doy(ds.tmax, window=5, per=90)
+    >>> tg90p(tas=da, t90=t90, freq="YS", bootstrap=True)
     """
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        bound_args = signature(func).bind(*args, **kwargs)
-        indice_window = None
-        config = None
-        for name, val in bound_args.arguments.items():
-            if name == "window":
-                indice_window = val
-            elif name == "freq":
-                freq = val
-            elif isinstance(val, DataArray):
-                da = val
-            elif isinstance(val, PercentileConfig):
-                config = val
-            else:
-                raise click.BadParameter(
-                    f"Unexpected argument {name}: {val} for {func}"
-                )
-        if config.in_base_slice is None:
+        # TODO: Modify signature and docstring to include bootstrap parameter
+
+        bootstrap = kwargs.pop("bootstrap", False)
+        if bootstrap is False:
             return func(*args, **kwargs)
-        config.indice_window = indice_window
-        config.freq = freq
-        return compute_bootstrapped_exceedance_rate(
-            exceedance_function=func, da=da, config=config
-        )
+
+        ba = signature(func).bind(*args, **kwargs)
+        ba.apply_defaults()
+        return bootstrap_func(func, **ba.arguments)
 
     return wrapper
 
 
-ExceedanceFunction = Callable[[DataArray, DataArray, str, Optional[int]], DataArray]
+def bootstrap_func(func, **kwargs):
+    """Bootstrap the computation of percentile-based exceedance indices.
+
+    Indices measuring exceedance over percentile-based threshold may contain artificial discontinuities at the
+    beginning and end of the base period used for calculating the percentile. A bootstrap resampling
+    procedure can reduce those discontinuities by iteratively replacing each the year the indice is computed on from
+    the percentile estimate, and replacing it with another year within the base period.
+
+    Parameters
+    ----------
+    func : callable
+      Indice function.
+    kwargs : dict
+      Arguments to `func`.
+
+    Returns
+    -------
+    xr.DataArray
+      The result of func with bootstrapping.
+
+    References
+    ----------
+    Zhang, X., Hegerl, G., Zwiers, F. W., & Kenyon, J. (2005). Avoiding Inhomogeneity in Percentile-Based Indices of
+    Temperature Extremes, Journal of Climate, 18(11), 1641-1651, https://doi.org/10.1175/JCLI3366.1
+
+    Notes
+    -----
+    This function is meant to be used by the `percentile_bootstrap` decorator.
+    The parameters of the percentile calculation (percentile, window, base period) are stored in the
+    attributes of the percentile DataArray.
+    The bootstrap algorithm implemented here does the following:
+
+    For each temporal grouping in the calculation of the indice
+        If the group `g_t` is in the base period
+            For every other group `g_s` in the base period
+                Replace group `g_t` by `g_s`
+                Compute percentile on resampled time series
+                Compute indice function using percentile
+            Average output from indice function over all resampled time series
+        Else compute indice function using original percentile
+
+    """
+    # Identify the input and the percentile arrays from the bound arguments
+    for name, val in kwargs.items():
+        if isinstance(val, DataArray):
+            if "percentile_doy" in val.attrs.get("xclim_history", ""):
+                per_key = name
+            else:
+                da_key = name
+
+    # Extract the DataArray inputs from the arguments
+    da = kwargs.pop(da_key)
+    per = kwargs.pop(per_key)
+
+    # List of years in base period
+    clim = per.attrs["climatology_bounds"]
+    per_clim_years = xr.cftime_range(*clim, freq="YS").year
+
+    # `da` over base period used to compute percentile
+    da_base = da.sel(time=slice(*clim))
+
+    # Arguments used to compute percentile
+    pdoy_args = dict(window=per.attrs["window"], per=per.percentiles.data.tolist()[0])
+
+    # Group input array in years, with an offset matching freq
+    freq = kwargs["freq"]
+    mul, b, anchor = parse_offset(freq)
+    bfreq = "YS"
+    if anchor is not None:
+        bfreq += f"-{anchor}"
+    g_full = da.resample(time=bfreq).groups
+    g_base = da_base.resample(time=bfreq).groups
+
+    out = []
+    # Compute func on each grouping
+    for label, sl in g_full.items():
+        year = label.astype("datetime64[Y]").astype(int) + 1970
+        kw = {da_key: da[sl], **kwargs}
+
+        # If the group year is in the base period, run the bootstrap
+        if year in per_clim_years:
+            bda = bootstrap_year(da_base, g_base, label)
+            kw[per_key] = percentile_doy(bda, **pdoy_args)
+            value = func(**kw).mean(dim="_bootstrap")
+
+        # Otherwise run the normal computation using the original percentile
+        else:
+            kw[per_key] = per
+            value = func(**kw)
+
+        out.append(value)
+
+    return xr.concat(out, dim="time")
+
+
+# TODO: Return a generator instead and assess performance
+def bootstrap_year(da, groups, label, dim="time"):
+    """Return an array where a group in the original is replace by every other groups along a new dimension.
+
+    Parameters
+    ----------
+    da : DataArray
+      Original input array over base period.
+    groups : dict
+      Output of grouping functions, such as `DataArrayResample.groups`.
+    label : Any
+      Key identifying the group item to replace.
+
+    Returns
+    -------
+    DataArray:
+      Array where one group is replaced by values from every other group along the `bootstrap` dimension.
+    """
+    gr = groups.copy()
+
+    # Location along dim that must be replaced
+    bloc = da[dim][gr.pop(label)]
+
+    # Initialize output array with new bootstrap dimension
+    bdim = "_bootstrap"
+    out = da.expand_dims({bdim: np.arange(len(gr))}).copy(deep=True)
+
+    # Replace `bloc` by every other group
+    for i, (key, gsl) in enumerate(gr.items()):
+        source = da.isel({dim: gsl})
+
+        if len(source[dim]) == len(bloc):
+            out.loc[{bdim: i, dim: bloc}] = source.data
+        elif len(bloc) == 365:
+            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "365_day").data
+        elif len(bloc) == 366:
+            out.loc[{bdim: i, dim: bloc[:-1]}] = convert_calendar(
+                source, "366_day"
+            ).data
+        else:
+            raise NotImplementedError
+
+    return out
 
 
 def compute_bootstrapped_exceedance_rate(
@@ -169,7 +287,8 @@ def _bootstrap_year(
     config: PercentileConfig,
     exceedance_function: ExceedanceFunction,
 ) -> DataArray:
-    print("out base :", out_base_year)
+    """ """
+
     in_base = _build_virtual_in_base_period(ds_in_base_period, out_base_year)
     out_base = ds_in_base_period.sel(time=str(out_base_year))
     exceedance_rates = []
@@ -216,20 +335,24 @@ def _build_completed_in_base(
 def _build_virtual_in_base_period(
     in_base_period: DataArray, out_base_year: int
 ) -> DataArray:
+
     in_base_first_year = in_base_period[0].time.dt.year.item()
     in_base_last_year = in_base_period[-1].time.dt.year.item()
     if in_base_first_year == in_base_last_year:
         raise ValueError(
             "The in_base_period given to _build_virtual_in_base_period must be of at least two years."
         )
-    elif in_base_first_year == out_base_year:
+
+    if in_base_first_year == out_base_year:
         return in_base_period.sel(
             time=slice(str(in_base_first_year + 1), str(in_base_last_year))
         )
-    elif in_base_last_year == out_base_year:
+
+    if in_base_last_year == out_base_year:
         return in_base_period.sel(
             time=slice(str(in_base_first_year), str(in_base_last_year - 1))
         )
+
     in_base_time_slice_begin = slice(str(in_base_first_year), str(out_base_year - 1))
     in_base_time_slice_end = slice(str(out_base_year + 1), str(in_base_last_year))
     return xr.concat(
