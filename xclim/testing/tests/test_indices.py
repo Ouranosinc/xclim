@@ -324,17 +324,18 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "method, end_date, values",
         [
-            ("smoothed", "10-01", 1102.1),
-            ("icclim", "11-01", 915.0),
-            ("jones", "10-01", 915.0),
-            ("jones", "11-01", 915.0),
+            ("smoothed", "10-01", 1702.87),
+            ("icclim", "11-01", 1983.53),
+            ("jones", "10-01", 1784.43),
+            ("jones", "11-01", 2285.15),
         ],
     )
     def test_huglin_index(self, method, end_date, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
-        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+        ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        # It would be much better if the index would interpolate from monthly data intelligently.
+        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+        # It would be much better if the index would interpolate to daily from monthly data intelligently.
         tasmax, tasmin = (
             tasmax.resample(time="1D").interpolate("cubic"),
             tasmin.resample(time="1D").interpolate("cubic"),
@@ -349,8 +350,7 @@ class TestAgroclimaticIndices:
             end_date=end_date,
         )
 
-        # TODO: Finish writing this test.
-        np.testing.assert_equal(np.mean(hi[0]), values)
+        np.testing.assert_almost_equal(np.mean(hi), values, 2)
 
 
 class TestDailyFreezeThawCycles:
