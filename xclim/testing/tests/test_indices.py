@@ -321,14 +321,31 @@ class TestAgroclimaticIndices:
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
         np.testing.assert_array_almost_equal(lti[0].transpose(), np.array([values]), 2)
 
-    @pytest.mark.skip()
-    def test_huglin_index(self):
+    @pytest.mark.parametrize(
+        "method, end_date, values",
+        [
+            ("smoothed", "10-01", 1102.1),
+            ("icclim", "11-01", 915.0),
+            ("jones", "10-01", 915.0),
+            ("jones", "11-01", 915.0),
+        ],
+    )
+    def test_huglin_index(self, method, end_date, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         tasmax, tasmin = ds.tas + 5, ds.tas - 5
         tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
-        hi = xci.huglin_index(tasmax=tasmax, tasmin=tasmin, lat=ds.lat)
+
+        hi = xci.huglin_index(
+            tasmax=tasmax,
+            tasmin=tasmin,
+            lat=ds.lat,
+            method=method,
+            end_date=end_date,
+            freq="YS",
+        )
+
         # TODO: Finish writing this test.
-        assert hi == 43
+        np.testing.assert_equal(np.mean(hi[0]), values)
 
 
 class TestDailyFreezeThawCycles:

@@ -178,8 +178,8 @@ def huglin_index(
                                 NaN, & \text{if } |lat| > 50 \\
                             \end{array} \right\}
 
-    For compatibility with icclim, the `icclim` method for the day-length multiplication factor, :math:`k`,
-    is calculated as follows:
+    For compatibility with icclim, `end_date` should be set to `11-01` while the `icclim` method for the day-length
+    multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
         k = f(lat) = \left\{ \begin{array}{cl}
