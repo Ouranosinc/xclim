@@ -1137,21 +1137,32 @@ def _parse_indice(indice: Callable, passed=None, **new_kwargs):
     def _upd_param(param):
         # Required DataArray arguments receive their own name as new default
         #         + the Union[str, DataArray] annotation
-        # Parameters with no default receive None
         if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
             return param
 
-        if param.annotation is DataArray:
-            annot = Union[str, DataArray]
-        else:
-            annot = param.annotation
+        xckind = infer_kind_from_parameter(param)
 
         default = passed.get(param.name, {}).get("default", param.default)
+        if xckind == InputKind.OPTIONAL_VARIABLE and (
+            default is _empty or isinstance(default, str)
+        ):
+            # Was wrapped with suggested={param: _empty} OR somehow a variable name was injected (ex: through yaml)
+            # It becomes a non-optional variable
+            xckind = InputKind.VARIABLE
         if default is _empty:
-            if param.annotation is DataArray:
+            if xckind == InputKind.VARIABLE:
                 default = param.name
             else:
+                # Parameters with no default receive None
+                # Because we can't have no-default args _after_ default args and we just set the default on the variables (which are the first args)
                 default = None
+
+        # Python dont need no switch case
+        annots = {
+            InputKind.VARIABLE: Union[str, DataArray],
+            InputKind.OPTIONAL_VARIABLE: Optional[Union[str, DataArray]],
+        }
+        annot = annots.get(xckind, param.annotation)
 
         return Parameter(
             param.name,

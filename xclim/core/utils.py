@@ -77,7 +77,7 @@ def wrapped_partial(
     )
 
     # Store all injected params,
-    injected = getattr(func, "_injected", {})
+    injected = getattr(func, "_injected", {}).copy()
     injected.update(fixed)
     fully_wrapped._injected = injected
     return fully_wrapped
