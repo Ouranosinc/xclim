@@ -709,7 +709,8 @@ def aggregate_between_dates(
 
         if len(good_freq) != 1:
             raise ValueError(
-                "Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freqs}. Please consider providing `freq` manually."
+                "Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freqs}."
+                " Please consider providing `freq` manually."
             )
         freq = good_freq.pop()
 

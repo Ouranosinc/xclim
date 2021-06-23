@@ -332,7 +332,13 @@ class TestAgroclimaticIndices:
     )
     def test_huglin_index(self, method, end_date, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
-        tasmax, tasmin = ds.tas + 5, ds.tas - 5
+        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+
+        # It would be much better if the index would interpolate from monthly data intelligently.
+        tasmax, tasmin = (
+            tasmax.resample(time="1D").interpolate("cubic"),
+            tasmin.resample(time="1D").interpolate("cubic"),
+        )
         tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
 
         hi = xci.huglin_index(
@@ -341,7 +347,6 @@ class TestAgroclimaticIndices:
             lat=ds.lat,
             method=method,
             end_date=end_date,
-            freq="YS",
         )
 
         # TODO: Finish writing this test.

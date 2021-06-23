@@ -7,6 +7,7 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
+from xclim.core.datachecks import check_freq
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates, day_length_coefficient
@@ -172,25 +173,25 @@ def huglin_index(
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
-        k = f(lat) = \left\{ \begin{array}{cl}
-                                1,  \text{if } |lat| <= 40 \\
-                                1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
-                                NaN, & \text{if } |lat| > 50 \\
-                            \end{array} \right\}
+        k = f(lat) = \begin{cases}
+                        1, & \text{if } |lat| <= 40 \\
+                        1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
+                        NaN, & \text{if } |lat| > 50 \\
+                     \end{cases}
 
     For compatibility with icclim, `end_date` should be set to `11-01` while the `icclim` method for the day-length
     multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
-        k = f(lat) = \left\{ \begin{array}{cl}
-                                1.0, & \text{if } |lat| \lteq 40 \\
-                                1.02, & \text{if } 40 < |lat| \lteq 42 \\
-                                1.03, & \text{if } 42 < |lat| \lteq 44 \\
-                                1.04, & \text{if } 44 < |lat| \lteq 46 \\
-                                1.05, & \text{if } 46 < |lat| \lteq 48 \\
-                                1.06, & \text{if } 48 < |lat| \lteq 50 \\
-                                NaN, & \text{if } |lat| > 50 \\
-                            \end{array} \right\}
+        k = f(lat) = \begin{cases}
+                        1.0, & \text{if } |lat| \lteq 40 \\
+                        1.02, & \text{if } 40 < |lat| \lteq 42 \\
+                        1.03, & \text{if } 42 < |lat| \lteq 44 \\
+                        1.04, & \text{if } 44 < |lat| \lteq 46 \\
+                        1.05, & \text{if } 46 < |lat| \lteq 48 \\
+                        1.06, & \text{if } 48 < |lat| \lteq 50 \\
+                        NaN, & \text{if } |lat| > 50 \\
+                    \end{cases}
 
     References
     ----------
@@ -332,11 +333,11 @@ def biologically_effective_degree_days(
         BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
 
     .. math::
-        TR_{adj} = f(TX_{i}, TN_{i}) = \left\{ \begin{array}{cl}
+        TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
                                 0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
                                 0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
                                 0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-                            \end{array} \right\}
+                                       \end{cases}
 
     .. math::
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
@@ -478,7 +479,7 @@ def latitude_temperature_index(
     and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
 
     .. math::
-        LTI = max(TN_{j}: j = 1..12)(lat_f - lat)
+        LTI = max(TN_{j}: j = 1..12)(lat_f - |lat|)
 
     References
     ----------
