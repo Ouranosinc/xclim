@@ -72,3 +72,14 @@ indices:
       name: extreme_precip_accumulation
       parameters:
         perc: 99
+  LPRatio:
+    base: liquid_precip_ratio
+    input:
+      tas: tas
+      pr: pr
+    output:
+      long_name: Liquid precip to total precip ratio.
+      description: Precipitation is estimated to be solid when tas is under 0.5°C
+    index_function:
+      parameters:
+        thresh: 0.5 degC
