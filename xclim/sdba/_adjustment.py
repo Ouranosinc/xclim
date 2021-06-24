@@ -9,6 +9,7 @@ import xarray as xr
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
+from .processing import escore
 
 
 @map_groups(
@@ -182,10 +183,10 @@ def npdf_transform(ds, **kwargs):
     ref = ds.ref
     hist = ds.hist
     sim = ds.sim.rename(time_sim="time")
-
     dim = kwargs["pts_dim"]
+
     escores = []
-    for i, R in enumerate(ds.rot_matrices.transpose("iterations, ...")):
+    for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
 
         # Rotate to new magic space
         refp = ref @ R
@@ -205,13 +206,13 @@ def npdf_transform(ds, **kwargs):
 
         if kwargs["n_escore"] >= 0:
             escores.append(
-                nbu.escore(
+                escore(
                     ref,
                     hist,
                     dims=(dim, "time"),
                     N=kwargs["n_escore"],
-                    std=True,
-                )
+                    scale=True,
+                ).expand_dims(iterations=[i])
             )
 
     if kwargs["n_escore"] >= 0:

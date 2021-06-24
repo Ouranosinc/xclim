@@ -8,7 +8,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT
+from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 from xclim.indices import stats
@@ -25,7 +25,7 @@ from ._adjustment import (
     scaling_adjust,
     scaling_train,
 )
-from .base import Grouper, ParametrizableWithDataset, parse_group
+from .base import Grouper, Parametrizable, ParametrizableWithDataset, parse_group
 from .detrending import PolyDetrend
 from .utils import (
     ADDITIVE,
@@ -33,7 +33,6 @@ from .utils import (
     equally_spaced_nodes,
     get_clusters,
     get_clusters_1d,
-    get_prime_dim,
     pc_matrix,
     rand_rot_matrix,
 )
@@ -47,6 +46,7 @@ __all__ = [
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
+    "NpdfTransform",
 ]
 
 
@@ -1003,15 +1003,8 @@ class PrincipalComponents(BaseAdjustment):
         return scen.unstack(lbl_R)
 
 
-class NpdfTransform(BaseAdjustment):
-    """N-dimensional probability density function transform.
-
-    A multivariate bias-adjustment algorithm described by [Cannon18]_, as part of the MBCn algorithm,
-    based on a color-correction algorithm described by [Pitie05]_.
-
-    This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
-    The full MBCn algorithm includes a reordeing step provided here by :py:class:`Reordering`.
-    """
+class NpdfTransform(Parametrizable):
+    """N-dimensional probability density function transform."""
 
     def __init__(
         self,
@@ -1020,6 +1013,93 @@ class NpdfTransform(BaseAdjustment):
         n_escore: int = 0,
         n_iter: int = 20,
     ):
+        r"""
+        A multivariate bias-adjustment algorithm described by [Cannon18]_, as part of the MBCn algorithm,
+        based on a color-correction algorithm described by [Pitie05]_.
+
+        This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
+        The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
+
+        See notes for an explanation of the algorithm.
+
+        Parameters
+        ----------
+
+        At instantiation:
+
+        base: BaseAdjustment
+          An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
+        base_kws : dict, optional
+          Arguments passed to the initialization of the univariate adjustment.
+        n_escore : int
+          The number of elements to send to the escore function. The default, 0, means all elements are included.
+          Pass -1 to skip computing the escore completely.
+          Small numbers result in less significative scores, but the execution time goes up quickly with large values.
+        n_iter : int
+          The number of iterations to perform. Defaults to 20.
+
+        In train-adjustment:
+
+        pts_dim : str
+          The name of the "multivariate" dimension. Defaults to "variables", which is the
+          normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+        adj_kws : dict, optional
+          Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+        rot_matrices : xr.DataArray, optional
+          The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+
+        Notes
+        -----
+        The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
+        datasets are constructed by stacking the timeseries of N variables together. The algoriths goes into the
+        following steps:
+
+        1. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
+
+        ..math ::
+
+            \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \\
+            \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \\
+            \tilde{\mathbf{S}} = \mathbf{S}\mathbf{R}
+
+        2. An univariate bias-adjustment :math:`\mathcal{F}` is used on the rotated datasets.
+        The adjustments are made in additive mode, for each variable :math:`i`.
+
+        .. math::
+
+            \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+
+        3. The bias-adjusted datasets are rotated back.
+
+        .. math::
+
+            \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+            \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+
+
+        These three steps are repeated a certain number of times, prescribed by argument ``n_iter``. At each
+        iteration, a new random rotation matrix is generated.
+
+        The original algorithm ([Pitie05]_), stops the iteration when some distance score converges. Following
+        [Cannon18_] and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
+
+        As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
+        (see :py:func:`xclim.sdba.processing.escore`).
+
+        The random matrices are generated following a method laid out by [Mezzadri].
+
+        This is only part of the full MBCn algorithm, see :ref:`The MBCn algorithm` for an example on how
+        to replicate the full method with xclim. This includes a standardization of the simulated data beforehand,
+        an initial univariate adjustment and the reordering of those adjusted series according to the
+        rank structure of the output of this algorithm.
+
+        References
+        ----------
+        .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+        .. [Mezzadri]Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+        .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
+        .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+        """
         base_kws or {}
         if "kind" in base_kws:
             warn(
@@ -1046,7 +1126,9 @@ class NpdfTransform(BaseAdjustment):
     ):
         # Assuming sim has the same coords as hist
         # We get the safest new name of the rotated dim.
-        rot_dim = get_prime_dim(pts_dim, ref, hist, sim)
+        rot_dim = xr.core.utils.get_temp_dimname(
+            set(ref.dims).union(hist.dims).union(sim.dims), pts_dim + "_prime"
+        )
 
         # Get the rotation matrices
         rot_matrices = rand_rot_matrix(
@@ -1058,7 +1140,7 @@ class NpdfTransform(BaseAdjustment):
         escores_tmpl = xr.broadcast(
             ref.isel({pts_dim: 0, "time": 0}),
             hist.isel({pts_dim: 0, "time": 0}),
-        ).expand_dims(iterations=rot_matrices.iterations)
+        )[0].expand_dims(iterations=rot_matrices.iterations)
 
         template = xr.Dataset(
             data_vars={
@@ -1086,13 +1168,17 @@ class NpdfTransform(BaseAdjustment):
             )
 
         kwargs = self.parameters.copy()
-        kwargs.update(pts_dim=pts_dim, rot_dim=rot_dim, adj_kws=adj_kws)
-        out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
+        kwargs.update(pts_dim=pts_dim, adj_kws=adj_kws or {})
+
+        with set_options(sdba_extra_output=False):
+            out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
         scenh = out.scenh
         scens = out.scens.rename(time_sim="time")
-        escores = out.escores
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
-            return scenh, scens, escores
+            extra = xr.Dataset(
+                dict(escores=out.escores, rotation_matrices=rot_matrices)
+            )
+            return scenh, scens, extra
         return scenh, scens

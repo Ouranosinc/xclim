@@ -757,7 +757,7 @@ def stack_variables(ds):
 
     da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
     da.attrs.update(ds.attrs)
-    return da
+    return da.rename("multivariate")
 
 
 def unstack_variables(da):

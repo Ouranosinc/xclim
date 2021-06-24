@@ -687,23 +687,6 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
     return ds
 
 
-def get_prime_dim(dim, *das):
-    """Return a safe dimension name to be the "prime" equivalent of `dim`."""
-
-    def _test_no_collision(name):
-        for da in das:
-            if name in da.dims or name in da.data_vars:
-                return False
-        return True
-
-    new_dim = main = dim + "_prime"
-    n = 0
-    while _test_no_collision(new_dim):
-        new_dim = main + str(n)
-        n += 1
-    return new_dim
-
-
 def rand_rot_matrix(crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = None):
     r"""Generate random rotation matrices.
 
@@ -729,7 +712,7 @@ def rand_rot_matrix(crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = No
 
     References
     ----------
-    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")
