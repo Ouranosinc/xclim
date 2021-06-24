@@ -1,9 +1,9 @@
-from functools import wraps
 from inspect import signature
 from typing import Any, Callable, Dict
 
 import numpy as np
 import xarray as xr
+from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
