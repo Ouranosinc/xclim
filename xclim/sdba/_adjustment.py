@@ -176,3 +176,56 @@ def scaling_adjust(ds, *, group, interp, kind):
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
     return scen.rename("scen").to_dataset()
+
+
+def npdf_transform(ds, **kwargs):
+    ref = ds.ref
+    hist = ds.hist
+    sim = ds.sim.rename(time_sim="time")
+
+    dim = kwargs["pts_dim"]
+    escores = []
+    for i, R in enumerate(ds.rot_matrices.transpose("iterations, ...")):
+
+        # Rotate to new magic space
+        refp = ref @ R
+        histp = hist @ R
+        simp = sim @ R
+
+        # Perform univariate adjustment in new space
+        ADJ = kwargs["base"](**kwargs["base_kws"])
+        ADJ.train(refp, histp)
+        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
+        scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
+
+        # Rotate back
+        # Confusing but works when you think about it (hint: xarray has named dims)
+        hist = scenhp @ R
+        sim = scensp @ R
+
+        if kwargs["n_escore"] >= 0:
+            escores.append(
+                nbu.escore(
+                    ref,
+                    hist,
+                    dims=(dim, "time"),
+                    N=kwargs["n_escore"],
+                    std=True,
+                )
+            )
+
+    if kwargs["n_escore"] >= 0:
+        escores = xr.concat(escores, "iterations")
+    else:
+        # All NaN, but with the proper shape.
+        escores = (
+            ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
+        ).expand_dims(iterations=ds.iteration) * np.NaN
+
+    return xr.Dataset(
+        data_vars={
+            "scenh": hist,
+            "scens": sim.rename(time="time_sim"),
+            "escores": escores,
+        }
+    )

@@ -10,6 +10,7 @@ from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT
 from xclim.core.units import convert_units_to
+from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
@@ -18,6 +19,7 @@ from ._adjustment import (
     eqm_train,
     loci_adjust,
     loci_train,
+    npdf_transform,
     qdm_adjust,
     qm_adjust,
     scaling_adjust,
@@ -31,7 +33,9 @@ from .utils import (
     equally_spaced_nodes,
     get_clusters,
     get_clusters_1d,
+    get_prime_dim,
     pc_matrix,
+    rand_rot_matrix,
 )
 
 __all__ = [
@@ -999,29 +1003,96 @@ class PrincipalComponents(BaseAdjustment):
         return scen.unstack(lbl_R)
 
 
-class NPDFTransfer(BaseAdjustment):
-    """Doc string"""
+class NpdfTransform(BaseAdjustment):
+    """N-dimensional probability density function transform.
+
+    A multivariate bias-adjustment algorithm described by [Cannon18]_, as part of the MBCn algorithm,
+    based on a color-correction algorithm described by [Pitie05]_.
+
+    This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
+    The full MBCn algorithm includes a reordeing step provided here by :py:class:`Reordering`.
+    """
 
     def __init__(
         self,
         base: BaseAdjustment = QuantileDeltaMapping,
         base_kws: Optional[Mapping[str, Any]] = None,
         n_escore: int = 0,
-        max_iter: int = 20,
-        tolerance: float = 0.01,
+        n_iter: int = 20,
     ):
-        if max_iter < 1 and (n_escore < 0 or tolerance <= 0):
-            raise ValueError(
-                "If max_iter is < 1, n_escore must be >= 0 and tolerance must be > 0."
+        base_kws or {}
+        if "kind" in base_kws:
+            warn(
+                f'The adjustment kind cannot be controlled when using {self.__class__.__name__}, it defaults to "+".'
             )
+        base_kws.setdefault("kind", "+")
 
         super().__init__(
             base=base,
-            base_kws=base_kws or {},
+            base_kws=base_kws,
             n_escore=n_escore,
-            max_iter=max_iter,
-            tolerance=tolerance,
+            n_iter=n_iter,
         )
 
-    def train_adjust(ref, hist, sim, *, kinds, adj_kws=None):
-        pass
+    def train_adjust(
+        self,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        *,
+        pts_dim: str = "variables",
+        adj_kws: Optional[Mapping[str, Any]] = None,
+        rot_matrices: Optional[xr.DataArray] = None,
+    ):
+        # Assuming sim has the same coords as hist
+        # We get the safest new name of the rotated dim.
+        rot_dim = get_prime_dim(pts_dim, ref, hist, sim)
+
+        # Get the rotation matrices
+        rot_matrices = rand_rot_matrix(
+            ref[pts_dim], num=self.n_iter, new_dim=rot_dim
+        ).rename(matrices="iterations")
+
+        # Call a map_blocks on the iterative function
+        # Sadly, this is a bit too complicated for map_blocks, we'll do it by hand.
+        escores_tmpl = xr.broadcast(
+            ref.isel({pts_dim: 0, "time": 0}),
+            hist.isel({pts_dim: 0, "time": 0}),
+        ).expand_dims(iterations=rot_matrices.iterations)
+
+        template = xr.Dataset(
+            data_vars={
+                "scenh": xr.full_like(hist, np.NaN),
+                "scens": xr.full_like(sim, np.NaN),
+                "escores": escores_tmpl,
+            }
+        )
+
+        # Input data, rename time dim on sim since it can't be aligned with ref or hist.
+        ds = xr.Dataset(
+            data_vars={
+                "ref": ref,
+                "hist": hist,
+                "sim": sim.rename(time="time_sim"),
+                "rot_matrices": rot_matrices,
+            }
+        )
+
+        if uses_dask(ds) and any(
+            [d in ds.chunks for d in ["time", "time_sim", pts_dim]]
+        ):
+            raise ValueError(
+                f'Inputs of {self.__class__.__name__} cannot be chunked along the main dimensions "time" and "{pts_dim}"'
+            )
+
+        kwargs = self.parameters.copy()
+        kwargs.update(pts_dim=pts_dim, rot_dim=rot_dim, adj_kws=adj_kws)
+        out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
+
+        scenh = out.scenh
+        scens = out.scens.rename(time_sim="time")
+        escores = out.escores
+
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
+            return scenh, scens, escores
+        return scenh, scens

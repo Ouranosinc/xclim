@@ -5,6 +5,7 @@ import dask.array as dsk
 import numpy as np
 import xarray as xr
 
+from xclim.core.formatting import update_history
 from xclim.core.utils import uses_dask
 
 from .base import Grouper, map_groups
@@ -246,3 +247,31 @@ def standardize(
 def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     """Rescale a standardized array by performing the inverse operation of `standardize`."""
     return (std * da) + mean
+
+
+@map_groups(scen=[Grouper.DIM])
+def reordering(sim, ref):
+    """Reorders data in `sim` following the order of ref.
+
+    The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
+    optionnaly doing the operation group-wise.
+
+    Reference
+    ---------
+    Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+    """
+
+    def _reordering_1d(data, ordr):
+        return np.sort(data)[np.argsort(np.argsort(ordr))]
+
+    return xr.apply_ufunc(
+        _reordering_1d,
+        sim,
+        ref,
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[sim.dtype],
+        keep_attrs=True,
+    )

@@ -1,4 +1,6 @@
 """Numba-accelerated utils."""
+from typing import Sequence
+
 import numpy as np
 import xarray as xr
 from numba import boolean, float32, float64, guvectorize, int64, njit
@@ -193,18 +195,18 @@ def _escore(tgt, sim, N=0, std=False):
 def escore(
     tgt: xr.DataArray,
     sim: xr.DataArray,
+    dims: Sequence[str] = ("variables", "time"),
     N: int = 0,
     scale: bool = False,
-    obs_dim: str = "time",
 ):
     r"""Energy score, or energy dissimilarity metric, based on [SkezelyRizzo]_ and [Cannon18]_.
 
     Parameters
     ----------
     tgt: DataArray
-      Target observations, 2D.
+      Target observations.
     sim: DataArray
-      Candidate observations. Must have the same (2) dimensions as `tgt`.
+      Candidate observations. Must have the same dimensions as `tgt`.
     N : int
       If larger than 0, the number of observations to use in the score computation. The points are taken
       evenly distributed along `obs_dim`.
@@ -212,14 +214,15 @@ def escore(
       Whether to scale the data before computing the score. If True, both arrays as scaled according
       to the mean and standard deviation of `tgt` along `obs_dim`. (std computed with `ddof=1` and both
       statistics excluding NaN values.
-    obs_dim: str
-      The name of the array dimension along which the observation points are listed. `tgt` and `sim` can
-      have different length along this one, but must be equal along the other one.
+    dim: sequence of 2 str
+      The name of the dimensions along which the variables and observation points are listed.
+      `tgt` and `sim` can have different length along the second one, but must be equal along the first one.
+      The result will keep all other dimensions.
 
     Returns
     -------
     e-score
-        float
+        xr.DataArray with dimensions not in `dims`.
 
     Notes
     -----
@@ -248,13 +251,14 @@ def escore(
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     """
 
-    pts_dim = set(tgt.dims) - {obs_dim}
-    if len(pts_dim) > 1 or {pts_dim, obs_dim} != set(sim.dims):
-        raise ValueError(
-            f"Incorrect dimensions or number of dimensions. `sim` and `tgt` must both have the same 2 dimension names, including obs_dim={obs_dim}."
-        )
+    pts_dim, obs_dim = dims
 
-    sim = sim.transpose(..., obs_dim)
-    tgt = tgt.transpose(..., obs_dim)
-
-    return _escore(tgt.values, sim.values, N=N, scale=scale)
+    return xr.apply_ufunc(
+        _escore,
+        tgt,
+        sim,
+        input_core_dims=[[pts_dim, obs_dim], [pts_dim, obs_dim]],
+        output_dtypes=[sim.dtype],
+        dask="parallelized",
+        vectorize=True,
+    )

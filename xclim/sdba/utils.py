@@ -687,7 +687,24 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
     return ds
 
 
-def rand_rot_matrix(crd: xr.DataArray, num: int = 1):
+def get_prime_dim(dim, *das):
+    """Return a safe dimension name to be the "prime" equivalent of `dim`."""
+
+    def _test_no_collision(name):
+        for da in das:
+            if name in da.dims or name in da.data_vars:
+                return False
+        return True
+
+    new_dim = main = dim + "_prime"
+    n = 0
+    while _test_no_collision(new_dim):
+        new_dim = main + str(n)
+        n += 1
+    return new_dim
+
+
+def rand_rot_matrix(crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = None):
     r"""Generate random rotation matrices.
 
     Rotation matrices are members of the SO(n) group, where n is the matrix size (`crd.size`).
@@ -699,9 +716,11 @@ def rand_rot_matrix(crd: xr.DataArray, num: int = 1):
     crd: DataArray
       1D coordinate DataArray along which the rotation occurs.
       The output will be square with the same coordinate replicated,
-      the second renamed to `crd.name + '_prime'`.
+      the second renamed to `new_dim`.
     num : int
       If larger than 1 (default), the number of matrices to generate, stacked along a "matrices" dimension.
+    new_dim : str
+      Name of the new "prime" dimension, defaults to the same name as `crd` + "_prime".
 
     Returns
     -------
@@ -718,8 +737,9 @@ def rand_rot_matrix(crd: xr.DataArray, num: int = 1):
     N = crd.size
     dim = crd.dims[0]
     # Rename and rebuild second coordinate : "prime" axis.
-    dim2 = dim + "_prime"
-    crd2 = xr.DataArray(crd.values, dims=dim2, name=dim2, attrs=crd.attrs)
+    if new_dim is None:
+        new_dim = dim + "_prime"
+    crd2 = xr.DataArray(crd.values, dims=new_dim, name=new_dim, attrs=crd.attrs)
 
     # Random floats from the standardized normal distribution
     Z = np.random.standard_normal((N, N))
@@ -730,5 +750,5 @@ def rand_rot_matrix(crd: xr.DataArray, num: int = 1):
     denum = np.abs(num)
     lam = np.diag(num / denum)  # "lambda"
     return xr.DataArray(
-        Q @ lam, dims=(dim, dim2), coords={dim: crd, dim2: crd2}
+        Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
     ).astype("float32")
