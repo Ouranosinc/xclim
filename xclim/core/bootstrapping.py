@@ -36,12 +36,12 @@ def percentile_bootstrap(func):
     def wrapper(*args, **kwargs):
         # TODO: Modify signature and docstring to include bootstrap parameter
 
-        bootstrap = kwargs.pop("bootstrap", False)
+        ba = signature(func).bind(*args, **kwargs)
+        ba.apply_defaults()
+        bootstrap = ba.arguments.pop("bootstrap", False)
         if bootstrap is False:
             return func(*args, **kwargs)
 
-        ba = signature(func).bind(*args, **kwargs)
-        ba.apply_defaults()
         return bootstrap_func(func, **ba.arguments)
 
     return wrapper
