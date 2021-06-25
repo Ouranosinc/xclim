@@ -9,7 +9,7 @@ from xarray.core.dataarray import DataArray
 from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
 
 
-def percentile_bootstrap(compute_indice_func):
+def percentile_bootstrap(func):
     """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
     Boostraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
@@ -22,25 +22,27 @@ def percentile_bootstrap(compute_indice_func):
         tas: xarray.DataArray,
         t90: xarray.DataArray,
         freq: str = "YS",
-        bootstrap=False
+        bootstrap: bool = False
     ) -> xarray.DataArray:
 
     Example when called:
-    >>> t90 = percentile_doy(ds.tmax, window=5, per=90)
-    >>> tg90p(tas=da, t90=t90, freq="YS", bootstrap=True)
+    >>> import xarray as xr
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> t90 = percentile_doy(tas, window=5, per=90)
+    >>> tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
     """
 
-    @wraps(compute_indice_func)
+    @wraps(func)
     def wrapper(*args, **kwargs):
         # TODO: Modify signature and docstring to include bootstrap parameter
 
         bootstrap = kwargs.pop("bootstrap", False)
         if bootstrap is False:
-            return compute_indice_func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-        ba = signature(compute_indice_func).bind(*args, **kwargs)
+        ba = signature(func).bind(*args, **kwargs)
         ba.apply_defaults()
-        return bootstrap_func(compute_indice_func, **ba.arguments)
+        return bootstrap_func(func, **ba.arguments)
 
     return wrapper
 

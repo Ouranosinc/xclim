@@ -82,6 +82,8 @@ def cold_spell_duration_index(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -889,6 +891,8 @@ def days_over_precip_thresh(
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -939,6 +943,8 @@ def fraction_over_precip_thresh(
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -985,6 +991,8 @@ def tg90p(
       90th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1033,6 +1041,8 @@ def tg10p(
       10th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1081,6 +1091,8 @@ def tn90p(
       90th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1129,6 +1141,8 @@ def tn10p(
       10th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1177,6 +1191,8 @@ def tx90p(
       90th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1225,6 +1241,8 @@ def tx10p(
       10th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
@@ -1338,6 +1356,8 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping.
 
     Returns
     -------
