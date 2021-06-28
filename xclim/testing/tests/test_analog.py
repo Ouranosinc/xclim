@@ -70,7 +70,14 @@ def test_spatial_analogs(method):
     candidates = data.sel(time=slice("1970", "1990"))
 
     out = xca.spatial_analogs(target, candidates, method=method)
+    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
+    # Test multi-indexes
+    target_stacked = target.stack(sample=["time"])
+    candidates_stacked = candidates.stack(sample=["time"])
+    out = xca.spatial_analogs(
+        target_stacked, candidates_stacked, dist_dim="sample", method=method
+    )
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 

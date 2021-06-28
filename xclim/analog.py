@@ -97,8 +97,8 @@ def spatial_analogs(
     candidates : xr.Dataset
         Dataset of the candidate indices. Only indice variables should be included in
         the dataset's `data_vars`.
-    dist_dim : Union[str, Sequence[Union[str, Sequence[str]]]]
-        The dimension(s) over which the *distributions* are constructed.
+    dist_dim : str
+        The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
         Which method to use when computing the dissimilarity statistic.
     **kwargs
@@ -115,24 +115,23 @@ def spatial_analogs(
     ]:
         raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
 
-    if isinstance(dist_dim, str):
-        dist_dim = [dist_dim]
-
     # Create the target DataArray:
     target = xr.concat(
         target.data_vars.values(),
-        xr.DataArray(list(target.data_vars.keys()), dims=("indices",), name="indices"),
+        xr.DataArray(
+            list(target.data_vars.keys()), dims=("target_indices",), name="indices"
+        ),
     )
-    target = target.stack(dist=dist_dim)
 
     # Create the target DataArray:
     candidates = xr.concat(
         candidates.data_vars.values(),
         xr.DataArray(
-            list(candidates.data_vars.keys()), dims=("indices",), name="indices"
+            list(candidates.data_vars.keys()),
+            dims=("candidate_indices",),
+            name="indices",
         ),
     )
-    candidates = candidates.stack(dist=dist_dim)
 
     try:
         metric = metrics[method]
@@ -146,7 +145,7 @@ def spatial_analogs(
         metric,
         target,
         candidates,
-        input_core_dims=[("dist", "indices"), ("dist", "indices")],
+        input_core_dims=[(dist_dim, "target_indices"), (dist_dim, "candidate_indices")],
         output_core_dims=[()],
         vectorize=True,
         dask="parallelized",
