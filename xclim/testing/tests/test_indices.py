@@ -217,6 +217,7 @@ class TestAgroclimaticIndices:
         "method, end_date, deg_days, max_deg_days",
         [
             ("gladstones", "11-01", 1102.1, 1926.0),
+            ("jones", "11-01", 1210.6, 2179.1),
             ("icclim", "10-01", 915.0, 1647.0),
         ],
     )
@@ -271,17 +272,28 @@ class TestAgroclimaticIndices:
             freq="YS",
         )
 
-        np.testing.assert_allclose(
-            bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
-        )
-        np.testing.assert_array_equal(
-            bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
-        )
+        if method == "jones":
+            np.testing.assert_array_less(
+                bedd[1], bedd[0]
+            )  # Leap-year has slightly higher values
+            np.testing.assert_allclose(
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=3e-4
+            )
+            np.testing.assert_allclose(
+                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+            )
 
-        if method == "gladstones":
-            np.testing.assert_array_less(bedd, bedd_high_lat)
-        if method == "icclim":
-            np.testing.assert_array_equal(bedd, bedd_high_lat)
+        else:
+            np.testing.assert_allclose(
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+            )
+            np.testing.assert_array_equal(
+                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+            )
+            if method == "gladstones":
+                np.testing.assert_array_less(bedd, bedd_high_lat)
+            if method == "icclim":
+                np.testing.assert_array_equal(bedd, bedd_high_lat)
 
     def test_cool_night_index(self):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
