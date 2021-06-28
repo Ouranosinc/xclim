@@ -7,7 +7,6 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.datachecks import check_freq
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates, day_lengths
@@ -301,10 +300,11 @@ def biologically_effective_degree_days(
       Latitude coordinate.
     thresh_tasmin: str
       The minimum temperature threshold.
-    method: {"gladstones", "icclim"}
+    method: {"gladstones", "icclim", "jones"}
       The formula to use for the calculation.
       The "gladstones" integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
       The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
+      The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient. End_date should be "11-01".
     low_dtr: str
       The lower bound for daily temperature range adjustment (default: 10°C).
     high_dtr: str
@@ -367,7 +367,7 @@ def biologically_effective_degree_days(
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
-    if method.lower() == "gladstones" and lat is not None:
+    if method.lower() in ["gladstones", "jones"] and lat is not None:
         low_dtr = convert_units_to(low_dtr, "degC")
         high_dtr = convert_units_to(high_dtr, "degC")
         dtr = tasmax - tasmin
@@ -376,12 +376,25 @@ def biologically_effective_degree_days(
             dtr - high_dtr,
             xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
-
-        lat_mask = abs(lat) <= 50
-        k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
+        if method.lower() == "gladstones":
+            lat_mask = abs(lat) <= 50
+            k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
+            k_aggregated = 1
+        else:
+            day_length = day_lengths(
+                dates=tasmin.time,
+                lat=lat,
+                start_date=start_date,
+                end_date=end_date,
+                freq=freq,
+            )
+            k = 1
+            k_huglin = 2.8311e-4 * day_length + 0.30834
+            k_aggregated = 1.1135 * k_huglin - 0.1352
     elif method.lower() == "icclim":
         k = 1
         tr_adj = 0
+        k_aggregated = 1
     else:
         raise NotImplementedError()
 
@@ -389,7 +402,10 @@ def biologically_effective_degree_days(
         max=max_daily_degree_days
     )
 
-    bedd = aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
+    bedd = (
+        aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
+        * k_aggregated
+    )
 
     bedd.attrs["units"] = "K days"
     return bedd
