@@ -326,8 +326,8 @@ class TestAgroclimaticIndices:
         [
             ("smoothed", "10-01", 1702.87),
             ("icclim", "11-01", 1983.53),
-            ("jones", "10-01", 1784.43),
-            ("jones", "11-01", 2285.15),
+            ("jones", "10-01", 1727.94),
+            ("jones", "11-01", 2220.15),
         ],
     )
     def test_huglin_index(self, method, end_date, values):
