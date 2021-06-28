@@ -146,7 +146,7 @@ def huglin_index(
     thresh_tasmin: str
       The minimum temperature threshold.
     method: {"smoothed", "icclim", "jones"}
-      The formula to use for the calculation.
+      The formula to use for the latitude coefficient calculation.
     start_date: DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
     end_date: DayOfYearStr
