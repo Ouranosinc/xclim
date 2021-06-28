@@ -2064,3 +2064,39 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
 
     out = xci.water_budget(prm, tas=tm, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
+
+
+def test_dry_spell(pr_series):
+    pr = pr_series(
+        np.array(
+            [
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                1.01,
+                0.01,
+                0.01,
+                0.01,
+                0.51,
+                0.51,
+                0.75,
+                0.75,
+                0.51,
+                0.01,
+                0.01,
+                0.01,
+                1.01,
+                1.01,
+                1.01,
+            ]
+        )
+    )
+    pr.attrs["units"] = "mm/day"
+
+    events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+    total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+
+    np.testing.assert_allclose(events[0], [2], rtol=1e-1)
+    np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
