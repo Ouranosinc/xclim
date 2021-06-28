@@ -6,16 +6,19 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-import math
 import warnings
 from typing import Optional, Union
 
 import numpy as np
-import scipy.stats
 import xarray
 import xarray as xr
 
-from xclim.core.calendar import convert_calendar, doy_to_days_since, get_calendar
+from xclim.core.calendar import (
+    convert_calendar,
+    days_in_year,
+    doy_to_days_since,
+    get_calendar,
+)
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -787,7 +790,7 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
     return out
 
 
-def day_length_coefficient(
+def day_lengths(
     dates: xr.DataArray,
     lat: xr.DataArray,
     obliquity: float = 0.4091,
@@ -795,7 +798,7 @@ def day_length_coefficient(
     end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     freq: str = "YS",
 ) -> xr.DataArray:
-    """Day-length coefficient.
+    """Day-lengths according to latitude, obliquity, and day of year.
 
     Parameters
     ----------
@@ -824,15 +827,19 @@ def day_length_coefficient(
     Examples available from Glarner, 2006 (http://www.gandraxa.com/length_of_day.xml).
     """
     warnings.warn("This is untested.", UserWarning, stacklevel=4)
-    axis = xr.where(lat > 0, obliquity, -obliquity)
-    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
-        axis * (np.cos((2 * np.pi * dates.dt.dayofyear) / 365.25))
+    cal = get_calendar(dates)
+    year_lengths = dates.time.copy(
+        data=[days_in_year(x, calendar=cal) for x in dates.time.dt.year]
     )
-    day_length_multiplier = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
+
+    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
+        obliquity * (np.cos((2 * np.pi * dates.dt.dayofyear) / year_lengths))
+    )
+    day_length_hours = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
 
     if start_date and end_date:
         return aggregate_between_dates(
-            day_length_multiplier, start=start_date, end=end_date, op="sum", freq=freq
+            day_length_hours, start=start_date, end=end_date, op="sum", freq=freq
         )
     else:
-        return day_length_multiplier
+        return day_length_hours

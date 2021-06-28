@@ -10,7 +10,7 @@ import xclim.indices.run_length as rl
 from xclim.core.datachecks import check_freq
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices.generic import aggregate_between_dates, day_length_coefficient
+from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -179,8 +179,8 @@ def huglin_index(
                         NaN, & \text{if } |lat| > 50 \\
                      \end{cases}
 
-    For compatibility with icclim, `end_date` should be set to `11-01` while the `icclim` method for the day-length
-    multiplication factor, :math:`k`, is calculated as follows:
+    For compatibility with ICCLIM, `end_date` should be set to `11-01`, `method` should be set to `icclim`. The
+    day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
         k = f(lat) = \begin{cases}
@@ -192,6 +192,10 @@ def huglin_index(
                         1.06, & \text{if } 48 < |lat| \lteq 50 \\
                         NaN, & \text{if } |lat| > 50 \\
                     \end{cases}
+
+    For a more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available is
+    available with `method="jones"`. see: :py:func:`xclim.core.calendar.day_lengths` or Hall and Jones (2010) for more
+    information.
 
     References
     ----------
@@ -240,7 +244,7 @@ def huglin_index(
         )
         k_aggregated = 1
     elif method.lower() == "jones":
-        day_length = day_length_coefficient(
+        day_length = day_lengths(
             dates=tasmin.time,
             lat=lat,
             start_date=start_date,
