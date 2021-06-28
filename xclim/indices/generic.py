@@ -794,6 +794,7 @@ def day_lengths(
     dates: xr.DataArray,
     lat: xr.DataArray,
     obliquity: float = 0.4091,
+    summer_solstice: DayOfYearStr = "06-21",
     start_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     freq: str = "YS",
@@ -807,6 +808,8 @@ def day_lengths(
       Latitude coordinate.
     obliquity: float
       Obliquity of the elliptic (rads). Default: 0.4091.
+    summer_solstice: DayOfYearStr
+      Date of summer solstice in northern hemisphere. Used for approximating solar julian dates.
     start_date: xarray.DataArray or DayOfYearStr, optional
     end_date: xarray.DataArray or DayOfYearStr, optional
     freq : str
@@ -826,15 +829,22 @@ def day_lengths(
 
     Examples available from Glarner, 2006 (http://www.gandraxa.com/length_of_day.xml).
     """
-    warnings.warn("This is untested.", UserWarning, stacklevel=4)
     cal = get_calendar(dates)
-    year_lengths = dates.time.copy(
+
+    year_length = dates.time.copy(
         data=[days_in_year(x, calendar=cal) for x in dates.time.dt.year]
     )
 
-    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
-        obliquity * (np.cos((2 * np.pi * dates.dt.dayofyear) / year_lengths))
+    julian_date_from_solstice = dates.time.copy(
+        data=doy_to_days_since(
+            dates.time.dt.dayofyear, start=summer_solstice, calendar=cal
+        )
     )
+
+    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
+        -obliquity * (np.cos((2 * np.pi * julian_date_from_solstice) / year_length))
+    )
+
     day_length_hours = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
 
     if start_date and end_date:

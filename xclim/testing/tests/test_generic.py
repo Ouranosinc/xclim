@@ -348,6 +348,54 @@ class TestAggregateBetweenDates:
             generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
 
 
+class TestDayLength:
+    @pytest.mark.parametrize(
+        "event, date, values",
+        [
+            (
+                "solstice",
+                "1992-12-21",
+                [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
+            ),
+            (
+                "equinox",
+                "1993-03-20",  # True equinox on 1993-03-20 at 9:40 AM. Some relative tolerance needed.
+                [[12] * 7],
+            ),
+            (
+                "solstice",
+                "1993-06-21",
+                [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]],
+            ),
+            (
+                "solstice",
+                "1993-12-21",
+                [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
+            ),
+        ],
+    )
+    def test_multiple_lats(self, event, date, values):
+        time_data = date_range(
+            "1992-12-01", "1994-01-01", freq="D", calendar="standard"
+        )
+        data = xr.DataArray(
+            np.ones((time_data.size, 7)),
+            dims=("time", "lat"),
+            coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60]},
+        )
+
+        dl = generic.day_lengths(dates=data.time, lat=data.lat)
+
+        if event == "solstice":
+            np.testing.assert_array_almost_equal(
+                dl.sel(time=date).transpose(), np.array(values), 2
+            )
+        elif event == "equinox":
+            np.testing.assert_allclose(
+                dl.sel(time=date).transpose(), np.array(values), rtol=2e-1
+            )
+
+
 def test_degree_days(tas_series):
     tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
 
