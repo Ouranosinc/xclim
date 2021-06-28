@@ -349,32 +349,7 @@ class TestAggregateBetweenDates:
 
 
 class TestDayLength:
-    @pytest.mark.parametrize(
-        "event, date, values",
-        [
-            (
-                "solstice",
-                "1992-12-21",
-                [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
-            ),
-            (
-                "equinox",
-                "1993-03-20",  # True equinox on 1993-03-20 at 9:40 AM. Some relative tolerance needed.
-                [[12] * 7],
-            ),
-            (
-                "solstice",
-                "1993-06-21",
-                [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]],
-            ),
-            (
-                "solstice",
-                "1993-12-21",
-                [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
-            ),
-        ],
-    )
-    def test_multiple_lats(self, event, date, values):
+    def test_multiple_lats(self):
         time_data = date_range(
             "1992-12-01", "1994-01-01", freq="D", calendar="standard"
         )
@@ -386,14 +361,27 @@ class TestDayLength:
 
         dl = generic.day_lengths(dates=data.time, lat=data.lat)
 
-        if event == "solstice":
-            np.testing.assert_array_almost_equal(
-                dl.sel(time=date).transpose(), np.array(values), 2
-            )
-        elif event == "equinox":
-            np.testing.assert_allclose(
-                dl.sel(time=date).transpose(), np.array(values), rtol=2e-1
-            )
+        events = dict(
+            solstice=[
+                ["1992-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
+                ["1993-06-21", [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]]],
+                ["1993-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
+            ],
+            equinox=[
+                ["1993-03-20", [[12] * 7]]
+            ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
+        )
+
+        for event, evaluations in events.items():
+            for e in evaluations:
+                if event == "solstice":
+                    np.testing.assert_array_almost_equal(
+                        dl.sel(time=e[0]).transpose(), np.array(e[1]), 2
+                    )
+                elif event == "equinox":
+                    np.testing.assert_allclose(
+                        dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1
+                    )
 
 
 def test_degree_days(tas_series):
