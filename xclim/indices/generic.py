@@ -203,8 +203,8 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     high : float
       Maximum threshold value.
     freq : str
-      Resampling frequency defining the periods
-      defined in http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+      Resampling frequency defining the periods defined in
+      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -793,13 +793,13 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
 def day_lengths(
     dates: xr.DataArray,
     lat: xr.DataArray,
-    obliquity: float = 0.4091,
+    obliquity: float = -0.4091,
     summer_solstice: DayOfYearStr = "06-21",
     start_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
     freq: str = "YS",
 ) -> xr.DataArray:
-    """Day-lengths according to latitude, obliquity, and day of year.
+    r"""Day-lengths according to latitude, obliquity, and day of year.
 
     Parameters
     ----------
@@ -807,7 +807,7 @@ def day_lengths(
     lat: xarray.DataArray
       Latitude coordinate.
     obliquity: float
-      Obliquity of the elliptic (rads). Default: 0.4091.
+      Obliquity of the elliptic (radians). Default: -0.4091.
     summer_solstice: DayOfYearStr
       Date of summer solstice in northern hemisphere. Used for approximating solar julian dates.
     start_date: xarray.DataArray or DayOfYearStr, optional
@@ -820,6 +820,27 @@ def day_lengths(
     xarray.DataArray
       If start and end date provided, returns total sum of daylight-hour between dates at provided frequency.
       If no start and end date provided, returns day-length in hours per individual day.
+
+    Notes
+    -----
+    Daylight-hours are dependent on latitude, :math:`lat`, the Julian day (solar day) from the summer solstice in the
+    Northern hemisphere, :math:`Jday`, and the axial tilt :math:`Axis`, therefore day-length at any latitude for a given
+    date on Earth, :math:`dayLength_{lat_{Jday}}`, for a given year in days, :math:`Year`, can be approximated as
+    follows:
+
+    .. math::
+        dayLength_{lat_{Jday}} = f({lat}, {Jday}) = \frac{\arccos(1-m_{lat_{Jday}})}{\pi} * 24
+
+    Where:
+
+    .. math::
+        m_{lat_{Jday}} = f({lat}, {Jday}) = 1 - \tan({Lat}) * \tan \left({Axis}*\cos\left[\frac{2*\pi*{Jday}}{||{Year}||} \right] \right)
+
+    The total sum of daylight hours for a given period between two days (:math:`{Jday} = 0` -> :math:`N`) within a solar
+    year then is:
+
+    .. math::
+        \sum({SeasonDayLength_{lat}}) = \sum_{Jday=1}^{N} dayLength_{lat_{Jday}}
 
     References
     ----------
@@ -842,7 +863,7 @@ def day_lengths(
     )
 
     m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
-        -obliquity * (np.cos((2 * np.pi * julian_date_from_solstice) / year_length))
+        obliquity * (np.cos((2 * np.pi * julian_date_from_solstice) / year_length))
     )
 
     day_length_hours = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24

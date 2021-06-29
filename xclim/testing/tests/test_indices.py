@@ -217,7 +217,7 @@ class TestAgroclimaticIndices:
         "method, end_date, deg_days, max_deg_days",
         [
             ("gladstones", "11-01", 1102.1, 1926.0),
-            ("jones", "11-01", 1210.6, 2179.1),
+            ("jones", "11-01", 1203.4, 2179.1),
             ("icclim", "10-01", 915.0, 1647.0),
         ],
     )
@@ -338,8 +338,8 @@ class TestAgroclimaticIndices:
         [
             ("smoothed", "10-01", 1702.87),
             ("icclim", "11-01", 1983.53),
-            ("jones", "10-01", 1727.94),
-            ("jones", "11-01", 2220.15),
+            ("jones", "10-01", 1729.12),
+            ("jones", "11-01", 2219.51),
         ],
     )
     def test_huglin_index(self, method, end_date, values):

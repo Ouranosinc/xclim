@@ -167,14 +167,14 @@ def huglin_index(
     1 April and 30 September is:
 
     .. math::
-        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \left( \frac{TX_i  + TN_i)}{2} - 10 \right) k \right)
+        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TN_i)}{2} - 10 \right) * k
 
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
         k = f(lat) = \begin{cases}
                         1, & \text{if } |lat| <= 40 \\
-                        1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| \lteq 50 \\
+                        1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| <= 50 \\
                         NaN, & \text{if } |lat| > 50 \\
                      \end{cases}
 
@@ -183,18 +183,18 @@ def huglin_index(
 
     .. math::
         k = f(lat) = \begin{cases}
-                        1.0, & \text{if } |lat| \lteq 40 \\
-                        1.02, & \text{if } 40 < |lat| \lteq 42 \\
-                        1.03, & \text{if } 42 < |lat| \lteq 44 \\
-                        1.04, & \text{if } 44 < |lat| \lteq 46 \\
-                        1.05, & \text{if } 46 < |lat| \lteq 48 \\
-                        1.06, & \text{if } 48 < |lat| \lteq 50 \\
+                        1.0, & \text{if } |lat| <= 40 \\
+                        1.02, & \text{if } 40 < |lat| <= 42 \\
+                        1.03, & \text{if } 42 < |lat| <= 44 \\
+                        1.04, & \text{if } 44 < |lat| <= 46 \\
+                        1.05, & \text{if } 46 < |lat| <= 48 \\
+                        1.06, & \text{if } 48 < |lat| <= 50 \\
                         NaN, & \text{if } |lat| > 50 \\
                     \end{cases}
 
     For a more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available is
-    available with `method="jones"`. see: :py:func:`xclim.core.calendar.day_lengths` or Hall and Jones (2010) for more
-    information.
+    available with `method="jones"`.
+    see: :py:func:`xclim.indices.generic.day_lengths` or Hall and Jones (2010) for more information.
 
     References
     ----------
