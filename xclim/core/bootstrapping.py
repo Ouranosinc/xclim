@@ -25,7 +25,10 @@ def percentile_bootstrap(func):
         bootstrap: bool = False
     ) -> xarray.DataArray:
 
-    Example when called:
+    Examples
+    --------
+    >>> from xclim.core.calendar import percentile_doy
+    >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> t90 = percentile_doy(tas, window=5, per=90)
     >>> tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
