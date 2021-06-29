@@ -72,14 +72,6 @@ def test_spatial_analogs(method):
     out = xca.spatial_analogs(target, candidates, method=method)
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
-    # Test multi-indexes
-    target_stacked = target.stack(sample=["time"])
-    candidates_stacked = candidates.stack(sample=["time"])
-    out = xca.spatial_analogs(
-        target_stacked, candidates_stacked, dist_dim="sample", method=method
-    )
-    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
-
 
 @pytest.mark.slow
 def test_spatial_analogs_multidim():
@@ -99,6 +91,30 @@ def test_spatial_analogs_multidim():
         diss.seuclidean, out.sel(locations=(46.1875, -72.1875)), 5
     )
     assert out.attrs["indices"] == "meantemp,totalpr"
+
+
+def test_spatial_analogs_multi_index():
+    # Test multi-indexes
+    diss = open_dataset("SpatialAnalogs/dissimilarity")
+    data = open_dataset("SpatialAnalogs/indicators")
+
+    target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
+    candidates = data.sel(time=slice("1970", "1990"))
+
+    target_stacked = target.stack(sample=["time"])
+    candidates_stacked = candidates.stack(sample=["time"])
+
+    method = "seuclidean"
+    out = xca.spatial_analogs(
+        target_stacked, candidates_stacked, dist_dim="sample", method=method
+    )
+    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
+
+    # Check that it works as well when time dimensions don't have the same length.
+    candidates = data.sel(time=slice("1970", "1991"))
+    xca.spatial_analogs(
+        target_stacked, candidates_stacked, dist_dim="sample", method=method
+    )
 
 
 class TestSEuclidean:

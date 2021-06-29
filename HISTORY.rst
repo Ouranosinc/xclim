@@ -9,7 +9,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Automatic load of translations on import and possibility to pass translations for virtual modules.
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
-* `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter.
+* `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~

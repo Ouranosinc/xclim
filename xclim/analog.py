@@ -118,20 +118,19 @@ def spatial_analogs(
     # Create the target DataArray:
     target = xr.concat(
         target.data_vars.values(),
-        xr.DataArray(
-            list(target.data_vars.keys()), dims=("target_indices",), name="indices"
-        ),
+        xr.DataArray(list(target.data_vars.keys()), dims=("indices",), name="indices"),
     )
 
-    # Create the target DataArray:
+    # Create the target DataArray with different dist_dim
+    c_dist_dim = "candidate_dist_dim"
     candidates = xr.concat(
         candidates.data_vars.values(),
         xr.DataArray(
             list(candidates.data_vars.keys()),
-            dims=("candidate_indices",),
+            dims=("indices",),
             name="indices",
         ),
-    )
+    ).rename({dist_dim: c_dist_dim})
 
     try:
         metric = metrics[method]
@@ -145,7 +144,7 @@ def spatial_analogs(
         metric,
         target,
         candidates,
-        input_core_dims=[(dist_dim, "target_indices"), (dist_dim, "candidate_indices")],
+        input_core_dims=[(dist_dim, "indices"), (c_dist_dim, "indices")],
         output_core_dims=[()],
         vectorize=True,
         dask="parallelized",
