@@ -189,6 +189,7 @@ def npdf_transform(ds, **kwargs):
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
 
         # Rotate to new magic space
+        # @ operator stands for matrix multiplication
         refp = ref @ R
         histp = hist @ R
         simp = sim @ R
