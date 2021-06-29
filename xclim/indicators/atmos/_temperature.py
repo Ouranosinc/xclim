@@ -802,12 +802,6 @@ huglin_index = Temp(
     compute=wrapped_partial(
         indices.huglin_index,
         method="jones",
-        suggested=dict(
-            thresh_tasmin="10 degC",
-            start_date="04-01",
-            end_date="10-01",
-            lat=_empty,
-        ),
     ),
 )
 
