@@ -11,7 +11,7 @@ from xclim.testing import open_dataset
 
 
 def test_default_modules_exist():
-    from xclim.indicators import anuclim, cf, icclim
+    from xclim.indicators import anuclim, cf, icclim  # noqa
 
     assert hasattr(icclim, "TG")
 
@@ -20,7 +20,7 @@ def test_default_modules_exist():
 
     assert hasattr(cf, "fg")
 
-    assert len(list(icclim.iter_indicators())) == 48
+    assert len(list(icclim.iter_indicators())) == 49
     assert len(list(anuclim.iter_indicators())) == 19
     # Not testing cf because many indices are waiting to be implemented.
 
@@ -94,9 +94,9 @@ def test_custom_indices():
         nbpath / "example.yml", name="ex2", indices=exinds
     )
 
-    assert ex1.R95p.__doc__ == ex2.R95p.__doc__
+    assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
-    out1 = ex1.R95p(pr=pr)
-    out2 = ex2.R95p(pr=pr)
+    out1 = ex1.R95p(pr=pr)  # noqa
+    out2 = ex2.R95p(pr=pr)  # noqa
 
     xr.testing.assert_equal(out1, out2)
