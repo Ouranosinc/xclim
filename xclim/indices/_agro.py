@@ -323,6 +323,10 @@ def biologically_effective_degree_days(
     xarray.DataArray
       Biologically effective growing degree days (BEDD).
 
+    Warnings
+    --------
+    Lat coordinate must be provided if method is "gladstones" or "jones".
+
     Notes
     -----
     The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
