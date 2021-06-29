@@ -2,7 +2,7 @@ from inspect import signature
 from typing import Any, Callable, Dict
 
 import numpy as np
-import xarray as xr
+import xarray
 from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
@@ -49,7 +49,7 @@ def percentile_bootstrap(func):
     return wrapper
 
 
-def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
+def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     """Bootstrap the computation of percentile-based exceedance indices.
 
     Indices measuring exceedance over percentile-based threshold may contain artificial discontinuities at the
@@ -105,7 +105,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
 
     # List of years in base period
     clim = per.attrs["climatology_bounds"]
-    per_clim_years = xr.cftime_range(*clim, freq="YS").year
+    per_clim_years = xarray.cftime_range(*clim, freq="YS").year
 
     # `da` over base period used to compute percentile
     da_base = da.sel(time=slice(*clim))
@@ -140,7 +140,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
             value = compute_indice_func(**kw)
 
         out.append(value)
-    out = xr.concat(out, dim="time")
+    out = xarray.concat(out, dim="time")
     # TODO Make sure that's okay to insert the unit like that
     out.attrs["units"] = "d"
     return out
@@ -148,7 +148,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
 
 # TODO: Return a generator instead and assess performance
 def bootstrap_year(
-    da: DataArray, groups: Dict[Any, slice], label: Any, dim="time"
+    da: DataArray, groups: Dict[Any, slice], label: Any, dim: str = "time"
 ) -> DataArray:
     """Return an array where a group in the original is replace by every other groups along a new dimension.
 
