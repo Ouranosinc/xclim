@@ -113,7 +113,6 @@ def test_reordering():
     x = xr.DataArray(np.arange(1, 11), dims=("time",))
     y = xr.DataArray(np.arange(10, 20)[::-1], dims=("time",))
 
-    ds = xr.Dataset(dict(sim=x, ref=y))
-    out = reordering(ds, group="time")
+    out = reordering(x, y, group="time")
 
     np.testing.assert_array_equal(out, np.arange(1, 11)[::-1])
