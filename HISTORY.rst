@@ -16,6 +16,13 @@ New features and enhancements
 * New ``sdba.processing.standardize``, ``.unstandardize`` and  ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
 * New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
 
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in sdba :
+
+    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
+    - raise a proper error when ``ref``and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -37,15 +44,6 @@ Internal Changes
 * Minor modifications to the GitHub Pull Requests template.
 * Simplification of some yaml elements for virtual modules.
 * Allow injecting `freq` without the missing checks failing.
-
-
-Bug fixes
-~~~~~~~~~
-* Various bug fixes in sdba :
-
-    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
-    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
-    - raise a proper error when ``ref``and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
 
 0.27.0 (2021-05-28)
