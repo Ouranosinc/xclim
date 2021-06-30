@@ -248,8 +248,30 @@ def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     return (std * da) + mean
 
 
-@map_groups(scen=[Grouper.DIM], main_only=True)
-def reordering(ds, *, dim):
+@map_groups(reordered=[Grouper.DIM], main_only=True)
+def _reordering_group(ds, *, dim):
+    """Group-wise reordering."""
+
+    def _reordering_1d(data, ordr):
+        return np.sort(data)[np.argsort(np.argsort(ordr))]
+
+    return (
+        xr.apply_ufunc(
+            _reordering_1d,
+            ds.sim,
+            ds.ref,
+            input_core_dims=[[dim], [dim]],
+            output_core_dims=[[dim]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[ds.sim.dtype],
+        )
+        .rename("reordered")
+        .to_dataset()
+    )
+
+
+def reordering(sim, ref, group="time"):
     """Reorders data in `sim` following the order of ref.
 
     The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
@@ -259,21 +281,8 @@ def reordering(ds, *, dim):
     ---------
     Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
     """
-
-    def _reordering_1d(data, ordr):
-        return np.sort(data)[np.argsort(np.argsort(ordr))]
-
-    return xr.apply_ufunc(
-        _reordering_1d,
-        ds.sim,
-        ds.ref,
-        input_core_dims=[[dim], [dim]],
-        output_core_dims=[[dim]],
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[ds.sim.dtype],
-        keep_attrs=True,
-    ).rename("scen")
+    ds = xr.Dataset({"sim": sim, "ref": ref})
+    return _reordering_group(ds, group=group).reordered
 
 
 def escore(

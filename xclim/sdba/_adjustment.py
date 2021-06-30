@@ -241,8 +241,8 @@ def npdf_transform(ds, **kwargs):
 
     return xr.Dataset(
         data_vars={
-            "scenh": hist,
-            "scens": sim.rename(time="time_sim"),
+            "scenh": hist.transpose(*ds.hist.dims),
+            "scens": sim.rename(time="time_sim").transpose(*ds.sim.dims),
             "escores": escores,
         }
     )

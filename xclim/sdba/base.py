@@ -739,10 +739,11 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
     return xr.concat(out, "time")
 
 
-def stack_variables(ds):
+def stack_variables(ds, rechunk=True, dim="variables"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes.
+    If rechunk is True (default), dask arrays are rechunked with `variables : -1`.
     """
     attrs = {}
     nvar = len(ds.data_vars)
@@ -752,21 +753,29 @@ def stack_variables(ds):
 
     attrs["is_variables"] = True
     var_crd = xr.DataArray(
-        list(ds.data_vars.keys()), dims=("variables"), name="variables", attrs=attrs
+        list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
     )
 
     da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
+
+    if uses_dask(da) and rechunk:
+        da = da.chunk({dim: -1})
+
     da.attrs.update(ds.attrs)
     return da.rename("multivariate")
 
 
-def unstack_variables(da):
-    """Unstack a DataArray created by `stack_variables` to a dataset."""
-    for dim, crd in da.coords.items():
-        if crd.attrs.get("is_variables"):
-            break
-    else:
-        raise ValueError("No variable coordinate found, were attributes removed?")
+def unstack_variables(da, dim=None):
+    """Unstack a DataArray created by `stack_variables` to a dataset.
+
+    If not specified (default), `dim` is inferred from attributes of the coordinate.
+    """
+    if dim is None:
+        for dim, crd in da.coords.items():
+            if crd.attrs.get("is_variables"):
+                break
+        else:
+            raise ValueError("No variable coordinate found, were attributes removed?")
 
     ds = xr.Dataset(
         {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},

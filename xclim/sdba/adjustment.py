@@ -1145,7 +1145,7 @@ class NpdfTransform(Parametrizable):
         template = xr.Dataset(
             data_vars={
                 "scenh": xr.full_like(hist, np.NaN),
-                "scens": xr.full_like(sim, np.NaN),
+                "scens": xr.full_like(sim, np.NaN).rename(time="time_sim"),
                 "escores": escores_tmpl,
             }
         )
@@ -1161,7 +1161,7 @@ class NpdfTransform(Parametrizable):
         )
 
         if uses_dask(ds) and any(
-            [d in ds.chunks for d in ["time", "time_sim", pts_dim]]
+            [len(ds.chunks.get(d, [])) > 1 for d in ["time", "time_sim", pts_dim]]
         ):
             raise ValueError(
                 f'Inputs of {self.__class__.__name__} cannot be chunked along the main dimensions "time" and "{pts_dim}"'
