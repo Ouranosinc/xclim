@@ -1,12 +1,13 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
 import hashlib
+import json
 import logging
 from pathlib import Path
 from typing import Optional, Sequence
 from urllib.error import HTTPError
 from urllib.parse import urljoin
-from urllib.request import urlretrieve
+from urllib.request import urlopen, urlretrieve
 
 import pandas as pd
 from xarray import Dataset
@@ -19,6 +20,7 @@ LOGGER = logging.getLogger("xclim")
 
 __all__ = [
     "open_dataset",
+    "list_datasets",
     "list_input_variables",
     "get_all_CMIP6_variables",
     "update_variable_yaml",
@@ -150,6 +152,36 @@ def open_dataset(
         return ds
     except OSError:
         raise
+
+
+def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
+    """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
+
+    The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
+    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP). A single call
+    of this function triggers one request per subdirectory, so use with parcimony.
+    """
+    res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
+    base = json.loads(res.read().decode())
+    records = []
+    for folder in base:
+        if folder["path"].startswith(".") or folder["size"] > 0:
+            # drop hidden folders and other files.
+            continue
+        res = urlopen(folder["url"])
+        listing = json.loads(res.read().decode())
+        for file in listing:
+            if file["path"].endswith(".nc"):
+                records.append(
+                    {
+                        "name": file["path"],
+                        "size": file["size"] / 2 ** 10,
+                        "url": file["html_url"],
+                    }
+                )
+    df = pd.DataFrame.from_records(records).set_index("name")
+    print(f"Found {len(df)} datasets.")
+    return df
 
 
 def as_tuple(x):  # noqa: D103

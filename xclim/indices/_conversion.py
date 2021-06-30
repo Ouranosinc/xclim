@@ -30,10 +30,11 @@ __all__ = [
 ]
 
 
-@declare_units(tas="[temperature]", tdps="[temperature]")
+@declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
 def humidex(
     tas: xr.DataArray,
-    tdps: xr.DataArray,
+    tdps: Optional[xr.DataArray] = None,
+    hurs: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     r"""Humidex index.
 
@@ -46,6 +47,8 @@ def humidex(
       Air temperature.
     tdps : xarray.DataArray,
       Dewpoint temperature.
+    hurs : xarray.DataArray
+      Relative humidity.
 
     Returns
     -------
@@ -59,12 +62,22 @@ def humidex(
 
     .. math::
 
-       T_{\text{dry bulb}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{
-       dewpoint}}}}\right)-10\right]
+       T + {\frac {5}{9}}\left[e - 10\right]
 
-    where :math:`T_{dry bulb}` is the dry bulb air temperature (°C), and :math:`T_{dewpoint}` the dewpoint
-    temperature (°K). The constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant ([mekis15]_).
+    where :math:`T` is the dry bulb air temperature (°C). The term :math:`e` can be computed from the dewpoint
+    temperature :math:`T_{dewpoint}` in °K:
+
+    .. math::
+
+       e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
+
+    where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
+    and the universal gas constant ([mekis15]_). Alternatively, the term :math:`e` can also be computed from
+    the relative humidity `h` expressed in percent using [sirangelo20]_:
+
+    .. math::
+
+      e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
     The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
 
@@ -77,13 +90,24 @@ def humidex(
     ----------
     .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
     .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [sirangelo20] Sirangelo, B., Caloiero, T., Coscarelli, R. et al. Combining stochastic models of air temperature and vapour pressure for the analysis of the bioclimatic comfort through the Humidex. Sci Rep 10, 11395 (2020). https://doi.org/10.1038/s41598-020-68297-4
     .. [eccc] https://climate.weather.gc.ca/glossary_e.html
     """
-    # Convert dewpoint temperature to Kelvins
-    tdps = convert_units_to(tdps, "kelvin")
+    if (tdps is None) == (hurs is None):
+        raise ValueError(
+            "At least one of `tdps` or `hurs` must be given, and not both."
+        )
 
     # Vapour pressure in hPa
-    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+    if tdps is not None:
+        # Convert dewpoint temperature to Kelvins
+        tdps = convert_units_to(tdps, "kelvin")
+        e = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+
+    elif hurs is not None:
+        # Convert dry bulb temperature to Celsius
+        tasC = convert_units_to(tas, "celsius")
+        e = hurs / 100 * 6.112 * 10 ** (7.5 * tasC / (tasC + 237.7))
 
     # Temperature delta due to humidity in delta_degC
     h = 5 / 9 * (e - 10)
@@ -364,7 +388,7 @@ def relative_humidity(
     tdps : xr.DataArray
       Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
-      Specific Humidity.
+      Specific humidity.
     ps : xr.DataArray
       Air Pressure.
     ice_thresh : str

@@ -29,6 +29,8 @@ __all__ = [
     "high_precip_low_temp",
     "fraction_over_precip_thresh",
     "liquid_precip_ratio",
+    "dry_spell_frequency",
+    "dry_spell_total_length",
 ]
 
 
@@ -307,4 +309,24 @@ liquid_precip_ratio = PrTasx(
     compute=wrapped_partial(
         indices.liquid_precip_ratio, suggested={"tas": _empty}, prsn=None
     ),
+)
+
+
+dry_spell_frequency = Precip(
+    identifier="dry_spell_frequency",
+    description="The {freq} number of dry periods of {window} days and more, during which the accumulated "
+    "precipitation on a window of {window} days is under {thresh}.",
+    units="",
+    cell_methods="",
+    compute=indices.dry_spell_frequency,
+)
+
+
+dry_spell_total_length = Precip(
+    identifier="dry_spell_total_length",
+    description="The {freq} number of days in dry periods of {window} days and more, during which the accumulated "
+    "precipitation on a window of {window} days is under {thresh}.",
+    units="d",
+    cell_methods="",
+    compute=indices.dry_spell_total_length,
 )
