@@ -9,11 +9,13 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Automatic load of translations on import and possibility to pass translations for virtual modules.
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
+* `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
+* `humidex` can be computed using relative humidity instead of dewpoint temperature.
 * New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* Nothing yet.
+* `spatial_analogs` does not support sequence of `dist_dim` anymore. Users are responsible for stacking dimensions prior to calling `spatial_analogs`.
 
 New indicators
 ~~~~~~~~~~~~~~
