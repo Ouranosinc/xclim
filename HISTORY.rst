@@ -12,6 +12,10 @@ New features and enhancements
 * `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
 * `humidex` can be computed using relative humidity instead of dewpoint temperature.
 * New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
+* New ``sdba.adjustment.NpdfTransform`` which is an adaptation of Cannon's version of Pitié's _N-dimensional probability density function transform_. Uses new ``sdba.utils.rand_rot_matrix``.
+* New ``sdba.processing.standardize``, ``.unstandardize`` and  ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
+* New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
+
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
