@@ -31,6 +31,7 @@ Indicator-defining yaml files are structured in the following way:
     indices:
       <identifier>:
         base: <base indicator class>  # Defaults to module-wide base class or "Daily".
+                                      # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
         realm: <realm>  # Defaults to the module-wide realm or "atmos"
         reference: <references>
         references: <references>  # Plural or singular accepted (for harmonizing clix-meta and xclim)
@@ -54,7 +55,8 @@ Indicator-defining yaml files are structured in the following way:
           name: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
           # When using Indicator.from_dict, the "name" field can also be a function (instead of a string)
           parameters:  # See below for details on that section.
-            <param name>  # Refering to a parameter of the function above.
+            <param name>: <param data>  # Simplest case when only injecting is needed.
+            <param name>:  # Most complex case where we want to change parameters metadata. Also retrocompatible with clix-meta.
               kind: <param kind>  # Optional, one of quantity, operator or reducer
               data: <param data>
               units: <param units>
@@ -491,8 +493,11 @@ class Indicator(IndicatorRegistrar):
             injected_params = {}
             # In clix-meta, when there are no parameters, the key is still there with a None value.
             for name, param in (data["index_function"].get("parameters") or {}).items():
+                if not isinstance(param, dict):
+                    # Simplest case for injecting, passing a value directly.
+                    value = param
                 # Handle clix-meta cases
-                if param.get("kind") == "quantity" and isinstance(
+                elif param.get("kind") == "quantity" and isinstance(
                     param["data"], (str, int, float)
                 ):
                     # A string with units, but not a placeholder (where data is a dict)
@@ -621,8 +626,9 @@ class Indicator(IndicatorRegistrar):
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
         # params : OrderedDict of parameters INCLUDING unpacked kwargs
-        # bound_kwargs: OrderedDict of parameters with PACKED kwargs. <- this is needed by _update_attrs and _mask because of `indexer`.
-        das, params, bound_kwargs = self._parse_variables_from_call(args, kwds)
+        # all_params: OrderedDict of parameters with PACKED kwargs <- this is needed by _update_attrs and _mask because of `indexer`.
+        #                  AND includes injected arguments <- this is needed by update_attrs and missing (when "freq" is injected)
+        das, params, all_params = self._parse_variables_from_call(args, kwds)
 
         # Metadata attributes from templates
         var_id = None
@@ -632,7 +638,7 @@ class Indicator(IndicatorRegistrar):
                 var_id = attrs["var_name"]
             var_attrs.append(
                 self._update_attrs(
-                    bound_kwargs.copy(), das, attrs, names=self._cf_names, var_id=var_id
+                    all_params.copy(), das, attrs, names=self._cf_names, var_id=var_id
                 )
             )
 
@@ -643,11 +649,11 @@ class Indicator(IndicatorRegistrar):
         # Check if the period is allowed:
         if (
             self.allowed_periods is not None
-            and "freq" in kwds
-            and parse_offset(kwds["freq"])[1] not in self.allowed_periods
+            and "freq" in all_params
+            and parse_offset(all_params["freq"])[1] not in self.allowed_periods
         ):
             raise ValueError(
-                f"Resampling frequency {kwds['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
+                f"Resampling frequency {all_params['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
             )
 
         # Compute the indicator values, ignoring NaNs and missing values.
@@ -675,8 +681,8 @@ class Indicator(IndicatorRegistrar):
 
         if self.missing != "skip":
             # Mask results that do not meet criteria defined by the `missing` method.
-            # This means all variables must have the same dimensions...
-            mask = self._mask(*das.values(), **bound_kwargs)
+            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
+            mask = self._mask(*das.values(), **all_params)
             outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
@@ -688,8 +694,13 @@ class Indicator(IndicatorRegistrar):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.pop("ds")
         for name, param in self._sig.parameters.items():
-            if param.annotation is Union[str, DataArray] and isinstance(
-                ba.arguments[name], str
+            if (
+                self.parameters[name]["kind"]
+                in (
+                    InputKind.VARIABLE,
+                    InputKind.OPTIONAL_VARIABLE,
+                )
+                and isinstance(ba.arguments[name], str)
             ):
                 if ds is not None:
                     try:
@@ -729,7 +740,10 @@ class Indicator(IndicatorRegistrar):
                 kwargs = params.pop(param.name)
                 params.update(**kwargs)
 
-        return das, params, ba.arguments
+        # Add injected kwargs to the all_params
+        all_params = ba.arguments
+        all_params.update(getattr(self._indcompute, "_injected", {}))
+        return das, params, all_params
 
     def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
@@ -779,9 +793,8 @@ class Indicator(IndicatorRegistrar):
         cl = cls
         while hasattr(cl, "_registry_id"):
             family_tree.append(cl._registry_id + var_id)
-            cl = cl.__bases__[
-                0
-            ]  # The indicator mechanism always has single inheritance.
+            # The indicator mechanism always has single inheritance.
+            cl = cl.__bases__[0]
 
         return get_local_attrs(
             family_tree,
@@ -977,8 +990,7 @@ class Indicator(IndicatorRegistrar):
         # Use defaults
         if args is None:
             args = {k: v["default"] for k, v in cls.parameters.items()}
-
-        args.update(getattr(cls._indcompute, "_injected", {}))
+            args.update(getattr(cls._indcompute, "_injected", {}))
 
         out = {}
         for key, val in attrs.items():
@@ -1125,21 +1137,32 @@ def _parse_indice(indice: Callable, passed=None, **new_kwargs):
     def _upd_param(param):
         # Required DataArray arguments receive their own name as new default
         #         + the Union[str, DataArray] annotation
-        # Parameters with no default receive None
         if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
             return param
 
-        if param.annotation is DataArray:
-            annot = Union[str, DataArray]
-        else:
-            annot = param.annotation
+        xckind = infer_kind_from_parameter(param)
 
         default = passed.get(param.name, {}).get("default", param.default)
+        if xckind == InputKind.OPTIONAL_VARIABLE and (
+            default is _empty or isinstance(default, str)
+        ):
+            # Was wrapped with suggested={param: _empty} OR somehow a variable name was injected (ex: through yaml)
+            # It becomes a non-optional variable
+            xckind = InputKind.VARIABLE
         if default is _empty:
-            if param.annotation is DataArray:
+            if xckind == InputKind.VARIABLE:
                 default = param.name
             else:
+                # Parameters with no default receive None
+                # Because we can't have no-default args _after_ default args and we just set the default on the variables (which are the first args)
                 default = None
+
+        # Python dont need no switch case
+        annots = {
+            InputKind.VARIABLE: Union[str, DataArray],
+            InputKind.OPTIONAL_VARIABLE: Optional[Union[str, DataArray]],
+        }
+        annot = annots.get(xckind, param.annotation)
 
         return Parameter(
             param.name,
@@ -1376,7 +1399,11 @@ def build_indicator_module_from_yaml(
             )
 
             if "base" in data:
-                base = registry[data["base"].upper()]
+                if data["base"].startswith("."):
+                    # A point means the base has been declared above.
+                    base = registry[module_name + data["base"].upper()]
+                else:
+                    base = registry[data["base"].upper()]
             else:
                 base = default_base
 
