@@ -11,12 +11,18 @@ from xclim.sdba.adjustment import (
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
+    NpdfTransform,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
 )
-from xclim.sdba.base import Grouper
-from xclim.sdba.processing import jitter_under_thresh, uniform_noise_like
+from xclim.sdba.base import Grouper, stack_variables, unstack_variables
+from xclim.sdba.processing import (
+    jitter_under_thresh,
+    reordering,
+    standardize,
+    uniform_noise_like,
+)
 from xclim.sdba.utils import (
     ADDITIVE,
     MULTIPLICATIVE,

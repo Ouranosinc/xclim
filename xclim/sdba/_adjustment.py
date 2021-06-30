@@ -180,6 +180,21 @@ def scaling_adjust(ds, *, group, interp, kind):
 
 
 def npdf_transform(ds, **kwargs):
+    """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+
+    Dataset variables:
+      ref : Reference multivariate timeseries
+      hist : simulated timeseries on the reference period
+      sim : Simulated timeseries on the projected period.
+      rot_matrices : Random rotation matrices.
+
+    Kwargs:
+      pts_dim : multivariate dimensionn name
+      base : Adjustment class
+      base_kws : Kwargs for initialising the adjustment object
+      adj_kws : Kwargs of the `adjust` call
+      n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+    """
     ref = ds.ref
     hist = ds.hist
     sim = ds.sim.rename(time_sim="time")

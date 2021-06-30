@@ -1131,7 +1131,7 @@ class NpdfTransform(Parametrizable):
         )
 
         # Get the rotation matrices
-        rot_matrices = rand_rot_matrix(
+        rot_matrices = rot_matrices or rand_rot_matrix(
             ref[pts_dim], num=self.n_iter, new_dim=rot_dim
         ).rename(matrices="iterations")
 
