@@ -11,6 +11,7 @@ New features and enhancements
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
 * `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
 * `humidex` can be computed using relative humidity instead of dewpoint temperature.
+* New function `xclim.indices.clausius_clapeyron_scaled_precipitation` can be used to scale precipitation according to changes in mean temperature.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
