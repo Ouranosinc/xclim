@@ -1,7 +1,7 @@
 """Numba-accelerated utils."""
 import numpy as np
 import xarray as xr
-from numba import float32, float64, guvectorize, njit
+from numba import boolean, float32, float64, guvectorize, njit
 
 
 @guvectorize(
@@ -95,6 +95,14 @@ def quantile(da, q, dim):
     return res
 
 
+@njit([float32[:, :](float32[:, :]), float64[:, :](float64[:, :])])
+def remove_NaNs(x):
+    remove = np.zeros_like(x[0, :], dtype=boolean)
+    for i in range(x.shape[0]):
+        remove = remove | np.isnan(x[i, :])
+    return x[:, ~remove]
+
+
 @njit([float32(float32[:]), float64(float64[:])], fastmath=True)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
@@ -145,6 +153,9 @@ def _escore(tgt, sim, out):
     When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.
     When std is True, X and Y are standardized according to the nanmean and nanstd (ddof = 1) of X.
     """
+    sim = remove_NaNs(sim)
+    tgt = remove_NaNs(tgt)
+
     n1 = sim.shape[1]
     n2 = tgt.shape[1]
 
