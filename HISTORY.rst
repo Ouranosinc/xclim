@@ -11,6 +11,7 @@ New features and enhancements
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
 * `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
 * `humidex` can be computed using relative humidity instead of dewpoint temperature.
+* Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
