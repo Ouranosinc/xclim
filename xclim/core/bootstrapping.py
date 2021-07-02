@@ -141,8 +141,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
         out.append(value)
     out = xarray.concat(out, dim="time")
-    # TODO Make sure that's okay to insert the unit like that
-    out.attrs["units"] = "d"
+    out.attrs["units"] = value.attrs["units"]
     return out
 
 
