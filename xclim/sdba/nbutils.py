@@ -66,8 +66,11 @@ def quantile(da, q, dim):
     da = da.stack({tem: dims})
 
     # So we cut in half the definitions to declare in numba
+    # We still use q as the coords so it corresponds to what was done upstream
     if not hasattr(q, "dtype") or q.dtype != da.dtype:
-        q = np.array(q, dtype=da.dtype)
+        qc = np.array(q, dtype=da.dtype)
+    else:
+        qc = q
 
     if len(da.dims) > 1:
         # There are some extra dims
@@ -75,7 +78,7 @@ def quantile(da, q, dim):
         da = da.stack({extra: set(da.dims) - {tem}})
         da = da.transpose(..., tem)
         res = xr.DataArray(
-            _quantile(da.values, q),
+            _quantile(da.values, qc),
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
             attrs=da.attrs,
@@ -84,7 +87,7 @@ def quantile(da, q, dim):
     else:
         # All dims are processed
         res = xr.DataArray(
-            _quantile(da.values, q),
+            _quantile(da.values, qc),
             dims=("quantiles"),
             coords={"quantiles": q},
             attrs=da.attrs,
