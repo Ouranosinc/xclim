@@ -71,6 +71,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     """
 
+    _allow_diff_calendars = True
     _attribute = "_xclim_adjustment"
     _repr_hide_params = ["hist_calendar"]
 
@@ -100,18 +101,12 @@ class BaseAdjustment(ParametrizableWithDataset):
             _raise_on_multiple_chunk(ref, self.group.dim)
             _raise_on_multiple_chunk(hist, self.group.dim)
 
-            if self.group.prop == "dayofyear" and get_calendar(
-                ref, self.group.dim
-            ) != get_calendar(hist, self.group.dim):
-                warn(
-                    (
-                        "Input ref and hist are defined on different calendars, "
-                        "this is not recommended when using 'dayofyear' grouping "
-                        "and could give strange results. See `xclim.core.calendar` "
-                        "for tools to convert your data to a common calendar."
-                    ),
-                    stacklevel=4,
-                )
+        if not self._allow_diff_calendars and get_calendar(
+            ref, self.group.dim
+        ) != get_calendar(hist, self.group.dim):
+            raise ValueError(
+                f"Input ref and hist are defined on different calendars, this is not supported for {self.__class__.__name__} adjustment."
+            )
 
         ds = self._train(ref, hist)
         self["hist_calendar"] = get_calendar(hist)
@@ -183,6 +178,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
 class EmpiricalQuantileMapping(BaseAdjustment):
     """Conventional quantile mapping adjustment."""
+
+    _allow_diff_calendars = False
 
     @parse_group
     def __init__(
@@ -690,6 +687,8 @@ class ExtremeValues(BaseAdjustment):
 class LOCI(BaseAdjustment):
     """Local intensity scaling adjustment intended for daily precipitation."""
 
+    _allow_diff_calendars = False
+
     @parse_group
     def __init__(self, *, group: Union[str, Grouper] = "time", thresh: float = None):
         r"""Local Intensity Scaling (LOCI) bias-adjustment.
@@ -756,6 +755,8 @@ class LOCI(BaseAdjustment):
 
 class Scaling(BaseAdjustment):
     """Simple scaling adjustment."""
+
+    _allow_diff_calendars = False
 
     @parse_group
     def __init__(self, *, group="time", kind=ADDITIVE):
