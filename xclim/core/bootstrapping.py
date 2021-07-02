@@ -12,6 +12,8 @@ from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
 def percentile_bootstrap(func):
     """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
+    This feature is experimental.
+
     Boostraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
     computed, and "out of base" periods. See `bootstrap_func` for details.
 

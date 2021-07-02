@@ -83,7 +83,7 @@ def cold_spell_duration_index(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -892,7 +892,7 @@ def days_over_precip_thresh(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -944,7 +944,7 @@ def fraction_over_precip_thresh(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -971,8 +971,8 @@ def fraction_over_precip_thresh(
     return out
 
 
-@percentile_bootstrap
 @declare_units(tas="[temperature]", t90="[temperature]")
+@percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
     t90: xarray.DataArray,
@@ -992,7 +992,7 @@ def tg90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1042,7 +1042,7 @@ def tg10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1092,7 +1092,7 @@ def tn90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1142,7 +1142,7 @@ def tn10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1192,7 +1192,7 @@ def tx90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1242,7 +1242,7 @@ def tx10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1331,8 +1331,8 @@ def tx_tn_days_above(
     return to_agg_units(out, tasmin, "count")
 
 
-@percentile_bootstrap
 @declare_units(tasmax="[temperature]", tx90="[temperature]")
+@percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
     tx90: xarray.DataArray,
@@ -1357,7 +1357,7 @@ def warm_spell_duration_index(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping.
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------

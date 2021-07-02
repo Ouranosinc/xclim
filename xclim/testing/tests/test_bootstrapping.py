@@ -1,10 +1,24 @@
+from typing import Callable
+
 import numpy as np
+from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import percentile_doy
-from xclim.indices import days_over_precip_thresh, tg90p
+from xclim.indices import (
+    cold_spell_duration_index,
+    days_over_precip_thresh,
+    fraction_over_precip_thresh,
+    tg10p,
+    tg90p,
+    tn10p,
+    tn90p,
+    tx10p,
+    tx90p,
+    warm_spell_duration_index,
+)
 
 
-def ar1(alpha, n):
+def ar1(alpha, n, abs=False):
     """Return random AR1 DataArray."""
 
     # White noise
@@ -14,56 +28,88 @@ def ar1(alpha, n):
     out = np.empty(n)
     out[0] = np.random.randn()
     for i, w in enumerate(wn):
-        out[i + 1] = alpha * out[i] + w
+        if abs:
+            out[i + 1] = np.abs(alpha * out[i] + w)
+        else:
+            out[i + 1] = alpha * out[i] + w
 
     return out
 
 
-def test_bootstrap_tas(tas_series):
+def bootstrap_testor(
+    serie: DataArray,
+    per: int,
+    compute_indice: Callable[[DataArray, DataArray], DataArray],
+    positive_values=False,
+):
+    # GIVEN
     n = int(60 * 365.25)
     alpha = 0.8
-    tas = tas_series(ar1(alpha, n), start="2000-01-01")
+    climat_variable = serie(ar1(alpha, n, positive_values), start="2000-01-01")
     in_base_slice = slice("2000-01-01", "2029-12-31")
     out_base_slice = slice("2030-01-01", "2059-12-31")
-    per = percentile_doy(tas.sel(time=in_base_slice), per=90)
-
-    no_bootstrap = tg90p(tas, per, freq="MS", bootstrap=False)
-    biaised_period = no_bootstrap.sel(time=(in_base_slice))
+    per = percentile_doy(climat_variable.sel(time=in_base_slice), per=per)
+    # WHEN
+    no_bootstrap = compute_indice(climat_variable, per, False)
+    no_bs_in_base = no_bootstrap.sel(time=(in_base_slice))
     no_bs_out_base = no_bootstrap.sel(time=(out_base_slice))
-
-    bootstrap = tg90p(tas, per, freq="MS", bootstrap=True)
-    corrected_period = bootstrap.sel(time=(in_base_slice))
+    bootstrap = compute_indice(climat_variable, per, True)
+    bootstrapped_in_base = bootstrap.sel(time=(in_base_slice))
     bs_out_base = bootstrap.sel(time=(out_base_slice))
-
-    # bootstrapping should globally increase the indices values within the in_base
+    # THEN
+    # bootstrapping should increase the indices values within the in_base
     # will not work on unrealistic values such as a constant temperature
-    assert np.count_nonzero(corrected_period > biaised_period) > np.count_nonzero(
-        corrected_period < biaised_period
+    assert np.count_nonzero(bootstrapped_in_base > no_bs_in_base) > np.count_nonzero(
+        bootstrapped_in_base < no_bs_in_base
     )
-    # bootstrapping should keep the out of base unchanged
+    # bootstrapping should let the out of base unchanged
     assert np.count_nonzero(no_bs_out_base != bs_out_base) == 0
 
 
-def test_bootstrap_pr(pr_series):
-    n = int(60 * 365.25)
-    alpha = 0.8
-    pr = pr_series(ar1(alpha, n), start="2000-01-01")
-    in_base_slice = slice("2000-01-01", "2029-12-31")
-    out_base_slice = slice("2030-01-01", "2059-12-31")
-    per = percentile_doy(pr.sel(time=in_base_slice), per=99)
-
-    no_bootstrap = days_over_precip_thresh(pr, per, freq="MS", bootstrap=False)
-    biaised_period = no_bootstrap.sel(time=(in_base_slice))
-    no_bs_out_base = no_bootstrap.sel(time=(out_base_slice))
-
-    bootstrap = days_over_precip_thresh(pr, per, freq="MS", bootstrap=True)
-    corrected_period = bootstrap.sel(time=(in_base_slice))
-    bs_out_base = bootstrap.sel(time=(out_base_slice))
-
-    # bootstrapping should globally increase the indices values within the in_base
-    # will not work on unrealistic values such as a constant temperature
-    assert np.count_nonzero(corrected_period > biaised_period) > np.count_nonzero(
-        corrected_period < biaised_period
+def test_bootstrap(tas_series, tasmax_series, tasmin_series, pr_series):
+    # The closer the targetted percentile is to the median the less bootstrapping makes sense to use.
+    # The tests may even fail if the chosen percentile is close to 50
+    # temperatures
+    bootstrap_testor(
+        tas_series, 98, lambda x, y, z: tg90p(x, y, freq="MS", bootstrap=z)
     )
-    # bootstrapping should keep the out of base unchanged
-    assert np.count_nonzero(no_bs_out_base != bs_out_base) == 0
+    bootstrap_testor(
+        tasmin_series, 98, lambda x, y, z: tn90p(x, y, freq="YS", bootstrap=z)
+    )
+    bootstrap_testor(
+        tasmax_series, 98, lambda x, y, z: tx90p(x, y, freq="MS", bootstrap=z)
+    )
+    bootstrap_testor(
+        tasmin_series, 2, lambda x, y, z: tn10p(x, y, freq="MS", bootstrap=z)
+    )
+    bootstrap_testor(
+        tasmax_series, 2, lambda x, y, z: tx10p(x, y, freq="YS", bootstrap=z)
+    )
+    bootstrap_testor(tas_series, 2, lambda x, y, z: tg10p(x, y, freq="MS", bootstrap=z))
+    bootstrap_testor(
+        tasmax_series,
+        98,
+        lambda x, y, z: warm_spell_duration_index(
+            x, y, window=6, freq="MS", bootstrap=z
+        ),
+    )
+    bootstrap_testor(
+        tasmin_series,
+        2,
+        lambda x, y, z: cold_spell_duration_index(
+            x, y, window=6, freq="MS", bootstrap=z
+        ),
+    )
+    # precipitations
+    bootstrap_testor(
+        pr_series,
+        99,
+        lambda x, y, z: days_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+        positive_values=True,
+    )
+    bootstrap_testor(
+        pr_series,
+        98,
+        lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+        positive_values=True,
+    )
