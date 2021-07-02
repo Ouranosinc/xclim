@@ -18,7 +18,7 @@ from xclim.indices import (
 )
 
 
-def ar1(alpha, n, abs=False):
+def ar1(alpha, n, positive_values=False):
     """Return random AR1 DataArray."""
 
     # White noise
@@ -28,7 +28,7 @@ def ar1(alpha, n, abs=False):
     out = np.empty(n)
     out[0] = np.random.randn()
     for i, w in enumerate(wn):
-        if abs:
+        if positive_values:
             out[i + 1] = np.abs(alpha * out[i] + w)
         else:
             out[i + 1] = alpha * out[i] + w
