@@ -786,7 +786,7 @@ def clausius_clapeyron_scaled_precipitation(
     if "time" in tmean_baseline.coords.keys():
         if tmean_baseline.coords["time"].size != 1:
             raise ValueError(
-                "Temperature baseline needs to be a single time slice (e.g., of a common climatologal period)."
+                "Temperature baseline needs to be a single time slice (e.g., of a common climatological period)."
             )
         # else:
         #    tmean_baseline = tmean_baseline.squeeze(dim=["time"], drop=True)
