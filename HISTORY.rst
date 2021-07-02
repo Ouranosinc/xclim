@@ -9,9 +9,18 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Automatic load of translations on import and possibility to pass translations for virtual modules.
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
+* New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
 * `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
 * `humidex` can be computed using relative humidity instead of dewpoint temperature.
 * Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
+
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in sdba :
+
+    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
+    - raise a proper error when ``ref``and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -33,7 +42,6 @@ Internal Changes
 * Minor modifications to the GitHub Pull Requests template.
 * Simplification of some yaml elements for virtual modules.
 * Allow injecting `freq` without the missing checks failing.
-
 
 0.27.0 (2021-05-28)
 -------------------

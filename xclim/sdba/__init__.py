@@ -59,7 +59,7 @@ one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
 """
 from . import detrending, processing, utils
 from .adjustment import *
-from .base import Grouper
+from .base import Grouper, construct_moving_yearly_window, unpack_moving_yearly_window
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;
