@@ -2014,24 +2014,24 @@ class TestClausiusClapeyronScaledPrecip:
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
             attrs={"units": "mmday"},
         )
-        tmean_baseline = xr.DataArray(
+        tas_baseline = xr.DataArray(
             np.arange(4).reshape(1, 2, 2),
             dims=["time", "lat", "lon"],
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
             attrs={"units": "C"},
         )
-        tmean_future = xr.DataArray(
+        tas_future = xr.DataArray(
             np.arange(40).reshape(10, 2, 2),
-            dims=["time", "lat", "lon"],
-            coords={"time": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
+            dims=["time_fut", "lat", "lon"],
+            coords={"time_fut": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
             attrs={"units": "C"},
         )
-        out = xci.clausius_clapeyron_scaled_precipitation(
-            pr_baseline, tmean_baseline, tmean_future
-        )
+        delta_tas = tas_future - tas_baseline
+        delta_tas.attrs["units"] = "delta_degC"
+        out = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_baseline)
 
         np.testing.assert_allclose(
-            out,
+            out.isel(time=0),
             [
                 [
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -2090,7 +2090,9 @@ class TestClausiusClapeyronScaledPrecip:
             tfut_m = tfut.mean(dim="time")
             pr_m = pr.mean(dim="time")
 
-        pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(pr_m, tref_m, tfut_m)
+        delta_tas = tfut_m - tref_m
+        delta_tas.attrs["units"] = "delta_degC"
+        pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_m)
         np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07 ** 2, 1)
 
         # Compute monthly climatologies
@@ -2099,7 +2101,10 @@ class TestClausiusClapeyronScaledPrecip:
             tfut_mm = tfut.groupby("time.month").mean()
             pr_mm = pr.groupby("time.month").mean()
 
-        pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(pr_mm, tref_mm, tfut_mm)
+        delta_tas_m = tfut_mm - tref_mm
+        delta_tas_m.attrs["units"] = "delta_degC"
+
+        pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas_m, pr_mm)
         np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07 ** 2, 1)
 
 
