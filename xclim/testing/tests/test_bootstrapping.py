@@ -16,6 +16,7 @@ from xclim.indices import (
     tx90p,
     warm_spell_duration_index,
 )
+from xclim.testing import open_dataset
 
 
 def ar1(alpha, n, positive_values=False):
@@ -113,3 +114,12 @@ def test_bootstrap(tas_series, tasmax_series, tasmin_series, pr_series):
         lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
         positive_values=True,
     )
+
+
+def test_doctest_ndims():
+    """Replicates doctest to facilitate debugging."""
+    tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+    t90 = percentile_doy(tas, window=5, per=90)
+    tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
+
+    tg90p(tas=tas, t90=t90.isel(percentiles=0), freq="YS", bootstrap=True)

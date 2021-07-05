@@ -33,7 +33,7 @@ def percentile_bootstrap(func):
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> t90 = percentile_doy(tas, window=5, per=90)
-    >>> tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
+    >>> tg90p(tas=tas, t90=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """
 
     @wraps(func)
@@ -111,7 +111,11 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     da_base = da.sel(time=slice(*clim))
 
     # Arguments used to compute percentile
-    pdoy_args = dict(window=per.attrs["window"], per=per.percentiles.data.tolist()[0])
+    percentile = per.percentiles.data.tolist()  # Can be a list or scalar
+    pdoy_args = dict(
+        window=per.attrs["window"],
+        per=percentile if np.isscalar(percentile) else percentile[0],
+    )
 
     # Group input array in years, with an offset matching freq
     freq = kwargs["freq"]
@@ -126,13 +130,13 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     # Compute func on each grouping
     for label, time_slice in g_full.items():
         year = label.astype("datetime64[Y]").astype(int) + 1970
-        kw = {da_key: da[time_slice], **kwargs}
+        kw = {da_key: da.isel(time=time_slice), **kwargs}
 
         # If the group year is in the base period, run the bootstrap
         if year in per_clim_years:
             bda = bootstrap_year(da_base, g_base, label)
             kw[per_key] = percentile_doy(bda, **pdoy_args)
-            value = compute_indice_func(**kw).mean(dim="_bootstrap")
+            value = compute_indice_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
 
         # Otherwise run the normal computation using the original percentile
         else:
