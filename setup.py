@@ -23,7 +23,7 @@ requirements = [
     "xarray>=0.17",
     "scipy>=1.2",
     "numba",
-    "pandas>=0.23",
+    "pandas>=0.23,<1.3",
     "cftime>=1.4.1",
     "dask[array]>=2.6",
     "pint>=0.9",
