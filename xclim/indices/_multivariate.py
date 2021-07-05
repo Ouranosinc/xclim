@@ -4,7 +4,9 @@ from typing import Optional
 
 import numpy as np
 import xarray
+from xarray.core.dataarray import DataArray
 
+from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
@@ -57,8 +59,13 @@ __all__ = [
 
 
 @declare_units(tasmin="[temperature]", tn10="[temperature]")
+@percentile_bootstrap
 def cold_spell_duration_index(
-    tasmin: xarray.DataArray, tn10: xarray.DataArray, window: int = 6, freq: str = "YS"
+    tasmin: xarray.DataArray,
+    tn10: xarray.DataArray,
+    window: int = 6,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -75,6 +82,8 @@ def cold_spell_duration_index(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -859,11 +868,13 @@ def high_precip_low_temp(
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
+@percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
     per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -880,6 +891,8 @@ def days_over_precip_thresh(
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -907,11 +920,13 @@ def days_over_precip_thresh(
 
 
 @declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
+@percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
     per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -928,6 +943,8 @@ def fraction_over_precip_thresh(
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -955,8 +972,12 @@ def fraction_over_precip_thresh(
 
 
 @declare_units(tas="[temperature]", t90="[temperature]")
+@percentile_bootstrap
 def tg90p(
-    tas: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
+    tas: xarray.DataArray,
+    t90: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -970,6 +991,8 @@ def tg90p(
       90th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -999,8 +1022,12 @@ def tg90p(
 
 
 @declare_units(tas="[temperature]", t10="[temperature]")
+@percentile_bootstrap
 def tg10p(
-    tas: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
+    tas: xarray.DataArray,
+    t10: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
@@ -1014,6 +1041,8 @@ def tg10p(
       10th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1043,8 +1072,12 @@ def tg10p(
 
 
 @declare_units(tasmin="[temperature]", t90="[temperature]")
+@percentile_bootstrap
 def tn90p(
-    tasmin: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray,
+    t90: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1058,6 +1091,8 @@ def tn90p(
       90th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1087,8 +1122,12 @@ def tn90p(
 
 
 @declare_units(tasmin="[temperature]", t10="[temperature]")
+@percentile_bootstrap
 def tn10p(
-    tasmin: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray,
+    t10: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1102,6 +1141,8 @@ def tn10p(
       10th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1130,9 +1171,13 @@ def tn10p(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", t90="[temperature]")
+@declare_units(tasmax="[temperature]")
+@percentile_bootstrap
 def tx90p(
-    tasmax: xarray.DataArray, t90: xarray.DataArray, freq: str = "YS"
+    tasmax: xarray.DataArray,
+    t90: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1146,6 +1191,8 @@ def tx90p(
       90th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1175,8 +1222,12 @@ def tx90p(
 
 
 @declare_units(tasmax="[temperature]", t10="[temperature]")
+@percentile_bootstrap
 def tx10p(
-    tasmax: xarray.DataArray, t10: xarray.DataArray, freq: str = "YS"
+    tasmax: xarray.DataArray,
+    t10: xarray.DataArray,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1190,6 +1241,8 @@ def tx10p(
       10th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1279,8 +1332,13 @@ def tx_tn_days_above(
 
 
 @declare_units(tasmax="[temperature]", tx90="[temperature]")
+@percentile_bootstrap
 def warm_spell_duration_index(
-    tasmax: xarray.DataArray, tx90: xarray.DataArray, window: int = 6, freq: str = "YS"
+    tasmax: xarray.DataArray,
+    tx90: xarray.DataArray,
+    window: int = 6,
+    freq: str = "YS",
+    bootstrap: bool = False,
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
@@ -1298,6 +1356,8 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
+    bootstrap : bool
+      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
 
     Returns
     -------
@@ -1327,7 +1387,7 @@ def warm_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(thresh, tasmax)
 
-    above = tasmax > thresh
+    above: DataArray = tasmax > thresh
 
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
