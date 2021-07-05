@@ -122,3 +122,6 @@ ENV/
 /docs/xclim.testing.rst
 /docs/xclim.testing.tests.rst
 /docs/xclim.testing.tests.test_sdba.rst
+
+.vscode
+*.nc
