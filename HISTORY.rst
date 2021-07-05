@@ -15,6 +15,8 @@ New features and enhancements
 * New ``sdba.adjustment.NpdfTransform`` which is an adaptation of Cannon's version of Pitié's _N-dimensional probability density function transform_. Uses new ``sdba.utils.rand_rot_matrix``.
 * New ``sdba.processing.standardize``, ``.unstandardize`` and  ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
 * New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
+* New function `xclim.indices.clausius_clapeyron_scaled_precipitation` can be used to scale precipitation according to changes in mean temperature.
+* Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
 
 Bug fixes
 ~~~~~~~~~
