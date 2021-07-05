@@ -25,6 +25,7 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
+    "clausius_clapeyron_scaled_precipitation",
     "potential_evapotranspiration",
 ]
 
@@ -730,6 +731,57 @@ def wind_chill_index(
     return W
 
 
+@declare_units(
+    delta_tas="[temperature]",
+    pr_baseline="[precipitation]",
+)
+def clausius_clapeyron_scaled_precipitation(
+    delta_tas: xr.DataArray,
+    pr_baseline: xr.DataArray,
+    cc_scale_factor: float = 1.07,
+) -> xr.DataArray:
+    """Scale precipitation according to the Clausius-Clapeyron relation.
+
+    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
+    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+
+    .. math::
+
+        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+
+    This function assumes that precipitation can be scaled by the same factor.
+
+    Parameters
+    ----------
+    delta_tas : xarray.DataArray
+      Difference in temperature between a baseline climatology and another climatology.
+    pr_baseline : xarray.DataArray
+      Baseline precipitation to adjust with Clausius-Clapeyron.
+    cc_scale_factor : float (default  = 1.07)
+      Clausius Clapeyron scale factor.
+
+    Returns
+    -------
+    DataArray
+        Baseline precipitation scaled to other climatology using Clausius-Clapeyron relationship.
+
+    Notes
+    -----
+    Make sure that `delta_tas` is computed over a baseline compatible with `pr_baseline`. So for example,
+    if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
+    should be precipitations over a period within the same baseline.
+    """
+
+    # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
+    delta_tas = convert_units_to(delta_tas, "delta_degreeC")
+
+    # Calculate scaled precipitation.
+    pr_out = pr_baseline * (cc_scale_factor ** delta_tas)
+    pr_out.attrs["units"] = pr_baseline.attrs["units"]
+
+    return pr_out
+
+
 @declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
 def potential_evapotranspiration(
     tasmin: Optional[xr.DataArray] = None,
@@ -752,11 +804,9 @@ def potential_evapotranspiration(
       Mean daily temperature.
     method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
       Which method to use, see notes.
-
     Returns
     -------
     xarray.DataArray
-        Potential evapotranspiration.
 
     Notes
     -----
