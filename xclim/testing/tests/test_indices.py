@@ -1984,23 +1984,32 @@ def test_humidex(tas_series):
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"
 
-    dtas = tas_series([10, 15, 25, 25])
-    dtas.attrs["units"] = "C"
+    dtps = tas_series([10, 15, 25, 25])
+    dtps.attrs["units"] = "C"
 
     # expected values from https://en.wikipedia.org/wiki/Humidex
     expected = np.array([16, 29, 47, 52]) * units.degC
 
     # Celcius
-    hc = xci.humidex(tas, dtas)
+    hc = xci.humidex(tas, dtps)
     np.testing.assert_array_almost_equal(hc, expected, 0)
 
     # Kelvin
-    hk = xci.humidex(convert_units_to(tas, "K"), dtas)
+    hk = xci.humidex(convert_units_to(tas, "K"), dtps)
     np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
 
     # Fahrenheit
-    hf = xci.humidex(convert_units_to(tas, "fahrenheit"), dtas)
+    hf = xci.humidex(convert_units_to(tas, "fahrenheit"), dtps)
     np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
+
+    # With relative humidity
+    hurs = xci.relative_humidity(tas, dtps, method="bohren98")
+    hr = xci.humidex(tas, hurs=hurs)
+    np.testing.assert_array_almost_equal(hr, expected, 0)
+
+    # With relative humidity and Kelvin
+    hk = xci.humidex(convert_units_to(tas, "K"), hurs=hurs)
+    np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
 
 
 @pytest.mark.parametrize(

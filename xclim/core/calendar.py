@@ -27,6 +27,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.formatting import update_history
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
@@ -464,6 +465,7 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
+
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
     if compare_offsets(xr.infer_freq(arr.time) or "D", "<", "D"):
@@ -502,6 +504,17 @@ def percentile_doy(
         p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
 
     p.attrs.update(arr.attrs.copy())
+
+    # Saving percentile attributes
+    n = len(arr.time)
+    p.attrs["climatology_bounds"] = (
+        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
+    )
+    p.attrs["window"] = window
+
+    infostr = f"percentile_doy(arr, window={window}, per={per})"
+    p.attrs["xclim_history"] = update_history(infostr, arr, new_name="per")
+
     return p
 
 
