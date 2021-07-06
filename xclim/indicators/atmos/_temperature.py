@@ -69,6 +69,7 @@ __all__ = [
     "maximum_consecutive_warm_days",
     "fire_season",
     "corn_heat_units",
+    "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
 ]
@@ -781,10 +782,29 @@ corn_heat_units = Temp(
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
     "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
+    var_name="chu",
     cell_methods="",
     missing="skip",
     compute=indices.corn_heat_units,
 )
+
+huglin_index = Temp(
+    identifier="huglin_index",
+    units="",
+    long_name="Huglin heliothermal index (Summation of ((Tmin + Tmax)/2 - {thresh_tasmin}) * Latitude-based day-length"
+    "coefficient (`k`), for days between {start_date} and {end_date}).",
+    description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
+    "Considers daily Tmin and Tmax with a base of {thresh_tasmin}, typically between 1 April and 30 September. "
+    "Integrates a day-length coefficient calculation for higher latitudes.",
+    cell_methods="",
+    comment="Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010)",
+    var_name="hi",
+    compute=wrapped_partial(
+        indices.huglin_index,
+        method="jones",
+    ),
+)
+
 
 biologically_effective_degree_days = Temp(
     identifier="biologically_effective_degree_days",

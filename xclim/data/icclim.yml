@@ -56,6 +56,18 @@ indices:
     base: tn_max
   TNn:
     base: tn_min
+  HI:
+    base: huglin_index
+    output:
+      long_name: Huglin heliothermal index (Summation of ((Tmin + Tmax)/2 - {thresh_tasmin}) * Latitude-based day-length coefficient (`k`), for days between 1 April and 31 October)
+      comment: Metric originally published in Huglin, 1978. Also presented by ECAD/KNMI for ICCLIM, 2013.
+    index_function:
+      name: huglin_index
+      parameters:
+        method: icclim
+        thresh_tasmin: 10 degC
+        start_date: 04-01
+        end_date: 11-01
   BEDD:
     base: biologically_effective_degree_days
     output:

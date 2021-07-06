@@ -216,7 +216,8 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "method, end_date, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1127.78, 1926.0),
+            ("gladstones", "11-01", 1102.1, 1926.0),
+            ("jones", "11-01", 1203.4, 2179.1),
             ("icclim", "10-01", 915.0, 1647.0),
         ],
     )
@@ -271,17 +272,28 @@ class TestAgroclimaticIndices:
             freq="YS",
         )
 
-        np.testing.assert_allclose(
-            bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
-        )
-        np.testing.assert_array_equal(
-            bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
-        )
+        if method == "jones":
+            np.testing.assert_array_less(
+                bedd[1], bedd[0]
+            )  # Leap-year has slightly higher values
+            np.testing.assert_allclose(
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=3e-4
+            )
+            np.testing.assert_allclose(
+                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+            )
 
-        if method == "gladstones":
-            np.testing.assert_array_less(bedd, bedd_high_lat)
-        if method == "icclim":
-            np.testing.assert_array_equal(bedd, bedd_high_lat)
+        else:
+            np.testing.assert_allclose(
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+            )
+            np.testing.assert_array_equal(
+                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+            )
+            if method == "gladstones":
+                np.testing.assert_array_less(bedd, bedd_high_lat)
+            if method == "icclim":
+                np.testing.assert_array_equal(bedd, bedd_high_lat)
 
     def test_cool_night_index(self):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
@@ -320,6 +332,37 @@ class TestAgroclimaticIndices:
         )
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
         np.testing.assert_array_almost_equal(lti[0].transpose(), np.array([values]), 2)
+
+    @pytest.mark.parametrize(
+        "method, end_date, values",
+        [
+            ("smoothed", "10-01", 1702.87),
+            ("icclim", "11-01", 1983.53),
+            ("jones", "10-01", 1729.12),
+            ("jones", "11-01", 2219.51),
+        ],
+    )
+    def test_huglin_index(self, method, end_date, values):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
+        ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
+
+        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+        # It would be much better if the index would interpolate to daily from monthly data intelligently.
+        tasmax, tasmin = (
+            tasmax.resample(time="1D").interpolate("cubic"),
+            tasmin.resample(time="1D").interpolate("cubic"),
+        )
+        tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
+
+        hi = xci.huglin_index(
+            tasmax=tasmax,
+            tasmin=tasmin,
+            lat=ds.lat,
+            method=method,
+            end_date=end_date,
+        )
+
+        np.testing.assert_almost_equal(np.mean(hi), values, 2)
 
 
 class TestDailyFreezeThawCycles:
