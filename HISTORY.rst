@@ -17,6 +17,7 @@ New features and enhancements
 * New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
 * New function `xclim.indices.clausius_clapeyron_scaled_precipitation` can be used to scale precipitation according to changes in mean temperature.
 * Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
+* Added a `.zenodo.json` file for collecting and maintaining author order and tracking ORCIDs.
 
 Bug fixes
 ~~~~~~~~~
