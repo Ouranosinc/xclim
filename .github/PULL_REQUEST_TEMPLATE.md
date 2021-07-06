@@ -8,6 +8,7 @@
 - [ ] HISTORY.rst has been updated (with summary of main changes)
 - [ ] `bumpversion (major / minor / patch)` has been called on this branch
 - [ ] Tags have been pushed (`git push --tags`)
+- [ ] The relevant author information has been added to `.zenodo.json`
 
 ### What kind of change does this PR introduce?
 

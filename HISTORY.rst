@@ -14,6 +14,7 @@ New features and enhancements
 * `humidex` can be computed using relative humidity instead of dewpoint temperature.
 * New function `xclim.indices.clausius_clapeyron_scaled_precipitation` can be used to scale precipitation according to changes in mean temperature.
 * Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
+* Added a `.zenodo.json` file for collecting and maintaining author order and tracking ORCIDs.
 
 Bug fixes
 ~~~~~~~~~
