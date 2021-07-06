@@ -1047,7 +1047,7 @@ class NpdfTransform(Parametrizable):
           Dictionary of arguments to pass to the adjust method of the univariate adjustment.
         rot_matrices : xr.DataArray, optional
           The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-          If left empty, random rotation matrices will be created. 
+          If left empty, random rotation matrices will be automatically generated.
 
         Notes
         -----

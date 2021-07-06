@@ -182,18 +182,26 @@ def scaling_adjust(ds, *, group, interp, kind):
 def npdf_transform(ds, **kwargs):
     """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
 
+    Parameters
+    ----------
     Dataset variables:
       ref : Reference multivariate timeseries
       hist : simulated timeseries on the reference period
       sim : Simulated timeseries on the projected period.
       rot_matrices : Random rotation matrices.
 
-    Kwargs:
+    kwargs:
       pts_dim : multivariate dimensionn name
       base : Adjustment class
       base_kws : Kwargs for initialising the adjustment object
       adj_kws : Kwargs of the `adjust` call
       n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
+      respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
     """
     ref = ds.ref
     hist = ds.hist
@@ -202,28 +210,26 @@ def npdf_transform(ds, **kwargs):
 
     escores = []
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
-# R rotates from coordinate x to x'. 
-        # Rotate to new magic space
-        # @ operator stands for matrix multiplication
-        # It takes an array defined over coordinate x and rotates it over x'
+        # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
+        # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
         refp = ref @ R
         histp = hist @ R
         simp = sim @ R
 
-        # Perform univariate adjustment in new space
+        # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"](**kwargs["base_kws"])
         ADJ.train(refp, histp)
         scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
         scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
 
-        # Rotate back
-        # Note that this works because the matrix multiplication is done along named 
-        # dimensions. So here, the dot product is done along x', not x as in the first 
-        # rotation. Because xarray broadcasts over named dimensions, this is 
-        # equivalent to taking the transpose of R, the reverse rotation. 
+        # Rotate back to original dimension x'@R = x
+        # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
+        # operating along named dimensions.
+        # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
         hist = scenhp @ R
         sim = scensp @ R
 
+        # Compute score
         if kwargs["n_escore"] >= 0:
             escores.append(
                 escore(

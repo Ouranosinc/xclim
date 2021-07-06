@@ -743,14 +743,29 @@ def stack_variables(ds, rechunk=True, dim="variables"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes.
-    If rechunk is True (default), dask arrays are rechunked with `variables : -1`.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+      Input dataset.
+    rechunk : bool
+      If True (default), dask arrays are rechunked with `variables : -1`.
+    dim : str
+      Name of dimension along which variables are indexed.
+
+    Returns
+    -------
+    xr.DataArray
+      Array with variables stacked along `dim` dimension.
     """
+    # Store original arrays' attributes
     attrs = {}
     nvar = len(ds.data_vars)
     for i, var in enumerate(ds.data_vars.values()):
         for name, attr in var.attrs.items():
             attrs.setdefault(name, [None] * nvar)[i] = attr
 
+    # Special key used for later `unstacking`
     attrs["is_variables"] = True
     var_crd = xr.DataArray(
         list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
@@ -768,7 +783,18 @@ def stack_variables(ds, rechunk=True, dim="variables"):
 def unstack_variables(da, dim=None):
     """Unstack a DataArray created by `stack_variables` to a dataset.
 
-    If not specified (default), `dim` is inferred from attributes of the coordinate.
+    Parameters
+    ----------
+    da : xr.DataArray
+      Array holding different variables along `dim` dimension.
+    dim : str
+      Name of dimension along which the variables are stacked. If not specified (default),
+      `dim` is inferred from attributes of the coordinate.
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset holding each variable in an individual DataArray.
     """
     if dim is None:
         for dim, crd in da.coords.items():
@@ -782,6 +808,7 @@ def unstack_variables(da, dim=None):
         attrs=da.attrs,
     )
 
+    # Reset attributes
     for name, attr_list in da.variables.attrs.items():
         if name == "is_variables":
             continue

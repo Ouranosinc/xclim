@@ -275,11 +275,27 @@ def reordering(sim, ref, group="time"):
     """Reorders data in `sim` following the order of ref.
 
     The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
-    optionnaly doing the operation group-wise.
+    optionally doing the operation group-wise.
+
+    Parameters
+    ----------
+    sim : xr.DataArray
+      Array to reorder.
+    ref : xr.DataArray
+      Array whose rank order sim should replicate.
+    group : str
+      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+
+    Returns
+    -------
+    xr.Dataset
+      sim reordered according to ref's rank order.
 
     Reference
     ---------
-    Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+    Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function
+    transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49.
+    https://doi.org/10.1007/s00382-017-3580-6
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
     return _reordering_group(ds, group=group).reordered
