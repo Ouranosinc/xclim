@@ -68,7 +68,6 @@ indices:
         thresh_tasmin: 10 degC
         start_date: 04-01
         end_date: 11-01
-        lat: null
   BEDD:
     base: biologically_effective_degree_days
     output:
