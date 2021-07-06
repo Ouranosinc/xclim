@@ -4,14 +4,26 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
-from xclim.core.indicator import build_indicator_module_from_yaml, registry
+from xclim import indicators
+from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.options import set_options
 from xclim.core.utils import InputKind
 from xclim.testing import open_dataset
 
 
+def all_virtual_indicators():
+    for mod in ["anuclim", "cf", "icclim"]:
+        for name, ind in getattr(indicators, mod).iter_indicators():
+            yield pytest.param((mod, name, ind), id=f"{mod}.{name}")
+
+
+@pytest.fixture(params=all_virtual_indicators())
+def virtual_indicator(request):
+    return request.param
+
+
 def test_default_modules_exist():
-    from xclim.indicators import anuclim, cf, icclim
+    from xclim.indicators import anuclim, cf, icclim  # noqa
 
     assert hasattr(icclim, "TG")
 
@@ -20,58 +32,27 @@ def test_default_modules_exist():
 
     assert hasattr(cf, "fg")
 
-    assert len(list(icclim.iter_indicators())) == 48
+    assert len(list(icclim.iter_indicators())) == 49
     assert len(list(anuclim.iter_indicators())) == 19
     # Not testing cf because many indices are waiting to be implemented.
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize(
-    "indname", [name for name in registry.keys() if name.startswith("cf.")]
-)
-def test_cf(indname, atmosds):
+def test_virtual_modules(virtual_indicator, atmosds):
     with set_options(cf_compliance="warn"):
         # skip when missing default values
-        ind = registry[indname].get_instance()
+        kws = {}
+        mod, indname, ind = virtual_indicator
         for name, param in ind.parameters.items():
-            if param["kind"] is not InputKind.DATASET and param["default"] in (
-                None,
-                name,
+            if name == "src_timestep":
+                kws["src_timestep"] = "D"
+            if param["kind"] is not InputKind.DATASET and (
+                param["default"] is None
+                or (param["default"] == name and name not in atmosds)
             ):
-                pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
+
+                pytest.skip(f"Indicator {mod}.{indname} has no default for {name}.")
         ind(ds=atmosds)
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "indname", [name for name in registry.keys() if name.startswith("icclim.")]
-)
-def test_icclim(indname, atmosds):
-    # skip when missing default values
-    ind = registry[indname].get_instance()
-    for name, param in ind.parameters.items():
-        if param["kind"] is not InputKind.DATASET and param["default"] in (None, name):
-            pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
-    ind(ds=atmosds)
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "indname", [name for name in registry.keys() if name.startswith("anuclim.")]
-)
-def test_anuclim(indname, atmosds):
-    # skip when missing default values
-    ind = registry[indname].get_instance()
-    kws = {}
-    for name, param in ind.parameters.items():
-        if name == "src_timestep":
-            kws["src_timestep"] = "D"
-        elif param["kind"] is not InputKind.DATASET and param["default"] in (
-            None,
-            name,
-        ):
-            pytest.skip(f"Indicator {ind.identifier} has no default for {name}.")
-    ind(ds=atmosds, **kws)
 
 
 def test_custom_indices():
@@ -94,9 +75,9 @@ def test_custom_indices():
         nbpath / "example.yml", name="ex2", indices=exinds
     )
 
-    assert ex1.R95p.__doc__ == ex2.R95p.__doc__
+    assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
-    out1 = ex1.R95p(pr=pr)
-    out2 = ex2.R95p(pr=pr)
+    out1 = ex1.R95p(pr=pr)  # noqa
+    out2 = ex2.R95p(pr=pr)  # noqa
 
     xr.testing.assert_equal(out1, out2)

@@ -106,8 +106,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     af, _ = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
 
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
-    sel = {dim: sim_q[dim] for dim in set(af.dims).intersection(set(sim_q.dims))}
-    sel["quantiles"] = sim_q
+    sel = {"quantiles": sim_q}
     af = u.broadcast(af, ds.sim, group=group, interp=interp, sel=sel)
 
     scen = u.apply_correction(ds.sim, af, kind)

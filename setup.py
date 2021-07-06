@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.27.4-beta"
+VERSION = "0.27.5-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -23,7 +23,7 @@ requirements = [
     "xarray>=0.17",
     "scipy>=1.2",
     "numba",
-    "pandas>=0.23",
+    "pandas>=0.23,<1.3",
     "cftime>=1.4.1",
     "dask[array]>=2.6",
     "pint>=0.9",

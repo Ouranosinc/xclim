@@ -9,17 +9,37 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Automatic load of translations on import and possibility to pass translations for virtual modules.
 * New ``xclim.testing.list_datasets`` function listing all available test datasets in repo `xclim-testdata`.
+* New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
+* `spatial_analogs` accepts multi-indexes as the `dist_dim` parameter and will work with candidates and target arrays of different lengths.
+* `humidex` can be computed using relative humidity instead of dewpoint temperature.
+* New function `xclim.indices.clausius_clapeyron_scaled_precipitation` can be used to scale precipitation according to changes in mean temperature.
+* Percentile based indices gained a `bootstrap` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods.
+
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in sdba :
+
+    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
+    - raise a proper error when ``ref``and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* Nothing yet.
+* `spatial_analogs` does not support sequence of `dist_dim` anymore. Users are responsible for stacking dimensions prior to calling `spatial_analogs`.
 
 New indicators
 ~~~~~~~~~~~~~~
 * `biologically_effective_degree_days` (with ``method="gladstones"``) indice computes degree-days between two specific dates, with a capped daily max value as well as latitude and temperature range swing as modifying coefficients (based on Gladstones, J. (1992)). This has also been wrapped as an indicator.
 * An alternative implementation of `biologically_effective_degree_days` (with ``method="icclim"``, based on ICCLIM formula) ignores latitude and temperature range swing modifiers and uses an alternate ``end_date``. Wrapped and available as an ICCLIM indicator.
 * `cool_night_index` indice returns the mean minimum temperature in September (``lat >= 0`` deg N) or March (``lat < 0`` deg N), based on Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001). Also available as an indicator (see indices `Notes` section on indicator usage recommendations).
-* `latitude_temperature_index` indices computes LTI values based on mean temperature of warmest month and a parameterizable latitude coefficient (default: ``lat_factor=75``) based on Jackson & Cherry, 1988, and Kenny & Shao, 1992 (10.1080/00221589.1992.11516243). This has also been wrapped as an indicator.
+* `latitude_temperature_index` indice computes LTI values based on mean temperature of warmest month and a parameterizable latitude coefficient (default: ``lat_factor=75``) based on Jackson & Cherry, 1988, and Kenny & Shao, 1992 (10.1080/00221589.1992.11516243). This has also been wrapped as an indicator.
+* `huglin_index` indice computes Huglin Heliothermal Index (HI) values based on growing degrees and a latitude-influenced coefficient for day-length (based on Huglin. (1978)). The indice supports several methods of estimating the latitude coefficient:
+
+    - ``method="smoothed"``: Marks latitudes between -40 N and 40 N with ``k=1``, and linearly increases to ``k=1.06`` at ``|lat|==50``.
+    - ``method="icclim"``: Uses a stepwise function based on the the original method as presented by Huglin (1978). Identical to the ICCLIM implementation.
+    - ``method="jones"``: Uses a more robust calculation for calculating day-lengths, based on Hall & Jones (2010). This method is now also available for `biologically_effective_degree_days`.
+
+* The generic indice `day_length`, used for calculating approximate daily day-length in hours per day or, given ``start_date`` and ``end_date``, the total aggregated day-hours over period. Uses axial tilt, start and end dates, calendar, and approximate date of northern hemisphere summer solstice, based on Hall & Jones (2010).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
@@ -30,7 +50,6 @@ Internal Changes
 * Minor modifications to the GitHub Pull Requests template.
 * Simplification of some yaml elements for virtual modules.
 * Allow injecting `freq` without the missing checks failing.
-
 
 0.27.0 (2021-05-28)
 -------------------

@@ -25,14 +25,16 @@ __all__ = [
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
+    "clausius_clapeyron_scaled_precipitation",
     "potential_evapotranspiration",
 ]
 
 
-@declare_units(tas="[temperature]", tdps="[temperature]")
+@declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
 def humidex(
     tas: xr.DataArray,
-    tdps: xr.DataArray,
+    tdps: Optional[xr.DataArray] = None,
+    hurs: Optional[xr.DataArray] = None,
 ) -> xr.DataArray:
     r"""Humidex index.
 
@@ -45,6 +47,8 @@ def humidex(
       Air temperature.
     tdps : xarray.DataArray,
       Dewpoint temperature.
+    hurs : xarray.DataArray
+      Relative humidity.
 
     Returns
     -------
@@ -58,12 +62,22 @@ def humidex(
 
     .. math::
 
-       T_{\text{dry bulb}}+{\frac {5}{9}}\left[6.11\times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{
-       dewpoint}}}}\right)-10\right]
+       T + {\frac {5}{9}}\left[e - 10\right]
 
-    where :math:`T_{dry bulb}` is the dry bulb air temperature (°C), and :math:`T_{dewpoint}` the dewpoint
-    temperature (°K). The constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant ([mekis15]_).
+    where :math:`T` is the dry bulb air temperature (°C). The term :math:`e` can be computed from the dewpoint
+    temperature :math:`T_{dewpoint}` in °K:
+
+    .. math::
+
+       e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
+
+    where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
+    and the universal gas constant ([mekis15]_). Alternatively, the term :math:`e` can also be computed from
+    the relative humidity `h` expressed in percent using [sirangelo20]_:
+
+    .. math::
+
+      e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
     The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
 
@@ -76,13 +90,24 @@ def humidex(
     ----------
     .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
     .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [sirangelo20] Sirangelo, B., Caloiero, T., Coscarelli, R. et al. Combining stochastic models of air temperature and vapour pressure for the analysis of the bioclimatic comfort through the Humidex. Sci Rep 10, 11395 (2020). https://doi.org/10.1038/s41598-020-68297-4
     .. [eccc] https://climate.weather.gc.ca/glossary_e.html
     """
-    # Convert dewpoint temperature to Kelvins
-    tdps = convert_units_to(tdps, "kelvin")
+    if (tdps is None) == (hurs is None):
+        raise ValueError(
+            "At least one of `tdps` or `hurs` must be given, and not both."
+        )
 
     # Vapour pressure in hPa
-    e = 6.11 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+    if tdps is not None:
+        # Convert dewpoint temperature to Kelvins
+        tdps = convert_units_to(tdps, "kelvin")
+        e = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+
+    elif hurs is not None:
+        # Convert dry bulb temperature to Celsius
+        tasC = convert_units_to(tas, "celsius")
+        e = hurs / 100 * 6.112 * 10 ** (7.5 * tasC / (tasC + 237.7))
 
     # Temperature delta due to humidity in delta_degC
     h = 5 / 9 * (e - 10)
@@ -363,7 +388,7 @@ def relative_humidity(
     tdps : xr.DataArray
       Dewpoint temperature, if specified, overrides huss and ps.
     huss : xr.DataArray
-      Specific Humidity.
+      Specific humidity.
     ps : xr.DataArray
       Air Pressure.
     ice_thresh : str
@@ -706,6 +731,57 @@ def wind_chill_index(
     return W
 
 
+@declare_units(
+    delta_tas="[temperature]",
+    pr_baseline="[precipitation]",
+)
+def clausius_clapeyron_scaled_precipitation(
+    delta_tas: xr.DataArray,
+    pr_baseline: xr.DataArray,
+    cc_scale_factor: float = 1.07,
+) -> xr.DataArray:
+    """Scale precipitation according to the Clausius-Clapeyron relation.
+
+    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
+    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+
+    .. math::
+
+        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+
+    This function assumes that precipitation can be scaled by the same factor.
+
+    Parameters
+    ----------
+    delta_tas : xarray.DataArray
+      Difference in temperature between a baseline climatology and another climatology.
+    pr_baseline : xarray.DataArray
+      Baseline precipitation to adjust with Clausius-Clapeyron.
+    cc_scale_factor : float (default  = 1.07)
+      Clausius Clapeyron scale factor.
+
+    Returns
+    -------
+    DataArray
+        Baseline precipitation scaled to other climatology using Clausius-Clapeyron relationship.
+
+    Notes
+    -----
+    Make sure that `delta_tas` is computed over a baseline compatible with `pr_baseline`. So for example,
+    if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
+    should be precipitations over a period within the same baseline.
+    """
+
+    # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
+    delta_tas = convert_units_to(delta_tas, "delta_degreeC")
+
+    # Calculate scaled precipitation.
+    pr_out = pr_baseline * (cc_scale_factor ** delta_tas)
+    pr_out.attrs["units"] = pr_baseline.attrs["units"]
+
+    return pr_out
+
+
 @declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
 def potential_evapotranspiration(
     tasmin: Optional[xr.DataArray] = None,
@@ -728,11 +804,9 @@ def potential_evapotranspiration(
       Mean daily temperature.
     method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
       Which method to use, see notes.
-
     Returns
     -------
     xarray.DataArray
-        Potential evapotranspiration.
 
     Notes
     -----

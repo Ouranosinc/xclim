@@ -196,6 +196,10 @@ def broadcast(
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
+            # For `.interp` we need to explicitly pass the shared dims (see pydata/xarray#4463 and Ouranosinc/xclim#449,567)
+            sel.update(
+                {dim: x[dim] for dim in set(grouped.dims).intersection(set(x.dims))}
+            )
             if group.prop != "group":
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
@@ -240,7 +244,7 @@ def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
     q = np.linspace(dq, 1 - dq, n)
     if eps is None:
         return q
-    return sorted(np.append([eps, 1 - eps], q))
+    return np.insert(np.append(q, 1 - eps), 0, eps)
 
 
 def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):

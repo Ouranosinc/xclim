@@ -30,6 +30,7 @@ __all__ = [
     "pint2cfunits",
     "rate2amount",
     "str2pint",
+    "to_agg_units",
     "units",
     "units2pint",
 ]
