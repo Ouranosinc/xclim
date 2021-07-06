@@ -2049,6 +2049,108 @@ def test_wind_chill(tas_series, sfcWind_series):
     assert out[-1].isnull()
 
 
+class TestClausiusClapeyronScaledPrecip:
+    def test_simple(self):
+        pr_baseline = xr.DataArray(
+            np.arange(4).reshape(1, 2, 2),
+            dims=["time", "lat", "lon"],
+            coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "mmday"},
+        )
+        tas_baseline = xr.DataArray(
+            np.arange(4).reshape(1, 2, 2),
+            dims=["time", "lat", "lon"],
+            coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "C"},
+        )
+        tas_future = xr.DataArray(
+            np.arange(40).reshape(10, 2, 2),
+            dims=["time_fut", "lat", "lon"],
+            coords={"time_fut": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
+            attrs={"units": "C"},
+        )
+        delta_tas = tas_future - tas_baseline
+        delta_tas.attrs["units"] = "delta_degC"
+        out = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_baseline)
+
+        np.testing.assert_allclose(
+            out.isel(time=0),
+            [
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [
+                        1.0,
+                        1.31079601,
+                        1.71818618,
+                        2.25219159,
+                        2.95216375,
+                        3.86968446,
+                        5.07236695,
+                        6.64883836,
+                        8.7152708,
+                        11.42394219,
+                    ],
+                ],
+                [
+                    [
+                        2.0,
+                        2.62159202,
+                        3.43637236,
+                        4.50438318,
+                        5.9043275,
+                        7.73936892,
+                        10.14473391,
+                        13.29767673,
+                        17.4305416,
+                        22.84788438,
+                    ],
+                    [
+                        3.0,
+                        3.93238803,
+                        5.15455854,
+                        6.75657477,
+                        8.85649125,
+                        11.60905339,
+                        15.21710086,
+                        19.94651509,
+                        26.1458124,
+                        34.27182657,
+                    ],
+                ],
+            ],
+        )
+
+    def test_workflow(self, tas_series, pr_series):
+        """Test typical workflow."""
+        n = int(365.25 * 10)
+        tref = tas_series(np.random.rand(n), start="1961-01-01")
+        tfut = tas_series(np.random.rand(n) + 2, start="2051-01-01")
+        pr = pr_series(np.random.rand(n) * 10, start="1961-01-01")
+
+        # Compute climatologies
+        with xr.set_options(keep_attrs=True):
+            tref_m = tref.mean(dim="time")
+            tfut_m = tfut.mean(dim="time")
+            pr_m = pr.mean(dim="time")
+
+        delta_tas = tfut_m - tref_m
+        delta_tas.attrs["units"] = "delta_degC"
+        pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_m)
+        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07 ** 2, 1)
+
+        # Compute monthly climatologies
+        with xr.set_options(keep_attrs=True):
+            tref_mm = tref.groupby("time.month").mean()
+            tfut_mm = tfut.groupby("time.month").mean()
+            pr_mm = pr.groupby("time.month").mean()
+
+        delta_tas_m = tfut_mm - tref_mm
+        delta_tas_m.attrs["units"] = "delta_degC"
+
+        pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas_m, pr_mm)
+        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07 ** 2, 1)
+
+
 class TestPotentialEvapotranspiration:
     def test_baier_robertson(self, tasmin_series, tasmax_series):
         tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
