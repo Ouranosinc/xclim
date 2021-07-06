@@ -9,6 +9,7 @@ import xarray as xr
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
+from .processing import escore
 
 
 @map_groups(
@@ -176,3 +177,82 @@ def scaling_adjust(ds, *, group, interp, kind):
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
     return scen.rename("scen").to_dataset()
+
+
+def npdf_transform(ds, **kwargs):
+    """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+
+    Parameters
+    ----------
+    Dataset variables:
+      ref : Reference multivariate timeseries
+      hist : simulated timeseries on the reference period
+      sim : Simulated timeseries on the projected period.
+      rot_matrices : Random rotation matrices.
+
+    kwargs:
+      pts_dim : multivariate dimensionn name
+      base : Adjustment class
+      base_kws : Kwargs for initialising the adjustment object
+      adj_kws : Kwargs of the `adjust` call
+      n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
+      respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+    """
+    ref = ds.ref
+    hist = ds.hist
+    sim = ds.sim.rename(time_sim="time")
+    dim = kwargs["pts_dim"]
+
+    escores = []
+    for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
+        # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
+        # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
+        refp = ref @ R
+        histp = hist @ R
+        simp = sim @ R
+
+        # Perform univariate adjustment in rotated space (x')
+        ADJ = kwargs["base"](**kwargs["base_kws"])
+        ADJ.train(refp, histp)
+        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
+        scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
+
+        # Rotate back to original dimension x'@R = x
+        # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
+        # operating along named dimensions.
+        # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
+        hist = scenhp @ R
+        sim = scensp @ R
+
+        # Compute score
+        if kwargs["n_escore"] >= 0:
+            escores.append(
+                escore(
+                    ref,
+                    hist,
+                    dims=(dim, "time"),
+                    N=kwargs["n_escore"],
+                    scale=True,
+                ).expand_dims(iterations=[i])
+            )
+
+    if kwargs["n_escore"] >= 0:
+        escores = xr.concat(escores, "iterations")
+    else:
+        # All NaN, but with the proper shape.
+        escores = (
+            ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
+        ).expand_dims(iterations=ds.iteration) * np.NaN
+
+    return xr.Dataset(
+        data_vars={
+            "scenh": hist.transpose(*ds.hist.dims),
+            "scens": sim.rename(time="time_sim").transpose(*ds.sim.dims),
+            "escores": escores,
+        }
+    )
