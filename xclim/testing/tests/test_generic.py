@@ -348,11 +348,48 @@ class TestAggregateBetweenDates:
             generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
 
 
-def test_degree_days(tas_series):
-    tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
+class TestDayLength:
+    def test_multiple_lats(self):
+        time_data = date_range(
+            "1992-12-01", "1994-01-01", freq="D", calendar="standard"
+        )
+        data = xr.DataArray(
+            np.ones((time_data.size, 7)),
+            dims=("time", "lat"),
+            coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60]},
+        )
 
-    out = generic.degree_days(tas, thresh="10 degC", condition=">")
-    outK = generic.degree_days(tas, thresh="283.15 degK", condition=">")
+        dl = generic.day_lengths(dates=data.time, lat=data.lat)
 
-    np.testing.assert_allclose(out, [0, 5, 10, 0, 0])
-    np.testing.assert_allclose(out, outK)
+        events = dict(
+            solstice=[
+                ["1992-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
+                ["1993-06-21", [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]]],
+                ["1993-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
+            ],
+            equinox=[
+                ["1993-03-20", [[12] * 7]]
+            ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
+        )
+
+        for event, evaluations in events.items():
+            for e in evaluations:
+                if event == "solstice":
+                    np.testing.assert_array_almost_equal(
+                        dl.sel(time=e[0]).transpose(), np.array(e[1]), 2
+                    )
+                elif event == "equinox":
+                    np.testing.assert_allclose(
+                        dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1
+                    )
+
+
+class TestDegreeDays:
+    def test_simple(self, tas_series):
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
+
+        out = generic.degree_days(tas, thresh="10 degC", condition=">")
+        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", condition=">")
+
+        np.testing.assert_allclose(out, [0, 5, 10, 0, 0])
+        np.testing.assert_allclose(out, out_kelvin)
