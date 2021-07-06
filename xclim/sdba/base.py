@@ -115,12 +115,13 @@ class Grouper(Parametrizable):
           If larger than 1, a centered rolling window along the main dimension is created when grouping data.
           Units are the sampling frequency of the data along the main dimension.
         add_dims : Optional[Sequence[str]]
-          Additionnal dimensions that should be reduced in grouping operations. This behaviour is also controlled
+          Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
           by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
           they will be omitted.
         interp : Union[bool, str]
           Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
-          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names are translated to True.
+          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names
+          are translated to True.
           This modifies the default, but `get_index` also accepts an `interp` argument overriding the one defined here..
         """
         if "." in group:
@@ -737,3 +738,83 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
         out.append(slc)
 
     return xr.concat(out, "time")
+
+
+def stack_variables(ds, rechunk=True, dim="variables"):
+    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
+
+    Variable attributes are all added as lists of attributes.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+      Input dataset.
+    rechunk : bool
+      If True (default), dask arrays are rechunked with `variables : -1`.
+    dim : str
+      Name of dimension along which variables are indexed.
+
+    Returns
+    -------
+    xr.DataArray
+      Array with variables stacked along `dim` dimension.
+    """
+    # Store original arrays' attributes
+    attrs = {}
+    nvar = len(ds.data_vars)
+    for i, var in enumerate(ds.data_vars.values()):
+        for name, attr in var.attrs.items():
+            attrs.setdefault(name, [None] * nvar)[i] = attr
+
+    # Special key used for later `unstacking`
+    attrs["is_variables"] = True
+    var_crd = xr.DataArray(
+        list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
+    )
+
+    da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
+
+    if uses_dask(da) and rechunk:
+        da = da.chunk({dim: -1})
+
+    da.attrs.update(ds.attrs)
+    return da.rename("multivariate")
+
+
+def unstack_variables(da, dim=None):
+    """Unstack a DataArray created by `stack_variables` to a dataset.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Array holding different variables along `dim` dimension.
+    dim : str
+      Name of dimension along which the variables are stacked. If not specified (default),
+      `dim` is inferred from attributes of the coordinate.
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset holding each variable in an individual DataArray.
+    """
+    if dim is None:
+        for dim, crd in da.coords.items():
+            if crd.attrs.get("is_variables"):
+                break
+        else:
+            raise ValueError("No variable coordinate found, were attributes removed?")
+
+    ds = xr.Dataset(
+        {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
+        attrs=da.attrs,
+    )
+
+    # Reset attributes
+    for name, attr_list in da.variables.attrs.items():
+        if name == "is_variables":
+            continue
+        for attr, var in zip(attr_list, da.variables):
+            if attr is not None:
+                ds[var.item()].attrs[name] = attr
+
+    return ds

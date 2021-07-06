@@ -1,7 +1,7 @@
 """Numba-accelerated utils."""
 import numpy as np
 import xarray as xr
-from numba import float32, float64, guvectorize, jit  # , int32, int64
+from numba import boolean, float32, float64, guvectorize, njit
 
 
 @guvectorize(
@@ -32,14 +32,13 @@ def vecquantiles(da, rnk, dim):
     return res
 
 
-@jit(
+@njit(
     [
         float32[:, :](float32[:, :], float32[:]),
         float64[:, :](float64[:, :], float64[:]),
         float32[:](float32[:], float32[:]),
         float64[:](float64[:], float64[:]),
     ],
-    nopython=True,
 )
 def _quantile(arr, q):
     if arr.ndim == 1:
@@ -94,3 +93,75 @@ def quantile(da, q, dim):
         )
 
     return res
+
+
+@njit([float32[:, :](float32[:, :]), float64[:, :](float64[:, :])])
+def remove_NaNs(x):
+    remove = np.zeros_like(x[0, :], dtype=boolean)
+    for i in range(x.shape[0]):
+        remove = remove | np.isnan(x[i, :])
+    return x[:, ~remove]
+
+
+@njit([float32(float32[:]), float64(float64[:])], fastmath=True)
+def _euclidean_norm(v):
+    """Compute the euclidean norm of vector v."""
+    return np.sqrt(np.sum(v ** 2))
+
+
+@njit(
+    [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
+    fastmath=True,
+)
+def _correlation(X, Y):
+    """Compute a correlation as the mean of pairwise distances between points in X and Y.
+
+    X is KxN and Y is KxM, the result is the mean of the MxN distances.
+    Similar to scipy.spatial.distance.cdist(X, Y, 'euclidean')
+    """
+    d = 0
+    for i in range(X.shape[1]):
+        for j in range(Y.shape[1]):
+            d += _euclidean_norm(X[:, i] - Y[:, j])
+    return d / (X.shape[1] * Y.shape[1])
+
+
+@njit([float32(float32[:, :]), float64(float64[:, :])], fastmath=True)
+def _autocorrelation(X):
+    """Mean of the NxN pairwise distances of points in X of shape KxN.
+
+    Similar to scipy.spatial.distance.pdist(..., 'euclidean')
+    """
+    d = 0
+    for i in range(X.shape[1]):
+        for j in range(i + 1):
+            d += (int(i != j) + 1) * _euclidean_norm(X[:, i] - X[:, j])
+    return d / X.shape[1] ** 2
+
+
+@guvectorize(
+    [
+        (float32[:, :], float32[:, :], float32[:]),
+        (float64[:, :], float64[:, :], float64[:]),
+    ],
+    "(k, n),(k, m)->()",
+)
+def _escore(tgt, sim, out):
+    """E-score based on the Skezely-Rizzo e-distances between clusters.
+
+    tgt and sim are KxN and KxM, where dimensions are along K and observations along M and N.
+    When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.
+    When std is True, X and Y are standardized according to the nanmean and nanstd (ddof = 1) of X.
+    """
+    sim = remove_NaNs(sim)
+    tgt = remove_NaNs(tgt)
+
+    n1 = sim.shape[1]
+    n2 = tgt.shape[1]
+
+    sXY = _correlation(tgt, sim)
+    sXX = _autocorrelation(tgt)
+    sYY = _autocorrelation(sim)
+
+    w = n1 * n2 / (n1 + n2)
+    out[0] = w * (sXY + sXY - sXX - sYY) / 2
