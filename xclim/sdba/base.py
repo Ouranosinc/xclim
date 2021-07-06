@@ -115,12 +115,13 @@ class Grouper(Parametrizable):
           If larger than 1, a centered rolling window along the main dimension is created when grouping data.
           Units are the sampling frequency of the data along the main dimension.
         add_dims : Optional[Sequence[str]]
-          Additionnal dimensions that should be reduced in grouping operations. This behaviour is also controlled
+          Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
           by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
           they will be omitted.
         interp : Union[bool, str]
           Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
-          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names are translated to True.
+          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names
+          are translated to True.
           This modifies the default, but `get_index` also accepts an `interp` argument overriding the one defined here..
         """
         if "." in group:

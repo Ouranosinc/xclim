@@ -31,6 +31,8 @@ def adapt_freq(
     ds : xr.Dataset
       With variables :  "ref", Target/reference data, usually observed data.
       and  "sim", Simulated data.
+    dim : str
+      Dimension name.
     group : Union[str, Grouper]
       Grouping information, see base.Grouper
     thresh : float

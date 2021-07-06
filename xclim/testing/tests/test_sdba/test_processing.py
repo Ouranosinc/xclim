@@ -50,7 +50,9 @@ def test_adapt_freq(use_dask):
     prsim = xr.where(pr < 20, pr / 20, pr)
     prref = xr.where(pr < 10, pr / 20, pr)
     ds_in = xr.Dataset({"sim": prsim, "ref": prref})
-    ds_ad = adapt_freq(ds_in, thresh=1, group=group)
+    ds_ad = adapt_freq(
+        ds_in, thresh=1, group=group
+    )  # Don't worry about CodeFactor complaint. dim is fed by decorator
 
     # Where the input is considered zero
     input_zeros = ds_ad.sim_ad.where(prsim <= 1)
