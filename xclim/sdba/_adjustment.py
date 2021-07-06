@@ -202,9 +202,10 @@ def npdf_transform(ds, **kwargs):
 
     escores = []
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
-
+# R rotates from coordinate x to x'. 
         # Rotate to new magic space
         # @ operator stands for matrix multiplication
+        # It takes an array defined over coordinate x and rotates it over x'
         refp = ref @ R
         histp = hist @ R
         simp = sim @ R
@@ -216,7 +217,10 @@ def npdf_transform(ds, **kwargs):
         scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
 
         # Rotate back
-        # Confusing but works when you think about it (hint: xarray has named dims)
+        # Note that this works because the matrix multiplication is done along named 
+        # dimensions. So here, the dot product is done along x', not x as in the first 
+        # rotation. Because xarray broadcasts over named dimensions, this is 
+        # equivalent to taking the transpose of R, the reverse rotation. 
         hist = scenhp @ R
         sim = scensp @ R
 
