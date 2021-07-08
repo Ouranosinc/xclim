@@ -2,6 +2,15 @@
 History
 =======
 
+
+0.29.0 (unreleased)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* ``snow_depth`` indicator returns the mean snow depth over period. Added as ``SD`` to ICCLIM module.
+
+
 0.28.0 (2021-07-07)
 -------------------
 

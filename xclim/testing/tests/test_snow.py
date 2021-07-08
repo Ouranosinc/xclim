@@ -5,6 +5,14 @@ from xclim import land
 from xclim.core.utils import ValidationError
 
 
+class TestSnowDepth:
+    def test_simple(self, snd_series):
+        snd = snd_series(np.ones(110), start="2001-01-01")
+        out = land.snow_depth(snd, freq="M")
+        assert out.units == "cm"
+        np.testing.assert_array_equal(out, [100, 100, 100, np.nan])
+
+
 class TestSnowCoverDuration:
     def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
