@@ -763,6 +763,12 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
+  "SD": {
+    "long_name": "Profondeur de neige journalière moyenne",
+    "description": "Profondeur de neige journalière moyenne",
+    "title": "Moyenne de la profondeur de neige",
+    "abstract": "Profondeur de neige journalière moyenne"
+  },
   "PRLP": {
     "long_name": "Précipitation liquide",
     "description": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
