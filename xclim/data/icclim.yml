@@ -315,3 +315,15 @@ indices:
     index_function:
       parameters:
         thresh: 50 cm
+  CD:
+    base: cold_and_dry_days
+    output:
+      long_name: Cold and dry days
+    index_function:
+      parameters:
+        tas_25:
+          data: {tas_25}
+          description: Daily 25th percentile of temperature.
+        pr_25:
+          data: {pr_25}
+          description: Daily 25th percentile of wet day precipitation flux.

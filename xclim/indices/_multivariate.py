@@ -11,11 +11,13 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    infer_sampling_units,
     pint2cfunits,
     rate2amount,
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import ValidationError
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
@@ -130,8 +132,18 @@ def cold_spell_duration_index(
     return to_agg_units(out, tasmin, "count")
 
 
+@declare_units(
+    tas="[temperature]",
+    tas_25="[temperature]",
+    pr="[precipitation]",
+    pr_25="[precipitation]",
+)
 def cold_and_dry_days(
-    tas: xarray.DataArray, tgin25, pr, wet25, freq: str = "YS"
+    tas: xarray.DataArray,
+    tas_25: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_25: xarray.DataArray,
+    freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Cold and dry days.
 
@@ -140,13 +152,16 @@ def cold_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values,
-    tgin25 : xarray.DataArray
+      Mean daily temperature values
+    tas_25 : xarray.DataArray
       First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    wet25 : xarray.DataArray
+    pr_25 : xarray.DataArray
       First quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
     freq : str
       Resampling frequency.
 
@@ -157,6 +172,8 @@ def cold_and_dry_days(
 
     Notes
     -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
     Formula to be written [cold_dry_days]_.
 
     References
@@ -164,14 +181,11 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    raise NotImplementedError()
-    # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
-    #
-    # c1 = tas < convert_units_to(tgin25, tas)
-    # c2 = (pr > convert_units_to('1 mm', pr)) * (pr < convert_units_to(wet25, pr))
-
-    # c = (c1 * c2) * 1
-    # return c.resample(time=freq).sum(dim='time')
+    _check_common_sampling_freq(tas, pr)
+    tg25 = _da_below_per_thrsh(tas, tas_25)
+    pr25 = _da_below_per_thrsh(pr, pr_25)
+    cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
+    return to_agg_units(cold_and_dry, tas, "count")
 
 
 @declare_units(
@@ -1477,3 +1491,24 @@ def blowing_snow(
     out = cond.resample(time=freq).sum(dim="time")
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
+
+
+def _check_common_sampling_freq(tas, pr):
+    tas_freq = infer_sampling_units(tas)
+    pr_freq = infer_sampling_units(pr)
+    if tas_freq != pr_freq:
+        raise ValidationError(
+            f"The sampling frequencies of the two datasets are different, tas frequency is {tas_freq} whereas pr frequency is {pr_freq}"
+        )
+
+
+def _da_below_per_thrsh(da: xarray.DataArray, da_per: xarray.DataArray):
+    da_per = convert_units_to(da_per, da)
+    thresh = resample_doy(da_per, da)
+    return da < thresh
+
+
+def _da_above_per_thrsh(da: xarray.DataArray, da_per: xarray.DataArray):
+    da_per = convert_units_to(da_per, da)
+    thresh = resample_doy(da_per, da)
+    return da > thresh

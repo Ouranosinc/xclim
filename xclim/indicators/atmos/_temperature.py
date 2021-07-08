@@ -72,6 +72,7 @@ __all__ = [
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
+    "cold_and_dry_days",
 ]
 
 
@@ -848,4 +849,14 @@ latitude_temperature_index = Temp(
     compute=wrapped_partial(
         indices.latitude_temperature_index, suggested=dict(lat_factor=60, lat=_empty)
     ),
+)
+
+cold_and_dry_days = Temp(
+    identifier="cold_and_dry_days",
+    units="days",
+    long_name="Cold and dry days",
+    title="Cold and dry days",
+    description="{freq} number of days where tas < 25th percentile and pr < 25th percentile",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.cold_and_dry_days,
 )
