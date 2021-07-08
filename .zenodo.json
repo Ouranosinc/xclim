@@ -36,6 +36,10 @@
       "orcid": "0000-0003-3389-9406"
     },
     {
+      "affiliation": "CERFACS",
+      "name": "Aoun, Abel",
+    },    
+    {
       "name": "Roy, Philippe"
     },
     {
@@ -67,5 +71,6 @@
     "analysis"
   ],
   "license": "Apache-2.0",
-  "upload_type": "software"
+  "upload_type": "software",
+  "access_right": "open"
 }
