@@ -58,7 +58,7 @@ def use_ufunc(
 
 
 def rle(
-    da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000
+    da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000, lastday: bool = False
 ) -> xr.DataArray:
     """Generate basic run length function.
 
@@ -67,12 +67,15 @@ def rle(
     da : xr.DataArray
     dim : str
     max_chunk : int
+    lastday: bool
 
     Returns
     -------
     xr.DataArray
-      Values are 0 where da is False (out of runs),
-      are N on the first day of a run, where N is the length of that run,
+      Values are 0 where da is False (out of runs).
+      If lastday is False, value are N on the first day of a run, where N is the length of that run,
+      and are NaN on the other days of the runs.
+      If lastday is True, values are N on the last day of a run, where N is the length of that run,
       and are NaN on the other days of the runs.
     """
     use_dask = isinstance(da.data, dsk.Array)
@@ -119,12 +122,21 @@ def rle(
                 chunks[dd] = chunksize_ex_dims
         b = b.chunk(chunks)
 
-    # back fill nans with first position after
-    z = b.bfill(dim=dim)
+    if lastday:
+        # forward-fill nans with last position before
+        z = b.ffill(dim=dim)
+    else
+        # back fill nans with first position after
+        z = b.bfill(dim=dim)
     # calculate lengths
-    d = z.diff(dim=dim) - 1
-    d = d.where(d >= 0)
-    d = d.isel({dim: slice(None, -1)}).where(da, 0)
+    d = (z.diff(dim=dim) - 1)
+    if lastday:
+        d = d.where(d >= 0)[1:,:,:]
+        # fudge the dates back to where they started (padding & differencing has put them out by 1)
+        d = d.assign_coords(time = da.time.values)
+    else:
+        d = d.where(d >= 0)
+        d = d.isel({dim: slice(None, -1)}).where(da, 0)
     return d
 
 
