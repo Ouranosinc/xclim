@@ -58,7 +58,10 @@ def use_ufunc(
 
 
 def rle(
-    da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000, lastday: bool = False
+    da: xr.DataArray,
+    dim: str = "time",
+    max_chunk: int = 1_000_000,
+    lastday: bool = False,
 ) -> xr.DataArray:
     """Generate basic run length function.
 
@@ -127,7 +130,7 @@ def rle(
     z = b.bfill(dim=dim)
 
     # calculate lengths
-    d = (z.diff(dim=dim) - 1)
+    d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
     d = d.isel({dim: slice(None, -1)}).where(da, 0)
     if lastday:
