@@ -19,7 +19,8 @@ def ufunc(request):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_rle(ufunc, use_dask):
+@pytest.mark.parametrize("lastday", [True, False])
+def test_rle(ufunc, use_dask, lastday):
     if use_dask and ufunc:
         pytest.xfail("rle_1d is not implemented for dask arrays.")
 
@@ -38,10 +39,15 @@ def test_rle(ufunc, use_dask):
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
 
-        out = rl.rle(da != 0).mean(["a", "b", "c"])
-        expected = np.zeros(365)
-        expected[1] = 10
-        expected[2:11] = np.nan
+        out = rl.rle(da != 0, lastday=lastday).mean(["a", "b", "c"])
+        if lastday:
+            expected = np.zeros(365)
+            expected[1:10] = np.nan
+            expected[10] = 10
+        else:
+            expected = np.zeros(365)
+            expected[1] = 10
+            expected[2:11] = np.nan
         np.testing.assert_array_equal(out, expected)
 
 
