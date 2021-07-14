@@ -37,7 +37,7 @@ def use_ufunc(
     Parameters
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
-    da : .DataArray
+    da : xr.DataArray
       N-dimensional input array.
     dim: str
       The dimension along which to find runs.
