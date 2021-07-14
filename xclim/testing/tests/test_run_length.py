@@ -38,8 +38,12 @@ def test_rle(ufunc, use_dask, lastday):
     else:
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
-
+        import time
+        print("lastday: " + str(lastday))
+        start = time.time()
         out = rl.rle(da != 0, lastday=lastday).mean(["a", "b", "c"])
+        end = time.time()
+        print(end - start)
         if lastday:
             expected = np.zeros(365)
             expected[1:10] = np.nan
@@ -164,19 +168,21 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    def test_simple(self):
+    @pytest.mark.parametrize("lastday", [True, False])
+    def test_simple(self, lastday):
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_events(a, 3, dim="x") == 2
+        assert rl.windowed_run_events(a, 3, dim="x", lastday=lastday) == 2
 
 
 class TestWindowedRunCount:
-    def test_simple(self):
+    @pytest.mark.parametrize("lastday", [True, False])
+    def test_simple(self, lastday):
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="x") == len(a[4:7]) + len(a[34:45])
+        assert rl.windowed_run_count(a, 3, dim="x", lastday=lastday) == len(a[4:7]) + len(a[34:45])
 
 
 class TestLastRun:
@@ -226,25 +232,28 @@ def test_run_bounds_data():
     assert bounds.events.size == 15
 
 
-def test_keep_longest_run_synthetic():
+@pytest.mark.parametrize("lastday", [True, False])
+def test_keep_longest_run_synthetic(lastday):
     runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x").astype(bool)
-    lrun = rl.keep_longest_run(runs, "x")
+    lrun = rl.keep_longest_run(runs, "x", lastday=lastday)
     np.testing.assert_array_equal(
         lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
     )
 
 
-def test_keep_longest_run_data():
+@pytest.mark.parametrize("lastday", [True, False])
+def test_keep_longest_run_data(lastday):
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.001
-    lrun = rl.keep_longest_run(cond, "time")
+    lrun = rl.keep_longest_run(cond, "time", lastday=lastday)
     np.testing.assert_array_equal(
         lrun.isel(time=slice(651, 658), location=2),
         np.array([0, 0, 0, 1, 1, 1, 1], dtype=bool),
     )
 
     xr.testing.assert_equal(
-        rl.keep_longest_run(cond, "time").sum("time"), rl.longest_run(cond, "time")
+        rl.keep_longest_run(cond, "time", lastday=lastday).sum("time"),
+        rl.longest_run(cond, "time", lastday=lastday)
     )
 
 
