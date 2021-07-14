@@ -12,7 +12,6 @@ from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
 import numpy as np
-import xarray
 import xarray as xr
 from dask import array as dsk
 
