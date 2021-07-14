@@ -37,7 +37,7 @@ def use_ufunc(
     Parameters
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
-    da : xarray.DataArray
+    da : .DataArray
       N-dimensional input array.
     dim: str
       The dimension along which to find runs.
@@ -877,7 +877,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray:
+def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
     Parameters
@@ -889,7 +889,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle_1d(arr)
@@ -910,7 +910,7 @@ def windowed_run_count_ufunc(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -939,7 +939,7 @@ def windowed_run_events_ufunc(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -975,7 +975,7 @@ def statistics_run_ufunc(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -1008,7 +1008,7 @@ def first_run_ufunc(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     ind = xr.apply_ufunc(
