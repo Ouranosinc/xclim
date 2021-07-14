@@ -127,6 +127,7 @@ def rle(
                 chunks[dd] = chunksize_ex_dims
         b = b.chunk(chunks)
 
+    # back fill nans with first position after
     z = b.bfill(dim=dim)
 
     # calculate lengths
