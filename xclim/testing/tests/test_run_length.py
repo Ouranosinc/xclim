@@ -39,6 +39,7 @@ def test_rle(ufunc, use_dask, lastday):
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
         import time
+
         print("lastday: " + str(lastday))
         start = time.time()
         out = rl.rle(da != 0, lastday=lastday).mean(["a", "b", "c"])
@@ -182,7 +183,9 @@ class TestWindowedRunCount:
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="x", lastday=lastday) == len(a[4:7]) + len(a[34:45])
+        assert rl.windowed_run_count(a, 3, dim="x", lastday=lastday) == len(
+            a[4:7]
+        ) + len(a[34:45])
 
 
 class TestLastRun:
@@ -253,7 +256,7 @@ def test_keep_longest_run_data(lastday):
 
     xr.testing.assert_equal(
         rl.keep_longest_run(cond, "time", lastday=lastday).sum("time"),
-        rl.longest_run(cond, "time", lastday=lastday)
+        rl.longest_run(cond, "time", lastday=lastday),
     )
 
 

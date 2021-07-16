@@ -215,8 +215,9 @@ def longest_run(
     xr.DataArray
       Length of longest run of True values along dimension (int).
     """
-    return rle_statistics(da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim,
-                          lastday=lastday)
+    return rle_statistics(
+        da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, lastday=lastday
+    )
 
 
 def windowed_run_events(
@@ -224,7 +225,7 @@ def windowed_run_events(
     window: int,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "auto",
-    lastday: bool = False
+    lastday: bool = False,
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
@@ -470,8 +471,9 @@ def run_bounds(
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(da: xr.DataArray, dim: str = "time",
-                     lastday: bool = False) -> xr.DataArray:
+def keep_longest_run(
+    da: xr.DataArray, dim: str = "time", lastday: bool = False
+) -> xr.DataArray:
     """Keep the longest run along a dimension.
 
     Parameters
