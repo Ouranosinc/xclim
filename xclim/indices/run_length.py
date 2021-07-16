@@ -501,7 +501,10 @@ def keep_longest_run(
         rls + 1,  # Add one to the First longest run
         rls,
     )
-    out = out.ffill(dim) == out.max(dim)
+    if lastday:
+        out = out.bfill(dim) == out.max(dim)
+    else:
+        out = out.ffill(dim) == out.max(dim)
     return da.copy(data=out.transpose(*da.dims).data)  # Keep everything the same
 
 
