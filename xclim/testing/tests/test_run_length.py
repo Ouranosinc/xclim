@@ -180,10 +180,10 @@ class TestWindowedRunEvents:
 class TestWindowedRunCount:
     @pytest.mark.parametrize("lastday", [True, False])
     def test_simple(self, lastday):
-        a = xr.DataArray(np.zeros(50, bool), dims=("x",))
+        a = xr.DataArray(np.zeros(50, bool), dims=("time",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="x", lastday=lastday) == len(
+        assert rl.windowed_run_count(a, 3, dim="time", lastday=lastday) == len(
             a[4:7]
         ) + len(a[34:45])
 
