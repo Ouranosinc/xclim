@@ -232,8 +232,8 @@ def test_run_bounds_data():
 
 @pytest.mark.parametrize("lastday", [True, False])
 def test_keep_longest_run_synthetic(lastday):
-    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x").astype(bool)
-    lrun = rl.keep_longest_run(runs, "x", lastday=lastday)
+    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
+    lrun = rl.keep_longest_run(runs, "time", lastday=lastday)
     np.testing.assert_array_equal(
         lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
     )
