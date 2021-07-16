@@ -109,6 +109,7 @@ def calm_days(
     out = to_agg_units(out, pr, "count")
     return out
 
+
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
     tas: xarray.DataArray,
