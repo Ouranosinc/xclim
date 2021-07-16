@@ -39,12 +39,7 @@ def test_rle(ufunc, use_dask, lastday):
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
         import time
-
-        print("lastday: " + str(lastday))
-        start = time.time()
         out = rl.rle(da != 0, lastday=lastday).mean(["a", "b", "c"])
-        end = time.time()
-        print(end - start)
         if lastday:
             expected = np.zeros(365)
             expected[1:10] = np.nan
