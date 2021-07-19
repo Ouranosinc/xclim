@@ -327,3 +327,15 @@ indices:
         pr_25:
           data: {pr_25}
           description: Daily 25th percentile of wet day precipitation flux.
+  WD:
+    base: warm_and_dry_days
+    output:
+      long_name: Warm and dry days
+    index_function:
+      parameters:
+        tas_75:
+          data: {tas_75}
+          description: Daily 75th percentile of temperature.
+        pr_25:
+          data: {pr_25}
+          description: Daily 25th percentile of wet day precipitation flux.

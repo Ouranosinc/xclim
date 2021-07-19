@@ -32,7 +32,7 @@ def test_default_modules_exist():
 
     assert hasattr(cf, "fg")
 
-    assert len(list(icclim.iter_indicators())) == 51
+    assert len(list(icclim.iter_indicators())) == 52
     assert len(list(anuclim.iter_indicators())) == 19
     # Not testing cf because many indices are waiting to be implemented.
 
