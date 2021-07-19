@@ -954,5 +954,11 @@
     "abstract": "Durée totale en jours où la température est au dessus du 75eme percentile et les précipitations en dessous du 25eme percentile.",
     "description": "Durée totale {freq:f} en jours où la température est au dessus du 75eme percentile et les précipitations en dessous du 25eme percentile. Les percentiles sont calculés à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence. Concernant les precipitations les percentiles ne sont calculés que pour des valeurs au dessus de 1 mm.",
     "long_name": "Durée totale {freq:f} en jours des périodes chaudes et seches"
+  },
+  "WARM_AND_WET_DAYS": {
+    "title": "Durée totale en jours des périodes chaudes et pluvieuses",
+    "abstract": "Durée totale en jours où la température est au dessus du 75eme percentile et les précipitations au dessus du 75eme percentile.",
+    "description": "Durée totale {freq:f} en jours où la température est au dessus du 75eme percentile et les précipitations au dessus du 75eme percentile. Les percentiles sont calculés à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence. Concernant les precipitations les percentiles ne sont calculés que pour des valeurs au dessus de 1 mm.",
+    "long_name": "Durée totale {freq:f} en jours des périodes chaudes et pluvieuses"
   }
 }

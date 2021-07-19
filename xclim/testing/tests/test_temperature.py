@@ -443,6 +443,23 @@ class TestWarmAndDry:
         assert result.data[0] == 20
 
 
+class TestWarmAndWet:
+    def test_simple(seldf, tas_series, pr_series):
+        # GIVEN
+        raw_temp = np.full(365 * 4, 20) + K2C
+        raw_temp[10:30] += 10
+        ts = tas_series(raw_temp)
+        ts_per = percentile_doy(ts, 5, 75).sel(percentiles=75)
+        raw_prec = np.full(365 * 4, 10)
+        raw_prec[10:30] += 20
+        pr = pr_series(raw_prec)
+        pr_per = percentile_doy(pr, 5, 75).sel(percentiles=75)
+        # WHEN
+        result = atmos.warm_and_wet_days(ts, ts_per, pr, pr_per, "MS")
+        # THEN january has 20 warm and wet days
+        assert result.data[0] == 20
+
+
 class TestFrostDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 

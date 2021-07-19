@@ -74,6 +74,7 @@ __all__ = [
     "latitude_temperature_index",
     "cold_and_dry_days",
     "warm_and_dry_days",
+    "warm_and_wet_days",
 ]
 
 
@@ -870,4 +871,14 @@ warm_and_dry_days = Temp(
     description="{freq} number of days where tas > 75th percentile and pr < 25th percentile",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.warm_and_dry_days,
+)
+
+warm_and_wet_days = Temp(
+    identifier="warm_and_wet_days",
+    units="days",
+    long_name="warm and wet days",
+    title="warm and wet days",
+    description="{freq} number of days where tas > 75th percentile and pr > 75th percentile",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.warm_and_wet_days,
 )

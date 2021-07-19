@@ -35,6 +35,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_and_dry_days",
     "warm_and_dry_days",
+    "warm_and_wet_days",
     "daily_freezethaw_cycles",
     "multiday_temperature_swing",
     "daily_temperature_range",
@@ -243,6 +244,62 @@ def warm_and_dry_days(
     pr25 = _da_below_per_thrsh(pr, pr_25)
     warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_dry, tas, "count")
+
+
+@declare_units(
+    tas="[temperature]",
+    tas_75="[temperature]",
+    pr="[precipitation]",
+    pr_75="[precipitation]",
+)
+def warm_and_wet_days(
+    tas: xarray.DataArray,
+    tas_75: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_75: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Warm and wet days.
+
+    Returns the total number of days where "warm" and "wet" conditions coincide.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values
+    tas_75 : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr : xarray.DataArray
+      Daily precipitation.
+    pr_75 : xarray.DataArray
+      First quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray,
+      The total number of days where warm and wet conditions coincide.
+
+    Notes
+    -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
+    Formula to be written [warm_wet_days]_.
+
+    References
+    ----------
+    .. [warm_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
+        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
+    """
+    _check_common_sampling_freq(tas, pr)
+    tg75 = _da_above_per_thrsh(tas, tas_75)
+    pr75 = _da_above_per_thrsh(pr, pr_75)
+    warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
+    return to_agg_units(warm_and_wet, tas, "count")
 
 
 @declare_units(
