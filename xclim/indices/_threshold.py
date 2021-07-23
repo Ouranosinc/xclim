@@ -1871,6 +1871,8 @@ def degree_days_exceedance_date(
         c = thresh - tas
     elif op in [">", ">=", "gt", "ge"]:
         c = tas - thresh
+    else:
+        raise NotImplementedError(f"op: '{op}'.")
 
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
