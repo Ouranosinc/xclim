@@ -185,8 +185,8 @@ def cold_and_dry_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg25 = _da_below_percentile_theshold(tas, tas_25)
-    pr25 = _da_below_percentile_theshold(pr, pr_25)
+    tg25 = _da_below_percentile_threshold(tas, tas_25)
+    pr25 = _da_below_percentile_threshold(pr, pr_25)
     cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_dry, tas, "count")
 
@@ -241,8 +241,8 @@ def warm_and_dry_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg75 = _da_above_percentile_theshold(tas, tas_75)
-    pr25 = _da_below_percentile_theshold(pr, pr_25)
+    tg75 = _da_above_percentile_threshold(tas, tas_75)
+    pr25 = _da_below_percentile_threshold(pr, pr_25)
     warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_dry, tas, "count")
 
@@ -297,8 +297,8 @@ def warm_and_wet_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg75 = _da_above_percentile_theshold(tas, tas_75)
-    pr75 = _da_above_percentile_theshold(pr, pr_75)
+    tg75 = _da_above_percentile_threshold(tas, tas_75)
+    pr75 = _da_above_percentile_threshold(pr, pr_75)
     warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_wet, tas, "count")
 
@@ -353,8 +353,8 @@ def cold_and_wet_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg25 = _da_below_percentile_theshold(tas, tas_25)
-    pr75 = _da_above_percentile_theshold(pr, pr_75)
+    tg25 = _da_below_percentile_threshold(tas, tas_25)
+    pr75 = _da_above_percentile_threshold(pr, pr_75)
     cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_wet, tas, "count")
 
