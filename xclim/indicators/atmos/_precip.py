@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Precipitation indicator definitions."""
-from inspect import _empty
+from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks

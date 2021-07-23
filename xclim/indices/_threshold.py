@@ -188,7 +188,8 @@ def continuous_snow_cover_end(
 
     References
     ----------
-    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur
+    du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
@@ -230,7 +231,8 @@ def continuous_snow_cover_start(
 
     References
     ----------
-    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur
+    du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh

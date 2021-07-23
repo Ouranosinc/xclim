@@ -22,7 +22,7 @@ from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+# See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
@@ -117,6 +117,8 @@ def cold_spell_duration_index(
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
     """
+    # FIXME: Bootsrap flag is not used. Should be removed.
+
     tn10 = convert_units_to(tn10, tasmin)
 
     # Create time series out of doy values.

@@ -151,7 +151,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
