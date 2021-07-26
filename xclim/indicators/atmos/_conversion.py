@@ -1,5 +1,5 @@
 """Atmospheric conversion definitions."""
-from inspect import _empty
+from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core.indicator import Indicator

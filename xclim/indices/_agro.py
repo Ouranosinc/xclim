@@ -12,7 +12,7 @@ from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+# See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
