@@ -109,7 +109,8 @@ class BaseAdjustment(ParametrizableWithDataset):
             ref, self.group.dim
         ) != get_calendar(hist, self.group.dim):
             raise ValueError(
-                f"Input ref and hist are defined on different calendars, this is not supported for {self.__class__.__name__} adjustment."
+                "Input ref and hist are defined on different calendars,"
+                f" this is not supported for {self.__class__.__name__} adjustment."
             )
 
         ds = self._train(ref, hist)

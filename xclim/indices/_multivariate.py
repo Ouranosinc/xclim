@@ -22,7 +22,7 @@ from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+# See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
@@ -65,7 +65,7 @@ def cold_spell_duration_index(
     tn10: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 

@@ -1,9 +1,7 @@
 # noqa: D100
-from calendar import monthrange
 from typing import Optional, Tuple
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
@@ -170,7 +168,7 @@ def uas_vas_2_sfcwind(
     -------
     wind : xr.DataArray, [m s-1]
       Wind velocity
-    windfromdir : xr.DataArray, [°]
+    wind_from_dir : xr.DataArray, [°]
       Direction from which the wind blows, following the meteorological convention where
       360 stands for North and 0 for calm winds.
 
@@ -189,18 +187,18 @@ def uas_vas_2_sfcwind(
     wind.attrs["units"] = "m s-1"
 
     # Calculate the angle
-    windfromdir_math = np.degrees(np.arctan2(vas, uas))
+    wind_from_dir_math = np.degrees(np.arctan2(vas, uas))
 
     # Convert the angle from the mathematical standard to the meteorological standard
-    windfromdir = (270 - windfromdir_math) % 360.0
+    wind_from_dir = (270 - wind_from_dir_math) % 360.0
 
     # According to the meteorological standard, calm winds must have a direction of 0°
     # while northerly winds have a direction of 360°
     # On the Beaufort scale, calm winds are defined as < 0.5 m/s
-    windfromdir = xr.where(windfromdir.round() == 0, 360, windfromdir)
-    windfromdir = xr.where(wind < wind_thresh, 0, windfromdir)
-    windfromdir.attrs["units"] = "degree"
-    return wind, windfromdir
+    wind_from_dir = xr.where(wind_from_dir.round() == 0, 360, wind_from_dir)
+    wind_from_dir = xr.where(wind < wind_thresh, 0, wind_from_dir)
+    wind_from_dir.attrs["units"] = "degree"
+    return wind, wind_from_dir
 
 
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
@@ -231,20 +229,20 @@ def sfcwind_2_uas_vas(
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
-    windfromdir_math = (-sfcWindfromdir + 270) % 360.0
+    wind_from_dir_math = (-sfcWindfromdir + 270) % 360.0
 
     # TODO: This commented part should allow us to resample subdaily wind, but needs to be cleaned up and put elsewhere.
     # if resample is not None:
     #     wind = wind.resample(time=resample).mean(dim='time', keep_attrs=True)
     #
     #     # nb_per_day is the number of values each day. This should be calculated
-    #     windfromdir_math_per_day = windfromdir_math.reshape((len(wind.time), nb_per_day))
+    #     wind_from_dir_math_per_day = wind_from_dir_math.reshape((len(wind.time), nb_per_day))
     #     # Averages the subdaily angles around a circle, i.e. mean([0, 360]) = 0, not 180
-    #     windfromdir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
-    #                                       for angles in windfromdir_math_per_day])
+    #     wind_from_dir_math = np.concatenate([[degrees(phase(sum(rect(1, radians(d)) for d in angles) / len(angles)))]
+    #                                       for angles in wind_from_dir_math_per_day])
 
-    uas = sfcWind * np.cos(np.radians(windfromdir_math))
-    vas = sfcWind * np.sin(np.radians(windfromdir_math))
+    uas = sfcWind * np.cos(np.radians(wind_from_dir_math))
+    vas = sfcWind * np.sin(np.radians(wind_from_dir_math))
     uas.attrs["units"] = "m s-1"
     vas.attrs["units"] = "m s-1"
     return uas, vas
@@ -280,7 +278,6 @@ def saturation_vapor_pressure(
     - "sonntag90" or "SO90", taken from [sonntag90]_.
     - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
-
 
     References
     ----------
@@ -499,7 +496,7 @@ def specific_humidity(
     ----------
     tas : xr.DataArray
       Temperature array
-    hurs : xr.DataArrsay
+    hurs : xr.DataArray
       Relative Humidity.
     ps : xr.DataArray
       Air Pressure.
@@ -643,9 +640,6 @@ def rain_approximation(
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
     return prra
-    prlp = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
-    prlp.attrs["units"] = pr.attrs["units"]
-    return prlp
 
 
 @declare_units(
@@ -669,7 +663,7 @@ def wind_chill_index(
     tas : xarray.DataArray
       Surface air temperature.
     sfcwind : xarray.DataArray
-      Suface wind speed (10 m).
+      Surface wind speed (10 m).
     method : {'CAN', 'US'}
       If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
     mask_invalid : bool
@@ -687,7 +681,7 @@ def wind_chill_index(
     -----
     Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
     to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
-    a temperature at suface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
+    a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
     is computed as:
 
     .. math::
@@ -704,7 +698,7 @@ def wind_chill_index(
     Both equations are invalid for temperature over 0°C in the canadian method.
 
     The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
-    `method='US'`. In that case, the maximual valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
+    `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
 
     References
     ----------
@@ -742,15 +736,6 @@ def clausius_clapeyron_scaled_precipitation(
 ) -> xr.DataArray:
     """Scale precipitation according to the Clausius-Clapeyron relation.
 
-    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
-    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
-
-    .. math::
-
-        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
-
-    This function assumes that precipitation can be scaled by the same factor.
-
     Parameters
     ----------
     delta_tas : xarray.DataArray
@@ -767,6 +752,17 @@ def clausius_clapeyron_scaled_precipitation(
 
     Notes
     -----
+    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
+    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+
+        .. math::
+
+        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+
+    This function assumes that precipitation can be scaled by the same factor.
+
+    Warnings
+    --------
     Make sure that `delta_tas` is computed over a baseline compatible with `pr_baseline`. So for example,
     if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
     should be precipitations over a period within the same baseline.
@@ -947,6 +943,9 @@ def potential_evapotranspiration(
         # Thornthwaite(1948) formula
         out = 1.6 * dl_m * tas_idy_a  # cm/month
         out = 10 * out  # mm/month
+
+    else:
+        raise NotImplementedError(f"'{method}' method is not implemented.")
 
     m, freq = infer_sampling_units(out)
     out.attrs["units"] = "mm/" + freq
