@@ -185,8 +185,15 @@ def cold_and_dry_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg25 = _da_below_percentile_threshold(tas, tas_25)
-    pr25 = _da_below_percentile_threshold(pr, pr_25)
+
+    tas_25 = convert_units_to(tas_25, tas)
+    thresh = resample_doy(tas_25, tas)
+    tg25 = tas < thresh
+
+    pr_25 = convert_units_to(pr_25, pr)
+    thresh = resample_doy(pr_25, pr)
+    pr25 = pr < thresh
+
     cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_dry, tas, "count")
 
@@ -241,8 +248,15 @@ def warm_and_dry_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg75 = _da_above_percentile_threshold(tas, tas_75)
-    pr25 = _da_below_percentile_threshold(pr, pr_25)
+
+    tas_75 = convert_units_to(tas_75, tas)
+    thresh = resample_doy(tas_75, tas)
+    tg75 = tas > thresh
+
+    pr_25 = convert_units_to(pr_25, pr)
+    thresh = resample_doy(pr_25, pr)
+    pr25 = pr < thresh
+
     warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_dry, tas, "count")
 
@@ -297,8 +311,15 @@ def warm_and_wet_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg75 = _da_above_percentile_threshold(tas, tas_75)
-    pr75 = _da_above_percentile_threshold(pr, pr_75)
+
+    tas_75 = convert_units_to(tas_75, tas)
+    thresh = resample_doy(tas_75, tas)
+    tg75 = tas > thresh
+
+    pr_75 = convert_units_to(pr_75, pr)
+    thresh = resample_doy(pr_75, pr)
+    pr75 = pr > thresh
+
     warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_wet, tas, "count")
 
@@ -353,8 +374,15 @@ def cold_and_wet_days(
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     _check_common_sampling_freq(tas, pr)
-    tg25 = _da_below_percentile_threshold(tas, tas_25)
-    pr75 = _da_above_percentile_threshold(pr, pr_75)
+
+    tas_25 = convert_units_to(tas_25, tas)
+    thresh = resample_doy(tas_25, tas)
+    tg25 = tas < thresh
+
+    pr_75 = convert_units_to(pr_75, pr)
+    thresh = resample_doy(pr_75, pr)
+    pr75 = pr > thresh
+
     cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_wet, tas, "count")
 
@@ -1671,15 +1699,3 @@ def _check_common_sampling_freq(tas, pr):
         raise ValidationError(
             f"The sampling frequencies of the two datasets are different, tas frequency is {tas_freq} whereas pr frequency is {pr_freq}"
         )
-
-
-def _da_below_percentile_threshold(da: xarray.DataArray, da_per: xarray.DataArray):
-    da_per = convert_units_to(da_per, da)
-    thresh = resample_doy(da_per, da)
-    return da < thresh
-
-
-def _da_above_percentile_threshold(da: xarray.DataArray, da_per: xarray.DataArray):
-    da_per = convert_units_to(da_per, da)
-    thresh = resample_doy(da_per, da)
-    return da > thresh
