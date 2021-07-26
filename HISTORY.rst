@@ -6,6 +6,10 @@ History
 0.29.0 (unreleased)
 -------------------
 
+Announcements
+~~~~~~~~~~~~~
+* The ``xclim`` binary package available on conda-forge will no longer supply ``clisops`` by default. Installation of ``clisops`` must be performed explicitly to preserve subsetting and bias correction capabilities.
+
 New indicators
 ~~~~~~~~~~~~~~
 * ``snow_depth`` indicator returns the mean snow depth over period. Added as ``SD`` to ICCLIM module.
