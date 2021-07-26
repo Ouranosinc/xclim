@@ -292,7 +292,7 @@ def add_cyclic_bounds(
 
 def extrapolate_qm(
     qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"
-) -> Tuple[Union[xr.DataArray, xr.Dataset], Union[xr.DataArray, xr.Dataset]]:
+) -> Tuple[xr.DataArray, xr.DataArray]:
     """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
     Parameters
@@ -310,11 +310,12 @@ def extrapolate_qm(
         Extrapolated adjustment factors.
     xr.Dataset or xr.DataArray
         Extrapolated x-values.
+
     Notes
     -----
-    nan
+    qf: xr.DataArray
       Estimating values above or below the computed values will return a NaN.
-    constant
+    xq: xr.DataArray
       The adjustment factor above and below the computed values are equal to the last and first values
       respectively.
     """
@@ -430,19 +431,19 @@ def interp_on_quantiles(
         )
     # else:
 
-    def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
+    def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
         if method != "nearest":
-            oldx = np.clip(oldx, newx.min() - 1, newx.max() + 1)
-        if np.all(np.isnan(newx)):
+            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
+        if np.all(np.isnan(_newx)):
             warn(
                 "All-NaN slice encountered in interp_on_quantiles",
                 category=RuntimeWarning,
             )
-            return newx
+            return _newx
         return griddata(
-            (oldx.flatten(), oldg.flatten()),
-            oldy.flatten(),
-            (newx, newg),
+            (_oldx.flatten(), _oldg.flatten()),
+            _oldy.flatten(),
+            (_newx, _newg),
             method=method,
         )
 
@@ -490,7 +491,7 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Parameters
     ----------
     da: xr.DataArray
-    dim : hashable
+    dim : str, hashable
         Dimension over which to compute rank.
     pct : bool, optional
         If True, compute percentage ranks, otherwise compute integer ranks.

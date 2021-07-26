@@ -75,7 +75,6 @@ from scipy.spatial import cKDTree as KDTree
 metrics = dict()
 
 
-# FIXME: Kwargs seem not to be passed to any functions.
 def spatial_analogs(
     target: xr.Dataset,
     candidates: xr.Dataset,
@@ -150,6 +149,7 @@ def spatial_analogs(
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
+        **kwargs,
     )
     diss.name = "dissimilarity"
     diss.attrs.update(

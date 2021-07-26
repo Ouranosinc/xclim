@@ -65,7 +65,7 @@ def cold_spell_duration_index(
     tn10: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -117,8 +117,6 @@ def cold_spell_duration_index(
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
     """
-    # FIXME: Bootsrap flag is not used. Should be removed.
-
     tn10 = convert_units_to(tn10, tasmin)
 
     # Create time series out of doy values.
