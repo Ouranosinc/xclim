@@ -184,8 +184,6 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    _check_common_sampling_freq(tas, pr)
-
     tas_25 = convert_units_to(tas_25, tas)
     thresh = resample_doy(tas_25, tas)
     tg25 = tas < thresh
@@ -247,8 +245,6 @@ def warm_and_dry_days(
     .. [warm_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    _check_common_sampling_freq(tas, pr)
-
     tas_75 = convert_units_to(tas_75, tas)
     thresh = resample_doy(tas_75, tas)
     tg75 = tas > thresh
@@ -310,8 +306,6 @@ def warm_and_wet_days(
     .. [warm_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    _check_common_sampling_freq(tas, pr)
-
     tas_75 = convert_units_to(tas_75, tas)
     thresh = resample_doy(tas_75, tas)
     tg75 = tas > thresh
@@ -373,8 +367,6 @@ def cold_and_wet_days(
     .. [cold_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    _check_common_sampling_freq(tas, pr)
-
     tas_25 = convert_units_to(tas_25, tas)
     thresh = resample_doy(tas_25, tas)
     tg25 = tas < thresh
@@ -1690,12 +1682,3 @@ def blowing_snow(
     out = cond.resample(time=freq).sum(dim="time")
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
-
-
-def _check_common_sampling_freq(tas, pr):
-    tas_freq = infer_sampling_units(tas)
-    pr_freq = infer_sampling_units(pr)
-    if tas_freq != pr_freq:
-        raise ValidationError(
-            f"The sampling frequencies of the two datasets are different, tas frequency is {tas_freq} whereas pr frequency is {pr_freq}"
-        )
