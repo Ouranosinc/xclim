@@ -40,7 +40,7 @@ def percentile_bootstrap(func):
     def wrapper(*args, **kwargs):
         ba = signature(func).bind(*args, **kwargs)
         ba.apply_defaults()
-        bootstrap = ba.arguments.pop("bootstrap", False)
+        bootstrap = ba.arguments.get("bootstrap", False)
         if bootstrap is False:
             return func(*args, **kwargs)
 
