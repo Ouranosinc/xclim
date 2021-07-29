@@ -12,7 +12,7 @@ To install xclim via pip, run this command in your terminal:
 
     $ pip install xclim
 
-To install xclim with spatial subsetting and bias correction tools (`clisops`_), ensure you have the necessary system dependencies installed and run:
+To install xclim with spatial subsetting tools (`clisops`_), ensure you have the necessary system dependencies installed and run:
 
 .. code-block:: console
 
