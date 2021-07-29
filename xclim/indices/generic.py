@@ -26,18 +26,33 @@ from xclim.core.units import (
     to_agg_units,
 )
 
-# __all__ = [
-#     "select_time",
-#     "select_resample_op",
-#     "doymax",
-#     "doymin",
-#     "default_freq",
-#     "threshold_count",
-#     "get_daily_events",
-#     "daily_downsampler",
-# ]
 from ..core.utils import DayOfYearStr
 from . import run_length as rl
+
+__all__ = [
+    "aggregate_between_dates",
+    "compare",
+    "count_level_crossings",
+    "count_occurrences",
+    "daily_downsampler",
+    "day_lengths",
+    "default_freq",
+    "degree_days",
+    "diurnal_temperature_range",
+    "domain_count",
+    "doymax",
+    "doymin",
+    "get_daily_events",
+    "get_op",
+    "interday_diurnal_temperature_range",
+    "last_occurrence",
+    "select_resample_op",
+    "select_time",
+    "statistics",
+    "temperature_sum",
+    "threshold_count",
+    "thresholded_statistics",
+]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
@@ -873,3 +888,21 @@ def day_lengths(
         )
     else:
         return day_length_hours
+
+
+def bootsma_weighted_mean_average(tas: xr.DataArray, dim="time") -> xr.DataArray:
+    """Bootsma at al. weighted mean average.
+
+    Parameters
+    ----------
+    tas: xr.DataArray
+    dim: str
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    weights = xr.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
+    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+
+    return weighted_mean
