@@ -26,6 +26,7 @@ from .utils import ValidationError
 __all__ = [
     "convert_units_to",
     "declare_units",
+    "infer_sampling_units",
     "pint_multiply",
     "pint2cfunits",
     "rate2amount",

@@ -27,6 +27,7 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "max_pr_intensity",
+    "snow_depth",
 ]
 
 
@@ -502,3 +503,29 @@ def max_pr_intensity(
 
     out.attrs["units"] = pr.units
     return out
+
+
+@declare_units(snd="[length]")
+def snow_depth(
+    snd: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Mean of daily average snow depth.
+
+    Resample the original daily mean snow depth series by taking the mean over each period.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily snow depth.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as snd]
+      The mean daily snow depth at the given time frequency
+
+    """
+    arr = snd.resample(time=freq)
+    return arr.mean(dim="time", keep_attrs=True)

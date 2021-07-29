@@ -1,7 +1,8 @@
 """Numba-accelerated utils."""
 import numpy as np
-import xarray as xr
 from numba import boolean, float32, float64, guvectorize, njit
+from xarray import DataArray
+from xarray.core import utils
 
 
 @guvectorize(
@@ -18,12 +19,12 @@ def vecquantiles(da, rnk, dim):
 
     da and rnk must share all dimensions but dim.
     """
-    tem = xr.core.utils.get_temp_dimname(da.dims, "temporal")
+    tem = utils.get_temp_dimname(da.dims, "temporal")
     dims = [dim] if isinstance(dim, str) else dim
     da = da.stack({tem: dims})
     da = da.transpose(*rnk.dims, tem)
 
-    res = xr.DataArray(
+    res = DataArray(
         _vecquantiles(da.values, rnk.values),
         dims=rnk.dims,
         coords=rnk.coords,
@@ -61,7 +62,7 @@ def quantile(da, q, dim):
     # Stack the dims and send to the last position
     # This is in case there are more than one
     dims = [dim] if isinstance(dim, str) else dim
-    tem = xr.core.utils.get_temp_dimname(da.dims, "temporal")
+    tem = utils.get_temp_dimname(da.dims, "temporal")
     da = da.stack({tem: dims})
 
     # So we cut in half the definitions to declare in numba
@@ -73,10 +74,10 @@ def quantile(da, q, dim):
 
     if len(da.dims) > 1:
         # There are some extra dims
-        extra = xr.core.utils.get_temp_dimname(da.dims, "extra")
+        extra = utils.get_temp_dimname(da.dims, "extra")
         da = da.stack({extra: set(da.dims) - {tem}})
         da = da.transpose(..., tem)
-        res = xr.DataArray(
+        res = DataArray(
             _quantile(da.values, qc),
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
@@ -85,7 +86,7 @@ def quantile(da, q, dim):
 
     else:
         # All dims are processed
-        res = xr.DataArray(
+        res = DataArray(
             _quantile(da.values, qc),
             dims=("quantiles"),
             coords={"quantiles": q},

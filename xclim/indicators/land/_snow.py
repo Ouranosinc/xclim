@@ -9,6 +9,7 @@ __all__ = [
     "snd_max_doy",
     "snow_melt_we_max",
     "winter_storm",
+    "snow_depth",
 ]
 
 
@@ -88,4 +89,14 @@ blowing_snow = Snow(
     "{sfcWind_thresh}.",
     units="days",
     compute=xci.blowing_snow,
+)
+
+snow_depth = Snow(
+    identifier="snow_depth",
+    units="cm",
+    standard_name="surface_snow_thickness",
+    long_name="Mean of daily snow depth",
+    description="{freq} mean of daily mean snow depth.",
+    cell_methods="time: mean within days time: mean over days",
+    compute=xci.snow_depth,
 )

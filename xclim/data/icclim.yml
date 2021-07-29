@@ -286,6 +286,11 @@ indices:
         per:
           data: {per}
           description: Daily 99th percentile of wet day precipitation flux.
+  SD:
+    realm: land
+    base: snow_depth
+    output:
+      long_name: Mean of daily snow depth
   SD1:
     realm: land
     base: snow_cover_duration
