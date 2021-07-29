@@ -1,5 +1,5 @@
 """SDBA utilities module."""
-from typing import Callable, List, Mapping, Optional, Union
+from typing import Callable, List, Mapping, Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -68,7 +68,7 @@ def map_cdf(
     )
 
 
-def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
+def ecdf(x: xr.DataArray, value: float, dim: str = "time") -> xr.DataArray:
     """Return the empirical CDF of a sample at a given value.
 
     Parameters
@@ -77,10 +77,12 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time"):
       Sample.
     value : float
       The value within the support of `x` for which to compute the CDF value.
+    dim : str
+      Dimension name.
 
     Returns
     -------
-    array
+    xr.DataArray
       Empirical CDF.
     """
     return (x <= value).sum(dim) / x.notnull().sum(dim)
@@ -115,7 +117,7 @@ def ensure_longest_doy(func: Callable) -> Callable:
 
 
 @ensure_longest_doy
-def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str):
+def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str) -> xr.DataArray:
     """Return the additive or multiplicative correction/adjustment factors."""
     with xr.set_options(keep_attrs=True):
         if kind == ADDITIVE:
@@ -131,7 +133,9 @@ def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str):
 
 
 @ensure_longest_doy
-def apply_correction(x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None):
+def apply_correction(
+    x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None
+) -> xr.DataArray:
     """Apply the additive or multiplicative correction/adjustment factors.
 
     If kind is not given, default to the one stored in the "kind" attribute of factor.
@@ -147,7 +151,7 @@ def apply_correction(x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] 
     return out
 
 
-def invert(x: xr.DataArray, kind: Optional[str] = None):
+def invert(x: xr.DataArray, kind: Optional[str] = None) -> xr.DataArray:
     """Invert a DataArray either additively (-x) or multiplicatively (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
@@ -169,7 +173,7 @@ def broadcast(
     group: Union[str, Grouper] = "time",
     interp: str = "nearest",
     sel: Optional[Mapping[str, xr.DataArray]] = None,
-):
+) -> xr.DataArray:
     """Broadcast a grouped array back to the same shape as a given array.
 
     Parameters
@@ -184,6 +188,10 @@ def broadcast(
       The interpolation method to use,
     sel : Mapping[str, xr.DataArray]
       Mapping of grouped coordinates to x coordinates (other than the grouping one).
+
+    Returns
+    -------
+    xr.DataArray
     """
     if sel is None:
         sel = {}
@@ -196,6 +204,11 @@ def broadcast(
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
         else:  # Find quantile for nearest time group and quantile.
+            # For `.interp` we need to explicitly pass the shared dims
+            # (see pydata/xarray#4463 and Ouranosinc/xclim#449,567)
+            sel.update(
+                {dim: x[dim] for dim in set(grouped.dims).intersection(set(x.dims))}
+            )
             if group.prop != "group":
                 grouped = add_cyclic_bounds(grouped, group.prop, cyclic_coords=False)
 
@@ -217,7 +230,7 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
+def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4) -> np.array:
     """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
 
     Parameters
@@ -229,7 +242,7 @@ def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
 
     Returns
     -------
-    array
+    np.array
       Nodes between 0 and 1.
 
     Notes
@@ -240,10 +253,12 @@ def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4):
     q = np.linspace(dq, 1 - dq, n)
     if eps is None:
         return q
-    return sorted(np.append([eps, 1 - eps], q))
+    return np.insert(np.append(q, 1 - eps), 0, eps)
 
 
-def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
+def add_cyclic_bounds(
+    da: xr.DataArray, att: str, cyclic_coords: bool = True
+) -> Union[xr.DataArray, xr.Dataset]:
     """Reindex an array to include the last slice at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
@@ -275,7 +290,9 @@ def add_cyclic_bounds(da: xr.DataArray, att: str, cyclic_coords: bool = True):
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"):
+def extrapolate_qm(
+    qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"
+) -> Tuple[xr.DataArray, xr.DataArray]:
     """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
     Parameters
@@ -289,14 +306,16 @@ def extrapolate_qm(qf: xr.DataArray, xq: xr.DataArray, method: str = "constant")
 
     Returns
     -------
-    xr.Dataset
-        Extrapolated adjustment factors and x-values.
+    xr.Dataset or xr.DataArray
+        Extrapolated adjustment factors.
+    xr.Dataset or xr.DataArray
+        Extrapolated x-values.
 
     Notes
     -----
-    nan
+    qf: xr.DataArray
       Estimating values above or below the computed values will return a NaN.
-    constant
+    xq: xr.DataArray
       The adjustment factor above and below the computed values are equal to the last and first values
       respectively.
     """
@@ -331,7 +350,7 @@ def add_endpoints(
     left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
     right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
     dim: str = "quantiles",
-):
+) -> xr.DataArray:
     """Add left and right endpoints to a DataArray.
 
     Parameters
@@ -375,7 +394,7 @@ def interp_on_quantiles(
     Parameters
     ----------
     newx : xr.DataArray
-        The values at wich to evalute `yq`. If `group` has group information,
+        The values at which to evaluate `yq`. If `group` has group information,
         `new` should have a coordinate with the same name as the group name
          In that case, 2D interpolation is used.
     xq, yq : xr.DataArray
@@ -412,19 +431,19 @@ def interp_on_quantiles(
         )
     # else:
 
-    def _interp_quantiles_2D(newx, newg, oldx, oldy, oldg):
+    def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
         if method != "nearest":
-            oldx = np.clip(oldx, newx.min() - 1, newx.max() + 1)
-        if np.all(np.isnan(newx)):
+            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
+        if np.all(np.isnan(_newx)):
             warn(
                 "All-NaN slice encountered in interp_on_quantiles",
                 category=RuntimeWarning,
             )
-            return newx
+            return _newx
         return griddata(
-            (oldx.flatten(), oldg.flatten()),
-            oldy.flatten(),
-            (newx, newg),
+            (_oldx.flatten(), _oldg.flatten()),
+            _oldy.flatten(),
+            (_newx, _newg),
             method=method,
         )
 
@@ -455,7 +474,7 @@ def interp_on_quantiles(
 
 
 # TODO is this useless?
-def rank(da, dim="time", pct=False):
+def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
     """Ranks data along a dimension.
 
     Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
@@ -471,20 +490,21 @@ def rank(da, dim="time", pct=False):
 
     Parameters
     ----------
-    dim : hashable
+    da: xr.DataArray
+    dim : str, hashable
         Dimension over which to compute rank.
     pct : bool, optional
         If True, compute percentage ranks, otherwise compute integer ranks.
 
     Returns
     -------
-    ranked : DataArray
+    DataArray
         DataArray with the same coordinates and dtype 'float64'.
     """
     return da.rank(dim, pct=pct)
 
 
-def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
+def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]:
     """Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
@@ -493,12 +513,12 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
 
     Parameters
     ----------
-    arr : Union[numpy.ndarray, dask.array.Array]
+    arr : numpy.ndarray or dask.array.Array
       2D array (M, N) of the M coordinates of N points.
 
     Returns
     -------
-    A
+    numpy.ndarray or dask.array.Array
       MxM Array of the same type as arr.
     """
     # Get appropriate math module
@@ -519,7 +539,9 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]):
     return eig_vec * mod.sqrt(eig_vals)
 
 
-def best_pc_orientation(A, Binv, val=1000):
+def best_pc_orientation(
+    A: np.ndarray, Binv: np.ndarray, val: float = 1000
+) -> np.ndarray:
     """Return best orientation vector for A.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
@@ -531,9 +553,9 @@ def best_pc_orientation(A, Binv, val=1000):
 
     Parameters
     ----------
-    A : numpy.ndarray
+    A : np.ndarray
       MxM Matrix defining the final transformation.
-    Binv : numpy.ndarray
+    Binv : np.ndarray
       MxM Matrix defining the (inverse) first transformation.
     val : float
       The coordinate of the test point (same for all axes). It should be much
@@ -541,7 +563,7 @@ def best_pc_orientation(A, Binv, val=1000):
 
     Returns
     -------
-    orient :
+    np.ndarray
       Mx1 vector of orientation correction (1 or -1).
     """
     m = A.shape[0]
@@ -564,7 +586,9 @@ def best_pc_orientation(A, Binv, val=1000):
     return orient
 
 
-def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
+def get_clusters_1d(
+    data: np.ndarray, u1: float, u2: float
+) -> Tuple[np.array, np.array, np.array, np.array]:
     """Get clusters of a 1D array.
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
@@ -578,8 +602,12 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
     u2 : float
       Cluster threshold, values above this can be part of a cluster.
 
-    Reference
-    ---------
+    Returns
+    -------
+    (np.array, np.array, np.array, np.array)
+
+    References
+    ----------
     `getcluster` of Extremes.jl (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
     """
     # Boolean array, True where data is over u2
@@ -614,10 +642,21 @@ def get_clusters_1d(data: np.ndarray, u1: float, u2: float):
     )
 
 
-def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
+def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
     """Get cluster count, maximum and position along a given dim.
 
     See `get_clusters_1d`. Used by `adjustment.ExtremeValues`.
+
+    Parameters
+    ----------
+    data: 1D ndarray
+      Values to get clusters from.
+    u1 : float
+      Extreme value threshold, at least one value in the cluster must exceed this.
+    u2 : float
+      Cluster threshold, values above this can be part of a cluster.
+    dim : str
+      Dimension name.
 
     Returns
     -------
@@ -656,7 +695,6 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
         input_core_dims=[[dim], [], []],
         output_core_dims=[["cluster"], ["cluster"], ["cluster"], ["cluster"], []],
         kwargs={"N": N},
-        output_dtypes=[int, int, int, data.dtype, int],
         dask="parallelized",
         vectorize=True,
         dask_gufunc_kwargs={
@@ -682,3 +720,55 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time"):
     )
 
     return ds
+
+
+def rand_rot_matrix(
+    crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = None
+) -> xr.DataArray:
+    r"""Generate random rotation matrices.
+
+    Rotation matrices are members of the SO(n) group, where n is the matrix size (`crd.size`).
+    They can be characterized as orthogonal matrices with determinant 1. A square matrix :math:`R`
+    is a rotation matrix if and only if :math:`R^t = R^{−1}` and :math:`\mathrm{det} R = 1`.
+
+    Parameters
+    ----------
+    crd: xr.DataArray
+      1D coordinate DataArray along which the rotation occurs.
+      The output will be square with the same coordinate replicated,
+      the second renamed to `new_dim`.
+    num : int
+      If larger than 1 (default), the number of matrices to generate, stacked along a "matrices" dimension.
+    new_dim : str
+      Name of the new "prime" dimension, defaults to the same name as `crd` + "_prime".
+
+    Returns
+    -------
+    xr.DataArray
+      float, NxN if num = 1, numxNxN otherwise, where N is the length of crd.
+
+    References
+    ----------
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    """
+    if num > 1:
+        return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")
+
+    N = crd.size
+    dim = crd.dims[0]
+    # Rename and rebuild second coordinate : "prime" axis.
+    if new_dim is None:
+        new_dim = dim + "_prime"
+    crd2 = xr.DataArray(crd.values, dims=new_dim, name=new_dim, attrs=crd.attrs)
+
+    # Random floats from the standardized normal distribution
+    Z = np.random.standard_normal((N, N))
+
+    # QR decomposition and manipulation from Mezzadri 2006
+    Q, R = np.linalg.qr(Z)
+    num = np.diag(R)
+    denum = np.abs(num)
+    lam = np.diag(num / denum)  # "lambda"
+    return xr.DataArray(
+        Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
+    ).astype("float32")

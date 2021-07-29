@@ -2,26 +2,112 @@
 History
 =======
 
-0.27.0 (unreleased)
+
+0.29.0 (unreleased)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* ``snow_depth`` indicator returns the mean snow depth over period. Added as ``SD`` to ICCLIM module.
+
+
+0.28.0 (2021-07-07)
+-------------------
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Automatic load of translations on import and possibility to pass translations for virtual modules.
+* New ``xclim.testing.list_datasets`` function listing all available test datasets in repo ``xclim-testdata``.
+* ``spatial_analogs`` accepts multi-indexes as the ``dist_dim`` parameter and will work with candidates and target arrays of different lengths.
+* ``humidex`` can be computed using relative humidity instead of dewpoint temperature.
+* New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
+* New ``sdba.adjustment.NpdfTransform`` which is an adaptation of Alex Cannon's version of Pitié's *N-dimensional probability density function transform*. Uses new ``sdba.utils.rand_rot_matrix``. *Experimental, subject to changes.*
+* New ``sdba.processing.standardize``, ``.unstandardize`` and  ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
+* New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
+* New function ``xclim.indices.clausius_clapeyron_scaled_precipitation`` can be used to scale precipitation according to changes in mean temperature.
+* Percentile based indices gained a ``bootstrap`` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods. *Experimental, subject to changes.*
+* Added a `.zenodo.json` file for collecting and maintaining author order and tracking ORCIDs.
+
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in sdba :
+
+    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
+    - raise a proper error when ``ref`` and ``hist`` have a different calendar for map_blocks-backed adjustments.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* ``spatial_analogs`` does not support sequence of ``dist_dim`` anymore. Users are responsible for stacking dimensions prior to calling ``spatial_analogs``.
+
+New indicators
+~~~~~~~~~~~~~~
+* ``biologically_effective_degree_days`` (with ``method="gladstones"``) indice computes degree-days between two specific dates, with a capped daily max value as well as latitude and temperature range swing as modifying coefficients (based on Gladstones, J. (1992)). This has also been wrapped as an indicator.
+* An alternative implementation of ``biologically_effective_degree_days`` (with ``method="icclim"``, based on ICCLIM formula) ignores latitude and temperature range swing modifiers and uses an alternate ``end_date``. Wrapped and available as an ICCLIM indicator.
+* ``cool_night_index`` indice returns the mean minimum temperature in September (``lat >= 0`` deg N) or March (``lat < 0`` deg N), based on Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001). Also available as an indicator (see indices `Notes` section on indicator usage recommendations).
+* ``latitude_temperature_index`` indice computes LTI values based on mean temperature of warmest month and a parameterizable latitude coefficient (default: ``lat_factor=75``) based on Jackson & Cherry, 1988, and Kenny & Shao, 1992 (10.1080/00221589.1992.11516243). This has also been wrapped as an indicator.
+* ``huglin_index`` indice computes Huglin Heliothermal Index (HI) values based on growing degrees and a latitude-influenced coefficient for day-length (based on Huglin. (1978)). The indice supports several methods of estimating the latitude coefficient:
+
+    - ``method="smoothed"``: Marks latitudes between -40 N and 40 N with ``k=1``, and linearly increases to ``k=1.06`` at ``|lat|==50``.
+    - ``method="icclim"``: Uses a stepwise function based on the the original method as presented by Huglin (1978). Identical to the ICCLIM implementation.
+    - ``method="jones"``: Uses a more robust calculation for calculating day-lengths, based on Hall & Jones (2010). This method is now also available for ``biologically_effective_degree_days``.
+
+* The generic indice ``day_length``, used for calculating approximate daily day-length in hours per day or, given ``start_date`` and ``end_date``, the total aggregated day-hours over period. Uses axial tilt, start and end dates, calendar, and approximate date of northern hemisphere summer solstice, based on Hall & Jones (2010).
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* ``aggregate_between_dates`` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
+* The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
+* Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
+* ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
+* Minor modifications to the GitHub Pull Requests template.
+* Simplification of some yaml elements for virtual modules.
+* Allow injecting ``freq`` without the missing checks failing.
+
+
+0.27.0 (2021-05-28)
 -------------------
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Rewrite of nearly all adjustment methods in ``sdba``, with use of ``xr.map_blocks`` to improve scalability with dask. Rewrite of some parts of the algorithms with numba-accelerated code.
+* "GFWED" specifics for fire weather computation implemented back into the FWI module. Outputs are within 3% of GFWED data.
+* Addition of the `run_length_ufunc` option to control which run length algorithm gets run. Defaults stay the same (automatic switch dependent of the input array : the 1D version is used with non-dask arrays with less than 9000 points per slice).
+* Indicator modules built from YAML can now use custom indices. A mapping or module of them can be given to ``build_indicator_module_from_yaml`` with the ``indices`` keyword.
+* Virtual submodules now include an `iter_indicators` function to iterate over the pairs of names and indicator objects in that module.
+* The indicator string formatter now accepts a "r" modifier which passes the raw strings instead of the adjective version.
+* Addition of the `sdba_extra_output` option to adds extra diagnostic variables to the outputs of Adjustment objects. Implementation of `sim_q` in QuantileDeltaMapping and `nclusters` in ExtremeValues.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"`. The indicator remains valid, now wrapping this new indice.
+* The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
 * Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* The `daily_freezethaw_cycles` indice is being deprecated in favour of ``multiday_temperature_swing`` with temp thresholds at 0 degC and ``window=1, op="sum"``. The indicator remains valid, now wrapping this new indice.
+* CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
+
+    - ``swe`` is now ``snw`` (``snw`` is the snow amount [kg / m²] and ``swe`` the liquid water equivalent thickness [m])
+    - ``rh`` is now ``hurs``
+    - ``dtas`` is now ``tdps``
+    - ``ws`` (in FWI) is now ``sfcWind``
+    - ``sic`` is now ``siconc``
+    - ``area`` (of sea ice indicators) is now ``areacello``
+    - Indicators ``RH`` and ``RH_FROMDEWPOINT`` have be renamed to ``HURS`` and ``HURS_FROMDEWPOINT``. These are changes in the _identifiers_, the python names (``relative_humidity[...]``) are unchanged.
 
 New indicators
 ~~~~~~~~~~~~~~
 * `atmos.corn_heat_units` computes the daily temperature-based index for corn growth.
 * New indices and indicators for `tx_days_below`, `tg_days_above`, `tg_days_below`, and `tn_days_above`.
+* `atmos.humidex` returns the Canadian *humidex*, an indicator of perceived temperature account for relative humidity.
+* `multiday_temperature_swing` indice for returning general statistics based on spells of doubly-thresholded temperatures (Tmin < T1, Tmax > T2).
+* New indicators `atmos.freezethaw_frequency`, `atmos.freezethaw_spell_mean_length`, `atmos.freezethaw_spell_max_length` for statistics of Tmin < 0 degC and Tmax > 0 deg C days now available (wrapped from `multiday_temperature_swing`).
+* `atmos.wind_chill_index` computes the daily wind chill index. The default is similar to what Environment and Climate Change Canada does, options are tunable to get the version of the National Weather Service.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
+* `run_length.rle_statistics` now accepts a `window` argument.
+* Common arguments to the `op` parameter now have better adjective and noun formattings.
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
+* Added internal function ``aggregate_between_dates`` for array aggregation operations using xarray datetime arrays with start and end DayOfYear values.
 
 
 0.26.1 (2021-05-04)

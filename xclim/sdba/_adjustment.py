@@ -9,6 +9,7 @@ import xarray as xr
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
+from .processing import escore
 
 
 @map_groups(
@@ -16,7 +17,7 @@ from .base import Grouper, map_blocks, map_groups
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
 )
-def dqm_train(ds, *, dim, kind, quantiles):
+def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     """DQM: Train step on one group.
 
 
@@ -42,7 +43,7 @@ def dqm_train(ds, *, dim, kind, quantiles):
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
 )
-def eqm_train(ds, *, dim, kind, quantiles):
+def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
@@ -58,7 +59,7 @@ def eqm_train(ds, *, dim, kind, quantiles):
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
-def qm_adjust(ds, *, group, interp, extrapolation, kind):
+def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
     Dataset variables:
@@ -74,7 +75,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind):
 
 
 @map_blocks(reduces=[Grouper.PROP], sim=[])
-def dqm_scale_sim(ds, *, group, interp, kind):
+def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
     """DQM: Sim preprocessing on one block
 
     Dataset variables:
@@ -94,8 +95,8 @@ def dqm_scale_sim(ds, *, group, interp, kind):
     return sim.rename("sim").to_dataset()
 
 
-@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
-def qdm_adjust(ds, *, group, interp, extrapolation, kind):
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
+def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
     Dataset variables:
@@ -106,16 +107,15 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind):
     af, _ = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
 
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
-    sel = {dim: sim_q[dim] for dim in set(af.dims).intersection(set(sim_q.dims))}
-    sel["quantiles"] = sim_q
+    sel = {"quantiles": sim_q}
     af = u.broadcast(af, ds.sim, group=group, interp=interp, sel=sel)
 
     scen = u.apply_correction(ds.sim, af, kind)
-    return scen.rename("scen").to_dataset()
+    return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
 
 @map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
-def loci_train(ds, *, group, thresh):
+def loci_train(ds, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
     Dataset variables:
@@ -138,7 +138,7 @@ def loci_train(ds, *, group, thresh):
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def loci_adjust(ds, *, group, thresh, interp):
+def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
     """LOCI: Adjust on one block.
 
     Dataset variables:
@@ -153,7 +153,7 @@ def loci_adjust(ds, *, group, thresh, interp):
 
 
 @map_groups(af=[Grouper.PROP])
-def scaling_train(ds, *, dim, kind):
+def scaling_train(ds, *, dim, kind) -> xr.Dataset:
     """Scaling: Train on one group.
 
     Dataset variables:
@@ -167,7 +167,7 @@ def scaling_train(ds, *, dim, kind):
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def scaling_adjust(ds, *, group, interp, kind):
+def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
     """Scaling: Adjust on one block.
 
     Dataset variables:
@@ -177,3 +177,83 @@ def scaling_adjust(ds, *, group, interp, kind):
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
     return scen.rename("scen").to_dataset()
+
+
+def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
+    """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+
+    Parameters
+    ----------
+    ds: xr.Dataset
+      Dataset variables:
+        ref : Reference multivariate timeseries
+        hist : simulated timeseries on the reference period
+        sim : Simulated timeseries on the projected period.
+        rot_matrices : Random rotation matrices.
+
+    kwargs:
+      pts_dim : multivariate dimensionn name
+      base : Adjustment class
+      base_kws : Kwargs for initialising the adjustment object
+      adj_kws : Kwargs of the `adjust` call
+      n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
+      respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+    """
+    ref = ds.ref
+    hist = ds.hist
+    sim = ds.sim.rename(time_sim="time")
+    dim = kwargs["pts_dim"]
+
+    escores = []
+    for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
+        # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
+        # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
+        refp = ref @ R
+        histp = hist @ R
+        simp = sim @ R
+
+        # Perform univariate adjustment in rotated space (x')
+        ADJ = kwargs["base"](**kwargs["base_kws"])
+        ADJ.train(refp, histp)
+        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
+        scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
+
+        # Rotate back to original dimension x'@R = x
+        # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
+        # operating along named dimensions.
+        # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
+        hist = scenhp @ R
+        sim = scensp @ R
+
+        # Compute score
+        if kwargs["n_escore"] >= 0:
+            escores.append(
+                escore(
+                    ref,
+                    hist,
+                    dims=(dim, "time"),
+                    N=kwargs["n_escore"],
+                    scale=True,
+                ).expand_dims(iterations=[i])
+            )
+
+    if kwargs["n_escore"] >= 0:
+        escores = xr.concat(escores, "iterations")
+    else:
+        # All NaN, but with the proper shape.
+        escores = (
+            ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
+        ).expand_dims(iterations=ds.iteration) * np.NaN
+
+    return xr.Dataset(
+        data_vars={
+            "scenh": hist.transpose(*ds.hist.dims),
+            "scens": sim.rename(time="time_sim").transpose(*ds.sim.dims),
+            "escores": escores,
+        }
+    )

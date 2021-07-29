@@ -6,15 +6,19 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import logging
+import os
+import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
+from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
+from pathlib import Path
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
-import numpy
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
@@ -29,7 +33,7 @@ DateStr = NewType("DateStr", str)
 DayOfYearStr = NewType("DayOfYearStr", str)
 
 # Official variables definitions
-variables = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
 
 def wrapped_partial(
@@ -72,7 +76,7 @@ def wrapped_partial(
     )
 
     # Store all injected params,
-    injected = getattr(func, "_injected", {})
+    injected = getattr(func, "_injected", {}).copy()
     injected.update(fixed)
     fully_wrapped._injected = injected
     return fully_wrapped
@@ -103,6 +107,37 @@ def walk_map(d: dict, func: FunctionType):
     return out
 
 
+def load_module(path: os.PathLike):
+    """Load a python module from a single .py file.
+
+    Examples
+    --------
+    Given a path to a module file (.py)
+
+    >>> from pathlib import Path
+    >>> path = Path(path_to_example_py)
+
+    The two following imports are equivalent, the second uses this method.
+
+    >>> # xdoctest: +SKIP
+    >>> os.chdir(path.parent)
+    >>> import example as mod1
+    >>> os.chdir(previous_working_dir)
+    >>> mod2 = load_module(path)
+    >>> mod1 == mod2
+    """
+    path = Path(path)
+    pwd = Path(os.getcwd())
+    os.chdir(path.parent)
+    try:
+        mod = import_module(path.stem)
+    except ModuleNotFoundError as err:
+        raise err
+    finally:
+        os.chdir(pwd)
+    return mod
+
+
 class ValidationError(ValueError):
     """Error raised when input data to an indicator fails the validation tests."""
 
@@ -115,7 +150,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -173,10 +208,11 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
+def _calc_perc(arr: np.array, p: Sequence[float] = None):
     """Ufunc-like computing a percentile over the last axis of the array.
 
-    Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
+    Processes cases with invalid values separately, which makes it more efficient than np.nanpercentile for array with
+    only a few invalid points.
 
     Parameters
     ----------
@@ -205,12 +241,41 @@ def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
     return out
 
 
+def raise_warn_or_log(
+    err: Exception, mode: str, msg: Optional[str] = None, stacklevel: int = 1
+):
+    """Raise, warn or log an error according.
+
+    Parameters
+    ----------
+    err : Exception
+      An error.
+    mode : {'ignore', 'log', 'warn', 'raise'}
+      What to do with the error.
+    msg : str, optional
+      The string used when logging or warning.
+      Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    stacklevel : int
+      Stacklevel when warning. Relative to the call of this function (1 is added).
+    """
+    msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    if mode == "ignore":
+        pass
+    elif mode == "log":
+        logging.info(msg)
+    elif mode == "warn":
+        warnings.warn(msg, stacklevel=stacklevel + 1)
+    else:  # mode == "raise"
+        raise err
+
+
 class InputKind(IntEnum):
     """Constants for input parameter kinds.
 
     For use by external parses to determine what kind of data the indicator expects.
-    On the creation of an indicator, the appropriate constant is stored in :py:attr:`xclim.core.indicator.Indicator.parameters`.
-    The integer value is what gets stored in the output of :py:meth:`xclim.core.indicator.Indicator.json`.
+    On the creation of an indicator, the appropriate constant is stored in
+    :py:attr:`xclim.core.indicator.Indicator.parameters`. The integer value is what gets stored in the output
+    of :py:meth:`xclim.core.indicator.Indicator.json`.
 
     For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
     should use in order to be picked up by the indicator constructor.
@@ -310,11 +375,10 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     ):
         return InputKind.VARIABLE
 
-    if (
-        Optional[param.annotation]
-        in [Optional[DataArray], Optional[Union[DataArray, str]]]
-        and param.default is None
-    ):
+    if Optional[param.annotation] in [
+        Optional[DataArray],
+        Optional[Union[DataArray, str]],
+    ]:
         return InputKind.OPTIONAL_VARIABLE
 
     if _typehint_is_in(param.annotation, (str, None)) and has_units:

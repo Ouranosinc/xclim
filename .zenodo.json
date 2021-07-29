@@ -1,0 +1,82 @@
+{
+  "creators": [
+    {
+      "affiliation": "Ouranos",
+      "name": "Logan, Travis",
+      "orcid": "0000-0002-2212-9580"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Bourgault, Pascal",
+      "orcid": "0000-0003-1192-0403"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Smith, Trevor James",
+      "orcid": "0000-0001-5393-8359"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Huard, David",
+      "orcid": "0000-0003-0311-5498"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Biner, Sébastien",
+      "orcid": "0000-0001-7515-490X"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Labonté, Marie-Pier",
+      "orcid": "0000-0003-0738-3940"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Rondeau-Genesse, Gabriel",
+      "orcid": "0000-0003-3389-9406"
+    },
+    {
+      "affiliation": "ECCC",
+      "name": "Fyke, Jeremy",
+      "orcid": "0000-0002-4522-3019"
+    },
+    {
+      "affiliation": "CERFACS",
+      "name": "Aoun, Abel",
+      "orcid": "0000-0003-2289-2890"
+    },
+    {
+      "name": "Roy, Philippe"
+    },
+    {
+      "name": "Ehbrecht, Carsten"
+    },
+    {
+      "affiliation": "@jakarto3d",
+      "name": "Caron, David"
+    },
+    {
+      "affiliation": "STFC CEDA",
+      "name": "Stephens, Ag"
+    },
+    {
+      "name": "Whelan, Chistopher"
+    },
+    {
+      "name": "Low, Jwen-Fai"
+    }
+  ],
+  "keywords": [
+    "xclim",
+    "xarray",
+    "climate",
+    "climatology",
+    "climate change",
+    "indicators",
+    "prediction",
+    "analysis"
+  ],
+  "license": "Apache-2.0",
+  "upload_type": "software",
+  "access_right": "open"
+}

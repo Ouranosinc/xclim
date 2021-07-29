@@ -27,6 +27,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.formatting import update_history
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
@@ -340,7 +341,7 @@ def _convert_datetime(
     datetime: Union[pydt.datetime, cftime.datetime],
     new_doy: Optional[Union[float, int]] = None,
     calendar: str = "default",
-) -> Union[cftime.datetime, pydt.datetime, np.int]:
+) -> Union[cftime.datetime, pydt.datetime, float]:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
@@ -464,6 +465,7 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
     """
+
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
     if compare_offsets(xr.infer_freq(arr.time) or "D", "<", "D"):
@@ -502,6 +504,17 @@ def percentile_doy(
         p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
 
     p.attrs.update(arr.attrs.copy())
+
+    # Saving percentile attributes
+    n = len(arr.time)
+    p.attrs["climatology_bounds"] = (
+        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
+    )
+    p.attrs["window"] = window
+
+    infostr = f"percentile_doy(arr, window={window}, per={per})"
+    p.attrs["xclim_history"] = update_history(infostr, arr, new_name="per")
+
     return p
 
 
@@ -786,9 +799,9 @@ def time_bnds(group, freq):
 
     Examples
     --------
-    >>> import xarray as xr
+    >>> from xarray import cftime_range
     >>> from xclim.core.calendar import time_bnds
-    >>> index = xr.cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
+    >>> index = cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
     >>> time_bnds(index, '2Q')
     ((cftime.Datetime360Day(2000, 1, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 3, 30, 23, 59, 59, 999999)),
     (cftime.Datetime360Day(2000, 7, 1, 0, 0, 0, 0), cftime.Datetime360Day(2000, 9, 30, 23, 59, 59, 999999)),
@@ -962,8 +975,9 @@ def doy_to_days_since(
 
     Examples
     --------
+    >>> from xarray import DataArray
     >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = xr.DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
+    >>> da = DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
     >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
     array([-86, 92])
     """
@@ -1019,8 +1033,9 @@ def days_since_to_doy(
 
     Examples
     --------
+    >>> from xarray import DataArray
     >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = xr.DataArray(
+    >>> da = DataArray(
             [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
         )
     >>> days_since_to_doy(da).values

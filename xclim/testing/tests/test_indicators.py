@@ -3,7 +3,7 @@
 # Tests for the Indicator objects
 import gc
 import json
-from typing import Union
+from typing import Optional, Union
 
 import dask
 import numpy as np
@@ -37,7 +37,7 @@ class UniIndTemp(Daily):
     cell_methods = "time: mean within {freq:noun}"
 
     @staticmethod
-    def compute(da: xr.DataArray, thresh=0.0, freq="YS"):
+    def compute(da: xr.DataArray, thresh: int = 0.0, freq: str = "YS"):
         """Docstring"""
         out = da
         out -= thresh
@@ -62,7 +62,7 @@ class UniClim(Daily):
     units = "K"
 
     @staticmethod
-    def compute(da: xr.DataArray, **indexer):
+    def compute(da: xr.DataArray, freq="YS", **indexer):
         select = select_time(da, **indexer)
         return select.mean(dim="time", keep_attrs=True)
 
@@ -83,6 +83,23 @@ class MultiTemp(Daily):
         )
 
 
+class MultiOptVar(Daily):
+    realm = "atmos"
+    identifier = "multiopt"
+    units = "K"
+
+    @staticmethod
+    def compute(
+        tas: Optional[xr.DataArray] = None,
+        tasmax: Optional[xr.DataArray] = None,
+        tasmin: Optional[xr.DataArray] = None,
+    ):
+        if tas is None:
+            with xr.set_options(keep_attrs=True):
+                return (tasmin + tasmax) / 2
+        return tas
+
+
 def test_attrs(tas_series):
     import datetime as dt
 
@@ -94,6 +111,15 @@ def test_attrs(tas_series):
     assert "TMIN(da=<array>, thresh=5, freq='YS')" in txm.attrs["xclim_history"]
     assert f"xclim version: {__version__}." in txm.attrs["xclim_history"]
     assert txm.name == "tmin5"
+
+
+def test_opt_vars(tasmin_series, tasmax_series):
+    tn = tasmin_series(np.zeros(365))
+    tx = tasmax_series(np.zeros(365))
+
+    ind = MultiOptVar()
+
+    ind(tasmin=tn, tasmax=tx)
 
 
 def test_registering():
@@ -110,7 +136,7 @@ def test_registering():
 
     # Confirm registries live in subclasses.
     class IndicatorNew(Indicator):
-        nvar = 2
+        pass
 
     # Identifier must be given
     with pytest.raises(AttributeError, match="has not been set."):
@@ -359,7 +385,7 @@ def test_parsed_doc():
     assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
     assert params["snd"]["units"] == "[length]"
     assert params["season_method"]["kind"] is InputKind.STRING
-    assert params["season_method"]["choices"] == {None, "WF93", "LA08"}
+    assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
 
 
 def test_default_formatter():
@@ -466,6 +492,4 @@ def test_indicator_from_dict():
     assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
-    assert ind.parameters["data"]["units"] == "[temperature]"
-    # Cf checks were generated
-    assert ind.cfcheck is not Daily.cfcheck
+    assert ind.parameters["data"]["units"] == "K"

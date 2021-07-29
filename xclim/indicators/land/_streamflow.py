@@ -75,7 +75,7 @@ base_flow_index = Streamflow(
 
 freq_analysis = FA(
     identifier="freq_analysis",
-    var_name="q{window}{mode}{indexer}",
+    var_name="q{window}{mode:r}{indexer}",
     long_name="N-year return period {mode} {indexer} {window}-day flow",
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
     "estimated using the {dist} distribution.",
@@ -94,7 +94,7 @@ rb_flashiness_index = Streamflow(
 
 stats = Stats(
     identifier="stats",
-    var_name="q{indexer}{op}",
+    var_name="q{indexer}{op:r}",
     long_name="{freq} {op} of {indexer} daily flow ",
     description="{freq} {op} of {indexer} daily flow",
     title="Statistic of the daily flow on a given period.",
