@@ -26,6 +26,7 @@ __all__ = [
     "dry_spell_frequency",
     "dry_spell_total_length",
     "latitude_temperature_index",
+    "qian_weighted_mean_average",
     "water_budget",
 ]
 
@@ -651,3 +652,46 @@ def dry_spell_total_length(
     out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time=freq).sum()
 
     return to_agg_units(out, pram, "count")
+
+
+def qian_weighted_mean_average(
+    tas: xarray.DataArray, dim: str = "time"
+) -> xarray.DataArray:
+    r"""Binomial smoothed, five-day weighted mean average temperature.
+
+    Calculates a five-day weighted moving average with emphasis on temperatures closer to day of interest.
+
+    Parameters
+    ----------
+    tas: xr.DataArray
+      Daily mean temperature.
+    dim: str
+      Time dimension.
+
+    Returns
+    -------
+    xr.DataArray
+      Binomial smoothed, five-day weighted mean average temperature.
+
+    Notes
+    -----
+    Let :math:`X_{n}` be the average temperature for day :math:`n` and :math:`X_{t}` be the daily mean temperature
+    on day :math:`t`. Then the weighted mean average can be calculated as follows:
+
+    .. math::
+        \overline{X}_{n} = \frac{X_{n-2} + 4X_{n-1} + 6X_{n} + 4X_{n+1} + X_{n+2}}{16}
+
+    References
+    ----------
+    Adapted from Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term Trends for
+    Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618.
+    https://doi.org/10.1175/2009JAMC2275.1
+
+    Inspired by Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected
+    agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
+    https://doi.org/10.4141/S04-019
+    """
+    weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
+    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+
+    return weighted_mean

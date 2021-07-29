@@ -888,21 +888,3 @@ def day_lengths(
         )
     else:
         return day_length_hours
-
-
-def bootsma_weighted_mean_average(tas: xr.DataArray, dim="time") -> xr.DataArray:
-    """Bootsma at al. weighted mean average.
-
-    Parameters
-    ----------
-    tas: xr.DataArray
-    dim: str
-
-    Returns
-    -------
-    xr.DataArray
-    """
-    weights = xr.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
-
-    return weighted_mean
