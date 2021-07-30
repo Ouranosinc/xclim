@@ -9,6 +9,7 @@ import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
+from xclim.indices._threshold import first_day_below, freshet_start, growing_season_end
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -25,6 +26,7 @@ __all__ = [
     "corn_heat_units",
     "dry_spell_frequency",
     "dry_spell_total_length",
+    "effective_growing_degree_days",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "water_budget",
@@ -270,6 +272,9 @@ def huglin_index(
     tasmin="[temperature]",
     tasmax="[temperature]",
     thresh_tasmin="[temperature]",
+    low_dtr="[temperature]",
+    high_dtr="[temperature]",
+    max_daily_degree_days="[temperature]",
 )
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
@@ -654,8 +659,9 @@ def dry_spell_total_length(
     return to_agg_units(out, pram, "count")
 
 
+@declare_units(tas="[temperature]")
 def qian_weighted_mean_average(
-    tas: xarray.DataArray, dim: str = "time"
+    tas: xarray.DataArray, dim: str = "time", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Binomial smoothed, five-day weighted mean average temperature.
 
@@ -667,6 +673,8 @@ def qian_weighted_mean_average(
       Daily mean temperature.
     dim: str
       Time dimension.
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
@@ -683,8 +691,8 @@ def qian_weighted_mean_average(
 
     References
     ----------
-    Adapted from Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term Trends for
-    Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618.
+    Indice oririginally published in Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term
+    Trends for Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618.
     https://doi.org/10.1175/2009JAMC2275.1
 
     Inspired by Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected
@@ -692,6 +700,101 @@ def qian_weighted_mean_average(
     https://doi.org/10.4141/S04-019
     """
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    weighted_mean = (
+        tas.rolling({dim: 5}, center=True)
+        .resample({dim: freq})
+        .construct("window")
+        .dot(weights)
+    )
 
     return weighted_mean
+
+
+@declare_units(
+    tas="[temperature]",
+    tasmin="[temperature]",
+    thresh="[temperature]",
+)
+def effective_growing_degree_days(
+    tas: xarray.DataArray,
+    tasmin: Optional[xarray.DataArray] = None,
+    thresh: str = "5 degC",
+    method: str = "bootsma",
+    dim: str = "time",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Effective growing degree days.
+
+    Growing degree days based on a dynamic start and end of the growing season.
+
+    Parameters
+    ----------
+    tas: xr.DataArray
+      Daily mean temperature.
+    tasmin: xr.DataArray, optional
+      Daily minimum temperature.
+    thresh: str
+      The minimum temperature threshold.
+    method: {"bootsma", "qian"}
+      The window method used to determine the temperature-based start date.
+      For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
+      For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
+    dim: str
+      Time dimension.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+
+    Notes
+    -----
+    The effective growing degree days for a given year :math:`EGDD_i` can be calculated as follows:
+
+    .. math::
+        EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
+
+    Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
+    of the growing season. The growing season start date methodology is determined via the `method` flag.
+    For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
+    For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
+
+    If Tasmin is supplied, the end date is determined as the first day with temperature below 0 degC; Otherwise, the
+    end date is interpreted as the growing season end (temperatures below 5 degC with a moving window of 5 days).
+
+    References
+    ----------
+    Indice originally published in Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate
+    change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
+    https://doi.org/10.4141/S04-019
+    """
+    tas = convert_units_to(tas, "degC")
+    thresh = convert_units_to(thresh, tas)
+
+    if method.lower() == "bootsma":
+        tas_weighted = tas.rolling({dim: 10}).mean()
+    elif method.lower() == "qian":
+        tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
+    else:
+        raise NotImplementedError(f"Method: {method}.")
+
+    start = freshet_start(tas_weighted, thresh=thresh, window=5, freq=freq)
+
+    if tasmin:
+        end = first_day_below(
+            tasmin=tasmin,
+            thresh="0 degC",
+            after_date="07-01",  # noqa
+            window=1,
+            freq=freq,
+        )
+    else:
+        end = growing_season_end(
+            tas_weighted, thresh=thresh, mid_date="07-01", window=5, freq=freq  # noqa
+        )
+
+    deg_days = (tas - thresh).clip(min=0)
+    egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
+
+    return to_agg_units(egdd, tas, op="delta_prod")
