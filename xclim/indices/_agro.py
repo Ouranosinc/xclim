@@ -711,7 +711,7 @@ def qian_weighted_mean_average(
 
 
 @declare_units(
-    tas="[temperature]",
+    tasmax="[temperature]",
     tasmin="[temperature]",
     thresh="[temperature]",
 )
@@ -721,6 +721,7 @@ def effective_growing_degree_days(
     tasmin: xarray.DataArray,
     thresh: str = "5 degC",
     method: str = "bootsma",
+    after_date: DayOfYearStr = "07-01",
     dim: str = "time",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -740,6 +741,8 @@ def effective_growing_degree_days(
       The window method used to determine the temperature-based start date.
       For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
       For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
+    after_date : str
+      Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
     dim: str
       Time dimension.
     freq : str
@@ -787,7 +790,7 @@ def effective_growing_degree_days(
     end = first_day_below(
         tasmin=tasmin,
         thresh="0 degC",
-        after_date="07-01",  # noqa
+        after_date=after_date,
         window=1,
         freq=freq,
     )
