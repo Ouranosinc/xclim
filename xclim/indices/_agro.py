@@ -9,7 +9,7 @@ import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices._threshold import first_day_below, freshet_start, growing_season_end
+from xclim.indices._threshold import first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -716,8 +716,9 @@ def qian_weighted_mean_average(
     thresh="[temperature]",
 )
 def effective_growing_degree_days(
-    tas: xarray.DataArray,
-    tasmin: Optional[xarray.DataArray] = None,
+    *,
+    tasmax: xarray.DataArray,
+    tasmin: xarray.DataArray,
     thresh: str = "5 degC",
     method: str = "bootsma",
     dim: str = "time",
@@ -729,9 +730,9 @@ def effective_growing_degree_days(
 
     Parameters
     ----------
-    tas: xr.DataArray
+    tasmax: xr.DataArray
       Daily mean temperature.
-    tasmin: xr.DataArray, optional
+    tasmin: xr.DataArray
       Daily minimum temperature.
     thresh: str
       The minimum temperature threshold.
@@ -760,8 +761,7 @@ def effective_growing_degree_days(
     For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
     For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
 
-    If Tasmin is supplied, the end date is determined as the first day with temperature below 0 degC; Otherwise, the
-    end date is interpreted as the growing season end (temperatures below 5 degC with a moving window of 5 days).
+    The end date is determined as the first day with minimum temperature below 0 degC.
 
     References
     ----------
@@ -769,7 +769,10 @@ def effective_growing_degree_days(
     change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
     https://doi.org/10.4141/S04-019
     """
-    tas = convert_units_to(tas, "degC")
+    tasmax = convert_units_to(tasmax, "degC")
+    tasmin = convert_units_to(tasmin, "degC")
+
+    tas = (tasmin + tasmax) / 2
     thresh = convert_units_to(thresh, tas)
 
     if method.lower() == "bootsma":
@@ -781,18 +784,13 @@ def effective_growing_degree_days(
 
     start = freshet_start(tas_weighted, thresh=thresh, window=5, freq=freq)
 
-    if tasmin:
-        end = first_day_below(
-            tasmin=tasmin,
-            thresh="0 degC",
-            after_date="07-01",  # noqa
-            window=1,
-            freq=freq,
-        )
-    else:
-        end = growing_season_end(
-            tas_weighted, thresh=thresh, mid_date="07-01", window=5, freq=freq  # noqa
-        )
+    end = first_day_below(
+        tasmin=tasmin,
+        thresh="0 degC",
+        after_date="07-01",  # noqa
+        window=1,
+        freq=freq,
+    )
 
     deg_days = (tas - thresh).clip(min=0)
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
