@@ -3,8 +3,12 @@ History
 =======
 
 
-0.29.0 (unreleased)
+0.28.1 (2021-07-29)
 -------------------
+
+Announcements
+~~~~~~~~~~~~~
+* The ``xclim`` binary package available on conda-forge will no longer supply ``clisops`` by default. Installation of ``clisops`` must be performed explicitly to preserve subsetting and bias correction capabilities.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -13,6 +17,10 @@ New indicators
 * ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` to ICCLIM module.
 * ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Minor modifications to many function call signatures (type hinting) and docstrings (numpy docstring compliance).
 
 0.28.0 (2021-07-07)
 -------------------
