@@ -9,7 +9,7 @@ import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices._threshold import first_day_below, freshet_start
+from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -661,7 +661,7 @@ def dry_spell_total_length(
 
 @declare_units(tas="[temperature]")
 def qian_weighted_mean_average(
-    tas: xarray.DataArray, dim: str = "time", freq: str = "YS"
+    tas: xarray.DataArray, dim: str = "time"
 ) -> xarray.DataArray:
     r"""Binomial smoothed, five-day weighted mean average temperature.
 
@@ -673,8 +673,6 @@ def qian_weighted_mean_average(
       Daily mean temperature.
     dim: str
       Time dimension.
-    freq : str
-      Resampling frequency.
 
     Returns
     -------
@@ -699,14 +697,12 @@ def qian_weighted_mean_average(
     agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
     https://doi.org/10.4141/S04-019
     """
-    weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = (
-        tas.rolling({dim: 5}, center=True)
-        .resample({dim: freq})
-        .construct("window")
-        .dot(weights)
-    )
+    units = tas.attrs["units"]
 
+    weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
+    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+
+    weighted_mean.attrs["units"] = units
     return weighted_mean
 
 
@@ -774,18 +770,19 @@ def effective_growing_degree_days(
     """
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")
+    thresh = convert_units_to(thresh, "degC")
 
     tas = (tasmin + tasmax) / 2
-    thresh = convert_units_to(thresh, tas)
+    tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        tas_weighted = tas.rolling({dim: 10}).mean()
+        fda = first_day_above(tasmin=tas, thresh="5.0 degC", window=1, freq=freq)
+        start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
+        start = freshet_start(tas_weighted, thresh=thresh, window=5, freq=freq)
     else:
         raise NotImplementedError(f"Method: {method}.")
-
-    start = freshet_start(tas_weighted, thresh=thresh, window=5, freq=freq)
 
     end = first_day_below(
         tasmin=tasmin,

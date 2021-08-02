@@ -221,9 +221,7 @@ class TestAgroclimaticIndices:
             ("icclim", "10-01", 915.0, 1647.0),
         ],
     )
-    def test_bedd(
-        self, tasmin_series, tasmax_series, method, end_date, deg_days, max_deg_days
-    ):
+    def test_bedd(self, method, end_date, deg_days, max_deg_days):
 
         time_data = date_range(
             "1992-01-01", "1995-06-01", freq="D", calendar="standard"
@@ -253,22 +251,27 @@ class TestAgroclimaticIndices:
         high_lat = np.array([48])
 
         bedd = xci.biologically_effective_degree_days(
-            tasmin=tn, tasmax=tx, lat=lat, method=method, end_date=end_date, freq="YS"
+            tasmin=tn,
+            tasmax=tx,
+            lat=lat,
+            method=method,
+            end_date=end_date,
+            freq="YS",  # noqa
         )
         bedd_hot = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx_hot,
-            lat=lat,
+            lat=lat,  # noqa
             method=method,
-            end_date=end_date,
+            end_date=end_date,  # noqa
             freq="YS",
         )
         bedd_high_lat = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
-            lat=high_lat,
+            lat=high_lat,  # noqa
             method=method,
-            end_date=end_date,
+            end_date=end_date,  # noqa
             freq="YS",
         )
 
@@ -363,6 +366,48 @@ class TestAgroclimaticIndices:
         )
 
         np.testing.assert_almost_equal(np.mean(hi), values, 2)
+
+    def test_qian_weighted_mean_average(self, tas_series):
+        mg = np.zeros(365)
+
+        # False start
+        mg[10:20] = [1, 2, 5, 6, 1, 2, 4, 5, 4, 1]
+        mg[20:40] = np.ones(20)
+
+        # Actual start
+        mg[40:50] = np.arange(1, 11)
+
+        mg = tas_series(mg + K2C)
+        out = xci.qian_weighted_mean_average(mg, dim="time")
+        np.testing.assert_array_equal(
+            out[7:12], [273.15, 273.2125, 273.525, 274.3375, 275.5875]
+        )
+        assert out[50].values < (10 + K2C)
+        assert out[51].values > K2C
+        assert out.attrs["units"] == "K"
+
+    @pytest.mark.parametrize("method,expected", [("bootsma", 2272), ("qian", 2257.0)])
+    def test_effective_growing_degree_days(
+        self, tasmax_series, tasmin_series, method, expected
+    ):
+        mg = np.zeros(547)
+
+        # False start
+        mg[192:202] = [1, 2, 5, 6, 1, 2, 4, 5, 4, 1]
+        mg[202:222] = np.ones(20)
+        mg[213] = 20  # An outlier day to test start date (Adds 15 deg days)
+
+        # Actual start
+        mg[222:242] = np.arange(1, 21)
+        mg[242:382] = np.repeat(20, 140)
+        mg[382:392] = np.array([20, 15, 12, 10, 7, 0, -1, 2, 1, -10])
+
+        mx = tasmax_series(mg + K2C + 10)
+        mn = tasmin_series(mg + K2C - 10)
+        out = xci.effective_growing_degree_days(
+            tasmax=mx, tasmin=mn, method=method, freq="YS"
+        )
+        np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
 
 class TestDailyFreezeThawCycles:
