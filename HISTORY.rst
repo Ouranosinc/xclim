@@ -2,6 +2,13 @@
 History
 =======
 
+0.29.0 (unreleased)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
+* ``qian_weighted_mean_average`` (based on Qian et al. (2010)) is offered as an alternate method for determining the start date using a weighted 5-day average (``method="qian"``). Can also be used directly as an indice.
 
 0.28.1 (2021-07-29)
 -------------------
