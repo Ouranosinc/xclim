@@ -837,6 +837,29 @@ biologically_effective_degree_days = Temp(
     ),
 )
 
+effective_growing_degree_days = Temp(
+    identifier="effective_growing_degree_days",
+    units="K days",
+    long_name="Effective growing degree days computed with {method} formula (Summation of max((Tmin + Tmax)/2 "
+    "- {thresh}, 0), for days between between dynamically-determined start and end dates).",
+    description="Heat-summation index for agroclimatic suitability estimation."
+    "Considers daily Tmin and Tmax with a base of {thresh} between dynamically-determined growing season start"
+    "and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to identify a start date, "
+    "while the 'qian' method uses a weighted mean average above {thresh} over 5 days to determine start date. "
+    "The end date of the growing season is the date of first fall frost (Tmin < 0 degC).",
+    cell_methods="",
+    comment="Original formula published in Bootsma et al. 2005.",
+    var_name="egdd",
+    compute=wrapped_partial(
+        indices.effective_growing_degree_days,
+        suggested=dict(
+            thresh="5 degC",
+            method="bootsma",
+            after_date="07-01",
+        ),
+    ),
+)
+
 
 latitude_temperature_index = Temp(
     identifier="latitude_temperature_index",
