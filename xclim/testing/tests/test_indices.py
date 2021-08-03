@@ -380,7 +380,7 @@ class TestAgroclimaticIndices:
         mg = tas_series(mg + K2C)
         out = xci.qian_weighted_mean_average(mg, dim="time")
         np.testing.assert_array_equal(
-            out[7:12], [273.15, 273.2125, 273.525, 274.3375, 275.5875]
+            out[7:12], [273.15, 273.2125, 273.525, 274.3375, 275.775]
         )
         assert out[50].values < (10 + K2C)
         assert out[51].values > K2C
