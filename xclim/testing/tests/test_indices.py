@@ -253,10 +253,10 @@ class TestAgroclimaticIndices:
         bedd = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
-            lat=lat,
+            lat=lat,  # noqa
             method=method,
-            end_date=end_date,
-            freq="YS",  # noqa
+            end_date=end_date,  # noqa
+            freq="YS",
         )
         bedd_hot = xci.biologically_effective_degree_days(
             tasmin=tn,
