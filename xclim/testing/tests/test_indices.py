@@ -362,7 +362,7 @@ class TestAgroclimaticIndices:
             tasmin=tasmin,
             lat=ds.lat,
             method=method,
-            end_date=end_date,
+            end_date=end_date,  # noqa
         )
 
         np.testing.assert_almost_equal(np.mean(hi), values, 2)
@@ -386,7 +386,7 @@ class TestAgroclimaticIndices:
         assert out[51].values > K2C
         assert out.attrs["units"] == "K"
 
-    @pytest.mark.parametrize("method,expected", [("bootsma", 2272), ("qian", 2257.0)])
+    @pytest.mark.parametrize("method,expected", [("bootsma", 2267), ("qian", 2252.0)])
     def test_effective_growing_degree_days(
         self, tasmax_series, tasmin_series, method, expected
     ):

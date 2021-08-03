@@ -760,7 +760,7 @@ def effective_growing_degree_days(
     For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
     For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
 
-    The end date is determined as the first day with minimum temperature below 0 degC.
+    The end date is determined as the day preceding the first day with minimum temperature below 0 degC.
 
     References
     ----------
@@ -784,12 +784,16 @@ def effective_growing_degree_days(
     else:
         raise NotImplementedError(f"Method: {method}.")
 
-    end = first_day_below(
-        tasmin=tasmin,
-        thresh="0 degC",
-        after_date=after_date,
-        window=1,
-        freq=freq,
+    # The day before the first day below 0 degC
+    end = (
+        first_day_below(
+            tasmin=tasmin,
+            thresh="0 degC",
+            after_date=after_date,
+            window=1,
+            freq=freq,
+        )
+        - 1
     )
 
     deg_days = (tas - thresh).clip(min=0)
