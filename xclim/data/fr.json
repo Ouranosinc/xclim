@@ -949,5 +949,29 @@
     "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
     "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus."
+  },
+  "COLD_AND_DRY_DAYS": {
+    "title": "Nombre de jours froide et secs",
+    "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
+    "long_name": "Nombre {freq:m} de jours froids et secs"
+  },
+  "WARM_AND_DRY_DAYS": {
+    "title": "Nombre de jours chauds et secs",
+    "abstract": "Nombre de jours où la température est au-dessus du 75eme percentile et les précipitations en dessous du 25eme percentile.",
+    "description": "Nombre {freq:m} de jours où la température est au dessus du 75eme percentile et les précipitations en dessous du 25eme percentile.",
+    "long_name": "Nombre {freq:m} de jours chauds et secs"
+  },
+  "WARM_AND_WET_DAYS": {
+    "title": "Nombre de jours chauds et pluvieux",
+    "abstract": "Nombre de jours où la température est au-dessus du 75eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du 75eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "long_name": "Nombre {freq:m} de jours chauds et pluvieux"
+  },
+  "COLD_AND_WET_DAYS": {
+    "title": "Nombre de jours froids et pluvieux",
+    "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "long_name": "Nombre {freq:m} de jours froids et pluvieux"
   }
 }
