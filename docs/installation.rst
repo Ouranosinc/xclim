@@ -6,23 +6,26 @@ Installation
 
 Stable release
 --------------
-.. Warning::
-    For Windows users: xclim requires a handful of libraries `GDAL`, `PROJ`, and `libspatialindex-dev` (for `rtree` support)
-    that must be manually installed prior to installation via pip. If you wish to install these libraries,
-    they are offered through the `OSGeo4W installer`_. In the interest of streamlining installation, xclim is also
-    offered via an Anaconda package that pre-compiles these dependencies for ease of portability.
-
 To install xclim via pip, run this command in your terminal:
 
 .. code-block:: console
 
     $ pip install xclim
 
+To install xclim with spatial subsetting tools (`clisops`_), ensure you have the necessary system dependencies installed and run:
+
+.. code-block:: console
+
+    $ pip install xclim[gis]
+    # or alternatively;
+    $ pip install xclim clisops
+
 This is the preferred method to install xclim, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
+.. _clisops: https://clisops.readthedocs.io/en/latest/readme.html
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 .. _OSGeo4W installer: https://trac.osgeo.org/osgeo4w/
@@ -38,12 +41,12 @@ To install the xclim Anaconda binary, run this command in your terminal:
 .. code-block:: console
 
     $ conda install -c conda-forge xclim
-
+    $ conda install -c conda-forge clisops  # for subsetting and bias correction functions
 
 From sources
 ------------
 .. Warning::
-    For Python3.8+ users: Many of the required scientific libraries do not currently have wheels that support the latest
+    For Python3.10+ users: Many of the required scientific libraries do not currently have wheels that support the latest
     python. In order to ensure that installation of xclim doesn't fail, we suggest installing the `Cython` module
     before installing xclim in order to compile necessary libraries from source packages.
 
@@ -76,7 +79,6 @@ Alternatively, you can also install a local development copy via pip:
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
 
-
 Creating a Conda environment
 ----------------------------
 
@@ -84,6 +86,6 @@ To create a conda development environment including all xclim dependencies, ente
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.6 --file=requirements_dev.txt
+    $ conda create -n my_xclim_env python=3.7 --file=environment.yml
     $ conda activate my_xclim_env
-    $ pip install .[dev]
+    (my_xclim_env) $ pip install .[dev]

@@ -8,8 +8,8 @@ DESCRIPTION = "Derived climate variables built with xarray."
 URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
-REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.19.4-beta"
+REQUIRES_PYTHON = ">=3.7.0"
+VERSION = "0.28.1"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -20,12 +20,11 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "numpy>=1.16",
-    "xarray>=0.16",
+    "xarray>=0.17",
     "scipy>=1.2",
     "numba",
-    "pandas>=0.23",
-    "cftime>=1.0.4",
-    "netCDF4>=1.4",
+    "pandas>=0.23,<1.3",
+    "cftime>=1.4.1",
     "dask[array]>=2.6",
     "pint>=0.9",
     "bottleneck~=1.3.1",
@@ -33,11 +32,13 @@ requirements = [
     "scikit-learn>=0.21.3",
     "Click",
     "packaging>=20.0",
+    "pyyaml",
+    "jsonpickle",
 ]
 
-setup_requirements = ["pytest-runner"]
+setup_requirements = ["pytest-runner", "wheel"]
 
-test_requirements = ["pytest", "tox"]
+test_requirements = ["pytest", "tox", "xdoctest", "pooch"]
 
 docs_requirements = [
     "sphinx",
@@ -47,11 +48,13 @@ docs_requirements = [
     "ipykernel",
     "jupyter_client",
     "matplotlib",
+    "netCDF4",
     "nc-time-axis",
     "distributed>=2.0",
+    "pooch",
 ]
 
-gis_requirements = ["clisops>=0.3.1"]
+gis_requirements = ["clisops>=0.4.0"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
@@ -71,9 +74,9 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
     description=DESCRIPTION,

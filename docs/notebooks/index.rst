@@ -7,7 +7,9 @@ Examples
 
    example
    ensembles
-   options
-   mappings
+   ensembles-advanced
+   frequency_analysis
+   customize
+   extendxclim
    sdba
    sdba-advanced

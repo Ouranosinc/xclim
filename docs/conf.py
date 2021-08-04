@@ -15,8 +15,7 @@
 import os
 import sys
 import warnings
-
-import xarray as xr
+from collections import OrderedDict
 
 import xclim
 
@@ -28,32 +27,25 @@ import xclim
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
-# Hack to be able to parse sdba
-# sdba.__init__ fails if xarray doesn't have polyval as a test for the version.
-xr.__dict__["polyval"] = None
-
 
 def _get_indicators(module):
     """For all modules or classes listed, return the children that are instances of registered Indicator classes.
 
-    modules : sequence
-      Sequence of modules to inspect.
+    module : A xclim module.
     """
     from xclim.core.indicator import registry
 
     out = {}
     for key, val in module.__dict__.items():
-        if hasattr(val, "identifier") and val.identifier.upper() in registry:
+        if hasattr(val, "_registry_id") and val._registry_id in registry:
             out[key] = val
 
-    return out
+    return OrderedDict(sorted(out.items()))
 
 
-def _indicator_table(realm):
-    """Return a sequence of dicts storing metadata about all available indices."""
-    # import inspect
-
-    inds = _get_indicators(getattr(xclim, realm))
+def _indicator_table(module):
+    """Return a sequence of dicts storing metadata about all available indices in xclim."""
+    inds = _get_indicators(getattr(xclim.indicators, module))
     table = {}
     for indname, ind in inds.items():
         # Apply default values
@@ -62,18 +54,24 @@ def _indicator_table(realm):
         #     for (name, p) in ind._sig.parameters.items()
         # }
         try:
-            table[indname] = ind.json()  # args)
+            table[indname] = ind.json()  # args?
         except KeyError as err:
             warnings.warn(
                 f"{ind.identifier} could not be documented.({err})", UserWarning
             )
         else:
-            table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
+            table[indname]["doc"] = ind.__doc__
+            if ind.compute.__module__.endswith("generic"):
+                table[indname][
+                    "function"
+                ] = f"xclim.indices.generic.{ind.compute.__name__}"
+            else:
+                table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
-realms = ("atmos", "land", "seaIce")
-indicators = {realm: _indicator_table(realm) for realm in realms}
+modules = ("atmos", "land", "seaIce", "cf", "icclim", "anuclim")
+indicators = {module: _indicator_table(module) for module in modules}
 
 # -- General configuration ---------------------------------------------
 
@@ -95,6 +93,7 @@ extensions = [
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
+    "autodoc_indicator",
 ]
 
 napoleon_numpy_docstring = True
@@ -102,7 +101,10 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-intersphinx_mapping = {"clisops": ("https://clisops.readthedocs.io/en/latest/", None)}
+intersphinx_mapping = {
+    "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+}
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
@@ -113,6 +115,7 @@ nbsphinx_prolog = r"""
     `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
 """
 nbsphinx_timeout = 300
+nbsphinx_allow_errors = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

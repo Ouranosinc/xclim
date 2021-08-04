@@ -1,0 +1,953 @@
+{
+  "attrs_mapping": {
+    "modifiers": [
+      "m",
+      "f",
+      "mpl",
+      "fpl",
+      "nom"
+    ],
+    "YS": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles",
+      "années"
+    ],
+    "AS-*": [
+      "annuel",
+      "annuelle",
+      "annuels",
+      "annuelles",
+      "années"
+    ],
+    "MS": [
+      "mensuel",
+      "mensuelle",
+      "mensuels",
+      "mensuelles",
+      "mois"
+    ],
+    "QS-*": [
+      "saisonnier",
+      "saisonnière",
+      "saisonniers",
+      "saisonnières",
+      "saisons"
+    ],
+    "DJF": [
+      "hivernal",
+      "hivernale",
+      "hivernaux",
+      "hivernales",
+      "hivers"
+    ],
+    "MAM": [
+      "printanier",
+      "printanière",
+      "printaniers",
+      "printanières",
+      "printemps"
+    ],
+    "JJA": [
+      "estival",
+      "estivale",
+      "estivaux",
+      "estivales",
+      "étés"
+    ],
+    "SON": [
+      "automnal",
+      "automnale",
+      "automnaux",
+      "automnales",
+      "automnes"
+    ],
+    "norm": [
+      "normal",
+      "normale",
+      "normaux",
+      "normales"
+    ],
+    "m1": [
+      "janvier"
+    ],
+    "m2": [
+      "février"
+    ],
+    "m3": [
+      "mars"
+    ],
+    "m4": [
+      "avril"
+    ],
+    "m5": [
+      "mai"
+    ],
+    "m6": [
+      "juin"
+    ],
+    "m7": [
+      "juillet"
+    ],
+    "m8": [
+      "août"
+    ],
+    "m9": [
+      "septembre"
+    ],
+    "m10": [
+      "octobre"
+    ],
+    "m11": [
+      "novembre"
+    ],
+    "m12": [
+      "decembre"
+    ],
+    "mean": [
+      "moyen",
+      "moyenne",
+      "moyens",
+      "moyennes",
+      "moyenne"
+    ],
+    "max": [
+      "maximal",
+      "maximale",
+      "maximaux",
+      "maximales",
+      "maximum"
+    ],
+    "min": [
+      "minimal",
+      "minimale",
+      "minimaux",
+      "minimales",
+      "minimum"
+    ],
+    "sum": [
+      "total",
+      "totale",
+      "totaux",
+      "totales",
+      "somme"
+    ],
+    "std": [
+      "écart-type"
+    ]
+  },
+  "RAIN_FRZGR": {
+    "long_name": "Nombre de jours de pluie sur sol gelé",
+    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
+    "title": "Nombre de jours de pluie sur sol gelé",
+    "comment": "",
+    "abstract": "Nombre de jours avec des précipitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
+  },
+  "RX1DAY": {
+    "long_name": "Précipitation maximale en 1 jour",
+    "description": "Précipitation maximale en 1 jour {freq:f}",
+    "title": "Précipitation maximale en 1 jour dans une période donnée.",
+    "comment": "",
+    "abstract": "Maximum des précipitations totales quotidiennes pour une période donnée."
+  },
+  "MAX_N_DAY_PRECIPITATION_AMOUNT": {
+    "long_name": "Précipitation maximale sur {window} jours",
+    "description": "Précipitation maximale sur {window} jours {freq:f}",
+    "title": "Précipitation maximale cumulée sur un nombre de jours donné.",
+    "comment": "",
+    "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
+  },
+  "MAX_PR_INTENSITY": {
+    "long_name": "Intensité maximale de précipitation sur une durée de {window} h",
+    "description": "Intensité maximale {freq:f} de précipitation sur une fenêtre mobile de {window} h.",
+    "title": "Intensité de précipitation maximale sur une durée et période donnée.",
+    "comment": "",
+    "keywords": "courbes IDF",
+    "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
+  },
+  "WETDAYS": {
+    "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
+    "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Jours mouillés",
+    "comment": "",
+    "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
+  },
+  "CDD": {
+    "long_name": "Durée maximale d'une période sèche",
+    "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont sous {thresh}.",
+    "title": "Nombre maximal de jours secs consécutifs",
+    "comment": "",
+    "abstract": "Période la plus longue où la précipitation est sous un seuil."
+  },
+  "CWD": {
+    "long_name": "Durée maximale d'une période pluvieuse",
+    "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
+    "title": "Durée de période pluvieuse",
+    "comment": "",
+    "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil."
+  },
+  "SDII": {
+    "long_name": "Indice simple de l'intensité des précipitations",
+    "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précipitation journalière pour les jours où la précipitation est au-dessus de {thresh}.",
+    "title": "Indice simple de l'intensité des précipitations",
+    "comment": "",
+    "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil."
+  },
+  "PRCPTOT": {
+    "long_name": "Précipitation totale",
+    "description": "Précipitation totale {freq:f}",
+    "title": "Précipitation accumulée totale (liquide ou solide)",
+    "comment": "",
+    "abstract": "Précipitation accumulée totale. Si la température journalière moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température journalière moyenne est sous 0°C (et vice-versa)."
+  },
+  "LIQUIDPRCPTOT": {
+    "long_name": "Précipitation liquide totale",
+    "description": "Précipitation liquide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est >= 0°C",
+    "title": "Précipitation liquide accumulée totale",
+    "comment": "",
+    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est au-dessus de 0°C."
+  },
+  "SOLIDPRCPTOT": {
+    "long_name": "Précipitation solide totale",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est < 0°C",
+    "title": "Précipitation solide accumulée totale",
+    "comment": "",
+    "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est sous 0°C."
+  },
+  "DC": {
+    "long_name": "Indice de sécheresse",
+    "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'",
+    "title": "Indice de sécheresse quotidien",
+    "comment": "",
+    "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
+  },
+  "TN_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmin > {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmin au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est au-dessus d'un seuil."
+  },
+  "TN_DAYS_BELOW": {
+    "long_name": "Nombre de jours avec Tmin < {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous {thresh}",
+    "title": "Nombre de jours avec tmin sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est sous un seuil."
+  },
+  "TG_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmoy > {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière moyenne est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmoy au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière moyenne est au-dessus d'un seuil."
+  },
+  "TG_DAYS_BELOW": {
+    "long_name": "Nombre de jours avec Tmoy < {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière moyenne est sous {thresh}",
+    "title": "Nombre de jours avec tmoy sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière moyenne est sous un seuil."
+  },
+  "TX_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmax > {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est au-dessus de {thresh}",
+    "title": "Nombre de jours avec tmax au-dessus d'un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est au-dessus d'un seuil."
+  },
+  "TX_DAYS_BELOW": {
+    "long_name": "Nombre de jours avec Tmax < {thresh}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous {thresh}",
+    "title": "Nombre de jours avec tmax sous un certain seuil",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est sous un seuil."
+  },
+  "TX_TN_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale excède {thresh_tasmax} et la température journalière minimale excède {thresh_tasmin}",
+    "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes",
+    "comment": "",
+    "abstract": "Nombre de jours où les températures journalières maximales et minimales sont au-dessus de seuils donnés."
+  },
+  "HEAT_WAVE_FREQUENCY": {
+    "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours)",
+    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "title": "Fréquence des vagues de chaleur",
+    "comment": "",
+    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "HEAT_WAVE_TOTAL_LENGTH": {
+    "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "comment": "",
+    "title": "Durée totale des vagues de chaleur",
+    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "HEAT_WAVE_MAX_LENGTH": {
+    "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
+    "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des vagues de chaleur",
+    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures journalières minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+  },
+  "HEAT_WAVE_INDEX": {
+    "long_name": "Nombre de jours de vague de chaleur",
+    "description": "Nombre {freq:m} de jours de vague de chaleur, définie comme cinq jours consécutifs ou plus où la température est au-dessus de {thresh}.",
+    "title": "Indice de vague de chaleur",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température journalière maximale excède un seuil durant au moins 5 jours."
+  },
+  "TG": {
+    "long_name": "température journalière moyenne",
+    "description": "température journalière moyenne estimée par la médiane des températures maximales et minimales.",
+    "title": "Moyenne des températures maximales et minimales",
+    "comment": "",
+    "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
+  },
+  "TG_MIN": {
+    "long_name": "Minimum de la température journalière moyenne",
+    "description": "Minimum {freq:m} de la température journalière moyenne",
+    "title": "Minimum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Minimum de la température journalière moyenne."
+  },
+  "TG_MAX": {
+    "long_name": "Maximum de la température journalière moyenne",
+    "description": "Maximum {freq:m} de la température journalière moyenne",
+    "title": "Maximum de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Maximum de la température journalière moyenne."
+  },
+  "TG_MEAN": {
+    "long_name": "Moyenne de la température journalière moyenne",
+    "description": "Moyenne {freq:f} de la température journalière moyenne",
+    "title": "Moyenne de la température journalière moyenne",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière moyenne."
+  },
+  "TG10P": {
+    "long_name": "Nombre de jours où la température est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température est au-dessus du 10e percentile"
+  },
+  "TG90P": {
+    "long_name": "Nombre de jours où la température est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Number of days with daily mean temperature over the 90th percentile."
+  },
+  "TN_MIN": {
+    "long_name": "Minimum de la température journalière minimale",
+    "description": "Minimum {freq:m} de la température journalière minimale",
+    "title": "Minimum de la température minimale",
+    "comment": "",
+    "abstract": "Minimum de la température journalière minimale."
+  },
+  "TN_MAX": {
+    "long_name": "Maximum de la température journalière minimale",
+    "description": "Maximum {freq:m} de la température journalière minimale",
+    "title": "Maximum de la température minimale",
+    "comment": "",
+    "abstract": "Maximum de la température journalière minimale."
+  },
+  "TN_MEAN": {
+    "long_name": "Moyenne de la température journalière minimale",
+    "description": "Moyenne {freq:f} de la température journalière minimale",
+    "title": "Moyenne de la température minimale",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière minimale."
+  },
+  "TN10P": {
+    "long_name": "Nombre de jours où la température minimale est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du 10e percentile."
+  },
+  "TN90P": {
+    "long_name": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du 90e percentile."
+  },
+  "TX_MIN": {
+    "long_name": "Minimum de la température journalière maximale",
+    "description": "Minimum {freq:m} de la température journalière maximale",
+    "title": "Minimum de la température maximale",
+    "comment": "",
+    "abstract": "Minimum de la température journalière maximale."
+  },
+  "TX_MAX": {
+    "long_name": "Maximum de la température journalière maximale",
+    "description": "Maximum {freq:m} de la température journalière maximale",
+    "title": "Maximum de la température maximale",
+    "comment": "",
+    "abstract": "Maximum de la température journalière maximale."
+  },
+  "TX_MEAN": {
+    "long_name": "Moyenne de la température journalière maximale",
+    "description": "Moyenne {freq:f} de la température journalière maximale",
+    "title": "Moyenne de la température maximale",
+    "comment": "",
+    "abstract": "Moyenne de la température journalière maximale."
+  },
+  "TX10P": {
+    "long_name": "Nombre de jours où la température maximale est au-dessus du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est au-dessus du 10e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du 10e percentile."
+  },
+  "TX90P": {
+    "long_name": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
+    "comment": "",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
+  },
+  "DTRMAX": {
+    "long_name": "Amplitude maximale de la température diurne",
+    "description": "Maximum {freq:m} de l'amplitude diurne de température",
+    "comment": "",
+    "title": "Amplitude maxmimale de la température diurne",
+    "abstract": "La différence maximale entre la température journalière maximale et la température journalière minimale."
+  },
+  "DTR": {
+    "long_name": "Amplitude de la température diurne",
+    "description": "Moyenne {freq:f} de l'amplitude diurne de température",
+    "comment": "",
+    "title": "Amplitude de la température diurne",
+    "abstract": "La différence moyenne entre la température journalière maximale et la température journalière minimale."
+  },
+  "DTRVAR": {
+    "long_name": "Variabilité de l'amplitude de la température diurne",
+    "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
+    "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
+    "comment": "",
+    "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
+  },
+  "ETR": {
+    "long_name": "Amplitude des températures extrêmes",
+    "description": "Calcul {freq:m} de l'intervalle entre le maximum de la température journalière maximale et le minimum de la température journalière minimale",
+    "title": "Intervalle des températures extrêmes",
+    "comment": "",
+    "abstract": "Le maximum de la température maximale moins le minimum de la température minimale."
+  },
+  "COLD_SPELL_DURATION_INDEX": {
+    "long_name": "Indice de durée des vagues de froid",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins {window} jours consécutifs. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Indice de durée des vagues de froid",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
+  },
+  "COLD_SPELL_FREQUENCY": {
+    "long_name": "Nombre de vagues de froid",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Nombre de vagues de froid",
+    "comment": "",
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+  },
+  "COLD_SPELL_DAYS": {
+    "long_name": "Jours de vagues de froid",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Jours de vague de froid",
+    "comment": "",
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+  },
+  "COOL_NIGHT_INDEX": {
+    "long_name": "Indice de fraîcheur des nuits",
+    "description": "Moyenne {freq:f} de la température journalière minimale en septembre (hémisphère nord) ou en mars (hémisphère sud)",
+    "title": "Indice de fraîcheur des nuits",
+    "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
+    "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
+  },
+  "DLYFRZTHW": {
+    "long_name": "Cycles de gel-dégel quotidien",
+    "description": "Nombre {freq:m} de jours avec un gel-dégel : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
+    "title": "Nombre de jours avec un cycle de gel-dégel",
+    "comment": "",
+    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin sous un seuil, habituellement 0°C pour les deux."
+  },
+  "COOLING_DEGREE_DAYS": {
+    "long_name": "Degré-jour de réfrigération (Tmoy > {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de réfrigération (Température au-dessus de {thresh})",
+    "title": "Degré-jour de réfrigération",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil et que les immeubles doivent être réfrigérés."
+  },
+  "HEATING_DEGREE_DAYS": {
+    "long_name": "Degré-jour de chauffe (Tmoy < {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de chauffe (Température au-dessus de {thresh}).",
+    "title": "Degré-jour de chauffe",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil et que les immeubles doivent être chauffés."
+  },
+  "GROWING_DEGREE_DAYS": {
+    "long_name": "Degré-jour de croissance (Tmoy > {thresh})",
+    "description": "Cumul {freq} des degrés-jours de croissance (Température au-dessus de {thresh})",
+    "title": "Degré-jour de croissance",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
+  },
+  "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
+    "long_name": "Degrés-jours biologiquement actifs",
+    "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de longueur du jour dépendent de la latitude.",
+    "title": "Degrés-jours biologiquement actifs",
+    "comment": "Formule originale prise de Gladstones 1992.",
+    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
+  },
+  "EFFECTIVE_GROWING_DEGREE_DAYS": {
+  "long_name": "Degrés-jours effectives",
+  "description": "Accumulation des degrés-jours borné par (Tmax + Tmin)/2 > {thresh} et des dates de début et fin de la saison de croissance generés dynamiquement.",
+  "title": "Degrés-jours effectives",
+  "comment": "Formule originale prise de Bootsma et al. 2005.",
+  "abstract": "Indice de degrés-jours de croissance basés sur un début et une fin dynamiques de la saison de croissance."
+  },
+  "LATITUDE_TEMPERATURE_INDEX": {
+    "long_name": "Indice latitude-température",
+    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude  : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
+    "title": "Indice de latitude-température",
+    "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
+    "abstract": "indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
+  },
+  "FRESHET_START": {
+    "long_name": "Jour de l'année du début de la crue nivale",
+    "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
+    "title": "Nième jour consécutif où la température excède un seuil",
+    "comment": "",
+    "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
+  },
+  "FROST_SEASON_LENGTH": {
+    "long_name": "Durée de la saison de gel (Tmin < 0°C)",
+    "description": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus.",
+    "title": "Durée de la saison de gel",
+    "abstract": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus."
+  },
+  "FROST_DAYS": {
+    "long_name": "Nombre de jours de gel (Tmin < 0C)",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous 0°C.",
+    "title": "Jours de gel",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière minimale est sous 0°C."
+  },
+  "ICE_DAYS": {
+    "long_name": "Nombre de jours de givre (Tmax < 0°C)",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C.",
+    "title": "Nombre de jours de givre",
+    "comment": "",
+    "abstract": "Nombre de jours où la température journalière maximale est sous 0°C."
+  },
+  "CONSECUTIVE_FROST_DAYS": {
+    "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
+    "description": "Durée maximale {freq:f} des périodes où la température journalière minimale est sous 0°C.",
+    "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
+    "comment": "",
+    "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C."
+  },
+  "GROWING_SEASON_LENGTH": {
+    "long_name": "Durée de la saison de végétation",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température journalière moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
+    "comment": "",
+    "title": "Durée de la saison de croissance",
+    "abstract": "Nombre de jours entre la première série de N jours avec des températures journalières moyennes au-dessus d'un seuil et la première série de N jours avec des températures journalières moyennes sous ce même seuil."
+  },
+  "TROPICAL_NIGHTS": {
+    "long_name": "Nombre de nuits tropicales (Tmin > {thresh})",
+    "description": "Nombre {freq:m} de nuits tropicales : définies comme des jours avec une température minimale au-dessus de {thresh}",
+    "title": "Nombre de nuits tropicales",
+    "comment": "",
+    "abstract": "Nombre de jours où la température minimale est au-dessus d'un seuil."
+  },
+  "BASE_FLOW_INDEX": {
+    "long_name": "Flux de base",
+    "description": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen",
+    "title": "Flux de base",
+    "comment": "",
+    "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
+  },
+  "RB_FLASHINESS_INDEX": {
+    "long_name": "Indice Richards-Baker de torrentialité",
+    "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+    "title": "Indice Richards-Baker de torrentialité",
+    "comment": "",
+    "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
+  },
+  "FREQ_ANALYSIS": {
+    "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
+    "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}",
+    "title": "Période de retour",
+    "comment": "",
+    "abstract": "Analyse de fréquence selon un mode et une distribution."
+  },
+  "STATS": {
+    "long_name": "{op} du {indexer} {freq:m} du flux journalier",
+    "description": "{op} du {indexer} {freq:m} du flux journalier",
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "comment": "",
+    "abstract": ""
+  },
+  "FIT": {
+    "long_name": "Paramètres d'une distribution {dist:f}",
+    "description": "Paramètres d'une distribution {dist:f}",
+    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données.",
+    "comment": "",
+    "abstract": ""
+  },
+  "DOY_QMAX": {
+    "long_name": "Jour de l'année du maximum le long de {indexer}",
+    "description": "Jour de l'année du maximum le long de {indexer}",
+    "comment": "",
+    "title": "Jour de l'année du maximum.",
+    "abstract": ""
+  },
+  "DOY_QMIN": {
+    "long_name": "Jour de l'année du minimum le long de {indexer}",
+    "description": "Jour de l'année du minimum le long de {indexer}",
+    "comment": "",
+    "title": "Jour de l'année du minimum.",
+    "abstract": ""
+  },
+  "SEA_ICE_AREA": {
+    "long_name": "Surface de la banquise",
+    "description": "La somme des surfaces recouvertes de glace de mer là où sa concentration est d'au moins {thresh}.",
+    "comment": "",
+    "title": "Surface de la banquise",
+    "abstract": "Mesure de surface totale des océans couverte de glace de mer."
+  },
+  "SEA_ICE_EXTENT": {
+    "long_name": "Étendue de banquise",
+    "description": "L'aire totale de toutes les régions où la concentration de glace de mer est d'au moins {thresh}.",
+    "comment": "",
+    "title": "Étendue de la banquise",
+    "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
+  },
+  "DRY_DAYS": {
+    "long_name": "Nombre de jours secs (precip < {thresh})",
+    "description": "Nombre {freq} de jours où la précipitation journalière est sous {thresh}.",
+    "comment": "",
+    "title": "Jours secs",
+    "abstract": "Nombre de jours où la précipitation journalière est sous un seuil."
+  },
+  "HOT_SPELL_FREQUENCY": {
+    "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Fréquences des périodes chaudes",
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "LAST_SPRING_FROST": {
+    "long_name": "Jour de l'année du dernier gel printanier",
+    "description": "Jour de l'année du dernier gel printanier, defini comme le dernier jour où la température journalière moyenne reste sous {thresh} durant au moins {window} jours avant une certaine date.",
+    "comment": "",
+    "title": "Jour de l'année du dernier gel printanier",
+    "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
+  },
+  "HOT_SPELL_MAX_LENGTH": {
+    "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
+    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température journalière maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "comment": "",
+    "title": "Longueur maximale des périodes chaudes",
+    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
+  },
+  "CONSECUTIVE_FROST_FREE_DAYS": {
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
+    "comment": "",
+    "title": "Nombre maximal de jours consécutifs sans gel (Tmin > 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus d'un seuil."
+  },
+  "GROWING_SEASON_END": {
+    "long_name": "Jour de l'année de la fin de la saison de végétation",
+    "description": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "comment": "",
+    "title": "Fin de la saison de végétation",
+    "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
+  },
+  "FWI": {
+    "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
+    "title": "Indices Forêt-Météo",
+    "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
+  },
+  "FWI.dc": {
+    "long_name": "Indice de sécheresse",
+    "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+  "FWI.dmc": {
+    "long_name": "Indice d'humidité de l'humus",
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+  "FWI.ffmc": {
+    "long_name": "Indice du combustible léger (FFMC)",
+    "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers. Calculée avec la méthode de mise en route '{start_up_mode}'"
+  },
+  "FWI.isi": {
+    "long_name": "Indice de propagation initiale",
+    "description": "Évaluation numérique du taux prévu de propagation du feu."
+  },
+  "FWI.bui": {
+    "long_name": "Indice du combustible disponible",
+    "description": "Évaluation numérique de la quantité totale de combustible disponible."
+  },
+  "FWI.fwi": {
+    "long_name": "Indice forêt météo",
+    "description": "Évaluation numérique de l'intensité du feu."
+  },
+  "WIND_SPEED_FROM_VECTOR": {
+    "title": "Vitesse et direction du vent à partir du vecteur vent.",
+    "abstract": "Calcul de la magnitude et la direction de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWind": {
+    "long_name": "Vitesse du vent de surface",
+    "description": "Magnitude de la vitesse du vent calculée à partir des deux composantes uas et vas."
+  },
+  "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
+    "long_name": "Direction de provenance du vent de surface",
+    "description": "Direction de provenance du vent calculée à partir des deux composantes uas et vas. Les vents du nord ont une direction de 360° et les vents de moins de {calm_wind_thresh} ont une direction de 0°."
+  },
+  "WIND_VECTOR_FROM_SPEED": {
+    "title": "Vitesse cartésienne du vent à partir de la magnitude et direction de provenance.",
+    "abstract": "Calcul des deux composantes ouest-est et nord-sud du vent à partir de la magnitude et la direction de provenance de sa vitesse."
+  },
+  "WIND_VECTOR_FROM_SPEED.uas": {
+    "long_name": "Vent d'ouest de surface",
+    "description": "Vitesse d'ouest du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
+  },
+  "WIND_VECTOR_FROM_SPEED.vas": {
+    "long_name": "Vent du sud de surface",
+    "description": "Vitesse du sud du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
+  },
+  "E_SAT": {
+    "long_name": "Pression de vapeur saturante",
+    "description": "Pression de vapeur saturante calculée à partir de la température en suivant la méthode {method}.",
+    "title": "Pression de vapeur saturante (e_sat)",
+    "abstract": "Calcul de la pression de vapeur saturante à partir de la température, selon une méthode donnée. Si ice_thresh est donné, le calcul se fait en référence à la glace pour les températures sous ce seuil."
+  },
+  "HURS_FROMDEWPOINT": {
+    "long_name": "Humidité relative",
+    "description": "Calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
+    "title": "Humidité relative à partir du point de rosée",
+    "abstract": "Calcul de l'humidité relative à partir de la température et du point de rosée à l'aire de la pression de vapeur saturante."
+  },
+  "HURS": {
+    "long_name": "Humidité relative",
+    "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}",
+    "title": "Humidité relative à partir de l'humidité spécifique et de la pression",
+    "abstract": "Calcul de l'humidité relative à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
+  },
+  "HUSS": {
+    "long_name": "Humidité spécifique",
+    "description": "Calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}",
+    "title": "Humidité spécifique à partir de l'humidité relative et de la pression",
+    "abstract": "Calcul de l'humidité spécifique à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
+  },
+  "FIRST_DAY_BELOW": {
+    "long_name": "Premier jour de l'année avec une température sous {thresh}",
+    "description": "Premier jour de l'année avec une température sous {thresh} pour au moins {window} jours.",
+    "title": "Premier jour de l'année de températures sous un seuil.",
+    "abstract": "Calcule le premier jour d'une période où la température est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
+  },
+  "FIRST_DAY_ABOVE": {
+    "long_name": "Premier jour de l'année avec une température au-dessus de {thresh}",
+    "description": "Premier jour de l'année avec une température au-dessus de {thresh} pour au moins {window} jours.",
+    "title": "Premier jour de l'année de températures au-dessus d'un seuil.",
+    "abstract": "Calcule le premier jour d'une période où la température est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
+  },
+  "DEGREE_DAYS_EXCEEDANCE_DATE": {
+    "long_name": "Premier jour de l'année où la somme des degrés-jours excède {sum_thresh}",
+    "description": "Premier jour de l'année où la somme des degrés-jours (Tmoy {op} {thresh}) excède {sum_thresh}, la somme commençant le {start_date}.",
+    "title": "Jour du dépassement des degrés-jours",
+    "abstract": "Jour de l'année où la somme des degrés-jours excède un seuil. Les degrés-jours sont calculés au-dessus ou au-dessous d'un seuil de température donné."
+  },
+  "PRSN": {
+    "long_name": "Précipitation solide",
+    "description": "Précipitation solide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
+    "title": "Approximation de la neige",
+    "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
+  },
+  "SD": {
+    "long_name": "Profondeur de neige journalière moyenne",
+    "description": "Profondeur de neige journalière moyenne",
+    "title": "Moyenne de la profondeur de neige",
+    "abstract": "Profondeur de neige journalière moyenne"
+  },
+  "PRLP": {
+    "long_name": "Précipitation liquide",
+    "description": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
+    "title": "Approximation de la pluie",
+    "abstract": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
+  },
+  "LAST_SNOWFALL": {
+    "long_name": "Date de la dernière neige",
+    "description": "Dernier jour {freq:m} où la précipitation solide excède {thresh}.",
+    "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil",
+    "abstract": "Dernier jour d'une période où la précipitation solide excède un certain seuil."
+  },
+  "FIRST_SNOWFALL": {
+    "long_name": "Date de la première neige",
+    "description": "Premier jour {freq:m} où la précipitation solide excède {thresh}.",
+    "title": "Premier jour avec une précipitation solide au-dessus d'un seuil",
+    "abstract": "Premier jour d'une période où la précipitation solide excède un certain seuil."
+  },
+  "DAYS_WITH_SNOW": {
+    "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
+    "description": "Nombre {freq:m} de jours où la précipitation solide est plus grande que {low} et plus petite ou égale à {high}.",
+    "title": "Jours avec neige",
+    "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
+  },
+  "SNOW_COVER_DURATION": {
+    "long_name": "Nombre de jour où la profondeur de neige est au-dessus d'un seuil",
+    "description": "Nombre {freq:m} de jours où la profondeur de neige est supérieure ou égale à {thresh}.",
+    "title": "Durée du couvert de neige",
+    "abstract": "Nombre de jours pendant lesquels la profondeur de neige est supérieure ou égale à un seuil."
+  },
+  "CONTINUOUS_SNOW_COVER_START": {
+    "long_name": "Date d'établissement du couvert de neige",
+    "description": "Première date à laquelle la profondeur de neige est supérieure à {thresh} pendant au moins {window} jours.",
+    "title": "Date du début du couvert de neige",
+    "abstract": "Première date à partir de laquelle la profondeur de neige est supérieure ou égale à un seuil pendant un nombre de jours consécutifs."
+  },
+  "CONTINUOUS_SNOW_COVER_END": {
+    "long_name": "Date de disparition du couvert de neige",
+    "description": "Première date à laquelle la profondeur de neige passe sous {thresh} pendant au moins {window} jours suite à l'établissement du couvert de neige.",
+    "title": "Date du fin du couvert de neige",
+    "abstract": "Première date à partir de laquelle la profondeur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
+  },
+  "SND_MAX_DOY": {
+    "long_name": "Date de la profondeur de neige maximale",
+    "description": "Date {freq:f} à laquelle la profondeur de neige atteint sa valeur maximale.",
+    "title": "Date où la profondeur de neige est maximale",
+    "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
+  },
+  "SNOW_MELT_WE_MAX": {
+    "long_name": "Fonte de neige maximale",
+    "description": "Fonte maximale {freq:f} de neige sur {window} jours.",
+    "title": "Fonte de neige maximale",
+    "abstract": "Équivalent en eau de la fonte de neige maximale."
+  },
+  "MELT_AND_PRECIP_MAX": {
+    "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
+    "description": "Precipitation et fonte de neige maximales {freq:fpl} sur {window} jours.",
+    "title": "Précipitations et fonte de neige maximales",
+    "abstract": "Maximum des apports en eau provenant des précipitations et de la fonte de neige."
+  },
+  "BLOWING_SNOW": {
+    "long_name": "Jours de poudrerie",
+    "description": "Nombre {freq:m} de jours avec accumulation de neige supérieure ou égale à {snd_thresh} au cours des {window} jours précédents et vents supérieurs à {sfcwind_thresh}.",
+    "title": "Nombre de jours de poudrerie",
+    "abstract": "Nombre de jours où les conditions sont favorables à la poudrerie."
+  },
+  "WINTER_STORM": {
+    "long_name": "Jours avec forte accumulation de neige",
+    "description": "Nombre de jours où l'accumulation de neige est supérieure à {thresh}.",
+    "title": "Jours avec accumulation de neige supérieure à un seuil",
+    "abstract": "Nombre de jours où l'accumulation de neige est supérieure à un seuil."
+  },
+  "HIGH_PRECIP_LOW_TEMP": {
+    "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
+    "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égale à {pr_thresh} et température inférieure à {tas_thresh}.",
+    "title": "Jours avec précipitations et températures froides",
+    "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
+  },
+  "DAYS_OVER_PRECIP_THRESH": {
+    "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",
+    "description": "Nombre {freq:m} de jours où la précipitation au-dessus d'un percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés.",
+    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien"
+  },
+  "FRACTION_OVER_PRECIP_THRESH": {
+    "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
+    "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
+    "description": "Fraction {freq:f} des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "long_name": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
+  },
+  "LIQUID_PRECIP_RATIO": {
+    "title": "Fraction liquide de la précipitation totale.",
+    "abstract": "Le ratio entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus d'un seuil.",
+    "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}.",
+    "long_name": "Fraction liquide de la précipitation totale."
+  },
+  "WARM_SPELL_DURATION_INDEX": {
+    "title": "Indice de durée des vagues de chaleur.",
+    "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le 90e percentile. Le 90e percentile des températures devrait être calculé avec une fenêtre mobile de 5 jours.",
+    "description": "Nombre {freq:m} total de jours faisant parties de vagues de chaleur d'au moins {window} jours consécutifs où tmax est au-dessus du 90e percentile.",
+    "long_name": "Indice de durée des vagues de chaleur."
+  },
+  "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
+    "title": "Nombre maximal de jours chauds consécutifs.",
+    "abstract": "Nombre maximal de jours consecutifs où la température maximale quotidienne excède un certain seuil.",
+    "description": "Nombre {freq:m} maximal de jours chauds consécutifs (Tmax > {thresh}).",
+    "long_name": "Nombre maximal de jours chauds consécutifs."
+  },
+  "FIRE_SEASON": {
+    "title": "Saison des incendies.",
+    "abstract": "Masque binaire de la saison des incendies, défini selon des conditions de températures quotidiennes consécutives et, optionnellement, d'épaisseurs du couvert de neige.",
+    "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
+    "long_name": "Saison des incendies"
+  },
+  "CORN_HEAT_UNITS": {
+    "title": "Unités thermiques maïs.",
+    "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
+    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
+    "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
+  },
+  "FREEZETHAW_SPELL_FREQUENCY": {
+    "title": "Fréquence des événements de gel-dégel quotidien.",
+    "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Fréquence {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Fréquence {freq:f} des événements de gel-dégel quotidien."
+  },
+  "FREEZETHAW_SPELL_MAX_LENGTH": {
+    "title": "Longueur maximale des événements de gel-dégel quotidien.",
+    "abstract": "Longueur maximale des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Longueur maximale {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Longueur maximale {freq:f} des événements de gel-dégel quotidien."
+  },
+  "FREEZETHAW_SPELL_MEAN_LENGTH": {
+    "title": "Longueur moyenne des événements de gel-dégel quotidien.",
+    "abstract": "Longueur moyenne des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
+    "description": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "long_name": "Longueur moyenne {freq:f} des événements de gel-dégel quotidien."
+  },
+  "WIND_CHILL": {
+    "title": "Facteur éolien.",
+    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisé pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
+    "description": "Refroiddissement éolien, équivalent à la sensation du froid due au vent par in individu moyen.",
+    "long_name": "Facteur éolien."
+  },
+  "HUMIDEX": {
+    "title": "Indice humidex",
+    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
+    "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
+    "long_name": "indice humidex"
+  },
+  "POTENTIAL_EVAPOTRANSPIRATION": {
+    "title": "Évapotranspiration potentielle.",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
+    "long_name": "Évapotranspiration potentielle."
+  },
+  "WATER_BUDGET": {
+    "title": "Bilan hydrique.",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
+    "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {method}.",
+    "long_name": "Bilan hydrique."
+  },
+  "DRY_SPELL_FREQUENCY": {
+    "title": "Fréquence des périodes sèches.",
+    "abstract": "Fréquence des périodes sèches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "long_name": "Fréquence {freq:f} des périodes sèches de {window} jours et plus."
+  },
+  "DRY_SPELL_TOTAL_LENGTH": {
+    "title": "Durée totale en jours des périodes séches.",
+    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus."
+  }
+}

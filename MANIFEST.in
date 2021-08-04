@@ -5,9 +5,8 @@ include LICENSE
 include README.rst
 include requirements_dev.txt
 
-recursive-include xclim *
+recursive-include xclim *.json *.yml *.py
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
-recursive-include tests *.json *.nc *.py
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

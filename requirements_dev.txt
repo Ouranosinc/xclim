@@ -3,11 +3,15 @@ bump2version
 wheel
 watchdog
 flake8
+black
 tox
 coverage
 twine
 pytest
+pytest-cov
 pytest-runner
 pylint
 xdoctest
-pre-commit
+pydocstyle>=5.1.1
+nbval
+pre-commit>=2.9

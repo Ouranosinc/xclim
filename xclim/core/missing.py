@@ -24,10 +24,12 @@ To define another missing value algorithm, subclass :class:`MissingBase` and dec
 `xclim.core.options.register_missing_method`.
 
 """
+from typing import Any, Tuple, Union
+
 import numpy as np
-import pandas as pd
 import xarray as xr
 
+from xclim.core.calendar import date_range, get_calendar
 from xclim.core.options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -101,10 +103,10 @@ class MissingBase:
           Input data.
         freq : str
           Resampling frequency defining the periods defined in
-          http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling.
+          https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
         src_timestep : {"D", "H"}
           Expected input frequency.
-        **indexer : {dim: indexer, }, optional
+        **indexer : {dim: indexer}, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
           values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
           all values are considered.
@@ -140,13 +142,12 @@ class MissingBase:
 
         if indexer:
             # Create a full synthetic time series and compare the number of days with the original series.
-            t0 = str(start_time[0].date())
-            t1 = str(end_time[-1].date())
-            if isinstance(da.indexes["time"], xr.CFTimeIndex):
-                cal = da.time.encoding.get("calendar")
-                t = xr.cftime_range(t0, t1, freq=src_timestep, calendar=cal)
-            else:
-                t = pd.date_range(t0, t1, freq=src_timestep)
+            t = date_range(
+                start_time[0],
+                end_time[-1],
+                freq=src_timestep,
+                calendar=get_calendar(da),
+            )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
             st = generic.select_time(sda, **indexer)
@@ -172,7 +173,7 @@ class MissingBase:
 
     @staticmethod
     def validate(**kwargs):
-        """Return whether or not arguments are valid."""
+        """Return whether or not options arguments are valid."""
         return True
 
     def __call__(self, **kwargs):
@@ -210,7 +211,7 @@ class MissingAny(MissingBase):
       A boolean array set to True if period has missing values.
     """
 
-    def is_missing(self, null, count):
+    def is_missing(self, null, count):  # noqa
         cond0 = null.count(dim="time") != count  # Check total number of days
         cond1 = null.sum(dim="time") > 0  # Check if any is missing
         return cond0 | cond1
@@ -266,6 +267,16 @@ class MissingWMO(MissingAny):
 
         super().__init__(da, freq, src_timestep, **indexer)
 
+    @classmethod
+    def execute(cls, da, freq, src_timestep, options, indexer):
+        """Create the instance and call it in one operation."""
+        if freq[0] not in ["Y", "A", "Q", "M"]:
+            raise ValueError(
+                "MissingWMO can only be used with Monthly or longer frequencies."
+            )
+        obj = cls(da, "MS", src_timestep, **indexer)
+        return obj(**options).resample(time=freq).any()
+
     def is_missing(self, null, count, nm=11, nc=5):
         from xclim.indices import run_length as rl
 
@@ -296,7 +307,7 @@ class MissingPct(MissingBase):
     freq : str
       Resampling frequency.
     tolerance : float
-      Fraction of missing values that is tolerated.
+      Fraction of missing values that is tolerated [0,1].
     src_timestep : {"D", "H"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
@@ -315,7 +326,7 @@ class MissingPct(MissingBase):
         if tolerance < 0 or tolerance > 1:
             raise ValueError("tolerance should be between 0 and 1.")
 
-        n = count - null.count(dim="time") + null.sum(dim="time")
+        n = count - null.count(dim="time").fillna(0) + null.sum(dim="time").fillna(0)
         return n / count >= tolerance
 
     @staticmethod
@@ -348,16 +359,21 @@ class AtLeastNValid(MissingBase):
       A boolean array set to True if period has missing values.
     """
 
+    def __init__(self, da, freq, src_timestep, **indexer):
+        # No need to compute count, so no check required on `src_timestep`.
+        self.null = self.is_null(da, freq, **indexer)
+        self.count = None  # Not needed
+
     def is_missing(self, null, count, n: int = 20):
         """Check for missing results after a reduction operation.
 
         The result of a reduction operation is considered missing if less than `n` values are valid.
         """
-        nvalid = null.count(dim="time") - null.sum(dim="time")
+        nvalid = null.count(dim="time").fillna(0) - null.sum(dim="time").fillna(0)
         return nvalid < n
 
     @staticmethod
-    def validate(n):
+    def validate(n: int) -> bool:
         return n > 0
 
 
@@ -388,7 +404,7 @@ class FromContext(MissingBase):
         kls = MISSING_METHODS[name]
         opts = OPTIONS[MISSING_OPTIONS][name]
 
-        return kls(da, freq, src_timestep, **indexer)(**opts)
+        return kls.execute(da, freq, src_timestep, opts, indexer)
 
 
 # --------------------------

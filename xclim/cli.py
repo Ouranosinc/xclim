@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
-import inspect
 import warnings
 
 import click
@@ -8,6 +7,7 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
+from xclim.core.utils import InputKind
 
 try:
     from dask.distributed import Client, progress
@@ -70,26 +70,17 @@ def _process_indicator(indicator, ctx, **params):
     dsout = _get_output(ctx)
 
     for key, val in params.items():
-        # A DataArray is expected, it has to come from the input dataset
-        # All other parameters are passed as is or almost
-        if indicator.parameters[key]["annotation"] is xr.DataArray:
-            # Default value is the var name (val == key)
-            if val in dsin:
-                params[key] = dsin[val]
-                if ctx.obj["verbose"]:
-                    click.echo(f"Parsed {key} = dsin.{val}")
-            else:
-                raise click.BadArgumentUsage(
-                    f"Variable {val} absent from input dataset. "
-                    f"You should provide a name with --{key}",
-                    ctx,
-                )
-        elif val == "None" or val is None:
+        if val == "None" or val is None:
             params[key] = None
         elif ctx.obj["verbose"]:
             click.echo(f"Parsed {key} = {val}")
+    params["ds"] = dsin
 
-    out = indicator(**params)
+    try:
+        out = indicator(**params)
+    except xc.core.utils.MissingVariableError as err:
+        raise click.BadArgumentUsage(err.args[0])
+
     if isinstance(out, tuple):
         dsout = dsout.assign(**{var.name: var for var in out})
     else:
@@ -102,20 +93,21 @@ def _create_command(indname):
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator.parameters.items():
-        if param["default"] is inspect._empty:
-            default = name if param["annotation"] is xr.DataArray else None
-            # Required DataArray -> default is a variable name
-            # Required param not a DataArray -> no default
-        else:
-            # Not required but stored default or "None"
-            default = param["default"] or "None"
+        if name in ["ds"] or param["kind"] == InputKind.KWARGS:
+            continue
+        choices = "" if "choices" not in param else f" Choices: {param['choices']}"
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=default,
+                default=param["default"],
                 show_default=True,
-                help=param["description"],
-                metavar="VAR_NAME" if param["annotation"] is xr.DataArray else "TEXT",
+                help=param["description"] + choices,
+                metavar=(
+                    "VAR_NAME"
+                    if param["kind"]
+                    in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+                    else "TEXT"
+                ),
             )
         )
 
@@ -143,7 +135,9 @@ def indices(info):
     rows = []
     for name, indcls in xc.core.indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
-        right = ", ".join([var["long_name"] for var in indcls.cf_attrs])
+        right = ", ".join(
+            [var.get("long_name", var["var_name"]) for var in indcls.cf_attrs]
+        )
         if indcls.cf_attrs[0]["var_name"] != name.lower():
             right += (
                 " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"

@@ -1,9 +1,9 @@
 # noqa: D100
 import xarray
 
-from xclim.core.units import convert_units_to, declare_units, pint_multiply, units
+from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 
-from . import run_length as rl
+from .generic import threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -22,18 +22,17 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "base_flow_index",
-    "consecutive_frost_days",
     "frost_days",
     "ice_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "max_pr_intensity",
+    "snow_depth",
 ]
 
 
-@declare_units("[temperature]", tas="[temperature]")
-def tg_max(tas: xarray.DataArray, freq: str = "YS"):
+@declare_units(tas="[temperature]")
+def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest mean temperature.
 
     The maximum of daily mean temperature.
@@ -41,13 +40,13 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tas]
       Maximum of daily minimum temperature.
 
     Notes
@@ -62,8 +61,8 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS"):
     return tas.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tas="[temperature]")
-def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
+@declare_units(tas="[temperature]")
+def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
@@ -71,13 +70,13 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tas]
       The mean daily temperature at the given time frequency
 
     Notes
@@ -98,12 +97,12 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS"):
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-    arr = tas.resample(time=freq) if freq else tas
+    arr = tas.resample(time=freq)
     return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tas="[temperature]")
-def tg_min(tas: xarray.DataArray, freq: str = "YS"):
+@declare_units(tas="[temperature]")
+def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest mean temperature.
 
     Minimum of daily mean temperature.
@@ -111,13 +110,13 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature [℃] or [K]
+      Mean daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tas]
       Minimum of daily minimum temperature.
 
     Notes
@@ -132,8 +131,8 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS"):
     return tas.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmin="[temperature]")
-def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmin="[temperature]")
+def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest minimum temperature.
 
     The maximum of daily minimum temperature.
@@ -141,13 +140,13 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmin]
       Maximum of daily minimum temperature.
 
     Notes
@@ -162,8 +161,8 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS"):
     return tasmin.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmin="[temperature]")
-def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmin="[temperature]")
+def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean minimum temperature.
 
     Mean of daily minimum temperature.
@@ -171,13 +170,13 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmin]
       Mean of daily minimum temperature.
 
     Notes
@@ -189,12 +188,12 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS"):
 
         TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-    arr = tasmin.resample(time=freq) if freq else tasmin
+    arr = tasmin.resample(time=freq)
     return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmin="[temperature]")
-def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmin="[temperature]")
+def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest minimum temperature.
 
     Minimum of daily minimum temperature.
@@ -202,13 +201,13 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmin]
       Minimum of daily minimum temperature.
 
     Notes
@@ -223,8 +222,8 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS"):
     return tasmin.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmax="[temperature]")
-def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmax="[temperature]")
+def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Highest max temperature.
 
     The maximum value of daily maximum temperature.
@@ -232,13 +231,13 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmax]
       Maximum value of daily maximum temperature.
 
     Notes
@@ -253,8 +252,8 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS"):
     return tasmax.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmax="[temperature]")
-def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmax="[temperature]")
+def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Mean max temperature.
 
     The mean of daily maximum temperature.
@@ -262,13 +261,13 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmax]
       Mean of daily maximum temperature.
 
     Notes
@@ -280,12 +279,12 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS"):
 
         TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-    arr = tasmax.resample(time=freq) if freq else tasmax
+    arr = tasmax.resample(time=freq)
     return arr.mean(dim="time", keep_attrs=True)
 
 
-@declare_units("[temperature]", tasmax="[temperature]")
-def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmax="[temperature]")
+def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Lowest max temperature.
 
     The minimum of daily maximum temperature.
@@ -293,13 +292,13 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [same units as tasmax]
       Minimum of daily maximum temperature.
 
     Notes
@@ -314,96 +313,10 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS"):
     return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
 
 
-@declare_units("", q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS"):  # noqa: D401
-    r"""Base flow index.
-
-    Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
-
-    Parameters
-    ----------
-    q : xarray.DataArray
-      Rate of river discharge [m³/s]
-    freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
-
-    Returns
-    -------
-    xarray.DataArray
-      Base flow index.
-
-    Notes
-    -----
-    Let :math:`\mathbf{q}=q_0, q_1, \ldots, q_n` be the sequence of daily discharge and :math:`\overline{\mathbf{q}}`
-    the mean flow over the period. The base flow index is given by:
-
-    .. math::
-
-       \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
-
-
-    where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
-
-    .. math::
-
-       \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
-    """
-    m7 = (
-        q.rolling(time=7, center=True)
-        .mean(allow_lazy=True, skipna=False)
-        .resample(time=freq)
-    )
-    mq = q.resample(time=freq)
-
-    m7m = m7.min(dim="time")
-    return m7m / mq.mean(dim="time")
-
-
-@declare_units("days", tasmin="[temperature]")
-def consecutive_frost_days(tasmin: xarray.DataArray, freq: str = "AS-JUL"):
-    r"""Maximum number of consecutive frost days (Tmin < 0℃).
-
-    Resample the daily minimum temperature series by computing the maximum number
-    of days below the freezing point over each period.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature values [℃] or [K]
-    freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
-
-    Returns
-    -------
-    xarray.DataArray
-      The maximum number of consecutive days below the freezing point.
-
-    Notes
-    -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily minimum temperature series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i < 0^\circ C] \neq [p_{i+1} <
-    0^\circ C]`, that is, the days when the temperature crosses the freezing point.
-    Then the maximum number of consecutive frost days is given by
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
-    """
-    tu = units.parse_units(tasmin.attrs["units"].replace("-", "**-"))
-    fu = "degC"
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    group = (tasmin < frz).resample(time=freq)
-    return group.map(rl.longest_run, dim="time")
-
-
-@declare_units("days", tasmin="[temperature]")
-def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def frost_days(
+    tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+) -> xarray.DataArray:
     r"""Frost days index.
 
     Number of days where daily minimum temperatures are below 0℃.
@@ -411,13 +324,15 @@ def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature [℃] or [K]
+      Minimum daily temperature.
+    thresh : str
+      Freezing temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Frost days index.
 
     Notes
@@ -429,17 +344,15 @@ def frost_days(tasmin: xarray.DataArray, freq: str = "YS"):
 
         TN_{ij} < 0℃
     """
-    tu = units.parse_units(tasmin.attrs["units"].replace("-", "**-"))
-    fu = "degC"
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    f = (tasmin < frz) * 1
-    return f.resample(time=freq).sum(dim="time")
+    frz = convert_units_to(thresh, tasmin)
+    out = threshold_count(tasmin, "<", frz, freq)
+    return to_agg_units(out, tasmin, "count")
 
 
-@declare_units("days", tasmax="[temperature]")
-def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):  # noqa: D401
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def ice_days(
+    tasmax: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
     Number of days where daily maximum temperatures are below 0℃.
@@ -447,13 +360,15 @@ def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):  # noqa: D401
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature [℃] or [K]
+      Maximum daily temperature.
+    thresh : str
+      Freezing temperature.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [time]
       Number of ice/freezing days.
 
     Notes
@@ -465,17 +380,15 @@ def ice_days(tasmax: xarray.DataArray, freq: str = "YS"):  # noqa: D401
 
         TX_{ij} < 0℃
     """
-    tu = units.parse_units(tasmax.attrs["units"].replace("-", "**-"))
-    fu = "degC"
-    frz = 0
-    if fu != tu:
-        frz = units.convert(frz, fu, tu)
-    f = (tasmax < frz) * 1
-    return f.resample(time=freq).sum(dim="time")
+    frz = convert_units_to(thresh, tasmax)
+    out = threshold_count(tasmax, "<", frz, freq)
+    return to_agg_units(out, tasmax, "count")
 
 
-@declare_units("mm/day", pr="[precipitation]")
-def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
+@declare_units(pr="[precipitation]")
+def max_1day_precipitation_amount(
+    pr: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
@@ -483,14 +396,14 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
+      Daily precipitation values.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
-      The highest 1-day precipitation value at the given time frequency.
+    xarray.DataArray, [same units as pr]
+      The highest 1-period precipitation flux value at the given time frequency.
 
     Notes
     -----
@@ -509,14 +422,13 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS"):
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
-    out = pr.resample(time=freq).max(dim="time", keep_attrs=True)
-    return convert_units_to(out, "mm/day", "hydro")
+    return pr.resample(time=freq).max(dim="time", keep_attrs=True)
 
 
-@declare_units("mm", pr="[precipitation]")
+@declare_units(pr="[precipitation]")
 def max_n_day_precipitation_amount(
     pr: xarray.DataArray, window: int = 1, freq: str = "YS"
-):
+) -> xarray.DataArray:
     r"""Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
@@ -525,16 +437,16 @@ def max_n_day_precipitation_amount(
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation values [Kg m-2 s-1] or [mm]
+      Daily precipitation values.
     window : int
       Window size in days.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
-      The highest cumulated n-day precipitation value at the given time frequency.
+    xarray.DataArray, [length]
+      The highest cumulated n-period precipitation value at the given time frequency.
 
     Examples
     --------
@@ -546,16 +458,18 @@ def max_n_day_precipitation_amount(
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
-    arr = pr.rolling(time=window).sum(allow_lazy=True, skipna=False)
+    pram = rate2amount(pr)
+    arr = pram.rolling(time=window).sum(skipna=False)
     out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
 
-    out.attrs["units"] = pr.units
-    # Adjust values and units to make sure they are daily
-    return pint_multiply(out, 1 * units.day, "mm")
+    out.attrs["units"] = pram.units
+    return out
 
 
-@declare_units("mm/h", pr="[precipitation]")
-def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
+@declare_units(pr="[precipitation]")
+def max_pr_intensity(
+    pr: xarray.DataArray, window: int = 1, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest precipitation intensity over a n-hour moving window.
 
     Calculate the n-hour rolling average of the original hourly total precipitation series
@@ -564,16 +478,16 @@ def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
     Parameters
     ----------
     pr : xarray.DataArray
-      Hourly precipitation values [Kg m-2 s-1] or [mm]
+      Hourly precipitation values.
     window : int
       Window size in hours.
     freq : str
-      Resampling frequency; Defaults to "YS" (yearly).
+      Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
-      The highest cumulated n-hour precipitation intensity (mm/h) at the given time frequency.
+    xarray.DataArray, [same units as pr]
+      The highest cumulated n-hour precipitation intensity at the given time frequency.
 
     Examples
     --------
@@ -584,8 +498,34 @@ def max_pr_intensity(pr, window: int = 1, freq: str = "YS"):
     # TODO
     """
     # Rolling sum of the values
-    arr = pr.rolling(time=window).mean(allow_lazy=True, skipna=False)
-    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
+    arr = pr.rolling(time=window).mean(skipna=False)
+    out = arr.resample(time=freq).max(dim="time")
 
     out.attrs["units"] = pr.units
     return out
+
+
+@declare_units(snd="[length]")
+def snow_depth(
+    snd: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Mean of daily average snow depth.
+
+    Resample the original daily mean snow depth series by taking the mean over each period.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily snow depth.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as snd]
+      The mean daily snow depth at the given time frequency
+
+    """
+    arr = snd.resample(time=freq)
+    return arr.mean(dim="time", keep_attrs=True)

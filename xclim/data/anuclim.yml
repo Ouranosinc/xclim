@@ -1,0 +1,136 @@
+realm: atmos
+doc: |
+  ===============
+  ANUCLIM indices
+  ===============
+
+  The ANUCLIM (v6.1) software package' BIOCLIM sub-module produces a set of Bioclimatic
+  parameters derived values of temperature and precipitation. The methods in this module
+  are wrappers around a subset of corresponding methods of `xclim.indices`. Note that none
+  of the checks performed by the `xclim.utils.Indicator` class (like with `xclim.atmos`
+  indicators) are performed in this module.
+
+  Futhermore, according to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6),
+  input values should be at a weekly (or monthly) frequency.  However, the xclim.indices
+  implementation here will calculate the result with input data of any frequency.
+
+  .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
+references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
+indices:
+  P1_AnnMeanTemp:
+    base: tg_mean
+    period: annual
+  P2_MeanDiurnalRange:
+    base: dtr
+    period: annual
+  P3_Isothermality:
+    period: annual
+    index_function:
+      name: isothermality
+  P4_TempSeasonality:
+    period: annual
+    index_function:
+      name: temperature_seasonality
+  P5_MaxTempWarmestPeriod:
+    base: tx_max
+    period: annual
+    output:
+      long_name: Max temperature of warmest period
+  P6_MinTempColdestPeriod:
+    base: tn_min
+    period: annual
+    output:
+      long_name: Min temperature of coldest period
+  P7_TempAnnualRange:
+    base: etr
+    output:
+      long_name: Temperature annual range
+  P8_MeanTempWettestQuarter:
+    period: annual
+    output:
+      units: K
+    index_function:
+      name: tg_mean_wetdry_quarter
+      parameters:
+        op: wettest
+  P9_MeanTempDriestQuarter:
+    period: annual
+    output:
+      units: K
+    index_function:
+      name: tg_mean_wetdry_quarter
+      parameters:
+        op: driest
+  P10_MeanTempWarmestQuarter:
+    period: annual
+    output:
+      units: K
+    index_function:
+      name: tg_mean_warmcold_quarter
+      parameters:
+        op: warmest
+  P11_MeanTempColdestQuarter:
+    period: annual
+    output:
+      units: K
+    index_function:
+      name: tg_mean_warmcold_quarter
+      parameters:
+        op: coldest
+  P12_AnnualPrecip:
+    period: annual
+    base: prcptot
+    output:
+      long_name: Annual precipitation
+  P13_PrecipWettestPeriod:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_wetdry_period
+      parameters:
+        op: wettest
+  P14_PrecipDriestPeriod:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_wetdry_period
+      parameters:
+        op: driest
+  P15_PrecipSeasonality:
+    period: annual
+    index_function:
+      name: precip_seasonality
+  P16_PrecipWettestQuarter:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_wetdry_quarter
+      parameters:
+        op: wettest
+  P17_PrecipDriestQuarter:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_wetdry_quarter
+      parameters:
+        op: driest
+  P18_PrecipWarmestQuarter:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_warmcold_quarter
+      parameters:
+        op: warmest
+  P19_PrecipColdestQuarter:
+    period: annual
+    output:
+      units: mm
+    index_function:
+      name: prcptot_warmcold_quarter
+      parameters:
+        op: coldest

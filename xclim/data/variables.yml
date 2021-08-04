@@ -1,0 +1,134 @@
+variables:
+  areacello:
+    canonical_units: m2
+    cell_methods:
+    - area: sum
+    description: Cell area (over the ocean).
+    standard_name: cell_area
+  hurs:
+    canonical_units: '%'
+    cell_methods:
+    - time: mean
+    description: Relative humidity.
+    standard_name: relative_humidity
+  huss:
+    canonical_units: '1'
+    cell_methods:
+    - time: mean
+    description: Specific humidity.
+    standard_name: specific_humidity
+  lat:
+    canonical_units: degrees_north
+    description: Latitude.
+    standard_name: latitude
+  pr:
+    canonical_units: kg m-2 s-1
+    cell_methods:
+    - time: mean
+    description: Surface precipitation flux (all phases).
+    standard_name: precipitation_flux
+  prsn:
+    canonical_units: kg m-2 s-1
+    cell_methods:
+    - time: mean
+    description: Surface snowfall flux.
+    standard_name: snowfall_flux
+  ps:
+    canonical_units: Pa
+    cell_methods:
+    - time: mean
+    description: Air pressure at surface
+    standard_name: surface_air_pressure
+  psl:
+    canonical_units: Pa
+    cell_methods:
+    - time: mean
+    description: Air pressure at sea level.
+    standard_name: air_pressure_at_sea_level
+  sfcWind:
+    canonical_units: m s-1
+    cell_methods:
+    - time: mean
+    description: Surface wind speed.
+    standard_name: wind_speed
+  sfcWindfromdir:
+    cmip6: False
+    canonical_units: degree
+    cell_methods:
+    - time: mean
+    description: Surface wind direction of provenance.
+    standard_name: wind_from_direction
+  siconc:
+    canonical_units: '%'
+    cell_methods:
+    - time: mean
+    description: Sea ice concentration (area fraction).
+    standard_name: sea_ice_area_fraction
+  snc:
+    canonical_units: '%'
+    cell_methods:
+    - time: mean
+    description: Surface area fraction covered by snow.
+    standard_name: surface_snow_area_fraction
+  snd:
+    canonical_units: m
+    cell_methods:
+    - time: mean
+    description: Surface snow thickness.
+    standard_name: surface_snow_thickness
+  snw:
+    canonical_units: kg m-2
+    cell_methods:
+    - time: mean
+    description: Surface snow amount.
+    standard_name: surface_snow_amount
+  sund:
+    cmip6: False
+    canonical_units: s
+    cell_methods:
+    - time: mean
+    description: Duration of sunshine.
+    standard_name: duration_of_sunshine
+  tas:
+    canonical_units: K
+    cell_methods:
+    - time: mean
+    description: Mean surface temperature.
+    standard_name: air_temperature
+  tasmax:
+    canonical_units: K
+    cell_methods:
+    - time: maximum
+    description: Maximum surface temperature.
+    standard_name: air_temperature
+  tasmin:
+    canonical_units: K
+    cell_methods:
+    - time: minimum
+    description: Minimum surface temperature.
+    standard_name: air_temperature
+  tdps:
+    canonical_units: K
+    cell_methods:
+    - time: mean
+    description: Mean surface dew point temperaure.
+    standard_name: dew_point_temperature
+  uas:
+    canonical_units: m s-1
+    cell_methods:
+    - time: mean
+    description: Eastward component of the wind velocity.
+    standard_name: eastward_wind
+  vas:
+    canonical_units: m s-1
+    cell_methods:
+    - time: mean
+    description: Northward component of the wind velocity.
+    standard_name: northward_wind
+  wsgsmax:
+    cmip6: False
+    canonical_units: m s-1
+    cell_methods:
+    - time: maximum
+    description: Maximum surface wind speed.
+    standard_name: wind_speed_of_gust

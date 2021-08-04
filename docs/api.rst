@@ -2,6 +2,14 @@
 API
 ===
 
+Indicators
+==========
+
+.. toctree::
+
+  indicators_api
+
+
 Indices
 =======
 
@@ -9,27 +17,28 @@ Indices
 
    indices
 
-Indices submodules
-------------------
+Ensembles module
+================
 
+.. automodule:: xclim.ensembles
+   :members: create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
 
-.. automodule:: xclim.indices.generic
-   :noindex:
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. automodule:: xclim.ensembles._reduce
 
-.. automodule:: xclim.indices.run_length
-   :noindex:
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. Use of autofunction is so that paths do not include private modules.
+.. autofunction:: xclim.ensembles.kkz_reduce_ensemble
+.. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
+.. autofunction:: xclim.ensembles.plot_rsqprofile
+
+.. automodule:: xclim.ensembles._robustness
+
+.. autofunction:: xclim.ensembles.change_significance
+.. autofunction:: xclim.ensembles.robustness_coefficient
 
 Indicator tools
 ===============
 
 .. automodule:: xclim.core.indicator
-   :noindex:
    :members:
    :member-order: bysource
    :show-inheritance:
@@ -39,11 +48,12 @@ Unit handling module
 ====================
 
 .. automodule:: xclim.core.units
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
+Statistical Downscaling and Bias Adjustment
+===========================================
 
 .. toctree::
 
@@ -54,46 +64,58 @@ Other utilities
 ===============
 
 .. automodule:: xclim.core.calendar
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.core.checks
-   :noindex:
+.. automodule:: xclim.core.cfchecks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: xclim.core.datachecks
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: xclim.core.formatting
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: xclim.core.options
+   :members: set_options
+
 .. automodule:: xclim.core.utils
-   :noindex:
    :members:
    :undoc-members:
+   :member-order: bysource
    :show-inheritance:
 
 
 Other xclim modules
 ===================
 
-ensembles module
-----------------
+Spatial Analogs module
+----------------------
 
-.. automodule:: xclim.ensembles
+.. automodule:: xclim.analog
    :members:
-   :undoc-members:
-   :show-inheritance:
 
+Testing module
+--------------
 
-subset module
+.. automodule:: xclim.testing
+    :members:
+
+Subset module
 -------------
 .. warning::
-    Subsetting is now offered via `clisops`. The functions offered by clisops
-    will be described here once the subsetting functions API is made available.
-    For now, refer to their documentation here:
-    :doc:`clisops subset examples <clisops:notebooks/subset>`
+    Subsetting is now offered via `clisops.core.subset`. The subsetting functions offered by `clisops`
+    are available at the following link:
+
+:doc:`CLISOPS API <clisops:api>`
+
+.. note::
+    For more information about `clisops` refer to their documentation here:
+    :doc:`CLISOPS documentation <clisops:readme>`
