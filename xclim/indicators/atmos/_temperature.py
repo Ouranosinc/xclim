@@ -72,10 +72,6 @@ __all__ = [
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
-    "cold_and_dry_days",
-    "warm_and_dry_days",
-    "warm_and_wet_days",
-    "cold_and_wet_days",
 ]
 
 
@@ -875,44 +871,4 @@ latitude_temperature_index = Temp(
     compute=wrapped_partial(
         indices.latitude_temperature_index, suggested=dict(lat_factor=60, lat=_empty)
     ),
-)
-
-cold_and_dry_days = Temp(
-    identifier="cold_and_dry_days",
-    units="days",
-    long_name="Cold and dry days",
-    title="Cold and dry days",
-    description="{freq} number of days where tas < 25th percentile and pr < 25th percentile",
-    cell_methods="time: mean within days time: sum over days",
-    compute=indices.cold_and_dry_days,
-)
-
-warm_and_dry_days = Temp(
-    identifier="warm_and_dry_days",
-    units="days",
-    long_name="warm and dry days",
-    title="warm and dry days",
-    description="{freq} number of days where tas > 75th percentile and pr < 25th percentile",
-    cell_methods="time: mean within days time: sum over days",
-    compute=indices.warm_and_dry_days,
-)
-
-warm_and_wet_days = Temp(
-    identifier="warm_and_wet_days",
-    units="days",
-    long_name="warm and wet days",
-    title="warm and wet days",
-    description="{freq} number of days where tas > 75th percentile and pr > 75th percentile",
-    cell_methods="time: mean within days time: sum over days",
-    compute=indices.warm_and_wet_days,
-)
-
-cold_and_wet_days = Temp(
-    identifier="cold_and_wet_days",
-    units="days",
-    long_name="cold and wet days",
-    title="cold and wet days",
-    description="{freq} number of days where tas < 25th percentile and pr > 75th percentile",
-    cell_methods="time: mean within days time: sum over days",
-    compute=indices.cold_and_wet_days,
 )
