@@ -7,7 +7,7 @@ History
 
 Announcements
 ~~~~~~~~~~~~~
-* It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It was hidden from `xclim.sdba` but it is still accessible through `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is on-going and a better version will be implemented in a future version.
+* It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
 
 New indicators
 ~~~~~~~~~~~~~~

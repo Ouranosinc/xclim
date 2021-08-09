@@ -540,7 +540,7 @@ class ExtremeValues(BaseAdjustment):
         .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
         """
         warn(
-            "Work is on going on the ExtremeValues adjustment. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
+            "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
         )
         super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh)
 
