@@ -371,7 +371,7 @@ def infer_sampling_units(
     if freq is None:
         freq = deffreq
 
-    multi, base, _ = parse_offset(freq)
+    multi, base, _, _ = parse_offset(freq)
     try:
         return int(multi or "1"), FREQ_UNITS[base]
     except KeyError:

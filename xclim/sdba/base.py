@@ -623,7 +623,7 @@ def _get_number_of_elements_by_year(time):
             "For moving window computations, the data must have a uniform calendar (360_day, no_leap or all_leap)"
         )
 
-    mult, freq, _ = parse_offset(xr.infer_freq(time))
+    mult, freq, _, _ = parse_offset(xr.infer_freq(time))
     days_in_year = max_doy[cal]
     elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
     N_in_year = elements_in_year.get(freq, 1) / int(mult or 1)
