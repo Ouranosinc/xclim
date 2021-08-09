@@ -18,6 +18,12 @@ New indicators
 * ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
 
+Bug fixes
+~~~~~~~~~~~~~~
+* Various bug fixes in bootstrapping:
+   - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
+   - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
+
 0.28.1 (2021-07-29)
 -------------------
 
