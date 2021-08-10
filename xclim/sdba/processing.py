@@ -73,31 +73,36 @@ def adapt_freq(
     # The proportion of values <= thresh in sim that need to be corrected, compared to ref
     dP0 = (P0_sim - P0_ref) / P0_sim
 
-    # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
-    # The value in ref with the same rank as the first non zero value in sim.
-    # pth is meaningless when freq. adaptation is not needed
-    pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
-
-    if "window" in ds.sim.dims:
-        # P0_sim was computed using the window, but only the original time series is corrected.
-        sim = ds.sim.isel(window=(ds.sim.window.size - 1) // 2)
-        dim = [dim[0]]
+    if dP0.isnull().all():
+        # All NaN slice.
+        pth = dP0.copy()
+        sim_ad = ds.sim.copy()
     else:
-        sim = ds.sim
+        # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
+        # The value in ref with the same rank as the first non zero value in sim.
+        # pth is meaningless when freq. adaptation is not needed
+        pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
 
-    # Get the percentile rank of each value in sim.
-    rank = sim.rank(dim[0], pct=True)
+        if "window" in ds.sim.dims:
+            # P0_sim was computed using the window, but only the original time series is corrected.
+            sim = ds.sim.isel(window=(ds.sim.window.size - 1) // 2)
+            dim = [dim[0]]
+        else:
+            sim = ds.sim
 
-    # Frequency-adapted sim
-    sim_ad = sim.where(
-        dP0 < 0,  # dP0 < 0 means no-adaptation.
-        sim.where(
-            (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
-            # Generate random numbers ~ U[T0, Pth]
-            (pth.broadcast_like(sim) - thresh) * np.random.random_sample(size=sim.shape)
-            + thresh,
-        ),
-    )
+        # Get the percentile rank of each value in sim.
+        rank = sim.rank(dim[0], pct=True)
+
+        # Frequency-adapted sim
+        sim_ad = sim.where(
+            dP0 < 0,  # dP0 < 0 means no-adaptation.
+            sim.where(
+                (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
+                # Generate random numbers ~ U[T0, Pth]
+                (pth.broadcast_like(sim) - thresh) * np.random.random_sample(size=sim.shape)
+                + thresh,
+            ),
+        )    # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
 
     # Set some metadata
     sim_ad.attrs.update(ds.sim.attrs)
