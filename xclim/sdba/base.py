@@ -11,6 +11,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 
 from xclim.core.calendar import days_in_year, get_calendar, max_doy, parse_offset
+from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
 
@@ -558,9 +559,21 @@ def map_blocks(reduces=None, **outvars):
                 # duck empty calls dask if chunks is not None
                 tmpl[var] = duck_empty(dims, sizes, chunks)
 
+            if OPTIONS[SDBA_ENCODE_CF]:
+                # Optimization to circumvent the slow pickle.dumps(cftime_array)
+                for name, crd in ds.coords.items():
+                    if xr.core.common._contains_cftime_datetimes(crd.values):
+                        ds[name] = xr.conventions.encode_cf_variable(crd)
+
             def _call_and_transpose_on_exit(dsblock, **kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
-                out = func(dsblock, **kwargs).transpose(*all_dims)
+                try:
+                    dsblock = xr.decode_cf(dsblock, decode_timedelta=False)
+                    out = func(dsblock, **kwargs).transpose(*all_dims)
+                except Exception as err:
+                    raise ValueError(
+                        f"{func.__name__} failed on block with coords : {dsblock.coords}."
+                    ) from err
                 for name, crd in dsblock.coords.items():
                     if name not in out.coords and set(crd.dims).issubset(out.dims):
                         out = out.assign_coords({name: dsblock[name]})
