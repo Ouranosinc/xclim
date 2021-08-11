@@ -49,44 +49,66 @@ __all__ = [
 ]
 
 
-def _raise_on_multiple_chunk(da, main_dim):
-    if da.chunks is not None and len(da.chunks[da.get_axis_num(main_dim)]) > 1:
-        raise ValueError(
-            f"Multiple chunks along the main adjustment dimension {main_dim} is not supported."
-        )
-
-
 class BaseAdjustment(ParametrizableWithDataset):
     """Base class for adjustment objects.
 
+    Children classes should implement the `train` and / or the `adjust` method.
+
+    This base class defined the basic input and output checks. It should only be used for a real adjustment
+    if neither `TwoStepAdjustment` or `SingleStepAdjustment` fit the algorithm.
+    """
+
+    _allow_diff_calendars = True
+    _attribute = "_xclim_adjustment"
+
+    @classmethod
+    def _check_inputs(cls, *inputs, group):
+        """
+        Raises an error if there are chunks along the main dimension.
+        Also raises if cls._allow_diff_calendars is False and calendars differ.
+        """
+        for inda in inputs:
+            if uses_dask(inda) and len(inda.chunks[inda.get_axis_num(group.dim)]) > 1:
+                raise ValueError(
+                    f"Multiple chunks along the main adjustment dimension {group.dim} is not supported."
+                )
+
+        # All calendars used by the inputs
+        calendars = {get_calendar(inda, group.dim) for inda in inputs}
+        if not cls._allow_diff_calendars and len(calendars) > 1:
+            raise ValueError(
+                "Inputs are defined on different calendars,"
+                f" this is not supported for {cls.__name__} adjustment."
+            )
+
+        if group.prop == "dayofyear" and (
+            "default" in calendars or "standard" in calendars
+        ):
+            warn(
+                "Strange results could be returned when using dayofyear grouping "
+                "on data defined in the proleptic_greogrian calendar "
+            )
+
+
+class TwoStepAdjustment(BaseAdjustment):
+    """Base class for adjustment objects obeying the train-adjust scheme.
+
     Children classes should implement these methods:
 
-    __init__(**kwargs)
-      Patameters should be set either by passing kwargs to the base class. with super().__init__(**kwarga),
-      or through bracket access (self['abc'] = abc). All parameters should be simple python literals or other
-      `Parametrizable` subclasses instances. See doc of :py:class:`Parametrizable`.
-
-    _train(ref, hist)
-      Receiving the training target and data, returning a training dataset.
+    @classmethod
+    _train(ref, hist, **kwargs)
+      Receiving the training target and data, returning a training dataset and parameters to store in the object.
 
     _adjust(sim, **kwargs)
       Receiving the projected data and some arguments, returning the `scen` dataarray.
 
     """
 
-    _allow_diff_calendars = True
-    _attribute = "_xclim_adjustment"
     _repr_hide_params = ["hist_calendar"]
 
-    @property
-    def _trained(self):
-        return hasattr(self, "ds")
-
-    def train(
-        self,
-        ref: DataArray,
-        hist: DataArray,
-    ):
+    @parse_group
+    @classmethod
+    def train(cls, ref: DataArray, hist: DataArray, **kwargs):
         """Train the adjustment object. Refer to the class documentation for the algorithm details.
 
         Parameters
@@ -96,25 +118,14 @@ class BaseAdjustment(ParametrizableWithDataset):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
-        if self._trained:
-            warn("train() was already called, overwriting old results.")
+        if "group" in kwargs:
+            cls._check_inputs(ref, hist, group=kwargs["group"])
 
-        if hasattr(self, "group"):
-            # Right now there is no other way of getting the main adjustment dimension
-            _raise_on_multiple_chunk(ref, self.group.dim)
-            _raise_on_multiple_chunk(hist, self.group.dim)
-
-        if not self._allow_diff_calendars and get_calendar(
-            ref, self.group.dim
-        ) != get_calendar(hist, self.group.dim):
-            raise ValueError(
-                "Input ref and hist are defined on different calendars,"
-                f" this is not supported for {self.__class__.__name__} adjustment."
-            )
-
-        ds = self._train(ref, hist)
-        self["hist_calendar"] = get_calendar(hist)
-        self.set_dataset(ds)
+        ds, params = cls._train(ref, hist, **kwargs)
+        obj = cls(**params)
+        obj["hist_calendar"] = get_calendar(hist)
+        obj.set_dataset(ds)
+        return obj
 
     def adjust(self, sim: DataArray, **kwargs):
         """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -126,26 +137,9 @@ class BaseAdjustment(ParametrizableWithDataset):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        if not self._trained:
-            raise ValueError("train() must be called before adjusting.")
 
-        if hasattr(self, "group"):
-            # Right now there is no other way of getting the main adjustment dimension
-            _raise_on_multiple_chunk(sim, self.group.dim)
-
-            if (
-                self.group.prop == "dayofyear"
-                and get_calendar(sim) != self.hist_calendar
-            ):
-                warn(
-                    (
-                        "This adjustment was trained on a simulation with the "
-                        f"{self._hist_calendar} calendar but the sim input uses "
-                        f"{get_calendar(sim)}. This is not recommended with dayofyear "
-                        "grouping and could give strange results."
-                    ),
-                    stacklevel=4,
-                )
+        if "group" in self:
+            self._check_inputs(sim, group=self.group)
 
         out = self._adjust(sim, **kwargs)
 
@@ -173,21 +167,63 @@ class BaseAdjustment(ParametrizableWithDataset):
         super().set_dataset(ds)
         self.ds.attrs["adj_params"] = str(self)
 
-    def _train(self, ref: DataArray, hist: DataArray):
+    @classmethod
+    def _train(cls, ref: DataArray, hist: DataArray, *kwargs):
         raise NotImplementedError
 
     def _adjust(self, sim, **kwargs):
         raise NotImplementedError
 
 
-class EmpiricalQuantileMapping(BaseAdjustment):
+class SingleStepAdjustment(BaseAdjustment):
+    """Adjustment with a single step, not fittable into the train-adjust scheme.
+
+    Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
+    and returning the scen dataset/array.
+    """
+
+    @parse_group
+    @classmethod
+    def adjust(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        **kwargs,
+    ):
+
+        if "group" in kwargs:
+            cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+
+        out = cls._adjust(ref, hist, sim, **kwargs)
+
+        if isinstance(out, xr.DataArray):
+            out = out.rename("scen").to_dataset()
+
+        scen = out.scen
+
+        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
+        scen.attrs["xclim_history"] = update_history(
+            f"Bias-adjusted with {infostr}", sim
+        )
+        scen.attrs["bias_adjustment"] = infostr
+
+        if OPTIONS[SDBA_EXTRA_OUTPUT]:
+            return out
+        return scen
+
+
+class EmpiricalQuantileMapping(TwoStepAdjustment):
     """Conventional quantile mapping adjustment."""
 
     _allow_diff_calendars = False
 
-    @parse_group
-    def __init__(
-        self,
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
         *,
         nquantiles: int = 20,
         kind: str = ADDITIVE,
@@ -226,22 +262,15 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         ----------
         Dequé, M. (2007). Frequency of precipitation and temperature extremes over France in an anthropogenic scenario: Model results and statistical correction according to observed values. Global and Planetary Change, 57(1–2), 16–26. https://doi.org/10.1016/j.gloplacha.2006.11.030
         """
-        super().__init__(
-            nquantiles=nquantiles,
-            kind=kind,
-            group=group,
-        )
-
-    def _train(self, ref, hist):
-        if np.isscalar(self.nquantiles):
-            quantiles = equally_spaced_nodes(self.nquantiles, eps=1e-6)
+        if np.isscalar(nquantiles):
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
         else:
-            quantiles = self.nquantiles
+            quantiles = nquantiles
 
         ds = eqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
-            group=self.group,
-            kind=self.kind,
+            group=group,
+            kind=kind,
             quantiles=quantiles,
         )
 
@@ -253,7 +282,7 @@ class EmpiricalQuantileMapping(BaseAdjustment):
             standard_name="Model quantiles",
             long_name="Quantiles of model on the reference period",
         )
-        return ds
+        return ds, {"group": group, "kind": kind}
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
         return qm_adjust(
@@ -265,17 +294,20 @@ class EmpiricalQuantileMapping(BaseAdjustment):
         ).scen
 
 
-class DetrendedQuantileMapping(EmpiricalQuantileMapping):
+class DetrendedQuantileMapping(TwoStepAdjustment):
     """Quantile mapping using normalized and detrended data."""
 
-    @parse_group
-    def __init__(
-        self,
+    _allow_diff_calendars = False
+
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
         *,
         nquantiles: int = 20,
         kind: str = ADDITIVE,
         group: Union[str, Grouper] = "time",
-        norm_window: int = 1,
     ):
         r"""Detrended Quantile Mapping bias-adjustment.
 
@@ -307,8 +339,6 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         group : Union[str, Grouper]
           The grouping information used in the quantile mapping process. See :py:class:`xclim.sdba.base.Grouper` for details.
           the normalization step is always performed on each day of the year.
-        norm_window : 1
-          The window size used in the normalization grouping. Defaults to 1.
 
         In adjustment:
 
@@ -318,12 +348,6 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
           The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree. Defaults to 1 (linear detrending)
         extrapolation : {'constant', 'nan'}
           The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
-        normalize_sim : bool
-          If True, scaled sim is normalized by its "dayofyear" mean and then detrended using `group`.
-          The norm is broadcasted and added back on scen using `interp='nearest'`, ignoring the passed `interp`.
-          If False, scaled sim is detrended per "dayofyear".
-          This is useful on large datasets using dask, in which case "dayofyear" is a very small division,
-          because normalization is a more efficient operation than detrending for similarly sized groups.
 
         References
         ----------
@@ -334,22 +358,16 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
                 f"Using DQM with a grouping other than 'dayofyear' is not recommended (received {group.name})."
             )
 
-        super().__init__(
-            nquantiles=nquantiles,
-            kind=kind,
-            group=group,
-        )
-
-    def _train(self, ref, hist):
-        quantiles = np.array(
-            equally_spaced_nodes(self.nquantiles, eps=1e-6), dtype="float32"
-        )
+        if np.isscalar(nquantiles):
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+        else:
+            quantiles = nquantiles
 
         ds = dqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
-            group=self.group,
+            group=group,
             quantiles=quantiles,
-            kind=self.kind,
+            kind=kind,
         )
 
         ds.af.attrs.update(
@@ -364,7 +382,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
             standard_name="Scaling factor",
             description="Scaling factor making the mean of hist match the one of hist.",
         )
-        return ds
+        return ds, {"group": group, "kind": kind}
 
     def _adjust(
         self,
@@ -401,50 +419,46 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
-    """Quantile mapping with sim's quantiles computed independently."""
+    r"""Quantile Delta Mapping bias-adjustment.
 
-    def __init__(self, **kwargs):
-        r"""Quantile Delta Mapping bias-adjustment.
+    Adjustment factors are computed between the quantiles of `ref` and `hist`.
+    Quantiles of `sim` are matched to the corresponding quantiles of `hist` and corrected accordingly.
 
-        Adjustment factors are computed between the quantiles of `ref` and `hist`.
-        Quantiles of `sim` are matched to the corresponding quantiles of `hist` and corrected accordingly.
+    .. math::
 
-        .. math::
+        sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
 
-            sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
+    where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
+    The algorithm is based on the "QDM" method of [Cannon2015]_.
 
-        where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
-        The algorithm is based on the "QDM" method of [Cannon2015]_.
+    Parameters
+    ----------
+    At instantiation:
 
-        Parameters
-        ----------
-        At instantiation:
+    nquantiles : int
+      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
+    kind : {'+', '*'}
+      The adjustment kind, either additive or multiplicative.
+    group : Union[str, Grouper]
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
 
-        nquantiles : int
-          The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-        kind : {'+', '*'}
-          The adjustment kind, either additive or multiplicative.
-        group : Union[str, Grouper]
-          The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+    In adjustment:
 
-        In adjustment:
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
-        interp : {'nearest', 'linear', 'cubic'}
-          The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
-        extrapolation : {'constant', 'nan'}
-          The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+    Extra diagnostics
+    -----------------
+    In adjustment:
 
-        Extra diagnostics
-        -----------------
-        In adjustment:
+    quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
 
-        quantiles : The quantile of each value of `sim`. The adjustment factor is interpolated using this as the "quantile" axis on `ds.af`.
-
-        References
-        ----------
-        Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
-        """
-        super().__init__(**kwargs)
+    References
+    ----------
+    Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    """
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
         out = qdm_adjust(
@@ -460,13 +474,17 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         return out.scen
 
 
-class ExtremeValues(BaseAdjustment):
+class ExtremeValues(TwoStepAdjustment):
     """Second order adjustment for extreme values."""
 
-    def __init__(
-        self,
-        cluster_thresh: str,
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
         *,
+        ref_params: xr.Dataset = None,
+        cluster_thresh: str,
         q_thresh: float = 0.95,
     ):
         r"""Adjustement correction for extreme values.
@@ -486,9 +504,6 @@ class ExtremeValues(BaseAdjustment):
           The threshold value for defining clusters.
         q_thresh : float
           The quantile of "extreme" values, [0, 1[.
-
-        In training:
-
         ref_params :  xr.DataArray
           Distribution parameters to use in place of a fitted dist on `ref`.
 
@@ -542,34 +557,14 @@ class ExtremeValues(BaseAdjustment):
         warn(
             "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
         )
-        super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh)
-
-    def train(self, ref, hist, ref_params=None):
-        """Train the second-order adjustment object. Refer to the class documentation for the algorithm details.
-
-        Parameters
-        ----------
-        ref : DataArray
-          Training target, usually a reference time series drawn from observations.
-        hist : DataArray
-          Training data, usually a model output whose biases are to be adjusted.
-        ref_params: DataArray, optional
-          Distribution parameters to use inplace of a Generalized Pareto fitted on `ref`.
-          Must be similar to the output of `xclim.indices.stats.fit` called on `ref`.
-          If the `scipy_dist` attribute is missing, `genpareto` is assumed.
-          Only `genextreme` and `genpareto` are accepted as scipy_dist.
-        """
-        if self._trained:
-            warn("train() was already called, overwriting old results.")
-
-        cluster_thresh = convert_units_to(self.cluster_thresh, ref)
+        cluster_thresh = convert_units_to(cluster_thresh, ref)
         hist = convert_units_to(hist, ref)
 
         # Extreme value threshold computed relative to "large values".
         # We use the mean between ref and hist here.
         thresh = (
-            ref.where(ref >= cluster_thresh).quantile(self.q_thresh, dim="time")
-            + hist.where(hist >= cluster_thresh).quantile(self.q_thresh, dim="time")
+            ref.where(ref >= cluster_thresh).quantile(q_thresh, dim="time")
+            + hist.where(hist >= cluster_thresh).quantile(q_thresh, dim="time")
         ) / 2
 
         if ref_params is None:
@@ -601,17 +596,16 @@ class ExtremeValues(BaseAdjustment):
             long_name="Generalized Pareto distribution parameters of ref",
         )
         ds.thresh.attrs.update(
-            long_name=f"{self.q_thresh * 100}th percentile extreme value threshold",
-            description=f"Mean of the {self.q_thresh * 100}th percentile of large values (x > {self.cluster_thresh}) of ref and hist.",
+            long_name=f"{q_thresh * 100}th percentile extreme value threshold",
+            description=f"Mean of the {q_thresh * 100}th percentile of large values (x > {cluster_thresh}) of ref and hist.",
         )
-        self["hist_calendar"] = get_calendar(hist)
 
         if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
             ds = ds.assign(nclusters=ref_clusters.nclusters)
 
-        self.set_dataset(ds)
+        return ds, {"cluster_thresh": cluster_thresh}
 
-    def adjust(
+    def _adjust(
         self,
         scen: xr.DataArray,
         sim: xr.DataArray,
@@ -629,8 +623,6 @@ class ExtremeValues(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        if not self._trained:
-            raise ValueError("train() must be called before adjusting.")
 
         def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
             # Clusters of large values of sim
@@ -685,20 +677,23 @@ class ExtremeValues(BaseAdjustment):
             output_dtypes=[scen.dtype],
         )
 
-        params = f"frac={frac}, power={power}"
-        new_scen.attrs["xclim_history"] = update_history(
-            f"Second order bias-adjustment with {str(self)}.adjust(sim, {params})", sim
-        )
         return new_scen
 
 
-class LOCI(BaseAdjustment):
+class LOCI(TwoStepAdjustment):
     """Local intensity scaling adjustment intended for daily precipitation."""
 
     _allow_diff_calendars = False
 
-    @parse_group
-    def __init__(self, *, group: Union[str, Grouper] = "time", thresh: float = None):
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        group: Union[str, Grouper] = "time",
+        thresh: float = None,
+    ):
         r"""Local Intensity Scaling (LOCI) bias-adjustment.
 
         This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
@@ -740,15 +735,12 @@ class LOCI(BaseAdjustment):
         ----------
         .. [Schmidli2006] Schmidli, J., Frei, C., & Vidale, P. L. (2006). Downscaling from GCM precipitation: A benchmark for dynamical and statistical downscaling methods. International Journal of Climatology, 26(5), 679–689. DOI:10.1002/joc.1287
         """
-        super().__init__(group=group, thresh=thresh)
-
-    def _train(self, ref, hist):
         ds = loci_train(
-            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, thresh=self.thresh
+            xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
         )
         ds.af.attrs.update(long_name="LOCI adjustment factors")
         ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
-        return ds
+        return ds, {"group": group, "thresh": thresh}
 
     def _adjust(self, sim, interp="linear"):
         return loci_adjust(
@@ -761,13 +753,20 @@ class LOCI(BaseAdjustment):
         ).scen
 
 
-class Scaling(BaseAdjustment):
+class Scaling(TwoStepAdjustment):
     """Simple scaling adjustment."""
 
     _allow_diff_calendars = False
 
-    @parse_group
-    def __init__(self, *, group="time", kind=ADDITIVE):
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        group: Union[str, Grouper] = "time",
+        kind: str = ADDITIVE,
+    ):
         """Scaling bias-adjustment.
 
         Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
@@ -787,14 +786,11 @@ class Scaling(BaseAdjustment):
         interp : {'nearest', 'linear', 'cubic'}
           The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
         """
-        super().__init__(group=group, kind=kind)
-
-    def _train(self, ref, hist):
         ds = scaling_train(
-            xr.Dataset({"ref": ref, "hist": hist}), group=self.group, kind=self.kind
+            xr.Dataset({"ref": ref, "hist": hist}), group=group, kind=kind
         )
         ds.af.attrs.update(long_name="Scaling adjustment factors")
-        return ds
+        return ds, {"group": group, "kind": kind}
 
     def _adjust(self, sim, interp="nearest"):
         return scaling_adjust(
@@ -805,12 +801,14 @@ class Scaling(BaseAdjustment):
         ).scen
 
 
-class PrincipalComponents(BaseAdjustment):
+class PrincipalComponents(TwoStepAdjustment):
     """Principal components inspired adjustment."""
 
-    @parse_group
-    def __init__(
-        self,
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
         *,
         group: Union[str, Grouper] = "time",
         crd_dims: Optional[Sequence[str]] = None,
@@ -901,21 +899,16 @@ class PrincipalComponents(BaseAdjustment):
         # Grouper used in the adjust part : no window, no add_dims
         adj_group = Grouper(group.name)
 
-        super().__init__(
-            train_group=train_group, adj_group=adj_group, crd_dims=crd_dims
-        )
-
-    def _train(self, ref, hist):
         all_dims = set(ref.dims).intersection(hist.dims)
         lbl_R = xr.core.utils.get_temp_dimname(all_dims, "crdR")
         lbl_M = xr.core.utils.get_temp_dimname(all_dims, "crdM")
         lbl_P = xr.core.utils.get_temp_dimname(all_dims, "points")
 
         # Dimensions that represent different points
-        pts_dims = set(self.train_group.add_dims)
-        pts_dims.update({self.train_group.dim})
+        pts_dims = set(train_group.add_dims)
+        pts_dims.update({train_group.dim})
         # Dimensions that represents different dimensions.
-        crds_M = self.crd_dims or (set(ref.dims).union(hist.dims) - pts_dims)
+        crds_M = crd_dims or (set(ref.dims).union(hist.dims) - pts_dims)
         # Rename coords on ref, multiindex do not like conflicting coordinates names
         crds_R = [f"{name}_out" for name in crds_M]
         # Stack, so that we have a single "coordinate" axis
@@ -963,22 +956,22 @@ class PrincipalComponents(BaseAdjustment):
             return transformation
 
         # Transformation matrix, from model coords to ref coords.
-        trans = self.train_group.apply(
+        trans = train_group.apply(
             _compute_transform_matrices, {"ref": ref, "hist": hist}
         )
         trans.attrs.update(long_name="Transformation from training to target spaces.")
 
-        ref_mean = self.train_group.apply("mean", ref)  # Centroids of ref
+        ref_mean = train_group.apply("mean", ref)  # Centroids of ref
         ref_mean.attrs.update(long_name="Centroid point of target.")
 
-        hist_mean = self.train_group.apply("mean", hist)  # Centroids of hist
+        hist_mean = train_group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
         ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
 
         ds.attrs["_reference_coord"] = lbl_R
         ds.attrs["_model_coord"] = lbl_M
-        return ds
+        return ds, {"train_group": train_group, "adj_group": adj_group}
 
     def _adjust(self, sim):
         lbl_R = self.ds.attrs["_reference_coord"]
@@ -1007,15 +1000,23 @@ class PrincipalComponents(BaseAdjustment):
         return scen.unstack(lbl_R)
 
 
-class NpdfTransform(Parametrizable):
+class NpdfTransform(SingleStepAdjustment):
     """N-dimensional probability density function transform."""
 
-    def __init__(
-        self,
-        base: BaseAdjustment = QuantileDeltaMapping,
+    @classmethod
+    def _adjust(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        *,
+        base: TwoStepAdjustment = QuantileDeltaMapping,
         base_kws: Optional[Mapping[str, Any]] = None,
         n_escore: int = 0,
         n_iter: int = 20,
+        pts_dim: str = "variables",
+        adj_kws: Optional[Mapping[str, Any]] = None,
+        rot_matrices: Optional[xr.DataArray] = None,
     ):
         r"""
         A multivariate bias-adjustment algorithm described by [Cannon18]_, as part of the MBCn algorithm,
@@ -1028,22 +1029,16 @@ class NpdfTransform(Parametrizable):
 
         Parameters
         ----------
-
-        At instantiation:
-
         base: BaseAdjustment
           An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
         base_kws : dict, optional
-          Arguments passed to the initialization of the univariate adjustment.
+          Arguments passed to the training of the univariate adjustment.
         n_escore : int
           The number of elements to send to the escore function. The default, 0, means all elements are included.
           Pass -1 to skip computing the escore completely.
           Small numbers result in less significative scores, but the execution time goes up quickly with large values.
         n_iter : int
           The number of iterations to perform. Defaults to 20.
-
-        In train-adjustment:
-
         pts_dim : str
           The name of the "multivariate" dimension. Defaults to "variables", which is the
           normal case when using :py:func:`xclim.sdba.base.stack_variables`.
@@ -1108,27 +1103,10 @@ class NpdfTransform(Parametrizable):
         base_kws or {}
         if "kind" in base_kws:
             warn(
-                f'The adjustment kind cannot be controlled when using {self.__class__.__name__}, it defaults to "+".'
+                f'The adjustment kind cannot be controlled when using {cls.__name__}, it defaults to "+".'
             )
         base_kws.setdefault("kind", "+")
 
-        super().__init__(
-            base=base,
-            base_kws=base_kws,
-            n_escore=n_escore,
-            n_iter=n_iter,
-        )
-
-    def train_adjust(
-        self,
-        ref: xr.DataArray,
-        hist: xr.DataArray,
-        sim: xr.DataArray,
-        *,
-        pts_dim: str = "variables",
-        adj_kws: Optional[Mapping[str, Any]] = None,
-        rot_matrices: Optional[xr.DataArray] = None,
-    ):
         # Assuming sim has the same coords as hist
         # We get the safest new name of the rotated dim.
         rot_dim = xr.core.utils.get_temp_dimname(
@@ -1137,7 +1115,7 @@ class NpdfTransform(Parametrizable):
 
         # Get the rotation matrices
         rot_matrices = rot_matrices or rand_rot_matrix(
-            ref[pts_dim], num=self.n_iter, new_dim=rot_dim
+            ref[pts_dim], num=n_iter, new_dim=rot_dim
         ).rename(matrices="iterations")
 
         # Call a map_blocks on the iterative function
@@ -1149,8 +1127,8 @@ class NpdfTransform(Parametrizable):
 
         template = xr.Dataset(
             data_vars={
-                "scenh": xr.full_like(hist, np.NaN),
-                "scens": xr.full_like(sim, np.NaN).rename(time="time_sim"),
+                "scenh": xr.full_like(hist, np.NaN).rename(time="time_hist"),
+                "scen": xr.full_like(sim, np.NaN),
                 "escores": escores_tmpl,
             }
         )
@@ -1159,31 +1137,23 @@ class NpdfTransform(Parametrizable):
         ds = xr.Dataset(
             data_vars={
                 "ref": ref,
-                "hist": hist,
-                "sim": sim.rename(time="time_sim"),
+                "hist": hist.rename(time="time_hist"),
+                "sim": sim,
                 "rot_matrices": rot_matrices,
             }
         )
 
-        if uses_dask(ds) and any(
-            [len(ds.chunks.get(d, [])) > 1 for d in ["time", "time_sim", pts_dim]]
-        ):
-            raise ValueError(
-                f'Inputs of {self.__class__.__name__} cannot be chunked along the main dimensions "time" and "{pts_dim}"'
-            )
-
-        kwargs = self.parameters.copy()
-        kwargs.update(pts_dim=pts_dim, adj_kws=adj_kws or {})
+        kwargs = {
+            "base": base,
+            "base_kws": base_kws,
+            "n_escore": n_escore,
+            "n_iter": n_iter,
+            "pts_dim": pts_dim,
+            "adj_kws": adj_kws or {},
+        }
 
         with set_options(sdba_extra_output=False):
             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
-        scenh = out.scenh
-        scens = out.scens.rename(time_sim="time")
-
-        if OPTIONS[SDBA_EXTRA_OUTPUT]:
-            extra = xr.Dataset(
-                dict(escores=out.escores, rotation_matrices=rot_matrices)
-            )
-            return scenh, scens, extra
-        return scenh, scens
+        out = out.assign(rotation_matrices=rot_matrices)
+        return out

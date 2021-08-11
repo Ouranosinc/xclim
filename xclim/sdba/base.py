@@ -50,7 +50,7 @@ class Parametrizable(dict):
         return dict(**self)
 
     def __repr__(self):
-        """Return a string representation that allows eval to recreate it."""
+        """Return a string representation."""
         params = ", ".join(
             [
                 f"{k}={repr(v)}"
