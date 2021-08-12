@@ -429,7 +429,7 @@ def parse_group(func: Callable) -> Callable:
     return _parse_group
 
 
-def duck_empty(dims, sizes, chunks=None):
+def duck_empty(dims, sizes, dtype='float64', chunks=None):
     """Return an empty DataArray based on a numpy or dask backend, depending on the chunks argument."""
     shape = [sizes[dim] for dim in dims]
     if chunks:
@@ -438,6 +438,13 @@ def duck_empty(dims, sizes, chunks=None):
     else:
         content = np.empty(shape)
     return xr.DataArray(content, dims=dims)
+
+
+def _decode_cf_coords(ds):
+    """Decodes coords in-place."""
+    crds = xr.decode_cf(ds.coords.to_dataset())
+    for crdname in ds.coords.keys():
+        ds[crdname] = crds[crdname]
 
 
 def map_blocks(reduces=None, **outvars):
@@ -553,13 +560,18 @@ def map_blocks(reduces=None, **outvars):
 
             # Create the output dataset, but empty
             tmpl = xr.Dataset(coords=coords)
+            if isinstance(ds, xr.Dataset):
+                dtype = max([da.dtype for da in ds.data_vars.values()], key=lambda d: d.itemsize)
+            else:
+                dtype = ds.dtype
             for var, dims in outvars.items():
                 # Out variables must have the base dims + new_dims
                 dims = base_dims + [placeholders.get(dim, dim) for dim in dims]
                 # duck empty calls dask if chunks is not None
-                tmpl[var] = duck_empty(dims, sizes, chunks)
+                tmpl[var] = duck_empty(dims, sizes, dtype=dtype, chunks=chunks)
 
             if OPTIONS[SDBA_ENCODE_CF]:
+                ds = ds.copy()
                 # Optimization to circumvent the slow pickle.dumps(cftime_array)
                 for name, crd in ds.coords.items():
                     if xr.core.common._contains_cftime_datetimes(crd.values):
@@ -568,7 +580,7 @@ def map_blocks(reduces=None, **outvars):
             def _call_and_transpose_on_exit(dsblock, **kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
                 try:
-                    dsblock = xr.decode_cf(dsblock, decode_timedelta=False)
+                    _decode_cf_coords(dsblock)
                     out = func(dsblock, **kwargs).transpose(*all_dims)
                 except Exception as err:
                     raise ValueError(

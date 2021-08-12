@@ -376,7 +376,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
     ):
 
         scaled_sim = dqm_scale_sim(
-            xr.Dataset({"scaling": self.ds.scaling, "sim": sim}),
+            xr.Dataset({"scaling": self.ds.scaling.astype(sim.dtype), "sim": sim}),
             group=self.group,
             kind=self.kind,
             interp=interp,
@@ -390,7 +390,7 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
 
         scen = qm_adjust(
             xr.Dataset(
-                {"af": self.ds.af, "hist_q": self.ds.hist_q, "sim": sim_detrended}
+                {"af": self.ds.af.astype(sim.dtype), "hist_q": self.ds.hist_q.astype(sim.dtype), "sim": sim_detrended}
             ),
             group=self.group,
             interp=interp,
