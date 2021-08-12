@@ -44,7 +44,7 @@ def _valid_missing_options(mopts):
             # All options must exist
             or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
             # Method option validator must pass, default validator is always True.
-            or not cls.validate(**opts)
+            or not cls.validate(**opts)  # noqa
         ):
             return False
     return True

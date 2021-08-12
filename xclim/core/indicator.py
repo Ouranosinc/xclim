@@ -101,7 +101,7 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from inspect import Parameter, _empty, signature
+from inspect import Parameter, _empty, signature  # noqa
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -133,7 +133,7 @@ from .locales import (
     read_locale_file,
 )
 from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
-from .units import FREQ_NAMES, convert_units_to, declare_units, units
+from .units import FREQ_NAMES, convert_units_to, declare_units, units  # noqa
 from .utils import (
     VARIABLES,
     InputKind,
@@ -185,7 +185,8 @@ class IndicatorRegistrar:
             if inst is not None:
                 return inst
         raise ValueError(
-            f"There is no existing instance of {cls.__name__}. Either none were created or they were all garbage-collected."
+            f"There is no existing instance of {cls.__name__}. "
+            "Either none were created or they were all garbage-collected."
         )
 
 
@@ -198,9 +199,9 @@ class Indicator(IndicatorRegistrar):
 
     Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
 
-    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators` subclasses,
-    if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
-    In the latter case, the same value is used on all variables.
+    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators`
+    subclasses, if the compute function returns multiple variables, attributes may be given as lists of strings or
+    strings. In the latter case, the same value is used on all variables.
 
     Compared to their base `compute` function, indicators add the possibility of using dataset as input,
     with the injected argument `ds` in the call signature. All arguments that were indicated by the compute function
@@ -422,7 +423,8 @@ class Indicator(IndicatorRegistrar):
                 values = [values] * n_outs
             elif len(values) != n_outs:
                 raise ValueError(
-                    f"Attribute {name} has {len(values)} elements but should have {n_outs} according to passed var_name."
+                    f"Attribute {name} has {len(values)} elements but "
+                    f"should have {n_outs} according to passed var_name."
                 )
             for attrs, value in zip(cf_attrs, values):
                 if value:
@@ -475,8 +477,8 @@ class Indicator(IndicatorRegistrar):
         metadata_placeholders = {}
         if "index_function" in data:
             # Generate compute function
-            # data.index_function.name refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
-            # It can also directly be a function.
+            # data.index_function.name refers to a function in xclim.indices.generic
+            # or xclim.indices (in this order of priority). It can also directly be a function.
             # data.index_function.parameters is a list of injected arguments.
             funcname = data["index_function"].get("name")
             if funcname is None:
@@ -486,7 +488,7 @@ class Indicator(IndicatorRegistrar):
                 compute = funcname
             else:
                 compute = getattr(
-                    indices.generic, funcname, getattr(indices, funcname, None)
+                    indices.generic, funcname, getattr(indices, funcname, None)  # noqa
                 )
                 if compute is None:
                     raise ImportError(
@@ -649,18 +651,6 @@ class Indicator(IndicatorRegistrar):
         self._bind_call(self.datacheck, **das)
         self._bind_call(self.cfcheck, **das)
 
-        # TODO: Migrated from Data Quality Assurance Checks
-        # for da in das:
-        #     self.validate(da)
-        #     self.validate(da, self.flag)
-        #     # Flag suspicious time series
-        #     flags = self.validate(da, self.flag)
-        #     if any(flags.values()):
-        #         da.attrs["flags"] = ", ".join(
-        #             [key for key, val in flags.items() if val]
-        #         )
-        # self.cfprobe(*das)
-
         # Check if the period is allowed:
         if (
             self.allowed_periods is not None
@@ -668,7 +658,8 @@ class Indicator(IndicatorRegistrar):
             and parse_offset(all_params["freq"])[1] not in self.allowed_periods
         ):
             raise ValueError(
-                f"Resampling frequency {all_params['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
+                f"Resampling frequency {all_params['freq']} is not allowed for indicator "
+                f"{self.identifier} (needs something equivalent to one of {self.allowed_periods})."
             )
 
         # Compute the indicator values, ignoring NaNs and missing values.
@@ -704,18 +695,6 @@ class Indicator(IndicatorRegistrar):
         if n_outs == 1:
             return outs[0]
         return tuple(outs)
-
-    # TODO: Migrated from Data Quality Assurance Checks
-    # def validate(self, da, conditions):
-    #     """Validate input data requirements. Raise error and return suspect flags if one of the
-    #      conditions are not met."""
-    #     checks.assert_daily(da)
-    #
-    #     flags = {}
-    #     for key, func in conditions.items():
-    #         flags[key] = func(da)
-    #
-    #     return flags
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
