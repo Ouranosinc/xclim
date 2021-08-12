@@ -41,7 +41,6 @@ __all__ = [
     "BaseAdjustment",
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
-    "ExtremeValues",
     "LOCI",
     "PrincipalComponents",
     "QuantileDeltaMapping",
@@ -540,6 +539,9 @@ class ExtremeValues(BaseAdjustment):
         .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
         .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
         """
+        warn(
+            "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
+        )
         super().__init__(q_thresh=q_thresh, cluster_thresh=cluster_thresh)
 
     def train(self, ref, hist, ref_params=None):
@@ -647,7 +649,8 @@ class ExtremeValues(BaseAdjustment):
             # Cumulative density function for extreme values in sim's distribution
             sim_cdf = dist.cdf(sim_maxs, *sim_fit)
             # Equivalent value of sim's CDF's but in ref's distribution.
-            new_sim = dist.ppf(sim_cdf, *ref_params) + thresh
+            # removed a +thresh that was a bug in the julia source.
+            new_sim = dist.ppf(sim_cdf, *ref_params)
 
             # Get the transition weights based on frac and power values
             transition = (
