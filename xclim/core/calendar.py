@@ -543,8 +543,8 @@ def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
     from xclim.indices.generic import get_op
 
     # Get multiplicator and base frequency
-    t_a, b_a, _ = parse_offset(freqA)
-    t_b, b_b, _ = parse_offset(freqB)
+    t_a, b_a, _, _ = parse_offset(freqA)
+    t_b, b_b, _, _ = parse_offset(freqB)
 
     if b_a == b_b:
         # Same base freq, compare mulitplicator only.
@@ -560,12 +560,12 @@ def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
     return get_op(op)(t_a, t_b)
 
 
-def parse_offset(freq: str) -> Tuple[str, str, Optional[str]]:
+def parse_offset(freq: str) -> Tuple[str, str, Optional[str], Optional[str]]:
     """Parse an offset string.
 
-    Returns: multiplicator, offset base, anchor (or None)
+    Returns: multiplicator, offset base, start stamp (or None), anchor (or None)
     """
-    patt = r"(\d*)(\w)S?(?:-(\w{2,3}))?"
+    patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
     return re.search(patt, freq.replace("Y", "A")).groups()
 
 
