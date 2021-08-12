@@ -9,6 +9,7 @@ import xarray as xr
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
+from .detrending import PolyDetrend
 from .processing import escore
 
 
@@ -93,6 +94,48 @@ def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
         kind,
     )
     return sim.rename("sim").to_dataset()
+
+
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], trend=[])
+def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
+    """DQM adjustment on one block
+
+    Dataset variables:
+      scaling : Scaling factor between ref and hist
+      af : Adjustment factors
+      hist_q : Quantiles over the training data
+      sim : Data to adjust
+    """
+    scaled_sim = u.apply_correction(
+        ds.sim,
+        u.broadcast(
+            ds.scaling,
+            ds.sim,
+            group=group,
+            interp=interp if group.prop != "dayofyear" else "nearest",
+        ),
+        kind,
+    )
+
+    if isinstance(detrend, int):
+        detrend = PolyDetrend(degree=detrend, kind=kind, group=group)
+
+    detrend = detrend.fit(scaled_sim)
+    sim_detrended = detrend.detrend(scaled_sim)
+
+    ds["sim"] = sim_detrended
+    scen = qm_adjust.func(
+        ds,
+        group=group,
+        interp=interp,
+        extrapolation=extrapolation,
+        kind=kind,
+    ).scen
+
+    scen = detrend.retrend(scen)
+
+    out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})
+    return out
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])

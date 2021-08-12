@@ -429,7 +429,7 @@ def parse_group(func: Callable) -> Callable:
     return _parse_group
 
 
-def duck_empty(dims, sizes, dtype='float64', chunks=None):
+def duck_empty(dims, sizes, dtype="float64", chunks=None):
     """Return an empty DataArray based on a numpy or dask backend, depending on the chunks argument."""
     shape = [sizes[dim] for dim in dims]
     if chunks:
@@ -561,7 +561,9 @@ def map_blocks(reduces=None, **outvars):
             # Create the output dataset, but empty
             tmpl = xr.Dataset(coords=coords)
             if isinstance(ds, xr.Dataset):
-                dtype = max([da.dtype for da in ds.data_vars.values()], key=lambda d: d.itemsize)
+                dtype = max(
+                    [da.dtype for da in ds.data_vars.values()], key=lambda d: d.itemsize
+                )
             else:
                 dtype = ds.dtype
             for var, dims in outvars.items():
@@ -600,6 +602,7 @@ def map_blocks(reduces=None, **outvars):
 
             return out
 
+        _map_blocks.__dict__["func"] = func
         return _map_blocks
 
     return _decorator

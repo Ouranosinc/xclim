@@ -14,7 +14,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
-    dqm_scale_sim,
+    dqm_adjust,
     dqm_train,
     eqm_train,
     loci_adjust,
@@ -26,7 +26,6 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, Parametrizable, ParametrizableWithDataset, parse_group
-from .detrending import PolyDetrend
 from .utils import (
     ADDITIVE,
     best_pc_orientation,
@@ -374,30 +373,14 @@ class DetrendedQuantileMapping(EmpiricalQuantileMapping):
         detrend=1,
     ):
 
-        scaled_sim = dqm_scale_sim(
-            xr.Dataset({"scaling": self.ds.scaling.astype(sim.dtype), "sim": sim}),
-            group=self.group,
-            kind=self.kind,
-            interp=interp,
-        ).sim
-
-        if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
-
-        detrend = detrend.fit(scaled_sim)
-        sim_detrended = detrend.detrend(scaled_sim)
-
-        scen = qm_adjust(
-            xr.Dataset(
-                {"af": self.ds.af.astype(sim.dtype), "hist_q": self.ds.hist_q.astype(sim.dtype), "sim": sim_detrended}
-            ),
-            group=self.group,
+        return dqm_adjust(
+            self.ds.assign(sim=sim),
             interp=interp,
             extrapolation=extrapolation,
+            detrend=detrend,
+            group=self.group,
             kind=self.kind,
-        ).scen
-
-        return detrend.retrend(scen)
+        )
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
