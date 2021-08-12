@@ -95,18 +95,39 @@ variables:
     - time: mean
     description: Mean surface temperature.
     standard_name: air_temperature
+    data_flags:
+      temperature_extremely_high:
+        - thresh: 60 degC
+      temperature_extremely_low:
+        - thresh: -90 degC
+      tas_exceeds_tasmax:
+      tas_below_tasmin:
   tasmax:
     canonical_units: K
     cell_methods:
     - time: maximum
     description: Maximum surface temperature.
     standard_name: air_temperature
+    data_flags:
+      temperature_extremely_high:
+        - thresh: 60 degC
+      temperature_extremely_low:
+        - thresh: -90 degC
+      tasmax_below_tas:
+      tasmax_below_tasmin:
   tasmin:
     canonical_units: K
     cell_methods:
     - time: minimum
     description: Minimum surface temperature.
     standard_name: air_temperature
+    data_flags:
+      temperature_extremely_high:
+        - thresh: 60 degC
+      temperature_extremely_low:
+        - thresh: -90 degC
+      tasmin_exceeds_tasmax:
+      tasmin_exceeds_tas:
   tdps:
     canonical_units: K
     cell_methods:
