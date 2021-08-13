@@ -17,6 +17,25 @@ New indicators
 * ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` to ICCLIM module.
 * ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
+* ``climatological_mean_doy`` indice returns the mean and standard deviation for values as compared to other values within the year.
+* ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``xclim`` now implements many data quality assurance flags for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
+    - Temperature: ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
+    - Precipitation:  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
+    - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
+    These checks parse the checks according CF-standard variable names and can be induced via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. The checks are separate from the Indicator checks and must be run independently, as they trigger calculations. Will return an array of data_flags as boolean variables.
+* ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Call signatures, expected returns and docstrings for ``xclim.core.calendar`` functions are much more accurate.
 
 Bug fixes
 ~~~~~~~~~~~~~~
