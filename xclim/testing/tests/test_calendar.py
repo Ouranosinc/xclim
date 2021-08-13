@@ -10,7 +10,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 
 from xclim.core.calendar import (
     adjust_doy_calendar,
-    clim_mean_doy,
+    climatological_mean_doy,
     compare_offsets,
     convert_calendar,
     date_range,
@@ -386,13 +386,13 @@ def test_datetime_to_decimal_year(source_cal, exp180):
 @pytest.mark.skip(reason="Not yet implemented.")
 def test_clim_mean_doy(tas_series):
     arr = tas_series(np.ones(365 * 10))
-    m, s = clim_mean_doy(arr, window=1)
+    m, s = climatological_mean_doy(arr, window=1)
     assert "dayofyear" in m.coords
     np.testing.assert_array_equal(m.values, 1)
     np.testing.assert_array_equal(s.values, 0)
 
     arr = tas_series(np.arange(365 * 3), start="1/1/2001")
-    m, s = clim_mean_doy(arr, window=3)
+    m, s = climatological_mean_doy(arr, window=3)
     np.testing.assert_array_equal(m[1:-1], np.arange(365, 365 * 2)[1:-1])
     np.testing.assert_array_almost_equal(s[1:-1], 298.0223, 4)
 

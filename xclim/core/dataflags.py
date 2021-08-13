@@ -3,7 +3,7 @@ from inspect import signature
 import xarray as xr
 
 from ..indices.run_length import suspicious_run
-from .calendar import clim_mean_doy, within_bnds_doy
+from .calendar import climatological_mean_doy, within_bnds_doy
 from .units import convert_units_to, declare_units
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
@@ -100,7 +100,7 @@ def outside_5_standard_deviations_of_climatology(
     da: xr.DataArray, window: int = 5, n: int = 5
 ):
     """Check if any value is outside `n` standard deviations from the day of year mean."""
-    mu, sig = clim_mean_doy(da, window=window)
+    mu, sig = climatological_mean_doy(da, window=window)
     return ~within_bnds_doy(da, mu + n * sig, mu - n * sig).all()
 
 

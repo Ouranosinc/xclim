@@ -11,7 +11,6 @@ import re
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
-import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -386,7 +385,7 @@ def _convert_datetime(
 
 def ensure_cftime_array(
     time: Sequence,
-) -> Union[CFTimeIndex, numpy.ndarray]:
+) -> Union[CFTimeIndex, np.ndarray]:
     """Convert an input 1D array to an array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian.
@@ -518,7 +517,7 @@ def percentile_doy(
     return p
 
 
-def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
+def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     """Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
@@ -664,7 +663,7 @@ def resample_doy(
     return out
 
 
-def cftime_start_time(date, freq):
+def cftime_start_time(date: cftime.datetime, freq: str) -> cftime.datetime:
     """Get the cftime.datetime for the start of a period.
 
     As we are not supplying actual period objects, assumptions regarding the period are made based on
@@ -697,7 +696,7 @@ def cftime_start_time(date, freq):
     return date
 
 
-def cftime_end_time(date, freq):
+def cftime_end_time(date: cftime.datetime, freq: str) -> cftime.datetime:
     """Get the cftime.datetime for the end of a period.
 
     As we are not supplying actual period objects, assumptions regarding the period are made based on
@@ -730,7 +729,7 @@ def cftime_end_time(date, freq):
     return cftime_start_time(date + mod_freq, freq) - pydt.timedelta(microseconds=1)
 
 
-def cfindex_start_time(cfindex, freq):
+def cfindex_start_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     """
     Get the start of a period for a pseudo-period index.
 
@@ -750,10 +749,10 @@ def cfindex_start_time(cfindex, freq):
     CFTimeIndex
         The starting datetimes of periods inferred from dates and freq
     """
-    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])
+    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])  # noqa
 
 
-def cfindex_end_time(cfindex, freq):
+def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     """
     Get the end of a period for a pseudo-period index.
 
@@ -773,10 +772,10 @@ def cfindex_end_time(cfindex, freq):
     CFTimeIndex
         The ending datetimes of periods inferred from dates and freq
     """
-    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])
+    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
 
 
-def time_bnds(group, freq):
+def time_bnds(group, freq: str) -> Sequence[(cftime.datetime, cftime.datetime)]:
     """
     Find the time bounds for a pseudo-period index.
 
@@ -794,8 +793,8 @@ def time_bnds(group, freq):
 
     Returns
     -------
-    start_time : cftime.datetime
-        The start time of the period inferred from datetime and freq.
+    Sequence[(cftime.datetime, cftime.datetime)]
+        The start and end times of the period inferred from datetime and freq.
 
     Examples
     --------
@@ -830,8 +829,7 @@ def time_bnds(group, freq):
     )
 
 
-# TODO: Migrated from Data Quality Assurance Checks
-def clim_mean_doy(
+def climatological_mean_doy(
     arr: xr.DataArray, window: int = 5
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """The climatological mean and standard deviation for each day of the year.
@@ -858,9 +856,11 @@ def clim_mean_doy(
     return m, s
 
 
-# TODO: Migrated from Data Quality Assurance Checks
-def within_bnds_doy(arr: xr.DataArray, low: xr.DataArray, high: xr.DataArray):
+def within_bnds_doy(
+    arr: xr.DataArray, low: xr.DataArray, high: xr.DataArray
+) -> xr.DataArray:
     """Return whether or not array values are within bounds for each day of the year.
+
     Parameters
     ----------
     arr : xarray.DataArray
@@ -869,13 +869,19 @@ def within_bnds_doy(arr: xr.DataArray, low: xr.DataArray, high: xr.DataArray):
       Low bound with dayofyear coordinate.
     high : xarray.DataArray
       High bound with dayofyear coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
     """
     low = resample_doy(low, arr)
     high = resample_doy(high, arr)
     return (low < arr) * (arr < high)
 
 
-def _doy_days_since_doys(base: xr.DataArray, start: Optional[DayOfYearStr] = None):
+def _doy_days_since_doys(
+    base: xr.DataArray, start: Optional[DayOfYearStr] = None
+) -> Tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
     """Common calculation for doy to days since and inverse conversions.
 
     Parameters
@@ -922,7 +928,7 @@ def doy_to_days_since(
     da: xr.DataArray,
     start: Optional[DayOfYearStr] = None,
     calendar: Optional[str] = None,
-):
+) -> xr.DataArray:
     """Convert day-of-year data to days since a given date
 
     This is useful for computing meaningful statistics on doy data.
@@ -992,7 +998,7 @@ def days_since_to_doy(
     da: xr.DataArray,
     start: Optional[DayOfYearStr] = None,
     calendar: Optional[str] = None,
-):
+) -> xr.DataArray:
     """Reverse the conversion made by :py:func:`doy_to_days_since`.
 
     Converts data given in days since a specific date to day-of-year.

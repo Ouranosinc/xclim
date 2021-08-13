@@ -371,7 +371,7 @@ def last_run(
 
 
 # TODO: Add window arg
-# Maybe todo : Inverse window arg to tolerate holes?
+# TODO: Inverse window arg to tolerate holes?
 def run_bounds(
     mask: xr.DataArray, dim: str = "time", coord: Optional[Union[bool, str]] = True
 ):
@@ -1177,8 +1177,7 @@ def suspicious_run_1d(
         if op in {">=", "gteq"}:
             return ((v >= thresh) * rl >= window).any()
         raise NotImplementedError(f"{op}")
-    else:
-        return (rl >= window).any()
+    return (rl >= window).any()
 
 
 def suspicious_run(
