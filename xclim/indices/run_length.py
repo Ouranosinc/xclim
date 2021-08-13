@@ -1176,8 +1176,7 @@ def suspicious_run_1d(
             return ((v == thresh) * rl >= window).any()
         if op in {">=", "gteq"}:
             return ((v >= thresh) * rl >= window).any()
-        else:
-            raise NotImplementedError(f"{op}")
+        raise NotImplementedError(f"{op}")
     else:
         return (rl >= window).any()
 
