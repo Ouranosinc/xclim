@@ -23,10 +23,10 @@ New indicators
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``xclim`` now implements many data quality assurance flags for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
-    - Temperature: ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
-    - Precipitation:  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
+    - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
+    - Precipitation (variables: ``pr``):  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
     - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
-    These checks parse the checks according CF-standard variable names and can be induced via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. The checks are separate from the Indicator checks and must be run independently, as they trigger calculations. Will return an array of data_flags as boolean variables.
+    These pseudo-indices are triggered according CF-standard variable names and can be induced via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-triggered checks and must be run independently, as they trigger calculations. Will return an array of data_flags as boolean variables.
 * ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
 
 Breaking changes
