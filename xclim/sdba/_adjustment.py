@@ -204,7 +204,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
       Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
       respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
     """
-    ref = ds.ref
+    ref = ds.ref.rename(time_hist="time")
     hist = ds.hist.rename(time_hist="time")
     sim = ds.sim
     dim = kwargs["pts_dim"]

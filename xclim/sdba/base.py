@@ -417,12 +417,10 @@ def parse_group(func: Callable) -> Callable:
 
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        if default_group:
+        if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
-        elif "group" not in kwargs:
-            raise ValueError("'group' argument not given.")
-        if not isinstance(kwargs["group"], Grouper):
-            kwargs = Grouper.from_kwargs(**kwargs)
+            if not isinstance(kwargs["group"], Grouper):
+                kwargs = Grouper.from_kwargs(**kwargs)
         return func(*args, **kwargs)
 
     return _parse_group

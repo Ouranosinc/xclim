@@ -9,6 +9,16 @@ Announcements
 ~~~~~~~~~~~~~
 * It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+
+    - ``TwoStepAdjustment`` objects (most of the algorithms), which are created **and** trained in the same call:
+      ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
+
+    - ``SingleStepAdjustment`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
+      class method performs all the work in one call.
+
 New indicators
 ~~~~~~~~~~~~~~
 * ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
