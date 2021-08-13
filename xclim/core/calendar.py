@@ -775,7 +775,7 @@ def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
 
 
-def time_bnds(group, freq: str) -> Sequence[(cftime.datetime, cftime.datetime)]:
+def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.datetime]]:
     """
     Find the time bounds for a pseudo-period index.
 
