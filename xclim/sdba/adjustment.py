@@ -75,7 +75,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     _allow_diff_calendars = True
     _attribute = "_xclim_adjustment"
-    _repr_hide_params = ["hist_calendar"]
+    _repr_hide_params = ["hist_calendar", "train_units"]
 
     @property
     def _trained(self):
@@ -102,6 +102,9 @@ class BaseAdjustment(ParametrizableWithDataset):
             # Right now there is no other way of getting the main adjustment dimension
             _raise_on_multiple_chunk(ref, self.group.dim)
             _raise_on_multiple_chunk(hist, self.group.dim)
+
+        hist = convert_units_to(hist, ref)
+        self["train_units"] = hist.units
 
         if not self._allow_diff_calendars and get_calendar(
             ref, self.group.dim
@@ -145,6 +148,8 @@ class BaseAdjustment(ParametrizableWithDataset):
                     ),
                     stacklevel=4,
                 )
+
+        sim = convert_units_to(sim, self.train_units)
 
         out = self._adjust(sim, **kwargs)
 

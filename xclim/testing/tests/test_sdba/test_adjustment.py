@@ -85,6 +85,8 @@ class TestScaling:
 
         hist = sim = series(x, name)
         ref = series(apply_correction(x, 2, kind), name)
+        if kind == ADDITIVE:
+            ref = convert_units_to(ref, "degC")
 
         scaling = Scaling(group="time", kind=kind)
         scaling.train(ref, hist)
@@ -470,9 +472,13 @@ class TestPrincipalComponents:
         sim_x = norm.rvs(loc=4, scale=2, size=(m, n))
         sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n))
 
-        ref = xr.DataArray([ref_x, ref_y], dims=("lat", "lon", "time"))
+        ref = xr.DataArray(
+            [ref_x, ref_y], dims=("lat", "lon", "time"), attrs={"units": "degC"}
+        )
         ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
-        sim = xr.DataArray([sim_x, sim_y], dims=("lat", "lon", "time"))
+        sim = xr.DataArray(
+            [sim_x, sim_y], dims=("lat", "lon", "time"), attrs={"units": "degC"}
+        )
         sim["time"] = ref["time"]
 
         PCA = PrincipalComponents(group=group, crd_dims=crd_dims, pts_dims=pts_dims)
