@@ -9,6 +9,10 @@ Announcements
 ~~~~~~~~~~~~~
 * It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
+
 New indicators
 ~~~~~~~~~~~~~~
 * ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
@@ -19,10 +23,15 @@ New indicators
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
 
 Bug fixes
-~~~~~~~~~~~~~~
+~~~~~~~~~
 * Various bug fixes in bootstrapping:
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+
 
 0.28.1 (2021-07-29)
 -------------------
