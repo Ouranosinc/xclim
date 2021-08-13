@@ -571,7 +571,8 @@ def season(
     )
     out.end.attrs.update(
         long_name="End of the season.",
-        description=f"First {coordstr} of a run of at least {window} steps breaking the condition, starting after `start`.",
+        description=f"First {coordstr} of a run of at least {window} "
+        "steps breaking the condition, starting after `start`.",
     )
     out.length.attrs.update(
         long_name="Length of the season.",
@@ -1140,16 +1141,25 @@ def index_of_date(
 
 
 # TODO: Migrated from Data Quality Assurance Checks
-def suspicious_run(arr, window: int = 10, thresh: float = None):
+def suspicious_run(
+    arr: xr.DataArray,
+    window: int = 10,
+    op: Optional[str] = None,
+    thresh: Optional[float] = None,
+):
     """Return True if the array contains a run of identical values.
+
     Parameters
     ----------
-    arr : sequence
+    arr : xr.DataArray
      Array of values to be parsed.
     window : int
       Minimum run length
-    thresh : float
+    op: {">", ">=", "==", "gt", "eq", "gteq"}, optional
+      Operator for threshold comparison
+    thresh : float, optional
       Threshold above which values are checked for identical values.
+
     Returns
     -------
     bool
@@ -1157,6 +1167,13 @@ def suspicious_run(arr, window: int = 10, thresh: float = None):
     """
     v, rl, pos = rle(arr)
     if thresh:
-        return ((v > thresh) * rl >= window).any()
+        if op in {">", "gt"}:
+            return ((v > thresh) * rl >= window).any()
+        if op in {"==", "eq"}:
+            return ((v == thresh) * rl >= window).any()
+        if op in {">=", "gteq"}:
+            return ((v >= thresh) * rl >= window).any()
+        else:
+            raise NotImplementedError(f"{op}")
     else:
         return (rl >= window).any()

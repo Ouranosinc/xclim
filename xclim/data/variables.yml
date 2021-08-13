@@ -27,6 +27,11 @@ variables:
     - time: mean
     description: Surface precipitation flux (all phases).
     standard_name: precipitation_flux
+    data_flags:
+      negative_precipitation_values:
+      very_large_precipitation_events:
+      many_5mm_repetitions:
+      many_1mm_repetitions:
   prsn:
     canonical_units: kg m-2 s-1
     cell_methods:
@@ -97,11 +102,11 @@ variables:
     standard_name: air_temperature
     data_flags:
       temperature_extremely_high:
-        - thresh: 60 degC
       temperature_extremely_low:
-        - thresh: -90 degC
       tas_exceeds_tasmax:
       tas_below_tasmin:
+      values_repeating_for_5_or_more_days:
+      outside_5_standard_deviations_of_climatology:
   tasmax:
     canonical_units: K
     cell_methods:
@@ -110,11 +115,11 @@ variables:
     standard_name: air_temperature
     data_flags:
       temperature_extremely_high:
-        - thresh: 60 degC
       temperature_extremely_low:
-        - thresh: -90 degC
       tasmax_below_tas:
       tasmax_below_tasmin:
+      values_repeating_for_5_or_more_days:
+      outside_5_standard_deviations_of_climatology:
   tasmin:
     canonical_units: K
     cell_methods:
@@ -123,11 +128,11 @@ variables:
     standard_name: air_temperature
     data_flags:
       temperature_extremely_high:
-        - thresh: 60 degC
       temperature_extremely_low:
-        - thresh: -90 degC
       tasmin_exceeds_tasmax:
       tasmin_exceeds_tas:
+      values_repeating_for_5_or_more_days:
+      outside_5_standard_deviations_of_climatology:
   tdps:
     canonical_units: K
     cell_methods:

@@ -8,7 +8,6 @@ from .units import convert_units_to, declare_units
 from .utils import VARIABLES, MissingVariableError
 
 
-# FIXME: I get that this is bad, so let's brainstorm a better way, please
 @declare_units(tasmax="[temperature]", tas="[temperature]")
 def tasmax_below_tas(tasmax: xr.Dataset, tas: xr.Dataset):
     return (tasmax < tas).any()
@@ -39,30 +38,57 @@ def tasmin_exceeds_tas(tasmin: xr.Dataset, tas: xr.Dataset):
     return (tasmin > tas).any()
 
 
+@declare_units(da="[temperature]")
 def temperature_extremely_low(da: xr.DataArray, thresh: str = "-90 degC"):
     thresh = convert_units_to(thresh, da)
     return (da < thresh).any()
 
 
+@declare_units(da="[temperature]")
 def temperature_extremely_high(da: xr.DataArray, thresh: str = "60 degC"):
     thresh = convert_units_to(thresh, da)
     return (da > thresh).any()
 
 
-def outside_standard_deviations_of_climatology(da: xr.DataArray, window=5, n=5):
+@declare_units(pr="[precipitation]")
+def negative_precipitation_values(pr: xr.Dataset):
+    return (pr < 0).any()
+
+
+@declare_units(pr="[precipitation]")
+def very_large_precipitation_events(pr: xr.Dataset, thresh="300 mm d-1"):
+    thresh = convert_units_to(thresh, pr)
+    return (pr > thresh).any()
+
+
+@declare_units(pr="[precipitation]")
+def many_1mm_repetitions(pr: xr.DataArray, window=10, op="==", thresh="1 mm d-1"):
+    thresh = convert_units_to(thresh, pr)
+    return not suspicious_run(pr, window=window, op=op, thresh=thresh)
+
+
+@declare_units(pr="[precipitation]")
+def many_5mm_repetitions(pr: xr.DataArray, window=5, op="==", thresh="5 mm d-1"):
+    thresh = convert_units_to(thresh, pr)
+    return not suspicious_run(pr, window=window, op=op, thresh=thresh)
+
+
+def outside_5_standard_deviations_of_climatology(
+    da: xr.DataArray, window: int = 5, n: int = 5
+):
     """Check if any value is outside `n` standard deviations from the day of year mean."""
     mu, sig = clim_mean_doy(da, window=window)
     return not within_bnds_doy(da, mu + n * sig, mu - n * sig).all()
 
 
-def values_repeating_for_window_days(da: xr.DataArray, window=5):
+def values_repeating_for_5_or_more_days(da: xr.DataArray, window: int = 5):
     return not suspicious_run(da, window=window)
 
 
 def missing_vars(func, var: str, ds: xr.Dataset):
     sig = signature(func)
     sig = sig.pop(var)
-    extras = {}
+    extras = dict()
     for arg in sig:
         if arg in ds:
             extras[arg] = ds[arg]
