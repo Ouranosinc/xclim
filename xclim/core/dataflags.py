@@ -73,6 +73,9 @@ def many_5mm_repetitions(pr: xr.DataArray, window=5, op="==", thresh="5 mm d-1")
     return not suspicious_run(pr, window=window, op=op, thresh=thresh)
 
 
+# TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
+
+
 def outside_5_standard_deviations_of_climatology(
     da: xr.DataArray, window: int = 5, n: int = 5
 ):
@@ -101,8 +104,8 @@ def data_flags(da: xr.DataArray, ds: xr.Dataset):
     flagfunc = VARIABLES.get(var)["data_flags"]
 
     flags = dict()
-    for func in flagfunc:
-        kwargs = VARIABLES["data_flags"][func.name]
+    for func, kwargs in flagfunc.items():
+        # kwargs = VARIABLES["data_flags"][func.name]
         try:
             extras = missing_vars(func, var, ds)
         except MissingVariableError:
@@ -112,72 +115,3 @@ def data_flags(da: xr.DataArray, ds: xr.Dataset):
 
     dsflags = xr.Dataset(data_vars=flags)
     return dsflags
-
-
-# # TODO: Migrated from Data Quality Assurance Checks
-# def flag(arr, conditions):
-#     for msg, func in conditions.items():
-#         if func(arr):
-#             UserWarning(msg)
-#
-#
-# # TODO: Migrated from Data Quality Assurance Checks
-# def icclim_precipitation_flags():
-#     """Return a dictionary of conditions that would flag a suspicious precipitation time series."""
-#     conditions = {
-#         "Contains negative values": lambda x: (x < 0).any(),
-#         "Values too large (> 300mm)": lambda x: (x > 300).any(),
-#         "Many 1mm repetitions": lambda x: suspicious_run(x, window=10, thresh=1.0),
-#         "Many 5mm repetitions": lambda x: suspicious_run(x, window=5, thresh=5.0)
-#         # TODO: Create a check for dry days in precipitation runs
-#         # . . . dry periods receive flag = 1 (suspect), if the amount of dry days lies
-#         # outside a 14·bivariate standard deviation ?
-#         # 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
-#     }
-#
-#     return conditions
-#
-#
-# # TODO: Migrated from Data Quality Assurance Checks
-# def icclim_tasmean_flags():
-#     """Return a dictionary of conditions that would flag a suspicious tas time series."""
-#     conditions = {
-#         "Extremely low (< -90℃)": lambda x: (x < -90).any(),
-#         "Extremely high (> 60℃)": lambda x: (x > 60).any(),
-#         "Exceeds maximum temperature": lambda x, tasmax: (x > tasmax).any(),
-#         "Below minimum temperature": lambda x, tasmin: (x < tasmin).any(),
-#         "Identical values for 5 or more days": lambda x: suspicious_run(x, window=5),
-#         "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
-#     }
-#
-#     return conditions
-#
-#
-# # TODO: Migrated from Data Quality Assurance Checks
-# def icclim_tasmax_flags():
-#     """Return a dictionary of conditions that would flag a suspicious tasmax time series."""
-#     conditions = {
-#         "Extremely low (< -90℃)": lambda x: (x < -90).any(),
-#         "Extremely high (> 60℃)": lambda x: (x > 60).any(),
-#         "Below mean temperature": lambda x, tas: (x < tas).any(),
-#         "Below minimum temperature": lambda x, tasmin: (x < tasmin).any(),
-#         "Identical values for 5 or more days": lambda x: suspicious_run(x, window=5),
-#         "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
-#     }
-#
-#     return conditions
-#
-#
-# # TODO: Migrated from Data Quality Assurance Checks
-# def icclim_tasmin_flags():
-#     """Return a dictionary of conditions that would flag a suspicious tasmin time series."""
-#     conditions = {
-#         "Extremely low (< -90℃)": lambda x: (x < -90).any(),
-#         "Extremely high (> 60℃)": lambda x: (x > 60).any(),
-#         "Exceeds maximum temperature": lambda x, tasmax: (x > tasmax).any(),
-#         "Exceeds mean temperature": lambda x, tas: (x > tas).any(),
-#         "Identical values for 5 or more days": lambda x: suspicious_run(x, window=5),
-#         "Outside 5 standard deviations of mean": lambda x: outside_climatology(x, n=5),
-#     }
-#
-#     return conditions
