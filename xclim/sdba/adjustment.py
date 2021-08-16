@@ -55,7 +55,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     Children classes should implement the `train` and / or the `adjust` method.
 
     This base class defined the basic input and output checks. It should only be used for a real adjustment
-    if neither `TwoStepAdjustment` or `SingleStepAdjustment` fit the algorithm.
+    if neither `TrainAdjust` or `Adjust` fit the algorithm.
     """
 
     _allow_diff_calendars = True
@@ -105,7 +105,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         raise NotImplementedError()
 
 
-class TwoStepAdjustment(BaseAdjustment):
+class TrainAdjust(BaseAdjustment):
     """Base class for adjustment objects obeying the train-adjust scheme.
 
     Children classes should implement these methods:
@@ -192,7 +192,7 @@ class TwoStepAdjustment(BaseAdjustment):
         raise NotImplementedError
 
 
-class SingleStepAdjustment(BaseAdjustment):
+class Adjust(BaseAdjustment):
     """Adjustment with no intermediate trained object.
 
     Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
@@ -231,7 +231,7 @@ class SingleStepAdjustment(BaseAdjustment):
         return scen
 
 
-class EmpiricalQuantileMapping(TwoStepAdjustment):
+class EmpiricalQuantileMapping(TrainAdjust):
     """Empirical Quantile Mapping bias-adjustment.
 
     Adjustment factors are computed between the quantiles of `ref` and `sim`.
@@ -312,7 +312,7 @@ class EmpiricalQuantileMapping(TwoStepAdjustment):
         ).scen
 
 
-class DetrendedQuantileMapping(TwoStepAdjustment):
+class DetrendedQuantileMapping(TrainAdjust):
     r"""Detrended Quantile Mapping bias-adjustment.
 
     The algorithm follows these steps, 1-3 being the 'train' and 4-6, the 'adjust' steps.
@@ -493,7 +493,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         return out.scen
 
 
-class ExtremeValues(TwoStepAdjustment):
+class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the
@@ -690,7 +690,7 @@ class ExtremeValues(TwoStepAdjustment):
         return new_scen
 
 
-class LOCI(TwoStepAdjustment):
+class LOCI(TrainAdjust):
     r"""Local Intensity Scaling (LOCI) bias-adjustment.
 
     This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
@@ -762,7 +762,7 @@ class LOCI(TwoStepAdjustment):
         ).scen
 
 
-class Scaling(TwoStepAdjustment):
+class Scaling(TrainAdjust):
     """Scaling bias-adjustment.
 
     Simple bias-adjustment method scaling variables by an additive or multiplicative factor so that the mean of `hist`
@@ -809,7 +809,7 @@ class Scaling(TwoStepAdjustment):
         ).scen
 
 
-class PrincipalComponents(TwoStepAdjustment):
+class PrincipalComponents(TrainAdjust):
     r"""Principal component adjustment.
 
     This bias-correction method maps model simulation values to the observation
@@ -1005,7 +1005,7 @@ class PrincipalComponents(TwoStepAdjustment):
         return scen.unstack(lbl_R)
 
 
-class NpdfTransform(SingleStepAdjustment):
+class NpdfTransform(Adjust):
     r"""N-dimensional probability density function transform.
 
     This adjustment object combines both training and adjustent steps in the `adjust` class method.
@@ -1099,7 +1099,7 @@ class NpdfTransform(SingleStepAdjustment):
         hist: xr.DataArray,
         sim: xr.DataArray,
         *,
-        base: TwoStepAdjustment = QuantileDeltaMapping,
+        base: TrainAdjust = QuantileDeltaMapping,
         base_kws: Optional[Mapping[str, Any]] = None,
         n_escore: int = 0,
         n_iter: int = 20,

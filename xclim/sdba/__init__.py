@@ -6,7 +6,7 @@ Statistical Downscaling and Bias Adjustment
 ===========================================
 
 The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
-Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TwoStepAdjustment` classes.
+Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TrainAdjust` classes.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and the observations series, and then applying these factors to `sim`, which could be a future simulation::
 

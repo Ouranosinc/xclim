@@ -13,10 +13,10 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
 
-    - ``TwoStepAdjustment`` objects (most of the algorithms), which are created **and** trained in the same call:
+    - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
       ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
 
-    - ``SingleStepAdjustment`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
+    - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
 
 New indicators
