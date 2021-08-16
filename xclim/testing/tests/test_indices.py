@@ -1930,7 +1930,7 @@ def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
     np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
 
 
-@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 1, 1, 1, 1, 1])])
+@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 0, 1, 1, 1, 1])])
 def test_rain_approximation(pr_series, tas_series, method, exp):
     pr = pr_series(np.ones(10))
     tas = tas_series(np.arange(10) + K2C)

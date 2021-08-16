@@ -624,18 +624,9 @@ def snowfall_approximation(
 
         # Create nodes for the snowfall fraction: -inf, thresh, ..., thresh+6, inf [degC]
         t = np.concatenate(
-            [
-                [
-                    -273.15,
-                ],
-                np.linspace(0, 6, 100, endpoint=False),
-                [6, 1e10],
-            ]
+            [[-273.15], np.linspace(0, 6, 100, endpoint=False), [6, 1e10]]
         )
-        t = xr.DataArray(t, dims="tas")
-
-        # I can't get polyval to work directly with a DataArray, hence the empty values serving no purpose.
-        tmp = xr.DataArray(np.empty_like(t), dims="tas", coords={"tas": t})
+        t = xr.DataArray(t, dims="tas", name="tas", coords={"tas": t})
 
         # The polynomial coefficients, valid between thresh and thresh + 6 (defined in CLASS)
         coeffs = xr.DataArray(
@@ -644,7 +635,7 @@ def snowfall_approximation(
             coords={"degree": range(7)},
         )
 
-        fraction = xr.polyval(tmp.tas, coeffs) / 100
+        fraction = xr.polyval(t.tas, coeffs) / 100
         fraction[0] = 1
         fraction[-2:] = 0
 
@@ -678,7 +669,7 @@ def rain_approximation(
       Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
-    method : {"binary"}
+    method : {"binary", "brown", "auer"}
       Which method to use when approximating snowfall from total precipitation. See notes.
 
     Returns
