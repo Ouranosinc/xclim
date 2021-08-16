@@ -94,7 +94,7 @@ class BaseAdjustment(ParametrizableWithDataset):
         ):
             warn(
                 "Strange results could be returned when using dayofyear grouping "
-                "on data defined in the proleptic_greogrian calendar "
+                "on data defined in the proleptic_gregorian calendar "
             )
 
     @classmethod
@@ -193,7 +193,7 @@ class TwoStepAdjustment(BaseAdjustment):
 
 
 class SingleStepAdjustment(BaseAdjustment):
-    """Adjustment with a single step, not fittable into the train-adjust scheme.
+    """Adjustment with no intermediate trained object. 
 
     Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
     and returning the scen dataset/array.
@@ -494,7 +494,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
 
 class ExtremeValues(TwoStepAdjustment):
-    r"""Adjustement correction for extreme values.
+    r"""Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the
     parametric Generalized Pareto distribution of the reference data, [RRJF2021]_.
