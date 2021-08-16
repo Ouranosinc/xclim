@@ -53,7 +53,7 @@ class TestDataFlags:
         pr = bad_ds.pr.values
         # Add some strangeness
         pr[0][800] = -1e-6  # negative values
-        pr[1][1200] = 1  # 86400mm/day
+        pr[1][1200] = 0.003483796296  # 301mm/day
         pr[2][1200:1300] = 0.000011574074  # 1mm/day
         pr[3][200:300] = 0.00005787037  # 5mm/day
         bad_pr = xr.DataArray(
