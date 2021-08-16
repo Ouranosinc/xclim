@@ -575,7 +575,7 @@ def snowfall_approximation(
       Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
-    method : {"binary"}
+    method : {"binary", "brown", "auer"}
       Which method to use when approximating snowfall from total precipitation. See notes.
 
     Returns
@@ -585,18 +585,65 @@ def snowfall_approximation(
 
     Notes
     -----
-    The following methods are available to approximate snowfall:
+    The following methods are available to approximate snowfall and are drawn from the
+    Canadian Land Surface Scheme (CLASS, [Verseghy09]_).
 
-    - "binary" : When the given temperature is under a given threshold, precipitation
+    - "binary" : When the temperature is under the freezing threshold, precipitation
         is assumed to be solid. The method is agnostic to the type of temperature used
         (mean, maximum or minimum).
+    - "brown" : The phase between the freezing threshold goes from solid to liquid linearly
+        over a range of 2°C over the freezing point.
+    - "auer" : The phase between the freezing threshold goes from solid to liquid as a degree six
+        polynomial over a range of 6°C over the freezing point.
 
+    .. [Verseghy09]: Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
+    Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
     """
-    thresh = convert_units_to(thresh, tas)
+    # https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
+
     if method == "binary":
-        prsn = pr.where(tas < thresh, 0)
+        thresh = convert_units_to(thresh, tas)
+        prsn = pr.where(tas <= thresh, 0)
+
+    elif method == "brown":
+        # Freezing point + 2C in the native units
+        upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
+        thresh = convert_units_to(thresh, tas)
+
+        # Interpolate fraction over temperature (in units of tas)
+        t = xr.DataArray(
+            [-np.inf, thresh, upper, np.inf], dims=("tas",), attrs={"units": "degC"}
+        )
+        fraction = xr.DataArray([1.0, 1.0, 0.0, 0.0], dims=("tas",), coords={"tas": t})
+
+        # Multiply precip by snowfall fraction
+        prsn = pr * fraction.interp(tas=tas, method="linear")
+
+    elif method == "auer":
+        dtas = convert_units_to(tas, "degK") - convert_units_to(thresh, "degK")
+
+        # Create nodes for the snowfall fraction: -inf, thresh, ..., thresh+6, inf [degC]
+        t = np.concatenate(
+            [[-273.15], np.linspace(0, 6, 100, endpoint=False), [6, 1e10]]
+        )
+        t = xr.DataArray(t, dims="tas", name="tas", coords={"tas": t})
+
+        # The polynomial coefficients, valid between thresh and thresh + 6 (defined in CLASS)
+        coeffs = xr.DataArray(
+            [100, 4.6664, -15.038, -1.5089, 2.0399, -0.366, 0.0202],
+            dims=("degree",),
+            coords={"degree": range(7)},
+        )
+
+        fraction = xr.polyval(t.tas, coeffs).clip(0, 100) / 100
+        fraction[0] = 1
+        fraction[-2:] = 0
+
+        # Convert snowfall fraction coordinates to native tas units
+        prsn = pr * fraction.interp(tas=dtas, method="linear")
+
     else:
-        raise ValueError(f"Method {method} not in ['binary'].")
+        raise ValueError(f"Method {method} not one of 'binary', 'brown' or 'auer'.")
 
     prsn.attrs["units"] = pr.attrs["units"]
     return prsn
@@ -622,7 +669,7 @@ def rain_approximation(
       Mean, maximum, or minimum daily temperature.
     thresh : str,
       Threshold temperature, used by method "binary".
-    method : {"binary"}
+    method : {"binary", "brown", "auer"}
       Which method to use when approximating snowfall from total precipitation. See notes.
 
     Returns
