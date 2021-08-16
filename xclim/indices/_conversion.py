@@ -635,7 +635,7 @@ def snowfall_approximation(
             coords={"degree": range(7)},
         )
 
-        fraction = xr.polyval(t.tas, coeffs) / 100
+        fraction = xr.polyval(t.tas, coeffs).clip(0, 100) / 100
         fraction[0] = 1
         fraction[-2:] = 0
 
