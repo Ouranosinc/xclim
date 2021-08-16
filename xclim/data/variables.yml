@@ -106,7 +106,8 @@ variables:
       tas_exceeds_tasmax:
       tas_below_tasmin:
       values_repeating_for_5_or_more_days:
-      outside_5_standard_deviations_of_climatology:
+      outside_n_standard_deviations_of_climatology:
+        n: 5
   tasmax:
     canonical_units: K
     cell_methods:
@@ -119,7 +120,8 @@ variables:
       tasmax_below_tas:
       tasmax_below_tasmin:
       values_repeating_for_5_or_more_days:
-      outside_5_standard_deviations_of_climatology:
+      outside_n_standard_deviations_of_climatology:
+        n: 5
   tasmin:
     canonical_units: K
     cell_methods:
@@ -132,7 +134,8 @@ variables:
       tasmin_exceeds_tasmax:
       tasmin_exceeds_tas:
       values_repeating_for_5_or_more_days:
-      outside_5_standard_deviations_of_climatology:
+      outside_n_standard_deviations_of_climatology:
+        n: 5
   tdps:
     canonical_units: K
     cell_methods:

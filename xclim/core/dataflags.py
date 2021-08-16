@@ -22,7 +22,7 @@ __all__ = [
     "many_1mm_repetitions",
     "many_5mm_repetitions",
     "negative_precipitation_values",
-    "outside_5_standard_deviations_of_climatology",
+    "outside_n_standard_deviations_of_climatology",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
     "tasmax_below_tas",
@@ -251,7 +251,7 @@ def many_5mm_repetitions(pr: xr.DataArray) -> bool:
 
 
 @_register_methods
-def outside_5_standard_deviations_of_climatology(
+def outside_n_standard_deviations_of_climatology(
     da: xr.DataArray, window: int = 5, n: int = 5
 ) -> bool:
     """Check if any daily value is outside `n` standard deviations from the day of year mean.
