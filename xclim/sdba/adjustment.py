@@ -193,7 +193,7 @@ class TwoStepAdjustment(BaseAdjustment):
 
 
 class SingleStepAdjustment(BaseAdjustment):
-    """Adjustment with no intermediate trained object. 
+    """Adjustment with no intermediate trained object.
 
     Children classes should implement a `_adjust` classmethod taking as input the three DataArrays
     and returning the scen dataset/array.
