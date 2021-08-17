@@ -3,6 +3,7 @@ black
 bump2version
 coverage
 flake8
+mypy
 nbval
 pre-commit>=2.9
 pydocstyle>=5.1.1
