@@ -40,7 +40,7 @@ class DataQualityException(Exception):
 
     def __str__(self):
         nl = "\n  - "
-        return f"{self.message}{nl.join(self.flags)}."
+        return f"{self.message}{nl.join(self.flags)}"
 
 
 __all__ = [
@@ -90,7 +90,7 @@ def tasmax_below_tasmin(
     tasmax_lt_tasmin = tasmax < tasmin
     tasmax_lt_tasmin.attrs[
         "comment"
-    ] = "Maximum temperature values found below minimum temperatures"
+    ] = "Maximum temperature values found below minimum temperatures."
     return tasmax_lt_tasmin.any()
 
 
@@ -120,7 +120,7 @@ def tas_exceeds_tasmax(
     tas_gt_tasmax = tas > tasmax
     tas_gt_tasmax.attrs[
         "comment"
-    ] = "Mean temperature values found above maximum temperatures"
+    ] = "Mean temperature values found above maximum temperatures."
     return tas_gt_tasmax.any()
 
 
@@ -150,7 +150,7 @@ def tas_below_tasmin(
     tas_lt_tasmin = tas < tasmin
     tas_lt_tasmin.attrs[
         "comment"
-    ] = "Mean temperature values found below minimum temperatures"
+    ] = "Mean temperature values found below minimum temperatures."
     return tas_lt_tasmin.any()
 
 
@@ -181,7 +181,7 @@ def temperature_extremely_low(
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_low = da < thresh_converted
-    extreme_low.attrs["comment"] = f"Temperatures found below {thresh}"
+    extreme_low.attrs["comment"] = f"Temperatures found below {thresh}."
     return extreme_low.any()
 
 
@@ -212,7 +212,7 @@ def temperature_extremely_high(
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_high = da > thresh_converted
-    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}"
+    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}."
     return extreme_high.any()
 
 
@@ -237,7 +237,7 @@ def negative_precipitation_values(pr: xarray.DataArray) -> xarray.DataArray:
     >>> flagged = (ds.pr < 0)
     """
     negative_precip = pr < 0
-    negative_precip.attrs["comment"] = "Negative values found for precipitation"
+    negative_precip.attrs["comment"] = "Negative values found for precipitation."
     return negative_precip.any()
 
 
@@ -268,7 +268,7 @@ def very_large_precipitation_events(
     """
     thresh_converted = convert_units_to(thresh, pr)
     very_large_events = (pr > thresh_converted).any()
-    very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}"
+    very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}."
     return very_large_events.any()
 
 
@@ -297,7 +297,9 @@ def many_1mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """
     thresh = convert_units_to("1 mm d-1", pr)
     repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
-    repetitions.attrs["comment"] = "Repetitive precipitation values at 1mm d-1"
+    repetitions.attrs[
+        "comment"
+    ] = "Repetitive precipitation values at 1mm d-1 for at least 10 days."
     return repetitions.any()
 
 
@@ -326,7 +328,9 @@ def many_5mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """
     thresh = convert_units_to("5 mm d-1", pr)
     repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
-    repetitions.attrs["comment"] = "Repetitive precipitation values at 5mm d-1"
+    repetitions.attrs[
+        "comment"
+    ] = "Repetitive precipitation values at 5mm d-1 for at least 5 days."
     return repetitions.any()
 
 
@@ -364,7 +368,7 @@ def outside_n_standard_deviations_of_climatology(
     within_bounds = within_bnds_doy(da, mu + n * sig, mu - n * sig)
     within_bounds.attrs[
         "comment"
-    ] = f"Values found that are outside of {n} standard deviations from climatology"
+    ] = f"Values found that are outside of {n} standard deviations from climatology."
     if within_bounds.all():
         return ~within_bounds.all()
     return ~within_bounds.any()
@@ -391,7 +395,7 @@ def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArra
     >>> flagged = suspicious_run(ds.pr, window=5)
     """
     repetition = suspicious_run(da, window=5)
-    repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days"
+    repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days."
     return repetition.any()
 
 
