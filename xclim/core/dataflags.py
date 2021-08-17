@@ -177,7 +177,8 @@ def temperature_extremely_low(
     >>> from xclim.core.units import convert_units_to
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> threshold = convert_units_to("-90 degC", ds.tas)
-    >>> flagged = ds.tas < threshold"""
+    >>> flagged = ds.tas < threshold
+    """
     thresh = convert_units_to(thresh, da)
     extreme_low = da < thresh
     extreme_low.attrs["comment"] = f"Temperatures found below {thresh} K"
@@ -412,6 +413,14 @@ def data_flags(
     Returns
     -------
     xarray.Dataset
+
+    Examples
+    --------
+    To evaluate all applicable data flags for a given variable:
+
+    >>> from xclim.core.dataflags import data_flags
+    >>> pr = xr.open_dataset(path_to_pr_file)
+    >>> flagged_ds = data_flags(ds.pr, ds)
     """
 
     def _missing_vars(function, dataset: xarray.Dataset):
