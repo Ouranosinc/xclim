@@ -31,6 +31,7 @@ Bug fixes
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``, only "dev" is left and it includes all tools needed for xclim's development.
 
 
 0.28.1 (2021-07-29)
