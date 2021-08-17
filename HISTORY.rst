@@ -9,9 +9,21 @@ Announcements
 ~~~~~~~~~~~~~
 * It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+
+    - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
+      ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
+
+    - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
+      class method performs all the work in one call.
+* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
+
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -27,10 +39,6 @@ Bug fixes
 * Various bug fixes in bootstrapping:
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
-
-Breaking changes
-~~~~~~~~~~~~~~~~
-* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
 
 
 0.28.1 (2021-07-29)

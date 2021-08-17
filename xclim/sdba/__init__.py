@@ -6,12 +6,13 @@ Statistical Downscaling and Bias Adjustment
 ===========================================
 
 The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
-Adjustment algorithms all conform to the `train` - `adjust` scheme, formalized within `Adjustment` classes.
+Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TrainAdjust` classes.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and the observations series, and then applying these factors to `sim`, which could be a future simulation::
 
-  Adj = Adjustment(group="time.month")
-  Adj.train(ref, hist)
+  # Create the adjustment object by training it with reference and model data, plus certains arguments
+  Adj = Adjustment.train(ref, hist, group="time.month")
+  # Get a scenario by applying the adjustment to a simulated timeseries.
   scen = Adj.adjust(sim, interp="linear")
   Adj.ds.af  # adjustment factors.
 
@@ -36,8 +37,7 @@ This module adopts a modular approach instead of implementing published and name
 A generic bias adjustment process is laid out as follows:
 
 - preprocessing on `ref`, `hist` and `sim` (using methods in `xclim.sdba.processing` or `xclim.sdba.detrending`)
-- creating the adjustment object `Adj = Adjustment(**kwargs)` (from `xclim.sdba.adjustment`)
-- training `Adj.train(obs, sim)`
+- creating and training the adjustment object `Adj = Adjustment.train(obs, sim, **kwargs)` (from `xclim.sdba.adjustment`)
 - adjustment `scen = Adj.adjust(sim, **kwargs)`
 - post-processing on `scen` (for example: re-trending)
 
