@@ -50,8 +50,7 @@ class TestLoci:
         ref_fit = series(y, "pr").where(y > thresh, 0.1)
         ref = series(y, "pr")
 
-        loci = LOCI(group=group, thresh=thresh)
-        loci.train(ref_fit, hist)
+        loci = LOCI.train(ref_fit, hist, group=group, thresh=thresh)
         np.testing.assert_array_almost_equal(loci.ds.hist_thresh, 1, dec)
         np.testing.assert_array_almost_equal(loci.ds.af, 2, dec)
 
@@ -88,8 +87,7 @@ class TestScaling:
         if kind == ADDITIVE:
             ref = convert_units_to(ref, "degC")
 
-        scaling = Scaling(group="time", kind=kind)
-        scaling.train(ref, hist)
+        scaling = Scaling.train(ref, hist, group="time", kind=kind)
         np.testing.assert_array_almost_equal(scaling.ds.af, 2)
 
         p = scaling.adjust(sim)
@@ -107,8 +105,7 @@ class TestScaling:
         ref = mon_series(apply_correction(x, 2, kind), name)
 
         # Test train
-        scaling = Scaling(group="time.month", kind=kind)
-        scaling.train(ref, hist)
+        scaling = Scaling.train(ref, hist, group="time.month", kind=kind)
         expected = apply_correction(mon_triangular, 2, kind)
         np.testing.assert_array_almost_equal(scaling.ds.af, expected)
 
@@ -142,12 +139,13 @@ class TestDQM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        DQM = DetrendedQuantileMapping(
+        DQM = DetrendedQuantileMapping.train(
+            ref,
+            hist,
             kind=kind,
             group="time",
             nquantiles=50,
         )
-        DQM.train(ref, hist)
         p = DQM.adjust(sim, interp="linear")
 
         q = DQM.ds.quantiles
@@ -219,8 +217,9 @@ class TestDQM:
             sim = sim.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
             ref_t = ref_t.expand_dims(lat=[0, 1, 2])
 
-        DQM = DetrendedQuantileMapping(kind=kind, group="time.month", nquantiles=5)
-        DQM.train(ref, hist)
+        DQM = DetrendedQuantileMapping.train(
+            ref, hist, kind=kind, group="time.month", nquantiles=5
+        )
         mqm = DQM.ds.af.mean(dim="quantiles")
         p = DQM.adjust(sim)
 
@@ -232,8 +231,7 @@ class TestDQM:
     def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path):
         ref, hist, sim = cannon_2015_rvs(15000)
 
-        DQM = DetrendedQuantileMapping(kind="*", group="time")
-        DQM.train(ref, hist)
+        DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
         p = DQM.adjust(sim)
 
         np.testing.assert_almost_equal(p.mean(), 41.6, 0)
@@ -274,12 +272,13 @@ class TestQDM:
         hist = sim = series(x, name)
         ref = series(y, name)
 
-        QDM = QuantileDeltaMapping(
+        QDM = QuantileDeltaMapping.train(
+            ref,
+            hist,
             kind=kind,
             group="time",
             nquantiles=10,
         )
-        QDM.train(ref, hist)
         p = QDM.adjust(sim, interp="linear")
 
         q = QDM.ds.coords["quantiles"]
@@ -330,8 +329,9 @@ class TestQDM:
         else:
             sel = {}
 
-        QDM = QuantileDeltaMapping(kind=kind, group="time.month", nquantiles=40)
-        QDM.train(ref, hist)
+        QDM = QuantileDeltaMapping.train(
+            ref, hist, kind=kind, group="time.month", nquantiles=40
+        )
         p = QDM.adjust(sim, interp="linear" if kind == "+" else "nearest")
 
         q = QDM.ds.coords["quantiles"]
@@ -352,8 +352,9 @@ class TestQDM:
 
         # Quantile mapping
         with set_options(sdba_extra_output=True):
-            QDM = QuantileDeltaMapping(kind="*", group="time", nquantiles=50)
-            QDM.train(ref, hist)
+            QDM = QuantileDeltaMapping.train(
+                ref, hist, kind="*", group="time", nquantiles=50
+            )
             scends = QDM.adjust(sim)
 
         assert isinstance(scends, xr.Dataset)
@@ -400,12 +401,13 @@ class TestQM:
         # Test train
         hist = sim = series(x, name)
         ref = series(y, name)
-        QM = EmpiricalQuantileMapping(
+        QM = EmpiricalQuantileMapping.train(
+            ref,
+            hist,
             kind=kind,
             group="time",
             nquantiles=50,
         )
-        QM.train(ref, hist)
         p = QM.adjust(sim, interp="linear")
 
         q = QM.ds.coords["quantiles"]
@@ -442,8 +444,9 @@ class TestQM:
         hist = sim = series(x, name)
         ref = mon_series(y, name)
 
-        QM = EmpiricalQuantileMapping(kind=kind, group="time.month", nquantiles=5)
-        QM.train(ref, hist)
+        QM = EmpiricalQuantileMapping.train(
+            ref, hist, kind=kind, group="time.month", nquantiles=5
+        )
         p = QM.adjust(sim)
         mqm = QM.ds.af.mean(dim="quantiles")
         expected = apply_correction(mon_triangular, 2, kind)
@@ -481,8 +484,9 @@ class TestPrincipalComponents:
         )
         sim["time"] = ref["time"]
 
-        PCA = PrincipalComponents(group=group, crd_dims=crd_dims, pts_dims=pts_dims)
-        PCA.train(ref, sim)
+        PCA = PrincipalComponents.train(
+            ref, sim, group=group, crd_dims=crd_dims, pts_dims=pts_dims
+        )
         scen = PCA.adjust(sim)
 
         group = group if isinstance(group, Grouper) else Grouper("time")
@@ -524,8 +528,7 @@ class TestPrincipalComponents:
         ref = ds.air.isel(lat=21, lon=[40, 52]).drop_vars(["lon", "lat"])
         sim = ds.air.isel(lat=18, lon=[17, 35]).drop_vars(["lon", "lat"])
 
-        PCA = PrincipalComponents(group=group)
-        PCA.train(ref, sim)
+        PCA = PrincipalComponents.train(ref, sim, group=group)
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
@@ -571,15 +574,14 @@ class TestExtremeValues:
         hist = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
         sim = gen_testdata(-0.15, 2.5)
 
-        EQM = EmpiricalQuantileMapping(group="time.dayofyear", nquantiles=15, kind="*")
-        EQM.train(ref, hist)
+        EQM = EmpiricalQuantileMapping.train(
+            ref, hist, group="time.dayofyear", nquantiles=15, kind="*"
+        )
 
         scen = EQM.adjust(sim)
 
-        EX = ExtremeValues(c_thresh, q_thresh=q_thresh)
-
         with set_options(sdba_extra_output=diags):
-            EX.train(ref, hist)
+            EX = ExtremeValues.train(ref, hist, c_thresh, q_thresh=q_thresh)
 
         if diags:
             assert "nclusters" in EX.ds
@@ -610,19 +612,17 @@ class TestExtremeValues:
 
         quantiles = np.linspace(0.01, 0.99, num=50)
 
-        EQM = EmpiricalQuantileMapping(
-            group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
-        )
-
         with xr.set_options(keep_attrs=True):
             ref = ref + uniform_noise_like(ref, low=1e-6, high=1e-3)
             hist = hist + uniform_noise_like(hist, low=1e-6, high=1e-3)
 
-        EQM.train(ref, hist)
+        EQM = EmpiricalQuantileMapping.train(
+            ref, hist, group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
+        )
+
         scen = EQM.adjust(hist, interp="linear", extrapolation="constant")
 
-        EX = ExtremeValues(cluster_thresh="1 mm/day", q_thresh=0.97)
-        EX.train(ref, hist)
+        EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
 
         new_scen.load()
@@ -638,6 +638,5 @@ class TestExtremeValues:
 
 def test_raise_on_multiple_chunks(tas_series):
     ref = tas_series(np.arange(730)).chunk({"time": 365})
-    Adj = BaseAdjustment(group=Grouper("time.month"))
     with pytest.raises(ValueError):
-        Adj.train(ref, ref)
+        EmpiricalQuantileMapping.train(ref, ref, group=Grouper("time.month"))

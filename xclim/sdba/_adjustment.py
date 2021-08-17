@@ -247,9 +247,9 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
       Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
       respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
     """
-    ref = ds.ref
-    hist = ds.hist
-    sim = ds.sim.rename(time_sim="time")
+    ref = ds.ref.rename(time_hist="time")
+    hist = ds.hist.rename(time_hist="time")
+    sim = ds.sim
     dim = kwargs["pts_dim"]
 
     escores = []
@@ -261,8 +261,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         simp = sim @ R
 
         # Perform univariate adjustment in rotated space (x')
-        ADJ = kwargs["base"](**kwargs["base_kws"])
-        ADJ.train(refp, histp)
+        ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
         scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
         scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
 
@@ -295,8 +294,8 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
     return xr.Dataset(
         data_vars={
-            "scenh": hist.transpose(*ds.hist.dims),
-            "scens": sim.rename(time="time_sim").transpose(*ds.sim.dims),
+            "scenh": hist.rename(time="time_hist").transpose(*ds.hist.dims),
+            "scen": sim.transpose(*ds.sim.dims),
             "escores": escores,
         }
     )

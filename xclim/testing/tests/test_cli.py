@@ -102,7 +102,7 @@ def test_normal_computation(
 
 
 def test_multi_input(tas_series, pr_series, tmp_path):
-    tas = tas_series(np.ones(366) + 272.15, start="1/1/2000")
+    tas = tas_series(np.ones(366) + 273.15, start="1/1/2000")
     pr = pr_series(np.ones(366), start="1/1/2000")
     tas_file = tmp_path / "multi_tas_in.nc"
     pr_file = tmp_path / "multi_pr_in.nc"
