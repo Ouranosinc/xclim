@@ -18,6 +18,12 @@ Breaking changes
 
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
+* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
+
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -29,10 +35,11 @@ New indicators
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
 
 Bug fixes
-~~~~~~~~~~~~~~
+~~~~~~~~~
 * Various bug fixes in bootstrapping:
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
+
 
 0.28.1 (2021-07-29)
 -------------------
