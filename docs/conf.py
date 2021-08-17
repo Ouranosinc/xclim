@@ -82,7 +82,6 @@ indicators = {module: _indicator_table(module) for module in modules}
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
@@ -92,6 +91,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "rstjinja",
+    "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
 ]
@@ -106,7 +106,7 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
 }
 
-nbsphinx_execute = "always"
+nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
