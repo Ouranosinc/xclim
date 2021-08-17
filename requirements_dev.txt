@@ -14,6 +14,7 @@ pytest-runner
 tox
 xdoctest
 # Documentation and examples
+ipykernel
 matplotlib
 nbsphinx
 nc-time-axis
