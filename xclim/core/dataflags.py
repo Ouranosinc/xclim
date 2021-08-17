@@ -29,7 +29,7 @@ class DataQualityException(Exception):
     def __init__(
         self,
         flag_array: xarray.Dataset,
-        message="Data quality flags indicate suspicious values. Flags raised are:\n\t",
+        message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
         self.flags = list()
@@ -39,8 +39,8 @@ class DataQualityException(Exception):
         super().__init__(self.message)
 
     def __str__(self):
-        nl = "\n\t"
-        return f"{self.message} {nl.join(self.flags)}."
+        nl = "\n  - "
+        return f"{self.message}{nl.join(self.flags)}."
 
 
 __all__ = [
@@ -179,9 +179,9 @@ def temperature_extremely_low(
     >>> threshold = convert_units_to("-90 degC", ds.tas)
     >>> flagged = ds.tas < threshold
     """
-    thresh = convert_units_to(thresh, da)
-    extreme_low = da < thresh
-    extreme_low.attrs["comment"] = f"Temperatures found below {thresh} K"
+    thresh_converted = convert_units_to(thresh, da)
+    extreme_low = da < thresh_converted
+    extreme_low.attrs["comment"] = f"Temperatures found below {thresh}"
     return extreme_low.any()
 
 
@@ -210,9 +210,9 @@ def temperature_extremely_high(
     >>> threshold = convert_units_to("60 degC", ds.tas)
     >>> flagged = ds.tas > threshold
     """
-    thresh = convert_units_to(thresh, da)
-    extreme_high = da > thresh
-    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh} K"
+    thresh_converted = convert_units_to(thresh, da)
+    extreme_high = da > thresh_converted
+    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}"
     return extreme_high.any()
 
 
@@ -266,8 +266,8 @@ def very_large_precipitation_events(
     >>> threshold = convert_units_to("300 mm d-1", ds.pr)
     >>> flagged = (ds.pr > threshold)
     """
-    thresh = convert_units_to(thresh, pr)
-    very_large_events = (pr > thresh).any()
+    thresh_converted = convert_units_to(thresh, pr)
+    very_large_events = (pr > thresh_converted).any()
     very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}"
     return very_large_events.any()
 
@@ -297,7 +297,7 @@ def many_1mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """
     thresh = convert_units_to("1 mm d-1", pr)
     repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
-    repetitions.attrs["comment"] = "Repetitive precipitation values at 1mm"
+    repetitions.attrs["comment"] = "Repetitive precipitation values at 1mm d-1"
     return repetitions.any()
 
 
@@ -326,7 +326,7 @@ def many_5mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """
     thresh = convert_units_to("5 mm d-1", pr)
     repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
-    repetitions.attrs["comment"] = "Repetitive precipitation values at 5mm"
+    repetitions.attrs["comment"] = "Repetitive precipitation values at 5mm d-1"
     return repetitions.any()
 
 
@@ -364,7 +364,7 @@ def outside_n_standard_deviations_of_climatology(
     within_bounds = within_bnds_doy(da, mu + n * sig, mu - n * sig)
     within_bounds.attrs[
         "comment"
-    ] = f"Outside of {n} standard deviations from climatology"
+    ] = f"Values found that are outside of {n} standard deviations from climatology"
     if within_bounds.all():
         return ~within_bounds.all()
     return ~within_bounds.any()
@@ -419,7 +419,7 @@ def data_flags(
     To evaluate all applicable data flags for a given variable:
 
     >>> from xclim.core.dataflags import data_flags
-    >>> pr = xr.open_dataset(path_to_pr_file)
+    >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged_ds = data_flags(ds.pr, ds)
     """
 
