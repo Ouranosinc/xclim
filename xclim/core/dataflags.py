@@ -16,7 +16,6 @@ from .units import convert_units_to, declare_units
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
 _REGISTRY = dict()
-xr.set_options(keep_attrs=True)
 
 
 class DataQualityException(Exception):
@@ -78,6 +77,13 @@ def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> xr.DataAr
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> ds.tasmax < ds.tasmin
     """
     tasmax_lt_tasmin = tasmax < tasmin
     tasmax_lt_tasmin.attrs[
@@ -99,6 +105,13 @@ def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+        Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> flagged = ds.tas > ds.tasmax
     """
     tas_gt_tasmax = tas > tasmax
     tas_gt_tasmax.attrs[
@@ -120,6 +133,13 @@ def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> flagged = ds.tasmax < ds.tasmin
     """
     tas_lt_tasmin = tas < tasmin
     tas_lt_tasmin.attrs[
@@ -143,6 +163,15 @@ def temperature_extremely_low(
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.units import convert_units_to
+        >>> thresh = convert_units_to("-90 degC", ds.tas)
+        >>> flagged = ds.tas < thresh
     """
     thresh = convert_units_to(thresh, da)
     extreme_low = da < thresh
@@ -165,6 +194,15 @@ def temperature_extremely_high(
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.units import convert_units_to
+        >>> thresh = convert_units_to("60 degC", ds.tas)
+        >>> flagged = ds.tas > thresh
     """
     thresh = convert_units_to(thresh, da)
     extreme_high = da > thresh
@@ -184,6 +222,13 @@ def negative_precipitation_values(pr: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> flagged = (ds.pr < 0)
     """
     negative_precip = pr < 0
     negative_precip.attrs["comment"] = "Negative values found for precipitation"
@@ -205,6 +250,15 @@ def very_large_precipitation_events(
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.units import convert_units_to
+        >>> thresh = convert_units_to("300 mm d-1", ds.pr)
+        >>> flagged = (ds.pr > thresh)
     """
     thresh = convert_units_to(thresh, pr)
     very_large_events = (pr > thresh).any()
@@ -224,6 +278,16 @@ def many_1mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.units import convert_units_to
+        >>> from xclim.indices.run_length import suspicious_run
+        >>> thresh = convert_units_to("1 mm d-1", ds.pr)
+        >>> flagged = suspicious_run(ds.pr, window=10, op="==", thresh=thresh)
     """
     thresh = convert_units_to("1 mm d-1", pr)
     repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
@@ -243,6 +307,16 @@ def many_5mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.units import convert_units_to
+        >>> from xclim.indices.run_length import suspicious_run
+        >>> thresh = convert_units_to("5 mm d-1", ds.pr)
+        >>> flagged = suspicious_run(ds.pr, window=5, op="==", thresh=thresh)
     """
     thresh = convert_units_to("5 mm d-1", pr)
     repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
@@ -268,6 +342,16 @@ def outside_n_standard_deviations_of_climatology(
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
+        >>> mu, sig = climatological_mean_doy(ds.variable, window=5)
+        >>> std_devs = 5
+        >>> flagged = ~within_bnds_doy(ds.variable, mu + std_devs * sig, mu - std_devs * sig)
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
@@ -291,6 +375,14 @@ def values_repeating_for_5_or_more_days(da: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [bool]
+
+    Notes
+    -----
+    To gain access to the flag_array:
+
+    .. python::
+        >>> from xclim.indices.run_length import suspicious_run
+        >>> flagged = suspicious_run(ds.variable, window=5)
     """
     repetition = suspicious_run(da, window=5)
     repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days"
@@ -303,6 +395,7 @@ def data_flags(
     """Automatically evaluates the supplied DataArray for a set of data flag tests.
 
     Test triggers depend on variable name and availability of extra variables within Dataset for comparison.
+    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
 
     Parameters
     ----------
@@ -343,7 +436,8 @@ def data_flags(
         except MissingVariableError:
             flags[name] = None
         else:
-            flags[name] = func(da, **extras, **(kwargs or dict()))
+            with xr.set_options(keep_attrs=True):
+                flags[name] = func(da, **extras, **(kwargs or dict()))
 
     dsflags = xr.Dataset(data_vars=flags)
 

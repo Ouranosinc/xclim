@@ -43,6 +43,7 @@ New features and enhancements
     - Precipitation (variables: ``pr``):  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
     - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
     These pseudo-indices are triggered according CF-standard variable names and can be induced via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-triggered checks and must be run independently, as they trigger calculations. Will return an array of data_flags as boolean variables.
+    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
 * ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
 
 Breaking changes
