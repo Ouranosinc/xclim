@@ -273,13 +273,13 @@ class TestQDM:
         ref = series(y, name)
 
         QDM = QuantileDeltaMapping.train(
-            ref,
-            hist,
+            ref.astype("float32"),
+            hist.astype("float32"),
             kind=kind,
             group="time",
             nquantiles=10,
         )
-        p = QDM.adjust(sim, interp="linear")
+        p = QDM.adjust(sim.astype("float32"), interp="linear")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
@@ -291,6 +291,10 @@ class TestQDM:
         # Accept discrepancies near extremes
         middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
+
+        # Test dtype control of map_blocks
+        assert QDM.ds.af.dtype == "float32"
+        assert p.dtype == "float32"
 
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])

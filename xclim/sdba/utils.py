@@ -219,7 +219,7 @@ def broadcast(
                     " interpolation, not cubic. Using linear."
                 )
 
-            grouped = grouped.interp(sel, method=interp)
+            grouped = grouped.interp(sel, method=interp).astype(grouped.dtype)
 
         for var in sel.keys():
             if var in grouped.coords and var not in grouped.dims:

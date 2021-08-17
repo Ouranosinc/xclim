@@ -432,9 +432,9 @@ def duck_empty(dims, sizes, dtype="float64", chunks=None):
     shape = [sizes[dim] for dim in dims]
     if chunks:
         chnks = [chunks.get(dim, (sizes[dim],)) for dim in dims]
-        content = dsk.empty(shape, chunks=chnks)
+        content = dsk.empty(shape, chunks=chnks, dtype=dtype)
     else:
-        content = np.empty(shape)
+        content = np.empty(shape, dtype=dtype)
     return xr.DataArray(content, dims=dims)
 
 
@@ -559,11 +559,13 @@ def map_blocks(reduces=None, **outvars):
             # Create the output dataset, but empty
             tmpl = xr.Dataset(coords=coords)
             if isinstance(ds, xr.Dataset):
+                # Get largest dtype of the inputs, assign it to the output.
                 dtype = max(
                     [da.dtype for da in ds.data_vars.values()], key=lambda d: d.itemsize
                 )
             else:
                 dtype = ds.dtype
+
             for var, dims in outvars.items():
                 # Out variables must have the base dims + new_dims
                 dims = base_dims + [placeholders.get(dim, dim) for dim in dims]
@@ -594,6 +596,7 @@ def map_blocks(reduces=None, **outvars):
             # Fancy patching for explicit dask task names
             _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
+            print(tmpl)
             out = ds.map_blocks(
                 _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
             )

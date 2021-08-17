@@ -295,6 +295,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     """
 
+    _allow_diff_calendars = False
+
     @classmethod
     def _train(
         cls,
@@ -306,7 +308,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         group: Union[str, Grouper] = "time",
     ):
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
@@ -402,7 +404,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             )
 
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
