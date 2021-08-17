@@ -8,7 +8,7 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 from inspect import signature
 
 import numpy as np
-import xarray as xr
+import xarray
 
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
@@ -28,7 +28,7 @@ class DataQualityException(Exception):
 
     def __init__(
         self,
-        flag_array: xr.Dataset,
+        flag_array: xarray.Dataset,
         message="Data quality flags indicate suspicious values. Flags raised are:\n\t",
     ):
         self.message = message
@@ -66,24 +66,26 @@ def _register_methods(func):
 
 @_register_methods
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", check_output=False)
-def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
+def tasmax_below_tasmin(
+    tasmax: xarray.DataArray, tasmin: xarray.DataArray
+) -> xarray.DataArray:
     """Check if tasmax values are below tasmin values for any given day.
 
     Parameters
     ----------
-    tasmax : xr.DataArray
-    tasmin : xr.DataArray
+    tasmax : xarray.DataArray
+    tasmin : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> ds.tasmax < ds.tasmin
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> ds.tasmax < ds.tasmin
     """
     tasmax_lt_tasmin = tasmax < tasmin
     tasmax_lt_tasmin.attrs[
@@ -94,24 +96,26 @@ def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> xr.DataAr
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmax="[temperature]", check_output=False)
-def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
+def tas_exceeds_tasmax(
+    tas: xarray.DataArray, tasmax: xarray.DataArray
+) -> xarray.DataArray:
     """Check if tas values tasmax values for any given day.
 
     Parameters
     ----------
-    tas : xr.DataArray
-    tasmax : xr.DataArray
+    tas : xarray.DataArray
+    tasmax : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-        Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> flagged = ds.tas > ds.tasmax
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> flagged = ds.tas > ds.tasmax
     """
     tas_gt_tasmax = tas > tasmax
     tas_gt_tasmax.attrs[
@@ -122,24 +126,26 @@ def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmin="[temperature]", check_output=False)
-def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
+def tas_below_tasmin(
+    tas: xarray.DataArray, tasmin: xarray.DataArray
+) -> xarray.DataArray:
     """Check if tas values are below tasmin values for any given day.
 
     Parameters
     ----------
-    tas : xr.DataArray
-    tasmin : xr.DataArray
+    tas : xarray.DataArray
+    tasmin : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> flagged = ds.tasmax < ds.tasmin
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> flagged = ds.tasmax < ds.tasmin
     """
     tas_lt_tasmin = tas < tasmin
     tas_lt_tasmin.attrs[
@@ -151,28 +157,27 @@ def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_low(
-    da: xr.DataArray, thresh: str = "-90 degC"
-) -> xr.DataArray:
+    da: xarray.DataArray, thresh: str = "-90 degC"
+) -> xarray.DataArray:
     """Check if temperatures values are below -90 degrees Celsius for any given day.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xarray.DataArray
     thresh : str
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.units import convert_units_to
-        >>> thresh = convert_units_to("-90 degC", ds.tas)
-        >>> flagged = ds.tas < thresh
-    """
+    >>> from xclim.core.units import convert_units_to
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> threshold = convert_units_to("-90 degC", ds.tas)
+    >>> flagged = ds.tas < threshold"""
     thresh = convert_units_to(thresh, da)
     extreme_low = da < thresh
     extreme_low.attrs["comment"] = f"Temperatures found below {thresh} K"
@@ -182,27 +187,27 @@ def temperature_extremely_low(
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_high(
-    da: xr.DataArray, thresh: str = "60 degC"
-) -> xr.DataArray:
+    da: xarray.DataArray, thresh: str = "60 degC"
+) -> xarray.DataArray:
     """Check if temperatures values exceed 60 degrees Celsius for any given day.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xarray.DataArray
     thresh : str
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.units import convert_units_to
-        >>> thresh = convert_units_to("60 degC", ds.tas)
-        >>> flagged = ds.tas > thresh
+    >>> from xclim.core.units import convert_units_to
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> threshold = convert_units_to("60 degC", ds.tas)
+    >>> flagged = ds.tas > threshold
     """
     thresh = convert_units_to(thresh, da)
     extreme_high = da > thresh
@@ -212,23 +217,23 @@ def temperature_extremely_high(
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def negative_precipitation_values(pr: xr.DataArray) -> xr.DataArray:
+def negative_precipitation_values(pr: xarray.DataArray) -> xarray.DataArray:
     """Check if precipitation values are ever negative for any given day.
 
     Parameters
     ----------
-    pr : xr. DataArray
+    pr : xarray. DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> flagged = (ds.pr < 0)
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> flagged = (ds.pr < 0)
     """
     negative_precip = pr < 0
     negative_precip.attrs["comment"] = "Negative values found for precipitation"
@@ -238,27 +243,27 @@ def negative_precipitation_values(pr: xr.DataArray) -> xr.DataArray:
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
 def very_large_precipitation_events(
-    pr: xr.DataArray, thresh="300 mm d-1"
-) -> xr.DataArray:
+    pr: xarray.DataArray, thresh="300 mm d-1"
+) -> xarray.DataArray:
     """Check if precipitation values exceed 300 mm/day for any given day.
 
     Parameters
     ----------
-    pr : xr.DataArray
+    pr : xarray.DataArray
     thresh : str
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.units import convert_units_to
-        >>> thresh = convert_units_to("300 mm d-1", ds.pr)
-        >>> flagged = (ds.pr > thresh)
+    >>> from xclim.core.units import convert_units_to
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> threshold = convert_units_to("300 mm d-1", ds.pr)
+    >>> flagged = (ds.pr > threshold)
     """
     thresh = convert_units_to(thresh, pr)
     very_large_events = (pr > thresh).any()
@@ -268,26 +273,26 @@ def very_large_precipitation_events(
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_1mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
+def many_1mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 10 or more days.
 
     Parameters
     ----------
-    pr : xr.DataArray
+    pr : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.units import convert_units_to
-        >>> from xclim.indices.run_length import suspicious_run
-        >>> thresh = convert_units_to("1 mm d-1", ds.pr)
-        >>> flagged = suspicious_run(ds.pr, window=10, op="==", thresh=thresh)
+    >>> from xclim.core.units import convert_units_to
+    >>> from xclim.indices.run_length import suspicious_run
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> threshold = convert_units_to("1 mm d-1", ds.pr)
+    >>> flagged = suspicious_run(ds.pr, window=10, op="==", thresh=threshold)
     """
     thresh = convert_units_to("1 mm d-1", pr)
     repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
@@ -297,26 +302,26 @@ def many_1mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_5mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
+def many_5mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
     ----------
-    pr : xr.DataArray
+    pr : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.units import convert_units_to
-        >>> from xclim.indices.run_length import suspicious_run
-        >>> thresh = convert_units_to("5 mm d-1", ds.pr)
-        >>> flagged = suspicious_run(ds.pr, window=5, op="==", thresh=thresh)
+    >>> from xclim.core.units import convert_units_to
+    >>> from xclim.indices.run_length import suspicious_run
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> threshold = convert_units_to("5 mm d-1", ds.pr)
+    >>> flagged = suspicious_run(ds.pr, window=5, op="==", thresh=threshold)
     """
     thresh = convert_units_to("5 mm d-1", pr)
     repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
@@ -329,29 +334,29 @@ def many_5mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
 
 @_register_methods
 def outside_n_standard_deviations_of_climatology(
-    da: xr.DataArray, window: int = 5, n: int = 5
-) -> xr.DataArray:
+    da: xarray.DataArray, window: int = 5, n: int = 5
+) -> xarray.DataArray:
     """Check if any daily value is outside `n` standard deviations from the day of year mean.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xarray.DataArray
     window : int
     n : int
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
-        >>> mu, sig = climatological_mean_doy(ds.variable, window=5)
-        >>> std_devs = 5
-        >>> flagged = ~within_bnds_doy(ds.variable, mu + std_devs * sig, mu - std_devs * sig)
+    >>> from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> mu, sig = climatological_mean_doy(ds.tas, window=5)
+    >>> std_devs = 5
+    >>> flagged = ~within_bnds_doy(ds.tas, mu + std_devs * sig, mu - std_devs * sig)
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
@@ -365,24 +370,24 @@ def outside_n_standard_deviations_of_climatology(
 
 
 @_register_methods
-def values_repeating_for_5_or_more_days(da: xr.DataArray) -> xr.DataArray:
+def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArray:
     """Check if exact values are found to be repeating for at least 5 or more days.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xarray.DataArray
 
     Returns
     -------
-    xr.DataArray, [bool]
+    xarray.DataArray, [bool]
 
-    Notes
-    -----
+    Examples
+    --------
     To gain access to the flag_array:
 
-    .. python::
-        >>> from xclim.indices.run_length import suspicious_run
-        >>> flagged = suspicious_run(ds.variable, window=5)
+    >>> from xclim.indices.run_length import suspicious_run
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> flagged = suspicious_run(ds.pr, window=5)
     """
     repetition = suspicious_run(da, window=5)
     repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days"
@@ -390,8 +395,8 @@ def values_repeating_for_5_or_more_days(da: xr.DataArray) -> xr.DataArray:
 
 
 def data_flags(
-    da: xr.DataArray, ds: xr.Dataset, raise_flags: bool = False
-) -> xr.Dataset:
+    da: xarray.DataArray, ds: xarray.Dataset, raise_flags: bool = False
+) -> xarray.Dataset:
     """Automatically evaluates the supplied DataArray for a set of data flag tests.
 
     Test triggers depend on variable name and availability of extra variables within Dataset for comparison.
@@ -399,17 +404,17 @@ def data_flags(
 
     Parameters
     ----------
-    da : xr.DataArray
-    ds : xr.Dataset
+    da : xarray.DataArray
+    ds : xarray.Dataset
     raise_flags : bool
       Raise exception if any of the quality assessment flags are raised. Default: False.
 
     Returns
     -------
-    xr.Dataset
+    xarray.Dataset
     """
 
-    def _missing_vars(function, dataset: xr.Dataset):
+    def _missing_vars(function, dataset: xarray.Dataset):
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
@@ -436,10 +441,10 @@ def data_flags(
         except MissingVariableError:
             flags[name] = None
         else:
-            with xr.set_options(keep_attrs=True):
+            with xarray.set_options(keep_attrs=True):
                 flags[name] = func(da, **extras, **(kwargs or dict()))
 
-    dsflags = xr.Dataset(data_vars=flags)
+    dsflags = xarray.Dataset(data_vars=flags)
 
     if raise_flags:
         if np.any(dsflags.data_vars.values()):
