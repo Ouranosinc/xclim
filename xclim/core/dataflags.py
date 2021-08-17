@@ -6,8 +6,8 @@ Data flags
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
 from inspect import signature
-from typing import Optional
 
+import numpy as np
 import xarray as xr
 
 from ..indices.run_length import suspicious_run
@@ -16,6 +16,33 @@ from .units import convert_units_to, declare_units
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
 _REGISTRY = dict()
+xr.set_options(keep_attrs=True)
+
+
+class DataQualityException(Exception):
+    """Raised when any data evaluation checks are flagged as True.
+
+    Attributes:
+        data_flags -- Xarray.Dataset of Data Flags
+
+    """
+
+    def __init__(
+        self,
+        flag_array: xr.Dataset,
+        message="Data quality flags indicate suspicious values. Flags raised are:\n\t",
+    ):
+        self.message = message
+        self.flags = list()
+        for flag, value in flag_array.data_vars.items():
+            if value.any():
+                self.flags.append(value.attrs["comment"])
+        super().__init__(self.message)
+
+    def __str__(self):
+        nl = "\n\t"
+        return f"{self.message} {nl.join(self.flags)}."
+
 
 __all__ = [
     "data_flags",
@@ -25,10 +52,7 @@ __all__ = [
     "outside_n_standard_deviations_of_climatology",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
-    "tasmax_below_tas",
     "tasmax_below_tasmin",
-    "tasmin_exceeds_tas",
-    "tasmin_exceeds_tasmax",
     "temperature_extremely_high",
     "temperature_extremely_low",
     "values_repeating_for_5_or_more_days",
@@ -42,25 +66,8 @@ def _register_methods(func):
 
 
 @_register_methods
-@declare_units(tasmax="[temperature]", tas="[temperature]", check_output=False)
-def tasmax_below_tas(tasmax: xr.DataArray, tas: xr.DataArray) -> bool:
-    """Check if tasmax values are below tas values for any given day.
-
-    Parameters
-    ----------
-    tasmax : xr.DataArray
-    tas : xr.DataArray
-
-    Returns
-    -------
-    bool
-    """
-    return (tasmax < tas).any()
-
-
-@_register_methods
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", check_output=False)
-def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> bool:
+def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
     """Check if tasmax values are below tasmin values for any given day.
 
     Parameters
@@ -70,14 +77,18 @@ def tasmax_below_tasmin(tasmax: xr.DataArray, tasmin: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
-    return (tasmax < tasmin).any()
+    tasmax_lt_tasmin = tasmax < tasmin
+    tasmax_lt_tasmin.attrs[
+        "comment"
+    ] = "Maximum temperature values found below minimum temperatures"
+    return tasmax_lt_tasmin.any()
 
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmax="[temperature]", check_output=False)
-def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> bool:
+def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     """Check if tas values tasmax values for any given day.
 
     Parameters
@@ -87,14 +98,18 @@ def tas_exceeds_tasmax(tas: xr.DataArray, tasmax: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
-    return (tas > tasmax).any()
+    tas_gt_tasmax = tas > tasmax
+    tas_gt_tasmax.attrs[
+        "comment"
+    ] = "Mean temperature values found above maximum temperatures"
+    return tas_gt_tasmax.any()
 
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmin="[temperature]", check_output=False)
-def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> bool:
+def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> xr.DataArray:
     """Check if tas values are below tasmin values for any given day.
 
     Parameters
@@ -104,48 +119,20 @@ def tas_below_tasmin(tas: xr.DataArray, tasmin: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
-    return (tas < tasmin).any()
-
-
-@_register_methods
-@declare_units(tasmin="[temperature]", tasmax="[temperature]", check_output=False)
-def tasmin_exceeds_tasmax(tasmin: xr.DataArray, tasmax: xr.DataArray) -> bool:
-    """Check if tasmin values tasmax values for any given day.
-
-    Parameters
-    ----------
-    tasmin : xr.DataArray
-    tasmax : xr.DataArray
-
-    Returns
-    -------
-    bool
-    """
-    return (tasmin > tasmax).any()
-
-
-@_register_methods
-@declare_units(tasmin="[temperature]", tas="[temperature]", check_output=False)
-def tasmin_exceeds_tas(tasmin: xr.DataArray, tas: xr.DataArray) -> bool:
-    """Check if tasmin values tas values for any given day.
-
-    Parameters
-    ----------
-    tasmin : xr.DataArray
-    tas : xr.DataArray
-
-    Returns
-    -------
-    bool
-    """
-    return (tasmin > tas).any()
+    tas_lt_tasmin = tas < tasmin
+    tas_lt_tasmin.attrs[
+        "comment"
+    ] = "Mean temperature values found below minimum temperatures"
+    return tas_lt_tasmin.any()
 
 
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
-def temperature_extremely_low(da: xr.DataArray, thresh: str = "-90 degC") -> bool:
+def temperature_extremely_low(
+    da: xr.DataArray, thresh: str = "-90 degC"
+) -> xr.DataArray:
     """Check if temperatures values are below -90 degrees Celsius for any given day.
 
     Parameters
@@ -155,15 +142,19 @@ def temperature_extremely_low(da: xr.DataArray, thresh: str = "-90 degC") -> boo
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
     thresh = convert_units_to(thresh, da)
-    return (da < thresh).any()
+    extreme_low = da < thresh
+    extreme_low.attrs["comment"] = f"Temperatures found below {thresh} K"
+    return extreme_low.any()
 
 
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
-def temperature_extremely_high(da: xr.DataArray, thresh: str = "60 degC") -> bool:
+def temperature_extremely_high(
+    da: xr.DataArray, thresh: str = "60 degC"
+) -> xr.DataArray:
     """Check if temperatures values exceed 60 degrees Celsius for any given day.
 
     Parameters
@@ -173,15 +164,17 @@ def temperature_extremely_high(da: xr.DataArray, thresh: str = "60 degC") -> boo
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
     thresh = convert_units_to(thresh, da)
-    return (da > thresh).any()
+    extreme_high = da > thresh
+    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh} K"
+    return extreme_high.any()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def negative_precipitation_values(pr: xr.DataArray) -> bool:
+def negative_precipitation_values(pr: xr.DataArray) -> xr.DataArray:
     """Check if precipitation values are ever negative for any given day.
 
     Parameters
@@ -190,14 +183,18 @@ def negative_precipitation_values(pr: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
-    return (pr < 0).any()
+    negative_precip = pr < 0
+    negative_precip.attrs["comment"] = "Negative values found for precipitation"
+    return negative_precip.any()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def very_large_precipitation_events(pr: xr.DataArray, thresh="300 mm d-1") -> bool:
+def very_large_precipitation_events(
+    pr: xr.DataArray, thresh="300 mm d-1"
+) -> xr.DataArray:
     """Check if precipitation values exceed 300 mm/day for any given day.
 
     Parameters
@@ -207,15 +204,17 @@ def very_large_precipitation_events(pr: xr.DataArray, thresh="300 mm d-1") -> bo
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
     thresh = convert_units_to(thresh, pr)
-    return (pr > thresh).any()
+    very_large_events = (pr > thresh).any()
+    very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}"
+    return very_large_events.any()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_1mm_repetitions(pr: xr.DataArray) -> bool:
+def many_1mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 10 or more days.
 
     Parameters
@@ -224,15 +223,17 @@ def many_1mm_repetitions(pr: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
     thresh = convert_units_to("1 mm d-1", pr)
-    return suspicious_run(pr, window=10, op="==", thresh=thresh).any()
+    repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
+    repetitions.attrs["comment"] = "Repetitive precipitation values at 1mm"
+    return repetitions.any()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_5mm_repetitions(pr: xr.DataArray) -> bool:
+def many_5mm_repetitions(pr: xr.DataArray) -> xr.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
@@ -241,10 +242,12 @@ def many_5mm_repetitions(pr: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
     thresh = convert_units_to("5 mm d-1", pr)
-    return suspicious_run(pr, window=5, op="==", thresh=thresh).any()
+    repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
+    repetitions.attrs["comment"] = "Repetitive precipitation values at 5mm"
+    return repetitions.any()
 
 
 # TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
@@ -253,7 +256,7 @@ def many_5mm_repetitions(pr: xr.DataArray) -> bool:
 @_register_methods
 def outside_n_standard_deviations_of_climatology(
     da: xr.DataArray, window: int = 5, n: int = 5
-) -> bool:
+) -> xr.DataArray:
     """Check if any daily value is outside `n` standard deviations from the day of year mean.
 
     Parameters
@@ -264,14 +267,21 @@ def outside_n_standard_deviations_of_climatology(
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
+
     mu, sig = climatological_mean_doy(da, window=window)
-    return ~within_bnds_doy(da, mu + n * sig, mu - n * sig).all()
+    within_bounds = within_bnds_doy(da, mu + n * sig, mu - n * sig)
+    within_bounds.attrs[
+        "comment"
+    ] = f"Outside of {n} standard deviations from climatology"
+    if within_bounds.all():
+        return ~within_bounds.all()
+    return ~within_bounds.any()
 
 
 @_register_methods
-def values_repeating_for_5_or_more_days(da: xr.DataArray) -> bool:
+def values_repeating_for_5_or_more_days(da: xr.DataArray) -> xr.DataArray:
     """Check if exact values are found to be repeating for at least 5 or more days.
 
     Parameters
@@ -280,18 +290,26 @@ def values_repeating_for_5_or_more_days(da: xr.DataArray) -> bool:
 
     Returns
     -------
-    bool
+    xr.DataArray, [bool]
     """
-    return suspicious_run(da, window=5).any()
+    repetition = suspicious_run(da, window=5)
+    repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days"
+    return repetition.any()
 
 
-def data_flags(da: xr.DataArray, ds: xr.Dataset) -> xr.Dataset:
-    """Automatically evaluates the supplied DataArray for a set of tests depending on variable name and availability of extra variables within Dataset for comparison.
+def data_flags(
+    da: xr.DataArray, ds: xr.Dataset, raise_flags: bool = False
+) -> xr.Dataset:
+    """Automatically evaluates the supplied DataArray for a set of data flag tests.
+
+    Test triggers depend on variable name and availability of extra variables within Dataset for comparison.
 
     Parameters
     ----------
     da : xr.DataArray
     ds : xr.Dataset
+    raise_flags : bool
+      Raise exception if any of the quality assessment flags are raised. Default: False.
 
     Returns
     -------
@@ -328,4 +346,9 @@ def data_flags(da: xr.DataArray, ds: xr.Dataset) -> xr.Dataset:
             flags[name] = func(da, **extras, **(kwargs or dict()))
 
     dsflags = xr.Dataset(data_vars=flags)
+
+    if raise_flags:
+        if np.any(dsflags.data_vars.values()):
+            raise DataQualityException(dsflags)
+
     return dsflags

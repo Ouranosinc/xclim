@@ -22,28 +22,28 @@ class TestDataFlags:
         ds = ds.drop_vars(vars_dropped)
         flagged_ds = df.data_flags(ds.tas, ds)
 
-        flag_expects = dict(
-            temperature_extremely_high=False,
-            temperature_extremely_low=False,
-            values_repeating_for_5_or_more_days=False,
-            outside_n_standard_deviations_of_climatology=True,
-            **flags,
+        np.testing.assert_equal(flagged_ds.temperature_extremely_high.values, False)
+        np.testing.assert_equal(flagged_ds.temperature_extremely_low.values, False)
+        np.testing.assert_equal(
+            flagged_ds.values_repeating_for_5_or_more_days.values, False
+        )
+        np.testing.assert_equal(
+            flagged_ds.outside_n_standard_deviations_of_climatology.values, True
         )
 
-        for flag, val in flag_expects.items():
+        for flag, val in flags.items():
             np.testing.assert_equal(getattr(flagged_ds, flag).values, val)
 
     def test_pr_precipitation_flags(self):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         flagged_ds = df.data_flags(ds.pr, ds)
 
-        for flag, val in dict(
-            negative_precipitation_values=False,
-            very_large_precipitation_events=False,
-            many_5mm_repetitions=False,
-            many_1mm_repetitions=False,
-        ).items():
-            np.testing.assert_equal(getattr(flagged_ds, flag).values, val)
+        np.testing.assert_equal(flagged_ds.negative_precipitation_values.values, False)
+        np.testing.assert_equal(
+            flagged_ds.very_large_precipitation_events.values, False
+        )
+        np.testing.assert_equal(flagged_ds.many_5mm_repetitions.values, False)
+        np.testing.assert_equal(flagged_ds.many_1mm_repetitions.values, False)
 
     def test_suspicious_pr_data(self):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
@@ -69,14 +69,12 @@ class TestDataFlags:
         )
         bad_ds["pr"] = bad_pr
 
-        flagged_pr = df.data_flags(bad_ds.pr, bad_ds)
-        for flag, val in dict(
-            negative_precipitation_values=True,
-            very_large_precipitation_events=True,
-            many_5mm_repetitions=True,
-            many_1mm_repetitions=True,
-        ).items():
-            np.testing.assert_equal(getattr(flagged_pr, flag).values, val)
+        flagged = df.data_flags(bad_ds.pr, bad_ds)
+
+        np.testing.assert_equal(flagged.negative_precipitation_values.values, True)
+        np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
+        np.testing.assert_equal(flagged.many_1mm_repetitions.values, True)
+        np.testing.assert_equal(flagged.many_5mm_repetitions.values, True)
 
     def test_suspicious_tas_data(self):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
@@ -107,13 +105,28 @@ class TestDataFlags:
         )
         bad_ds["tas"] = bad_tas
 
-        flagged_tas = df.data_flags(bad_ds.tas, bad_ds)
-        for flag, val in dict(
-            temperature_extremely_high=True,
-            temperature_extremely_low=True,
-            values_repeating_for_5_or_more_days=True,
-            outside_n_standard_deviations_of_climatology=True,
-            tas_exceeds_tasmax=True,
-            tas_below_tasmin=True,
-        ).items():
-            np.testing.assert_equal(getattr(flagged_tas, flag).values, val)
+        flagged = df.data_flags(bad_ds.tas, bad_ds)
+        np.testing.assert_equal(flagged.temperature_extremely_high.values, True)
+        np.testing.assert_equal(flagged.temperature_extremely_low.values, True)
+        np.testing.assert_equal(
+            flagged.values_repeating_for_5_or_more_days.values, True
+        )
+        np.testing.assert_equal(
+            flagged.outside_n_standard_deviations_of_climatology.values, True
+        )
+        np.testing.assert_equal(flagged.tas_exceeds_tasmax.values, True)
+        np.testing.assert_equal(flagged.tas_below_tasmin.values, True)
+
+    def test_raises(self):
+        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
+
+        # Swap entire variable arrays
+        bad_ds["tasmin"].values, bad_ds["tasmax"].values = (
+            bad_ds.tasmax.values,
+            bad_ds.tasmin.values,
+        )
+        with pytest.raises(
+            df.DataQualityException,
+            match="Maximum temperature values found below minimum temperatures",
+        ):
+            df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)

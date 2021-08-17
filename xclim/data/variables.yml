@@ -117,7 +117,7 @@ variables:
     data_flags:
       temperature_extremely_high:
       temperature_extremely_low:
-      tasmax_below_tas:
+      tas_exceeds_tasmax:
       tasmax_below_tasmin:
       values_repeating_for_5_or_more_days:
       outside_n_standard_deviations_of_climatology:
@@ -131,8 +131,8 @@ variables:
     data_flags:
       temperature_extremely_high:
       temperature_extremely_low:
-      tasmin_exceeds_tasmax:
-      tasmin_exceeds_tas:
+      tasmax_below_tasmin:
+      tas_below_tasmin:
       values_repeating_for_5_or_more_days:
       outside_n_standard_deviations_of_climatology:
         n: 5
