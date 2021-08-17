@@ -82,6 +82,7 @@ indicators = {module: _indicator_table(module) for module in modules}
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
+    "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
@@ -91,7 +92,6 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "rstjinja",
-    "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
 ]
@@ -106,7 +106,7 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
 }
 
-nbsphinx_execute = "auto"
+nbsphinx_execute = "always"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
@@ -121,17 +121,15 @@ nbsphinx_allow_errors = False
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-#
-# source_suffix = ['.rst', '.md']
-source_suffix = [".rst", ".ipynb"]
+# If a list of string, all suffixes will be understood as restructured text variants.
+source_suffix = [".rst"]
 
 # The master toctree document.
 master_doc = "index"
 
 # General information about the project.
 project = "xclim"
-copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+copyright = "2021, Ouranos Inc., Travis Logan, and contributors"
 author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
