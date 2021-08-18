@@ -12,6 +12,7 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+import datetime
 import os
 import sys
 import warnings
@@ -129,7 +130,9 @@ master_doc = "index"
 
 # General information about the project.
 project = "xclim"
-copyright = f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
+copyright = (
+    f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
+)
 author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
