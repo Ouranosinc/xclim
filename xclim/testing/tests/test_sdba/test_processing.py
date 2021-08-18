@@ -16,8 +16,8 @@ from xclim.sdba.processing import (
 
 
 def test_jitter_under_thresh():
-    da = xr.DataArray([0.5, 2.1, np.nan])
-    out = jitter_under_thresh(da, 1)
+    da = xr.DataArray([0.5, 2.1, np.nan], attrs={"units": "K"})
+    out = jitter_under_thresh(da, "1 K")
 
     assert da[0] != out[0]
     assert da[0] < 1
@@ -26,8 +26,8 @@ def test_jitter_under_thresh():
 
 
 def test_jitter_over_thresh():
-    da = xr.DataArray([0.5, 2.1, np.nan])
-    out = jitter_over_thresh(da, 2, 3)
+    da = xr.DataArray([0.5, 2.1, np.nan], attrs={"units": "m"})
+    out = jitter_over_thresh(da, "200 cm", "0.003 km")
 
     assert da[1] != out[1]
     assert da[1] < 3
@@ -40,18 +40,21 @@ def test_adapt_freq(use_dask):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
     prvals = np.random.randint(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
-        prvals, coords={"time": time, "lat": [0, 1, 2]}, dims=("time", "lat")
+        prvals,
+        coords={"time": time, "lat": [0, 1, 2]},
+        dims=("time", "lat"),
+        attrs={"units": "mm d-1"},
     )
 
     if use_dask:
         pr = pr.chunk({"lat": 1})
     group = Grouper("time.month")
-
-    prsim = xr.where(pr < 20, pr / 20, pr)
-    prref = xr.where(pr < 10, pr / 20, pr)
+    with xr.set_options(keep_attrs=True):
+        prsim = xr.where(pr < 20, pr / 20, pr)
+        prref = xr.where(pr < 10, pr / 20, pr)
     ds_in = xr.Dataset({"sim": prsim, "ref": prref})
     ds_ad = adapt_freq(
-        ds_in, thresh=1, group=group
+        ds_in, thresh="1 mm d-1", group=group
     )  # Don't worry about CodeFactor complaint. dim is fed by decorator
 
     # Where the input is considered zero
