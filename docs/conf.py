@@ -129,7 +129,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "xclim"
-copyright = "2021, Ouranos Inc., Travis Logan, and contributors"
+copyright = f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
 author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement

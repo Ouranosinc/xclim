@@ -19,7 +19,7 @@ Breaking changes
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
 * ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
-* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``, only "dev" is left and it includes all tools needed for xclim's development.
+* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
