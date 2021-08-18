@@ -153,6 +153,19 @@ def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
     if unit == "1":
         unit = ""
 
+    if unit.strip() in [
+        "deg C",
+        "degree C",
+        "degree Celsius",
+        "deg K",
+        "degree K",
+        "degree Kelvin",
+        "deg F",
+        "degree F",
+        "degree Fahrenheit",
+    ]:
+        raise ValidationError(f"Remove white space from temperature units: {unit}")
+
     try:  # Pint compatible
         return units.parse_units(unit)
     except (

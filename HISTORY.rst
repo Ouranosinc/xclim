@@ -23,7 +23,7 @@ Breaking changes
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
-
+* A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
 
 New indicators
 ~~~~~~~~~~~~~~
