@@ -119,6 +119,7 @@ from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
     default_formatter,
+    gen_call_string,
     generate_indicator_docstring,
     merge_attributes,
     parse_cell_methods,
@@ -844,20 +845,6 @@ class Indicator(IndicatorRegistrar):
                 )
             )
 
-        # Generate a signature string for the history attribute
-        # We remove annotations, replace default float/int/str by values
-        # and replace others by type
-        callstr = []
-        for (k, v) in das.items():
-            callstr.append(f"{k}=<array>")
-        for (k, v) in args.items():
-            if isinstance(v, (float, int, str)):
-                callstr.append(f"{k}={v!r}")  # repr so strings have ' '
-            else:
-                callstr.append(
-                    f"{k}={type(v)}"
-                )  # don't take chance of having unprintable values
-
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
         if names is None or "cell_methods" in names:
@@ -868,7 +855,7 @@ class Indicator(IndicatorRegistrar):
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         attrs["xclim_history"] = update_history(
-            f"{var_id or cls._registry_id}({', '.join(callstr)})",
+            gen_call_string(var_id or cls._registry_id, **args, **das),
             new_name=out.get("var_name"),
             **das,
         )

@@ -23,6 +23,10 @@ def test_jitter_under_thresh():
     assert da[0] < 1
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
+    assert (
+        "jitter_under_thresh(<array>, '1 K') - xclim version"
+        in out.attrs["xclim_history"]
+    )
 
 
 def test_jitter_over_thresh():
@@ -33,6 +37,7 @@ def test_jitter_over_thresh():
     assert da[1] < 3
     assert da[1] > 2
     np.testing.assert_allclose(da[[0, 2]], out[[0, 2]])
+    assert out.units == "m"
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
@@ -49,8 +54,9 @@ def test_adapt_freq(use_dask):
     if use_dask:
         pr = pr.chunk({"lat": 1})
     group = Grouper("time.month")
-    prsim = xr.where(pr < 20, pr / 20, pr)
-    prref = xr.where(pr < 10, pr / 20, pr)
+    with xr.set_options(keep_attrs=True):
+        prsim = xr.where(pr < 20, pr / 20, pr)
+        prref = xr.where(pr < 10, pr / 20, pr)
     sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
 
     # Where the input is considered zero
@@ -78,6 +84,9 @@ def test_adapt_freq(use_dask):
     # Assert that Pth and dP0 are approx the good values
     np.testing.assert_allclose(pth, 20, rtol=0.05)
     np.testing.assert_allclose(dP0, 0.5, atol=0.14)
+    assert sim_ad.units == "mm d-1"
+    assert sim_ad.attrs["references"].startswith("Themeßl")
+    assert pth.units == "mm d-1"
 
 
 def test_escore():
@@ -89,13 +98,16 @@ def test_escore():
     y = xr.DataArray(y, dims=("variables", "time"))
 
     # Value taken from escore of Cannon's MBC R package.
-    np.testing.assert_allclose(escore(x, y), 1.90018550338863)
+    out = escore(x, y)
+    np.testing.assert_allclose(out, 1.90018550338863)
+    assert "escore(" in out.attrs["xclim_history"]
+    assert out.attrs["references"].startswith("Skezely")
 
 
 def test_standardize():
     x = np.random.standard_normal((2, 10000))
     x[0, 50] = np.NaN
-    x = xr.DataArray(x, dims=("x", "y"))
+    x = xr.DataArray(x, dims=("x", "y"), attrs={"units": "m"})
 
     xp, avg, std = standardize(x, dim="y")
 
@@ -108,12 +120,15 @@ def test_standardize():
     y = unstandardize(xp, 0, 1)
 
     np.testing.assert_allclose(x, y, atol=0.1)
+    assert avg.units == xp.units
 
 
 def test_reordering():
-    x = xr.DataArray(np.arange(1, 11), dims=("time",))
-    y = xr.DataArray(np.arange(10, 20)[::-1], dims=("time",))
+    y = xr.DataArray(np.arange(1, 11), dims=("time",), attrs={"a": 1, "units": "K"})
+    x = xr.DataArray(np.arange(10, 20)[::-1], dims=("time",))
 
     out = reordering(x, y, group="time")
 
     np.testing.assert_array_equal(out, np.arange(1, 11)[::-1])
+    out.attrs.pop("xclim_history")
+    assert out.attrs == y.attrs

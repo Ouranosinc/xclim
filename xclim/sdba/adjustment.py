@@ -176,6 +176,7 @@ class TrainAdjust(BaseAdjustment):
             f"Bias-adjusted with {infostr}", sim
         )
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = self.train_units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -216,6 +217,9 @@ class Adjust(BaseAdjustment):
 
         if "group" in kwargs:
             cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+
+        hist = convert_units_to(hist, ref)
+        sim = convert_units_to(sim, ref)
 
         out = cls._adjust(ref, hist, sim, **kwargs)
 
@@ -1168,4 +1172,5 @@ class NpdfTransform(Adjust):
             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
         out = out.assign(rotation_matrices=rot_matrices)
+        out.scenh.attrs["units"] = hist.units
         return out

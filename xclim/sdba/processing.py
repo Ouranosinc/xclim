@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 
@@ -15,6 +16,7 @@ from .nbutils import _escore
 from .utils import ADDITIVE
 
 
+@update_xclim_history
 def adapt_freq(
     ref: xr.DataArray,
     sim: xr.DataArray,
@@ -75,17 +77,21 @@ def adapt_freq(
 
     # Set some metadata
     out.sim_ad.attrs.update(sim.attrs)
-    out.sim_ad.attrs["units"] = sim.units
-    out.pth.attrs[
-        "long_name"
-    ] = "Smallest value of the timeseries not corrected by frequency adaptation."
-    out.dP0.attrs[
-        "long_name"
-    ] = "Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation"
+    out.sim_ad.attrs.update(
+        references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
+    )
+    out.pth.attrs.update(
+        long_name="Smallest value of the timeseries not corrected by frequency adaptation.",
+        units=sim.units,
+    )
+    out.dP0.attrs.update(
+        long_name=f"Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation",
+    )
 
     return out.sim_ad, out.pth, out.dP0
 
 
+@update_xclim_history
 def jitter_under_thresh(x: xr.DataArray, thresh: str):
     """Replace values smaller than threshold by a uniform random noise.
 
@@ -114,9 +120,12 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
         )
     else:
         jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    return x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out = x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out.attrs.update(x.attrs)  # copy attrs and same units
+    return out
 
 
+@update_xclim_history
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
     """Replace values greater than threshold by a uniform random noise.
 
@@ -146,9 +155,12 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
         )
     else:
         jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
-    return x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out = x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out.attrs.update(x.attrs)  # copy attrs and same units
+    return out
 
 
+@update_xclim_history
 def normalize(
     data: xr.DataArray,
     norm: Optional[xr.DataArray] = None,
@@ -179,11 +191,12 @@ def normalize(
     ds = xr.Dataset(dict(data=data))
 
     if norm is not None:
+        norm = convert_units_to(norm, data)
         ds = ds.assign(norm=norm)
 
     out = _normalize(ds, group=group, kind=kind)
-
-    return out.data
+    out.attrs.update(data.attrs)
+    return out.data.rename(data.name)
 
 
 def uniform_noise_like(
@@ -206,6 +219,7 @@ def uniform_noise_like(
     )
 
 
+@update_xclim_history
 def standardize(
     da: xr.DataArray,
     mean: Optional[xr.DataArray] = None,
@@ -219,19 +233,22 @@ def standardize(
     Returns the standardized data, the mean and the standard deviation.
     """
     if mean is None:
-        mean = da.mean(dim)
+        mean = da.mean(dim, keep_attrs=True)
     if std is None:
-        std = da.std(dim)
+        std = da.std(dim, keep_attrs=True)
     with xr.set_options(keep_attrs=True):
         return (da - mean) / std, mean, std
 
 
+@update_xclim_history
 def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     """Rescale a standardized array by performing the inverse operation of `standardize`."""
-    return (std * da) + mean
+    with xr.set_options(keep_attrs=True):
+        return (std * da) + mean
 
 
-def reordering(sim: xr.DataArray, ref: xr.DataArray, group: str = "time") -> xr.Dataset:
+@update_xclim_history
+def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.Dataset:
     """Reorders data in `sim` following the order of ref.
 
     The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
@@ -258,9 +275,12 @@ def reordering(sim: xr.DataArray, ref: xr.DataArray, group: str = "time") -> xr.
     https://doi.org/10.1007/s00382-017-3580-6
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
-    return _reordering(ds, group=group).reordered
+    out = _reordering(ds, group=group).reordered
+    out.attrs.update(sim.attrs)
+    return out
 
 
+@update_xclim_history
 def escore(
     tgt: xr.DataArray,
     sim: xr.DataArray,
@@ -316,7 +336,7 @@ def escore(
 
     References
     ----------
-    .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     """
 
@@ -337,7 +357,7 @@ def escore(
     # Otherwise, apply_ufunc tries to align both obs_dim together.
     new_dim = get_temp_dimname(tgt.dims, obs_dim)
     sim = sim.rename({obs_dim: new_dim})
-    return xr.apply_ufunc(
+    out = xr.apply_ufunc(
         _escore,
         tgt,
         sim,
@@ -345,3 +365,11 @@ def escore(
         output_dtypes=[sim.dtype],
         dask="parallelized",
     )
+
+    out.name = "escores"
+    out.attrs.update(
+        long_name="Energy dissimilarity metric",
+        description=f"Escores computed from {N or 'all'} points.",
+        references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+    )
+    return out

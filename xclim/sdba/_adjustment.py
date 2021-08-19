@@ -213,9 +213,10 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
         # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
         # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
-        refp = ref @ R
-        histp = hist @ R
-        simp = sim @ R
+        with xr.set_options(keep_attrs=True):
+            refp = ref @ R
+            histp = hist @ R
+            simp = sim @ R
 
         # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
