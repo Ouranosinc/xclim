@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 
 from ._processing import _adapt_freq, _normalize, _reordering
@@ -19,7 +20,7 @@ def adapt_freq(
     sim: xr.DataArray,
     *,
     group: Union[Grouper, str],
-    thresh: float = 0,
+    thresh: str = "0 mm d-1",
 ) -> xr.Dataset:
     r"""
     Adapt frequency of values under thresh of `sim`, in order to match ref.
@@ -37,8 +38,8 @@ def adapt_freq(
       Dimension name.
     group : Union[str, Grouper]
       Grouping information, see base.Grouper
-    thresh : float
-      Threshold below which values are considered zero.
+    thresh : str
+      Threshold below which values are considered zero, a quantity with units.
 
     Returns
     -------
@@ -67,11 +68,14 @@ def adapt_freq(
     ----------
     .. [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
     """
+    sim = convert_units_to(sim, ref)
+    thresh = convert_units_to(thresh, ref)
 
     out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
 
     # Set some metadata
     out.sim_ad.attrs.update(sim.attrs)
+    out.sim_ad.attrs["units"] = sim.units
     out.pth.attrs[
         "long_name"
     ] = "Smallest value of the timeseries not corrected by frequency adaptation."
@@ -82,7 +86,7 @@ def adapt_freq(
     return out.sim_ad, out.pth, out.dP0
 
 
-def jitter_under_thresh(x: xr.DataArray, thresh: float):
+def jitter_under_thresh(x: xr.DataArray, thresh: str):
     """Replace values smaller than threshold by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
@@ -91,8 +95,8 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     ----------
     x : xr.DataArray
       Values.
-    thresh : float
-      Threshold under which to add uniform random noise to values.
+    thresh : str
+      Threshold under which to add uniform random noise to values, a quantity with units.
 
     Returns
     -------
@@ -102,6 +106,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     -----
     If thresh is high, this will change the mean value of x.
     """
+    thresh = convert_units_to(thresh, x)
     epsilon = np.finfo(x.dtype).eps
     if uses_dask(x):
         jitter = dsk.random.uniform(
@@ -112,7 +117,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: float):
     return x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
 
 
-def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float) -> xr.Dataset:
+def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
     """Replace values greater than threshold by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
@@ -121,10 +126,10 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float) -> xr.D
     ----------
     x : xr.DataArray
       Values.
-    thresh : float
-      Threshold over which to add uniform random noise to values.
-    upper_bnd : float
-      Maximum possible value for the random noise
+    thresh : str
+      Threshold over which to add uniform random noise to values, a quantity with units.
+    upper_bnd : str
+      Maximum possible value for the random noise, a quantity with units.
     Returns
     -------
     xr.Dataset
@@ -133,6 +138,8 @@ def jitter_over_thresh(x: xr.DataArray, thresh: float, upper_bnd: float) -> xr.D
     -----
     If thresh is low, this will change the mean value of x.
     """
+    thresh = convert_units_to(thresh, x)
+    upper_bnd = convert_units_to(upper_bnd, x)
     if uses_dask(x):
         jitter = dsk.random.uniform(
             low=thresh, high=upper_bnd, size=x.shape, chunks=x.chunks
