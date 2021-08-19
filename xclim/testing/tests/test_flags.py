@@ -38,7 +38,7 @@ class TestDataFlags:
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         flagged_ds = df.data_flags(ds.pr, ds)
 
-        np.testing.assert_equal(flagged_ds.negative_precipitation_values.values, False)
+        np.testing.assert_equal(flagged_ds.negative_accumulation_values.values, False)
         np.testing.assert_equal(
             flagged_ds.very_large_precipitation_events.values, False
         )
@@ -71,7 +71,7 @@ class TestDataFlags:
 
         flagged = df.data_flags(bad_ds.pr, bad_ds)
 
-        np.testing.assert_equal(flagged.negative_precipitation_values.values, True)
+        np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
         np.testing.assert_equal(flagged.many_1mm_repetitions.values, True)
         np.testing.assert_equal(flagged.many_5mm_repetitions.values, True)

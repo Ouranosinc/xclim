@@ -48,9 +48,9 @@ __all__ = [
     "data_flags",
     "many_1mm_repetitions",
     "many_5mm_repetitions",
-    "negative_precipitation_values",
-    "negative_snow_water_equivalent_values",
+    "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",
+    "percentage_values_outside_of_bounds",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
     "tasmax_below_tasmin",
@@ -239,15 +239,14 @@ def temperature_extremely_high(
 
 
 @_register_methods
-@declare_units(pr="[precipitation]", check_output=False)
-def negative_precipitation_values(
-    pr: xarray.DataArray, dims: str = "all"
+def negative_accumulation_values(
+    da: xarray.DataArray, dims: str = "all"
 ) -> xarray.DataArray:
-    """Check if precipitation values are ever negative for any given day.
+    """Check if variable values are negative for any given day.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
     dims: str
       Dimenions upon which aggregation should be performed. Default: "all".
 
@@ -262,9 +261,11 @@ def negative_precipitation_values(
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = (ds.pr < 0)
     """
-    negative_precip = pr < 0
-    negative_precip.attrs["comment"] = "Negative values found for precipitation."
-    return negative_precip.any()
+    negative_accumulations = da < 0
+    negative_accumulations.attrs["comment"] = f"Negative values found for {da.name}."
+    if dims == "all":
+        return negative_accumulations.any()
+    raise NotImplementedError()
 
 
 @_register_methods
@@ -375,37 +376,6 @@ def many_5mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.Data
 
 
 @_register_methods
-@declare_units(swe="[length]", check_output=False)
-def negative_snow_water_equivalent_values(
-    swe: xarray.DataArray, dims: str = "all"
-) -> xarray.DataArray:
-    """Check if snow depth values are ever negative for any given day.
-
-    Parameters
-    ----------
-    swe : xarray.DataArray
-    dims: str
-      Dimenions upon which aggregation should be performed. Default: "all".
-
-    Returns
-    -------
-    xarray.DataArray, [bool]
-
-    Examples
-    --------
-    To gain access to the flag_array:
-
-    >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = (ds.swe < 0)
-    """
-    negative_swe = swe < 0
-    negative_swe.attrs["comment"] = "Negative values found for snow water equivalent."
-    if dims == "all":
-        return negative_swe.any()
-    raise NotImplementedError()
-
-
-@_register_methods
 def outside_n_standard_deviations_of_climatology(
     da: xarray.DataArray, window: int = 5, n: int = 5, dims: str = "all"
 ) -> xarray.DataArray:
@@ -474,6 +444,38 @@ def values_repeating_for_5_or_more_days(
     repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days."
     if dims == "all":
         return repetition.any()
+    raise NotImplementedError()
+
+
+@_register_methods
+def percentage_values_outside_of_bounds(
+    da: xarray.DataArray, dims: str = "all"
+) -> xarray.DataArray:
+    """Check if variable values are negative for any given day.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+
+    Examples
+    --------
+    To gain access to the flag_array:
+
+    >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
+    >>> flagged = (ds.huss < 0) | (ds.huss > 100)  # doctest: +SKIP
+    """
+    unbounded_percentages = (da < 0) | (da > 100)
+    unbounded_percentages.attrs[
+        "comment"
+    ] = f"Percentage values found beyond bounds for {da.name}."
+    if dims == "all":
+        return unbounded_percentages.any()
     raise NotImplementedError()
 
 

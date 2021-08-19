@@ -11,6 +11,8 @@ variables:
     - time: mean
     description: Relative humidity.
     standard_name: relative_humidity
+    data_flags:
+      percentage_values_outside_of_bounds:
   huss:
     canonical_units: '1'
     cell_methods:
@@ -28,7 +30,7 @@ variables:
     description: Surface precipitation flux (all phases).
     standard_name: precipitation_flux
     data_flags:
-      negative_precipitation_values:
+      negative_accumulation_values:
       very_large_precipitation_events:
       many_5mm_repetitions:
       many_1mm_repetitions:
@@ -38,12 +40,16 @@ variables:
     - time: mean
     description: Surface snowfall flux.
     standard_name: snowfall_flux
+    data_flags:
+      negative_accumulation_values:
   ps:
     canonical_units: Pa
     cell_methods:
     - time: mean
     description: Air pressure at surface
     standard_name: surface_air_pressure
+    data_flags:
+      - values_repeating_for_5_or_more_days:
   psl:
     canonical_units: Pa
     cell_methods:
@@ -69,24 +75,32 @@ variables:
     - time: mean
     description: Sea ice concentration (area fraction).
     standard_name: sea_ice_area_fraction
+    data_flags:
+      percentage_values_outside_of_bounds:
   snc:
     canonical_units: '%'
     cell_methods:
     - time: mean
     description: Surface area fraction covered by snow.
     standard_name: surface_snow_area_fraction
+    data_flags:
+      percentage_values_outside_of_bounds:
   snd:
     canonical_units: m
     cell_methods:
     - time: mean
     description: Surface snow thickness.
     standard_name: surface_snow_thickness
+    data_flags:
+      negative_accumulation_values:
   snw:
     canonical_units: kg m-2
     cell_methods:
     - time: mean
     description: Surface snow amount.
     standard_name: surface_snow_amount
+    data_flags:
+       negative_accumulation_values:
   sund:
     cmip6: False
     canonical_units: s
@@ -101,7 +115,7 @@ variables:
     description: Surface snow water equivalent amount
     standard_name: lwe_thickness_of_snow_amount
     data_flags:
-      negative_snow_water_equivalent_values:
+       negative_accumulation_values:
   tas:
     canonical_units: K
     cell_methods:
