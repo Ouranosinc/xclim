@@ -56,10 +56,25 @@ For basic time period grouping (months, day of year, season), passing a string t
 Most methods acting on grouped data also accept a `window` int argument to pad the groups with data from adjacent ones.
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass a :py:class:`xclim.sdba.base.Grouper` directly.
+
+Notes for developers
+====================
+To be scalable and performant, the sdba module makes use of the special decorators :py:func`xclim.sdba.base.map_blocks`
+and :py:func:`xclim.sdba.base.map_groups`. However, they have the inconvenient that functions wrapped by them are unable
+to manag xarray attributes (including units) correctly and their signatures are sometime wrong and often unclear. For
+this reason, the module is often divided in two parts : the (decorated) compute functions in a "private" file (ex: ``_adjustment.py``)
+and the user-facing functions or objects in corresponding public file (ex: ``adjustment.py``). See the `sdba-advanced`
+notebook for more info on the reasons for this move.
 """
 from . import detrending, processing, utils
 from .adjustment import *
-from .base import Grouper, construct_moving_yearly_window, unpack_moving_yearly_window
+from .base import (
+    Grouper,
+    construct_moving_yearly_window,
+    stack_variables,
+    unpack_moving_yearly_window,
+    unstack_variables,
+)
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;

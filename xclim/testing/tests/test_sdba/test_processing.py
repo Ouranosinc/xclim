@@ -49,13 +49,12 @@ def test_adapt_freq(use_dask):
 
     prsim = xr.where(pr < 20, pr / 20, pr)
     prref = xr.where(pr < 10, pr / 20, pr)
-    ds_in = xr.Dataset({"sim": prsim, "ref": prref})
-    ds_ad = adapt_freq(
-        ds_in, thresh=1, group=group
+    sim_ad, pth, dP0 = adapt_freq(
+        prref, prsim, thresh=1, group=group
     )  # Don't worry about CodeFactor complaint. dim is fed by decorator
 
     # Where the input is considered zero
-    input_zeros = ds_ad.sim_ad.where(prsim <= 1)
+    input_zeros = sim_ad.where(prsim <= 1)
 
     # The proportion of corrected values (time.size * 3 * 0.2 is the theoritical number of values under 1 in prsim)
     dP0_out = (input_zeros > 1).sum() / (time.size * 3 * 0.2)
@@ -73,12 +72,12 @@ def test_adapt_freq(use_dask):
     # Assert that non-corrected values are untouched
     # Again we add a 0.5 tol because of randomness.
     xr.testing.assert_equal(
-        ds_ad.sim_ad.where(prsim > 20.1),
+        sim_ad.where(prsim > 20.1),
         prsim.where(prsim > 20.5).transpose("lat", "time"),
     )
     # Assert that Pth and dP0 are approx the good values
-    np.testing.assert_allclose(ds_ad.pth, 20, rtol=0.05)
-    np.testing.assert_allclose(ds_ad.dP0, 0.5, atol=0.14)
+    np.testing.assert_allclose(pth, 20, rtol=0.05)
+    np.testing.assert_allclose(dP0, 0.5, atol=0.14)
 
 
 def test_escore():
