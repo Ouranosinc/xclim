@@ -94,6 +94,14 @@ variables:
     - time: mean
     description: Duration of sunshine.
     standard_name: duration_of_sunshine
+  swe:
+    canonical_units: m
+    cell_methods:
+      - time: mean
+    description: Surface snow water equivalent amount
+    standard_name: lwe_thickness_of_snow_amount
+    data_flags:
+      negative_snow_water_equivalent_values:
   tas:
     canonical_units: K
     cell_methods:

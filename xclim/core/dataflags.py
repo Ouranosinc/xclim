@@ -5,6 +5,7 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
+import warnings
 from inspect import signature
 
 import numpy as np
@@ -48,6 +49,7 @@ __all__ = [
     "many_1mm_repetitions",
     "many_5mm_repetitions",
     "negative_precipitation_values",
+    "negative_snow_water_equivalent_values",
     "outside_n_standard_deviations_of_climatology",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
@@ -67,7 +69,7 @@ def _register_methods(func):
 @_register_methods
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", check_output=False)
 def tasmax_below_tasmin(
-    tasmax: xarray.DataArray, tasmin: xarray.DataArray
+    tasmax: xarray.DataArray, tasmin: xarray.DataArray, dims: str = "all"
 ) -> xarray.DataArray:
     """Check if tasmax values are below tasmin values for any given day.
 
@@ -75,6 +77,8 @@ def tasmax_below_tasmin(
     ----------
     tasmax : xarray.DataArray
     tasmin : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -85,19 +89,21 @@ def tasmax_below_tasmin(
     To gain access to the flag_array:
 
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> ds.tasmax < ds.tasmin
+    >>> flagged = ds.tasmax < ds.tasmin
     """
     tasmax_lt_tasmin = tasmax < tasmin
     tasmax_lt_tasmin.attrs[
         "comment"
     ] = "Maximum temperature values found below minimum temperatures."
-    return tasmax_lt_tasmin.any()
+    if dims == "all":
+        return tasmax_lt_tasmin.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmax="[temperature]", check_output=False)
 def tas_exceeds_tasmax(
-    tas: xarray.DataArray, tasmax: xarray.DataArray
+    tas: xarray.DataArray, tasmax: xarray.DataArray, dims: str = "all"
 ) -> xarray.DataArray:
     """Check if tas values tasmax values for any given day.
 
@@ -105,6 +111,8 @@ def tas_exceeds_tasmax(
     ----------
     tas : xarray.DataArray
     tasmax : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -121,13 +129,15 @@ def tas_exceeds_tasmax(
     tas_gt_tasmax.attrs[
         "comment"
     ] = "Mean temperature values found above maximum temperatures."
-    return tas_gt_tasmax.any()
+    if dims == "all":
+        return tas_gt_tasmax.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(tas="[temperature]", tasmin="[temperature]", check_output=False)
 def tas_below_tasmin(
-    tas: xarray.DataArray, tasmin: xarray.DataArray
+    tas: xarray.DataArray, tasmin: xarray.DataArray, dims: str = "all"
 ) -> xarray.DataArray:
     """Check if tas values are below tasmin values for any given day.
 
@@ -135,6 +145,8 @@ def tas_below_tasmin(
     ----------
     tas : xarray.DataArray
     tasmin : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -151,13 +163,15 @@ def tas_below_tasmin(
     tas_lt_tasmin.attrs[
         "comment"
     ] = "Mean temperature values found below minimum temperatures."
-    return tas_lt_tasmin.any()
+    if dims == "all":
+        return tas_lt_tasmin.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_low(
-    da: xarray.DataArray, thresh: str = "-90 degC"
+    da: xarray.DataArray, thresh: str = "-90 degC", dims: str = "all"
 ) -> xarray.DataArray:
     """Check if temperatures values are below -90 degrees Celsius for any given day.
 
@@ -165,6 +179,8 @@ def temperature_extremely_low(
     ----------
     da : xarray.DataArray
     thresh : str
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -182,13 +198,15 @@ def temperature_extremely_low(
     thresh_converted = convert_units_to(thresh, da)
     extreme_low = da < thresh_converted
     extreme_low.attrs["comment"] = f"Temperatures found below {thresh}."
-    return extreme_low.any()
+    if dims == "all":
+        return extreme_low.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_high(
-    da: xarray.DataArray, thresh: str = "60 degC"
+    da: xarray.DataArray, thresh: str = "60 degC", dims: str = "all"
 ) -> xarray.DataArray:
     """Check if temperatures values exceed 60 degrees Celsius for any given day.
 
@@ -196,6 +214,8 @@ def temperature_extremely_high(
     ----------
     da : xarray.DataArray
     thresh : str
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -213,17 +233,23 @@ def temperature_extremely_high(
     thresh_converted = convert_units_to(thresh, da)
     extreme_high = da > thresh_converted
     extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}."
-    return extreme_high.any()
+    if dims == "all":
+        return extreme_high.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def negative_precipitation_values(pr: xarray.DataArray) -> xarray.DataArray:
+def negative_precipitation_values(
+    pr: xarray.DataArray, dims: str = "all"
+) -> xarray.DataArray:
     """Check if precipitation values are ever negative for any given day.
 
     Parameters
     ----------
-    pr : xarray. DataArray
+    pr : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -244,7 +270,7 @@ def negative_precipitation_values(pr: xarray.DataArray) -> xarray.DataArray:
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
 def very_large_precipitation_events(
-    pr: xarray.DataArray, thresh="300 mm d-1"
+    pr: xarray.DataArray, thresh="300 mm d-1", dims: str = "all"
 ) -> xarray.DataArray:
     """Check if precipitation values exceed 300 mm/day for any given day.
 
@@ -252,6 +278,8 @@ def very_large_precipitation_events(
     ----------
     pr : xarray.DataArray
     thresh : str
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -269,17 +297,21 @@ def very_large_precipitation_events(
     thresh_converted = convert_units_to(thresh, pr)
     very_large_events = (pr > thresh_converted).any()
     very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}."
-    return very_large_events.any()
+    if dims == "all":
+        return very_large_events.any()
+    raise NotImplementedError()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_1mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
-    """Check if precipitation values repeat at 5 mm/day for 10 or more days.
+def many_1mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
+    """Check if precipitation values repeat at 1 mm/day for 10 or more days.
 
     Parameters
     ----------
     pr : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -300,17 +332,20 @@ def many_1mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     repetitions.attrs[
         "comment"
     ] = "Repetitive precipitation values at 1mm d-1 for at least 10 days."
-    return repetitions.any()
+    if dims == "all":
+        return repetitions.any()
 
 
 @_register_methods
 @declare_units(pr="[precipitation]", check_output=False)
-def many_5mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
+def many_5mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
     ----------
     pr : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -331,15 +366,48 @@ def many_5mm_repetitions(pr: xarray.DataArray) -> xarray.DataArray:
     repetitions.attrs[
         "comment"
     ] = "Repetitive precipitation values at 5mm d-1 for at least 5 days."
-    return repetitions.any()
+    if dims == "all":
+        return repetitions.any()
+    raise NotImplementedError()
 
 
 # TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
 
 
 @_register_methods
+@declare_units(swe="[length]", check_output=False)
+def negative_snow_water_equivalent_values(
+    swe: xarray.DataArray, dims: str = "all"
+) -> xarray.DataArray:
+    """Check if snow depth values are ever negative for any given day.
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+
+    Examples
+    --------
+    To gain access to the flag_array:
+
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> flagged = (ds.swe < 0)
+    """
+    negative_swe = swe < 0
+    negative_swe.attrs["comment"] = "Negative values found for snow water equivalent."
+    if dims == "all":
+        return negative_swe.any()
+    raise NotImplementedError()
+
+
+@_register_methods
 def outside_n_standard_deviations_of_climatology(
-    da: xarray.DataArray, window: int = 5, n: int = 5
+    da: xarray.DataArray, window: int = 5, n: int = 5, dims: str = "all"
 ) -> xarray.DataArray:
     """Check if any daily value is outside `n` standard deviations from the day of year mean.
 
@@ -348,6 +416,8 @@ def outside_n_standard_deviations_of_climatology(
     da : xarray.DataArray
     window : int
     n : int
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -369,18 +439,24 @@ def outside_n_standard_deviations_of_climatology(
     within_bounds.attrs[
         "comment"
     ] = f"Values found that are outside of {n} standard deviations from climatology."
-    if within_bounds.all():
-        return ~within_bounds.all()
-    return ~within_bounds.any()
+    if dims == "all":
+        if within_bounds.all():
+            return ~within_bounds.all()
+        return ~within_bounds.any()
+    raise NotImplementedError()
 
 
 @_register_methods
-def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArray:
+def values_repeating_for_5_or_more_days(
+    da: xarray.DataArray, dims: str = "all"
+) -> xarray.DataArray:
     """Check if exact values are found to be repeating for at least 5 or more days.
 
     Parameters
     ----------
     da : xarray.DataArray
+    dims: str
+      Dimenions upon which aggregation should be performed. Default: "all".
 
     Returns
     -------
@@ -396,7 +472,9 @@ def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArra
     """
     repetition = suspicious_run(da, window=5)
     repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days."
-    return repetition.any()
+    if dims == "all":
+        return repetition.any()
+    raise NotImplementedError()
 
 
 def data_flags(
@@ -424,7 +502,7 @@ def data_flags(
 
     >>> from xclim.core.dataflags import data_flags
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> flagged_ds = data_flags(ds.pr, ds)
+    >>> flagged = data_flags(ds.pr, ds)
     """
 
     def _missing_vars(function, dataset: xarray.Dataset):
@@ -443,7 +521,15 @@ def data_flags(
         return extra_vars
 
     var = str(da.name)
-    flag_func = VARIABLES.get(var)["data_flags"]
+    try:
+        flag_func = VARIABLES.get(var)["data_flags"]
+    except TypeError:
+        if raise_flags:
+            raise NotImplementedError(
+                f"Data quality checks do not exist for '{var}' variable."
+            )
+        warnings.warn(f"Data quality checks do not exist for '{var}' variable.")
+        return xarray.Dataset()
 
     flags = dict()
     for name, kwargs in flag_func.items():
