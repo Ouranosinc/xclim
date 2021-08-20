@@ -450,7 +450,8 @@ def percentile_doy(
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-    All NaNs are skipped.
+
+    Default value for alpha and beta gives type 8 interpolation method of Hyndman&Fan.
 
     Parameters
     ----------
@@ -460,12 +461,17 @@ def percentile_doy(
       Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
       Percentile(s) between [0, 100]
+    alpha: float
+        used with beta to express the linear interpolation wanted.
+    beta: float
+        used with alpha to express the linear interpolation wanted.
 
     Returns
     -------
     xr.DataArray
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
+      Nan will be masked
     """
 
     # Ensure arr sampling frequency is daily or coarser

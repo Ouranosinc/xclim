@@ -19,11 +19,13 @@ Breaking changes
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
 * ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+* _cal_perc now returns a masked array
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+* _cal_perc and percentile_doy mow uses scipy mquartiles instead of numpy percentiles to have more flexibility on the interpolation method.
 
 New indicators
 ~~~~~~~~~~~~~~

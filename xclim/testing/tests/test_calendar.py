@@ -93,8 +93,7 @@ def test_percentile_doy_nan(tas_series, use_dask):
     tas = tas.where(tas.time.dt.dayofyear != 2)
     tas = xr.concat((tas, tas), "dim0")
     pnan = percentile_doy(tas, window=5, per=50)
-    assert pnan.sel(dayofyear=3, dim0=0).data == 3
-    assert np.isnan(pnan.sel(dayofyear=2, dim0=0).data)
+    assert pnan.sel(dayofyear=3, dim0=0).data == 2.5
     assert pnan.attrs["units"] == "K"
 
 

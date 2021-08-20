@@ -211,11 +211,10 @@ def uses_dask(da):
 
 def _calc_perc(
     arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
-):
+) -> np.array:
     """Ufunc-like computing a percentile over the last axis of the array.
 
-    Processes cases with invalid values separately, which makes it more efficient than np.nanpercentile for array with
-    only a few invalid points.
+    Default value for alpha and beta gives type 7 interpolation method of Hyndman&Fan, similar to what np.percentile does.
 
     Parameters
     ----------
@@ -223,12 +222,18 @@ def _calc_perc(
         Percentile is computed over the last axis.
     p : sequence of floats
         Percentile to compute, between 0 and 100. (the default is 50)
+    alpha: float
+        used with beta to express the linear interpolation wanted.
+    beta: float
+        used with alpha to express the linear interpolation wanted.
 
     Returns
     -------
-    np.array
+    masked numpy array
     """
     quantiles = [per / 100.0 for per in p]
+    # mask the NaNs
+    arr = np.ma.fix_invalid(arr)
     # mquantiles only accept a maximum 2D array
     shape = arr.shape[:-1]
     if shape:

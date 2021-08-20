@@ -126,7 +126,9 @@ class Test_calc_perc:
 
     def test_calc_perc_type8(self):
         # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
+        arr = np.asarray(
+            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
+        )
         res = _calc_perc(
             arr,
             p=[40.0],
@@ -134,4 +136,34 @@ class Test_calc_perc:
             beta=1.0 / 3.0,
         )
         # The expected is from R `quantile(arr, probs=c(0.4), type=8)`
-        assert res[()] == 27
+        assert res[0] == 27
+        assert res[1] == 27
+
+    def test_calc_perc_2d(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray(
+            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
+        )
+        res = _calc_perc(
+            arr,
+            p=[40.0],
+        )
+        # The expected is from R `quantile(arr, probs=c(0.4), type=8)`
+        assert res[0] == 29
+        assert res[1] == 29
+
+    def test_calc_perc_nan(self):
+        arr = np.asarray([np.NAN])
+        res = _calc_perc(
+            arr,
+            p=[50.0],
+        )
+        assert res.mask.all()
+
+    def test_calc_perc_partial_nan(self):
+        arr = np.asarray([np.NAN, 41.0, 43.0])
+        res = _calc_perc(
+            arr,
+            p=[50.0],
+        )
+        assert res[()] == 42.0
