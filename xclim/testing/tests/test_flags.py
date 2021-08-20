@@ -130,3 +130,18 @@ class TestDataFlags:
             match="Maximum temperature values found below minimum temperatures",
         ):
             df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
+
+    def test_ecad_qc_flag(self):
+        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
+
+        # Add some suspicious run values
+        bad_ds["tas"].values[0][100:300] = 17 + K2C
+
+        with pytest.raises(
+            df.DataQualityException,
+            match="Runs of repetitive values for 5 or more days found for tas",
+        ):
+            df.ecad_compliant(bad_ds, raise_flags=True)
+
+        df_flagged = df.ecad_compliant(bad_ds)
+        np.testing.assert_array_equal(df_flagged.ecad_qc_flag, False)

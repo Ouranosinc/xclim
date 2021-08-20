@@ -37,7 +37,9 @@ class DataQualityException(Exception):
         self.flags = list()
         for flag, value in flag_array.data_vars.items():
             if value.any():
-                self.flags.append(value.attrs["comment"])
+                for attribute in value.attrs.keys():
+                    if str(attribute).endswith("flag"):
+                        self.flags.append(value.attrs[attribute])
         super().__init__(self.message)
 
     def __str__(self):
@@ -47,6 +49,7 @@ class DataQualityException(Exception):
 
 __all__ = [
     "data_flags",
+    "ecad_compliant",
     "many_1mm_repetitions",
     "many_5mm_repetitions",
     "negative_accumulation_values",
@@ -65,6 +68,16 @@ __all__ = [
 def _register_methods(func):
     _REGISTRY[func.__name__] = func
     return func
+
+
+def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
+    to_remove = list()
+    for attr in da.attrs.keys():
+        if not str(attr).endswith("flag"):
+            to_remove.append(attr)
+    for attr in to_remove:
+        del da.attrs[attr]
+    return da
 
 
 @_register_methods
@@ -92,9 +105,9 @@ def tasmax_below_tasmin(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> flagged = ds.tasmax < ds.tasmin
     """
-    tasmax_lt_tasmin = tasmax < tasmin
+    tasmax_lt_tasmin = _sanitize_attrs(tasmax < tasmin)
     tasmax_lt_tasmin.attrs[
-        "comment"
+        "tasmax_tasmin_flag"
     ] = "Maximum temperature values found below minimum temperatures."
     if dims == "all":
         return tasmax_lt_tasmin.any()
@@ -126,9 +139,9 @@ def tas_exceeds_tasmax(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> flagged = ds.tas > ds.tasmax
     """
-    tas_gt_tasmax = tas > tasmax
+    tas_gt_tasmax = _sanitize_attrs(tas > tasmax)
     tas_gt_tasmax.attrs[
-        "comment"
+        "tas_tasmax_flag"
     ] = "Mean temperature values found above maximum temperatures."
     if dims == "all":
         return tas_gt_tasmax.any()
@@ -160,9 +173,9 @@ def tas_below_tasmin(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> flagged = ds.tasmax < ds.tasmin
     """
-    tas_lt_tasmin = tas < tasmin
+    tas_lt_tasmin = _sanitize_attrs(tas < tasmin)
     tas_lt_tasmin.attrs[
-        "comment"
+        "tas_tasmin_flag"
     ] = "Mean temperature values found below minimum temperatures."
     if dims == "all":
         return tas_lt_tasmin.any()
@@ -197,8 +210,10 @@ def temperature_extremely_low(
     >>> flagged = ds.tas < threshold
     """
     thresh_converted = convert_units_to(thresh, da)
-    extreme_low = da < thresh_converted
-    extreme_low.attrs["comment"] = f"Temperatures found below {thresh}."
+    extreme_low = _sanitize_attrs(da < thresh_converted)
+    extreme_low.attrs[
+        f"{da.name}_flag"
+    ] = f"Temperatures found below {thresh} in {da.name}."
     if dims == "all":
         return extreme_low.any()
     raise NotImplementedError(f"dims: {dims}")
@@ -232,8 +247,10 @@ def temperature_extremely_high(
     >>> flagged = ds.tas > threshold
     """
     thresh_converted = convert_units_to(thresh, da)
-    extreme_high = da > thresh_converted
-    extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}."
+    extreme_high = _sanitize_attrs(da > thresh_converted)
+    extreme_high.attrs[
+        f"{da.name}_flag"
+    ] = f"Temperatures found in excess of {thresh} in {da.name}."
     if dims == "all":
         return extreme_high.any()
     raise NotImplementedError(f"dims: {dims}")
@@ -262,23 +279,25 @@ def negative_accumulation_values(
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = (ds.pr < 0)
     """
-    negative_accumulations = da < 0
-    negative_accumulations.attrs["comment"] = f"Negative values found for {da.name}."
+    negative_accumulations = _sanitize_attrs(da < 0)
+    negative_accumulations.attrs[
+        f"{da.name}_flag"
+    ] = f"Negative values found for {da.name}."
     if dims == "all":
         return negative_accumulations.any()
     raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
-@declare_units(pr="[precipitation]", check_output=False)
+@declare_units(da="[precipitation]", check_output=False)
 def very_large_precipitation_events(
-    pr: xarray.DataArray, thresh="300 mm d-1", dims: str = "all"
+    da: xarray.DataArray, thresh="300 mm d-1", dims: str = "all"
 ) -> xarray.DataArray:
     """Check if precipitation values exceed 300 mm/day for any given day.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
     thresh : str
     dims: str
       Dimenions upon which aggregation should be performed. Default: "all".
@@ -296,22 +315,24 @@ def very_large_precipitation_events(
     >>> threshold = convert_units_to("300 mm d-1", ds.pr)
     >>> flagged = (ds.pr > threshold)
     """
-    thresh_converted = convert_units_to(thresh, pr)
-    very_large_events = (pr > thresh_converted).any()
-    very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}."
+    thresh_converted = convert_units_to(thresh, da)
+    very_large_events = _sanitize_attrs((da > thresh_converted).any())
+    very_large_events.attrs[
+        f"{da.name}_flag"
+    ] = f"Precipitation events in excess of {thresh} for {da.name}."
     if dims == "all":
         return very_large_events.any()
     raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
-@declare_units(pr="[precipitation]", check_output=False)
-def many_1mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
+@declare_units(da="[precipitation]", check_output=False)
+def many_1mm_repetitions(da: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
     """Check if precipitation values repeat at 1 mm/day for 10 or more days.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
     dims: str
       Dimenions upon which aggregation should be performed. Default: "all".
 
@@ -329,24 +350,24 @@ def many_1mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.Data
     >>> threshold = convert_units_to("1 mm d-1", ds.pr)
     >>> flagged = suspicious_run(ds.pr, window=10, op="==", thresh=threshold)
     """
-    thresh = convert_units_to("1 mm d-1", pr)
-    repetitions = suspicious_run(pr, window=10, op="==", thresh=thresh)
+    thresh = convert_units_to("1 mm d-1", da)
+    repetitions = _sanitize_attrs(suspicious_run(da, window=10, op="==", thresh=thresh))
     repetitions.attrs[
-        "comment"
-    ] = "Repetitive precipitation values at 1mm d-1 for at least 10 days."
+        f"{da.name}_flag"
+    ] = f"Repetitive precipitation values at 1mm d-1 for at least 10 days found for {da.name}."
     if dims == "all":
         return repetitions.any()
     raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
-@declare_units(pr="[precipitation]", check_output=False)
-def many_5mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
+@declare_units(da="[precipitation]", check_output=False)
+def many_5mm_repetitions(da: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    da : xarray.DataArray
     dims: str
       Dimenions upon which aggregation should be performed. Default: "all".
 
@@ -364,11 +385,11 @@ def many_5mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.Data
     >>> threshold = convert_units_to("5 mm d-1", ds.pr)
     >>> flagged = suspicious_run(ds.pr, window=5, op="==", thresh=threshold)
     """
-    thresh = convert_units_to("5 mm d-1", pr)
-    repetitions = suspicious_run(pr, window=5, op="==", thresh=thresh)
+    thresh = convert_units_to("5 mm d-1", da)
+    repetitions = _sanitize_attrs(suspicious_run(da, window=5, op="==", thresh=thresh))
     repetitions.attrs[
-        "comment"
-    ] = "Repetitive precipitation values at 5mm d-1 for at least 5 days."
+        f"{da.name}_flag"
+    ] = f"Repetitive precipitation values at 5mm d-1 for at least 5 days found for {da.name}."
     if dims == "all":
         return repetitions.any()
     raise NotImplementedError(f"dims: {dims}")
@@ -407,10 +428,10 @@ def outside_n_standard_deviations_of_climatology(
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
-    within_bounds = within_bnds_doy(da, mu + n * sig, mu - n * sig)
+    within_bounds = _sanitize_attrs(within_bnds_doy(da, mu + n * sig, mu - n * sig))
     within_bounds.attrs[
-        "comment"
-    ] = f"Values found that are outside of {n} standard deviations from climatology."
+        f"{da.name}_flag"
+    ] = f"Values outside of {n} standard deviations from climatology found for {da.name}."
     if dims == "all":
         if within_bounds.all():
             return ~within_bounds.all()
@@ -442,8 +463,10 @@ def values_repeating_for_5_or_more_days(
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = suspicious_run(ds.pr, window=5)
     """
-    repetition = suspicious_run(da, window=5)
-    repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days."
+    repetition = _sanitize_attrs(suspicious_run(da, window=5))
+    repetition.attrs[
+        f"{da.name}_flag"
+    ] = f"Runs of repetitive values for 5 or more days found for {da.name}."
     if dims == "all":
         return repetition.any()
     raise NotImplementedError(f"dims: {dims}")
@@ -472,10 +495,10 @@ def percentage_values_outside_of_bounds(
     >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
     >>> flagged = (ds.huss < 0) | (ds.huss > 100)  # doctest: +SKIP
     """
-    unbounded_percentages = (da < 0) | (da > 100)
+    unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
     unbounded_percentages.attrs[
-        "comment"
-    ] = f"Percentage values found beyond bounds for {da.name}."
+        f"{da.name}_flag"
+    ] = f"Percentage values found beyond bounds found for {da.name}."
     if dims == "all":
         return unbounded_percentages.any()
     raise NotImplementedError(f"dims: {dims}")
@@ -563,17 +586,19 @@ def data_flags(
 
 
 def ecad_compliant(
-    ds: xarray.Dataset, append: bool = True
+    ds: xarray.Dataset, raise_flags: bool = False, append: bool = True
 ) -> Union[xarray.DataArray, xarray.Dataset]:
     """
 
     Parameters
     ----------
     ds : xarray.Dataset
-      Dataset containing variables to be examined
+      Dataset containing variables to be examined.
+    raise_flags : bool
+      Raise exception if any of the quality assessment flags are raised. Default: False.
     append : bool
       If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
-      If `False`, return the DataArray of the
+      If `False`, return the DataArray of the `ecad_qc_flag` variable.
 
     Returns
     -------
@@ -589,6 +614,9 @@ def ecad_compliant(
                 # Collect all true values for commonly-named data flags
                 combined = flagged_array[flag] or df[flag]
                 flagged_array[flag] = combined
+
+    if raise_flags:
+        raise DataQualityException(flagged_array)
 
     ecad_flag = xarray.DataArray(
         name="ecad_qc_flag",
