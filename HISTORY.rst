@@ -25,7 +25,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
-* _cal_perc and percentile_doy mow uses scipy mquartiles instead of numpy percentiles to have more flexibility on the interpolation method.
+* _cal_perc and percentile_doy now use `scipy::mquartiles` instead of `numpy::percentiles` to have more flexibility on the interpolation method.
 
 New indicators
 ~~~~~~~~~~~~~~
