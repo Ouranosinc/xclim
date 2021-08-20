@@ -9,7 +9,7 @@ import pytest
 import xarray as xr
 
 from xclim.core.indicator import Daily
-from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
+from xclim.core.utils import _calc_perc, ensure_chunk_size, walk_map, wrapped_partial
 from xclim.testing import list_datasets, open_dataset
 
 
@@ -114,3 +114,24 @@ def test_list_datasets():
         ],
         845.021484375,
     )
+
+
+class Test_calc_perc:
+    def test_calc_perc_type7(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
+        res = _calc_perc(arr, p=[40.0])
+        # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
+        assert res[()] == 29
+
+    def test_calc_perc_type8(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
+        res = _calc_perc(
+            arr,
+            p=[40.0],
+            alpha=1.0 / 3.0,
+            beta=1.0 / 3.0,
+        )
+        # The expected is from R `quantile(arr, probs=c(0.4), type=8)`
+        assert res[()] == 27

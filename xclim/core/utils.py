@@ -23,6 +23,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from scipy.stats.mstats import mquantiles
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -208,7 +209,9 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc(arr: np.array, p: Sequence[float] = None):
+def _calc_perc(
+    arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
+):
     """Ufunc-like computing a percentile over the last axis of the array.
 
     Processes cases with invalid values separately, which makes it more efficient than np.nanpercentile for array with
@@ -225,20 +228,19 @@ def _calc_perc(arr: np.array, p: Sequence[float] = None):
     -------
     np.array
     """
-    if p is None:
-        p = [50]
-
-    nan_count = np.isnan(arr).sum(axis=-1)
-    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
-    nans = (nan_count > 0) & (nan_count < arr.shape[-1])
-    if np.any(nans):
-        out_mask = np.stack([nans] * len(p), axis=-1)
-        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
-        # only use nanpercentile where we need it (slow performance compared to standard) :
-        out[out_mask] = np.moveaxis(
-            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
-        ).ravel()
-    return out
+    quantiles = [per / 100.0 for per in p]
+    # mquantiles only accept a maximum 2D array
+    shape = arr.shape[:-1]
+    if shape:
+        arr = arr.reshape([np.prod(shape), arr.shape[-1]])
+    result = np.moveaxis(
+        mquantiles(arr, prob=quantiles, alphap=alpha, betap=beta, axis=-1), 0, -1
+    )
+    if shape:
+        quantiles = np.array(quantiles)
+        shape += quantiles.shape
+        result = result.reshape(shape)
+    return result
 
 
 def raise_warn_or_log(

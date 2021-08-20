@@ -443,7 +443,9 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: Union[float, Sequence[float]] = 10,
+    per: Union[float, Sequence[float]] = 10.0,
+    alpha: float = 1.0 / 3.0,
+    beta: float = 1.0 / 3.0,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
@@ -491,7 +493,7 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(p=per),
+        kwargs=dict(p=per, alpha=alpha, beta=beta),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
