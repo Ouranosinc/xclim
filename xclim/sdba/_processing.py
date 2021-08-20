@@ -96,7 +96,7 @@ def _normalize(
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
     """Normalize an array by removing its mean.
-    Normalization if performed group-wise.
+    Normalization is performed group-wise.
 
     Parameters
     ----------
