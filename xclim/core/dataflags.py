@@ -7,6 +7,7 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 """
 import warnings
 from inspect import signature
+from typing import Union
 
 import numpy as np
 import xarray
@@ -97,7 +98,7 @@ def tasmax_below_tasmin(
     ] = "Maximum temperature values found below minimum temperatures."
     if dims == "all":
         return tasmax_lt_tasmin.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -131,7 +132,7 @@ def tas_exceeds_tasmax(
     ] = "Mean temperature values found above maximum temperatures."
     if dims == "all":
         return tas_gt_tasmax.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -165,7 +166,7 @@ def tas_below_tasmin(
     ] = "Mean temperature values found below minimum temperatures."
     if dims == "all":
         return tas_lt_tasmin.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -200,7 +201,7 @@ def temperature_extremely_low(
     extreme_low.attrs["comment"] = f"Temperatures found below {thresh}."
     if dims == "all":
         return extreme_low.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -235,7 +236,7 @@ def temperature_extremely_high(
     extreme_high.attrs["comment"] = f"Temperatures found in excess of {thresh}."
     if dims == "all":
         return extreme_high.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -265,7 +266,7 @@ def negative_accumulation_values(
     negative_accumulations.attrs["comment"] = f"Negative values found for {da.name}."
     if dims == "all":
         return negative_accumulations.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -300,7 +301,7 @@ def very_large_precipitation_events(
     very_large_events.attrs["comment"] = f"Precipitation events in excess of {thresh}."
     if dims == "all":
         return very_large_events.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -335,6 +336,7 @@ def many_1mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.Data
     ] = "Repetitive precipitation values at 1mm d-1 for at least 10 days."
     if dims == "all":
         return repetitions.any()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -369,7 +371,7 @@ def many_5mm_repetitions(pr: xarray.DataArray, dims: str = "all") -> xarray.Data
     ] = "Repetitive precipitation values at 5mm d-1 for at least 5 days."
     if dims == "all":
         return repetitions.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 # TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
@@ -413,7 +415,7 @@ def outside_n_standard_deviations_of_climatology(
         if within_bounds.all():
             return ~within_bounds.all()
         return ~within_bounds.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -444,7 +446,7 @@ def values_repeating_for_5_or_more_days(
     repetition.attrs["comment"] = "Runs of repetitive values for 5 or more days."
     if dims == "all":
         return repetition.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 @_register_methods
@@ -476,11 +478,14 @@ def percentage_values_outside_of_bounds(
     ] = f"Percentage values found beyond bounds for {da.name}."
     if dims == "all":
         return unbounded_percentages.any()
-    raise NotImplementedError()
+    raise NotImplementedError(f"dims: {dims}")
 
 
 def data_flags(
-    da: xarray.DataArray, ds: xarray.Dataset, raise_flags: bool = False
+    da: xarray.DataArray,
+    ds: xarray.Dataset,
+    dims: str = "all",
+    raise_flags: bool = False,
 ) -> xarray.Dataset:
     """Automatically evaluates the supplied DataArray for a set of data flag tests.
 
@@ -491,6 +496,8 @@ def data_flags(
     ----------
     da : xarray.DataArray
     ds : xarray.Dataset
+    dims : str
+      Dimenions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
       Raise exception if any of the quality assessment flags are raised. Default: False.
 
@@ -525,7 +532,7 @@ def data_flags(
     var = str(da.name)
     try:
         flag_func = VARIABLES.get(var)["data_flags"]
-    except TypeError:
+    except (KeyError, TypeError):
         if raise_flags:
             raise NotImplementedError(
                 f"Data quality checks do not exist for '{var}' variable."
@@ -536,14 +543,15 @@ def data_flags(
     flags = dict()
     for name, kwargs in flag_func.items():
         func = _REGISTRY[name]
-
         try:
             extras = _missing_vars(func, ds)
         except MissingVariableError:
             flags[name] = None
         else:
+            if kwargs:
+                kwargs["dims"] = dims
             with xarray.set_options(keep_attrs=True):
-                flags[name] = func(da, **extras, **(kwargs or dict()))
+                flags[name] = func(da, **extras, **(kwargs or dict(dims=dims)))
 
     dsflags = xarray.Dataset(data_vars=flags)
 
@@ -552,3 +560,47 @@ def data_flags(
             raise DataQualityException(dsflags)
 
     return dsflags
+
+
+def ecad_compliant(
+    ds: xarray.Dataset, append: bool = True
+) -> Union[xarray.DataArray, xarray.Dataset]:
+    """
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+      Dataset containing variables to be examined
+    append : bool
+      If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
+      If `False`, return the DataArray of the
+
+    Returns
+    -------
+    Union[xarray.DataArray, xarray.Dataset]
+    """
+    flagged_array = xarray.Dataset()
+    for var in ds.data_vars:
+        df = data_flags(ds[var], ds)
+        for flag in df.data_vars:
+            try:
+                flagged_array = xarray.merge([flagged_array, df[flag]])
+            except xarray.MergeError:
+                # Collect all true values for commonly-named data flags
+                combined = flagged_array[flag] or df[flag]
+                flagged_array[flag] = combined
+
+    ecad_flag = xarray.DataArray(
+        name="ecad_qc_flag",
+        attrs=dict(comment="Adheres to ECAD quality control checks"),
+    )
+    if flagged_array.any():
+        # Has suspicious values/trends -> fails
+        ecad_flag.values = False
+    else:
+        # No flags raised -> passes
+        ecad_flag.values = True
+
+    if append:
+        return xarray.merge([ds, ecad_flag])
+    return ecad_flag

@@ -49,7 +49,7 @@ variables:
     description: Air pressure at surface
     standard_name: surface_air_pressure
     data_flags:
-      - values_repeating_for_5_or_more_days:
+      values_repeating_for_5_or_more_days:
   psl:
     canonical_units: Pa
     cell_methods:
