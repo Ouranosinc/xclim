@@ -68,7 +68,10 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    af, hist_q = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
+    af, hist_q = u.extrapolate_qm(
+        ds.af, ds.hist_q, method=extrapolation,
+        abs_bounds=(ds.sim.min().item() - 1, ds.sim.max().item() + 1)
+    )
     af = u.interp_on_quantiles(ds.sim, hist_q, af, group=group, method=interp)
 
     scen = u.apply_correction(ds.sim, af, kind).rename("scen")
