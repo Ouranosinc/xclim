@@ -1150,7 +1150,7 @@ def suspicious_run_1d(
     op: Optional[str] = None,
     thresh: Optional[float] = None,
 ) -> np.ndarray:
-    """Return True if the array contains a run of identical values.
+    """Return True where the array contains a run of identical values.
 
     Parameters
     ----------
@@ -1166,41 +1166,49 @@ def suspicious_run_1d(
     Returns
     -------
     numpy.ndarray
-      Whether or not the series contains a run of identical values.
+      Whether or not the data points is part of a run of identical values.
     """
     v, rl, pos = rle_1d(arr)
+    sus_runs = rl >= window
     if thresh:
         if op in {">", "gt"}:
-            return ((v > thresh) * rl >= window).any()
-        if op in {"==", "eq"}:
-            return ((v == thresh) * rl >= window).any()
-        if op in {">=", "gteq"}:
-            return ((v >= thresh) * rl >= window).any()
-        raise NotImplementedError(f"{op}")
-    return (rl >= window).any()
+            sus_runs = sus_runs & (v > thresh)
+        elif op in {"==", "eq"}:
+            sus_runs = sus_runs & (v == thresh)
+        elif op in {">=", "gteq"}:
+            sus_runs = sus_runs & (v >= thresh)
+        else:
+            raise NotImplementedError(f"{op}")
+
+    out = np.zeros_like(arr, dtype=bool)
+    for st, l in zip(pos[sus_runs], rl[sus_runs]):
+        out[st : st + l] = True
+    return out
 
 
 def suspicious_run(
     arr: xr.DataArray,
     dim: str = "time",
     window: int = 10,
-    op: Optional[str] = None,
+    op: Optional[str] = ">",
     thresh: Optional[float] = None,
 ) -> xr.DataArray:
-    """Return True if the array contains a run of identical values, vectorized version.
+    """Return True where the array contains has runs of identical values, vectorized version.
+
+    In opposition to other run length functions, here the outut has the same shape as the input.
 
     Parameters
     ----------
     arr : xr.DataArray
       Array of values to be parsed.
     dim: str
-      Dimension along which to index (default: "time").
+      Dimension along which to check for runs (default: "time").
     window : int
       Minimum run length
-    op: {">", ">=", "==", "gt", "eq", "gteq"}, optional
-      Operator for threshold comparison
     thresh : float, optional
       Threshold above which values are checked for identical values.
+    op: {">", ">=", "==", "gt", "eq", "gteq"}, optional
+      Operator for threshold comparison, defaults to ">".
 
     Returns
     -------
@@ -1210,6 +1218,7 @@ def suspicious_run(
         suspicious_run_1d,
         arr,
         input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[bool],
