@@ -854,8 +854,13 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
+        # Use of OrderedDict to ensure inputs (das) get listed before parameters (args).
+        # In the history attr, call signature will be all keywords
+        # and might be in a different order than the real function (but order doesn't really matter with keywords).
+        kwargs = OrderedDict(**das)
+        kwargs.update(**args)
         attrs["history"] = update_history(
-            gen_call_string(var_id or cls._registry_id, **args, **das),
+            gen_call_string(cls._registry_id, **kwargs),
             new_name=out.get("var_name"),
             **das,
         )

@@ -324,14 +324,14 @@ def update_history(
 
 
 def update_xclim_history(func):
-    """Decorator that auto-generates and fills a xclim_history attribute.
+    """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
     """
 
     @wraps(func)
     def _call_and_add_history(*args, **kwargs):
-        """Call the function and then generate and add the xclim_history attr."""
+        """Call the function and then generate and add the history attr."""
         outs = func(*args, **kwargs)
 
         if isinstance(outs, tuple):
@@ -355,7 +355,7 @@ def update_xclim_history(func):
             new_name=out.name,
             **da_dict,
         )
-        out.attrs["xclim_history"] = attr
+        out.attrs["history"] = attr
         return outs
 
     return _call_and_add_history

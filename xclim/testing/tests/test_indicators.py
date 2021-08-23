@@ -108,7 +108,7 @@ def test_attrs(tas_series):
     txm = ind(a, thresh=5, freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-    assert "TMIN(da=<array>, thresh=5, freq='YS')" in txm.attrs["history"]
+    assert "TMIN(da=tas, thresh=5, freq='YS')" in txm.attrs["history"]
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
 
