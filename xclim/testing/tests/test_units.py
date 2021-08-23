@@ -151,7 +151,6 @@ class TestCheckUnits:
             with pytest.raises(ValidationError):
                 check_units("m3", "[discharge]")
 
-    @pytest.mark.xfail
     def test_user_error(self):
         with pytest.raises(ValidationError):
             check_units("deg C", "[temperature]")
