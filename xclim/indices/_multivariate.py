@@ -11,18 +11,20 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    infer_sampling_units,
     pint2cfunits,
     rate2amount,
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import ValidationError
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
 from .generic import select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+# See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
@@ -32,6 +34,9 @@ __all__ = [
     "blowing_snow",
     "cold_spell_duration_index",
     "cold_and_dry_days",
+    "warm_and_dry_days",
+    "warm_and_wet_days",
+    "cold_and_wet_days",
     "daily_freezethaw_cycles",
     "multiday_temperature_swing",
     "daily_temperature_range",
@@ -65,7 +70,7 @@ def cold_spell_duration_index(
     tn10: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -130,8 +135,18 @@ def cold_spell_duration_index(
     return to_agg_units(out, tasmin, "count")
 
 
+@declare_units(
+    tas="[temperature]",
+    tas_25="[temperature]",
+    pr="[precipitation]",
+    pr_25="[precipitation]",
+)
 def cold_and_dry_days(
-    tas: xarray.DataArray, tgin25, pr, wet25, freq: str = "YS"
+    tas: xarray.DataArray,
+    tas_25: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_25: xarray.DataArray,
+    freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Cold and dry days.
 
@@ -140,13 +155,16 @@ def cold_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values,
-    tgin25 : xarray.DataArray
+      Mean daily temperature values
+    tas_25 : xarray.DataArray
       First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    wet25 : xarray.DataArray
+    pr_25 : xarray.DataArray
       First quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
     freq : str
       Resampling frequency.
 
@@ -157,6 +175,8 @@ def cold_and_dry_days(
 
     Notes
     -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
     Formula to be written [cold_dry_days]_.
 
     References
@@ -164,14 +184,199 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    raise NotImplementedError()
-    # There is an issue with the 1 mm threshold. It makes no sense to assume a day with < 1mm is not dry.
-    #
-    # c1 = tas < convert_units_to(tgin25, tas)
-    # c2 = (pr > convert_units_to('1 mm', pr)) * (pr < convert_units_to(wet25, pr))
+    tas_25 = convert_units_to(tas_25, tas)
+    thresh = resample_doy(tas_25, tas)
+    tg25 = tas < thresh
 
-    # c = (c1 * c2) * 1
-    # return c.resample(time=freq).sum(dim='time')
+    pr_25 = convert_units_to(pr_25, pr)
+    thresh = resample_doy(pr_25, pr)
+    pr25 = pr < thresh
+
+    cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
+    return to_agg_units(cold_and_dry, tas, "count")
+
+
+@declare_units(
+    tas="[temperature]",
+    tas_75="[temperature]",
+    pr="[precipitation]",
+    pr_25="[precipitation]",
+)
+def warm_and_dry_days(
+    tas: xarray.DataArray,
+    tas_75: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_25: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Warm and dry days.
+
+    Returns the total number of days where "warm" and "Dry" conditions coincide.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values
+    tas_75 : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr : xarray.DataArray
+      Daily precipitation.
+    pr_25 : xarray.DataArray
+      First quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray,
+      The total number of days where warm and dry conditions coincide.
+
+    Notes
+    -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
+    Formula to be written [warm_dry_days]_.
+
+    References
+    ----------
+    .. [warm_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
+        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
+    """
+    tas_75 = convert_units_to(tas_75, tas)
+    thresh = resample_doy(tas_75, tas)
+    tg75 = tas > thresh
+
+    pr_25 = convert_units_to(pr_25, pr)
+    thresh = resample_doy(pr_25, pr)
+    pr25 = pr < thresh
+
+    warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
+    return to_agg_units(warm_and_dry, tas, "count")
+
+
+@declare_units(
+    tas="[temperature]",
+    tas_75="[temperature]",
+    pr="[precipitation]",
+    pr_75="[precipitation]",
+)
+def warm_and_wet_days(
+    tas: xarray.DataArray,
+    tas_75: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_75: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Warm and wet days.
+
+    Returns the total number of days where "warm" and "wet" conditions coincide.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values
+    tas_75 : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr : xarray.DataArray
+      Daily precipitation.
+    pr_75 : xarray.DataArray
+      Third quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray,
+      The total number of days where warm and wet conditions coincide.
+
+    Notes
+    -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
+    Formula to be written [warm_wet_days]_.
+
+    References
+    ----------
+    .. [warm_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
+        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
+    """
+    tas_75 = convert_units_to(tas_75, tas)
+    thresh = resample_doy(tas_75, tas)
+    tg75 = tas > thresh
+
+    pr_75 = convert_units_to(pr_75, pr)
+    thresh = resample_doy(pr_75, pr)
+    pr75 = pr > thresh
+
+    warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
+    return to_agg_units(warm_and_wet, tas, "count")
+
+
+@declare_units(
+    tas="[temperature]",
+    tas_25="[temperature]",
+    pr="[precipitation]",
+    pr_75="[precipitation]",
+)
+def cold_and_wet_days(
+    tas: xarray.DataArray,
+    tas_25: xarray.DataArray,
+    pr: xarray.DataArray,
+    pr_75: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""cold and wet days.
+
+    Returns the total number of days where "cold" and "wet" conditions coincide.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature values
+    tas_25 : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
+    pr : xarray.DataArray
+      Daily precipitation.
+    pr_75 : xarray.DataArray
+      Third quartile of daily total precipitation computed by month.
+      Warning:
+        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
+        Otherwise the percentiles will include non wet days.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray,
+      The total number of days where cold and wet conditions coincide.
+
+    Notes
+    -----
+    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+
+    Formula to be written [cold_wet_days]_.
+
+    References
+    ----------
+    .. [cold_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
+        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
+    """
+    tas_25 = convert_units_to(tas_25, tas)
+    thresh = resample_doy(tas_25, tas)
+    tg25 = tas < thresh
+
+    pr_75 = convert_units_to(pr_75, pr)
+    thresh = resample_doy(pr_75, pr)
+    pr75 = pr > thresh
+
+    cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
+    return to_agg_units(cold_and_wet, tas, "count")
 
 
 @declare_units(

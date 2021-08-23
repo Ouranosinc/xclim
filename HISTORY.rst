@@ -2,14 +2,59 @@
 History
 =======
 
-
 0.29.0 (unreleased)
 -------------------
+
+Announcements
+~~~~~~~~~~~~~
+* It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+
+    - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
+      ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
+
+    - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
+      class method performs all the work in one call.
+* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
+* A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+
+New indicators
+~~~~~~~~~~~~~~
+* ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
+* ``qian_weighted_mean_average`` (based on Qian et al. (2010)) is offered as an alternate method for determining the start date using a weighted 5-day average (``method="qian"``). Can also be used directly as an indice.
+* ``cold_and_dry_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``CD`` to ICCLIM module.
+* ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` to ICCLIM module.
+* ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
+* ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
+
+Bug fixes
+~~~~~~~~~
+* Various bug fixes in bootstrapping:
+   - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
+   - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
+
+
+0.28.1 (2021-07-29)
+-------------------
+
+Announcements
+~~~~~~~~~~~~~
+* The ``xclim`` binary package available on conda-forge will no longer supply ``clisops`` by default. Installation of ``clisops`` must be performed explicitly to preserve subsetting and bias correction capabilities.
 
 New indicators
 ~~~~~~~~~~~~~~
 * ``snow_depth`` indicator returns the mean snow depth over period. Added as ``SD`` to ICCLIM module.
 
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Minor modifications to many function call signatures (type hinting) and docstrings (numpy docstring compliance).
 
 0.28.0 (2021-07-07)
 -------------------

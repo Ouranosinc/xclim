@@ -12,11 +12,13 @@ To install xclim via pip, run this command in your terminal:
 
     $ pip install xclim
 
-To install xclim with spatial subsetting tools (`clisops`_), ensure you have needed system dependencies installed and run:
+To install xclim with spatial subsetting tools (`clisops`_), ensure you have the necessary system dependencies installed and run:
 
 .. code-block:: console
 
-    $ pip install xclim[gis] # or pip install xclim clisops
+    $ pip install xclim[gis]
+    # or alternatively;
+    $ pip install xclim clisops
 
 This is the preferred method to install xclim, as it will always install the most recent stable release.
 
@@ -39,11 +41,12 @@ To install the xclim Anaconda binary, run this command in your terminal:
 .. code-block:: console
 
     $ conda install -c conda-forge xclim
+    $ conda install -c conda-forge clisops  # for subsetting and bias correction functions
 
 From sources
 ------------
 .. Warning::
-    For Python3.9+ users: Many of the required scientific libraries do not currently have wheels that support the latest
+    For Python3.10+ users: Many of the required scientific libraries do not currently have wheels that support the latest
     python. In order to ensure that installation of xclim doesn't fail, we suggest installing the `Cython` module
     before installing xclim in order to compile necessary libraries from source packages.
 
@@ -83,6 +86,6 @@ To create a conda development environment including all xclim dependencies, ente
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.7 --file=requirements_dev.txt
+    $ conda create -n my_xclim_env python=3.7 --file=environment.yml
     $ conda activate my_xclim_env
-    $ pip install .[dev]
+    (my_xclim_env) $ pip install .[dev]

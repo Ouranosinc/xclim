@@ -6,7 +6,6 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-import warnings
 from typing import Optional, Union
 
 import numpy as np
@@ -27,18 +26,33 @@ from xclim.core.units import (
     to_agg_units,
 )
 
-# __all__ = [
-#     "select_time",
-#     "select_resample_op",
-#     "doymax",
-#     "doymin",
-#     "default_freq",
-#     "threshold_count",
-#     "get_daily_events",
-#     "daily_downsampler",
-# ]
 from ..core.utils import DayOfYearStr
 from . import run_length as rl
+
+__all__ = [
+    "aggregate_between_dates",
+    "compare",
+    "count_level_crossings",
+    "count_occurrences",
+    "daily_downsampler",
+    "day_lengths",
+    "default_freq",
+    "degree_days",
+    "diurnal_temperature_range",
+    "domain_count",
+    "doymax",
+    "doymin",
+    "get_daily_events",
+    "get_op",
+    "interday_diurnal_temperature_range",
+    "last_occurrence",
+    "select_resample_op",
+    "select_time",
+    "statistics",
+    "temperature_sum",
+    "threshold_count",
+    "thresholded_statistics",
+]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
@@ -140,7 +154,7 @@ def get_op(op: str):
         pass
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
-    return xr.core.ops.get_op(op)
+    return xr.core.ops.get_op(op)  # noqa
 
 
 def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArray:
@@ -689,30 +703,30 @@ def aggregate_between_dates(
       If there is no start and/or end date, returns np.nan.
     """
 
-    def _get_days(bound, group, base_time):
+    def _get_days(_bound, _group, _base_time):
         """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
-        if isinstance(bound, str):
-            b_i = rl.index_of_date(group.time, bound, max_idxs=1)  # noqa
+        if isinstance(_bound, str):
+            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)  # noqa
             if not len(b_i):
                 return None
-            return (group.time.isel(time=b_i[0]) - group.time.isel(time=0)).dt.days
-        if base_time in bound.time:
-            return bound.sel(time=base_time)
+            return (_group.time.isel(time=b_i[0]) - _group.time.isel(time=0)).dt.days
+        if _base_time in _bound.time:
+            return _bound.sel(time=_base_time)
         return None
 
     if freq is None:
-        freqs = []
+        frequencies = []
         for i, bound in enumerate([start, end], start=1):
             try:
-                freqs.append(xr.infer_freq(bound.time))
+                frequencies.append(xr.infer_freq(bound.time))
             except AttributeError:
-                freqs.append(None)
+                frequencies.append(None)
 
-        good_freq = set(freqs) - {None}
+        good_freq = set(frequencies) - {None}
 
         if len(good_freq) != 1:
             raise ValueError(
-                "Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freqs}."
+                f"Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {frequencies}."
                 " Please consider providing `freq` manually."
             )
         freq = good_freq.pop()

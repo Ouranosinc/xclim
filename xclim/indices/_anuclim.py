@@ -403,6 +403,7 @@ def prcptot_warmcold_quarter(
     return out
 
 
+# FIXME: `src_timestep` is not used here.
 @declare_units(pr="[precipitation]")
 def prcptot(
     pr: xarray.DataArray, src_timestep: str = None, freq: str = "YS"
@@ -493,13 +494,13 @@ def _from_other_arg(
     output : DataArray
       Series to be indexed.
     op : func
-      Function returning an index, for example np.argmin, np.argmax, np.nanargmin, np.nanargmax.
+      Function returning an index, for example `np.argmin`, `np.argmax`, `np.nanargmin`, `np.nanargmax`.
     freq : str
       Temporal grouping.
 
     Returns
     -------
-    DataArray
+    xarray.DataArray
       Output values where criteria is met at the given frequency.
     """
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
@@ -519,6 +520,9 @@ def _to_quarter(
     tas: Optional[xarray.DataArray] = None,
 ) -> xarray.DataArray:
     """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
+    if tas is not None and pr is not None:
+        raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
+
     if freq.upper().startswith("D"):
         if tas is not None:
             tas = tg_mean(tas, freq="7D")
@@ -544,18 +548,16 @@ def _to_quarter(
 
     if tas is not None:
         tas = ensure_chunk_size(tas, time=np.ceil(window / 2))
-    if pr is not None:
+        out = tas.rolling(time=window, center=False).mean(skipna=False)
+        out.attrs = tas.attrs
+    elif pr is not None:
         pr = ensure_chunk_size(pr, time=np.ceil(window / 2))
-
-    if pr is not None:
         pram = rate2amount(pr)
         out = pram.rolling(time=window, center=False).sum()
         out.attrs = pr.attrs
         out.attrs["units"] = pram.units
-
-    if tas is not None:
-        out = tas.rolling(time=window, center=False).mean(skipna=False)
-        out.attrs = tas.attrs
+    else:
+        raise ValueError("No variables supplied.")
 
     out = ensure_chunk_size(out, time=-1)
     return out
