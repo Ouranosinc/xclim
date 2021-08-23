@@ -231,28 +231,26 @@ def test_run_bounds_data():
     assert bounds.events.size == 15
 
 
-@pytest.mark.parametrize("lastday", [True, False])
-def test_keep_longest_run_synthetic(lastday):
+def test_keep_longest_run_synthetic():
     runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
-    lrun = rl.keep_longest_run(runs, "time", lastday=lastday)
+    lrun = rl.keep_longest_run(runs, "time")
     np.testing.assert_array_equal(
         lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
     )
 
 
-@pytest.mark.parametrize("lastday", [True, False])
-def test_keep_longest_run_data(lastday):
+def test_keep_longest_run_data():
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.001
-    lrun = rl.keep_longest_run(cond, "time", lastday=lastday)
+    lrun = rl.keep_longest_run(cond, "time")
     np.testing.assert_array_equal(
         lrun.isel(time=slice(651, 658), location=2),
         np.array([0, 0, 0, 1, 1, 1, 1], dtype=bool),
     )
 
     xr.testing.assert_equal(
-        rl.keep_longest_run(cond, "time", lastday=lastday).sum("time"),
-        rl.longest_run(cond, "time", lastday=lastday),
+        rl.keep_longest_run(cond, "time").sum("time"),
+        rl.longest_run(cond, "time"),
     )
 
 

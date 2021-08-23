@@ -26,7 +26,8 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time"
+    ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time",
+    lastday: bool = False
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -472,7 +473,7 @@ def run_bounds(
 
 
 def keep_longest_run(
-    da: xr.DataArray, dim: str = "time", lastday: bool = False
+    da: xr.DataArray, dim: str = "time"
 ) -> xr.DataArray:
     """Keep the longest run along a dimension.
 
@@ -482,11 +483,6 @@ def keep_longest_run(
       Boolean array.
     dim : str
       Dimension along which to check for the longest run.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
 
     Returns
     -------
@@ -494,17 +490,14 @@ def keep_longest_run(
       Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
-    rls = rle(da, dim, lastday=lastday)
+    rls = rle(da, dim)
     out = xr.where(
         # Construct an integer array and find the max
         rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
         rls + 1,  # Add one to the First longest run
         rls,
     )
-    if lastday:
-        out = out.bfill(dim) == out.max(dim)
-    else:
-        out = out.ffill(dim) == out.max(dim)
+    out = out.ffill(dim) == out.max(dim)
     return da.copy(data=out.transpose(*da.dims).data)  # Keep everything the same
 
 
