@@ -21,6 +21,7 @@ from xclim.core.calendar import (
     get_calendar,
     interp_calendar,
     max_doy,
+    parse_offset,
     percentile_doy,
     time_bnds,
 )
@@ -446,3 +447,25 @@ def test_doy_to_days_since():
 
     da2 = days_since_to_doy(out)  # start read from attribute
     xr.testing.assert_identical(da, da2)
+
+
+def test_parse_offset_full():
+    # GIVEN
+    freq = "4AS-JUL"
+    # WHEN
+    m, b, s, a = parse_offset(freq)
+    assert m == "4"
+    assert b == "A"
+    assert s == "S"
+    assert a == "JUL"
+
+
+def test_parse_offset_minimal():
+    # GIVEN
+    freq = "M"
+    # WHEN
+    m, b, s, a = parse_offset(freq)
+    assert m == ""
+    assert b == "M"
+    assert s is None
+    assert a is None

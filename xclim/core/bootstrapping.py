@@ -40,7 +40,7 @@ def percentile_bootstrap(func):
     def wrapper(*args, **kwargs):
         ba = signature(func).bind(*args, **kwargs)
         ba.apply_defaults()
-        bootstrap = ba.arguments.pop("bootstrap", False)
+        bootstrap = ba.arguments.get("bootstrap", False)
         if bootstrap is False:
             return func(*args, **kwargs)
 
@@ -119,22 +119,24 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     # Group input array in years, with an offset matching freq
     freq = kwargs["freq"]
-    mul, b, anchor = parse_offset(freq)
-    bfreq = "YS"
-    if anchor is not None:
-        bfreq += f"-{anchor}"
-    g_full = da.resample(time=bfreq).groups
-    g_base = da_base.resample(time=bfreq).groups
+    _, base, start_stamp, anchor = parse_offset(freq)
+    bfreq = "A"
+    if start_stamp is not None:
+        bfreq += "S"
+    if base in ["A", "Q"] and anchor is not None:
+        bfreq = f"{bfreq}-{anchor}"
+    da_years = da.resample(time=bfreq).groups
+    in_base_years = da_base.resample(time=bfreq).groups
 
     out = []
     # Compute func on each grouping
-    for label, time_slice in g_full.items():
+    for label, time_slice in da_years.items():
         year = label.astype("datetime64[Y]").astype(int) + 1970
         kw = {da_key: da.isel(time=time_slice), **kwargs}
 
         # If the group year is in the base period, run the bootstrap
         if year in per_clim_years:
-            bda = bootstrap_year(da_base, g_base, label)
+            bda = bootstrap_year(da_base, in_base_years, label)
             kw[per_key] = percentile_doy(bda, **pdoy_args)
             value = compute_indice_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
 
@@ -145,6 +147,9 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
         out.append(value)
     out = xarray.concat(out, dim="time")
+    duplications = out.get_index("time").duplicated()
+    if len(duplications) > 0:
+        out = out.sel(time=~duplications)
     out.attrs["units"] = value.attrs["units"]
     return out
 
@@ -179,17 +184,19 @@ def bootstrap_year(
     out = da.expand_dims({bdim: np.arange(len(gr))}).copy(deep=True)
 
     # Replace `bloc` by every other group
-    for i, (key, gsl) in enumerate(gr.items()):
-        source = da.isel({dim: gsl})
+    for i, (key, group_slice) in enumerate(gr.items()):
+        source = da.isel({dim: group_slice})
 
         if len(source[dim]) == len(bloc):
             out.loc[{bdim: i, dim: bloc}] = source.data
+        if len(source[dim]) < len(bloc):
+            pass
         elif len(bloc) == 365:
             out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "365_day").data
         elif len(bloc) == 366:
-            out.loc[{bdim: i, dim: bloc[:-1]}] = convert_calendar(
-                source, "366_day"
-            ).data
+            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "366_day").data
+        elif len(bloc) < 365:
+            out.loc[{bdim: i, dim: bloc}] = source.data[: len(bloc)]
         else:
             raise NotImplementedError
 

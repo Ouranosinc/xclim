@@ -26,6 +26,7 @@ from .utils import ValidationError
 __all__ = [
     "convert_units_to",
     "declare_units",
+    "infer_sampling_units",
     "pint_multiply",
     "pint2cfunits",
     "rate2amount",
@@ -151,6 +152,25 @@ def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
     unit = unit.replace("%", "pct")
     if unit == "1":
         unit = ""
+
+    # Catch user errors undetected by Pint
+    degree_ex = ["deg", "degree", "degrees"]
+    unit_ex = [
+        "C",
+        "K",
+        "F",
+        "Celsius",
+        "Kelvin",
+        "Fahrenheit",
+        "celsius",
+        "kelvin",
+        "fahrenheit",
+    ]
+    possibilities = [f"{d} {u}" for d in degree_ex for u in unit_ex]
+    if unit.strip() in possibilities:
+        raise ValidationError(
+            "Remove white space from temperature units, e.g. use `degC`."
+        )
 
     try:  # Pint compatible
         return units.parse_units(unit)
@@ -370,7 +390,7 @@ def infer_sampling_units(
     if freq is None:
         freq = deffreq
 
-    multi, base, _ = parse_offset(freq)
+    multi, base, _, _ = parse_offset(freq)
     try:
         return int(multi or "1"), FREQ_UNITS[base]
     except KeyError:

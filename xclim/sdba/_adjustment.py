@@ -17,7 +17,7 @@ from .processing import escore
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
 )
-def dqm_train(ds, *, dim, kind, quantiles):
+def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     """DQM: Train step on one group.
 
 
@@ -43,7 +43,7 @@ def dqm_train(ds, *, dim, kind, quantiles):
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
 )
-def eqm_train(ds, *, dim, kind, quantiles):
+def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
@@ -59,7 +59,7 @@ def eqm_train(ds, *, dim, kind, quantiles):
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
-def qm_adjust(ds, *, group, interp, extrapolation, kind):
+def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
     Dataset variables:
@@ -75,7 +75,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind):
 
 
 @map_blocks(reduces=[Grouper.PROP], sim=[])
-def dqm_scale_sim(ds, *, group, interp, kind):
+def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
     """DQM: Sim preprocessing on one block
 
     Dataset variables:
@@ -96,7 +96,7 @@ def dqm_scale_sim(ds, *, group, interp, kind):
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
-def qdm_adjust(ds, *, group, interp, extrapolation, kind):
+def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
     Dataset variables:
@@ -115,7 +115,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind):
 
 
 @map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
-def loci_train(ds, *, group, thresh):
+def loci_train(ds, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
     Dataset variables:
@@ -138,7 +138,7 @@ def loci_train(ds, *, group, thresh):
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def loci_adjust(ds, *, group, thresh, interp):
+def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
     """LOCI: Adjust on one block.
 
     Dataset variables:
@@ -153,7 +153,7 @@ def loci_adjust(ds, *, group, thresh, interp):
 
 
 @map_groups(af=[Grouper.PROP])
-def scaling_train(ds, *, dim, kind):
+def scaling_train(ds, *, dim, kind) -> xr.Dataset:
     """Scaling: Train on one group.
 
     Dataset variables:
@@ -167,7 +167,7 @@ def scaling_train(ds, *, dim, kind):
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def scaling_adjust(ds, *, group, interp, kind):
+def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
     """Scaling: Adjust on one block.
 
     Dataset variables:
@@ -179,16 +179,17 @@ def scaling_adjust(ds, *, group, interp, kind):
     return scen.rename("scen").to_dataset()
 
 
-def npdf_transform(ds, **kwargs):
+def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
 
     Parameters
     ----------
-    Dataset variables:
-      ref : Reference multivariate timeseries
-      hist : simulated timeseries on the reference period
-      sim : Simulated timeseries on the projected period.
-      rot_matrices : Random rotation matrices.
+    ds: xr.Dataset
+      Dataset variables:
+        ref : Reference multivariate timeseries
+        hist : simulated timeseries on the reference period
+        sim : Simulated timeseries on the projected period.
+        rot_matrices : Random rotation matrices.
 
     kwargs:
       pts_dim : multivariate dimensionn name
@@ -203,9 +204,9 @@ def npdf_transform(ds, **kwargs):
       Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
       respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
     """
-    ref = ds.ref
-    hist = ds.hist
-    sim = ds.sim.rename(time_sim="time")
+    ref = ds.ref.rename(time_hist="time")
+    hist = ds.hist.rename(time_hist="time")
+    sim = ds.sim
     dim = kwargs["pts_dim"]
 
     escores = []
@@ -217,8 +218,7 @@ def npdf_transform(ds, **kwargs):
         simp = sim @ R
 
         # Perform univariate adjustment in rotated space (x')
-        ADJ = kwargs["base"](**kwargs["base_kws"])
-        ADJ.train(refp, histp)
+        ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
         scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
         scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
 
@@ -251,8 +251,8 @@ def npdf_transform(ds, **kwargs):
 
     return xr.Dataset(
         data_vars={
-            "scenh": hist.transpose(*ds.hist.dims),
-            "scens": sim.rename(time="time_sim").transpose(*ds.sim.dims),
+            "scenh": hist.rename(time="time_hist").transpose(*ds.hist.dims),
+            "scen": sim.transpose(*ds.sim.dims),
             "escores": escores,
         }
     )
