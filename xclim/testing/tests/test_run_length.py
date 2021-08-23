@@ -19,8 +19,8 @@ def ufunc(request):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-@pytest.mark.parametrize("lastday", [True, False])
-def test_rle(ufunc, use_dask, lastday):
+@pytest.mark.parametrize("index", ["first", "last"])
+def test_rle(ufunc, use_dask, index):
     if use_dask and ufunc:
         pytest.xfail("rle_1d is not implemented for dask arrays.")
 
@@ -40,8 +40,8 @@ def test_rle(ufunc, use_dask, lastday):
             da = da.chunk({"a": 1, "b": 2})
         import time
 
-        out = rl.rle(da != 0, lastday=lastday).mean(["a", "b", "c"])
-        if lastday:
+        out = rl.rle(da != 0, index=index).mean(["a", "b", "c"])
+        if index == "last":
             expected = np.zeros(365)
             expected[1:10] = np.nan
             expected[10] = 10
@@ -165,21 +165,21 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    @pytest.mark.parametrize("lastday", [True, False])
-    def test_simple(self, lastday):
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_events(a, 3, dim="x", lastday=lastday) == 2
+        assert rl.windowed_run_events(a, 3, dim="x", index=index) == 2
 
 
 class TestWindowedRunCount:
-    @pytest.mark.parametrize("lastday", [True, False])
-    def test_simple(self, lastday):
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
         a = xr.DataArray(np.zeros(50, bool), dims=("time",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="time", lastday=lastday) == len(
+        assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(
             a[4:7]
         ) + len(a[34:45])
 

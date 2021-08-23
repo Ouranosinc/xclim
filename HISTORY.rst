@@ -24,6 +24,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+* Functions computing run lengths (sequences of consecutive True values) now take the `index` argument. Possible values are `first` and `last`, indicating which item in the run should be used to index the run length. The default is set to `first`, preserving the current behavior.
 
 New indicators
 ~~~~~~~~~~~~~~

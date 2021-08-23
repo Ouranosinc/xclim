@@ -29,7 +29,7 @@ def use_ufunc(
     ufunc_1dim: Union[bool, str],
     da: xr.DataArray,
     dim: str = "time",
-    lastday: bool = False,
+    index: str = "first",
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -41,14 +41,12 @@ def use_ufunc(
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
     da : xr.DataArray
-      N-dimensional input array.
+      Input array.
     dim: str
       The dimension along which to find runs.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
@@ -56,7 +54,7 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
-    if not lastday:
+    if index == "first":
         if ufunc_1dim == "from_context":
             ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
         if ufunc_1dim == "auto":
@@ -68,31 +66,32 @@ def rle(
     da: xr.DataArray,
     dim: str = "time",
     max_chunk: int = 1_000_000,
-    lastday: bool = False,
+    index: str = "first",
 ) -> xr.DataArray:
     """Generate basic run length function.
 
     Parameters
     ----------
     da : xr.DataArray
+      Input array.
     dim : str
+      Dimension name.
     max_chunk : int
-    lastday: bool
+      Maximum chunk size.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
     xr.DataArray
       Values are 0 where da is False (out of runs).
-      If lastday is False, values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
     """
     use_dask = isinstance(da.data, dsk.Array)
 
     # Ensure boolean
     da = da.astype(bool)
-    if lastday:
+    if index == "last":
         da = da.reindex({dim: da[dim][::-1]})
 
     n = len(da[dim])
@@ -116,7 +115,7 @@ def rle(
     b = xr.concat([start1, b, end1], dim)
 
     # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropraite chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
+    # Determine appropriate chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
     ndims = len(b.shape)
     if use_dask:
         chunk_dim = b[dim].size
@@ -141,7 +140,7 @@ def rle(
     d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
     d = d.isel({dim: slice(None, -1)}).where(da, 0)
-    if lastday:
+    if index == "last":
         d = d.reindex({dim: d[dim][::-1]})
     return d
 
@@ -152,7 +151,7 @@ def rle_statistics(
     window: int = 1,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
-    lastday: bool = False,
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the length of consecutive run of True values, according to a reducing operator.
 
@@ -170,11 +169,10 @@ def rle_statistics(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
+
 
     Returns
     -------
@@ -182,12 +180,12 @@ def rle_statistics(
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
         rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
-        d = rle(da, dim=dim, lastday=lastday)
+        d = rle(da, dim=dim, index=index)
         rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
         rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
 
@@ -198,7 +196,7 @@ def longest_run(
     da: xr.DataArray,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
-    lastday: bool = False,
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
 
@@ -212,11 +210,10 @@ def longest_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
+
 
     Returns
     -------
@@ -224,7 +221,7 @@ def longest_run(
       Length of longest run of True values along dimension (int).
     """
     return rle_statistics(
-        da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, lastday=lastday
+        da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, index=index
     )
 
 
@@ -233,7 +230,7 @@ def windowed_run_events(
     window: int,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "auto",
-    lastday: bool = False,
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
@@ -249,23 +246,22 @@ def windowed_run_events(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
+
 
     Returns
     -------
     xr.DataArray
       Number of distinct runs of a minimum length (int).
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
     else:
-        d = rle(da, dim=dim, lastday=lastday)
+        d = rle(da, dim=dim, index=index)
         out = (d >= window).sum(dim=dim)
     return out
 
@@ -275,7 +271,7 @@ def windowed_run_count(
     window: int,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
-    lastday: bool = False,
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
@@ -291,23 +287,21 @@ def windowed_run_count(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
-    lastday: bool
-      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
-      If lastday is True, values are N on the last day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
     xr.DataArray
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)
     else:
-        d = rle(da, dim=dim, lastday=lastday)
+        d = rle(da, dim=dim, index=index)
         out = d.where(d >= window, 0).sum(dim=dim)
     return out
 
