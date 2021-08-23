@@ -73,7 +73,7 @@ __all__ = [
 ]
 
 
-@declare_units(pr="[speed]", thresh="[speed]")
+@declare_units(sfcWind="[speed]", thresh="[speed]")
 def calm_days(
     sfcWind: xarray.DataArray, thresh: str = "2 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
@@ -1802,7 +1802,7 @@ def sea_ice_extent(
     return out
 
 
-@declare_units(pr="[speed]", thresh="[speed]")
+@declare_units(sfcWind="[speed]", thresh="[speed]")
 def windy_days(
     sfcWind: xarray.DataArray, thresh: str = "10.8 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
