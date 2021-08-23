@@ -3,9 +3,10 @@
 import hashlib
 import json
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional, Sequence
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
 
@@ -46,6 +47,25 @@ def _get(
     md5name = fullname.with_suffix("{}.md5".format(suffix))
     md5file = cache_dir / branch / md5name
 
+    if local_file.is_file():
+        localmd5 = file_md5_checksum(local_file)
+        try:
+            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
+            LOGGER.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
+            urlretrieve(url, md5file)
+            with open(md5file) as f:
+                remote_md5 = f.read()
+            if localmd5.strip() != remote_md5.strip():
+                local_file.unlink()
+                msg = (
+                    f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
+                    "Attempting new download."
+                )
+                warnings.warn(msg)
+        except (HTTPError, URLError):
+            msg = f"{md5name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            warnings.warn(msg)
+
     if not local_file.is_file():
         # This will always leave this directory on disk.
         # We may want to add an option to remove it.
@@ -66,15 +86,17 @@ def _get(
         localmd5 = file_md5_checksum(local_file)
         try:
             with open(md5file) as f:
-                remotemd5 = f.read()
-            if localmd5.strip() != remotemd5.strip():
+                remote_md5 = f.read()
+            if localmd5.strip() != remote_md5.strip():
                 local_file.unlink()
-                msg = """
-                    MD5 checksum does not match, try downloading dataset again.
-                    """
+                msg = (
+                    f"{local_file.as_posix()} and md5 checksum do not match. "
+                    "There may be an issue with the upstream origin data."
+                )
                 raise OSError(msg)
         except OSError as e:
             LOGGER.error(e)
+
     return local_file
 
 
