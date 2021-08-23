@@ -93,7 +93,7 @@ def rle(
     # Ensure boolean
     da = da.astype(bool)
     if lastday:
-        da = da.reindex({dim: d[dim][::-1]})
+        da = da.reindex({dim: da[dim][::-1]})
 
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
