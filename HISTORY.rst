@@ -11,7 +11,9 @@ Announcements
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+* xclim has switched back to updating the `history` attribute (instead of `xclim_history`). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* Refactor of ``sdba.processing``. Now all functions take one or more dataarrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
+* The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
 
     - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
       ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
