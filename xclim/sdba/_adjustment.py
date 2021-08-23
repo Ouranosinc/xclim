@@ -227,8 +227,9 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
         # operating along named dimensions.
         # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
-        hist = scenhp @ R
-        sim = scensp @ R
+        with xr.set_options(keep_attrs=True):
+            hist = scenhp @ R
+            sim = scensp @ R
 
         # Compute score
         if kwargs["n_escore"] >= 0:
