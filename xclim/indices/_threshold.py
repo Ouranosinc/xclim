@@ -75,25 +75,25 @@ __all__ = [
 
 @declare_units(pr="[speed]", thresh="[speed]")
 def calm_days(
-    pr: xarray.DataArray, thresh: str = "2 m/s", freq: str = "MS"
+    sfcWind: xarray.DataArray, thresh: str = "2 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
     r"""Calm days.
 
-    The number of days with average windspeed below threshold.
+    The number of days with average near-surface wind speed below threshold.
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    sfcWind : xarray.DataArray
       Daily windspeed.
     thresh : str
-      Threshold average windspeed on which to base evaluation.
+      Threshold average near-surface wind speed on which to base evaluation.
     freq : str
       Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days with average windspeed below threshold.
+      Number of days with average near-surface wind speed below threshold.
 
     Notes
     -----
@@ -102,12 +102,13 @@ def calm_days(
 
     .. math::
 
-        WS_{ij} < Threshold [m/s]
+        WS_{ij} < Threshold [m s-1]
     """
-    thresh = convert_units_to(thresh, pr)
-    out = threshold_count(pr, "<", thresh, freq)
-    out = to_agg_units(out, pr, "count")
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, "<", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
     return out
+
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
@@ -1801,25 +1802,25 @@ def sea_ice_extent(
 
 @declare_units(pr="[speed]", thresh="[speed]")
 def windy_days(
-    pr: xarray.DataArray, thresh: str = "10.8 m/s", freq: str = "MS"
+    sfcWind: xarray.DataArray, thresh: str = "10.8 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
     r"""Windy days.
 
-    The number of days with average windspeed above threshold.
+    The number of days with average near-surface wind speed above threshold.
 
     Parameters
     ----------
-    pr : xarray.DataArray
-      Daily average windspeed.
+    sfcWind : xarray.DataArray
+      Daily average near-surface wind speed.
     thresh : str
-      Threshold average windspeed on which to base evaluation.
+      Threshold average near-surface wind speed on which to base evaluation.
     freq : str
       Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days with average windspeed above threshold.
+      Number of days with average near-surface wind speed above threshold.
 
     Notes
     -----
@@ -1828,11 +1829,11 @@ def windy_days(
 
     .. math::
 
-        WS_{ij} > Threshold [m/s]
+        WS_{ij} > Threshold [m s-1]
     """
-    thresh = convert_units_to(thresh, pr)
-    out = threshold_count(pr, ">", thresh, freq)
-    out = to_agg_units(out, pr, "count")
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, ">", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
     return out
 
 
