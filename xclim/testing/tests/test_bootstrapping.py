@@ -1,6 +1,7 @@
 from typing import Callable
 
 import numpy as np
+import pytest
 from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import percentile_doy
@@ -67,6 +68,7 @@ def bootstrap_testor(
     assert np.count_nonzero(no_bs_out_base != bs_out_base) == 0
 
 
+@pytest.mark.slow
 def test_bootstrap(tas_series, tasmax_series, tasmin_series, pr_series):
     # The closer the targetted percentile is to the median the less bootstrapping makes sense to use.
     # The tests may even fail if the chosen percentile is close to 50
@@ -75,10 +77,10 @@ def test_bootstrap(tas_series, tasmax_series, tasmin_series, pr_series):
         tas_series, 98, lambda x, y, z: tg90p(x, y, freq="MS", bootstrap=z)
     )
     bootstrap_testor(
-        tasmin_series, 98, lambda x, y, z: tn90p(x, y, freq="YS", bootstrap=z)
+        tasmin_series, 98, lambda x, y, z: tn90p(x, y, freq="A-JUL", bootstrap=z)
     )
     bootstrap_testor(
-        tasmax_series, 98, lambda x, y, z: tx90p(x, y, freq="MS", bootstrap=z)
+        tasmax_series, 98, lambda x, y, z: tx90p(x, y, freq="Q-APR", bootstrap=z)
     )
     bootstrap_testor(
         tasmin_series, 2, lambda x, y, z: tn10p(x, y, freq="MS", bootstrap=z)

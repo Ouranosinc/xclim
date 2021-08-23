@@ -19,7 +19,6 @@ from pathlib import Path
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
-import numpy
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
@@ -151,7 +150,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: int):
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     """Ensure that the input dataarray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -209,10 +208,11 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
+def _calc_perc(arr: np.array, p: Sequence[float] = None):
     """Ufunc-like computing a percentile over the last axis of the array.
 
-    Processes cases with invalid values separately, which makes it more efficent than np.nanpercentile for array with only a few invalid points.
+    Processes cases with invalid values separately, which makes it more efficient than np.nanpercentile for array with
+    only a few invalid points.
 
     Parameters
     ----------
@@ -241,7 +241,9 @@ def _calc_perc(arr: numpy.array, p: Sequence[float] = None):
     return out
 
 
-def raise_warn_or_log(err, mode, msg=None, stacklevel=1):
+def raise_warn_or_log(
+    err: Exception, mode: str, msg: Optional[str] = None, stacklevel: int = 1
+):
     """Raise, warn or log an error according.
 
     Parameters
@@ -271,8 +273,9 @@ class InputKind(IntEnum):
     """Constants for input parameter kinds.
 
     For use by external parses to determine what kind of data the indicator expects.
-    On the creation of an indicator, the appropriate constant is stored in :py:attr:`xclim.core.indicator.Indicator.parameters`.
-    The integer value is what gets stored in the output of :py:meth:`xclim.core.indicator.Indicator.json`.
+    On the creation of an indicator, the appropriate constant is stored in
+    :py:attr:`xclim.core.indicator.Indicator.parameters`. The integer value is what gets stored in the output
+    of :py:meth:`xclim.core.indicator.Indicator.json`.
 
     For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
     should use in order to be picked up by the indicator constructor.
