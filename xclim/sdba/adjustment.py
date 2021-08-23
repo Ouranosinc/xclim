@@ -230,6 +230,7 @@ class Adjust(BaseAdjustment):
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = ref.units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -423,6 +424,8 @@ class DetrendedQuantileMapping(TrainAdjust):
             kind=self.kind,
             interp=interp,
         ).sim
+        # Detrending needs units.
+        scaled_sim.attrs["units"] = sim.units
 
         if isinstance(detrend, int):
             detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
@@ -439,6 +442,8 @@ class DetrendedQuantileMapping(TrainAdjust):
             extrapolation=extrapolation,
             kind=self.kind,
         ).scen
+        # Detrending needs units.
+        scen.attrs["units"] = sim.units
 
         return detrend.retrend(scen)
 
