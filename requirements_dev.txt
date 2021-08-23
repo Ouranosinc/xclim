@@ -1,17 +1,25 @@
-pip
-bump2version
-wheel
-watchdog
-flake8
+# dev tools and testing
 black
-tox
+bump2version
 coverage
-twine
+flake8
+mypy
+nbval
+pre-commit>=2.9
+pydocstyle>=5.1.1
+pylint
 pytest
 pytest-cov
 pytest-runner
-pylint
+tox
 xdoctest
-pydocstyle>=5.1.1
-nbval
-pre-commit>=2.9
+# Documentation and examples
+distributed>=2.0
+ipykernel
+matplotlib
+nbsphinx
+nc-time-axis
+netCDF4
+pooch
+sphinx
+sphinx-rtd-theme
