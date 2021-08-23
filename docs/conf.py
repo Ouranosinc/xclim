@@ -12,6 +12,7 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+import datetime
 import os
 import sys
 import warnings
@@ -121,17 +122,17 @@ nbsphinx_allow_errors = False
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-#
-# source_suffix = ['.rst', '.md']
-source_suffix = [".rst", ".ipynb"]
+# If a list of string, all suffixes will be understood as restructured text variants.
+source_suffix = [".rst"]
 
 # The master toctree document.
 master_doc = "index"
 
 # General information about the project.
 project = "xclim"
-copyright = "2018, Ouranos Inc., Travis Logan, and contributors"
+copyright = (
+    f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
+)
 author = "Travis Logan"
 
 # The version info for the project you're documenting, acts as replacement
