@@ -90,15 +90,15 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     # For virtualenv environments:
-    $ pip install black pytest nbval xdoctest pydocstyle tox
+    $ pip install black pytest nbval xdoctest pydocstyle tox coveralls
 
     # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge black pytest pydocstyle xdoctest tox
+    $ conda install -c conda-forge black pytest pydocstyle xdoctest tox coveralls
 
-    $ black --check --target-version py37 xclim tests
-    $ flake8 xclim tests
+    $ black --check --target-version py37 xclim xclim/testing/tests
+    $ flake8 xclim xclim/testing/tests
     $ pytest --nbval docs/notebooks
-    $ pytest --root-dir xclim/testing/tests/ --xdoctest xclim
+    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
     $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
     $ tox
 
