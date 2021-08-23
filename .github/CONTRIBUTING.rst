@@ -69,16 +69,16 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 2. Clone your fork locally::
 
     $ git clone git@github.com:Ouranosinc/xclim.git
+    $ cd xclim/
 
-3. Install your local copy into a virtualenv. Assuming you have `virtualenvwrapper` installed, this is how you set up your fork for local development::
+3. Create a development environment. Assuming you have `virtualenvwrapper` installed, this is how you set up your fork for local development::
 
-    # For virtualenv environments:
+    # For virtualenv environments (ensure that you have the necessary system libraries).
     $ mkvirtualenv xclim
+    $ pip install -e .[dev]
 
     # For Anaconda/Miniconda environments:
-    $ conda create -n xclim python=3.6 --file=environment.yml
-
-    $ cd xclim/
+    $ conda create -n xclim python=3.7 --file=environment.yml
     $ pip install -e .[dev]
 
 4. Create a branch for local development::
@@ -89,12 +89,6 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
-    # For virtualenv environments:
-    $ pip install black pytest nbval xdoctest pydocstyle tox coveralls
-
-    # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge black pytest pydocstyle xdoctest tox coveralls
-
     $ black --check --target-version py37 xclim xclim/testing/tests
     $ flake8 xclim xclim/testing/tests
     $ pytest --nbval docs/notebooks
@@ -102,25 +96,21 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
     $ tox
 
-6. Before committing your changes, we ask that you install `pre-commit` in your dev environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
-
-    # For virtualenv environments:
-    $ pip install pre-commit
-
-    # For Anaconda/Miniconda environments:
-    $ conda install -c conda-forge pre-commit
+6. Before committing your changes, we ask that you install `pre-commit` in your development environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
 
     # To install the necessary pre-commit hooks:
     $ pre-commit install
+    # To run pre-commit hooks manually:
+    $ pre-commit run --all-files
 
 7. Commit your changes and push your branch to GitHub::
 
     $ git add *
 
     $ git commit -m "Your detailed description of your changes."
-    # `pre-commit` will run checks at this point:
-    # if no errors are found, changes will be committed.
-    # if errors are found, modifications will be made. Simply `git commit` again.
+    # If installed, `pre-commit` will run checks at this point:
+    # If no errors are found, changes will be committed.
+    # If errors are found, modifications will be made and warnings will be raised if intervention is needed. After changes, simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
 
@@ -190,7 +180,7 @@ The method we use is as follows::
 
 **Patch** should be used for bug fixes and optimizations;
 
-**Release** is a keyword used to specify the degree of production readiness (`beta` [, and optionally, `gamma`])
+**Release** is a keyword used to specify the degree of production readiness (`beta` [, and optionally, `gamma`]). *Only versions built from the main development branch will ever have this tag!*
 
   An increment to the Major or Minor will reset the Release to `beta`. When a build is promoted above `beta` (ie: release-ready), it's a good idea to push this version towards PyPi.
 
