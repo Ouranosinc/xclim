@@ -26,8 +26,10 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time",
-    lastday: bool = False
+    ufunc_1dim: Union[bool, str],
+    da: xr.DataArray,
+    dim: str = "time",
+    lastday: bool = False,
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -42,6 +44,11 @@ def use_ufunc(
       N-dimensional input array.
     dim: str
       The dimension along which to find runs.
+    lastday: bool
+      If lastday is False, da values are N on the first day of a run, where N is the length of that run,
+      and are NaN on the other days of the runs.
+      If lastday is True, values are N on the last day of a run, where N is the length of that run,
+      and are NaN on the other days of the runs.
 
     Returns
     -------
@@ -472,9 +479,7 @@ def run_bounds(
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(
-    da: xr.DataArray, dim: str = "time"
-) -> xr.DataArray:
+def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     """Keep the longest run along a dimension.
 
     Parameters
