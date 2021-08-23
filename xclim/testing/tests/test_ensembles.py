@@ -161,7 +161,7 @@ class TestEnsembleStats:
 
         out2 = ensembles.ensemble_percentiles(ens, values=(25, 75))
         assert np.all(out2["tg_mean_p75"] > out2["tg_mean_p25"])
-        assert "Computation of the percentiles on" in out1.attrs["xclim_history"]
+        assert "Computation of the percentiles on" in out1.attrs["history"]
 
         out3 = ensembles.ensemble_percentiles(ens, split=False)
         xr.testing.assert_equal(
@@ -217,7 +217,7 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5]
         )
-        assert "Computation of statistics on" in out1.attrs["xclim_history"]
+        assert "Computation of statistics on" in out1.attrs["history"]
 
 
 @pytest.mark.slow

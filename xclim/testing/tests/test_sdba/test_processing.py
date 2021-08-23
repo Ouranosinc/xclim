@@ -23,10 +23,7 @@ def test_jitter_under_thresh():
     assert da[0] < 1
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
-    assert (
-        "jitter_under_thresh(<array>, '1 K') - xclim version"
-        in out.attrs["xclim_history"]
-    )
+    assert "jitter_under_thresh(<array>, '1 K') - xclim version" in out.attrs["history"]
 
 
 def test_jitter_over_thresh():
@@ -100,7 +97,7 @@ def test_escore():
     # Value taken from escore of Cannon's MBC R package.
     out = escore(x, y)
     np.testing.assert_allclose(out, 1.90018550338863)
-    assert "escore(" in out.attrs["xclim_history"]
+    assert "escore(" in out.attrs["history"]
     assert out.attrs["references"].startswith("Skezely")
 
 
@@ -130,5 +127,5 @@ def test_reordering():
     out = reordering(x, y, group="time")
 
     np.testing.assert_array_equal(out, np.arange(1, 11)[::-1])
-    out.attrs.pop("xclim_history")
+    out.attrs.pop("history")
     assert out.attrs == y.attrs

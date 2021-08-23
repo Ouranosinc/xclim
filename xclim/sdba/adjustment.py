@@ -172,9 +172,7 @@ class TrainAdjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
         scen.attrs["units"] = self.train_units
 
@@ -230,9 +228,7 @@ class Adjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
