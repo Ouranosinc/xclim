@@ -56,11 +56,11 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
-    if ufunc_1dim == "from_context":
-        ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
-
-    if ufunc_1dim == "auto":
-        return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+    if not lastday:
+        if ufunc_1dim == "from_context":
+            ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
+        if ufunc_1dim == "auto":
+            return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
     return ufunc_1dim
 
 
@@ -182,7 +182,7 @@ def rle_statistics(
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
 
     if ufunc_1dim:
         rl_stat = statistics_run_ufunc(da, reducer, window, dim)
@@ -260,7 +260,7 @@ def windowed_run_events(
     xr.DataArray
       Number of distinct runs of a minimum length (int).
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
 
     if ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
@@ -302,7 +302,7 @@ def windowed_run_count(
     xr.DataArray
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, lastday=lastday)
 
     if ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)
