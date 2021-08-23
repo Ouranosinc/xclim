@@ -40,6 +40,7 @@ Bug fixes
 * Various bug fixes in bootstrapping:
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
+* Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
 
 0.28.1 (2021-07-29)
 -------------------

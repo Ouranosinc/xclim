@@ -249,11 +249,12 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     nquantiles : int or 1d array of floats
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed.
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative.
+      The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      Default is "time", meaning an single adjustment group along dimension "time".
 
     Adjust step:
 
@@ -338,19 +339,20 @@ class DetrendedQuantileMapping(TrainAdjust):
 
     nquantiles : int or 1d array of floats
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed.
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative.
+      The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
-      The grouping information used in the quantile mapping process. See :py:class:`xclim.sdba.base.Grouper` for details.
-      the normalization step is always performed on each day of the year.
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      Default is "time", meaning an single adjustment group along dimension "time".
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     detrend : int or BaseDetrend instance
-      The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree. Defaults to 1 (linear detrending)
+      The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree.
+      Defaults to 1 (linear detrending)
     extrapolation : {'constant', 'nan'}
       The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
@@ -455,11 +457,12 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     nquantiles : int or 1d array of floats
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed.
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative.
+      The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      Default is "time", meaning an single adjustment group along dimension "time".
 
     Adjust step:
 
@@ -510,9 +513,9 @@ class ExtremeValues(TrainAdjust):
     cluster_thresh: Quantity (str with units)
       The threshold value for defining clusters.
     q_thresh : float
-      The quantile of "extreme" values, [0, 1[.
-    ref_params :  xr.DataArray
-      Distribution parameters to use in place of a fitted dist on `ref`.
+      The quantile of "extreme" values, [0, 1[. Defaults to 0.95.
+    ref_params :  xr.DataArray, optional
+      Distribution parameters to use instead of fitting a GenPareto distribution on `ref`.
 
     Adjust step:
 
@@ -521,9 +524,9 @@ class ExtremeValues(TrainAdjust):
       adjusted timeseries in addition to the raw "sim".
     frac: float
       Fraction where the cutoff happens between the original scen and the corrected one.
-      See Notes, ]0, 1].
+      See Notes, ]0, 1]. Defaults to 0.25.
     power: float
-      Shape of the correction strength, see Notes.
+      Shape of the correction strength, see Notes. Defaults to 1.0.
 
     Extra diagnostics
     -----------------
@@ -571,8 +574,8 @@ class ExtremeValues(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        ref_params: xr.Dataset = None,
         cluster_thresh: str,
+        ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
         warn(
@@ -720,6 +723,7 @@ class LOCI(TrainAdjust):
 
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      Default is "time", meaning an single adjustment group along dimension "time".
     thresh : float
       The threshold in `ref` above which the values are scaled.
 
@@ -741,8 +745,8 @@ class LOCI(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
+        thresh: float,
         group: Union[str, Grouper] = "time",
-        thresh: float = None,
     ):
         ds = loci_train(
             xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
@@ -774,8 +778,9 @@ class Scaling(TrainAdjust):
 
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      Default is "time", meaning an single adjustment group along dimension "time".
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative.
+      The adjustment kind, either additive or multiplicative. Defaults to "+".
 
     Adjust step:
 
@@ -833,6 +838,7 @@ class PrincipalComponents(TrainAdjust):
       `add_dims` argument. See Notes.
       See :py:class:`xclim.sdba.base.Grouper` for details.
       The adjustment will be performed on each group independently.
+      Default is "time", meaning an single adjustment group along dimension "time".
     crd_dims : Sequence of str, optional
       The data dimension(s) along which the multiple simulation space dimensions are taken.
       They are flattened into  "coordinate" dimension, see Notes.
