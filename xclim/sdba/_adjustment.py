@@ -213,10 +213,14 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
         # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
         # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
-        with xr.set_options(keep_attrs=True):
-            refp = ref @ R
-            histp = hist @ R
-            simp = sim @ R
+        refp = ref @ R
+        histp = hist @ R
+        simp = sim @ R
+
+        # I have no idea why this is needed. See #801.
+        refp.attrs.update(units="")
+        histp.attrs.update(units="")
+        simp.attrs.update(units="")
 
         # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
@@ -227,9 +231,8 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
         # operating along named dimensions.
         # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
-        with xr.set_options(keep_attrs=True):
-            hist = scenhp @ R
-            sim = scensp @ R
+        hist = scenhp @ R
+        sim = scensp @ R
 
         # Compute score
         if kwargs["n_escore"] >= 0:
