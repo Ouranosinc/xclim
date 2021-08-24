@@ -106,7 +106,7 @@ def calm_days(
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, "<", thresh, freq)
-    out = to_agg_units(out, sfcWind, "count")
+    out = to_agg_units(out, sfcWind, "count").rename("calm_days")
     return out
 
 
@@ -1835,7 +1835,7 @@ def windy_days(
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, ">=", thresh, freq)
-    out = to_agg_units(out, sfcWind, "count")
+    out = to_agg_units(out, sfcWind, "count").rename("windy_days")
     return out
 
 
