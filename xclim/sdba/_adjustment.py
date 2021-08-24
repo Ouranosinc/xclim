@@ -217,6 +217,11 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         histp = hist @ R
         simp = sim @ R
 
+        # I have no idea why this is needed. See #801.
+        refp.attrs.update(units="")
+        histp.attrs.update(units="")
+        simp.attrs.update(units="")
+
         # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
         scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
