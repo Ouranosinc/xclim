@@ -157,6 +157,7 @@ def _create_command(indname):
 )
 @click.pass_context
 def dataflags(ctx, dataset, variables, output, raise_flags, append, dims, freq):
+    """Run quality control checks on input variables and flag for issues."""
     ctx.obj["input"] = dataset
     ds = _get_input(ctx)
 
