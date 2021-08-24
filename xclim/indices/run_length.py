@@ -54,12 +54,14 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
-    if index == "first":
-        if ufunc_1dim == "from_context":
-            ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
-        if ufunc_1dim == "auto":
-            return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
-    return ufunc_1dim
+
+    if ufunc_1dim == "from_context":
+        ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
+
+    if ufunc_1dim == "auto":
+        ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+
+    return index == "first" and ufunc_1dim
 
 
 def rle(
