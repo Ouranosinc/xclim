@@ -180,8 +180,8 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP). A single call
-    of this function triggers one request per subdirectory, so use with parcimony.
+    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP).
+    A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
     res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
     base = json.loads(res.read().decode())
@@ -286,9 +286,9 @@ def list_input_variables(
 
     Parameters
     ----------
-    realm: Sequence of str, optional
+    realms: Sequence of str, optional
       Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
-    submodule: str, optional
+    submodules: str, optional
       Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
 
     Returns
