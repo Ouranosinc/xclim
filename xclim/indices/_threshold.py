@@ -26,6 +26,7 @@ from .generic import domain_count, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
@@ -44,6 +45,7 @@ __all__ = [
     "first_day_above",
     "first_snowfall",
     "last_snowfall",
+    "heat_index",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -68,7 +70,45 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "sea_ice_area",
     "sea_ice_extent",
+    "windy_days",
 ]
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def calm_days(
+    sfcWind: xarray.DataArray, thresh: str = "2 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Calm days.
+
+    The number of days with average near-surface wind speed below threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily windspeed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed below threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} < Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, "<", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -979,6 +1019,62 @@ def days_with_snow(
     return to_agg_units(out, prsn, "count")
 
 
+@declare_units(tasmax="[temperature]", hurs="[g m-3]", thresh="[temperature]")
+def heat_index(
+    tasmax: xarray.DataArray,
+    hurs: xarray.DataArray,
+    thresh: str = "20.0 degC",
+    freq: str = "MS",
+) -> xarray.DataArray:
+    r"""Daily heat index.
+
+    Days in which the human body perceives temperature is hot, which combines
+    relative humidity with the air temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    hurs : xarray.DataArray
+      Relative humidity.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time][temperature]
+      Heat index.
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    t = convert_units_to(tasmax, "degC")
+    t = t.where(t > 20)
+    r = convert_units_to(hurs, "%")
+
+    tr = np.multiply(t, r)
+    tt = np.multiply(t, t)
+    rr = np.multiply(r, r)
+    ttr = np.multiply(tt, r)
+    trr = np.multiply(t, rr)
+    ttrr = np.multiply(tt, rr)
+
+    out = (
+        -8.78469475556
+        + 1.61139411 * t
+        + 2.33854883889 * r
+        - 0.14611605 * tr
+        - 0.012308094 * tt
+        - 0.0164248277778 * rr
+        + 0.002211732 * ttr
+        + 0.00072546 * trr
+        - 0.000003582 * ttrr
+    )
+    out = out.assign_attrs(units="degC")
+
+    return out
+
+
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def heat_wave_index(
     tasmax: xarray.DataArray,
@@ -1760,6 +1856,43 @@ def sea_ice_extent(
     t = convert_units_to(thresh, siconc)
     out = xarray.dot(siconc >= t, areacello)
     out.attrs["units"] = areacello.units
+    return out
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def windy_days(
+    sfcWind: xarray.DataArray, thresh: str = "10.8 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Windy days.
+
+    The number of days with average near-surface wind speed above threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily average near-surface wind speed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed above threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} > Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, ">=  ", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
     return out
 
 
