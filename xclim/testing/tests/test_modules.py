@@ -55,6 +55,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
         ind(ds=atmosds)
 
 
+@pytest.mark.requires_docs
 def test_custom_indices():
     # Use the example in the Extending Xclim notebook for testing.
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
