@@ -238,9 +238,7 @@ def _calc_perc(
     shape = arr.shape[:-1]
     if shape:
         arr = arr.reshape([np.prod(shape), arr.shape[-1]])
-    result = np.moveaxis(
-        mquantiles(arr, prob=quantiles, alphap=alpha, betap=beta, axis=-1), 0, -1
-    )
+    result = mquantiles(arr, prob=quantiles, alphap=alpha, betap=beta, axis=-1)
     if shape:
         quantiles = np.array(quantiles)
         shape += quantiles.shape
