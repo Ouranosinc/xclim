@@ -19,6 +19,7 @@ Breaking changes
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
 * ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,7 +42,6 @@ Bug fixes
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
 * Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
-
 
 0.28.1 (2021-07-29)
 -------------------
