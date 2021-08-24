@@ -551,7 +551,7 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         dim = str2pint(dim)
         expected = dim.dimensionality
     except pint.UndefinedUnitError:
-        # Raised when it is not understood, we assume it was a dimensionlity
+        # Raised when it is not understood, we assume it was a dimensionality
         expected = units.get_dimensionality(dim.replace("dimensionless", ""))
 
     if isinstance(val, str):

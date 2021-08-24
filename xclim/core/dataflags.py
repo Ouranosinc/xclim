@@ -5,7 +5,7 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
-import warnings
+import logging
 from inspect import signature
 from typing import Optional, Sequence, Union
 
@@ -18,6 +18,8 @@ from .units import convert_units_to, declare_units
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
 _REGISTRY = dict()
+logging.basicConfig(format="UserWarning: %(message)s")
+logger = logging.getLogger("xclim")
 
 
 class DataQualityException(Exception):
@@ -542,7 +544,10 @@ def data_flags(
                 raise NotImplementedError(
                     f"Data quality checks do not exist for '{var}' variable."
                 )
-            warnings.warn(f"Data quality checks do not exist for '{var}' variable.")
+            logger.warning(
+                f"Data quality checks do not exist for '{var}' variable.",
+                exc_info=False,
+            )
             return xarray.Dataset()
     else:
         flag_func = flags

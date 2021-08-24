@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
+import sys
 import warnings
 
 import click
+import xarray
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
+from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
 
 try:
@@ -18,7 +21,7 @@ except ImportError:
 
 def _get_indicator(indname):
     try:
-        return xc.core.indicator.registry[indname.upper()].get_instance()
+        return xc.core.indicator.registry[indname.upper()].get_instance()  # noqa
     except KeyError:
         raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
 
@@ -124,6 +127,65 @@ def _create_command(indname):
     )
 
 
+@click.command(short_help="Run data flag checks for input variables.")
+@click.argument("dataset", required=True)
+@click.argument("variables", required=False, nargs=-1)
+@click.option("-o", "--output", default=False, help="Name of output file, if desired.")
+@click.option(
+    "-r",
+    "--raise-flags",
+    is_flag=True,
+    help="Prints an exception in the event that file variable.",
+)
+@click.option(
+    "-a",
+    "--append",
+    is_flag=True,
+    help="Returns the netcdf dataset with the `ecad_qc_flag` array appended as a data_var.",
+)
+@click.option(
+    "-d",
+    "--dims",
+    default="all",
+    help='Dimenions upon which aggregation should be performed. Default: "all". Ignored if no variable provided.',
+)
+@click.option(
+    "-f",
+    "--freq",
+    default=None,
+    help="Resampling frequency to have data_flags aggregated over periods. Ignored if no variable provided.",
+)
+@click.pass_context
+def dataflags(ctx, dataset, variables, output, raise_flags, append, dims, freq):
+    ctx.obj["input"] = dataset
+    ds = _get_input(ctx)
+
+    flagged = xarray.Dataset()
+
+    if variables:
+        for v in variables:
+            try:
+                flagged_var = data_flags(
+                    ds[v], ds, dims=dims, freq=freq, raise_flags=raise_flags
+                )
+                if output:
+                    flagged = xr.merge([flagged, flagged_var])
+            except DataQualityException as e:
+                tb = sys.exc_info()
+                print(e.with_traceback(tb[2]))
+                return
+    else:
+        try:
+            flagged = ecad_compliant(ds, raise_flags=raise_flags, append=append)
+        except DataQualityException as e:
+            tb = sys.exc_info()
+            print(e.with_traceback(tb[2]))
+            return
+
+    if output:
+        ctx.obj["ds_out"] = flagged
+
+
 @click.command(short_help="List indicators.")
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
@@ -133,7 +195,7 @@ def indices(info):
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
     rows = []
-    for name, indcls in xc.core.indicator.registry.items():
+    for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join(
             [var.get("long_name", var["var_name"]) for var in indcls.cf_attrs]
@@ -194,11 +256,11 @@ class XclimCli(click.MultiCommand):
 
     def list_commands(self, ctx):
         """Return the available commands (other than the indicators)."""
-        return "indices", "info"
+        return "indices", "info", "dataflags"
 
     def get_command(self, ctx, name):
         """Return the requested command."""
-        command = {"indices": indices, "info": info}.get(name)
+        command = {"indices": indices, "info": info, "dataflags": dataflags}.get(name)
         if command is None:
             command = _create_command(name)
         return command
