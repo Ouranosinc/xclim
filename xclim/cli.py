@@ -270,7 +270,8 @@ class XclimCli(click.MultiCommand):
 @click.command(
     cls=XclimCli,
     chain=True,
-    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their (case-insensitive) identifier, as in xclim.core.indicator.registry.",
+    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
+    "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",
 )
@@ -290,15 +291,18 @@ class XclimCli(click.MultiCommand):
 @click.option(
     "--dask-nthreads",
     type=int,
-    help="Start a dask.distributed Client with this many threads and 1 worker. If not specified, the local schedular is used. If specified, '--dask-maxmem' must also be given",
+    help="Start a dask.distributed Client with this many threads and 1 worker. "
+    "If not specified, the local schedular is used. If specified, '--dask-maxmem' must also be given",
 )
 @click.option(
     "--dask-maxmem",
-    help="Memory limit for the dask.distributed Client as a human readable string (ex: 4GB). If specified, '--dask-nthreads' must also be specified.",
+    help="Memory limit for the dask.distributed Client as a human readable string (ex: 4GB). "
+    "If specified, '--dask-nthreads' must also be specified.",
 )
 @click.option(
     "--chunks",
-    help="Chunks to use when opening the input dataset(s). Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
+    help="Chunks to use when opening the input dataset(s). "
+    "Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
 )
 @click.pass_context
 def cli(ctx, **kwargs):
@@ -324,7 +328,8 @@ def cli(ctx, **kwargs):
         if Client is None:
             raise click.BadOptionUsage(
                 "dask_nthreads",
-                "Dask's distributed scheduler is not installed, only the local scheduler (non-customizable) can be used.",
+                "Dask's distributed scheduler is not installed, only the "
+                "local scheduler (non-customizable) can be used.",
                 ctx,
             )
         if kwargs["dask_maxmem"] is None:
@@ -340,7 +345,8 @@ def cli(ctx, **kwargs):
             memory_limit=kwargs["dask_maxmem"],
         )
         click.echo(
-            f"Dask client started. The dashboard is available at http://127.0.0.1:{client.scheduler_info()['services']['dashboard']}/status"
+            "Dask client started. The dashboard is available at http://127.0.0.1:"
+            f"{client.scheduler_info()['services']['dashboard']}/status"
         )
     if kwargs["chunks"] is not None:
         kwargs["chunks"] = {
