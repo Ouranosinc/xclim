@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Test for utils
-import os
 from inspect import signature
 
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim.core.indicator import Daily
 from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
-from xclim.testing import list_datasets, open_dataset
 
 
 def test_walk_map():
@@ -93,24 +90,3 @@ def test_ensure_chunk_size():
     assert out.chunks[0] == (3, 3, 3, 3, 3, 5)
     assert out.chunks[1] == (10, 11)
     assert out.chunks[2] == (20,)
-
-
-def test_open_testdata():
-    ds = open_dataset(
-        os.path.join("cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
-    )
-    assert ds.lon.size == 128
-
-
-# Not that this test is super slow, but there is no need in spamming github's API for no reason.
-@pytest.mark.slow
-def test_list_datasets():
-    out = list_datasets()
-
-    assert list(out.columns) == ["size", "url"]
-    np.testing.assert_allclose(
-        out.loc["cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"][
-            "size"
-        ],
-        845.021484375,
-    )
