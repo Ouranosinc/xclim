@@ -213,7 +213,7 @@ def change_significance(
         + test_str,
         units="",
         test=str(test),
-        xclim_history=update_history(
+        history=update_history(
             f"pos_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
         ),
@@ -222,7 +222,7 @@ def change_significance(
         description="Fraction of members showing significant change. " + test_str,
         units="",
         test=str(test),
-        xclim_history=update_history(
+        history=update_history(
             f"change_frac from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
         ),
@@ -312,6 +312,6 @@ def robustness_coefficient(
         description="Ensemble robustness coefficient as defined by Knutti and Sedláček (2013).",
         reference="Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change.",
         units="",
-        xclim_history=update_history("knutti_sedlacek(fut, ref)", ref=ref, fut=fut),
+        history=update_history("knutti_sedlacek(fut, ref)", ref=ref, fut=fut),
     )
     return R

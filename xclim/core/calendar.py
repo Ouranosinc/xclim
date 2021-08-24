@@ -26,7 +26,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from xclim.core.formatting import update_history
+from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import DayOfYearStr, _calc_perc
 
 # cftime and datetime classes to use for each calendar name
@@ -439,6 +439,7 @@ def days_in_year(year: int, calendar: str = "default") -> int:
     )
 
 
+@update_xclim_history
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
@@ -510,11 +511,7 @@ def percentile_doy(
         arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
     p.attrs["window"] = window
-
-    infostr = f"percentile_doy(arr, window={window}, per={per})"
-    p.attrs["xclim_history"] = update_history(infostr, arr, new_name="per")
-
-    return p
+    return p.rename("per")
 
 
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa

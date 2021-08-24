@@ -11,7 +11,10 @@ Announcements
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+* xclim has switched back to updating the `history` attribute (instead of `xclim_history`). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* Refactor of ``sdba.processing``. Now all functions take one or more dataarrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
+* Add unit handling in ``sdba``. Most parameters involving quantities are now expecting strings (and not numbers). Adjustment objects will ensure ref, hist and sim all have the same units (taking ref as reference).
+* The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
 
     - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
       ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
@@ -25,6 +28,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+* Functions computing run lengths (sequences of consecutive True values) now take the `index` argument. Possible values are `first` and `last`, indicating which item in the run should be used to index the run length. The default is set to `first`, preserving the current behavior.
 
 New indicators
 ~~~~~~~~~~~~~~

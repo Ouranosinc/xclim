@@ -119,6 +119,7 @@ from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
     default_formatter,
+    gen_call_string,
     generate_indicator_docstring,
     merge_attributes,
     parse_cell_methods,
@@ -813,7 +814,7 @@ class Indicator(IndicatorRegistrar):
     def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
-        Cell methods and xclim_history attributes are updated, adding to existing values. The language of the string is
+        Cell methods and history attributes are updated, adding to existing values. The language of the string is
         taken from the `OPTIONS` configuration dictionary.
 
         Parameters
@@ -826,7 +827,7 @@ class Indicator(IndicatorRegistrar):
           The attributes to format and update.
         var_id : str
           The identifier to use when requesting the attributes translations.
-          Defaults to the class name (for the translations) or the `identifier` field of the class (for the xclim_history attribute).
+          Defaults to the class name (for the translations) or the `identifier` field of the class (for the history attribute).
           If given, the identifier will be converted to uppercase to get the translation attributes.
           This is meant for multi-outputs indicators.
         names : Sequence[str]
@@ -835,7 +836,7 @@ class Indicator(IndicatorRegistrar):
         Returns
         -------
         dict
-          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `xclim_history`.
+          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
         """
         out = cls._format(attrs, args)
@@ -850,20 +851,6 @@ class Indicator(IndicatorRegistrar):
                 )
             )
 
-        # Generate a signature string for the history attribute
-        # We remove annotations, replace default float/int/str by values
-        # and replace others by type
-        callstr = []
-        for (k, v) in das.items():
-            callstr.append(f"{k}=<array>")
-        for (k, v) in args.items():
-            if isinstance(v, (float, int, str)):
-                callstr.append(f"{k}={v!r}")  # repr so strings have ' '
-            else:
-                callstr.append(
-                    f"{k}={type(v)}"
-                )  # don't take chance of having unprintable values
-
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
         if names is None or "cell_methods" in names:
@@ -873,8 +860,13 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        attrs["xclim_history"] = update_history(
-            f"{var_id or cls._registry_id}({', '.join(callstr)})",
+        # Use of OrderedDict to ensure inputs (das) get listed before parameters (args).
+        # In the history attr, call signature will be all keywords
+        # and might be in a different order than the real function (but order doesn't really matter with keywords).
+        kwargs = OrderedDict(**das)
+        kwargs.update(**args)
+        attrs["history"] = update_history(
+            gen_call_string(cls._registry_id, **kwargs),
             new_name=out.get("var_name"),
             **das,
         )
