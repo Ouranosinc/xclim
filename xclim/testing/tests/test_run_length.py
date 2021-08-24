@@ -19,7 +19,8 @@ def ufunc(request):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_rle(ufunc, use_dask):
+@pytest.mark.parametrize("index", ["first", "last"])
+def test_rle(ufunc, use_dask, index):
     if use_dask and ufunc:
         pytest.xfail("rle_1d is not implemented for dask arrays.")
 
@@ -37,11 +38,17 @@ def test_rle(ufunc, use_dask):
     else:
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
+        import time
 
-        out = rl.rle(da != 0).mean(["a", "b", "c"])
-        expected = np.zeros(365)
-        expected[1] = 10
-        expected[2:11] = np.nan
+        out = rl.rle(da != 0, index=index).mean(["a", "b", "c"])
+        if index == "last":
+            expected = np.zeros(365)
+            expected[1:10] = np.nan
+            expected[10] = 10
+        else:
+            expected = np.zeros(365)
+            expected[1] = 10
+            expected[2:11] = np.nan
         np.testing.assert_array_equal(out, expected)
 
 
@@ -158,19 +165,23 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    def test_simple(self):
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_events(a, 3, dim="x") == 2
+        assert rl.windowed_run_events(a, 3, dim="x", index=index) == 2
 
 
 class TestWindowedRunCount:
-    def test_simple(self):
-        a = xr.DataArray(np.zeros(50, bool), dims=("x",))
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
+        a = xr.DataArray(np.zeros(50, bool), dims=("time",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="x") == len(a[4:7]) + len(a[34:45])
+        assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(
+            a[4:7]
+        ) + len(a[34:45])
 
 
 class TestLastRun:
@@ -221,8 +232,8 @@ def test_run_bounds_data():
 
 
 def test_keep_longest_run_synthetic():
-    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x").astype(bool)
-    lrun = rl.keep_longest_run(runs, "x")
+    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
+    lrun = rl.keep_longest_run(runs, "time")
     np.testing.assert_array_equal(
         lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
     )
@@ -238,7 +249,8 @@ def test_keep_longest_run_data():
     )
 
     xr.testing.assert_equal(
-        rl.keep_longest_run(cond, "time").sum("time"), rl.longest_run(cond, "time")
+        rl.keep_longest_run(cond, "time").sum("time"),
+        rl.longest_run(cond, "time"),
     )
 
 
