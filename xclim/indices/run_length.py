@@ -1166,7 +1166,7 @@ def suspicious_run_1d(
     Returns
     -------
     numpy.ndarray
-      Whether or not the data points is part of a run of identical values.
+      Whether or not the data points are part of a run of identical values.
     """
     v, rl, pos = rle_1d(arr)
     sus_runs = rl >= window
