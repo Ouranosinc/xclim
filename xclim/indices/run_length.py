@@ -1147,7 +1147,7 @@ def index_of_date(
 def suspicious_run_1d(
     arr: np.ndarray,
     window: int = 10,
-    op: Optional[str] = None,
+    op: str = ">",
     thresh: Optional[float] = None,
 ) -> np.ndarray:
     """Return True where the array contains a run of identical values.
@@ -1190,7 +1190,7 @@ def suspicious_run(
     arr: xr.DataArray,
     dim: str = "time",
     window: int = 10,
-    op: Optional[str] = ">",
+    op: str = ">",
     thresh: Optional[float] = None,
 ) -> xr.DataArray:
     """Return True where the array contains has runs of identical values, vectorized version.
@@ -1207,7 +1207,7 @@ def suspicious_run(
       Minimum run length
     thresh : float, optional
       Threshold above which values are checked for identical values.
-    op: {">", ">=", "==", "gt", "eq", "gteq"}, optional
+    op: {">", ">=", "==", "gt", "eq", "gteq"}
       Operator for threshold comparison, defaults to ">".
 
     Returns

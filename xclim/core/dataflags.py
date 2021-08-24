@@ -560,11 +560,11 @@ def data_flags(
             with xarray.set_options(keep_attrs=True):
                 out = func(da, **extras, **(kwargs or dict()))
 
-            # Aggregation
-            if freq is not None:
-                out = out.resample(time=freq).any()
-            if dims is not None:
-                out = out.any(dims)
+                # Aggregation
+                if freq is not None:
+                    out = out.resample(time=freq).any()
+                if dims is not None:
+                    out = out.any(dims)
 
             flags[name] = out
 
