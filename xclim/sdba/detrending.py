@@ -3,6 +3,8 @@ from typing import Union
 
 import xarray as xr
 
+from xclim.core.units import convert_units_to
+
 from .base import Grouper, ParametrizableWithDataset, map_groups, parse_group
 from .loess import loess_smoothing
 from .utils import ADDITIVE, apply_correction, invert
@@ -54,6 +56,7 @@ class BaseDetrend(ParametrizableWithDataset):
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
+        new.ds.trend.attrs["units"] = da.units
         return new
 
     def _get_trend(self, da: xr.DataArray):
@@ -76,13 +79,15 @@ class BaseDetrend(ParametrizableWithDataset):
         """Remove the previously fitted trend from a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before detrending.")
-        return self._detrend(da, self.ds.trend)
+        trend = convert_units_to(self.ds.trend, da)
+        return self._detrend(da, trend)
 
     def retrend(self, da: xr.DataArray):
         """Put the previously fitted trend back on a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before retrending")
-        return self._retrend(da, self.ds.trend)
+        trend = convert_units_to(self.ds.trend, da)
+        return self._retrend(da, trend)
 
     def _detrend(self, da, trend):
         # Remove trend from series

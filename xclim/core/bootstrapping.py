@@ -94,7 +94,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     # Identify the input and the percentile arrays from the bound arguments
     for name, val in kwargs.items():
         if isinstance(val, DataArray):
-            if "percentile_doy" in val.attrs.get("xclim_history", ""):
+            if "percentile_doy" in val.attrs.get("history", ""):
                 per_key = name
             else:
                 da_key = name
