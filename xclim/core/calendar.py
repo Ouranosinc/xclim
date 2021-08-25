@@ -849,8 +849,8 @@ def climatological_mean_doy(
     # Create empty percentile array
     g = rr.groupby("time.dayofyear")
 
-    m = g.mean()
-    s = g.std()
+    m = g.mean(["time", "window"])
+    s = g.std(["time", "window"])
 
     return m, s
 

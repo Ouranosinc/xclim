@@ -6,6 +6,7 @@ Data flags
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
 import logging
+from functools import reduce
 from inspect import signature
 from typing import Optional, Sequence, Union
 
@@ -334,7 +335,7 @@ def many_1mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
 
 @_register_methods
 @declare_units(da="[precipitation]", check_output=False)
-def many_5mm_repetitions(da: xarray.DataArray, dims: str = "all") -> xarray.DataArray:
+def many_5mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
@@ -609,22 +610,17 @@ def ecad_compliant(
                 flagged_array = xarray.merge([flagged_array, df[flag]])
             except xarray.MergeError:
                 # Collect all true values for commonly-named data flags
-                combined = flagged_array[flag] or df[flag]
+                combined = flagged_array[flag] | df[flag]
                 flagged_array[flag] = combined
 
     if raise_flags:
         raise DataQualityException(flagged_array)
 
     ecad_flag = xarray.DataArray(
+        ~reduce(np.logical_or, flagged_array.data_vars.values()),
         name="ecad_qc_flag",
         attrs=dict(comment="Adheres to ECAD quality control checks"),
     )
-    if flagged_array.any():
-        # Has suspicious values/trends -> fails
-        ecad_flag.values = False
-    else:
-        # No flags raised -> passes
-        ecad_flag.values = True
 
     if append:
         return xarray.merge([ds, ecad_flag])
