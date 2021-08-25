@@ -1831,7 +1831,7 @@ def windy_days(
 
     .. math::
 
-        WS_{ij} > Threshold [m s-1]
+        WS_{ij} >= Threshold [m s-1]
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, ">=", thresh, freq)
