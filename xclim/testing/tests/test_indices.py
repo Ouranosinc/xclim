@@ -1685,7 +1685,7 @@ class TestWindIndices:
         da = sfcWind_series(a)
         out = xci.calm_days(da, thresh="3 km h-1", freq="M")
         np.testing.assert_array_equal(out, [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert out.units == "km h-1"
+        assert out.units == "d"
 
     def test_windy_days(self, sfcWind_series):
         a = np.zeros(365)  # all non-windy days
@@ -1695,7 +1695,7 @@ class TestWindIndices:
         da = sfcWind_series(a)
         out = xci.windy_days(da, thresh="12 km h-1", freq="M")
         np.testing.assert_array_equal(out, [0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert out.units == "km h-1"
+        assert out.units == "d"
 
 
 class TestTxTnDaysAbove:
