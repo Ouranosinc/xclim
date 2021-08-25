@@ -128,9 +128,7 @@ def _create_command(indname):
 
 
 @click.command(short_help="Run data flag checks for input variables.")
-@click.argument("dataset", required=True)
 @click.argument("variables", required=False, nargs=-1)
-@click.option("-o", "--output", default=False, help="Name of output file, if desired.")
 @click.option(
     "-r",
     "--raise-flags",
@@ -156,12 +154,16 @@ def _create_command(indname):
     help="Resampling frequency to have data_flags aggregated over periods. Ignored if no variable provided.",
 )
 @click.pass_context
-def dataflags(ctx, dataset, variables, output, raise_flags, append, dims, freq):
+def dataflags(ctx, variables, raise_flags, append, dims, freq):
     """Run quality control checks on input variables and flag for issues."""
-    ctx.obj["input"] = dataset
     ds = _get_input(ctx)
-
     flagged = xarray.Dataset()
+    output = ctx.obj["output"]
+
+    if output and raise_flags:
+        raise click.BadOptionUsage(
+            "raise_flags", "Cannot use raise_flags with output netCDF.", ctx.parent
+        )
 
     if variables:
         for v in variables:
@@ -173,14 +175,13 @@ def dataflags(ctx, dataset, variables, output, raise_flags, append, dims, freq):
                     flagged = xr.merge([flagged, flagged_var])
             except DataQualityException as e:
                 tb = sys.exc_info()
-                print(e.with_traceback(tb[2]))
-                return
+                click.echo(e.with_traceback(tb[2]))
     else:
         try:
             flagged = ecad_compliant(ds, raise_flags=raise_flags, append=append)
         except DataQualityException as e:
             tb = sys.exc_info()
-            print(e.with_traceback(tb[2]))
+            click.echo(e.with_traceback(tb[2]))
             return
 
     if output:
