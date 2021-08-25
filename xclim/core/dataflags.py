@@ -602,22 +602,17 @@ def ecad_compliant(
     -------
     Union[xarray.DataArray, xarray.Dataset]
     """
-    flagged_array = xarray.Dataset()
+    flags = xarray.Dataset()
     for var in ds.data_vars:
         df = data_flags(ds[var], ds)
-        for flag in df.data_vars:
-            try:
-                flagged_array = xarray.merge([flagged_array, df[flag]])
-            except xarray.MergeError:
-                # Collect all true values for commonly-named data flags
-                combined = flagged_array[flag] | df[flag]
-                flagged_array[flag] = combined
+        for flagname, flagdata in df.data_vars.items():
+            flags = flags.assign({f"{var}_{flagname}": flagdata})
 
     if raise_flags:
-        raise DataQualityException(flagged_array)
+        raise DataQualityException(flags)
 
     ecad_flag = xarray.DataArray(
-        ~reduce(np.logical_or, flagged_array.data_vars.values()),
+        ~reduce(np.logical_or, flags.data_vars.values()),
         name="ecad_qc_flag",
         attrs=dict(comment="Adheres to ECAD quality control checks"),
     )
