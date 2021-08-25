@@ -1695,7 +1695,7 @@ class TestWindIndices:
         a[40:50] = 12  # windy day on test threshold
         a[80:90] = 15  # windy days
         da = sfcWind_series(a)
-        out = xci.cold_spell_days(da, thresh="12 m s-1", freq="M")
+        out = xci.windy_days(da, thresh="12 km h-1", freq="M")
         np.testing.assert_array_equal(out, [0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         assert out.units == "m s-1"
 
