@@ -41,7 +41,7 @@ class DataQualityException(Exception):
         for flag, value in flag_array.data_vars.items():
             if value.any():
                 for attribute in value.attrs.keys():
-                    if str(attribute).endswith("flag"):
+                    if str(attribute) == "description":
                         self.flags.append(value.attrs[attribute])
         super().__init__(self.message)
 
@@ -109,7 +109,7 @@ def tasmax_below_tasmin(
     """
     tasmax_lt_tasmin = _sanitize_attrs(tasmax < tasmin)
     tasmax_lt_tasmin.attrs[
-        "tasmax_tasmin_flag"
+        "description"
     ] = "Maximum temperature values found below minimum temperatures."
     return tasmax_lt_tasmin
 
@@ -140,7 +140,7 @@ def tas_exceeds_tasmax(
     """
     tas_gt_tasmax = _sanitize_attrs(tas > tasmax)
     tas_gt_tasmax.attrs[
-        "tas_tasmax_flag"
+        "description"
     ] = "Mean temperature values found above maximum temperatures."
     return tas_gt_tasmax
 
@@ -170,7 +170,7 @@ def tas_below_tasmin(
     """
     tas_lt_tasmin = _sanitize_attrs(tas < tasmin)
     tas_lt_tasmin.attrs[
-        "tas_tasmin_flag"
+        "description"
     ] = "Mean temperature values found below minimum temperatures."
     return tas_lt_tasmin
 
@@ -203,7 +203,7 @@ def temperature_extremely_low(
     thresh_converted = convert_units_to(thresh, da)
     extreme_low = _sanitize_attrs(da < thresh_converted)
     extreme_low.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Temperatures found below {thresh} in {da.name}."
     return extreme_low
 
@@ -236,7 +236,7 @@ def temperature_extremely_high(
     thresh_converted = convert_units_to(thresh, da)
     extreme_high = _sanitize_attrs(da > thresh_converted)
     extreme_high.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Temperatures found in excess of {thresh} in {da.name}."
     return extreme_high
 
@@ -264,7 +264,7 @@ def negative_accumulation_values(
     """
     negative_accumulations = _sanitize_attrs(da < 0)
     negative_accumulations.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Negative values found for {da.name}."
     return negative_accumulations
 
@@ -297,7 +297,7 @@ def very_large_precipitation_events(
     thresh_converted = convert_units_to(thresh, da)
     very_large_events = _sanitize_attrs(da > thresh_converted)
     very_large_events.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Precipitation events in excess of {thresh} for {da.name}."
     return very_large_events
 
@@ -328,7 +328,7 @@ def many_1mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     thresh = convert_units_to("1 mm d-1", da)
     repetitions = _sanitize_attrs(suspicious_run(da, window=10, op="==", thresh=thresh))
     repetitions.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Repetitive precipitation values at 1mm d-1 for at least 10 days found for {da.name}."
     return repetitions
 
@@ -359,7 +359,7 @@ def many_5mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     thresh = convert_units_to("5 mm d-1", da)
     repetitions = _sanitize_attrs(suspicious_run(da, window=5, op="==", thresh=thresh))
     repetitions.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Repetitive precipitation values at 5mm d-1 for at least 5 days found for {da.name}."
     return repetitions
 
@@ -399,7 +399,7 @@ def outside_n_standard_deviations_of_climatology(
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(within_bnds_doy(da, mu + n * sig, mu - n * sig))
     within_bounds.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Values outside of {n} standard deviations from climatology found for {da.name}."
     return ~within_bounds
 
@@ -426,7 +426,7 @@ def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArra
     """
     repetition = _sanitize_attrs(suspicious_run(da, window=5))
     repetition.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Runs of repetitive values for 5 or more days found for {da.name}."
     return repetition
 
@@ -452,7 +452,7 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
     unbounded_percentages.attrs[
-        f"{da.name}_flag"
+        "description"
     ] = f"Percentage values found beyond bounds found for {da.name}."
     return unbounded_percentages
 
@@ -605,14 +605,14 @@ def ecad_compliant(
     flags = xarray.Dataset()
     for var in ds.data_vars:
         df = data_flags(ds[var], ds)
-        for flagname, flagdata in df.data_vars.items():
-            flags = flags.assign({f"{var}_{flagname}": flagdata})
+        for flag_name, flag_data in df.data_vars.items():
+            flags = flags.assign({f"{var}_{flag_name}": flag_data})
 
     if raise_flags:
         raise DataQualityException(flags)
 
     ecad_flag = xarray.DataArray(
-        ~reduce(np.logical_or, flags.data_vars.values()),
+        ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
         name="ecad_qc_flag",
         attrs=dict(comment="Adheres to ECAD quality control checks"),
     )

@@ -133,36 +133,40 @@ def _create_command(indname):
     "-r",
     "--raise-flags",
     is_flag=True,
-    help="Prints an exception in the event that file variable.",
+    help="Prints an exception in the event that a variable is found to have quality control issues.",
 )
 @click.option(
     "-a",
     "--append",
     is_flag=True,
-    help="Returns the netcdf dataset with the `ecad_qc_flag` array appended as a data_var.",
+    help="Returns the netCDF dataset with the `ecad_qc_flag` array appended as a data_var.",
 )
 @click.option(
     "-d",
     "--dims",
     default="all",
-    help='Dimenions upon which aggregation should be performed. Default: "all". Ignored if no variable provided.',
+    help='Dimensions upon which aggregation should be performed. Default: "all". Ignored if no variable provided.',
 )
 @click.option(
     "-f",
     "--freq",
     default=None,
-    help="Resampling frequency to have data_flags aggregated over periods. Ignored if no variable provided.",
+    help="Resampling periods frequency used for aggregation. Default: None. Ignored if no variable provided.",
 )
 @click.pass_context
 def dataflags(ctx, variables, raise_flags, append, dims, freq):
-    """Run quality control checks on input variables and flag for issues."""
+    """Run quality control checks on input data variables and flag for quality control issues or suspicious values."""
     ds = _get_input(ctx)
     flagged = xarray.Dataset()
     output = ctx.obj["output"]
 
     if output and raise_flags:
         raise click.BadOptionUsage(
-            "raise_flags", "Cannot use raise_flags with output netCDF.", ctx.parent
+            "raise_flags", "Cannot use 'raise_flags' with output netCDF.", ctx.parent
+        )
+    if not output and not raise_flags:
+        raise click.BadOptionUsage(
+            "raise_flags", "Must specify output or call with 'raise_flags'.", ctx.parent
         )
 
     if variables:
