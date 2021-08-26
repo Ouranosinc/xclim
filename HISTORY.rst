@@ -48,7 +48,7 @@ New features and enhancements
     - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
     - Precipitation (variables: ``pr``):  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
     - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
-    These pseudo-indices are triggered according CF-standard variable names and can be induced via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-triggered checks and must be run independently, as they trigger calculations. Will return an array of data_flags as boolean variables.
+    These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
     If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
 * ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
 

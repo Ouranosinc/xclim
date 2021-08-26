@@ -133,13 +133,13 @@ def _create_command(indname):
     "-r",
     "--raise-flags",
     is_flag=True,
-    help="Prints an exception in the event that a variable is found to have quality control issues.",
+    help="Print an exception in the event that a variable is found to have quality control issues.",
 )
 @click.option(
     "-a",
     "--append",
     is_flag=True,
-    help="Returns the netCDF dataset with the `ecad_qc_flag` array appended as a data_var.",
+    help="Return the netCDF dataset with the `ecad_qc_flag` array appended as a data_var.",
 )
 @click.option(
     "-d",
@@ -297,7 +297,7 @@ class XclimCli(click.MultiCommand):
     "--dask-nthreads",
     type=int,
     help="Start a dask.distributed Client with this many threads and 1 worker. "
-    "If not specified, the local schedular is used. If specified, '--dask-maxmem' must also be given",
+    "If not specified, the local scheduler is used. If specified, '--dask-maxmem' must also be given",
 )
 @click.option(
     "--dask-maxmem",
