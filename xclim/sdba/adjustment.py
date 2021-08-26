@@ -14,7 +14,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
-    dqm_scale_sim,
+    dqm_adjust,
     dqm_train,
     eqm_train,
     loci_adjust,
@@ -26,7 +26,6 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .detrending import PolyDetrend
 from .utils import (
     ADDITIVE,
     best_pc_orientation,
@@ -98,6 +97,19 @@ class BaseAdjustment(ParametrizableWithDataset):
             )
 
     @classmethod
+    def _harmonize_units(cls, *inputs, target: Optional[str] = None):
+        """Convert all inputs to the same units.
+
+        If the target unit is not given, the units of the first input are used.
+
+        Returns the converted inputs and the target units.
+        """
+        if target is None:
+            target = inputs[0].units
+
+        return (convert_units_to(inda, target) for inda in inputs), target
+
+    @classmethod
     def _train(ref, hist, **kwargs):
         raise NotImplementedError()
 
@@ -135,15 +147,21 @@ class TrainAdjust(BaseAdjustment):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
+
+        (ref, hist), train_units = cls._harmonize_units(ref, hist)
+
         if "group" in kwargs:
             cls._check_inputs(ref, hist, group=kwargs["group"])
 
         hist = convert_units_to(hist, ref)
 
         ds, params = cls._train(ref, hist, **kwargs)
-        obj = cls(_trained=True, **params)
-        obj["hist_calendar"] = get_calendar(hist)
-        obj["train_units"] = ref.units
+        obj = cls(
+            _trained=True,
+            hist_calendar=get_calendar(hist),
+            train_units=train_units,
+            **params,
+        )
         obj.set_dataset(ds)
         return obj
 
@@ -159,6 +177,8 @@ class TrainAdjust(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
+        (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
+
         if "group" in self:
             self._check_inputs(sim, *args, group=self.group)
 
@@ -216,8 +236,7 @@ class Adjust(BaseAdjustment):
         if "group" in kwargs:
             cls._check_inputs(ref, hist, sim, group=kwargs["group"])
 
-        hist = convert_units_to(hist, ref)
-        sim = convert_units_to(sim, ref)
+        (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
         out = cls._adjust(ref, hist, sim, **kwargs)
 
@@ -277,6 +296,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     """
 
+    _allow_diff_calendars = False
+
     @classmethod
     def _train(
         cls,
@@ -288,7 +309,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         group: Union[str, Grouper] = "time",
     ):
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
@@ -385,7 +406,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             )
 
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
@@ -418,34 +439,17 @@ class DetrendedQuantileMapping(TrainAdjust):
         detrend=1,
     ):
 
-        scaled_sim = dqm_scale_sim(
-            xr.Dataset({"scaling": self.ds.scaling, "sim": sim}),
-            group=self.group,
-            kind=self.kind,
-            interp=interp,
-        ).sim
-        # Detrending needs units.
-        scaled_sim.attrs["units"] = sim.units
-
-        if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
-
-        detrend = detrend.fit(scaled_sim)
-        sim_detrended = detrend.detrend(scaled_sim)
-
-        scen = qm_adjust(
-            xr.Dataset(
-                {"af": self.ds.af, "hist_q": self.ds.hist_q, "sim": sim_detrended}
-            ),
-            group=self.group,
+        scen = dqm_adjust(
+            self.ds.assign(sim=sim),
             interp=interp,
             extrapolation=extrapolation,
+            detrend=detrend,
+            group=self.group,
             kind=self.kind,
         ).scen
         # Detrending needs units.
         scen.attrs["units"] = sim.units
-
-        return detrend.retrend(scen)
+        return scen
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
