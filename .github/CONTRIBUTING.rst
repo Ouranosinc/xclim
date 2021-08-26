@@ -250,33 +250,6 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
  * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
  * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
-Building sources for wide support with `manylinux` image
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-    This section is for building source files that link to or provide links to C/C++ dependencies.
-    It is not necessary to perform the following when building pure Python packages.
-
-In order to do ensure best compatibility across architectures, we suggest building wheels using the `PyPA`'s `manylinux`
-docker images (at time of writing, we endorse using `manylinux_2_24_x86_64`).
-
-With `docker` installed and running, begin by pulling the image::
-
-    $ sudo docker pull quay.io/pypa/manylinux_2_24_x86_64
-
-From the xclim source folder, we can enter into the docker container, providing access to the `xclim` source files by linking them to the running image::
-
-    $ sudo docker run --rm -ti -v $(pwd):/xclim -w /xclim quay.io/pypa/manylinux_2_24_x86_64 bash
-
-Finally, to build the wheel, we run it against the provided Python3.7 binary::
-
-    $ /opt/python/cp37-cp37m/bin/python setup.py sdist bdist_wheel
-
-This will then place two files in `xclim/dist/` ("xclim-1.2.3-py3-none-any.whl" and "xclim-1.2.3.tar.gz").
-We can now leave our docker container (`$ exit`) and continue with uploading the files to PyPI::
-
-    $ twine upload dist/*
-
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
