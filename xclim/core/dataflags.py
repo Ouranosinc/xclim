@@ -329,7 +329,7 @@ def many_1mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     repetitions = _sanitize_attrs(suspicious_run(da, window=10, op="==", thresh=thresh))
     repetitions.attrs[
         "description"
-    ] = f"Repetitive precipitation values at 1mm d-1 for at least 10 days found for {da.name}."
+    ] = f"Repetitive precipitation values at 1 mm/d for at least 10 days found for {da.name}."
     return repetitions
 
 
@@ -380,7 +380,8 @@ def outside_n_standard_deviations_of_climatology(
     da : xarray.DataArray
     window : int
     n : int
-
+      Number of standard deviations. 
+      
     Returns
     -------
     xarray.DataArray, [bool]
@@ -475,7 +476,7 @@ def data_flags(
     da : xarray.DataArray
       The variable to check. Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
     ds : xarray.Dataset, optional
-      An optional dataset with extra variables needed by some flags.
+      An optional dataset with extra variables needed by some checks.
     flags : dict, optional
       A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries. The value can be None if there are no parameters to pass (i.e. default will be used).
       The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
