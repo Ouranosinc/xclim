@@ -258,7 +258,7 @@ With `docker` installed and running, begin by pulling the image::
 
     $ sudo docker pull quay.io/pypa/manylinux_2_24_x86_64
 
-From the xclim hen we can enter into the docker container, providing access to the `xclim` source files by linking them to the running image::
+From the xclim source folder, we can enter into the docker container, providing access to the `xclim` source files by linking them to the running image::
 
     $ sudo docker run --rm -ti -v $(pwd):/xclim -w /xclim quay.io/pypa/manylinux_2_24_x86_64 bash
 
