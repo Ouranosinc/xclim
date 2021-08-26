@@ -129,7 +129,7 @@ class TestScaling:
         assert "lon" not in scaling.ds
         p = scaling.adjust(sim)
         assert "lon" in p.dims
-        np.testing.assert_array_almost_equal(p, ref)
+        np.testing.assert_array_almost_equal(p.transpose(*ref.dims), ref)
 
 
 @pytest.mark.slow
