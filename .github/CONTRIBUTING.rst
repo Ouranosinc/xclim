@@ -187,27 +187,89 @@ The method we use is as follows::
 Deploying
 ---------
 
-A reminder for the maintainers on how to deploy.
+A reminder for the maintainers on how to prepare the library for a tagged version.
+
 Make sure all your changes are committed (**including an entry in HISTORY.rst**).
 Then run::
 
-$ bumpversion <option> # possible options: major / minor / patch / release
-$ git push
-$ git push --tags
+    $ bumpversion <option> # possible options: major / minor / patch / release
+    $ git add *
+    $ git commit -m "Bumped version to v1.2.3-XYZ"
+
+For PyPI releases/stable versions, ensure that the last version bumping command run is `$ bumpversion release`.
+These changes can now be merged to the main development branch::
+
+    $ git push
+
+With this performed, we can tag a version that will act as the GitHub-provided stable source archive::
+
+    $ git tag v1.2.3-XYZ
+    $ git push --tags
 
 Packaging
 ---------
 
-When test coverage and stability is adequate, maintainers should update the pip-installable package (wheel) on PyPI.
-In order to do this, you will need the following libraries installed:
+When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
+maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-* twine
-* setuptools
-* wheel
+The Simple approach
+~~~~~~~~~~~~~~~~~~~
 
-.. TODO::
+The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+ * setuptools
+ * wheel
+ * twine
 
-    Finish the packaging documentation
+From the command line on your Linux distribution, simply run the following from the clones main dev branch::
+
+    # To build the packages (sources and wheel)
+    $ python setup.py sdist bdist_wheel
+
+    # To upload to PyPI
+    $ twine upload dist/*
+
+The new version based off of the version checked out will now be available via `pip` (`$ pip install xclim`).
+
+Releasing on conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
+ * https://conda-forge.org/docs/maintainer/adding_pkgs.html
+ * https://github.com/conda-forge/staged-recipes
+
+When a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
+
+Before updating the conda-forge packages, we *strongly* suggest performing the following:
+ * Ensure that dependencies and dependency versions correspond with those of the tagged version.
+ * Provide a minimal set of `host` requirements, and the minimum requirements for running the library to the `run` section.
+ * If possible, configure tests within the conda build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
+
+Building sources for wide support with `manylinux` image
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+    This section is for building source files that link to or provide links to C/C++ dependencies.
+    It is not necessary to perform the following when building pure Python packages.
+
+In order to do ensure best compatibility across architectures, we suggest building wheels using the `PyPA`'s `manylinux`
+docker images (at time of writing, we endorse using `manylinux_2_24_x86_64`).
+
+With `docker` installed and running, begin by pulling the image::
+
+    $ sudo docker pull quay.io/pypa/manylinux_2_24_x86_64
+
+From the xclim hen we can enter into the docker container, providing access to the `xclim` source files by linking them to the running image::
+
+    $ sudo docker run --rm -ti -v $(pwd):/xclim -w /xclim quay.io/pypa/manylinux_2_24_x86_64 bash
+
+Finally, to build the wheel, we run it against the provided Python3.7 binary::
+
+    $ /opt/python/cp37-cp37m/bin/python setup.py sdist bdist_wheel
+
+This will then place two files in `xclim/dist/` ("xclim-1.2.3-py3-none-any.whl" and "xclim-1.2.3.tar.gz").
+We can now leave our docker container (`$ exit`) and continue with uploading the files to PyPI::
+
+    $ twine upload dist/*
 
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
