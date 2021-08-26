@@ -212,7 +212,7 @@ Packaging
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
 maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-The Simple approach
+TThe simple approach
 ~~~~~~~~~~~~~~~~~~~
 
 The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
@@ -220,7 +220,7 @@ The simplest approach to packaging for general support (pip wheels) requires the
  * wheel
  * twine
 
-From the command line on your Linux distribution, simply run the following from the clones main dev branch::
+From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
 
     # To build the packages (sources and wheel)
     $ python setup.py sdist bdist_wheel
@@ -233,16 +233,22 @@ The new version based off of the version checked out will now be available via `
 Releasing on conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+Initial Release
+^^^^^^^^^^^^^^^
+
 In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
  * https://conda-forge.org/docs/maintainer/adding_pkgs.html
  * https://github.com/conda-forge/staged-recipes
 
-When a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
+Subsequent releases
+^^^^^^^^^^^^^^^^^^^
 
-Before updating the conda-forge packages, we *strongly* suggest performing the following:
- * Ensure that dependencies and dependency versions correspond with those of the tagged version.
- * Provide a minimal set of `host` requirements, and the minimum requirements for running the library to the `run` section.
- * If possible, configure tests within the conda build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
+If the conda-forge feedstock recipe is built from PyPI, then when a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
+It is up to the conda-forge feedstock maintainers to verify that the package is building properly before merging the Pull Request to the main branch.
+
+Before updating the main conda-forge recipe, we *strongly* suggest performing the following checks:
+ * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
+ * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
 Building sources for wide support with `manylinux` image
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
