@@ -80,27 +80,6 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     return scen.to_dataset()
 
 
-@map_blocks(reduces=[Grouper.PROP], sim=[])
-def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
-    """DQM: Sim preprocessing on one block
-
-    Dataset variables:
-      scaling : Scaling factor between ref and hist.
-      sim: Data to adjust.
-    """
-    sim = u.apply_correction(
-        ds.sim,
-        u.broadcast(
-            ds.scaling,
-            ds.sim,
-            group=group,
-            interp=interp if group.prop != "dayofyear" else "nearest",
-        ),
-        kind,
-    )
-    return sim.rename("sim").to_dataset()
-
-
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], trend=[])
 def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
     """DQM adjustment on one block
@@ -162,7 +141,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
 
-@map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
+@map_blocks(af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
 def loci_train(ds, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 

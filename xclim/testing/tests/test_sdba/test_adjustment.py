@@ -113,6 +113,24 @@ class TestScaling:
         p = scaling.adjust(sim)
         np.testing.assert_array_almost_equal(p, ref)
 
+    def test_add_dim(self, series, mon_series):
+        n = 10000
+        u = np.random.rand(n, 4)
+
+        xd = uniform(loc=2, scale=1)
+        x = xd.ppf(u)
+
+        hist = sim = series(x, "tas")
+        ref = mon_series(apply_correction(x, 2, "+"), "tas")
+
+        group = Grouper("time.month", add_dims=["lon"])
+
+        scaling = Scaling.train(ref, hist, group=group, kind="+")
+        assert "lon" not in scaling.ds
+        p = scaling.adjust(sim)
+        assert "lon" in p.dims
+        np.testing.assert_array_almost_equal(p, ref)
+
 
 @pytest.mark.slow
 class TestDQM:

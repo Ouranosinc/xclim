@@ -3,6 +3,8 @@
 Here are defined the functions wrapped by map_blocks or map_groups,
 user-facing, metadata-handling functions should be defined in processing.py.
 """
+from typing import Sequence
+
 import numpy as np
 import xarray as xr
 
@@ -11,11 +13,13 @@ from .base import Grouper, map_groups
 from .utils import ADDITIVE, apply_correction, ecdf, invert
 
 
-@map_groups(sim_ad=[Grouper.DIM], pth=[Grouper.PROP], dP0=[Grouper.PROP])
+@map_groups(
+    sim_ad=[Grouper.ADD_DIMS, Grouper.DIM], pth=[Grouper.PROP], dP0=[Grouper.PROP]
+)
 def _adapt_freq(
     ds: xr.Dataset,
     *,
-    dim: str,
+    dim: Sequence[str],
     thresh: float = 0,
 ) -> xr.Dataset:
     r"""
@@ -28,8 +32,9 @@ def _adapt_freq(
     ds : xr.Dataset
       With variables :  "ref", Target/reference data, usually observed data.
       and  "sim", Simulated data.
-    dim : str
-      Dimension name.
+    dim : str, or seqence of strings
+      Dimension name(s). If more than one, the probabilities and quantiles are computed within all the dimensions.
+      If  `window` is in the names, it is removed before the correction and the final timeseries is corrected along dim[0] only.
     group : Union[str, Grouper]
       Grouping information, see base.Grouper
     thresh : float
@@ -57,7 +62,7 @@ def _adapt_freq(
     if dP0.isnull().all():
         # All NaN slice.
         pth = dP0.copy()
-        sim_ad = ds.wheresim.copy()
+        sim_ad = ds.sim.copy()
     else:
 
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
@@ -65,15 +70,17 @@ def _adapt_freq(
         # pth is meaningless when freq. adaptation is not needed
         pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
 
-        if "window" in ds.sim.dims:
+        # Probabilites and quantiles computed within all dims, but correction along the first one only.
+        if "window" in dim:
             # P0_sim was computed using the window, but only the original time series is corrected.
+            # Grouper.apply does this step, but if done here it makes the code faster.
             sim = ds.sim.isel(window=(ds.sim.window.size - 1) // 2)
-            dim = [dim[0]]
         else:
             sim = ds.sim
+        dim = dim[0]
 
         # Get the percentile rank of each value in sim.
-        rank = sim.rank(dim[0], pct=True)
+        rank = sim.rank(dim, pct=True)
 
         # Frequency-adapted sim
         sim_ad = sim.where(
@@ -99,7 +106,7 @@ def _adapt_freq(
 def _normalize(
     ds: xr.Dataset,
     *,
-    dim: str,
+    dim: Sequence[str],
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
     """Normalize an array by removing its mean.
@@ -112,8 +119,8 @@ def _normalize(
       If a `norm` variable is present, is uses this one instead of computing the norm again.
     group : Union[str, Grouper]
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-    dim : str
-      Dimension name.
+    dim : sequence of strings
+      Dimension name(s).
     kind : {'+', '*'}
       How to apply the adjustment, either additively or multiplicatively.
     Returns
@@ -132,7 +139,17 @@ def _normalize(
 
 @map_groups(reordered=[Grouper.DIM], main_only=True)
 def _reordering(ds, *, dim):
-    """Group-wise reordering."""
+    """Group-wise reordering.
+
+    Parameters
+    ----------
+    ds: xr.Dataset
+      With variables:
+        - sim : The timeseries to reorder.
+        - ref : The timeseries whose rank to use.
+    dim: str
+      The dimension along which to reorder.
+    """
 
     def _reordering_1d(data, ordr):
         return np.sort(data)[np.argsort(np.argsort(ordr))]
