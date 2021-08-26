@@ -57,8 +57,8 @@ class TestLoci:
         p = loci.adjust(sim)
         np.testing.assert_array_almost_equal(p, ref, dec)
 
-        assert "xclim_history" in p.attrs
-        assert "Bias-adjusted with LOCI(" in p.attrs["xclim_history"]
+        assert "history" in p.attrs
+        assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
         file = tmp_path / "test_loci.nc"
         loci.ds.to_netcdf(file)

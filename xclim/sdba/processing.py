@@ -6,19 +6,22 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 
-from . import nbutils as nbu
-from .base import Grouper, map_groups
-from .utils import ADDITIVE, apply_correction, ecdf, invert
+from ._processing import _adapt_freq, _normalize, _reordering
+from .base import Grouper
+from .nbutils import _escore
+from .utils import ADDITIVE
 
 
-@map_groups(sim_ad=[Grouper.DIM], pth=[Grouper.PROP], dP0=[Grouper.PROP])
+@update_xclim_history
 def adapt_freq(
-    ds: xr.Dataset,
+    ref: xr.DataArray,
+    sim: xr.DataArray,
     *,
-    dim: str,
+    group: Union[Grouper, str],
     thresh: str = "0 mm d-1",
 ) -> xr.Dataset:
     r"""
@@ -42,14 +45,15 @@ def adapt_freq(
 
     Returns
     -------
-    xr.Dataset, wth the following variables:
-
-      - `sim_adj`: Simulated data with the same frequency of values under threshold than ref.
-        Adjustment is made group-wise.
-      - `pth` : For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
-        either left as zero values or given a random value between thresh and pth.
-        NaN where frequency adaptation wasn't needed.
-      - `dP0` : For each group, the percentage of values that were corrected in sim.
+    sim_adj : xr.DataArray
+      Simulated data with the same frequency of values under threshold than ref.
+      Adjustment is made group-wise.
+    pth : xr.DataArray
+      For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
+      either left as zero values or given a random value between thresh and pth.
+      NaN where frequency adaptation wasn't needed.
+    dP0 : xr.DataArray
+      For each group, the percentage of values that were corrected in sim.
 
     Notes
     -----
@@ -66,66 +70,28 @@ def adapt_freq(
     ----------
     .. [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
     """
-    ref = ds.ref
-    sim = convert_units_to(ds.sim, ref)
+    sim = convert_units_to(sim, ref)
     thresh = convert_units_to(thresh, ref)
 
-    # Compute the probability of finding a value <= thresh
-    # This is the "dry-day frequency" in the precipitation case
-    P0_sim = ecdf(sim, thresh, dim=dim)
-    P0_ref = ecdf(ref, thresh, dim=dim)
-
-    # The proportion of values <= thresh in sim that need to be corrected, compared to ref
-    dP0 = (P0_sim - P0_ref) / P0_sim
-
-    if dP0.isnull().all():
-        # All NaN slice.
-        pth = dP0.copy()
-        sim_ad = sim.copy()
-    else:
-        # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
-        # The value in ref with the same rank as the first non zero value in sim.
-        # pth is meaningless when freq. adaptation is not needed
-        pth = nbu.vecquantiles(ref, P0_sim, dim).where(dP0 > 0)
-
-        if "window" in sim.dims:
-            # P0_sim was computed using the window, but only the original time series is corrected.
-            sim = sim.isel(window=(sim.window.size - 1) // 2)
-            dim = [dim[0]]
-
-        # Get the percentile rank of each value in sim.
-        rank = sim.rank(dim[0], pct=True)
-
-        # Frequency-adapted sim
-        sim_ad = sim.where(
-            dP0 < 0,  # dP0 < 0 means no-adaptation.
-            sim.where(
-                (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
-                # Generate random numbers ~ U[T0, Pth]
-                (pth.broadcast_like(sim) - thresh)
-                * np.random.random_sample(size=sim.shape)
-                + thresh,
-            ),
-        )  # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
+    out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
 
     # Set some metadata
-    sim_ad.attrs.update(ds.sim.attrs)
-    sim_ad.attrs["units"] = sim.units
-    pth.attrs[
-        "long_name"
-    ] = "Smallest value of the timeseries not corrected by frequency adaptation."
-    dP0.attrs[
-        "long_name"
-    ] = "Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation"
+    out.sim_ad.attrs.update(sim.attrs)
+    out.sim_ad.attrs.update(
+        references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
+    )
+    out.pth.attrs.update(
+        long_name="Smallest value of the timeseries not corrected by frequency adaptation.",
+        units=sim.units,
+    )
+    out.dP0.attrs.update(
+        long_name=f"Proportion of values smaller than {thresh} in the timeseries corrected by frequency adaptation",
+    )
 
-    # Tell group_apply that these will need reshaping (regrouping)
-    # This is needed since if any variable comes out a groupby with the original group axis,
-    # the whole output is broadcasted back to the original dims.
-    pth.attrs["_group_apply_reshape"] = True
-    dP0.attrs["_group_apply_reshape"] = True
-    return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
+    return out.sim_ad, out.pth, out.dP0
 
 
+@update_xclim_history
 def jitter_under_thresh(x: xr.DataArray, thresh: str):
     """Replace values smaller than threshold by a uniform random noise.
 
@@ -154,9 +120,12 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
         )
     else:
         jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    return x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out = x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out.attrs.update(x.attrs)  # copy attrs and same units
+    return out
 
 
+@update_xclim_history
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
     """Replace values greater than threshold by a uniform random noise.
 
@@ -186,42 +155,48 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
         )
     else:
         jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
-    return x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out = x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
+    out.attrs.update(x.attrs)  # copy attrs and same units
+    return out
 
 
-@map_groups(reduces=[Grouper.PROP], data=[])
+@update_xclim_history
 def normalize(
-    ds: xr.Dataset,
+    data: xr.DataArray,
+    norm: Optional[xr.DataArray] = None,
     *,
-    dim: str,
+    group: Union[Grouper, str],
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
     """Normalize an array by removing its mean.
-    Normalization if performed group-wise.
+
+    Normalization if performed group-wise and according to `kind`.
 
     Parameters
     ----------
-    ds: xr.Dataset
-      The variable `data` is normalized.
-      If a `norm` variable is present, is uses this one instead of computing the norm again.
+    data: xr.DataArray
+      The variable to normalize.
+    norm : xr.DataArray, optional
+      If present, it is used instead of computing the norm again.
     group : Union[str, Grouper]
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-    dim : str
-      Dimension name.
+      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details..
     kind : {'+', '*'}
-      How to apply the adjustment, either additively or multiplicatively.
+      If `kind` is "+", the mean is subtracted from the mean and if it is '*', it is divided from the data.
+
     Returns
     -------
-    xr.Dataset
-      Group-wise anomaly of x
+    xr.DataArray
+      Groupwise anomaly
     """
+    ds = xr.Dataset(dict(data=data))
 
-    if "norm" in ds:
-        norm = invert(ds.norm, kind)
-    else:
-        norm = invert(ds.data.mean(dim=dim), kind)
+    if norm is not None:
+        norm = convert_units_to(norm, data)
+        ds = ds.assign(norm=norm)
 
-    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind)))
+    out = _normalize(ds, group=group, kind=kind)
+    out.attrs.update(data.attrs)
+    return out.data.rename(data.name)
 
 
 def uniform_noise_like(
@@ -244,6 +219,7 @@ def uniform_noise_like(
     )
 
 
+@update_xclim_history
 def standardize(
     da: xr.DataArray,
     mean: Optional[xr.DataArray] = None,
@@ -257,42 +233,22 @@ def standardize(
     Returns the standardized data, the mean and the standard deviation.
     """
     if mean is None:
-        mean = da.mean(dim)
+        mean = da.mean(dim, keep_attrs=True)
     if std is None:
-        std = da.std(dim)
+        std = da.std(dim, keep_attrs=True)
     with xr.set_options(keep_attrs=True):
         return (da - mean) / std, mean, std
 
 
+@update_xclim_history
 def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     """Rescale a standardized array by performing the inverse operation of `standardize`."""
-    return (std * da) + mean
+    with xr.set_options(keep_attrs=True):
+        return (std * da) + mean
 
 
-@map_groups(reordered=[Grouper.DIM], main_only=True)
-def _reordering_group(ds, *, dim):
-    """Group-wise reordering."""
-
-    def _reordering_1d(data, ordr):
-        return np.sort(data)[np.argsort(np.argsort(ordr))]
-
-    return (
-        xr.apply_ufunc(
-            _reordering_1d,
-            ds.sim,
-            ds.ref,
-            input_core_dims=[[dim], [dim]],
-            output_core_dims=[[dim]],
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[ds.sim.dtype],
-        )
-        .rename("reordered")
-        .to_dataset()
-    )
-
-
-def reordering(sim: xr.DataArray, ref: xr.DataArray, group: str = "time") -> xr.Dataset:
+@update_xclim_history
+def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.Dataset:
     """Reorders data in `sim` following the order of ref.
 
     The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
@@ -319,9 +275,12 @@ def reordering(sim: xr.DataArray, ref: xr.DataArray, group: str = "time") -> xr.
     https://doi.org/10.1007/s00382-017-3580-6
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
-    return _reordering_group(ds, group=group).reordered
+    out = _reordering(ds, group=group).reordered
+    out.attrs.update(sim.attrs)
+    return out
 
 
+@update_xclim_history
 def escore(
     tgt: xr.DataArray,
     sim: xr.DataArray,
@@ -377,7 +336,7 @@ def escore(
 
     References
     ----------
-    .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     """
 
@@ -398,11 +357,19 @@ def escore(
     # Otherwise, apply_ufunc tries to align both obs_dim together.
     new_dim = get_temp_dimname(tgt.dims, obs_dim)
     sim = sim.rename({obs_dim: new_dim})
-    return xr.apply_ufunc(
-        nbu._escore,
+    out = xr.apply_ufunc(
+        _escore,
         tgt,
         sim,
         input_core_dims=[[pts_dim, obs_dim], [pts_dim, new_dim]],
         output_dtypes=[sim.dtype],
         dask="parallelized",
     )
+
+    out.name = "escores"
+    out.attrs.update(
+        long_name="Energy dissimilarity metric",
+        description=f"Escores computed from {N or 'all'} points.",
+        references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+    )
+    return out

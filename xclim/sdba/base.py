@@ -785,7 +785,7 @@ def stack_variables(ds, rechunk=True, dim="variables"):
     Returns
     -------
     xr.DataArray
-      Array with variables stacked along `dim` dimension.
+      Array with variables stacked along `dim` dimension. Units are set to "".
     """
     # Store original arrays' attributes
     attrs = {}
@@ -806,6 +806,7 @@ def stack_variables(ds, rechunk=True, dim="variables"):
         da = da.chunk({dim: -1})
 
     da.attrs.update(ds.attrs)
+    da.attrs["units"] = ""
     return da.rename("multivariate")
 
 
@@ -836,6 +837,7 @@ def unstack_variables(da, dim=None):
         {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
         attrs=da.attrs,
     )
+    del ds.attrs["units"]
 
     # Reset attributes
     for name, attr_list in da.variables.attrs.items():

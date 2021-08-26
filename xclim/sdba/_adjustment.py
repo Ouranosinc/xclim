@@ -69,8 +69,10 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       sim : Data to adjust.
     """
     af, hist_q = u.extrapolate_qm(
-        ds.af, ds.hist_q, method=extrapolation,
-        abs_bounds=(ds.sim.min().item() - 1, ds.sim.max().item() + 1)
+        ds.af,
+        ds.hist_q,
+        method=extrapolation,
+        abs_bounds=(ds.sim.min().item() - 1, ds.sim.max().item() + 1),
     )
     af = u.interp_on_quantiles(ds.sim, hist_q, af, group=group, method=interp)
 
@@ -262,6 +264,11 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         refp = ref @ R
         histp = hist @ R
         simp = sim @ R
+
+        # I have no idea why this is needed. See #801.
+        refp.attrs.update(units="")
+        histp.attrs.update(units="")
+        simp.attrs.update(units="")
 
         # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])

@@ -11,7 +11,10 @@ Announcements
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+* xclim has switched back to updating the `history` attribute (instead of `xclim_history`). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* Refactor of ``sdba.processing``. Now all functions take one or more dataarrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
+* Add unit handling in ``sdba``. Most parameters involving quantities are now expecting strings (and not numbers). Adjustment objects will ensure ref, hist and sim all have the same units (taking ref as reference).
+* The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
 
     - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
       ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
@@ -25,6 +28,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+* Functions computing run lengths (sequences of consecutive True values) now take the `index` argument. Possible values are `first` and `last`, indicating which item in the run should be used to index the run length. The default is set to `first`, preserving the current behavior.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -41,6 +45,11 @@ Bug fixes
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
 * Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* The behaviour of ``xclim.testing._utils.getfile`` was adjusted to launch file download requests for web-hosted md5 files for every call to compare against local test data.
+  This was done to validate that locally-stored test data is identical to test data available online, without resorting to git-based actions. This approach may eventually be revised/optimized in the future.
 
 0.28.1 (2021-07-29)
 -------------------

@@ -153,6 +153,8 @@ class TrainAdjust(BaseAdjustment):
         if "group" in kwargs:
             cls._check_inputs(ref, hist, group=kwargs["group"])
 
+        hist = convert_units_to(hist, ref)
+
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
             _trained=True,
@@ -175,12 +177,12 @@ class TrainAdjust(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-
         (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
 
         if "group" in self:
             self._check_inputs(sim, *args, group=self.group)
 
+        sim = convert_units_to(sim, self.train_units)
         out = self._adjust(sim, *args, **kwargs)
 
         if isinstance(out, xr.DataArray):
@@ -190,10 +192,9 @@ class TrainAdjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = self.train_units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -246,10 +247,9 @@ class Adjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = ref.units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -439,14 +439,17 @@ class DetrendedQuantileMapping(TrainAdjust):
         detrend=1,
     ):
 
-        return dqm_adjust(
+        scen = dqm_adjust(
             self.ds.assign(sim=sim),
             interp=interp,
             extrapolation=extrapolation,
             detrend=detrend,
             group=self.group,
             kind=self.kind,
-        )
+        ).scen
+        # Detrending needs units.
+        scen.attrs["units"] = sim.units
+        return
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
@@ -1180,4 +1183,5 @@ class NpdfTransform(Adjust):
             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
         out = out.assign(rotation_matrices=rot_matrices)
+        out.scenh.attrs["units"] = hist.units
         return out
