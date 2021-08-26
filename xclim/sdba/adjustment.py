@@ -449,7 +449,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         ).scen
         # Detrending needs units.
         scen.attrs["units"] = sim.units
-        return
+        return scen
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):

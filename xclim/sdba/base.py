@@ -805,7 +805,7 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
 def stack_variables(ds, rechunk=True, dim="variables"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
-    Variable attributes are all added as lists of attributes.
+    Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
 
     Parameters
     ----------
@@ -826,7 +826,7 @@ def stack_variables(ds, rechunk=True, dim="variables"):
     nvar = len(ds.data_vars)
     for i, var in enumerate(ds.data_vars.values()):
         for name, attr in var.attrs.items():
-            attrs.setdefault(name, [None] * nvar)[i] = attr
+            attrs.setdefault("_" + name, [None] * nvar)[i] = attr
 
     # Special key used for later `unstacking`
     attrs["is_variables"] = True
@@ -875,10 +875,10 @@ def unstack_variables(da, dim=None):
 
     # Reset attributes
     for name, attr_list in da.variables.attrs.items():
-        if name == "is_variables":
+        if not name.startswith("_"):
             continue
         for attr, var in zip(attr_list, da.variables):
             if attr is not None:
-                ds[var.item()].attrs[name] = attr
+                ds[var.item()].attrs[name[1:]] = attr
 
     return ds

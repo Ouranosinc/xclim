@@ -291,7 +291,10 @@ def add_cyclic_bounds(
 
 
 def extrapolate_qm(
-    qf: xr.DataArray, xq: xr.DataArray, method: str = "constant", abs_bounds: Optional[tuple] = (-np.inf, np.inf)
+    qf: xr.DataArray,
+    xq: xr.DataArray,
+    method: str = "constant",
+    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
