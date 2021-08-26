@@ -9,6 +9,7 @@ import xarray as xr
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
+from .detrending import PolyDetrend
 from .processing import escore
 
 
@@ -67,22 +68,29 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    af, hist_q = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
+    af, hist_q = u.extrapolate_qm(
+        ds.af,
+        ds.hist_q,
+        method=extrapolation,
+        abs_bounds=(ds.sim.min().item() - 1, ds.sim.max().item() + 1),
+    )
     af = u.interp_on_quantiles(ds.sim, hist_q, af, group=group, method=interp)
 
     scen = u.apply_correction(ds.sim, af, kind).rename("scen")
     return scen.to_dataset()
 
 
-@map_blocks(reduces=[Grouper.PROP], sim=[])
-def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
-    """DQM: Sim preprocessing on one block
+@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], trend=[])
+def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
+    """DQM adjustment on one block
 
     Dataset variables:
-      scaling : Scaling factor between ref and hist.
-      sim: Data to adjust.
+      scaling : Scaling factor between ref and hist
+      af : Adjustment factors
+      hist_q : Quantiles over the training data
+      sim : Data to adjust
     """
-    sim = u.apply_correction(
+    scaled_sim = u.apply_correction(
         ds.sim,
         u.broadcast(
             ds.scaling,
@@ -92,7 +100,24 @@ def dqm_scale_sim(ds, *, group, interp, kind) -> xr.Dataset:
         ),
         kind,
     )
-    return sim.rename("sim").to_dataset()
+
+    if isinstance(detrend, int):
+        detrend = PolyDetrend(degree=detrend, kind=kind, group=group)
+
+    detrend = detrend.fit(scaled_sim)
+    ds["sim"] = detrend.detrend(scaled_sim)
+    scen = qm_adjust.func(
+        ds,
+        group=group,
+        interp=interp,
+        extrapolation=extrapolation,
+        kind=kind,
+    ).scen
+
+    scen = detrend.retrend(scen)
+
+    out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})
+    return out
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
