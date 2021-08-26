@@ -464,7 +464,7 @@ def map_blocks(reduces=None, **outvars):
       Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.
-      If an output keeps a dimension that another looses, that dimension name must be given in `reduces` and in
+      If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
       the list of new dimensions of the first output.
     """
 

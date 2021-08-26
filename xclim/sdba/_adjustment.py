@@ -105,9 +105,7 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
         detrend = PolyDetrend(degree=detrend, kind=kind, group=group)
 
     detrend = detrend.fit(scaled_sim)
-    sim_detrended = detrend.detrend(scaled_sim)
-
-    ds["sim"] = sim_detrended
+    ds["sim"] = detrend.detrend(scaled_sim)
     scen = qm_adjust.func(
         ds,
         group=group,
