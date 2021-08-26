@@ -380,8 +380,8 @@ def outside_n_standard_deviations_of_climatology(
     da : xarray.DataArray
     window : int
     n : int
-      Number of standard deviations. 
-      
+      Number of standard deviations.
+
     Returns
     -------
     xarray.DataArray, [bool]
