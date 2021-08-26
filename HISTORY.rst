@@ -29,6 +29,7 @@ New features and enhancements
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
 * Functions computing run lengths (sequences of consecutive True values) now take the `index` argument. Possible values are `first` and `last`, indicating which item in the run should be used to index the run length. The default is set to `first`, preserving the current behavior.
+* New ``sdba_encode_cf`` option to workaround a cftime/xarray performance issue when using dask.
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -45,6 +46,10 @@ Bug fixes
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
 * Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
+* Fixes in ``sdba.processing.adapt_freq`` and ``sdba.nbutils.vecquantiles`` when handling all-nan slices.
+* Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``.
+* Better dtype preservation throughout ``sdba``.
+* "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

@@ -11,7 +11,10 @@ from xarray.core import utils
     nopython=True,
 )
 def _vecquantiles(arr, rnk, res):
-    res[0] = np.nanquantile(arr, rnk)
+    if np.isnan(rnk):
+        res[0] = np.NaN
+    else:
+        res[0] = np.nanquantile(arr, rnk)
 
 
 def vecquantiles(da, rnk, dim):
