@@ -1,7 +1,6 @@
-import os
-
 import numpy as np
 import pytest
+import xarray as xr
 
 from xclim.sdba.loess import (
     _constant_regression,
@@ -39,10 +38,18 @@ def test_loess_nb(d, f, w, n, exp):
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_loess_smoothing(use_dask):
     tas = open_dataset(
-        os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"),
+        "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         chunks={"lat": 1} if use_dask else None,
     ).tas.isel(lon=0, time=slice(0, 730))
 
-    tasmooth = loess_smoothing(tas)
+    tasmooth = loess_smoothing(tas, f=0.1)
 
     assert np.isclose(tasmooth.isel(lat=0, time=0), 265.76342659)
+
+    # Same but with one missing time, so the x axis is not equally spaced
+    tas2 = tas.where(tas.time != tas.time[-3], drop=True)
+    tasmooth2 = loess_smoothing(tas2, f=0.1)
+
+    xr.testing.assert_equal(
+        tasmooth.isel(time=slice(None, 700)), tasmooth2.isel(time=slice(None, 700))
+    )

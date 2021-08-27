@@ -1,5 +1,5 @@
 """LOESS smoothing module."""
-from typing import Callable, Optional, Union
+from typing import Callable, Union
 
 import numba
 import numpy as np
@@ -47,6 +47,7 @@ def _loess_nb(
     niter=2,
     weight_func=_tricube_weighting,
     reg_func=_linear_regression,
+    dx=0,
 ):  # pragma: no cover
     """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
 
@@ -67,63 +68,67 @@ def _loess_nb(
       Number of robustness iterations to execute.
     weight_func : numba func
       Numba function giving the weights when passed abs(x - xi) / hi
+    dx : float
+      The spacing of the x coordinates. If above 0, this enables the optimization for equally spaced x coordinates.
+      Must be 0 if spacing is unequal (default).
 
     References
     ----------
     Code adapted from https://gist.github.com/agramfort/850437
     Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     """
-    # If x is equally spaced, enable optimization.
-    dx = 0
-    diffx = np.diff(x)
-    # x is already normalized from 0 to 1 when coming into here
-    # allow for a small numerical error
-    if (diffx.min() - diffx.max()) < 1e-12:
-        dx = diffx[0]
-        print("enabling")
-
     n = x.size
     # Nearest odd number equal or above f * n
     r = int(2 * (f * n // 2) + 1)
     # half width of the weights, used when dx > 0
     hw = int((r - 1) / 2)
+
+    # For equal spacing opt:
+    # Number of values sent to the weigths. Just a bit larger than the window (r)
+    R = r + 4
+    HW = hw + 2
+
     yest = np.zeros(n)
     delta = np.ones(n)
+
+    if dx == 0:
+        xi = x
+        yi = y
 
     for iteration in range(niter):
         if dx == 0:
             xi = x
             yi = y
-            di = delta
         for i in range(n):
             if dx > 0:
                 # When x is equally spaced, we don't need to recompute the weights each time.
                 # We can pass only a subset of the arrays as we already know where the rth closest point will be.
                 # However, contrary to a moving mean, the weights change shape near the edges
-                if i < hw:
-                    xi = x[:r]
-                    yi = y[:r]
-                    di = delta[:r]
-                elif i >= n - hw - 1:
-                    di = delta[n - r :]
-                    xi = x[n - r :]
-                    yi = y[n - r :]
+                if i < HW:
+                    xi = x[:R]
+                    yi = y[:R]
+                    di = delta[:R]
+                elif i >= n - HW - 1:
+                    di = delta[n - R :]
+                    xi = x[n - R :]
+                    yi = y[n - R :]
                 else:
-                    di = delta[i - hw : i + hw + 1]
-                    xi = x[i - hw : i + hw + 1]
-                    yi = y[i - hw : i + hw + 1]
+                    di = delta[i - HW : i + HW + 1]
+                    xi = x[i - HW : i + HW + 1]
+                    yi = y[i - HW : i + HW + 1]
                 # Near the edges and on the first iteration away from them,
                 # compute the weights.
-                if i < hw + 1 or i >= n - hw - 1:
+                if i <= HW or i >= n - HW:
                     diffs = np.abs(xi - x[i])
 
                     if i < hw:
                         h = (r - i) * dx
                     elif i >= n - hw:
-                        h = (i - (n - r)) * dx
+                        h = (i - (n - r) + 1) * dx
                     else:
-                        h = hw * dx
-                    w = di * weight_func(diffs / h)
+                        h = (hw + 1) * dx
+                    wi = weight_func(diffs / h)
+                w = di * wi
             else:
                 # The weights computation is repeated niter times
                 # The distance of points from the current centre point.
@@ -131,7 +136,7 @@ def _loess_nb(
                 # h is the distance of the rth closest point.
                 h = np.sort(diffs)[r]
                 # The weights will be 0 everywhere diffs > h.
-                w = di * weight_func(diffs / h)
+                w = delta * weight_func(diffs / h)
             yest[i] = reg_func(x[i], xi, yi, w)
 
         if iteration < niter - 1:
@@ -204,6 +209,12 @@ def loess_smoothing(
 
     reg_func = {0: _constant_regression, 1: _linear_regression}[d]
 
+    diffx = np.diff(da[dim])
+    if np.all(diffx == diffx[0]):
+        dx = float(x[1] - x[0])
+    else:
+        dx = 0
+
     return xr.apply_ufunc(
         _loess_nb,
         x,
@@ -216,6 +227,7 @@ def loess_smoothing(
             "weight_func": weight_func,
             "niter": niter,
             "reg_func": reg_func,
+            "dx": dx,
         },
         dask="parallelized",
         output_dtypes=[float],
