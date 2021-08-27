@@ -2,7 +2,7 @@
 History
 =======
 
-0.29.0 (unreleased)
+0.29.0 (2021-08-27)
 -------------------
 
 Announcements
