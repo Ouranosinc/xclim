@@ -41,7 +41,13 @@ def _linear_regression(xi, x, y, w):  # pragma: no cover
 
 @numba.njit
 def _loess_nb(
-    x, y, f=0.5, niter=2, weight_func=_tricube_weighting, reg_func=_linear_regression
+    x,
+    y,
+    f=0.5,
+    niter=2,
+    weight_func=_tricube_weighting,
+    reg_func=_linear_regression,
+    equal_spacing=False,
 ):  # pragma: no cover
     """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
 
@@ -62,6 +68,8 @@ def _loess_nb(
       Number of robustness iterations to execute.
     weight_func : numba func
       Numba function giving the weights when passed abs(x - xi) / hi
+    equal_spacing : bool
+      If True, assumes x is uniformly spaced, which enables a performance optimization.
 
     References
     ----------
@@ -74,7 +82,21 @@ def _loess_nb(
     delta = np.ones(n)
 
     for iteration in range(niter):
+        if equal_spacing:
+            diffs = np.abs(x[: 2 * r + 1] - x[r])
+            h = np.sort(diffs)[r]
+            weights = delta * weight_func(diffs / h)
+
         for i in range(n):
+            if equal_spacing:
+                if i < r:
+                    w = weights[r - i :]
+                    xi = x[: i + r]
+                    yi = y[: i + r]
+                elif i >= n - r:
+                    w = weights[: r + (n - i)]
+
+                yest[i] = reg_func(x[i], xi, yi, w)
             # The weights computation is repeater niter times
             # The loss in speed is a clear gain in memory
             diffs = np.abs(x - x[i])
@@ -151,6 +173,11 @@ def loess_smoothing(
     )
 
     reg_func = {0: _constant_regression, 1: _linear_regression}[d]
+
+    diffx = np.diff(x)
+    # If the x spacing is constant, enable performance optimization
+    equal_spacing = np.all(diffx[0] == diffx)
+
     return xr.apply_ufunc(
         _loess_nb,
         x,
@@ -163,6 +190,7 @@ def loess_smoothing(
             "weight_func": weight_func,
             "niter": niter,
             "reg_func": reg_func,
+            "equal_spacing": equal_spacing,
         },
         dask="parallelized",
         output_dtypes=[float],
