@@ -8,6 +8,7 @@ History
 Announcements
 ~~~~~~~~~~~~~
 * It was found that the ``ExtremeValues`` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from ``xclim.sdba`` but can still be accessed via ``xclim.sdba.adjustment``, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+* It was found that the ``add_dims`` argument of ``sdba.Grouper`` had some caveats throughout ``sdba``. This argument is to be used with care before a careful analysis and more testing is done within xclim.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -50,6 +51,7 @@ Bug fixes
 * Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``. This feature is still not fully tested throughout ``sdba`` though, so use with caution.
 * Better dtype preservation throughout ``sdba``.
 * "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
+* Fixes in ``sdba.LOCI`` for the case where a grouping with additionnal dimensions is used.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

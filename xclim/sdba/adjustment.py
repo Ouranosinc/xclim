@@ -738,7 +738,7 @@ class LOCI(TrainAdjust):
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       Default is "time", meaning an single adjustment group along dimension "time".
-    thresh : float
+    thresh : str
       The threshold in `ref` above which the values are scaled.
 
     Adjust step:
@@ -759,9 +759,10 @@ class LOCI(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        thresh: float,
+        thresh: str,
         group: Union[str, Grouper] = "time",
     ):
+        thresh = convert_units_to(thresh, ref)
         ds = loci_train(
             xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
         )
