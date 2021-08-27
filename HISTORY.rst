@@ -7,11 +7,12 @@ History
 
 Announcements
 ~~~~~~~~~~~~~
-* It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+* It was found that the ``ExtremeValues`` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from ``xclim.sdba`` but can still be accessed via ``xclim.sdba.adjustment``, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+* It was found that the ``add_dims`` argument of ``sdba.Grouper`` had some caveats throughout ``sdba``. This argument is to be used with care before a careful analysis and more testing is done within xclim.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* xclim has switched back to updating the `history` attribute (instead of `xclim_history`). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* xclim has switched back to updating the ``history`` attribute (instead of ``xclim_history``). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
 * Refactor of ``sdba.processing``. Now all functions take one or more dataarrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
 * Add unit handling in ``sdba``. Most parameters involving quantities are now expecting strings (and not numbers). Adjustment objects will ensure ref, hist and sim all have the same units (taking ref as reference).
 * The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
@@ -28,7 +29,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
-* Functions computing run lengths (sequences of consecutive True values) now take the `index` argument. Possible values are `first` and `last`, indicating which item in the run should be used to index the run length. The default is set to `first`, preserving the current behavior.
+* Functions computing run lengths (sequences of consecutive True values) now take the ``index`` argument. Possible values are ``first`` and ``last``, indicating which item in the run should be used to index the run length. The default is set to ``first``, preserving the current behavior.
 * New ``sdba_encode_cf`` option to workaround a cftime/xarray performance issue when using dask.
 
 New indicators
@@ -49,9 +50,10 @@ Bug fixes
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
 * Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
 * Fixes in ``sdba.processing.adapt_freq`` and ``sdba.nbutils.vecquantiles`` when handling all-nan slices.
-* Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``.
+* Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``. This feature is still not fully tested throughout ``sdba`` though, so use with caution.
 * Better dtype preservation throughout ``sdba``.
 * "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
+* Fixes in ``sdba.LOCI`` for the case where a grouping with additionnal dimensions is used.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

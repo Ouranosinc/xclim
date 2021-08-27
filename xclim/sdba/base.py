@@ -135,8 +135,6 @@ class Grouper(Parametrizable):
             interp = interp != "nearest"
 
         add_dims = add_dims or []
-        if window > 1:
-            add_dims.insert(1, "window")
         super().__init__(
             dim=dim,
             add_dims=add_dims,
@@ -363,9 +361,12 @@ class Grouper(Parametrizable):
                 [] if not uses_dask(da) else da.chunks[da.get_axis_num(self.dim)]
             )
 
-        dims = self.dim
-        if not main_only:
-            dims = [dims] + [dim for dim in self.add_dims if dim in grpd.dims]
+        if main_only:
+            dims = self.dim
+        else:
+            dims = [self.dim] + self.add_dims
+            if self.window > 1:
+                dims += ["window"]
 
         if isinstance(func, str):
             out = getattr(grpd, func)(dim=dims, **kwargs)
@@ -559,6 +560,7 @@ def map_blocks(reduces=None, **outvars):
             all_dims = base_dims + new_dims
             # The coordinates of the output data.
             coords = {}
+            sizes = {}
             for dim in all_dims:
                 if dim == group.prop:
                     coords[group.prop] = group.get_coordinate(ds=ds)
@@ -568,11 +570,14 @@ def map_blocks(reduces=None, **outvars):
                     coords[dim] = ds[dim]
                 elif dim in kwargs:
                     coords[dim] = xr.DataArray(kwargs[dim], dims=(dim,), name=dim)
+                elif dim in ds.dims:
+                    # Dimension with no coordinate, but it is in the inputs so we can get the size.
+                    sizes[dim] = ds[dim].size
                 else:
                     raise ValueError(
                         f"This function adds the {dim} dimension, its coordinate must be provided as a keyword argument."
                     )
-            sizes = {name: crd.size for name, crd in coords.items()}
+            sizes.update({name: crd.size for name, crd in coords.items()})
 
             # Create the output dataset, but empty
             tmpl = xr.Dataset(coords=coords)
