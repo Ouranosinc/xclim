@@ -77,7 +77,7 @@ class TestLoci:
             hist.expand_dims("member").isel(member=[0, 0]).assign_coords(member=[0, 1])
         )
         ref = ref.expand_dims(member=hist.member)
-        LOCI.train(ref, hist, group="time", thresh="10 degC", add_dims=["member"])
+        LOCI.train(ref, hist, group="time", thresh=283, add_dims=["member"])
 
 
 @pytest.mark.slow
