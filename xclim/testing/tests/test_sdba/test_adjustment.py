@@ -50,7 +50,7 @@ class TestLoci:
         ref_fit = series(y, "pr").where(y > thresh, 0.1)
         ref = series(y, "pr")
 
-        loci = LOCI.train(ref_fit, hist, group=group, thresh=thresh)
+        loci = LOCI.train(ref_fit, hist, group=group, thresh=f"{thresh} kg m-2 s-1")
         np.testing.assert_array_almost_equal(loci.ds.hist_thresh, 1, dec)
         np.testing.assert_array_almost_equal(loci.ds.af, 2, dec)
 
@@ -73,11 +73,9 @@ class TestLoci:
 
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, sim = ref_hist_sim_tuto()
-        hist = (
-            hist.expand_dims("member").isel(member=[0, 0]).assign_coords(member=[0, 1])
-        )
+        hist = hist.expand_dims(member=[0, 1])
         ref = ref.expand_dims(member=hist.member)
-        LOCI.train(ref, hist, group="time", thresh=283, add_dims=["member"])
+        LOCI.train(ref, hist, group="time", thresh="283 K", add_dims=["member"])
 
 
 @pytest.mark.slow
