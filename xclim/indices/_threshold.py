@@ -26,6 +26,7 @@ from .generic import domain_count, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
@@ -68,7 +69,45 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "sea_ice_area",
     "sea_ice_extent",
+    "windy_days",
 ]
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def calm_days(
+    sfcWind: xarray.DataArray, thresh: str = "2 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Calm days.
+
+    The number of days with average near-surface wind speed below threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily windspeed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed below threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} < Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, "<", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1760,6 +1799,43 @@ def sea_ice_extent(
     t = convert_units_to(thresh, siconc)
     out = xarray.dot(siconc >= t, areacello)
     out.attrs["units"] = areacello.units
+    return out
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def windy_days(
+    sfcWind: xarray.DataArray, thresh: str = "10.8 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Windy days.
+
+    The number of days with average near-surface wind speed above threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily average near-surface wind speed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed above threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} >= Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, ">=", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
     return out
 
 

@@ -973,5 +973,17 @@
     "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
     "long_name": "Nombre {freq:m} de jours froids et pluvieux"
+  },
+  "CALM_DAYS": {
+    "title": "Nombre de jours de vent calme",
+    "abstract": "Nombre de jours où la vitesse du vent de surface est en dessous d'un seuil.",
+    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface < {thresh}",
+    "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est sous un seuil"
+  },
+  "WINDY_DAYS": {
+    "title": "Nombre de jours venteux",
+    "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil.",
+    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}",
+    "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus d'un seuil"
   }
 }

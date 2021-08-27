@@ -113,7 +113,8 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
         extrapolation=extrapolation,
         kind=kind,
     ).scen
-
+    # Circumvent random dask bug, same as discussed in  #810
+    scen.attrs["units"] = ds.sim.units
     scen = detrend.retrend(scen)
 
     out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})
@@ -139,7 +140,11 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
 
-@map_blocks(reduces=[Grouper.DIM], af=[Grouper.PROP], hist_thresh=[Grouper.PROP])
+@map_blocks(
+    reduces=[Grouper.ADD_DIMS, Grouper.DIM],
+    af=[Grouper.PROP],
+    hist_thresh=[Grouper.PROP],
+)
 def loci_train(ds, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
