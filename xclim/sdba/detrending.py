@@ -161,7 +161,7 @@ class PolyDetrend(BaseDetrend):
         return trend.trend
 
 
-@map_groups(main_only=True, trend=["<DIM>"])
+@map_groups(main_only=True, trend=[Grouper.DIM])
 def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
     """Polydetrend, atomic func on 1 group."""
     pfc = da.polyfit(dim=dim, deg=degree)
