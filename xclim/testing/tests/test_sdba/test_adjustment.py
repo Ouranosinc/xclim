@@ -50,7 +50,7 @@ class TestLoci:
         ref_fit = series(y, "pr").where(y > thresh, 0.1)
         ref = series(y, "pr")
 
-        loci = LOCI.train(ref_fit, hist, group=group, thresh=thresh)
+        loci = LOCI.train(ref_fit, hist, group=group, thresh=f"{thresh} kg m-2 s-1")
         np.testing.assert_array_almost_equal(loci.ds.hist_thresh, 1, dec)
         np.testing.assert_array_almost_equal(loci.ds.af, 2, dec)
 
