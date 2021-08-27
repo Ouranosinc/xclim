@@ -35,8 +35,8 @@ from xclim.testing import open_dataset
 from .utils import nancov
 
 
-@pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
 class TestLoci:
+    @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
     def test_time_and_from_ds(self, series, group, dec, tmp_path):
         n = 10000
         u = np.random.rand(n)
@@ -70,6 +70,14 @@ class TestLoci:
 
         p2 = loci2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
+
+    def test_reduce_dims(self, ref_hist_sim_tuto):
+        ref, hist, sim = ref_hist_sim_tuto()
+        hist = (
+            hist.expand_dims("member").isel(member=[0, 0]).assign_coords(member=[0, 1])
+        )
+        ref = ref.expand_dims(member=hist.member)
+        LOCI.train(ref, hist, group="time", thresh="10 degC", add_dims=["member"])
 
 
 @pytest.mark.slow
