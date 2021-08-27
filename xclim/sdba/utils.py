@@ -19,7 +19,7 @@ loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q"
 
 
 def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
+    sx = np.r_[-np.inf, np.sort(x, axis=None)]
     return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
