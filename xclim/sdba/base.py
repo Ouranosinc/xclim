@@ -584,7 +584,7 @@ def map_blocks(reduces=None, **outvars):
             if isinstance(ds, xr.Dataset):
                 # Get largest dtype of the inputs, assign it to the output.
                 dtype = max(
-                    [da.dtype for da in ds.data_vars.values()], key=lambda d: d.itemsize
+                    (da.dtype for da in ds.data_vars.values()), key=lambda d: d.itemsize
                 )
             else:
                 dtype = ds.dtype
