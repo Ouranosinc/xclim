@@ -9,9 +9,14 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were already not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
 
-Fixes
-~~~~~
+Bug fixes
+~~~~~~~~~
+* Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
 * ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
 
 0.29.0 (2021-08-30)
 -------------------
