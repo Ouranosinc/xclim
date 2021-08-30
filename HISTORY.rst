@@ -2,6 +2,13 @@
 History
 =======
 
+0.30.0 (unreleased)
+-------------------
+
+Fixes
+~~~~~
+* ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
+
 0.29.0 (2021-08-30)
 -------------------
 

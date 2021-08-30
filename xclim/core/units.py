@@ -507,7 +507,7 @@ def rate2amount(
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
     """
     m = 1
-    u = None
+    u = None  # Default to assume a non-uniform axis
     label = "lower"
     time = rate[dim]
 
@@ -518,13 +518,13 @@ def rate2amount(
     else:
         multi, base, start_str, _ = parse_offset(freq)
         if base in ["M", "Q", "A"]:
-            # We generate "time" with an extra element, so we do not need to repeat the last element below.
             start = time.indexes[dim][0]
             if start_str != "S":
                 # Anchor is on the end of the period, substract 1 period.
                 start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
+            # We generate "time" with an extra element, so we do not need to repeat the last element below.
             time = xr.DataArray(
                 date_range(
                     start, periods=len(time) + 1, freq=freq, calendar=get_calendar(time)
@@ -536,11 +536,11 @@ def rate2amount(
         else:
             m, u = int(multi or "1"), FREQ_UNITS[base]
 
-    # Freq is month, season or year, which are not constant units.
+    # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds
         # In the case with no freq, last period as the same length as the one before.
-        # In the case with freq in M, Q, A, this has been dealt with above in `time`.
+        # In the case with freq in M, Q, A, this has been dealt with above in `time` and `label` has been update accordingly.
         dt = (
             time.diff(dim, label=label)
             .reindex({dim: rate[dim]}, method="ffill")
