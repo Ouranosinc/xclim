@@ -90,6 +90,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     $ black --check --target-version py37 xclim xclim/testing/tests
+    $ black --check --target-version py37 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pytest --nbval docs/notebooks
     $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
@@ -147,7 +148,7 @@ Before you submit a pull request, please follow these guidelines:
     https://github.com/Ouranosinc/xclim/actions
 
 .. warning::
-    PEP8, Black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
+    PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
