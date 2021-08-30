@@ -2,6 +2,13 @@
 History
 =======
 
+0.30.0 (unreleased)
+-------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
+
 0.29.0 (2021-08-30)
 -------------------
 
