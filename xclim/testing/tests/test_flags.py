@@ -28,7 +28,7 @@ class TestDataFlags:
             flagged_ds.values_repeating_for_5_or_more_days.values, False
         )
         np.testing.assert_equal(
-            flagged_ds.outside_n_standard_deviations_of_climatology.values, True
+            flagged_ds.outside_5_standard_deviations_of_climatology.values, True
         )
 
         for flag, val in flags.items():
@@ -42,8 +42,12 @@ class TestDataFlags:
         np.testing.assert_equal(
             flagged_ds.very_large_precipitation_events.values, False
         )
-        np.testing.assert_equal(flagged_ds.many_5mm_repetitions.values, False)
-        np.testing.assert_equal(flagged_ds.many_1mm_repetitions.values, False)
+        np.testing.assert_equal(
+            flagged_ds.values_of_5mm_repeating_for_5_or_more_days.values, False
+        )
+        np.testing.assert_equal(
+            flagged_ds.values_of_1mm_repeating_for_10_or_more_days.values, False
+        )
 
     def test_suspicious_pr_data(self):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
@@ -73,8 +77,12 @@ class TestDataFlags:
 
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
-        np.testing.assert_equal(flagged.many_1mm_repetitions.values, True)
-        np.testing.assert_equal(flagged.many_5mm_repetitions.values, True)
+        np.testing.assert_equal(
+            flagged.values_of_1mm_repeating_for_10_or_more_days.values, True
+        )
+        np.testing.assert_equal(
+            flagged.values_of_5mm_repeating_for_5_or_more_days.values, True
+        )
 
     def test_suspicious_tas_data(self):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
@@ -112,7 +120,7 @@ class TestDataFlags:
             flagged.values_repeating_for_5_or_more_days.values, True
         )
         np.testing.assert_equal(
-            flagged.outside_n_standard_deviations_of_climatology.values, True
+            flagged.outside_5_standard_deviations_of_climatology.values, True
         )
         np.testing.assert_equal(flagged.tas_exceeds_tasmax.values, True)
         np.testing.assert_equal(flagged.tas_below_tasmin.values, True)
@@ -127,7 +135,7 @@ class TestDataFlags:
         )
         with pytest.raises(
             df.DataQualityException,
-            match="Maximum temperature values found below minimum temperatures",
+            match="Maximum temperature values found below minimum temperatures.",
         ):
             df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
 
@@ -139,7 +147,7 @@ class TestDataFlags:
 
         with pytest.raises(
             df.DataQualityException,
-            match="Runs of repetitive values for 5 or more days found for tas",
+            match="Runs of repetitive values for 5 or more days found for tas.",
         ):
             df.ecad_compliant(bad_ds, raise_flags=True)
 

@@ -53,22 +53,24 @@ class DataQualityException(Exception):
 __all__ = [
     "data_flags",
     "ecad_compliant",
-    "many_1mm_repetitions",
-    "many_5mm_repetitions",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",
     "percentage_values_outside_of_bounds",
+    "register_methods",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
     "tasmax_below_tasmin",
     "temperature_extremely_high",
     "temperature_extremely_low",
-    "values_repeating_for_5_or_more_days",
+    "values_of_1mm_repeating_for_n_or_more_days",
+    "values_of_5mm_repeating_for_n_or_more_days",
+    "values_of_thresh_repeating_for_n_or_more_days",
+    "values_repeating_for_n_or_more_days",
     "very_large_precipitation_events",
 ]
 
 
-def _register_methods(func):
+def register_methods(func):
     _REGISTRY[func.__name__] = func
     return func
 
@@ -83,7 +85,7 @@ def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
     return da
 
 
-@_register_methods
+@register_methods
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", check_output=False)
 def tasmax_below_tasmin(
     tasmax: xarray.DataArray,
@@ -105,16 +107,15 @@ def tasmax_below_tasmin(
     To gain access to the flag_array:
 
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = ds.tasmax < ds.tasmin
+    >>> flagged = tasmax_below_tasmin(ds.tasmax, ds.tasmin)
     """
     tasmax_lt_tasmin = _sanitize_attrs(tasmax < tasmin)
-    tasmax_lt_tasmin.attrs[
-        "description"
-    ] = "Maximum temperature values found below minimum temperatures."
+    description = "Maximum temperature values found below minimum temperatures."
+    tasmax_lt_tasmin.attrs["description"] = description
     return tasmax_lt_tasmin
 
 
-@_register_methods
+@register_methods
 @declare_units(tas="[temperature]", tasmax="[temperature]", check_output=False)
 def tas_exceeds_tasmax(
     tas: xarray.DataArray,
@@ -136,16 +137,15 @@ def tas_exceeds_tasmax(
     To gain access to the flag_array:
 
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = ds.tas > ds.tasmax
+    >>> flagged = tas_exceeds_tasmax(ds.tas, ds.tasmax)
     """
     tas_gt_tasmax = _sanitize_attrs(tas > tasmax)
-    tas_gt_tasmax.attrs[
-        "description"
-    ] = "Mean temperature values found above maximum temperatures."
+    description = "Mean temperature values found above maximum temperatures."
+    tas_gt_tasmax.attrs["description"] = description
     return tas_gt_tasmax
 
 
-@_register_methods
+@register_methods
 @declare_units(tas="[temperature]", tasmin="[temperature]", check_output=False)
 def tas_below_tasmin(
     tas: xarray.DataArray, tasmin: xarray.DataArray
@@ -166,16 +166,15 @@ def tas_below_tasmin(
     To gain access to the flag_array:
 
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = ds.tasmax < ds.tasmin
+    >>> flagged = tasmax_below_tasmin(ds.tas, ds.tasmin)
     """
     tas_lt_tasmin = _sanitize_attrs(tas < tasmin)
-    tas_lt_tasmin.attrs[
-        "description"
-    ] = "Mean temperature values found below minimum temperatures."
+    description = "Mean temperature values found below minimum temperatures."
+    tas_lt_tasmin.attrs["description"] = description
     return tas_lt_tasmin
 
 
-@_register_methods
+@register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_low(
     da: xarray.DataArray, thresh: str = "-90 degC"
@@ -195,20 +194,18 @@ def temperature_extremely_low(
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.units import convert_units_to
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> threshold = convert_units_to("-90 degC", ds.tas)
-    >>> flagged = ds.tas < threshold
+    >>> threshold = "-90 degC"
+    >>> flagged = temperature_extremely_low(ds.tas, threshold)
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_low = _sanitize_attrs(da < thresh_converted)
-    extreme_low.attrs[
-        "description"
-    ] = f"Temperatures found below {thresh} in {da.name}."
+    description = f"Temperatures found below {thresh} in {da.name}."
+    extreme_low.attrs["description"] = description
     return extreme_low
 
 
-@_register_methods
+@register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_high(
     da: xarray.DataArray, thresh: str = "60 degC"
@@ -228,20 +225,18 @@ def temperature_extremely_high(
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.units import convert_units_to
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> threshold = convert_units_to("60 degC", ds.tas)
-    >>> flagged = ds.tas > threshold
+    >>> threshold = "60 degC"
+    >>> flagged = temperature_extremely_high(ds.tas, threshold)
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_high = _sanitize_attrs(da > thresh_converted)
-    extreme_high.attrs[
-        "description"
-    ] = f"Temperatures found in excess of {thresh} in {da.name}."
+    description = f"Temperatures found in excess of {thresh} in {da.name}."
+    extreme_high.attrs["description"] = description
     return extreme_high
 
 
-@_register_methods
+@register_methods
 def negative_accumulation_values(
     da: xarray.DataArray,
 ) -> xarray.DataArray:
@@ -260,16 +255,15 @@ def negative_accumulation_values(
     To gain access to the flag_array:
 
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> flagged = (ds.pr < 0)
+    >>> flagged = negative_accumulation_values(ds.pr)
     """
     negative_accumulations = _sanitize_attrs(da < 0)
-    negative_accumulations.attrs[
-        "description"
-    ] = f"Negative values found for {da.name}."
+    description = f"Negative values found for {da.name}."
+    negative_accumulations.attrs["description"] = description
     return negative_accumulations
 
 
-@_register_methods
+@register_methods
 @declare_units(da="[precipitation]", check_output=False)
 def very_large_precipitation_events(
     da: xarray.DataArray, thresh="300 mm d-1"
@@ -289,27 +283,29 @@ def very_large_precipitation_events(
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.units import convert_units_to
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> threshold = convert_units_to("300 mm d-1", ds.pr)
-    >>> flagged = (ds.pr > threshold)
+    >>> threshold = "300 mm d-1"
+    >>> flagged = very_large_precipitation_events(ds.pr, threshold)
     """
     thresh_converted = convert_units_to(thresh, da)
     very_large_events = _sanitize_attrs(da > thresh_converted)
-    very_large_events.attrs[
-        "description"
-    ] = f"Precipitation events in excess of {thresh} for {da.name}."
+    description = f"Precipitation events in excess of {thresh} for {da.name}."
+    very_large_events.attrs["description"] = description
     return very_large_events
 
 
-@_register_methods
+@register_methods
 @declare_units(da="[precipitation]", check_output=False)
-def many_1mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
-    """Check if precipitation values repeat at 1 mm/day for 10 or more days.
+def values_of_1mm_repeating_for_n_or_more_days(
+    da: xarray.DataArray, *, n: int = 10
+) -> xarray.DataArray:
+    """Check if precipitation values repeat at 1 mm/day for n or more days.
 
     Parameters
     ----------
     da : xarray.DataArray
+    n : int
+      Number of days needed to trigger flag.
 
     Returns
     -------
@@ -319,28 +315,63 @@ def many_1mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.units import convert_units_to
-    >>> from xclim.indices.run_length import suspicious_run
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> threshold = convert_units_to("1 mm d-1", ds.pr)
-    >>> flagged = suspicious_run(ds.pr, window=10, op="==", thresh=threshold)
+    >>> days = 10
+    >>> flagged = values_of_1mm_repeating_for_n_or_more_days(ds.pr, n=days)
     """
     thresh = convert_units_to("1 mm d-1", da)
-    repetitions = _sanitize_attrs(suspicious_run(da, window=10, op="==", thresh=thresh))
-    repetitions.attrs[
-        "description"
-    ] = f"Repetitive precipitation values at 1 mm/d for at least 10 days found for {da.name}."
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
+    description = f"Repetitive precipitation values at 1 mm/d for at least 10 days found for {da.name}."
+    repetitions.attrs["description"] = description
     return repetitions
 
 
-@_register_methods
+@register_methods
 @declare_units(da="[precipitation]", check_output=False)
-def many_5mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
+def values_of_5mm_repeating_for_n_or_more_days(
+    da: xarray.DataArray, *, n: int = 5
+) -> xarray.DataArray:
+    """Check if precipitation values repeat at 5 mm/day for n or more days.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+    n : int
+      Number of days needed to trigger flag.
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+
+    Examples
+    --------
+    To gain access to the flag_array:
+
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> days = 5
+    >>> flagged = values_of_5mm_repeating_for_n_or_more_days(ds.pr, n=days)
+    """
+    thresh = convert_units_to("5 mm d-1", da)
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
+    description = f"Repetitive precipitation values at 5 mm/d for at least {n} days found for {da.name}."
+    repetitions.attrs["description"] = description
+    return repetitions
+
+
+@register_methods
+@declare_units(da="[precipitation]", check_output=False)
+def values_of_thresh_repeating_for_n_or_more_days(
+    da: xarray.DataArray, *, n: int, thresh: str
+) -> xarray.DataArray:
     """Check if precipitation values repeat at 5 mm/day for 5 or more days.
 
     Parameters
     ----------
     da : xarray.DataArray
+    n : int
+      Number of days needed to trigger flag.
+    thresh : str
+      Repeating values to search for that will trigger flag.
 
     Returns
     -------
@@ -350,26 +381,27 @@ def many_5mm_repetitions(da: xarray.DataArray) -> xarray.DataArray:
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.units import convert_units_to
-    >>> from xclim.indices.run_length import suspicious_run
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> threshold = convert_units_to("5 mm d-1", ds.pr)
-    >>> flagged = suspicious_run(ds.pr, window=5, op="==", thresh=threshold)
+    >>> units = "5 mm d-1"
+    >>> days = 5
+    >>> flagged = values_of_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units)
     """
-    thresh = convert_units_to("5 mm d-1", da)
-    repetitions = _sanitize_attrs(suspicious_run(da, window=5, op="==", thresh=thresh))
-    repetitions.attrs[
-        "description"
-    ] = f"Repetitive precipitation values at 5mm d-1 for at least 5 days found for {da.name}."
+    thresh = convert_units_to(thresh, da)
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
+    description = (
+        f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
+    )
+    repetitions.attrs["description"] = description
     return repetitions
 
 
 # TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
 
 
-@_register_methods
+@register_methods
 def outside_n_standard_deviations_of_climatology(
     da: xarray.DataArray,
+    *,
     window: int = 5,
     n: int = 5,
 ) -> xarray.DataArray:
@@ -379,6 +411,7 @@ def outside_n_standard_deviations_of_climatology(
     ----------
     da : xarray.DataArray
     window : int
+      Moving window used to determining climatological mean.
     n : int
       Number of standard deviations.
 
@@ -390,28 +423,30 @@ def outside_n_standard_deviations_of_climatology(
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> mu, sig = climatological_mean_doy(ds.tas, window=5)
     >>> std_devs = 5
-    >>> flagged = ~within_bnds_doy(ds.tas, mu + std_devs * sig, mu - std_devs * sig)
+    >>> window = 5
+    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=window)
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(within_bnds_doy(da, mu + n * sig, mu - n * sig))
-    within_bounds.attrs[
-        "description"
-    ] = f"Values outside of {n} standard deviations from climatology found for {da.name}."
+    description = f"Values outside of {n} standard deviations from climatology found for {da.name}."
+    within_bounds.attrs["description"] = description
     return ~within_bounds
 
 
-@_register_methods
-def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArray:
+@register_methods
+def values_repeating_for_n_or_more_days(
+    da: xarray.DataArray, *, n: int
+) -> xarray.DataArray:
     """Check if exact values are found to be repeating for at least 5 or more days.
 
     Parameters
     ----------
     da : xarray.DataArray
+    n : int
+      Number of days to trigger flag.
 
     Returns
     -------
@@ -421,18 +456,16 @@ def values_repeating_for_5_or_more_days(da: xarray.DataArray) -> xarray.DataArra
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.indices.run_length import suspicious_run
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> flagged = suspicious_run(ds.pr, window=5)
+    >>> flagged = values_repeating_for_n_or_more_days(ds.pr, n=5)
     """
-    repetition = _sanitize_attrs(suspicious_run(da, window=5))
-    repetition.attrs[
-        "description"
-    ] = f"Runs of repetitive values for 5 or more days found for {da.name}."
+    repetition = _sanitize_attrs(suspicious_run(da, window=n))
+    description = f"Runs of repetitive values for {n} or more days found for {da.name}."
+    repetition.attrs["description"] = description
     return repetition
 
 
-@_register_methods
+@register_methods
 def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArray:
     """Check if variable values are negative for any given day.
 
@@ -452,9 +485,8 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     >>> flagged = (ds.huss < 0) | (ds.huss > 100)  # doctest: +SKIP
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
-    unbounded_percentages.attrs[
-        "description"
-    ] = f"Percentage values found beyond bounds found for {da.name}."
+    description = f"Percentage values found beyond bounds found for {da.name}."
+    unbounded_percentages.attrs["description"] = description
     return unbounded_percentages
 
 
@@ -513,6 +545,7 @@ def data_flags(
     """
 
     def _missing_vars(function, dataset: xarray.Dataset):
+        """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
@@ -559,10 +592,19 @@ def data_flags(
     flags = dict()
     for name, kwargs in flag_func.items():
         func = _REGISTRY[name]
+        variable_name = str(name)
+
+        if kwargs:
+            for param, value in kwargs.items():
+                if isinstance(value, (int, str)):
+                    variable_name = variable_name.replace(
+                        f"_{param}_", f"_{str(value).replace(' ', '_')}_"
+                    )
+
         try:
             extras = _missing_vars(func, ds)
         except MissingVariableError:
-            flags[name] = None
+            flags[variable_name] = None
         else:
             with xarray.set_options(keep_attrs=True):
                 out = func(da, **extras, **(kwargs or dict()))
@@ -573,7 +615,7 @@ def data_flags(
                 if dims is not None:
                     out = out.any(dims)
 
-            flags[name] = out
+            flags[variable_name] = out
 
     dsflags = xarray.Dataset(data_vars=flags)
 
@@ -587,7 +629,9 @@ def data_flags(
 def ecad_compliant(
     ds: xarray.Dataset, raise_flags: bool = False, append: bool = True
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """
+    """ECAD compliant.
+
+    Assert file adheres to ECAD-based quality assurance checks.
 
     Parameters
     ----------
@@ -615,7 +659,7 @@ def ecad_compliant(
     ecad_flag = xarray.DataArray(
         ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
         name="ecad_qc_flag",
-        attrs=dict(comment="Adheres to ECAD quality control checks"),
+        attrs=dict(comment="Adheres to ECAD quality control checks."),
     )
 
     if append:
