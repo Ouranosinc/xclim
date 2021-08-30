@@ -7,7 +7,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.indicator import Daily
-from xclim.core.utils import _calc_perc, ensure_chunk_size, walk_map, wrapped_partial
+from xclim.core.utils import _calc_perc_sp, ensure_chunk_size, walk_map, wrapped_partial
 
 
 def test_walk_map():
@@ -93,10 +93,19 @@ def test_ensure_chunk_size():
 
 
 class Test_calc_perc:
+    def test_calc_perc_TMP_PERF(self):
+        import timeit
+
+        import xclim.core.utils
+
+        arr = np.arange(1, 100)
+        time = timeit.timeit(lambda: _calc_perc_sp(arr, p=[40.0]), number=10)
+        print(time)
+
     def test_calc_perc_type7(self):
         # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
-        res = _calc_perc(arr, p=[40.0])
+        res = _calc_perc_sp(arr, p=[40.0])
         # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
         assert res[()] == 29
 
@@ -105,7 +114,7 @@ class Test_calc_perc:
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )
-        res = _calc_perc(
+        res = _calc_perc_sp(
             arr,
             p=[40.0],
             alpha=1.0 / 3.0,
@@ -120,7 +129,7 @@ class Test_calc_perc:
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )
-        res = _calc_perc(
+        res = _calc_perc_sp(
             arr,
             p=[40.0],
         )
@@ -130,7 +139,7 @@ class Test_calc_perc:
 
     def test_calc_perc_nan(self):
         arr = np.asarray([np.NAN])
-        res = _calc_perc(
+        res = _calc_perc_sp(
             arr,
             p=[50.0],
         )
@@ -138,7 +147,7 @@ class Test_calc_perc:
 
     def test_calc_perc_partial_nan(self):
         arr = np.asarray([np.NAN, 41.0, 43.0])
-        res = _calc_perc(
+        res = _calc_perc_sp(
             arr,
             p=[50.0],
         )

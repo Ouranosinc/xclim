@@ -16,9 +16,11 @@ from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
+from sys import float_info
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
+import bottleneck
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
@@ -209,28 +211,9 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc(
+def _calc_perc_sp(
     arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
 ) -> np.array:
-    """Ufunc-like computing a percentile over the last axis of the array.
-
-    Default value for alpha and beta gives type 7 interpolation method of Hyndman&Fan, similar to what np.percentile does.
-
-    Parameters
-    ----------
-    arr : np.array
-        Percentile is computed over the last axis.
-    p : sequence of floats
-        Percentile to compute, between 0 and 100. (the default is 50)
-    alpha: float
-        used with beta to express the linear interpolation wanted.
-    beta: float
-        used with alpha to express the linear interpolation wanted.
-
-    Returns
-    -------
-    masked numpy array
-    """
     quantiles = [per / 100.0 for per in p]
     # mask the NaNs
     arr = np.ma.fix_invalid(arr)
@@ -244,6 +227,70 @@ def _calc_perc(
         shape += quantiles.shape
         result = result.reshape(shape)
     return result
+
+
+def _calc_perc_np(
+    arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
+) -> np.array:
+    if p is None:
+        p = [50]
+    nan_count = np.isnan(arr).sum(axis=-1)
+    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
+    nans = (nan_count > 0) & (nan_count < arr.shape[-1])
+    if np.any(nans):
+        out_mask = np.stack([nans] * len(p), axis=-1)
+        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
+        # only use nanpercentile where we need it (slow performance compared to standard) :
+        out[out_mask] = np.moveaxis(
+            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
+        ).ravel()
+    return out
+
+
+def calc_perc(arr: np.array, percentiles: Sequence[float] = [50.0]):
+    result = np.array([_calc_quantile(arr, per / 100.0) for per in percentiles])
+    return np.moveaxis(result, 0, -1)
+
+
+def _calc_quantile(arr: np.array, quantile: float):
+    #  TODO - alpha and beta are necessarily 1/3
+    initial_axis = -1
+    TARGET_AXIS = 0  # TODO could be a documented constant
+    axis_length = arr.shape[initial_axis]  # TODO Add parameter for axis instead of -1
+    arr = np.moveaxis(arr, initial_axis, TARGET_AXIS)
+    if axis_length == 0:
+        return np.NAN  # TODO maybe raise an exception
+    if axis_length == 1:
+        return arr[()]
+    virtual_index = axis_length * quantile + quantile * 1 / 3.0 + 1 / 3
+    if virtual_index >= axis_length - 1:
+        return arr[-1]
+    next_index = int(np.floor(virtual_index))
+    previous_index = next_index - 1
+    if axis_length <= 100 or bottleneck.anynan(arr):
+        # if the array has nan, ::sort will push them at the end of the sorted array which is very convenient
+        arr.sort(axis=TARGET_AXIS)
+    else:
+        # Partition is faster only when len(arr) > 100
+        arr.partition([previous_index, next_index], axis=TARGET_AXIS)
+    gamma = virtual_index - next_index
+    # TODO find out why epsilon * 4 (it is done like this in R and in climdex c++ impl)
+    fuzz = float_info.epsilon * 4
+    previous_element = arr[previous_index]
+    next_element = arr[next_index]
+    if gamma < fuzz:
+        return np.where(
+            np.isnan(previous_element),
+            np.nanargmax(arr, axis=TARGET_AXIS),
+            previous_element,
+        )
+    else:
+        interpolation = gamma * next_element + (1 - gamma) * previous_element
+        return np.where(
+            np.isnan(interpolation),
+            np.nanargmax(arr, axis=TARGET_AXIS),
+            interpolation,
+        )
 
 
 def raise_warn_or_log(

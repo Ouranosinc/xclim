@@ -28,7 +28,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
 from xclim.core.formatting import update_xclim_history
-from xclim.core.utils import DayOfYearStr, _calc_perc
+from xclim.core.utils import DayOfYearStr, _calc_perc_np, _calc_perc_sp
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
@@ -495,7 +495,7 @@ def percentile_doy(
         per = [per]
 
     p = xr.apply_ufunc(
-        _calc_perc,
+        _calc_perc_np,
         rrr,
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],

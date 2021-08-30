@@ -8,7 +8,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import _calc_perc  # noqa
+from xclim.core.utils import _calc_perc_sp  # noqa
 
 
 def create_ensemble(
@@ -231,7 +231,7 @@ def ensemble_percentiles(
             ens = ens.chunk({"realization": -1})
 
     out = xr.apply_ufunc(
-        _calc_perc,
+        _calc_perc_sp,
         ens,
         input_core_dims=[["realization"]],
         output_core_dims=[["percentiles"]],
