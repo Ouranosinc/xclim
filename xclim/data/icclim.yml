@@ -101,7 +101,7 @@ indices:
   SU:
     base: tx_days_above
     output:
-      long_name: Summer days (TX>25◦C)
+      long_name: Summer days (TX>25°C)
     index_function:
       parameters:
         thresh: 25 degC
@@ -116,28 +116,28 @@ indices:
   TR:
     base: tropical_nights
     output:
-      long_name: Tropical nights (TN>20◦C)
+      long_name: Tropical nights (TN>20°C)
     index_function:
       parameters:
         thresh: 20 degC
   GD4:
     base: growing_degree_days
     output:
-      long_name: Growing degree days (sum of TG>4◦C)
+      long_name: Growing degree days (sum of TG>4°C)
     index_function:
       parameters:
         thresh: 4 degC
   FD:
     base: frost_days
     output:
-      long_name: Frost days (TN<0◦C)
+      long_name: Frost days (TN<0°C)
     index_function:
       parameters:
         thresh: 0 degC
   CFD:
     base: consecutive_frost_days
     output:
-      long_name: Maximum number of consecutive frost days (TN<0◦C)
+      long_name: Maximum number of consecutive frost days (TN<0°C)
     index_function:
       parameters:
         thresh: 0 degC
@@ -152,14 +152,14 @@ indices:
   ID:
     base: ice_days
     output:
-      long_name: Ice days (TX<0◦C)
+      long_name: Ice days (TX<0°C)
     index_function:
       parameters:
         thresh: 0 degC
   HD17:
     base: heating_degree_days
     output:
-      long_name: Heating degree days (sum of17◦C - TG)
+      long_name: Heating degree days (sum of17°C - TG)
     index_function:
       parameters:
         thresh: 17 degC
