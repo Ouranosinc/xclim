@@ -2,17 +2,17 @@
 History
 =======
 
-0.29.0 (2021-08-27)
+0.29.0 (2021-08-30)
 -------------------
 
 Announcements
 ~~~~~~~~~~~~~
 * It was found that the ``ExtremeValues`` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from ``xclim.sdba`` but can still be accessed via ``xclim.sdba.adjustment``, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
-* It was found that the ``add_dims`` argument of ``sdba.Grouper`` had some caveats throughout ``sdba``. This argument is to be used with care before a careful analysis and more testing is done within xclim.
+* It was found that the ``add_dims`` argument of ``sdba.Grouper`` had some caveats throughout ``sdba``. This argument is to be used with care before a careful analysis and more testing is done within ``xclim``.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* xclim has switched back to updating the ``history`` attribute (instead of ``xclim_history``). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* ``xclim`` has switched back to updating the ``history`` attribute (instead of ``xclim_history``). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
 * Refactor of ``sdba.processing``. Now all functions take one or more dataarrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
 * Add unit handling in ``sdba``. Most parameters involving quantities are now expecting strings (and not numbers). Adjustment objects will ensure ref, hist and sim all have the same units (taking ref as reference).
 * The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
@@ -22,26 +22,26 @@ Breaking changes
 
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
-* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
-* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
+* ``snowfall_approximation`` used a `"<"` condition instead of `"<="` to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+* Removed the `"gis"`, `"docs"`, `"test"` and `"setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
-* Functions computing run lengths (sequences of consecutive True values) now take the ``index`` argument. Possible values are ``first`` and ``last``, indicating which item in the run should be used to index the run length. The default is set to ``first``, preserving the current behavior.
+* Functions computing run lengths (sequences of consecutive `"True"` values) now take the ``index`` argument. Possible values are ``first`` and ``last``, indicating which item in the run should be used to index the run length. The default is set to `"first"`, preserving the current behavior.
 * New ``sdba_encode_cf`` option to workaround a cftime/xarray performance issue when using dask.
 
 New indicators
 ~~~~~~~~~~~~~~
 * ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
 * ``qian_weighted_mean_average`` (based on Qian et al. (2010)) is offered as an alternate method for determining the start date using a weighted 5-day average (``method="qian"``). Can also be used directly as an indice.
-* ``cold_and_dry_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``CD`` to ICCLIM module.
-* ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` to ICCLIM module.
-* ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
-* ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
+* ``cold_and_dry_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``CD`` indicator to ICCLIM module.
+* ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` indicator to ICCLIM module.
+* ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` indicator to ICCLIM module.
+* ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` indicator to ICCLIM module.
 * ``calm_days`` indicator returns the number of days where surface wind speed is below threshold.
-* ``windy_days`` indicator returns the number of days where surface wind speed in above threshold.
+* ``windy_days`` indicator returns the number of days where surface wind speed is above threshold.
 
 Bug fixes
 ~~~~~~~~~
