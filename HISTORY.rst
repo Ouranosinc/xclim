@@ -5,6 +5,10 @@ History
 0.30.0 (unreleased)
 -------------------
 
+Bug fixes
+~~~~~~~~~
+* Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
