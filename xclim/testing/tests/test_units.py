@@ -5,6 +5,7 @@ from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
+    amount2rate,
     check_units,
     convert_units_to,
     pint2cfunits,
@@ -177,3 +178,23 @@ def test_rate2amount(pr_series):
         am_ys = rate2amount(pr_ys)
 
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
+
+
+def test_amount2rate(pr_series):
+    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
+    am = rate2amount(pr)
+
+    np.testing.assert_allclose(amount2rate(am), pr)
+
+    with xr.set_options(keep_attrs=True):
+        am_ms = am.resample(time="MS").sum()
+        am_m = am.resample(time="M").sum()
+
+        pr_ms = amount2rate(am_ms)
+        np.testing.assert_allclose(pr_ms, 1)
+        pr_m = amount2rate(am_m)
+        np.testing.assert_allclose(pr_m, 1)
+
+        am_ys = am.resample(time="YS").sum()
+        pr_ys = amount2rate(am_ys)
+        np.testing.assert_allclose(pr_ys, 1)

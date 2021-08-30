@@ -356,13 +356,11 @@ FREQ_UNITS = {
     "H": "h",
     "D": "d",
     "W": "week",
-    "M": "month",
-    "A": "yr",
 }
 """
 Resampling frequency units for :py:func:`infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit.
+Mapping from offset base to CF-compliant unit. Only constant-length frequencies are included.
 """
 
 
@@ -380,11 +378,32 @@ Mapping from english name to a tuple of offset base and default freq value.
 
 
 def infer_sampling_units(
-    da: xr.DataArray, deffreq: Optional[str] = "D"
+    da: xr.DataArray,
+    deffreq: Optional[str] = "D",
+    dim: str = "time",
 ) -> Tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
-    If `xr.infer_freq` fails, returns `deffreq`.
+    Parameters
+    ----------
+    da : xr.DataArray
+      A DataArray from which to take coordinate `dim`.
+    deffreq : str
+      If no frequency is inferred from `da[dim]`, take this one.
+    dim : str
+      Dimension from which to infer the frequency.
+
+    Raises
+    ------
+    ValueError
+      If the frequency has no exact corresponding units.
+
+    Returns
+    -------
+    m : int
+      The magnitude (number of base periods per period)
+    u : str
+      Units as a string, understandable by pint.
     """
     freq = xr.infer_freq(da.time)
     if freq is None:
@@ -461,6 +480,74 @@ def to_agg_units(
     return out
 
 
+def _rate_and_amount_converter(
+    da: xr.DataArray, dim: str = "time", to: str = "amount", out_units: str = None
+) -> xr.DataArray:
+    """Private function performing the actual conversion for :py:func:`rate2amount` and :py:func:`amount2rate`."""
+    m = 1
+    u = None  # Default to assume a non-uniform axis
+    label = "lower"
+    time = da[dim]
+
+    try:
+        freq = xr.infer_freq(da[dim])
+    except ValueError:
+        freq = None
+    if freq is not None:
+        multi, base, start_str, _ = parse_offset(freq)
+        if base in ["M", "Q", "A"]:
+            start = time.indexes[dim][0]
+            if start_str != "S":
+                # Anchor is on the end of the period, substract 1 period.
+                start = start - xr.coding.cftime_offsets.to_offset(freq)
+                # In the diff below, assign to upper label!
+                label = "upper"
+            # We generate "time" with an extra element, so we do not need to repeat the last element below.
+            time = xr.DataArray(
+                date_range(
+                    start, periods=len(time) + 1, freq=freq, calendar=get_calendar(time)
+                ),
+                dims=(dim,),
+                name=dim,
+                attrs=da[dim].attrs,
+            )
+        else:
+            m, u = int(multi or "1"), FREQ_UNITS[base]
+
+    # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
+    if u is None:
+        # Get sampling period lengths in nanoseconds
+        # In the case with no freq, last period as the same length as the one before.
+        # In the case with freq in M, Q, A, this has been dealt with above in `time` and `label` has been update accordingly.
+        dt = (
+            time.diff(dim, label=label)
+            .reindex({dim: da[dim]}, method="ffill")
+            .astype(float)
+        )
+        dt = dt / 1e9  # Convert to seconds
+
+        if to == "amount":
+            tu = (str2pint(da.units) * str2pint("s")).to_reduced_units()
+            out = da * dt * tu.m
+        elif to == "rate":
+            tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
+            out = (da / dt) * tu.m
+
+        out.attrs["units"] = pint2cfunits(tu)
+
+    else:
+        q = units.Quantity(m, u)
+        if to == "amount":
+            out = pint_multiply(da, q)
+        else:
+            out = pint_multiply(da, 1 / q)
+
+    if out_units:
+        out = convert_units_to(out, out_units)
+
+    return out
+
+
 def rate2amount(
     rate: xr.DataArray, dim: str = "time", out_units: str = None
 ) -> xr.DataArray:
@@ -469,6 +556,8 @@ def rate2amount(
     If the sampling period length cannot be inferred, the rate values
     are multiplied by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
+
+    This is the inverse operation of :py:func:`amount2rate`.
 
     Parameters
     ----------
@@ -506,57 +595,30 @@ def rate2amount(
     >>> pram.values
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
     """
-    m = 1
-    u = None  # Default to assume a non-uniform axis
-    label = "lower"
-    time = rate[dim]
+    return _rate_and_amount_converter(rate, dim=dim, to="amount", out_units=out_units)
 
-    try:
-        freq = xr.infer_freq(rate[dim])
-    except ValueError:
-        pass
-    else:
-        multi, base, start_str, _ = parse_offset(freq)
-        if base in ["M", "Q", "A"]:
-            start = time.indexes[dim][0]
-            if start_str != "S":
-                # Anchor is on the end of the period, substract 1 period.
-                start = start - xr.coding.cftime_offsets.to_offset(freq)
-                # In the diff below, assign to upper label!
-                label = "upper"
-            # We generate "time" with an extra element, so we do not need to repeat the last element below.
-            time = xr.DataArray(
-                date_range(
-                    start, periods=len(time) + 1, freq=freq, calendar=get_calendar(time)
-                ),
-                dims=(dim,),
-                name=dim,
-                attrs=rate[dim].attrs,
-            )
-        else:
-            m, u = int(multi or "1"), FREQ_UNITS[base]
 
-    # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
-    if u is None:
-        # Get sampling period lengths in nanoseconds
-        # In the case with no freq, last period as the same length as the one before.
-        # In the case with freq in M, Q, A, this has been dealt with above in `time` and `label` has been update accordingly.
-        dt = (
-            time.diff(dim, label=label)
-            .reindex({dim: rate[dim]}, method="ffill")
-            .astype(float)
-        )
-        dt = dt / 1e9  # Convert to seconds
-        tu = (str2pint(rate.units) * str2pint("s")).to_reduced_units()
-        amount = rate * dt * tu.m
-        amount.attrs["units"] = pint2cfunits(tu)
-        if out_units:
-            amount = convert_units_to(amount, out_units)
-    else:
-        q = units.Quantity(m, u)
-        amount = pint_multiply(rate, q, out_units=out_units)
+def amount2rate(
+    amount: xr.DataArray, dim: str = "time", out_units: str = None
+) -> xr.DataArray:
+    """Convert an amount variable to a rate by dividing by the sampling period length.
 
-    return amount
+    If the sampling period length cannot be inferred, the amount values
+    are divided by the duration between their time coordinate and the next one. The last period
+    is estimated with the duration of the one just before.
+
+    This is the inverse operation of :py:func:`rate2amount`.
+
+    Parameters
+    ----------
+    amount : xr.DataArray
+      "amount" variable. Ex: Precipitation amount in "mm".
+    dim : str
+      The time dimension.
+    out_units : str, optional
+      Optional output units to convert to.
+    """
+    return _rate_and_amount_converter(amount, dim=dim, out_units=out_units, to="rate")
 
 
 @datacheck

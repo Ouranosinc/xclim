@@ -5,6 +5,10 @@ History
 0.30.0 (unreleased)
 -------------------
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were already not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
+
 Fixes
 ~~~~~
 * ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
