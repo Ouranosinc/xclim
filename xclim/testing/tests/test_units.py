@@ -9,6 +9,7 @@ from xclim.core.units import (
     convert_units_to,
     pint2cfunits,
     pint_multiply,
+    rate2amount,
     str2pint,
     units,
     units2pint,
@@ -154,3 +155,25 @@ class TestCheckUnits:
     def test_user_error(self):
         with pytest.raises(ValidationError):
             check_units("deg C", "[temperature]")
+
+
+def test_rate2amount(pr_series):
+    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
+
+    am_d = rate2amount(pr)
+    np.testing.assert_array_equal(am_d, 86400)
+
+    with xr.set_options(keep_attrs=True):
+        pr_ms = pr.resample(time="MS").mean()
+        pr_m = pr.resample(time="M").mean()
+
+        am_ms = rate2amount(pr_ms)
+        np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
+        am_m = rate2amount(pr_m)
+        np.testing.assert_array_equal(am_m[:4], 86400 * np.array([31, 28, 31, 30]))
+        np.testing.assert_array_equal(am_ms, am_m)
+
+        pr_ys = pr.resample(time="YS").mean()
+        am_ys = rate2amount(pr_ys)
+
+        np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
