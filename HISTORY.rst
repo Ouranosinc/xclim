@@ -7,13 +7,13 @@ History
 
 Bug fixes
 ~~~~~~~~~
+* Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
 * Addressed an edge case where ``test_sdba::test_standardize`` randomness could generate values that surpass the test error tolerance.
 * Added a missing `.txt` file to the MANIFEST of the source distributable in order to be able to run all tests.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
-
 
 0.29.0 (2021-08-30)
 -------------------
