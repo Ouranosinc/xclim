@@ -411,9 +411,13 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        return int(multi or "1"), FREQ_UNITS[base]
+        out = int(multi or "1"), FREQ_UNITS[base]
     except KeyError:
         raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
+    if out == (7, "d"):
+        # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
+        return 1, "week"
+    return out
 
 
 def to_agg_units(
@@ -451,12 +455,12 @@ def to_agg_units(
     'd'
 
     Similarly, here we compute the total heating degree-days but we have weekly data:
-    >>> time = xr.cftime_range('2001-01-01', freq='MS', periods=12)
-    >>> tas = xr.DataArray(np.arange(12) + 10, dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
+    >>> time = xr.cftime_range('2001-01-01', freq='7D', periods=52)
+    >>> tas = xr.DataArray(np.arange(52) + 10, dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
     >>> degdays = (tas - 16).clip(0).sum('time')   # Integral of  temperature above a threshold
     >>> degdays = to_agg_units(degdays, tas, op='delta_prod')
     >>> degdays.units
-    'month delta_degC'
+    'week delta_degC'
 
     Which we can always convert to the more common "K days":
 
