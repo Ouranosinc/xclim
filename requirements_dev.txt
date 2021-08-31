@@ -11,6 +11,7 @@ pylint
 pytest
 pytest-cov
 pytest-runner
+tokenize-rt
 tox
 xdoctest
 # Documentation and examples
