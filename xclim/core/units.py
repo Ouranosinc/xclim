@@ -624,14 +624,16 @@ def declare_units(
             if check_output:
                 if isinstance(out, tuple):
                     for outd in out:
-                        assert (
-                            "units" in outd.attrs
-                        ), "No units were assigned in one of the indice's outputs."
+                        if "units" not in outd.attrs:
+                            raise ValueError(
+                                "No units were assigned in one of the indice's outputs."
+                            )
                         outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
                 else:
-                    assert (
-                        "units" in out.attrs
-                    ), "No units were assigned to the indice's output."
+                    if "units" not in out.attrs:
+                        raise ValueError(
+                            "No units were assigned to the indice's output."
+                        )
                     out.attrs["units"] = ensure_cf_units(out.attrs["units"])
 
             return out

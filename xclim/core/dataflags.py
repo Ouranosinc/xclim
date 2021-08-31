@@ -641,7 +641,7 @@ def data_flags(
 def ecad_compliant(
     ds: xarray.Dataset, raise_flags: bool = False, append: bool = True
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """Run ECAD compliance tests
+    """Run ECAD compliance tests.
 
     Assert file adheres to ECAD-based quality assurance checks.
 
