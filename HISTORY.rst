@@ -12,6 +12,8 @@ Breaking changes
 Bug fixes
 ~~~~~~~~~
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
+* Addressed an edge case where ``test_sdba::test_standardize`` randomness could generate values that surpass the test error tolerance.
+* Added a missing `.txt` file to the MANIFEST of the source distributable in order to be able to run all tests.
 * ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
 
 Internal Changes
