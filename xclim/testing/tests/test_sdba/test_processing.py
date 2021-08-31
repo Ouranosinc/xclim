@@ -137,7 +137,7 @@ def test_standardize():
 
     xp, avg, std = standardize(x, dim="y")
 
-    np.testing.assert_allclose(avg, 0, atol=3e-2)
+    np.testing.assert_allclose(avg, 0, atol=4e-2)
     np.testing.assert_allclose(std, 1, atol=2e-2)
 
     xp, avg, std = standardize(x, mean=avg, dim="y")
