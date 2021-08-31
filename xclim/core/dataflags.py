@@ -180,7 +180,7 @@ def tas_below_tasmin(
 @register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_low(
-    da: xarray.DataArray, thresh: str = "-90 degC"
+    da: xarray.DataArray, *, thresh: str = "-90 degC"
 ) -> xarray.DataArray:
     """Check if temperatures values are below -90 degrees Celsius for any given day.
 
@@ -199,8 +199,8 @@ def temperature_extremely_low(
 
     >>> from xclim.core.dataflags import temperature_extremely_low
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> threshold = "-90 degC"
-    >>> flagged = temperature_extremely_low(ds.tas, threshold)
+    >>> temperature = "-90 degC"
+    >>> flagged = temperature_extremely_low(ds.tas, thresh=temperature)
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_low = _sanitize_attrs(da < thresh_converted)
@@ -231,8 +231,8 @@ def temperature_extremely_high(
 
     >>> from xclim.core.dataflags import temperature_extremely_high
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> threshold = "60 degC"
-    >>> flagged = temperature_extremely_high(ds.tas, threshold)
+    >>> temperature = "60 degC"
+    >>> flagged = temperature_extremely_high(ds.tas, thresh=temperature)
     """
     thresh_converted = convert_units_to(thresh, da)
     extreme_high = _sanitize_attrs(da > thresh_converted)
@@ -291,8 +291,8 @@ def very_large_precipitation_events(
 
     >>> from xclim.core.dataflags import very_large_precipitation_events
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> threshold = "300 mm d-1"
-    >>> flagged = very_large_precipitation_events(ds.pr, threshold)
+    >>> rate = "300 mm d-1"
+    >>> flagged = very_large_precipitation_events(ds.pr, thresh=rate)
     """
     thresh_converted = convert_units_to(thresh, da)
     very_large_events = _sanitize_attrs(da > thresh_converted)
