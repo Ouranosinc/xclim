@@ -106,6 +106,7 @@ def tasmax_below_tasmin(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import tasmax_below_tasmin
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> flagged = tasmax_below_tasmin(ds.tasmax, ds.tasmin)
     """
@@ -136,6 +137,7 @@ def tas_exceeds_tasmax(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import tas_exceeds_tasmax
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> flagged = tas_exceeds_tasmax(ds.tas, ds.tasmax)
     """
@@ -165,8 +167,9 @@ def tas_below_tasmin(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import tas_below_tasmin
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = tasmax_below_tasmin(ds.tas, ds.tasmin)
+    >>> flagged = tas_below_tasmin(ds.tas, ds.tasmin)
     """
     tas_lt_tasmin = _sanitize_attrs(tas < tasmin)
     description = "Mean temperature values found below minimum temperatures."
@@ -194,6 +197,7 @@ def temperature_extremely_low(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import temperature_extremely_low
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> threshold = "-90 degC"
     >>> flagged = temperature_extremely_low(ds.tas, threshold)
@@ -208,7 +212,7 @@ def temperature_extremely_low(
 @register_methods
 @declare_units(da="[temperature]", check_output=False)
 def temperature_extremely_high(
-    da: xarray.DataArray, thresh: str = "60 degC"
+    da: xarray.DataArray, *, thresh: str = "60 degC"
 ) -> xarray.DataArray:
     """Check if temperatures values exceed 60 degrees Celsius for any given day.
 
@@ -225,6 +229,7 @@ def temperature_extremely_high(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import temperature_extremely_high
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> threshold = "60 degC"
     >>> flagged = temperature_extremely_high(ds.tas, threshold)
@@ -254,6 +259,7 @@ def negative_accumulation_values(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import negative_accumulation_values
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = negative_accumulation_values(ds.pr)
     """
@@ -266,7 +272,7 @@ def negative_accumulation_values(
 @register_methods
 @declare_units(da="[precipitation]", check_output=False)
 def very_large_precipitation_events(
-    da: xarray.DataArray, thresh="300 mm d-1"
+    da: xarray.DataArray, *, thresh="300 mm d-1"
 ) -> xarray.DataArray:
     """Check if precipitation values exceed 300 mm/day for any given day.
 
@@ -283,6 +289,7 @@ def very_large_precipitation_events(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import very_large_precipitation_events
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> threshold = "300 mm d-1"
     >>> flagged = very_large_precipitation_events(ds.pr, threshold)
@@ -315,6 +322,7 @@ def values_of_1mm_repeating_for_n_or_more_days(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import values_of_1mm_repeating_for_n_or_more_days
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> days = 10
     >>> flagged = values_of_1mm_repeating_for_n_or_more_days(ds.pr, n=days)
@@ -347,6 +355,7 @@ def values_of_5mm_repeating_for_n_or_more_days(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import values_of_5mm_repeating_for_n_or_more_days
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> days = 5
     >>> flagged = values_of_5mm_repeating_for_n_or_more_days(ds.pr, n=days)
@@ -363,7 +372,7 @@ def values_of_5mm_repeating_for_n_or_more_days(
 def values_of_thresh_repeating_for_n_or_more_days(
     da: xarray.DataArray, *, n: int, thresh: str
 ) -> xarray.DataArray:
-    """Check if precipitation values repeat at 5 mm/day for 5 or more days.
+    """Check if array values repeat at a given threshold for 'n' or more days.
 
     Parameters
     ----------
@@ -381,6 +390,7 @@ def values_of_thresh_repeating_for_n_or_more_days(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import values_of_thresh_repeating_for_n_or_more_days
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> units = "5 mm d-1"
     >>> days = 5
@@ -423,6 +433,7 @@ def outside_n_standard_deviations_of_climatology(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import outside_n_standard_deviations_of_climatology
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> std_devs = 5
     >>> window = 5
@@ -456,6 +467,7 @@ def values_repeating_for_n_or_more_days(
     --------
     To gain access to the flag_array:
 
+    >>> from xclim.core.dataflags import values_repeating_for_n_or_more_days
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = values_repeating_for_n_or_more_days(ds.pr, n=5)
     """
@@ -480,12 +492,12 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     Examples
     --------
     To gain access to the flag_array:
-
+    >>> from xclim.core.dataflags import percentage_values_outside_of_bounds
     >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
-    >>> flagged = (ds.huss < 0) | (ds.huss > 100)  # doctest: +SKIP
+    >>> flagged = percentage_values_outside_of_bounds(ds.huss)  # doctest: +SKIP
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
-    description = f"Percentage values found beyond bounds found for {da.name}."
+    description = f"Percentage values beyond bounds found for {da.name}."
     unbounded_percentages.attrs["description"] = description
     return unbounded_percentages
 
@@ -498,10 +510,10 @@ def data_flags(
     freq: Optional[str] = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:
-    """Automatically evaluates the supplied DataArray for a set of data flag tests.
+    """Evaluate the supplied DataArray for a set of data flag checks.
 
     Test triggers depend on variable name and availability of extra variables within Dataset for comparison.
-    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
+    If called with `raise_flags=True`, will raise a DataQualityException with comments for each quality control check raised.
 
     Parameters
     ----------
@@ -629,7 +641,7 @@ def data_flags(
 def ecad_compliant(
     ds: xarray.Dataset, raise_flags: bool = False, append: bool = True
 ) -> Union[xarray.DataArray, xarray.Dataset]:
-    """ECAD compliant.
+    """Run ECAD compliance tests
 
     Assert file adheres to ECAD-based quality assurance checks.
 
@@ -641,7 +653,7 @@ def ecad_compliant(
       Raise exception if any of the quality assessment flags are raised. Default: False.
     append : bool
       If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
-      If `False`, return the DataArray of the `ecad_qc_flag` variable.
+      If `False`, returns the DataArray of the `ecad_qc_flag` variable.
 
     Returns
     -------
