@@ -78,47 +78,48 @@ def _loess_nb(
     Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     """
     n = x.size
-    # Nearest odd number equal or above f * n
-    r = int(2 * (f * n // 2) + 1)
-    # half width of the weights, used when dx > 0
-    hw = int((r - 1) / 2)
-
-    # For equal spacing opt:
-    # Number of values sent to the weigths. Just a bit larger than the window (r)
-    R = r + 4
-    HW = hw + 2
-
     yest = np.zeros(n)
     delta = np.ones(n)
 
+    # Number of points included in the weights calculation
     if dx == 0:
-        xi = x
-        yi = y
+        # No opt. directly the nearest int
+        r = int(np.round(f * n))
+        # With unequal spacing, the rth closest point could be up to r points on either size.
+        HW = min(r + 2, n)
+        R = min(2 * HW, n)
+    else:
+        # Equal spacing, Nearest odd number equal or above f * n
+        r = int(2 * (f * n // 2) + 1)
+        # half width of the weights
+        hw = int((r - 1) / 2)
+        # Number of values sent to the weigth func. Just a bit larger than the window.
+        R = min(r + 4, n)
+        HW = hw + 2
 
     for iteration in range(niter):
-        if dx == 0:
-            xi = x
-            yi = y
         for i in range(n):
+            # We can pass only a subset of the arrays as we already know where the rth closest point will be.
+            if i < HW:
+                xi = x[:R]
+                yi = y[:R]
+                di = delta[:R]
+            elif i >= n - HW - 1:
+                di = delta[n - R :]
+                xi = x[n - R :]
+                yi = y[n - R :]
+            else:
+                di = delta[i - HW : i + HW + 1]
+                xi = x[i - HW : i + HW + 1]
+                yi = y[i - HW : i + HW + 1]
+
             if dx > 0:
                 # When x is equally spaced, we don't need to recompute the weights each time.
-                # We can pass only a subset of the arrays as we already know where the rth closest point will be.
+                # We can also skip the sorting part.
                 # However, contrary to a moving mean, the weights change shape near the edges
-                if i < HW:
-                    xi = x[:R]
-                    yi = y[:R]
-                    di = delta[:R]
-                elif i >= n - HW - 1:
-                    di = delta[n - R :]
-                    xi = x[n - R :]
-                    yi = y[n - R :]
-                else:
-                    di = delta[i - HW : i + HW + 1]
-                    xi = x[i - HW : i + HW + 1]
-                    yi = y[i - HW : i + HW + 1]
-                # Near the edges and on the first iteration away from them,
-                # compute the weights.
                 if i <= HW or i >= n - HW:
+                    # Near the edges and on the first iteration away from them,
+                    # compute the weights.
                     diffs = np.abs(xi - x[i])
 
                     if i < hw:
@@ -136,15 +137,15 @@ def _loess_nb(
                 # h is the distance of the rth closest point.
                 h = np.sort(diffs)[r]
                 # The weights will be 0 everywhere diffs > h.
-                w = delta * weight_func(diffs / h)
+                w = di * weight_func(diffs / h)
             yest[i] = reg_func(x[i], xi, yi, w)
 
         if iteration < niter - 1:
             residuals = y - yest
             s = np.median(np.abs(residuals))
-            delta = residuals / (6.0 * s)
-            delta = (1 - delta ** 2) ** 2
-            delta[np.abs(delta) >= 1] = 0
+            xres = residuals / (6.0 * s)
+            delta = (1 - xres ** 2) ** 2
+            delta[np.abs(xres) >= 1] = 0
 
     return yest
 

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim.sdba.loess import (
     _constant_regression,
@@ -15,20 +14,22 @@ from xclim.testing import open_dataset
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "d,f,w,n,exp",
+    "d,f,w,n,dx,exp",
     [
-        (0, 0.2, _tricube_weighting, 1, [-0.0698081, -0.3623449]),
-        # (0, 0.2, _tricube_weighting, 2, [-0.0679962, -0.3426567]),
-        # (1, 0.2, _tricube_weighting, 1, [-0.0698081, -0.8652001]),
-        (1, 0.2, _tricube_weighting, 4, [-0.0691396, -0.9155697]),
-        (1, 0.4, _gaussian_weighting, 2, [0.00287228, -0.4469015]),
+        (0, 0.2, _tricube_weighting, 1, False, [-0.0698081, -0.3623449]),
+        (0, 0.31, _tricube_weighting, 2, True, [-0.0052623, -0.1453554]),
+        (1, 0.2, _tricube_weighting, 3, True, [-0.0555941, -0.9219777]),
+        (1, 0.2, _tricube_weighting, 4, False, [-0.0691396, -0.9155697]),
+        (1, 0.4, _gaussian_weighting, 2, False, [0.00287228, -0.4469015]),
     ],
 )
-def test_loess_nb(d, f, w, n, exp):
+def test_loess_nb(d, f, w, n, dx, exp):
     regfun = {0: _constant_regression, 1: _linear_regression}[d]
     x = np.linspace(0, 1, num=100)
     y = np.sin(x * np.pi * 10)
-    ys = _loess_nb(x, y, f=f, reg_func=regfun, weight_func=w, niter=n)
+    ys = _loess_nb(  # dx is non 0 if dx is True
+        x, y, f=f, reg_func=regfun, weight_func=w, niter=n, dx=(x[1] - x[0]) * int(dx)
+    )
 
     assert np.isclose(ys[50], exp[0])
     assert np.isclose(ys[-1], exp[1])
@@ -42,14 +43,17 @@ def test_loess_smoothing(use_dask):
         chunks={"lat": 1} if use_dask else None,
     ).tas.isel(lon=0, time=slice(0, 730))
 
-    tasmooth = loess_smoothing(tas, f=0.1)
+    tasmooth = loess_smoothing(tas, f=0.1).load()
 
-    assert np.isclose(tasmooth.isel(lat=0, time=0), 265.76342659)
+    assert np.isclose(tasmooth.isel(lat=0, time=0), 263.19961486)
 
     # Same but with one missing time, so the x axis is not equally spaced
     tas2 = tas.where(tas.time != tas.time[-3], drop=True)
     tasmooth2 = loess_smoothing(tas2, f=0.1)
 
-    xr.testing.assert_equal(
-        tasmooth.isel(time=slice(None, 700)), tasmooth2.isel(time=slice(None, 700))
+    np.testing.assert_allclose(
+        tasmooth.isel(time=slice(None, 700)),
+        tasmooth2.isel(time=slice(None, 700)),
+        rtol=1e-3,
+        atol=1e-2,
     )
