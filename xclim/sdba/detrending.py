@@ -207,9 +207,24 @@ class LoessDetrend(BaseDetrend):
     """
 
     def __init__(
-        self, group="time", kind=ADDITIVE, f=0.2, niter=1, d=0, weights="tricube"
+        self,
+        group="time",
+        kind=ADDITIVE,
+        f=0.2,
+        niter=1,
+        d=0,
+        weights="tricube",
+        equal_spacing=None,
     ):
-        super().__init__(group=group, kind=kind, f=f, niter=niter, d=0, weights=weights)
+        super().__init__(
+            group=group,
+            kind=kind,
+            f=f,
+            niter=niter,
+            d=0,
+            weights=weights,
+            equal_spacing=equal_spacing,
+        )
 
     def _get_trend_group(self, da, *, dim):
         trend = loess_smoothing(
@@ -219,5 +234,6 @@ class LoessDetrend(BaseDetrend):
             niter=self.niter,
             d=self.d,
             weights=self.weights,
+            equal_spacing=self.equal_spacing,
         )
         return trend

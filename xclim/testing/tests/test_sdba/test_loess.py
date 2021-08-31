@@ -41,11 +41,11 @@ def test_loess_smoothing(use_dask):
     tas = open_dataset(
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         chunks={"lat": 1} if use_dask else None,
-    ).tas.isel(lon=0, time=slice(0, 730))
+    ).tas.isel(lon=0, time=slice(0, 740))
 
     tasmooth = loess_smoothing(tas, f=0.1).load()
 
-    assert np.isclose(tasmooth.isel(lat=0, time=0), 263.19961486)
+    assert np.isclose(tasmooth.isel(lat=0, time=0), 263.21876878)
 
     # Same but with one missing time, so the x axis is not equally spaced
     tas2 = tas.where(tas.time != tas.time[-3], drop=True)
@@ -57,3 +57,7 @@ def test_loess_smoothing(use_dask):
         rtol=1e-3,
         atol=1e-2,
     )
+
+    # Same but we force not to use the optimization
+    tasmooth3 = loess_smoothing(tas, f=0.1, equal_spacing=False)
+    np.testing.assert_allclose(tasmooth, tasmooth3, rtol=1e-3, atol=1e-3)

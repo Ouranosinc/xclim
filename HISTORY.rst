@@ -15,6 +15,10 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* The core ``sdba.loess`` method has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%.
+
 0.29.0 (2021-08-30)
 -------------------
 

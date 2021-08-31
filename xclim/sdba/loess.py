@@ -1,5 +1,6 @@
 """LOESS smoothing module."""
-from typing import Callable, Union
+from typing import Callable, Optional, Union
+from warnings import warn
 
 import numba
 import numpy as np
@@ -157,6 +158,7 @@ def loess_smoothing(
     f: float = 0.5,
     niter: int = 2,
     weights: Union[str, Callable] = "tricube",
+    equal_spacing: Optional[bool] = None,
 ):
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
 
@@ -182,6 +184,9 @@ def loess_smoothing(
       Shape of the weighting function, see notes. The user can provide a function or a string:
       "tricube" : a smooth top-hat like curve.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+    equal_spacing : bool, optional
+      Whether to use the equal spacing optimization. If None (the default), it is activated only if the
+      x axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
 
     Notes
     -----
@@ -212,6 +217,13 @@ def loess_smoothing(
 
     diffx = np.diff(da[dim])
     if np.all(diffx == diffx[0]):
+        if equal_spacing is None:
+            equal_spacing = True
+    elif equal_spacing:
+        warn(
+            "The equal spacing optimization was requested, but the x axis is not equally spaced. Strange results might occur."
+        )
+    if equal_spacing:
         dx = float(x[1] - x[0])
     else:
         dx = 0
