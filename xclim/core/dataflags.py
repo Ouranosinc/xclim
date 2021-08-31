@@ -479,7 +479,7 @@ def values_repeating_for_n_or_more_days(
 
 @register_methods
 def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArray:
-    """Check if variable values are negative for any given day.
+    """Check if variable values fall below 0% or rise above 100% for any given day.
 
     Parameters
     ----------
