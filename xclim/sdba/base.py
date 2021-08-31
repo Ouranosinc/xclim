@@ -116,7 +116,7 @@ class Grouper(Parametrizable):
         window : int
           If larger than 1, a centered rolling window along the main dimension is created when grouping data.
           Units are the sampling frequency of the data along the main dimension.
-        add_dims : Optional[Sequence[str]]
+        add_dims : Optional[Union[Sequence[str], str]]
           Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
           by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
           they will be omitted.
@@ -133,6 +133,9 @@ class Grouper(Parametrizable):
 
         if isinstance(interp, str):
             interp = interp != "nearest"
+
+        if isinstance(add_dims, str):
+            add_dims = [add_dims]
 
         add_dims = add_dims or []
         super().__init__(
