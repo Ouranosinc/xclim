@@ -82,3 +82,6 @@ def test_custom_indices():
     out2 = ex2.R95p(pr=pr)  # noqa
 
     xr.testing.assert_equal(out1, out2)
+
+    # Check that missing was not modified even with injecting `freq`.
+    assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing
