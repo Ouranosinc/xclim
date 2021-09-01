@@ -78,7 +78,7 @@ def register_methods(func):
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
     to_remove = list()
     for attr in da.attrs.keys():
-        if not str(attr).endswith("flag"):
+        if not str(attr) == "description":
             to_remove.append(attr)
     for attr in to_remove:
         del da.attrs[attr]
@@ -585,7 +585,7 @@ def data_flags(
 
     if flags is None:
         try:
-            flag_func = VARIABLES.get(var)["data_flags"]
+            flag_funcs = VARIABLES.get(var)["data_flags"]
         except (KeyError, TypeError):
             if raise_flags:
                 raise NotImplementedError(
@@ -597,37 +597,40 @@ def data_flags(
             )
             return xarray.Dataset()
     else:
-        flag_func = flags
+        flag_funcs = flags
 
     ds = ds or xarray.Dataset()
 
     flags = dict()
-    for name, kwargs in flag_func.items():
-        func = _REGISTRY[name]
-        variable_name = str(name)
+    for flag_func in flag_funcs:
+        for name, kwargs in flag_func.items():
+            func = _REGISTRY[name]
+            variable_name = str(name)
 
-        if kwargs:
-            for param, value in kwargs.items():
-                if isinstance(value, (int, str)):
-                    variable_name = variable_name.replace(
-                        f"_{param}_", f"_{str(value).replace(' ', '_')}_"
-                    )
+            if kwargs:
+                for param, value in kwargs.items():
+                    if isinstance(value, (int, str)):
+                        variable_name = variable_name.replace(
+                            f"_{param}_", f"_{str(value).replace(' ', '_')}_"
+                        )
+                        if "-" in variable_name:
+                            variable_name = variable_name.replace("-", "_minus_")
 
-        try:
-            extras = _missing_vars(func, ds)
-        except MissingVariableError:
-            flags[variable_name] = None
-        else:
-            with xarray.set_options(keep_attrs=True):
-                out = func(da, **extras, **(kwargs or dict()))
+            try:
+                extras = _missing_vars(func, ds)
+            except MissingVariableError:
+                flags[variable_name] = None
+            else:
+                with xarray.set_options(keep_attrs=True):
+                    out = func(da, **extras, **(kwargs or dict()))
 
-                # Aggregation
-                if freq is not None:
-                    out = out.resample(time=freq).any()
-                if dims is not None:
-                    out = out.any(dims)
+                    # Aggregation
+                    if freq is not None:
+                        out = out.resample(time=freq).any()
+                    if dims is not None:
+                        out = out.any(dims)
 
-            flags[variable_name] = out
+                flags[variable_name] = out
 
     dsflags = xarray.Dataset(data_vars=flags)
 

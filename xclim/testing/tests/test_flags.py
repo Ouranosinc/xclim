@@ -43,10 +43,12 @@ class TestDataFlags:
             flagged_ds.very_large_precipitation_events.values, False
         )
         np.testing.assert_equal(
-            flagged_ds.values_of_5mm_repeating_for_5_or_more_days.values, False
+            flagged_ds.values_of_5_mm_d_minus_1_repeating_for_5_or_more_days.values,
+            False,
         )
         np.testing.assert_equal(
-            flagged_ds.values_of_1mm_repeating_for_10_or_more_days.values, False
+            flagged_ds.values_of_1_mm_d_minus_1_repeating_for_10_or_more_days.values,
+            False,
         )
 
     def test_suspicious_pr_data(self):
@@ -75,13 +77,15 @@ class TestDataFlags:
 
         flagged = df.data_flags(bad_ds.pr, bad_ds)
 
+        print(flagged.data_vars)
+
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
         np.testing.assert_equal(
-            flagged.values_of_1mm_repeating_for_10_or_more_days.values, True
+            flagged.values_of_1_mm_d_minus_1_repeating_for_10_or_more_days.values, True
         )
         np.testing.assert_equal(
-            flagged.values_of_5mm_repeating_for_5_or_more_days.values, True
+            flagged.values_of_5_mm_d_minus_1_repeating_for_5_or_more_days.values, True
         )
 
     def test_suspicious_tas_data(self):
