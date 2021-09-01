@@ -603,7 +603,6 @@ def data_flags(
 
     flags = dict()
     for flag_func in flag_funcs:
-        print(flag_func)
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)

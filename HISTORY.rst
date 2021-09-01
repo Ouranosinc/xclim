@@ -7,7 +7,7 @@ History
 
 New indicators
 ~~~~~~~~~~~~~~
-* ``climatological_mean_doy`` indice returns the mean and standard deviation for values as compared to other values within the year.
+* ``climatological_mean_doy`` indice returns the mean and standard deviation across a climatology according to day-of-year (`xarray.DataArray.groupby("time.dayofyear")`) with a moving window mean of 5 days (`window=5`) by default.
 * ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
 
 New features and enhancements
