@@ -5,9 +5,15 @@ from inspect import signature
 
 import numpy as np
 import xarray as xr
+from scipy.stats.mstats_basic import mquantiles
 
 from xclim.core.indicator import Daily
-from xclim.core.utils import _calc_perc_sp, ensure_chunk_size, walk_map, wrapped_partial
+from xclim.core.utils import (
+    calc_percentiles,
+    ensure_chunk_size,
+    walk_map,
+    wrapped_partial,
+)
 
 
 def test_walk_map():
@@ -92,20 +98,11 @@ def test_ensure_chunk_size():
     assert out.chunks[2] == (20,)
 
 
-class Test_calc_perc:
-    def test_calc_perc_TMP_PERF(self):
-        import timeit
-
-        import xclim.core.utils
-
-        arr = np.arange(1, 100)
-        time = timeit.timeit(lambda: _calc_perc_sp(arr, p=[40.0]), number=10)
-        print(time)
-
+class Test_calc_percentiles:
     def test_calc_perc_type7(self):
         # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
-        res = _calc_perc_sp(arr, p=[40.0])
+        res = calc_percentiles(arr, percentiles=[40.0])
         # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
         assert res[()] == 29
 
@@ -114,9 +111,9 @@ class Test_calc_perc:
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )
-        res = _calc_perc_sp(
+        res = calc_percentiles(
             arr,
-            p=[40.0],
+            percentiles=[40.0],
             alpha=1.0 / 3.0,
             beta=1.0 / 3.0,
         )
@@ -129,26 +126,24 @@ class Test_calc_perc:
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )
-        res = _calc_perc_sp(
-            arr,
-            p=[40.0],
-        )
-        # The expected is from R `quantile(arr, probs=c(0.4), type=8)`
+        res = calc_percentiles(arr, percentiles=[40.0])
+        # The expected is from R ` quantile(c(15.0, 20.0, 35.0, 40.0, 50.0), probs=0.4)`
         assert res[0] == 29
         assert res[1] == 29
 
     def test_calc_perc_nan(self):
         arr = np.asarray([np.NAN])
-        res = _calc_perc_sp(
-            arr,
-            p=[50.0],
-        )
-        assert res.mask.all()
+        res = calc_percentiles(arr, percentiles=[50.0])
+        assert np.isnan(res)
+
+    def test_calc_perc_empty(self):
+        arr = np.asarray([])
+        res = calc_percentiles(arr)
+        assert np.isnan(res)
 
     def test_calc_perc_partial_nan(self):
-        arr = np.asarray([np.NAN, 41.0, 43.0])
-        res = _calc_perc_sp(
-            arr,
-            p=[50.0],
-        )
+        arr = np.asarray([np.NaN, 41.0, 41.0, 43.0, 43.0])
+        res = calc_percentiles(arr, percentiles=[50.0], alpha=1 / 3.0, beta=1 / 3.0)
+        # The expected is from R `quantile(arr, 0.5, type=8, na.rm = TRUE)`
+        # Note that scipy mquantiles would give a different result here
         assert res[()] == 42.0
