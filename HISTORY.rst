@@ -5,6 +5,25 @@ History
 0.30.0 (unreleased)
 -------------------
 
+New indicators
+~~~~~~~~~~~~~~
+* ``climatological_mean_doy`` indice returns the mean and standard deviation for values as compared to other values within the year.
+* ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``xclim`` now implements many data quality assurance flags for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
+    - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
+    - Precipitation (variables: ``pr``):  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
+    - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
+    These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
+    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
+* ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
 Bug fixes
 ~~~~~~~~~
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
@@ -14,6 +33,7 @@ Bug fixes
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
+* Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
 
 0.29.0 (2021-08-30)
 -------------------
@@ -55,26 +75,6 @@ New indicators
 * ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
 * ``calm_days`` indicator returns the number of days where surface wind speed is below threshold.
 * ``windy_days`` indicator returns the number of days where surface wind speed is above threshold.
-* ``climatological_mean_doy`` indice returns the mean and standard deviation for values as compared to other values within the year.
-* ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
-
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* ``xclim`` now implements many data quality assurance flags for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
-    - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tas``, ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``tasmin_exceeds_tasmax``, ``tasmin_exceeds_tas``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
-    - Precipitation (variables: ``pr``):  ``negative_precipitation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`), ``many_1mm_repetitions``, ``many_5mm_repetitions``.
-    - Generic: ``outside_5_standard_deviations_of_climatology``, ``values_repeating_for_5_or_more_days``.
-    These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
-    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
-* ``xclim.core.units.declare_units`` now has a `check_output` flag (default:`True`) for allowing variable units to be checked before execution but ignored afterwards.
-
-Breaking changes
-~~~~~~~~~~~~~~~~
-* Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
-
-Internal Changes
-~~~~~~~~~~~~~~~~
-* Call signatures, expected returns and docstrings for ``xclim.core.calendar`` functions are much more accurate.
 
 Bug fixes
 ~~~~~~~~~

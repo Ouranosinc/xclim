@@ -610,9 +610,11 @@ def data_flags(
             if kwargs:
                 for param, value in kwargs.items():
                     if isinstance(value, (int, str)):
+                        # Replace spaces between units with underlines
                         variable_name = variable_name.replace(
                             f"_{param}_", f"_{str(value).replace(' ', '_')}_"
                         )
+                        # Change hyphens in units into the word "_minus_"
                         if "-" in variable_name:
                             variable_name = variable_name.replace("-", "_minus_")
 

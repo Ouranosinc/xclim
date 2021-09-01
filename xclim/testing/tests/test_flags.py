@@ -77,8 +77,6 @@ class TestDataFlags:
 
         flagged = df.data_flags(bad_ds.pr, bad_ds)
 
-        print(flagged.data_vars)
-
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
         np.testing.assert_equal(
