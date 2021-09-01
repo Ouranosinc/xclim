@@ -843,6 +843,7 @@ def climatological_mean_doy(
     Returns
     -------
     xarray.DataArray, xarray.DataArray
+      Mean and standard deviation.
     """
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 

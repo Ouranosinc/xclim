@@ -383,18 +383,19 @@ def test_datetime_to_decimal_year(source_cal, exp180):
     np.testing.assert_almost_equal(decy[180] - 2004, exp180)
 
 
-@pytest.mark.skip(reason="Not yet implemented.")
 def test_clim_mean_doy(tas_series):
     arr = tas_series(np.ones(365 * 10))
-    m, s = climatological_mean_doy(arr, window=1)
-    assert "dayofyear" in m.coords
-    np.testing.assert_array_equal(m.values, 1)
-    np.testing.assert_array_equal(s.values, 0)
+    mean, stddev = climatological_mean_doy(arr, window=1)
+
+    assert "dayofyear" in mean.coords
+    np.testing.assert_array_equal(mean.values, 1)
+    np.testing.assert_array_equal(stddev.values, 0)
 
     arr = tas_series(np.arange(365 * 3), start="1/1/2001")
-    m, s = climatological_mean_doy(arr, window=3)
-    np.testing.assert_array_equal(m[1:-1], np.arange(365, 365 * 2)[1:-1])
-    np.testing.assert_array_almost_equal(s[1:-1], 298.0223, 4)
+    mean, stddev = climatological_mean_doy(arr, window=3)
+
+    np.testing.assert_array_equal(mean[1:-1], np.arange(365, 365 * 2)[1:-1])
+    np.testing.assert_array_almost_equal(stddev[1:-1], 298.0223, 4)
 
 
 def test_doy_to_days_since():

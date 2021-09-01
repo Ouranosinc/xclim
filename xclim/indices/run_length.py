@@ -1211,7 +1211,7 @@ def suspicious_run_1d(
     """
     v, rl, pos = rle_1d(arr)
     sus_runs = rl >= window
-    if thresh:
+    if thresh is not None:
         if op in {">", "gt"}:
             sus_runs = sus_runs & (v > thresh)
         elif op in {"==", "eq"}:
@@ -1236,7 +1236,7 @@ def suspicious_run(
 ) -> xr.DataArray:
     """Return True where the array contains has runs of identical values, vectorized version.
 
-    In opposition to other run length functions, here the outut has the same shape as the input.
+    In opposition to other run length functions, here the output has the same shape as the input.
 
     Parameters
     ----------

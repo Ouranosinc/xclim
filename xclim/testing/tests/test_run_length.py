@@ -12,10 +12,74 @@ from xclim.testing import open_dataset
 K2C = 273.15
 
 
-@pytest.mark.skip(reason="Not yet implemented.")
 class TestSuspiciousRun:
-    def test_simple(self):
-        assert False
+    def test_simple(self, tas_series):
+        t = np.zeros(365)
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas)
+        # Only zeroes
+        assert sus.all()
+
+        t = np.zeros(365)
+        t[30:39] = 5
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas, thresh=0)
+        # Not enough 5s to trigger suspicion
+        assert not sus[30:39].all()
+        assert not sus[0:10].all()
+
+        t = np.zeros(365)
+        t[30:40] = 1
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas, thresh=0)
+        # Run of 10 identical values
+        assert sus[30:40].all()
+        assert not sus[30:41].all()
+
+    def test_above_thresh(self, tas_series):
+        t = np.zeros(365)
+        t[30:40] = 0.1
+        t[40:50] = 1e-6
+        t[50:60] = 0.0001
+        t[60:65] = 1e-9
+        tas = tas_series(t, start="2000-01-01")
+
+        sus = rl.suspicious_run(tas, thresh=0, window=5)
+        assert not sus[:30].any()
+        assert sus[30:65].all()
+        assert not sus[65:].any()
+
+        sus = rl.suspicious_run(tas, thresh=1e-9, window=5)
+        assert sus[30:60].all()
+        assert not sus[60:].any()
+
+        sus = rl.suspicious_run(tas, thresh=1e-5, window=5)
+        assert sus[30:40].all()
+        assert not sus[40:50].any()
+        assert sus[50:60].all()
+        assert not sus[60:].any()
+
+        sus = rl.suspicious_run(tas, thresh=0, window=11)
+        assert not sus.any()
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_dask(self, use_dask):
+        values = np.zeros((10, 200))
+        time = pd.date_range("2015-01-01", periods=200, freq="D")
+        values[:, :10] = 1
+        values[9, :] = 1
+        da = xr.DataArray(values, coords={"time": time}, dims=("qq", "time"))
+
+        if use_dask:
+            da = da.chunk({"qq": 2})
+
+        sus = rl.suspicious_run(da, thresh=0)
+        assert sus[:, :10].all()
+        assert not sus[1, 10:].any()
+        assert sus[9].all()
+
+        sus = rl.suspicious_run(da)
+        assert sus.all()
 
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
@@ -44,7 +108,6 @@ def test_rle(ufunc, use_dask, index):
     else:
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
-        import time
 
         out = rl.rle(da != 0, index=index).mean(["a", "b", "c"])
         if index == "last":
