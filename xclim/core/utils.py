@@ -15,17 +15,16 @@ from functools import partial
 from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
+from math import floor
 from pathlib import Path
 from sys import float_info
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
-import bottleneck
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-from scipy.stats.mstats import mquantiles
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -211,86 +210,193 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc_sp(
-    arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
-) -> np.array:
-    quantiles = [per / 100.0 for per in p]
-    # mask the NaNs
-    arr = np.ma.fix_invalid(arr)
-    # mquantiles only accept a maximum 2D array
-    shape = arr.shape[:-1]
-    if shape:
-        arr = arr.reshape([np.prod(shape), arr.shape[-1]])
-    result = mquantiles(arr, prob=quantiles, alphap=alpha, betap=beta, axis=-1)
-    if shape:
-        quantiles = np.array(quantiles)
-        shape += quantiles.shape
-        result = result.reshape(shape)
+def calc_percentiles(
+    arr: np.array,
+    percentiles: Sequence[float] = [50.0],
+    axis=-1,
+    alpha=1.0,
+    beta=1.0,
+):
+    arr_copy = arr.copy()
+    result = np.array(
+        [_quantile(arr_copy, per / 100.0, axis, alpha, beta) for per in percentiles]
+    )
     return result
 
 
-def _calc_perc_np(
-    arr: np.array, p: Sequence[float] = [50.0], alpha: float = 1.0, beta: float = 1.0
-) -> np.array:
-    if p is None:
-        p = [50]
-    nan_count = np.isnan(arr).sum(axis=-1)
-    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
-    nans = (nan_count > 0) & (nan_count < arr.shape[-1])
-    if np.any(nans):
-        out_mask = np.stack([nans] * len(p), axis=-1)
-        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
-        # only use nanpercentile where we need it (slow performance compared to standard) :
-        out[out_mask] = np.moveaxis(
-            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
-        ).ravel()
-    return out
+# temp
+def nan_calc_percentiles(
+    arr: np.array,
+    percentiles: Sequence[float] = [50.0],
+    axis=-1,
+    alpha=1.0,
+    beta=1.0,
+):
+    arr_copy = arr.copy()
+    result = np.array(
+        [_quantile(arr_copy, per / 100.0, axis, alpha, beta) for per in percentiles]
+    )
+    return result
 
 
-def calc_perc(arr: np.array, percentiles: Sequence[float] = [50.0]):
-    result = np.array([_calc_quantile(arr, per / 100.0) for per in percentiles])
-    return np.moveaxis(result, 0, -1)
-
-
-def _calc_quantile(arr: np.array, quantile: float):
-    #  TODO - alpha and beta are necessarily 1/3
-    initial_axis = -1
-    TARGET_AXIS = 0  # TODO could be a documented constant
-    axis_length = arr.shape[initial_axis]  # TODO Add parameter for axis instead of -1
-    arr = np.moveaxis(arr, initial_axis, TARGET_AXIS)
-    if axis_length == 0:
-        return np.NAN  # TODO maybe raise an exception
-    if axis_length == 1:
+# Typical values of (alphap,betap) are:
+#         - (0,1)    : ``p(k) = k/n`` : linear interpolation of cdf
+#           (**R** type 4)
+#         - (.5,.5)  : ``p(k) = (k - 1/2.)/n`` : piecewise linear function
+#           (**R** type 5)
+#         - (0,0)    : ``p(k) = k/(n+1)`` :
+#           (**R** type 6)
+#         - (1,1)    : ``p(k) = (k-1)/(n-1)``: p(k) = mode[F(x[k])].
+#           (**R** type 7, **R** default)
+#         - (1/3,1/3): ``p(k) = (k-1/3)/(n+1/3)``: Then p(k) ~ median[F(x[k])].
+#           The resulting quantile estimates are approximately median-unbiased
+#           regardless of the distribution of x.
+#           (**R** type 8)
+#         - (3/8,3/8): ``p(k) = (k-3/8)/(n+1/4)``: Blom.
+#           The resulting quantile estimates are approximately unbiased
+#           if x is normally distributed
+#           (**R** type 9)
+#         - (.4,.4)  : approximately quantile unbiased (Cunnane)
+#         - (.35,.35): APL, used with PWM
+def _nan_quantile(arr: np.array, quantile: float, axis=0, alpha=1.0, beta=1.0):
+    values_count = arr.shape[axis]
+    if values_count == 0:
+        return np.NAN
+    if values_count == 1:
         return arr[()]
-    virtual_index = axis_length * quantile + quantile * 1 / 3.0 + 1 / 3
-    if virtual_index >= axis_length - 1:
-        return arr[-1]
-    next_index = int(np.floor(virtual_index))
-    previous_index = next_index - 1
-    if axis_length <= 100 or bottleneck.anynan(arr):
-        # if the array has nan, ::sort will push them at the end of the sorted array which is very convenient
-        arr.sort(axis=TARGET_AXIS)
+    nan_count = np.isnan(arr).sum(axis).astype(float)
+    valid_values_count = values_count - nan_count
+    # need at least two values to interpolate
+    valid_values_count[valid_values_count < 2] = np.NaN
+    # Index where to find the value in the sorted array.
+    # Virtual because it is a floating point value not an actual index, the nearest neighbour of it are used for interpolation
+    virtual_index = np.where(
+        valid_values_count == 0,
+        0.0,
+        valid_values_count * quantile + (alpha + quantile * (1.0 - alpha - beta)) - 1,
+    )
+    out_of_bounds_indexes = virtual_index >= valid_values_count - 1
+    if out_of_bounds_indexes.sum() > 0:
+        virtual_index[out_of_bounds_indexes] = valid_values_count - 1
+    previous_index = np.floor(virtual_index)
+    gamma = virtual_index - previous_index
+    next_index = previous_index + 1
+    arr.sort(axis=axis)
+    # TODO find out why epsilon * 4 instead of just epsilon (it is done like this in R and in climdex c++ impl)
+    fuzz = float_info.epsilon * 4
+    previous_index[np.isnan(previous_index)] = -1
+    next_index[np.isnan(next_index)] = -1
+    previous_element = np.squeeze(
+        np.take_along_axis(arr, previous_index.astype(int)[..., np.newaxis], axis=axis)
+    )
+    next_element = np.squeeze(
+        np.take_along_axis(arr, next_index.astype(int)[..., np.newaxis], axis=axis)
+    )
+    gamma[gamma < fuzz] = 0
+    interpolation = gamma * next_element + (1 - gamma) * previous_element
+    result = np.where(
+        np.isnan(interpolation),
+        np.nanmax(arr, axis=axis),
+        interpolation,
+    )
+    return result
+
+
+def _quantile(arr: np.array, quantile: float, axis=-1, alpha=1.0, beta=1.0):
+    #  TODO generalization
+    #   - Add doc
+    values_count = arr.shape[axis]
+    if values_count == 0:
+        return np.NAN
+    if values_count == 1:
+        return arr[()]
+    # Virtual because it is a floating point value not an actual index, the nearest neighbour of it are used for interpolation
+    virtual_index = (
+        values_count * quantile + (alpha + quantile * (1.0 - alpha - beta)) - 1
+    )
+    if virtual_index >= values_count - 1:
+        # When virtual_index is out of bounds we are looking for the array maximum (e.g when quantile == 1)
+        # This avoid sorting the array for nothing
+        return np.max(arr, axis=axis)
+    previous_index = int(floor(virtual_index))
+    gamma = virtual_index - previous_index
+    next_index = previous_index + 1
+    arr.partition([previous_index, next_index, -1], axis=axis)
+    slices_having_nans = np.isnan(np.take(arr, -1, axis=axis))
+    # TODO find out why epsilon * 4 instead of epsilon (it is done like this in R and in climdex c++ impl)
+    fuzz = float_info.epsilon * 4
+    previous_element = np.take(arr, previous_index, axis=axis)
+    next_element = np.take(arr, next_index, axis=axis)
+    if gamma < fuzz:
+        result = previous_element
     else:
-        # Partition is faster only when len(arr) > 100
-        arr.partition([previous_index, next_index], axis=TARGET_AXIS)
-    gamma = virtual_index - next_index
-    # TODO find out why epsilon * 4 (it is done like this in R and in climdex c++ impl)
+        result = gamma * next_element + (1 - gamma) * previous_element
+    if np.any(slices_having_nans):
+        # Mask the slices where a NaN was detected
+        result[..., slices_having_nans] = np.nan
+    return result
+
+
+def REF_quantile(arr: np.array, quantile: float, axis=-1, alpha=1.0, beta=1.0):
+    #  TODO generalization
+    #   - Add doc
+    FIRST_AXIS = 0
+    values_count = arr.shape[axis]
+    if values_count == 0:
+        return np.NAN
+    if values_count == 1:
+        return arr[()]
+    nan_count = np.isnan(arr).sum()  # FIXME bottleneck ?
+    has_nans = nan_count > 0
+    arr = np.moveaxis(arr, axis, FIRST_AXIS)
+    valid_values_count = values_count - nan_count
+    if valid_values_count == 0:
+        return np.NAN
+    # Index where to find the value in the sorted array.
+    # Virtual because it is a floating point value not an actual index, the nearest neighbour of it are used for interpolation
+    virtual_index = (
+        valid_values_count * quantile + (alpha + quantile * (1.0 - alpha - beta)) - 1
+    )
+    if virtual_index >= valid_values_count - 1:
+        # When virtual_index is out of bounds we are looking for the array maximum (e.g when quantile == 1)
+        # This avoid sorting the array for nothing
+        if has_nans:
+            return np.nanmax(arr, axis=axis)
+        else:
+            return np.max(arr, axis=axis)
+    previous_index = int(floor(virtual_index))
+    gamma = virtual_index - previous_index
+    next_index = previous_index + 1
+    # MAX_VALUE_COUNT_FOR_FAST_SORT = 100
+    # if values_count <= MAX_VALUE_COUNT_FOR_FAST_SORT or has_nans:
+    #     # if the array has NaNs, ::sort will push them at the end of the sorted array which is very convenient
+    #     arr.sort(axis=FIRST_AXIS)
+    # else:
+    #     # Partition is faster only when len(arr) > ~100
+    arr.partition([previous_index, next_index], axis=FIRST_AXIS)
+    # TODO find out why epsilon * 4 instead of epsilon (it is done like this in R and in climdex c++ impl)
     fuzz = float_info.epsilon * 4
     previous_element = arr[previous_index]
     next_element = arr[next_index]
     if gamma < fuzz:
-        return np.where(
-            np.isnan(previous_element),
-            np.nanargmax(arr, axis=TARGET_AXIS),
-            previous_element,
-        )
+        if has_nans:
+            return np.where(
+                np.isnan(previous_element),
+                np.nanmax(arr, axis=FIRST_AXIS),
+                previous_element,
+            )
+        else:
+            return previous_element
     else:
         interpolation = gamma * next_element + (1 - gamma) * previous_element
-        return np.where(
-            np.isnan(interpolation),
-            np.nanargmax(arr, axis=TARGET_AXIS),
-            interpolation,
-        )
+        if has_nans:
+            return np.where(
+                np.isnan(interpolation),
+                np.nanmax(arr, axis=FIRST_AXIS),
+                interpolation,
+            )
+        else:
+            return interpolation
 
 
 def raise_warn_or_log(
