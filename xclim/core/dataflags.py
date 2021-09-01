@@ -597,12 +597,13 @@ def data_flags(
             )
             return xarray.Dataset()
     else:
-        flag_funcs = flags
+        flag_funcs = [flags]
 
     ds = ds or xarray.Dataset()
 
     flags = dict()
     for flag_func in flag_funcs:
+        print(flag_func)
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)
