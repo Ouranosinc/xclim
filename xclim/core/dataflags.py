@@ -279,6 +279,7 @@ def very_large_precipitation_events(
     ----------
     da : xarray.DataArray
     thresh : str
+      Threshold to search array for that will trigger flag if any day exceeds value.
 
     Returns
     -------
@@ -315,7 +316,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     thresh : str
       Repeating values to search for that will trigger flag.
     op : {"eq", "gt", "lt", "gteq", "lteq"}
-      Operator used for comparison
+      Operator used for comparison with thresh.
 
     Returns
     -------
@@ -384,22 +385,26 @@ def wind_values_outside_of_bounds(
 def outside_n_standard_deviations_of_climatology(
     da: xarray.DataArray,
     *,
+    n: int,
     window: int = 5,
-    n: int = 5,
 ) -> xarray.DataArray:
     """Check if any daily value is outside `n` standard deviations from the day of year mean.
 
     Parameters
     ----------
     da : xarray.DataArray
-    window : int
-      Moving window used to determining climatological mean.
     n : int
       Number of standard deviations.
+    window : int
+      Moving window used to determining climatological mean. Default: 5.
 
     Returns
     -------
     xarray.DataArray, [bool]
+
+    Notes
+    -----
+    A moving window of 5 days is suggested for tas data flag calculations according to ICCLIM data quality standards.
 
     Examples
     --------
@@ -408,13 +413,16 @@ def outside_n_standard_deviations_of_climatology(
     >>> from xclim.core.dataflags import outside_n_standard_deviations_of_climatology
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> std_devs = 5
-    >>> window = 5
-    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=window)
+    >>> average_over = 5
+    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=average_over)
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(within_bnds_doy(da, mu + n * sig, mu - n * sig))
-    description = f"Values outside of {n} standard deviations from climatology found for {da.name}."
+    description = (
+        f"Values outside of {n} standard deviations from climatology found for {da.name} "
+        f"with moving window of {window} days."
+    )
     within_bounds.attrs["description"] = description
     return ~within_bounds
 
