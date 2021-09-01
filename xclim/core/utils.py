@@ -240,26 +240,37 @@ def nan_calc_percentiles(
 
 def virtual_index_formula(
     array_size: Union[int, np.array], quantile_value: float, a: float, b: float
-):
+) -> np.array:
     # Compared to R, -1 is added because R array indexes start at 1 (0 for python)
     return array_size * quantile_value + (a + quantile_value * (1 - a - b)) - 1
 
 
-def gamma_formula(val, val_floor):
+def gamma_formula(
+    val: Union[float, np.array], val_floor: Union[int, np.array]
+) -> Union[float, np.array]:
     return val - val_floor
 
 
-def linear_interpolation_formula(left, right, gamma):
+def linear_interpolation_formula(
+    left: Union[float, np.array],
+    right: Union[float, np.array],
+    gamma: Union[float, np.array],
+) -> Union[float, np.array]:
     return gamma * right + (1 - gamma) * left
 
 
-def _nan_quantile(arr: np.array, quantile: float, axis=0, alpha=1.0, beta=1.0):
+#  quantile must be a scalar
+def _nan_quantile(
+    arr: np.array, quantile: float, axis: int = 0, alpha: float = 1.0, beta: float = 1.0
+) -> Union[float, np.array]:
     # --- Setup
     values_count = arr.shape[axis]
     if values_count == 0:
         return np.NAN
     if values_count == 1:
         return arr[()]
+    if quantile == 1:
+        return np.max(arr, axis=axis)
     nan_count = np.isnan(arr).sum(axis).astype(float)
     valid_values_count = values_count - nan_count
     # We need at least two values to do an interpolation
@@ -276,7 +287,8 @@ def _nan_quantile(arr: np.array, quantile: float, axis=0, alpha=1.0, beta=1.0):
     )
     out_of_bounds_indexes = virtual_index >= valid_values_count - 1
     if out_of_bounds_indexes.any():
-        virtual_index[out_of_bounds_indexes] = valid_values_count - 1
+        # minus 2 because virtual_index is used to compute left boundary
+        virtual_index[out_of_bounds_indexes] = valid_values_count.ravel() - 2
     previous_index = np.floor(virtual_index)
     next_index = previous_index + 1
     previous_index_nan_mask = np.isnan(previous_index)
@@ -299,7 +311,9 @@ def _nan_quantile(arr: np.array, quantile: float, axis=0, alpha=1.0, beta=1.0):
     # TODO find out why epsilon * 4 instead of just epsilon (it is done like this in R and in climdex c++ impl)
     fuzz = float_info.epsilon * 4
     gamma = gamma_formula(virtual_index, previous_index)
-    gamma[gamma < fuzz] = 0
+    non_applicable_gammas = gamma < fuzz
+    if non_applicable_gammas.any():
+        gamma[non_applicable_gammas] = 0
     interpolation = linear_interpolation_formula(previous_element, next_element, gamma)
     # When a interpolation is in the Nan range, which is at the end of the array,
     # it means that we can take the array nanmax as an valid interpolation.
@@ -312,7 +326,13 @@ def _nan_quantile(arr: np.array, quantile: float, axis=0, alpha=1.0, beta=1.0):
 
 
 #  quantile must be a scalar
-def _quantile(arr: np.array, quantile: float, axis=-1, alpha=1.0, beta=1.0):
+def _quantile(
+    arr: np.array,
+    quantile: float,
+    axis: int = -1,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> Union[float, np.array]:
     #  TODO generalization
     #   - Add doc
     values_count = arr.shape[axis]
@@ -320,6 +340,8 @@ def _quantile(arr: np.array, quantile: float, axis=-1, alpha=1.0, beta=1.0):
         return np.NAN
     if values_count == 1:
         return arr[()]
+    if quantile == 1:
+        return np.max(arr, axis=axis)
     virtual_index = virtual_index_formula(values_count, quantile, alpha, beta)
     if virtual_index >= values_count - 1:
         # When virtual_index is out of bounds we are looking for the array maximum (e.g when quantile == 1)
