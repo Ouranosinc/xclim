@@ -62,11 +62,10 @@ __all__ = [
     "tasmax_below_tasmin",
     "temperature_extremely_high",
     "temperature_extremely_low",
-    "values_of_1mm_repeating_for_n_or_more_days",
-    "values_of_5mm_repeating_for_n_or_more_days",
-    "values_of_thresh_repeating_for_n_or_more_days",
+    "values_op_thresh_repeating_for_n_or_more_days",
     "values_repeating_for_n_or_more_days",
     "very_large_precipitation_events",
+    "wind_values_outside_of_bounds",
 ]
 
 
@@ -303,74 +302,8 @@ def very_large_precipitation_events(
 
 @register_methods
 @declare_units(da="[precipitation]", check_output=False)
-def values_of_1mm_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int = 10
-) -> xarray.DataArray:
-    """Check if precipitation values repeat at 1 mm/day for n or more days.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-    n : int
-      Number of days needed to trigger flag.
-
-    Returns
-    -------
-    xarray.DataArray, [bool]
-
-    Examples
-    --------
-    To gain access to the flag_array:
-
-    >>> from xclim.core.dataflags import values_of_1mm_repeating_for_n_or_more_days
-    >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> days = 10
-    >>> flagged = values_of_1mm_repeating_for_n_or_more_days(ds.pr, n=days)
-    """
-    thresh = convert_units_to("1 mm d-1", da)
-    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
-    description = f"Repetitive precipitation values at 1 mm/d for at least 10 days found for {da.name}."
-    repetitions.attrs["description"] = description
-    return repetitions
-
-
-@register_methods
-@declare_units(da="[precipitation]", check_output=False)
-def values_of_5mm_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int = 5
-) -> xarray.DataArray:
-    """Check if precipitation values repeat at 5 mm/day for n or more days.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-    n : int
-      Number of days needed to trigger flag.
-
-    Returns
-    -------
-    xarray.DataArray, [bool]
-
-    Examples
-    --------
-    To gain access to the flag_array:
-
-    >>> from xclim.core.dataflags import values_of_5mm_repeating_for_n_or_more_days
-    >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> days = 5
-    >>> flagged = values_of_5mm_repeating_for_n_or_more_days(ds.pr, n=days)
-    """
-    thresh = convert_units_to("5 mm d-1", da)
-    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
-    description = f"Repetitive precipitation values at 5 mm/d for at least {n} days found for {da.name}."
-    repetitions.attrs["description"] = description
-    return repetitions
-
-
-@register_methods
-@declare_units(da="[precipitation]", check_output=False)
-def values_of_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: str
+def values_op_thresh_repeating_for_n_or_more_days(
+    da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
 ) -> xarray.DataArray:
     """Check if array values repeat at a given threshold for 'n' or more days.
 
@@ -381,6 +314,8 @@ def values_of_thresh_repeating_for_n_or_more_days(
       Number of days needed to trigger flag.
     thresh : str
       Repeating values to search for that will trigger flag.
+    op : {"eq", "gt", "lt", "gteq", "lteq"}
+      Operator used for comparison
 
     Returns
     -------
@@ -390,19 +325,56 @@ def values_of_thresh_repeating_for_n_or_more_days(
     --------
     To gain access to the flag_array:
 
-    >>> from xclim.core.dataflags import values_of_thresh_repeating_for_n_or_more_days
+    >>> from xclim.core.dataflags import values_op_thresh_repeating_for_n_or_more_days
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> units = "5 mm d-1"
     >>> days = 5
-    >>> flagged = values_of_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units)
+    >>> comparison = "eq"
+    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
     """
     thresh = convert_units_to(thresh, da)
-    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op="==", thresh=thresh))
+    if op not in {"eq", "gt", "lt", "gteq", "lteq"}:
+        raise ValueError("Operator must not be symbolic.")
+    repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = (
         f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
     )
     repetitions.attrs["description"] = description
     return repetitions
+
+
+@register_methods
+@declare_units(da="[speed]", check_output=False)
+def wind_values_outside_of_bounds(
+    da: xarray.DataArray, *, lower: str = "0 m s-1", upper: str = "46 m s-1"
+) -> xarray.DataArray:
+    """Check if variable values fall below 0% or rise above 100% for any given day.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+    lower : str
+      Lower limit for wind speed.
+    upper : str
+      Upper limit for wind speed.
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+
+    Examples
+    --------
+    To gain access to the flag_array:
+    >>> from xclim.core.dataflags import wind_values_outside_of_bounds
+    >>> ds = xr.open_dataset(path_to_tas_file)
+    >>> ceiling, floor = "46 m s-1", "0 m s-1"
+    >>> flagged = wind_values_outside_of_bounds(ds.wsgsmax, upper=ceiling, lower=floor)
+    """
+    lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
+    unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
+    description = f"Percentage values exceeding bounds of {lower} and {upper} found for {da.name}."
+    unbounded_percentages.attrs["description"] = description
+    return unbounded_percentages
 
 
 # TODO: 'Many excessive dry days' = the amount of dry days lies outside a 14·bivariate standard deviation
