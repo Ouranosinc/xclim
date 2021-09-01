@@ -857,7 +857,7 @@ def climatological_mean_doy(
 
 
 def within_bnds_doy(
-    arr: xr.DataArray, low: xr.DataArray, high: xr.DataArray
+    arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray
 ) -> xr.DataArray:
     """Return whether or not array values are within bounds for each day of the year.
 

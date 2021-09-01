@@ -6,16 +6,18 @@ Data flags
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
 import logging
+from decimal import Decimal
 from functools import reduce
 from inspect import signature
 from typing import Optional, Sequence, Union
 
 import numpy as np
+import pint
 import xarray
 
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
-from .units import convert_units_to, declare_units
+from .units import convert_units_to, declare_units, str2pint
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
 _REGISTRY = dict()
@@ -302,7 +304,6 @@ def very_large_precipitation_events(
 
 
 @register_methods
-@declare_units(da="[precipitation]", check_output=False)
 def values_op_thresh_repeating_for_n_or_more_days(
     da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
 ) -> xarray.DataArray:
@@ -418,7 +419,9 @@ def outside_n_standard_deviations_of_climatology(
     """
 
     mu, sig = climatological_mean_doy(da, window=window)
-    within_bounds = _sanitize_attrs(within_bnds_doy(da, mu + n * sig, mu - n * sig))
+    within_bounds = _sanitize_attrs(
+        within_bnds_doy(da, high=(mu + n * sig), low=(mu - n * sig))
+    )
     description = (
         f"Values outside of {n} standard deviations from climatology found for {da.name} "
         f"with moving window of {window} days."
@@ -536,6 +539,29 @@ def data_flags(
     ... )
     """
 
+    def _convert_value_to_str(var_name, val) -> str:
+        """Convert variable units to an xarray data variable-like string."""
+        if isinstance(val, str):
+            try:
+                # Use pint to
+                val = str2pint(val).magnitude
+                if isinstance(val, float):
+                    if Decimal(val) % 1 == 0:
+                        val = str(int(val))
+                    else:
+                        val = "point".join(str(val).split("."))
+            except pint.UndefinedUnitError:
+                pass
+
+        if isinstance(val, (int, str)):
+            # Replace spaces between units with underlines
+            var_name = var_name.replace(f"_{param}_", f"_{str(val).replace(' ', '_')}_")
+            # Change hyphens in units into the word "_minus_"
+            if "-" in var_name:
+                var_name = var_name.replace("-", "_minus_")
+
+        return var_name
+
     def _missing_vars(function, dataset: xarray.Dataset):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
@@ -589,15 +615,7 @@ def data_flags(
 
             if kwargs:
                 for param, value in kwargs.items():
-                    if isinstance(value, (int, str)):
-                        # Replace spaces between units with underlines
-                        variable_name = variable_name.replace(
-                            f"_{param}_", f"_{str(value).replace(' ', '_')}_"
-                        )
-                        # Change hyphens in units into the word "_minus_"
-                        if "-" in variable_name:
-                            variable_name = variable_name.replace("-", "_minus_")
-
+                    variable_name = _convert_value_to_str(variable_name, value)
             try:
                 extras = _missing_vars(func, ds)
             except MissingVariableError:

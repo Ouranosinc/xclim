@@ -17,8 +17,17 @@ class TestDataFlags:
             ([], dict(tas_exceeds_tasmax=False, tas_below_tasmin=False)),
         ],
     )
-    def test_tas_temperature_flags(self, vars_dropped, flags):
-        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    def test_tas_temperature_flags(
+        self, vars_dropped, flags, tas_series, tasmax_series, tasmin_series
+    ):
+        ds = xr.Dataset()
+        for series, val in zip(
+            [tas_series, tasmax_series, tasmin_series], [0, 10, -10]
+        ):
+            vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
+            arr = series(vals, start="1971-01-01")
+            ds = xr.merge([ds, arr])
+
         ds = ds.drop_vars(vars_dropped)
         flagged_ds = df.data_flags(ds.tas, ds)
 
@@ -28,68 +37,58 @@ class TestDataFlags:
             flagged_ds.values_repeating_for_5_or_more_days.values, False
         )
         np.testing.assert_equal(
-            flagged_ds.outside_5_standard_deviations_of_climatology.values, True
+            flagged_ds.outside_5_standard_deviations_of_climatology.values, False
         )
 
         for flag, val in flags.items():
             np.testing.assert_equal(getattr(flagged_ds, flag).values, val)
 
-    def test_pr_precipitation_flags(self):
-        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-        flagged_ds = df.data_flags(ds.pr, ds)
+    def test_pr_precipitation_flags(self, pr_series):
+        pr = pr_series(np.zeros(365), start="1971-01-01")
+        pr += 1 / 3600 / 24
+        pr[0:7] += 10 / 3600 / 24
+        pr[-7:] += 11 / 3600 / 24
 
-        np.testing.assert_equal(flagged_ds.negative_accumulation_values.values, False)
+        flagged = df.data_flags(pr)
+        print(flagged)
+        np.testing.assert_equal(flagged.negative_accumulation_values.values, False)
+        np.testing.assert_equal(flagged.very_large_precipitation_events.values, False)
         np.testing.assert_equal(
-            flagged_ds.very_large_precipitation_events.values, False
-        )
-        np.testing.assert_equal(
-            flagged_ds.values_of_5_mm_d_minus_1_repeating_for_5_or_more_days.values,
+            flagged.values_eq_5_repeating_for_5_or_more_days.values,
             False,
         )
         np.testing.assert_equal(
-            flagged_ds.values_of_1_mm_d_minus_1_repeating_for_10_or_more_days.values,
+            flagged.values_eq_1_repeating_for_10_or_more_days.values,
             False,
         )
 
-    def test_suspicious_pr_data(self):
-        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
-        location = bad_ds.location.values
-        time = bad_ds.time.values
+    def test_suspicious_pr_data(self, pr_series):
+        bad_pr = pr_series(np.zeros(365), start="1971-01-01")
 
-        pr = bad_ds.pr.values
         # Add some strangeness
-        pr[0][800] = -1e-6  # negative values
-        pr[1][1200] = 0.003483796296  # 301mm/day
-        pr[2][1200:1300] = 0.000011574074  # 1mm/day
-        pr[3][200:300] = 0.00005787037  # 5mm/day
-        bad_pr = xr.DataArray(
-            pr,
-            coords=dict(location=location, time=time),
-            dims=["location", "time"],
-            attrs=dict(
-                units="kg m-2 s-1",
-                cell_methods="time: mean within days",
-                standard_name="precipitation_flux",
-                long_name="Mean daily precipitation flux",
-            ),
-        )
-        bad_ds["pr"] = bad_pr
+        bad_pr[8] = -1e-6  # negative values
+        bad_pr[120] = 301 / 3600 / 24  # 301mm/day
+        bad_pr[121:141] = 1.1574074074074072e-05  # 1mm/day
+        bad_pr[200:300] = 5.787037037037036e-05  # 5mm/day
 
-        flagged = df.data_flags(bad_ds.pr, bad_ds)
-
+        flagged = df.data_flags(bad_pr)
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
         np.testing.assert_equal(
-            flagged.values_of_1_mm_d_minus_1_repeating_for_10_or_more_days.values, True
+            flagged.values_eq_1_repeating_for_10_or_more_days.values, True
         )
         np.testing.assert_equal(
-            flagged.values_of_5_mm_d_minus_1_repeating_for_5_or_more_days.values, True
+            flagged.values_eq_5_repeating_for_5_or_more_days.values, True
         )
 
-    def test_suspicious_tas_data(self):
-        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
-        location = bad_ds.location.values
-        time = bad_ds.time.values
+    def test_suspicious_tas_data(self, tas_series, tasmax_series, tasmin_series):
+        bad_ds = xr.Dataset()
+        for series, val in zip(
+            [tas_series, tasmax_series, tasmin_series], [0, 10, -10]
+        ):
+            vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
+            arr = series(vals, start="1971-01-01")
+            bad_ds = xr.merge([bad_ds, arr])
 
         # Swap entire variable arrays
         bad_ds["tasmin"].values, bad_ds["tasmax"].values = (
@@ -97,23 +96,11 @@ class TestDataFlags:
             bad_ds.tasmin.values,
         )
 
-        tas = bad_ds.tas.values
+        bad_tas = bad_ds.tas.values
         # Add some jankiness to tas
-        tas[0][100:300] = 17 + K2C
-        tas[1][600] = 80 + K2C
-        tas[2][950] = -95 + K2C
-        bad_tas = xr.DataArray(
-            tas,
-            coords=dict(location=location, time=time),
-            dims=["location", "time"],
-            attrs=dict(
-                units="K",
-                cell_methods="time: mean within days",
-                standard_name="air_temperature",
-                long_name="Mean daily surface temperature",
-            ),
-        )
-        bad_ds["tas"] = bad_tas
+        bad_tas[600:610] = 80 + K2C
+        bad_tas[950] = -95 + K2C
+        bad_ds["tas"].values = bad_tas
 
         flagged = df.data_flags(bad_ds.tas, bad_ds)
         np.testing.assert_equal(flagged.temperature_extremely_high.values, True)
@@ -122,13 +109,19 @@ class TestDataFlags:
             flagged.values_repeating_for_5_or_more_days.values, True
         )
         np.testing.assert_equal(
-            flagged.outside_5_standard_deviations_of_climatology.values, True
+            # FIXME: This does not seem to be triggering!
+            flagged.outside_5_standard_deviations_of_climatology.values,
+            True,
         )
         np.testing.assert_equal(flagged.tas_exceeds_tasmax.values, True)
         np.testing.assert_equal(flagged.tas_below_tasmin.values, True)
 
-    def test_raises(self):
-        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
+    def test_raises(self, tasmax_series, tasmin_series):
+        bad_ds = xr.Dataset()
+        for series, val in zip([tasmax_series, tasmin_series], [10, -10]):
+            vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
+            arr = series(vals, start="1971-01-01")
+            bad_ds = xr.merge([bad_ds, arr])
 
         # Swap entire variable arrays
         bad_ds["tasmin"].values, bad_ds["tasmax"].values = (
@@ -141,7 +134,7 @@ class TestDataFlags:
         ):
             df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
 
-    def test_ecad_qc_flag(self):
+    def test_era5_ecad_qc_flag(self):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
 
         # Add some suspicious run values
