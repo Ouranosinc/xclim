@@ -5,7 +5,6 @@ from inspect import signature
 
 import numpy as np
 import xarray as xr
-from scipy.stats.mstats_basic import mquantiles
 
 from xclim.core.indicator import Daily
 from xclim.core.utils import (
