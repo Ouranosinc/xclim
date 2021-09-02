@@ -183,6 +183,8 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
     else:
         try:
             flagged = ecad_compliant(ds, raise_flags=raise_flags, append=append)
+            if raise_flags:
+                click.echo("Dataset passes checks!")
         except DataQualityException as e:
             tb = sys.exc_info()
             click.echo(e.with_traceback(tb[2]))
