@@ -272,7 +272,7 @@ def linear_interpolation_formula(
 # TODO add doc
 def _nan_quantile(
     arr: np.array,
-    quantiles: np.array,  # must be a scalar
+    quantiles: np.array,
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
@@ -282,12 +282,14 @@ def _nan_quantile(
     if values_count == 0:
         return np.NAN
     if values_count == 1:
-        return np.take(arr, 0, axis=axis)
+        result = np.take(arr, 0, axis=axis)
+        return np.broadcast_to(result, (quantiles.size,) + result.shape)
     if np.all(quantiles == 1):
         # TODO not working if 1 is one of the quantile the computation will happen
         return np.max(arr, axis=axis)
+    arr = np.moveaxis(arr, axis, 0)
     # nan_count is not a scalar
-    nan_count = np.isnan(arr).sum(axis).astype(float)
+    nan_count = np.isnan(arr).sum(0).astype(float)
     valid_values_count = values_count - nan_count
     # We need at least two values to do an interpolation
     invalid_values_mask = valid_values_count < 2
@@ -319,17 +321,17 @@ def _nan_quantile(
         next_index[indexes_below_bounds] = 0
     # --- Sorting
     # A sort instead of partition to push all NaNs at the very end of the array. Performances are good enough even on large arrays.
-    arr.sort(axis=axis)
+    arr.sort(axis=0)
     # --- Get values from indexes
-    arr = np.moveaxis(arr, axis, 0)
     initial_shape = arr.shape
-    arr = np.expand_dims(arr, -1)
+    arr = arr[..., np.newaxis]
     arr = np.broadcast_to(arr, initial_shape + (quantiles.size,))
     previous_element = np.squeeze(
-        np.take_along_axis(arr, previous_index.astype(int)[np.newaxis, ...], axis=0)
+        np.take_along_axis(arr, previous_index.astype(int)[np.newaxis, ...], axis=0),
+        axis=0,
     )
     next_element = np.squeeze(
-        np.take_along_axis(arr, next_index.astype(int)[np.newaxis, ...], axis=0)
+        np.take_along_axis(arr, next_index.astype(int)[np.newaxis, ...], axis=0), axis=0
     )
     # --- Linear interpolation
     # fuzz avoid edge cases where a upper bound would be wrongly chosen due to a failed floating point comparison
@@ -347,6 +349,7 @@ def _nan_quantile(
         np.nanmax(arr, axis=0),
         interpolation,
     )
+    # Move quantile axis in front
     result = np.moveaxis(result, axis, 0)
     return result
 
