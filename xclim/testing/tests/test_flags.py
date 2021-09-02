@@ -86,7 +86,7 @@ class TestDataFlags:
         for series, val in zip(
             [tas_series, tasmax_series, tasmin_series], [0, 10, -10]
         ):
-            vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
+            vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 7) / 366)
             arr = series(vals, start="1971-01-01")
             bad_ds = xr.merge([bad_ds, arr])
 
@@ -98,8 +98,9 @@ class TestDataFlags:
 
         bad_tas = bad_ds.tas.values
         # Add some jankiness to tas
-        bad_tas[600:610] = 80 + K2C
-        bad_tas[950] = -95 + K2C
+        bad_tas[5] = 58 + K2C  # Fluke event beyond 5 standard deviations
+        bad_tas[600:610] = 80 + K2C  # Repeating values above hot extreme
+        bad_tas[950] = -95 + K2C  # Cold extreme
         bad_ds["tas"].values = bad_tas
 
         flagged = df.data_flags(bad_ds.tas, bad_ds)
@@ -109,7 +110,6 @@ class TestDataFlags:
             flagged.values_repeating_for_5_or_more_days.values, True
         )
         np.testing.assert_equal(
-            # FIXME: This does not seem to be triggering!
             flagged.outside_5_standard_deviations_of_climatology.values,
             True,
         )
