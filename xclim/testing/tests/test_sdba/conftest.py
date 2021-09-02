@@ -108,8 +108,9 @@ def ref_hist_sim_tuto():
 
     def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
         ds = xr.tutorial.open_dataset("air_temperature")
-        ref = ds.air.resample(time="D").mean()
-        hist = ref.rolling(time=smth_win, min_periods=1).mean() + delta
+        ref = ds.air.resample(time="D").mean(keep_attrs=True)
+        hist = ref.rolling(time=smth_win, min_periods=1).mean(keep_attrs=True) + delta
+        hist.attrs["units"] = ref.attrs["units"]
         sim_time = hist.time + np.timedelta64(730 + sim_offset * 365, "D").astype(
             "<m8[ns]"
         )
@@ -120,6 +121,7 @@ def ref_hist_sim_tuto():
                 np.linspace(0, 2, num=hist.time.size),
                 dims=("time",),
                 coords={"time": hist.time},
+                attrs={"units": hist.attrs["units"]},
             )
         )
         sim["time"] = sim_time

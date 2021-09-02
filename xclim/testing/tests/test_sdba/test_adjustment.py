@@ -35,8 +35,8 @@ from xclim.testing import open_dataset
 from .utils import nancov
 
 
-@pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
 class TestLoci:
+    @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
     def test_time_and_from_ds(self, series, group, dec, tmp_path):
         n = 10000
         u = np.random.rand(n)
@@ -50,7 +50,7 @@ class TestLoci:
         ref_fit = series(y, "pr").where(y > thresh, 0.1)
         ref = series(y, "pr")
 
-        loci = LOCI.train(ref_fit, hist, group=group, thresh=thresh)
+        loci = LOCI.train(ref_fit, hist, group=group, thresh=f"{thresh} kg m-2 s-1")
         np.testing.assert_array_almost_equal(loci.ds.hist_thresh, 1, dec)
         np.testing.assert_array_almost_equal(loci.ds.af, 2, dec)
 
@@ -70,6 +70,12 @@ class TestLoci:
 
         p2 = loci2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
+
+    def test_reduce_dims(self, ref_hist_sim_tuto):
+        ref, hist, sim = ref_hist_sim_tuto()
+        hist = hist.expand_dims(member=[0, 1])
+        ref = ref.expand_dims(member=hist.member)
+        LOCI.train(ref, hist, group="time", thresh="283 K", add_dims=["member"])
 
 
 @pytest.mark.slow
@@ -112,6 +118,24 @@ class TestScaling:
         # Test predict
         p = scaling.adjust(sim)
         np.testing.assert_array_almost_equal(p, ref)
+
+    def test_add_dim(self, series, mon_series):
+        n = 10000
+        u = np.random.rand(n, 4)
+
+        xd = uniform(loc=2, scale=1)
+        x = xd.ppf(u)
+
+        hist = sim = series(x, "tas")
+        ref = mon_series(apply_correction(x, 2, "+"), "tas")
+
+        group = Grouper("time.month", add_dims=["lon"])
+
+        scaling = Scaling.train(ref, hist, group=group, kind="+")
+        assert "lon" not in scaling.ds
+        p = scaling.adjust(sim)
+        assert "lon" in p.dims
+        np.testing.assert_array_almost_equal(p.transpose(*ref.dims), ref)
 
 
 @pytest.mark.slow
@@ -273,13 +297,13 @@ class TestQDM:
         ref = series(y, name)
 
         QDM = QuantileDeltaMapping.train(
-            ref,
-            hist,
+            ref.astype("float32"),
+            hist.astype("float32"),
             kind=kind,
             group="time",
             nquantiles=10,
         )
-        p = QDM.adjust(sim, interp="linear")
+        p = QDM.adjust(sim.astype("float32"), interp="linear")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)[np.newaxis, :]
@@ -291,6 +315,10 @@ class TestQDM:
         # Accept discrepancies near extremes
         middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
+
+        # Test dtype control of map_blocks
+        assert QDM.ds.af.dtype == "float32"
+        assert p.dtype == "float32"
 
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
@@ -454,6 +482,39 @@ class TestQM:
 
         # Test predict
         np.testing.assert_array_almost_equal(p, ref, 2)
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_add_dims(self, use_dask):
+        if use_dask:
+            chunks = {"location": -1}
+        else:
+            chunks = None
+        ref = (
+            open_dataset(
+                "sdba/ahccd_1950-2013.nc", chunks=chunks, drop_variables=["lat", "lon"]
+            )
+            .sel(time=slice("1981", "2010"))
+            .tasmax
+        )
+        ref = convert_units_to(ref, "K")
+        ref = ref.isel(location=1, drop=True).expand_dims(location=["Amos"])
+
+        dsim = open_dataset(
+            "sdba/CanESM2_1950-2100.nc", chunks=chunks, drop_variables=["lat", "lon"]
+        ).tasmax
+        hist = dsim.sel(time=slice("1981", "2010"))
+        sim = dsim.sel(time=slice("2041", "2070"))
+
+        # With add_dims, "does it run" test
+        group = Grouper("time.dayofyear", window=5, add_dims=["location"])
+        EQM = EmpiricalQuantileMapping.train(ref, hist, group=group)
+        EQM.adjust(sim).load()
+
+        # Without, sanity test.
+        group = Grouper("time.dayofyear", window=5)
+        EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
+        scen2 = EQM2.adjust(sim).load()
+        assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
 
 class TestPrincipalComponents:

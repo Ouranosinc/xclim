@@ -90,6 +90,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
 
     $ black --check --target-version py37 xclim xclim/testing/tests
+    $ black --check --target-version py37 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pytest --nbval docs/notebooks
     $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
@@ -147,7 +148,7 @@ Before you submit a pull request, please follow these guidelines:
     https://github.com/Ouranosinc/xclim/actions
 
 .. warning::
-    PEP8, Black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
+    PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
@@ -187,27 +188,68 @@ The method we use is as follows::
 Deploying
 ---------
 
-A reminder for the maintainers on how to deploy.
+A reminder for the maintainers on how to prepare the library for a tagged version.
+
 Make sure all your changes are committed (**including an entry in HISTORY.rst**).
 Then run::
 
-$ bumpversion <option> # possible options: major / minor / patch / release
-$ git push
-$ git push --tags
+    $ bumpversion <option> # possible options: major / minor / patch / release
+    $ git add *
+    $ git commit -m "Bumped version to v1.2.3-XYZ"
+
+For PyPI releases/stable versions, ensure that the last version bumping command run is `$ bumpversion release`.
+These changes can now be merged to the main development branch::
+
+    $ git push
+
+With this performed, we can tag a version that will act as the GitHub-provided stable source archive::
+
+    $ git tag v1.2.3-XYZ
+    $ git push --tags
 
 Packaging
 ---------
 
-When test coverage and stability is adequate, maintainers should update the pip-installable package (wheel) on PyPI.
-In order to do this, you will need the following libraries installed:
+When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
+maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-* twine
-* setuptools
-* wheel
+TThe simple approach
+~~~~~~~~~~~~~~~~~~~
 
-.. TODO::
+The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+ * setuptools
+ * wheel
+ * twine
 
-    Finish the packaging documentation
+From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
+
+    # To build the packages (sources and wheel)
+    $ python setup.py sdist bdist_wheel
+
+    # To upload to PyPI
+    $ twine upload dist/*
+
+The new version based off of the version checked out will now be available via `pip` (`$ pip install xclim`).
+
+Releasing on conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Initial Release
+^^^^^^^^^^^^^^^
+
+In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
+ * https://conda-forge.org/docs/maintainer/adding_pkgs.html
+ * https://github.com/conda-forge/staged-recipes
+
+Subsequent releases
+^^^^^^^^^^^^^^^^^^^
+
+If the conda-forge feedstock recipe is built from PyPI, then when a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
+It is up to the conda-forge feedstock maintainers to verify that the package is building properly before merging the Pull Request to the main branch.
+
+Before updating the main conda-forge recipe, we *strongly* suggest performing the following checks:
+ * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
+ * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html

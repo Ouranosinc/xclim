@@ -359,7 +359,10 @@ class Indicator(IndicatorRegistrar):
         kwds["parameters"] = params
 
         # By default skip missing values handling if there is no resampling.
-        if "freq" not in params:
+        # Dont only check if freq is in current parameters but also if it was injected earlier.
+        if "freq" not in params and "freq" not in getattr(
+            kwds["compute"], "_injected", {}
+        ):
             kwds["missing"] = "skip"
 
         # Parse kwds to organize cf_attrs

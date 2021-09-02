@@ -86,6 +86,35 @@ def test_adapt_freq(use_dask):
     assert pth.units == "mm d-1"
 
 
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_adapt_freq_add_dims(use_dask):
+    time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
+    prvals = np.random.randint(0, 100, size=(time.size, 3))
+    pr = xr.DataArray(
+        prvals,
+        coords={"time": time, "lat": [0, 1, 2]},
+        dims=("time", "lat"),
+        attrs={"units": "mm d-1"},
+    )
+
+    if use_dask:
+        pr = pr.chunk()
+    group = Grouper("time.month", add_dims=["lat"])
+    with xr.set_options(keep_attrs=True):
+        prsim = xr.where(pr < 20, pr / 20, pr)
+        prref = xr.where(pr < 10, pr / 20, pr)
+    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    assert set(sim_ad.dims) == set(prsim.dims)
+    assert "lat" not in pth.dims
+
+    group = Grouper("time.dayofyear", window=5)
+    with xr.set_options(keep_attrs=True):
+        prsim = xr.where(pr < 20, pr / 20, pr)
+        prref = xr.where(pr < 10, pr / 20, pr)
+    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    assert set(sim_ad.dims) == set(prsim.dims)
+
+
 def test_escore():
 
     x = np.array([1, 4, 3, 6, 4, 7, 5, 8, 4, 5, 3, 7]).reshape(2, 6)
@@ -108,7 +137,7 @@ def test_standardize():
 
     xp, avg, std = standardize(x, dim="y")
 
-    np.testing.assert_allclose(avg, 0, atol=3e-2)
+    np.testing.assert_allclose(avg, 0, atol=4e-2)
     np.testing.assert_allclose(std, 1, atol=2e-2)
 
     xp, avg, std = standardize(x, mean=avg, dim="y")

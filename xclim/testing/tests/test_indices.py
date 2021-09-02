@@ -1677,6 +1677,27 @@ class TestWarmNightFrequency:
         np.testing.assert_allclose(wnf.values, [0])
 
 
+class TestWindIndices:
+    def test_calm_days(self, sfcWind_series):
+        a = np.full(365, 20)  # all non-calm days
+        a[10:20] = 2  # non-calm day on default thres, but should count as calm in test
+        a[40:50] = 3.1  # non-calm day on test threshold
+        da = sfcWind_series(a)
+        out = xci.calm_days(da, thresh="3 km h-1", freq="M")
+        np.testing.assert_array_equal(out, [10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+    def test_windy_days(self, sfcWind_series):
+        a = np.zeros(365)  # all non-windy days
+        a[10:20] = 10.8  # windy day on default threshold, non-windy in test
+        a[40:50] = 12  # windy day on test threshold
+        a[80:90] = 15  # windy days
+        da = sfcWind_series(a)
+        out = xci.windy_days(da, thresh="12 km h-1", freq="M")
+        np.testing.assert_array_equal(out, [0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+
 class TestTxTnDaysAbove:
     def test_1d(self, tasmax_series, tasmin_series):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
