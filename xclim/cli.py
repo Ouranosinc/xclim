@@ -4,7 +4,6 @@ import sys
 import warnings
 
 import click
-import xarray
 import xarray as xr
 from dask.diagnostics import ProgressBar
 
@@ -157,7 +156,7 @@ def _create_command(indname):
 def dataflags(ctx, variables, raise_flags, append, dims, freq):
     """Run quality control checks on input data variables and flag for quality control issues or suspicious values."""
     ds = _get_input(ctx)
-    flagged = xarray.Dataset()
+    flagged = xr.Dataset()
     output = ctx.obj["output"]
 
     if output and raise_flags:
