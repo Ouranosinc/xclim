@@ -203,7 +203,7 @@ Internal Changes
 
 Announcements
 ~~~~~~~~~~~~~
-* `xclim` no longer supports Python3.6. Code conventions and neures from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

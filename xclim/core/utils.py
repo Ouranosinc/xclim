@@ -272,7 +272,6 @@ def linear_interpolation_formula(
     return gamma * right + (1 - gamma) * left
 
 
-# TODO add doc
 def _nan_quantile(
     arr: np.array,
     quantiles: np.array,
