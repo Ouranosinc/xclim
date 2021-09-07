@@ -15,6 +15,12 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* utils.py::nan_calc_percentiles now uses a custom algorithm instead of `numpy::nanpercentiles` to have more flexibility on the interpolation method. The performances are also improved. *
+* calendar.py::percentile_doy now uses the 8th method of Hyndman&Fan for linear interpolation where alpha == beta == 1/3. This is to be consistant with other climate indices packages (climdex, icclim) *
+* utils.py::_cal_perc is now only a proxy for utils.py::nan_calc_percentiles with some axis moves *
+
 0.29.0 (2021-08-30)
 -------------------
 
@@ -42,9 +48,6 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
-* utils.py::calc_percentiles and utils.py::nan_calc_percentiles  now use a custom algorithm instead of `numpy::(nan)percentiles` to have more flexibility on the interpolation method. The performances are also improved especially on nan function.
-* calendar.py::percentile_doy now use the 8th method of Hyndman&Fan for linear interpolation where alpha == beta == 1/3. This is to be coherent with other climate indices packages (climdex, icclim) *
-* utils.py::_cal_perc is now only a proxy for utils.py::nan_calc_percentiles with some axis moves *
 * Functions computing run lengths (sequences of consecutive `"True"` values) now take the ``index`` argument. Possible values are ``first`` and ``last``, indicating which item in the run should be used to index the run length. The default is set to `"first"`, preserving the current behavior.
 * New ``sdba_encode_cf`` option to workaround a cftime/xarray performance issue when using dask.
 
