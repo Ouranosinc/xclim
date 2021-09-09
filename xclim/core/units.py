@@ -536,6 +536,8 @@ def _rate_and_amount_converter(
         elif to == "rate":
             tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
             out = (da / dt) * tu.m
+        else:
+            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
 
         out.attrs["units"] = pint2cfunits(tu)
 
@@ -543,8 +545,10 @@ def _rate_and_amount_converter(
         q = units.Quantity(m, u)
         if to == "amount":
             out = pint_multiply(da, q)
-        else:
+        elif to == "rate":
             out = pint_multiply(da, 1 / q)
+        else:
+            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
 
     if out_units:
         out = convert_units_to(out, out_units)
