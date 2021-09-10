@@ -15,9 +15,7 @@ from functools import partial
 from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
-from math import floor
 from pathlib import Path
-from sys import float_info
 from types import FunctionType
 from typing import Callable, NewType, Optional, Sequence, Union
 
@@ -343,13 +341,7 @@ def _nan_quantile(
         axis=0,
     )
     # --- Linear interpolation
-    # fuzz avoid edge cases where a upper bound would be wrongly chosen due to a failed floating point comparison
-    # TODO find out why epsilon * 4 instead of just epsilon (it is done like this in R and in climdex c++ impl)
-    fuzz = float_info.epsilon * 4
     gamma = gamma_formula(virtual_indexes, previous_indexes)
-    non_applicable_gammas = gamma < fuzz
-    if non_applicable_gammas.any():
-        gamma[non_applicable_gammas] = 0
     interpolation = linear_interpolation_formula(
         previous_elements, next_elements, gamma
     )
