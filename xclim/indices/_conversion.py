@@ -840,7 +840,7 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
-    method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48"}
       Which method to use, see notes.
 
     Returns
