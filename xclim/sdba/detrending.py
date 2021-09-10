@@ -129,7 +129,8 @@ class MeanDetrend(BaseDetrend):
 
 @map_groups(main_only=True, trend=["<DIM>"])
 def _meandetrend_get_trend(da, *, dim, kind):
-    return da.mean(dim).rename("trend").to_dataset()
+    trend = xr.full_like(da, da.mean(dim))
+    return trend.rename("trend").to_dataset()
 
 
 class PolyDetrend(BaseDetrend):
