@@ -34,6 +34,7 @@ Bug fixes
 * ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
 * In the ``potential_evapotranspiration`` indice, add abbreviated ``method`` names to docstring.
 * Fixed an issue that prevented using the default ``group`` arg in adjustment objects.
+* Fix bug in ``missing_wmo``, where a period would be considered valid if all months met WMO criteria, but complete months in a year were missing. Now if any month does not meet criteria or is absent, the period will be considered missing.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
