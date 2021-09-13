@@ -23,7 +23,7 @@ Internal Changes
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * utils.py::nan_calc_percentiles now uses a custom algorithm instead of `numpy::nanpercentiles` to have more flexibility on the interpolation method. The performances are also improved. *
-* calendar.py::percentile_doy now uses the 8th method of Hyndman&Fan for linear interpolation where alpha == beta == 1/3. This is to be consistant with other climate indices packages (climdex, icclim) *
+* ``calendar.py::percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (climdex, icclim).
 * utils.py::_cal_perc is now only a proxy for utils.py::nan_calc_percentiles with some axis moves *
 
 0.29.0 (2021-08-30)
