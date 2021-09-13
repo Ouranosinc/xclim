@@ -279,8 +279,11 @@ class MissingWMO(MissingAny):
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
             )
-        obj = cls(da, "MS", src_timestep, **indexer)
-        return obj(**options).resample(time=freq).any()
+        obj = cls(da, "M", src_timestep, **indexer)
+        miss = obj(**options)
+        # Replace missing months by NaNs
+        mda = miss.where(miss == 0)
+        return MissingAny(mda, freq, "M", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
         from xclim.indices import run_length as rl
@@ -426,11 +429,9 @@ def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
 
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
     src_timestep = src_timestep or xr.infer_freq(da.time)
-    # Return which months are missing
-    missing = MissingWMO(da, "M", src_timestep, **indexer)(nm=nm, nc=nc)
-    # Replace missing months by NaNs
-    mda = missing.where(missing == 0)
-    return MissingAny(mda, freq, "M", **indexer)()
+    return MissingWMO.execute(
+        da, freq, src_timestep, options=dict(nm=nm, nc=nc), indexer=indexer
+    )
 
 
 def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103
