@@ -429,6 +429,7 @@ class TestQM:
         # Test train
         hist = sim = series(x, name)
         ref = series(y, name)
+
         QM = EmpiricalQuantileMapping.train(
             ref,
             hist,
@@ -698,6 +699,14 @@ class TestExtremeValues:
 
 
 def test_raise_on_multiple_chunks(tas_series):
-    ref = tas_series(np.arange(730)).chunk({"time": 365})
+    ref = tas_series(np.arange(730).astype(float)).chunk({"time": 365})
     with pytest.raises(ValueError):
         EmpiricalQuantileMapping.train(ref, ref, group=Grouper("time.month"))
+
+
+def test_default_grouper_understood(tas_series):
+    ref = tas_series(np.arange(730).astype(float))
+
+    EQM = EmpiricalQuantileMapping.train(ref, ref)
+    EQM.adjust(ref)
+    assert EQM.group.dim == "time"

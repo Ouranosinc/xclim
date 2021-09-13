@@ -5,12 +5,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import (
-    convert_units_to,
-    declare_units,
-    infer_sampling_units,
-    units2pint,
-)
+from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
 
 __all__ = [
     "humidex",
@@ -845,8 +840,9 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
-    method : {"baierrobertson65", "hargreaves85", "thornthwaite48"}
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48"}
       Which method to use, see notes.
+
     Returns
     -------
     xarray.DataArray
@@ -994,6 +990,5 @@ def potential_evapotranspiration(
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
-    m, freq = infer_sampling_units(out)
-    out.attrs["units"] = "mm/" + freq
-    return convert_units_to(out, "kg m-2 s-1")
+    out.attrs["units"] = "mm"
+    return amount2rate(out, out_units="kg m-2 s-1")
