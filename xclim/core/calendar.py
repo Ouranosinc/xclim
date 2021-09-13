@@ -471,11 +471,12 @@ def percentile_doy(
     xr.DataArray
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
-      Nan will be masked
-      
+
     References
     ----------
-    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.  
+    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996).
+    Sample quantiles in statistical packages.
+    The American Statistician, 50(4), 361-365.
     """
 
     # Ensure arr sampling frequency is daily or coarser
