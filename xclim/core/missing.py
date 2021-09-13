@@ -62,7 +62,7 @@ class MissingBase:
 
     def __init__(self, da, freq, src_timestep, **indexer):
         if src_timestep is None:
-            raise ValueError("`src_timestep` must be either 'D' or 'H'.")
+            raise ValueError("`src_timestep` must be either 'D', 'H' or 'M'.")
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
@@ -140,7 +140,7 @@ class MissingBase:
             start_time = i[:1]
             end_time = i[-1:]
 
-        if indexer:
+        if indexer or "M" in src_timestep:
             # Create a full synthetic time series and compare the number of days with the original series.
             t = date_range(
                 start_time[0],
@@ -253,6 +253,11 @@ class MissingWMO(MissingAny):
     -------
     out : DataArray
       A boolean array set to True if period has missing values.
+
+    Notes
+    -----
+    If used at frequencies larger than a month, for example on an annual or seasonal basis, the function will return
+    True if any month within a period is missing.
     """
 
     def __init__(self, da, freq, src_timestep, **indexer):
@@ -421,8 +426,11 @@ def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
 
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
     src_timestep = src_timestep or xr.infer_freq(da.time)
+    # Return which months are missing
     missing = MissingWMO(da, "M", src_timestep, **indexer)(nm=nm, nc=nc)
-    return missing.resample(time=freq).any()
+    # Replace missing months by NaNs
+    mda = missing.where(missing == 0)
+    return MissingAny(mda, freq, "M", **indexer)()
 
 
 def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103
