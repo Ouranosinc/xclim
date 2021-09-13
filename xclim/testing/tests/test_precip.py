@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import atmos, set_options
+from xclim import atmos, core, set_options
 from xclim.core.calendar import percentile_doy
 from xclim.testing import open_dataset
 
@@ -125,6 +125,21 @@ class TestWetDays:
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
+
+
+class TestWetPrcptot:
+    """Testing of prcptot with wet days"""
+
+    def test_simple(self):
+        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+
+        thresh = "1 mm/day"
+        out = atmos.wet_precip_accumulation(pr, thresh=thresh)
+
+        # Reference value
+        t = core.units.convert_units_to(thresh, pr)
+        pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
+        np.testing.assert_array_equal(out, pa)
 
 
 class TestDailyIntensity:

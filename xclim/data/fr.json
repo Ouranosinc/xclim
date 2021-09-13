@@ -201,6 +201,13 @@
     "comment": "",
     "abstract": "Précipitation accumulée totale. Si la température journalière moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température journalière moyenne est sous 0°C (et vice-versa)."
   },
+  "WET_PRCPTOT": {
+    "long_name": "Précipitation totale lors de jours pluvieux",
+    "description": "Précipitation totale {freq:f} lorsque la précipitation journalière excède {thresh}.",
+    "title": "Précipitation accumulée totale lors de jours pluvieux",
+    "comment": "",
+    "abstract": "Précipitation accumulée totale lors de jours pluvieux. Un jour est considéré pluvieux si la précipitation est supérieure ou égale à {thresh}."
+  },
   "LIQUIDPRCPTOT": {
     "long_name": "Précipitation liquide totale",
     "description": "Précipitation liquide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est >= 0°C",
