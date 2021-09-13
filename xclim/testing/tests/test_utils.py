@@ -101,7 +101,7 @@ class Test_nan_calc_percentiles:
     def test_calc_perc_type7(self):
         # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
-        res = nan_calc_percentiles(arr, percentiles=[40.0])
+        res = nan_calc_percentiles(arr, percentiles=[40.0], alpha=1, beta=1)
         # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
         assert res[()] == 29
 

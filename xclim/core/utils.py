@@ -244,7 +244,8 @@ def virtual_index_formula(
     """
     Compute the floating point indexes of an array for the linear interpolation of quantiles.
 
-    Note:
+    Notes
+    -----
         Compared to R, -1 is added because R array indexes start at 1 (0 for python)
     """
     return array_size * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1

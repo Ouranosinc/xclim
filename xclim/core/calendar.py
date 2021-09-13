@@ -451,8 +451,7 @@ def percentile_doy(
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-
-    Default value for alpha and beta gives type 8 interpolation method of Hyndman&Fan.
+    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [Hyndman&Fan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -463,9 +462,9 @@ def percentile_doy(
     per : float or sequence of floats
       Percentile(s) between [0, 100]
     alpha: float
-        used with beta to express the linear interpolation wanted.
+        Plotting position parameter.
     beta: float
-        used with alpha to express the linear interpolation wanted.
+        Plotting position parameter.
 
     Returns
     -------
@@ -473,6 +472,10 @@ def percentile_doy(
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
       Nan will be masked
+      
+    References
+    ----------
+    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.  
     """
 
     # Ensure arr sampling frequency is daily or coarser
