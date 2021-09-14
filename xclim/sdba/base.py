@@ -410,10 +410,11 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable) -> Callable:
-    """Parse the "group" argument of a function and return a Grouper object.
+def parse_group(func: Callable, kwargs=None) -> Callable:
+    """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
-    Adds the possiblity to pass a window argument and a list of dimensions in group.
+    This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
+    It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -421,12 +422,20 @@ def parse_group(func: Callable) -> Callable:
     else:
         default_group = None
 
-    @wraps(func)
-    def _parse_group(*args, **kwargs):
+    def _update_kwargs(kwargs):
         if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
             if not isinstance(kwargs["group"], Grouper):
                 kwargs = Grouper.from_kwargs(**kwargs)
+        return kwargs
+
+    if kwargs is not None:  # Not used as a decorator
+        return _update_kwargs(kwargs)
+
+    # else (then it's a decorator)
+    @wraps(func)
+    def _parse_group(*args, **kwargs):
+        kwargs = _update_kwargs(kwargs)
         return func(*args, **kwargs)
 
     return _parse_group
