@@ -14,7 +14,6 @@ New features and enhancements
 * Added ``atmos.wet_precip_accumulation``, an indicator cumulating precip over wet days.
 * Module ICCLIM now includes ``PRCPTOT``, which cumulates precip on days with precip above 1 mm/day.
 
-
 Bug fixes
 ~~~~~~~~~
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.

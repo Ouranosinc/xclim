@@ -206,7 +206,7 @@
     "description": "Précipitation totale {freq:f} lorsque la précipitation journalière excède {thresh}.",
     "title": "Précipitation accumulée totale lors de jours pluvieux",
     "comment": "",
-    "abstract": "Précipitation accumulée totale lors de jours pluvieux. Un jour est considéré pluvieux si la précipitation est supérieure ou égale à {thresh}."
+    "abstract": "Précipitation accumulée totale lors de jours pluvieux. Un jour est considéré pluvieux si la précipitation est supérieure ou égale à un seuil donné."
   },
   "LIQUIDPRCPTOT": {
     "long_name": "Précipitation liquide totale",
