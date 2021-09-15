@@ -186,17 +186,17 @@ def bootstrap_year(
     # Replace `bloc` by every other group
     for i, (key, group_slice) in enumerate(gr.items()):
         source = da.isel({dim: group_slice})
-
+        out_view = out.loc[{bdim: i}]
         if len(source[dim]) == len(bloc):
-            out.loc[{bdim: i, dim: bloc}] = source.data
+            out_view.loc[{dim: bloc}] = source.data
         if len(source[dim]) < len(bloc):
             pass
         elif len(bloc) == 365:
-            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "365_day").data
+            out_view.loc[{dim: bloc}] = convert_calendar(source, "365_day").data
         elif len(bloc) == 366:
-            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "366_day").data
+            out_view.loc[{dim: bloc}] = convert_calendar(source, "366_day").data
         elif len(bloc) < 365:
-            out.loc[{bdim: i, dim: bloc}] = source.data[: len(bloc)]
+            out_view.loc[{dim: bloc}] = source.data[: len(bloc)]
         else:
             raise NotImplementedError
 
