@@ -28,7 +28,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
 from xclim.core.formatting import update_xclim_history
-from xclim.core.utils import DayOfYearStr, _calc_perc
+from xclim.core.utils import DayOfYearStr, calc_perc
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
@@ -444,12 +444,14 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: Union[float, Sequence[float]] = 10,
+    per: Union[float, Sequence[float]] = 10.0,
+    alpha: float = 1.0 / 3.0,
+    beta: float = 1.0 / 3.0,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-    All NaNs are skipped.
+    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [HyndmanFan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -459,12 +461,20 @@ def percentile_doy(
       Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
       Percentile(s) between [0, 100]
+    alpha: float
+        Plotting position parameter.
+    beta: float
+        Plotting position parameter.
 
     Returns
     -------
     xr.DataArray
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
+
+    References
+    ----------
+    .. [HyndmanFan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
     """
 
     # Ensure arr sampling frequency is daily or coarser
@@ -487,12 +497,12 @@ def percentile_doy(
         per = [per]
 
     p = xr.apply_ufunc(
-        _calc_perc,
+        calc_perc,
         rrr,
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(p=per),
+        kwargs=dict(percentiles=per, alpha=alpha, beta=beta),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),

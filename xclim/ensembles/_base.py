@@ -8,7 +8,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import _calc_perc  # noqa
+from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
@@ -141,7 +141,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
-    values: Sequence[int] = (10, 50, 90),
+    values: Sequence[float] = [10, 50, 90],
     keep_chunk_size: Optional[bool] = None,
     split: bool = True,
 ) -> xr.Dataset:
@@ -231,12 +231,14 @@ def ensemble_percentiles(
             ens = ens.chunk({"realization": -1})
 
     out = xr.apply_ufunc(
-        _calc_perc,
+        calc_perc,
         ens,
         input_core_dims=[["realization"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(p=values),
+        kwargs=dict(
+            percentiles=values,
+        ),
         dask="parallelized",
         output_dtypes=[ens.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
