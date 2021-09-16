@@ -474,9 +474,7 @@ def percentile_doy(
 
     References
     ----------
-    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996).
-    Sample quantiles in statistical packages.
-    The American Statistician, 50(4), 361-365.
+    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
     """
 
     # Ensure arr sampling frequency is daily or coarser
