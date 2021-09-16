@@ -182,22 +182,28 @@ def bootstrap_year(
     # Initialize output array with new bootstrap dimension
     bdim = "_bootstrap"
     out = da.expand_dims({bdim: np.arange(len(gr))}).copy(deep=True)
-
+    # With dask, mutating the views of out is not working, thus the accumulator
+    out_accumulator = []
     # Replace `bloc` by every other group
     for i, (key, group_slice) in enumerate(gr.items()):
         source = da.isel({dim: group_slice})
         out_view = out.loc[{bdim: i}]
-        if len(source[dim]) == len(bloc):
-            out_view.loc[{dim: bloc}] = source.data
-        if len(source[dim]) < len(bloc):
+        if len(source[dim]) < 360 and len(source[dim]) < len(bloc):
+            # This happens when the sampling frequency is anchored thus
+            # source[dim] would be only a few months on the first and last year
             pass
+        elif len(source[dim]) == len(bloc):
+            out_view.loc[{dim: bloc}] = source.data
         elif len(bloc) == 365:
             out_view.loc[{dim: bloc}] = convert_calendar(source, "365_day").data
         elif len(bloc) == 366:
-            out_view.loc[{dim: bloc}] = convert_calendar(source, "366_day").data
+            out_view.loc[{dim: bloc}] = convert_calendar(
+                source, "366_day", missing=np.NAN
+            ).data
         elif len(bloc) < 365:
             out_view.loc[{dim: bloc}] = source.data[: len(bloc)]
         else:
             raise NotImplementedError
+        out_accumulator.append(out_view)
 
-    return out
+    return xarray.concat(out_accumulator, dim=bdim)
