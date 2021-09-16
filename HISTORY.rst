@@ -18,6 +18,9 @@ Bug fixes
 * In the ``potential_evapotranspiration`` indice, add abbreviated ``method`` names to docstring.
 * Fixed an issue that prevented using the default ``group`` arg in adjustment objects.
 * Fix bug in ``missing_wmo``, where a period would be considered valid if all months met WMO criteria, but complete months in a year were missing. Now if any month does not meet criteria or is absent, the period will be considered missing.
+* Fix bootstrapping with dask arrays. Dask does not support using ``loc`` with multiple indexes to set new values so a workaround was necessary.
+* Fix bootstrapping when the bootstrapped year must be converted to a 366_day calendar.
+
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
