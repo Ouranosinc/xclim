@@ -129,7 +129,7 @@ class Test_bootstrap:
 
     def bootstrap_testor(
         self,
-        serie: Callable[[...], DataArray],
+        series,
         per: int,
         compute_indice: Callable[[DataArray, DataArray], DataArray],
         positive_values=False,
@@ -139,7 +139,7 @@ class Test_bootstrap:
         n = int(4 * 365.25)
         alpha = 0.8
         arr = self.ar1(alpha, n, positive_values)
-        climat_variable = serie(arr, start="2000-01-01")
+        climat_variable = series(arr, start="2000-01-01")
         if use_dask:
             climat_variable = climat_variable.chunk(dict(time=2))
         in_base_slice = slice("2000-01-01", "2001-12-31")
