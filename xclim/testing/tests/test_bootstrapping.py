@@ -21,6 +21,7 @@ from xclim.testing import open_dataset
 
 
 class Test_bootstrap:
+    @pytest.mark.slow
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_bootstrap_tg90p(self, tas_series, use_dask):
         self.bootstrap_testor(
