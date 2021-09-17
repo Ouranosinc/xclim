@@ -208,37 +208,154 @@ def uses_dask(da):
     return False
 
 
-def _calc_perc(arr: np.array, p: Sequence[float] = None):
-    """Ufunc-like computing a percentile over the last axis of the array.
-
-    Processes cases with invalid values separately, which makes it more efficient than np.nanpercentile for array with
-    only a few invalid points.
-
-    Parameters
-    ----------
-    arr : np.array
-        Percentile is computed over the last axis.
-    p : sequence of floats
-        Percentile to compute, between 0 and 100. (the default is 50)
-
-    Returns
-    -------
-    np.array
+def calc_perc(
+    arr: np.array, percentiles: Sequence[float] = [50.0], alpha=1.0, beta=1.0
+) -> np.array:
     """
-    if p is None:
-        p = [50]
+    Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
+    """
+    return np.moveaxis(
+        nan_calc_percentiles(
+            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta
+        ),
+        source=0,
+        destination=-1,
+    )
 
-    nan_count = np.isnan(arr).sum(axis=-1)
-    out = np.moveaxis(np.percentile(arr, p, axis=-1), 0, -1)
-    nans = (nan_count > 0) & (nan_count < arr.shape[-1])
-    if np.any(nans):
-        out_mask = np.stack([nans] * len(p), axis=-1)
-        # arr1 = arr.reshape(int(arr.size / arr.shape[-1]), arr.shape[-1])
-        # only use nanpercentile where we need it (slow performance compared to standard) :
-        out[out_mask] = np.moveaxis(
-            np.nanpercentile(arr[nans], p, axis=-1), 0, -1
-        ).ravel()
-    return out
+
+def nan_calc_percentiles(
+    arr: np.array,
+    percentiles: Sequence[float] = [50.0],
+    axis=-1,
+    alpha=1.0,
+    beta=1.0,
+) -> np.array:
+    """
+    Convert the percentiles to quantiles and compute them using _nan_quantile.
+    """
+    arr_copy = arr.copy()
+    quantiles = np.array([per / 100.0 for per in percentiles])
+    return _nan_quantile(arr_copy, quantiles, axis, alpha, beta)
+
+
+def virtual_index_formula(
+    array_size: Union[int, np.array], quantiles: np.array, alpha: float, beta: float
+) -> np.array:
+    """
+    Compute the floating point indexes of an array for the linear interpolation of quantiles.
+
+    Notes
+    -----
+        Compared to R, -1 is added because R array indexes start at 1 (0 for python)
+    """
+    return array_size * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
+
+
+def gamma_formula(
+    val: Union[float, np.array], val_floor: Union[int, np.array]
+) -> Union[float, np.array]:
+    """
+    Compute the gamma (a.k.a 'm' or weight) for the linear interpolation of quantiles.
+    """
+    return val - val_floor
+
+
+def linear_interpolation_formula(
+    left: Union[float, np.array],
+    right: Union[float, np.array],
+    gamma: Union[float, np.array],
+) -> Union[float, np.array]:
+    """
+    Compute the linear interpolation weighted by gamma on each point of two same shape array.
+    """
+    return gamma * right + (1 - gamma) * left
+
+
+def _nan_quantile(
+    arr: np.array,
+    quantiles: np.array,
+    axis: int = 0,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> Union[float, np.array]:
+    """
+    Get the quantiles of the array for the given axis.
+    A linear interpolation is performed using alpha and beta.
+
+    By default alpha == beta == 1 which performs the 7th method of Hyndman&Fan.
+    with alpha == beta == 1/3 we get the 8th method.
+    """
+    # --- Setup
+    values_count = arr.shape[axis]
+    if values_count == 0:
+        return np.NAN
+    if values_count == 1:
+        result = np.take(arr, 0, axis=axis)
+        return np.broadcast_to(result, (quantiles.size,) + result.shape)
+    # The dimensions of `q` are prepended to the output shape, so we need the
+    # axis being sampled from `ap` to be first.
+    arr = np.moveaxis(arr, axis, 0)
+    # nan_count is not a scalar
+    nan_count = np.isnan(arr).sum(0).astype(float)
+    valid_values_count = values_count - nan_count
+    # We need at least two values to do an interpolation
+    too_few_values = valid_values_count < 2
+    if too_few_values.any():
+        # This will result in getting the only available value if it exist
+        valid_values_count[too_few_values] = np.NaN
+    # --- Computation of indexes
+    # Add axis for quantiles
+    valid_values_count = valid_values_count[..., np.newaxis]
+    # Index where to find the value in the sorted array.
+    # Virtual because it is a floating point value, not an valid index. The nearest neighbours are used for interpolation
+    virtual_indexes = np.where(
+        valid_values_count == 0,
+        0.0,
+        virtual_index_formula(valid_values_count, quantiles, alpha, beta),
+    )
+    previous_indexes = np.floor(virtual_indexes)
+    next_indexes = previous_indexes + 1
+    previous_index_nans = np.isnan(previous_indexes)
+    if previous_index_nans.any():
+        # After sort, slices having NaNs will have for last element a NaN
+        previous_indexes[np.isnan(previous_indexes)] = -1
+        next_indexes[np.isnan(next_indexes)] = -1
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    # --- Sorting
+    # A sort instead of partition to push all NaNs at the very end of the array. Performances are good enough even on large arrays.
+    arr.sort(axis=0)
+    # --- Get values from indexes
+    arr = arr[..., np.newaxis]
+    previous_elements = np.squeeze(
+        np.take_along_axis(arr, previous_indexes.astype(int)[np.newaxis, ...], axis=0),
+        axis=0,
+    )
+    next_elements = np.squeeze(
+        np.take_along_axis(arr, next_indexes.astype(int)[np.newaxis, ...], axis=0),
+        axis=0,
+    )
+    # --- Linear interpolation
+    gamma = gamma_formula(virtual_indexes, previous_indexes)
+    interpolation = linear_interpolation_formula(
+        previous_elements, next_elements, gamma
+    )
+    # When an interpolation is in Nan range, which is at the end of the sorted array,
+    # it means that we can take the array nanmax as an valid interpolation.
+    result = np.where(
+        np.isnan(interpolation),
+        np.nanmax(arr, axis=0),
+        interpolation,
+    )
+    # Move quantile axis in front
+    result = np.moveaxis(result, axis, 0)
+    return result
 
 
 def raise_warn_or_log(
