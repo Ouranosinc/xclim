@@ -17,6 +17,7 @@ import xarray
 
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
+from .formatting import update_xclim_history
 from .units import convert_units_to, declare_units, str2pint
 from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
 
@@ -79,7 +80,7 @@ def register_methods(func):
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
     to_remove = list()
     for attr in da.attrs.keys():
-        if not str(attr) == "description":
+        if not str(attr) == "history":
             to_remove.append(attr)
     for attr in to_remove:
         del da.attrs[attr]
@@ -87,7 +88,8 @@ def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
 
 
 @register_methods
-@declare_units(tasmax="[temperature]", tasmin="[temperature]", check_output=False)
+@update_xclim_history
+@declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def tasmax_below_tasmin(
     tasmax: xarray.DataArray,
     tasmin: xarray.DataArray,
@@ -114,11 +116,13 @@ def tasmax_below_tasmin(
     tasmax_lt_tasmin = _sanitize_attrs(tasmax < tasmin)
     description = "Maximum temperature values found below minimum temperatures."
     tasmax_lt_tasmin.attrs["description"] = description
+    tasmax_lt_tasmin.attrs["units"] = ""
     return tasmax_lt_tasmin
 
 
 @register_methods
-@declare_units(tas="[temperature]", tasmax="[temperature]", check_output=False)
+@update_xclim_history
+@declare_units(tas="[temperature]", tasmax="[temperature]")
 def tas_exceeds_tasmax(
     tas: xarray.DataArray,
     tasmax: xarray.DataArray,
@@ -145,11 +149,13 @@ def tas_exceeds_tasmax(
     tas_gt_tasmax = _sanitize_attrs(tas > tasmax)
     description = "Mean temperature values found above maximum temperatures."
     tas_gt_tasmax.attrs["description"] = description
+    tas_gt_tasmax.attrs["units"] = ""
     return tas_gt_tasmax
 
 
 @register_methods
-@declare_units(tas="[temperature]", tasmin="[temperature]", check_output=False)
+@update_xclim_history
+@declare_units(tas="[temperature]", tasmin="[temperature]")
 def tas_below_tasmin(
     tas: xarray.DataArray, tasmin: xarray.DataArray
 ) -> xarray.DataArray:
@@ -175,11 +181,13 @@ def tas_below_tasmin(
     tas_lt_tasmin = _sanitize_attrs(tas < tasmin)
     description = "Mean temperature values found below minimum temperatures."
     tas_lt_tasmin.attrs["description"] = description
+    tas_lt_tasmin.attrs["units"] = ""
     return tas_lt_tasmin
 
 
 @register_methods
-@declare_units(da="[temperature]", check_output=False)
+@update_xclim_history
+@declare_units(da="[temperature]")
 def temperature_extremely_low(
     da: xarray.DataArray, *, thresh: str = "-90 degC"
 ) -> xarray.DataArray:
@@ -207,11 +215,13 @@ def temperature_extremely_low(
     extreme_low = _sanitize_attrs(da < thresh_converted)
     description = f"Temperatures found below {thresh} in {da.name}."
     extreme_low.attrs["description"] = description
+    extreme_low.attrs["units"] = ""
     return extreme_low
 
 
 @register_methods
-@declare_units(da="[temperature]", check_output=False)
+@update_xclim_history
+@declare_units(da="[temperature]")
 def temperature_extremely_high(
     da: xarray.DataArray, *, thresh: str = "60 degC"
 ) -> xarray.DataArray:
@@ -239,10 +249,12 @@ def temperature_extremely_high(
     extreme_high = _sanitize_attrs(da > thresh_converted)
     description = f"Temperatures found in excess of {thresh} in {da.name}."
     extreme_high.attrs["description"] = description
+    extreme_high.attrs["units"] = ""
     return extreme_high
 
 
 @register_methods
+@update_xclim_history
 def negative_accumulation_values(
     da: xarray.DataArray,
 ) -> xarray.DataArray:
@@ -267,11 +279,13 @@ def negative_accumulation_values(
     negative_accumulations = _sanitize_attrs(da < 0)
     description = f"Negative values found for {da.name}."
     negative_accumulations.attrs["description"] = description
+    negative_accumulations.attrs["units"] = ""
     return negative_accumulations
 
 
 @register_methods
-@declare_units(da="[precipitation]", check_output=False)
+@update_xclim_history
+@declare_units(da="[precipitation]")
 def very_large_precipitation_events(
     da: xarray.DataArray, *, thresh="300 mm d-1"
 ) -> xarray.DataArray:
@@ -300,10 +314,12 @@ def very_large_precipitation_events(
     very_large_events = _sanitize_attrs(da > thresh_converted)
     description = f"Precipitation events in excess of {thresh} for {da.name}."
     very_large_events.attrs["description"] = description
+    very_large_events.attrs["units"] = ""
     return very_large_events
 
 
 @register_methods
+@update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
     da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
 ) -> xarray.DataArray:
@@ -342,11 +358,13 @@ def values_op_thresh_repeating_for_n_or_more_days(
         f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
     )
     repetitions.attrs["description"] = description
+    repetitions.attrs["units"] = ""
     return repetitions
 
 
 @register_methods
-@declare_units(da="[speed]", check_output=False)
+@update_xclim_history
+@declare_units(da="[speed]")
 def wind_values_outside_of_bounds(
     da: xarray.DataArray, *, lower: str = "0 m s-1", upper: str = "46 m s-1"
 ) -> xarray.DataArray:
@@ -376,6 +394,7 @@ def wind_values_outside_of_bounds(
     unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
     description = f"Percentage values exceeding bounds of {lower} and {upper} found for {da.name}."
     unbounded_percentages.attrs["description"] = description
+    unbounded_percentages.attrs["units"] = ""
     return unbounded_percentages
 
 
@@ -383,6 +402,7 @@ def wind_values_outside_of_bounds(
 
 
 @register_methods
+@update_xclim_history
 def outside_n_standard_deviations_of_climatology(
     da: xarray.DataArray,
     *,
@@ -427,10 +447,12 @@ def outside_n_standard_deviations_of_climatology(
         f"with moving window of {window} days."
     )
     within_bounds.attrs["description"] = description
+    within_bounds.attrs["units"] = ""
     return ~within_bounds
 
 
 @register_methods
+@update_xclim_history
 def values_repeating_for_n_or_more_days(
     da: xarray.DataArray, *, n: int
 ) -> xarray.DataArray:
@@ -457,10 +479,12 @@ def values_repeating_for_n_or_more_days(
     repetition = _sanitize_attrs(suspicious_run(da, window=n))
     description = f"Runs of repetitive values for {n} or more days found for {da.name}."
     repetition.attrs["description"] = description
+    repetition.attrs["units"] = ""
     return repetition
 
 
 @register_methods
+@update_xclim_history
 def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArray:
     """Check if variable values fall below 0% or rise above 100% for any given day.
 
@@ -663,10 +687,21 @@ def ecad_compliant(
     Union[xarray.DataArray, xarray.Dataset]
     """
     flags = xarray.Dataset()
+    history = list()
     for var in ds.data_vars:
         df = data_flags(ds[var], ds)
         for flag_name, flag_data in df.data_vars.items():
             flags = flags.assign({f"{var}_{flag_name}": flag_data})
+
+            # The extra `split("\n") should be removed when merge_attributes(missing_str=None)
+            history_elems = flag_data.attrs["history"].split("\n")[-1].split(" ")
+            if not history:
+                history.append(
+                    " ".join(
+                        [" ".join(history_elems[0:2]), " ".join(history_elems[-4:])]
+                    )
+                )
+            history.append(" ".join(history_elems[2:-4]))
 
     if raise_flags:
         raise DataQualityException(flags)
@@ -674,7 +709,10 @@ def ecad_compliant(
     ecad_flag = xarray.DataArray(
         ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
         name="ecad_qc_flag",
-        attrs=dict(comment="Adheres to ECAD quality control checks."),
+        attrs=dict(
+            comment="Adheres to ECAD quality control checks.",
+            history="\n".join(history),
+        ),
     )
 
     if append:

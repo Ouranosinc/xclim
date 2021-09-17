@@ -676,7 +676,6 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
 
 
 def declare_units(
-    check_output: bool = True,
     **units_by_name,
 ) -> Callable:
     """Create a decorator to check units of function arguments.
@@ -686,8 +685,6 @@ def declare_units(
 
     Parameters
     ----------
-    check_output : bool
-      Flag to disable checking of units after calculation. Needed for data_flags checks.
     units_by_name : Mapping[str, str]
       Mapping from the input parameter names to their units or dimensionality ("[...]").
 
@@ -721,20 +718,17 @@ def declare_units(
             # Perform very basic sanity check on the output.
             # Indice are responsible for unit management.
             # If this fails, it's a developer's error.
-            if check_output:
-                if isinstance(out, tuple):
-                    for outd in out:
-                        if "units" not in outd.attrs:
-                            raise ValueError(
-                                "No units were assigned in one of the indice's outputs."
-                            )
-                        outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
-                else:
-                    if "units" not in out.attrs:
+            if isinstance(out, tuple):
+                for outd in out:
+                    if "units" not in outd.attrs:
                         raise ValueError(
-                            "No units were assigned to the indice's output."
+                            "No units were assigned in one of the indice's outputs."
                         )
-                    out.attrs["units"] = ensure_cf_units(out.attrs["units"])
+                    outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
+            else:
+                if "units" not in out.attrs:
+                    raise ValueError("No units were assigned to the indice's output.")
+                out.attrs["units"] = ensure_cf_units(out.attrs["units"])
 
             return out
 
