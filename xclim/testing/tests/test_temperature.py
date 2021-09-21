@@ -1105,7 +1105,7 @@ class TestT10p:
 
         np.testing.assert_array_equal(out, outC)
 
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
         # nan treatment
@@ -1115,7 +1115,7 @@ class TestT10p:
         outC = atmos.tg10p(tasC, t10, freq="MS")
 
         np.testing.assert_array_equal(out, outC)
-        assert out[0] == 1
+        assert out[0] == 0
         assert np.isnan(out[1])
         assert out[5] == 5
 
@@ -1135,7 +1135,7 @@ class TestT10p:
         outC = atmos.tn10p(tasC, t10, freq="MS")
 
         np.testing.assert_array_equal(out, outC)
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
         # nan treatment
@@ -1145,7 +1145,7 @@ class TestT10p:
         outC = atmos.tn10p(tasC, t10, freq="MS")
 
         np.testing.assert_array_equal(out, outC)
-        assert out[0] == 1
+        assert out[0] == 0
         assert np.isnan(out[1])
         assert out[5] == 5
 
@@ -1165,7 +1165,7 @@ class TestT10p:
         outC = atmos.tx10p(tasC, t10, freq="MS")
 
         np.testing.assert_array_equal(out, outC)
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
         # nan treatment
@@ -1175,7 +1175,7 @@ class TestT10p:
         outC = atmos.tx10p(tasC, t10, freq="MS")
 
         np.testing.assert_array_equal(out, outC)
-        assert out[0] == 1
+        assert out[0] == 0
         assert np.isnan(out[1])
         assert out[5] == 5
 

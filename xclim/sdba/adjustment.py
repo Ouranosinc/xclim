@@ -136,7 +136,6 @@ class TrainAdjust(BaseAdjustment):
     _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    @parse_group
     def train(cls, ref: DataArray, hist: DataArray, **kwargs):
         """Train the adjustment object. Refer to the class documentation for the algorithm details.
 
@@ -147,6 +146,8 @@ class TrainAdjust(BaseAdjustment):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
+        kwargs = parse_group(cls._train, kwargs)
+
         (ref, hist), train_units = cls._harmonize_units(ref, hist)
 
         if "group" in kwargs:
@@ -223,7 +224,6 @@ class Adjust(BaseAdjustment):
     """
 
     @classmethod
-    @parse_group
     def adjust(
         cls,
         ref: xr.DataArray,
@@ -231,7 +231,20 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray,
         **kwargs,
     ):
+        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
+        Parameters
+        ----------
+        ref : DataArray
+          Training target, usually a reference time series drawn from observations.
+        hist : DataArray
+          Training data, usually a model output whose biases are to be adjusted.
+        sim : DataArray
+          Time series to be bias-adjusted, usually a model output.
+        kwargs :
+          Algorithm-specific keyword arguments, see class doc.
+        """
+        kwargs = parse_group(cls._adjust, kwargs)
         if "group" in kwargs:
             cls._check_inputs(ref, hist, sim, group=kwargs["group"])
 

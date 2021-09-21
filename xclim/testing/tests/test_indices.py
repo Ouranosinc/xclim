@@ -1069,7 +1069,7 @@ class TestTGXN10p:
         tas[175:180] = 1
 
         out = xci.tg10p(tas, t10, freq="MS")
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
         with pytest.raises(AttributeError):
@@ -1085,7 +1085,7 @@ class TestTGXN10p:
         tas[175:180] = 1
 
         out = xci.tx10p(tas, t10, freq="MS")
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
     def test_tn10p_simple(self, tas_series):
@@ -1098,7 +1098,7 @@ class TestTGXN10p:
         tas[175:180] = 1
 
         out = xci.tn10p(tas, t10, freq="MS")
-        assert out[0] == 1
+        assert out[0] == 0
         assert out[5] == 5
 
     def test_doy_interpolation(self):
