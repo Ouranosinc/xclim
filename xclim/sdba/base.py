@@ -635,7 +635,9 @@ def map_blocks(reduces=None, **outvars):
             _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
             # Remove all auxiliary coords on both tmpl and ds
-            extra_coords = {nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims}
+            extra_coords = {
+                nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
+            }
             ds = ds.drop_vars(extra_coords.keys())
             tmpl = tmpl.drop_vars(extra_coords.keys())
 
@@ -645,10 +647,16 @@ def map_blocks(reduces=None, **outvars):
             )
 
             # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
-            out = out.assign_coords({nam: crd for nam, crd in extra_coords.items() if set(crd.dims).issubset(out.dims)})
+            out = out.assign_coords(
+                {
+                    nam: crd
+                    for nam, crd in extra_coords.items()
+                    if set(crd.dims).issubset(out.dims)
+                }
+            )
 
             # Finally remove coords we added... 'ignore' in case they were already removed.
-            out = out.drop_vars(added_coords, errors='ignore')
+            out = out.drop_vars(added_coords, errors="ignore")
             return out
 
         _map_blocks.__dict__["func"] = func

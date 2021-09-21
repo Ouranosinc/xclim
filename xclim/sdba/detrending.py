@@ -56,7 +56,7 @@ class BaseDetrend(ParametrizableWithDataset):
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
-        new.ds.trend.attrs["units"] = da.attrs.get('units', "")
+        new.ds.trend.attrs["units"] = da.attrs.get("units", "")
         return new
 
     def _get_trend(self, da: xr.DataArray):
@@ -80,7 +80,7 @@ class BaseDetrend(ParametrizableWithDataset):
         if not self.fitted:
             raise ValueError("You must call fit() before detrending.")
         trend = self.ds.trend
-        if 'units' in da.attrs:
+        if "units" in da.attrs:
             trend = convert_units_to(self.ds.trend, da)
         return self._detrend(da, trend)
 
@@ -89,7 +89,7 @@ class BaseDetrend(ParametrizableWithDataset):
         if not self.fitted:
             raise ValueError("You must call fit() before retrending")
         trend = self.ds.trend
-        if 'units' in da.attrs:
+        if "units" in da.attrs:
             trend = convert_units_to(self.ds.trend, da)
         return self._retrend(da, trend)
 
