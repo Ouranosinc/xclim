@@ -147,7 +147,6 @@ class TrainAdjust(BaseAdjustment):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
-
         (ref, hist), train_units = cls._harmonize_units(ref, hist)
 
         if "group" in kwargs:

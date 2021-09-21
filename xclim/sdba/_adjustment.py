@@ -113,8 +113,6 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
         extrapolation=extrapolation,
         kind=kind,
     ).scen
-    # Circumvent random dask bug, same as discussed in  #810
-    scen.attrs["units"] = ds.sim.units
     scen = detrend.retrend(scen)
 
     out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})

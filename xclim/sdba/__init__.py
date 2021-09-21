@@ -65,6 +65,8 @@ to manage xarray attributes (including units) correctly and their signatures are
 this reason, the module is often divided in two parts : the (decorated) compute functions in a "private" file (ex: ``_adjustment.py``)
 and the user-facing functions or objects in corresponding public file (ex: ``adjustment.py``). See the `sdba-advanced`
 notebook for more info on the reasons for this move.
+
+Other restrictions : `map_blocks` will remove any "auxiliary" coordinates before calling the wrapped function and will add them back on exit.
 """
 from . import detrending, processing, utils
 from .adjustment import *
