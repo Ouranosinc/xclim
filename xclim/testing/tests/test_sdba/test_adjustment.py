@@ -348,11 +348,13 @@ class TestQDM:
         ref = mon_series(y, name)
         hist = sim = series(x, name)
         if use_dask:
+            ref = ref.chunk({"time": -1})
+            hist = hist.chunk({"time": -1})
             sim = sim.chunk({"time": -1})
         if add_dims:
-            ref = ref.expand_dims(site=[0, 1, 2, 3, 4])
-            hist = hist.expand_dims(site=[0, 1, 2, 3, 4])
-            sim = sim.expand_dims(site=[0, 1, 2, 3, 4])
+            ref = ref.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
+            hist = hist.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
+            sim = sim.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
             sel = {"site": 0}
         else:
             sel = {}
@@ -429,6 +431,7 @@ class TestQM:
         # Test train
         hist = sim = series(x, name)
         ref = series(y, name)
+
         QM = EmpiricalQuantileMapping.train(
             ref,
             hist,
@@ -698,6 +701,14 @@ class TestExtremeValues:
 
 
 def test_raise_on_multiple_chunks(tas_series):
-    ref = tas_series(np.arange(730)).chunk({"time": 365})
+    ref = tas_series(np.arange(730).astype(float)).chunk({"time": 365})
     with pytest.raises(ValueError):
         EmpiricalQuantileMapping.train(ref, ref, group=Grouper("time.month"))
+
+
+def test_default_grouper_understood(tas_series):
+    ref = tas_series(np.arange(730).astype(float))
+
+    EQM = EmpiricalQuantileMapping.train(ref, ref)
+    EQM.adjust(ref)
+    assert EQM.group.dim == "time"

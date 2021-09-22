@@ -5,11 +5,23 @@ History
 0.30.0 (unreleased)
 -------------------
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
+
 Bug fixes
 ~~~~~~~~~
+* Fixes in ``sdba`` for (1) inputs with dimensions without coordinates, for (2) ``sdba.detrending.MeanDetrend`` and for (3) ``DetrendedQuantileMapping`` when used with dask's distributed scheduler.
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
 * Addressed an edge case where ``test_sdba::test_standardize`` randomness could generate values that surpass the test error tolerance.
 * Added a missing `.txt` file to the MANIFEST of the source distributable in order to be able to run all tests.
+* ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
+* In the ``potential_evapotranspiration`` indice, add abbreviated ``method`` names to docstring.
+* Fixed an issue that prevented using the default ``group`` arg in adjustment objects.
+* Fix bug in ``missing_wmo``, where a period would be considered valid if all months met WMO criteria, but complete months in a year were missing. Now if any month does not meet criteria or is absent, the period will be considered missing.
+* Fix bootstrapping with dask arrays. Dask does not support using ``loc`` with multiple indexes to set new values so a workaround was necessary.
+* Fix bootstrapping when the bootstrapped year must be converted to a 366_day calendar.
+
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
@@ -17,7 +29,11 @@ Internal Changes
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The core ``sdba.loess`` method has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%.
+* ``xc.core.utils.nan_calc_percentiles`` now uses a custom algorithm instead of ``numpy.nanpercentiles`` to have more flexibility on the interpolation method. The performance is also improved.
+* ``xc.core.calendar.percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (climdex, icclim). Using `alpha = beta = 1` restores the previous behaviour.
+* ``xc.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%.
+
 
 0.29.0 (2021-08-30)
 -------------------

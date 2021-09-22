@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.sdba.detrending import LoessDetrend, PolyDetrend
+from xclim.sdba.detrending import LoessDetrend, MeanDetrend, PolyDetrend
 
 
 def test_poly_detrend_and_from_ds(series, tmp_path):
@@ -41,3 +41,15 @@ def test_loess_detrend(series):
     # Strong boundary effects in LOESS, remove ~ f * Nx on each side.
     np.testing.assert_array_almost_equal(dx.isel(time=slice(880, 3500)), 0)
     np.testing.assert_array_almost_equal(xt, x)
+
+
+def test_mean_detrend(series):
+    x = series(np.arange(20 * 365.25), "tas")
+
+    md = MeanDetrend().fit(x)
+    assert (md.ds.trend == x.mean()).all()
+
+    anomaly = md.detrend(x)
+    x2 = md.retrend(anomaly)
+
+    np.testing.assert_array_almost_equal(x, x2)

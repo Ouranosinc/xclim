@@ -410,10 +410,11 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable) -> Callable:
-    """Parse the "group" argument of a function and return a Grouper object.
+def parse_group(func: Callable, kwargs=None) -> Callable:
+    """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
-    Adds the possiblity to pass a window argument and a list of dimensions in group.
+    This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
+    It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -421,12 +422,20 @@ def parse_group(func: Callable) -> Callable:
     else:
         default_group = None
 
-    @wraps(func)
-    def _parse_group(*args, **kwargs):
+    def _update_kwargs(kwargs):
         if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
             if not isinstance(kwargs["group"], Grouper):
                 kwargs = Grouper.from_kwargs(**kwargs)
+        return kwargs
+
+    if kwargs is not None:  # Not used as a decorator
+        return _update_kwargs(kwargs)
+
+    # else (then it's a decorator)
+    @wraps(func)
+    def _parse_group(*args, **kwargs):
+        kwargs = _update_kwargs(kwargs)
         return func(*args, **kwargs)
 
     return _parse_group
@@ -562,6 +571,7 @@ def map_blocks(reduces=None, **outvars):
             # All dimensions of the output data, new_dims are added at the end on purpose.
             all_dims = base_dims + new_dims
             # The coordinates of the output data.
+            added_coords = []
             coords = {}
             sizes = {}
             for dim in all_dims:
@@ -569,13 +579,15 @@ def map_blocks(reduces=None, **outvars):
                     coords[group.prop] = group.get_coordinate(ds=ds)
                 elif dim == group.dim:
                     coords[group.dim] = ds[group.dim]
-                elif dim in ds.coords:
-                    coords[dim] = ds[dim]
                 elif dim in kwargs:
                     coords[dim] = xr.DataArray(kwargs[dim], dims=(dim,), name=dim)
                 elif dim in ds.dims:
-                    # Dimension with no coordinate, but it is in the inputs so we can get the size.
-                    sizes[dim] = ds[dim].size
+                    # If a dim has no coords : some sdba function will add them, so to be safe we add them right now
+                    # and note them to remove them afterwards.
+                    if dim not in ds.coords:
+                        added_coords.append(dim)
+                    ds[dim] = ds[dim]
+                    coords[dim] = ds[dim]
                 else:
                     raise ValueError(
                         f"This function adds the {dim} dimension, its coordinate must be provided as a keyword argument."
@@ -617,18 +629,34 @@ def map_blocks(reduces=None, **outvars):
                     raise ValueError(
                         f"{func.__name__} failed on block with coords : {dsblock.coords}."
                     ) from err
-                for name, crd in dsblock.coords.items():
-                    if name not in out.coords and set(crd.dims).issubset(out.dims):
-                        out = out.assign_coords({name: dsblock[name]})
                 return out
 
             # Fancy patching for explicit dask task names
             _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
+            # Remove all auxiliary coords on both tmpl and ds
+            extra_coords = {
+                nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
+            }
+            ds = ds.drop_vars(extra_coords.keys())
+            tmpl = tmpl.drop_vars(extra_coords.keys())
+
+            # Call
             out = ds.map_blocks(
                 _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
             )
 
+            # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
+            out = out.assign_coords(
+                {
+                    nam: crd
+                    for nam, crd in extra_coords.items()
+                    if set(crd.dims).issubset(out.dims)
+                }
+            )
+
+            # Finally remove coords we added... 'ignore' in case they were already removed.
+            out = out.drop_vars(added_coords, errors="ignore")
             return out
 
         _map_blocks.__dict__["func"] = func
