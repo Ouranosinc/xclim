@@ -158,17 +158,28 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
     ds = _get_input(ctx)
     flagged = xr.Dataset()
     output = ctx.obj["output"]
+    if dims == "none":
+        dims = None
 
     if output and raise_flags:
-        raise click.BadOptionUsage(
-            "raise_flags", "Cannot use 'raise_flags' with output netCDF.", ctx.parent
+        ctx.fail(
+            click.BadOptionUsage(
+                "raise_flags",
+                "Cannot use 'raise_flags' with output netCDF.",
+                ctx.parent,
+            )
         )
     if not output and not raise_flags:
-        raise click.BadOptionUsage(
-            "raise_flags", "Must specify output or call with 'raise_flags'.", ctx.parent
+        ctx.fail(
+            click.BadOptionUsage(
+                "raise_flags",
+                "Must specify output or call with 'raise_flags'.",
+                ctx.parent,
+            )
         )
 
     if variables:
+        exit_code = 0
         for v in variables:
             try:
                 flagged_var = data_flags(
@@ -177,17 +188,23 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
                 if output:
                     flagged = xr.merge([flagged, flagged_var])
             except DataQualityException as e:
+                exit_code = 1
                 tb = sys.exc_info()
                 click.echo(e.with_traceback(tb[2]))
+        if raise_flags:
+            ctx.exit(exit_code)
     else:
         try:
-            flagged = ecad_compliant(ds, raise_flags=raise_flags, append=append)
+            flagged = ecad_compliant(
+                ds, dims=dims, raise_flags=raise_flags, append=append
+            )
             if raise_flags:
-                click.echo("Dataset passes checks!")
+                click.echo("Dataset passes quality control checks!")
+                ctx.exit()
         except DataQualityException as e:
             tb = sys.exc_info()
             click.echo(e.with_traceback(tb[2]))
-            return
+            ctx.exit(1)
 
     if output:
         ctx.obj["ds_out"] = flagged
@@ -201,7 +218,7 @@ def indices(info):
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    rows = []
+    rows = list()
     for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join(

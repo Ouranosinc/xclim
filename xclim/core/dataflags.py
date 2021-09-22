@@ -520,16 +520,18 @@ def data_flags(
     """Evaluate the supplied DataArray for a set of data flag checks.
 
     Test triggers depend on variable name and availability of extra variables within Dataset for comparison.
-    If called with `raise_flags=True`, will raise a DataQualityException with comments for each quality control check raised.
+    If called with `raise_flags=True`, will raise a DataQualityException with comments for each failed quality check.
 
     Parameters
     ----------
     da : xarray.DataArray
-      The variable to check. Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
+      The variable to check.
+      Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
     ds : xarray.Dataset, optional
       An optional dataset with extra variables needed by some checks.
     flags : dict, optional
-      A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries. The value can be None if there are no parameters to pass (i.e. default will be used).
+      A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
+      The value can be None if there are no parameters to pass (i.e. default will be used).
       The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
       Dimenions upon which aggregation should be performed. Default: "all".
@@ -552,7 +554,8 @@ def data_flags(
     >>> flagged = data_flags(ds.pr, ds)
 
     The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
-    yearly over the "time" dimension only, such that a True means there is a bad data point for that year at that location.
+    yearly over the "time" dimension only, such that a True means there is a bad data point for that year
+    at that location.
 
     >>> flagged = data_flags(
     ...     ds.pr,
@@ -591,10 +594,10 @@ def data_flags(
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
-        for i, (arg, value) in enumerate(sig.items()):
+        for i, (arg, val) in enumerate(sig.items()):
             if i == 0:
                 continue
-            kind = infer_kind_from_parameter(value)
+            kind = infer_kind_from_parameter(val)
             if kind == InputKind.VARIABLE:
                 if arg in dataset:
                     extra_vars[arg] = dataset[arg]
@@ -666,8 +669,11 @@ def data_flags(
 
 
 def ecad_compliant(
-    ds: xarray.Dataset, raise_flags: bool = False, append: bool = True
-) -> Union[xarray.DataArray, xarray.Dataset]:
+    ds: xarray.Dataset,
+    dims: Union[None, str, Sequence[str]] = "all",
+    raise_flags: bool = False,
+    append: bool = True,
+) -> Union[xarray.DataArray, xarray.Dataset, None]:
     """Run ECAD compliance tests.
 
     Assert file adheres to ECAD-based quality assurance checks.
@@ -676,8 +682,10 @@ def ecad_compliant(
     ----------
     ds : xarray.Dataset
       Dataset containing variables to be examined.
+    dims : {"all", None} or str or a sequence of strings
+      Dimenions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised. Default: False.
+      Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
     append : bool
       If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
       If `False`, returns the DataArray of the `ecad_qc_flag` variable.
@@ -689,22 +697,33 @@ def ecad_compliant(
     flags = xarray.Dataset()
     history = list()
     for var in ds.data_vars:
-        df = data_flags(ds[var], ds)
+        df = data_flags(ds[var], ds, dims=dims)
         for flag_name, flag_data in df.data_vars.items():
             flags = flags.assign({f"{var}_{flag_name}": flag_data})
 
-            # The extra `split("\n") should be removed when merge_attributes(missing_str=None)
-            history_elems = flag_data.attrs["history"].split("\n")[-1].split(" ")
-            if not history:
-                history.append(
-                    " ".join(
-                        [" ".join(history_elems[0:2]), " ".join(history_elems[-4:])]
+            if (
+                "history" in flag_data.attrs.keys()
+                and np.all(flag_data.values) is not None
+            ):
+                # The extra `split("\n") should be removed when merge_attributes(missing_str=None)
+                history_elems = flag_data.attrs["history"].split("\n")[-1].split(" ")
+                if not history:
+                    history.append(
+                        " ".join(
+                            [
+                                " ".join(history_elems[0:2]),
+                                " ".join(history_elems[-4:]),
+                                "- Performed the following checks:",
+                            ]
+                        )
                     )
-                )
-            history.append(" ".join(history_elems[2:-4]))
+                history.append(" ".join(history_elems[3:-4]))
 
     if raise_flags:
-        raise DataQualityException(flags)
+        if np.any([flags[dv] for dv in flags.data_vars]):
+            raise DataQualityException(flags)
+        else:
+            return
 
     ecad_flag = xarray.DataArray(
         ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
