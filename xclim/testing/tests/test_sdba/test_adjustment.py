@@ -520,16 +520,9 @@ class TestQM:
 
 class TestPrincipalComponents:
     @pytest.mark.parametrize(
-        "group,crd_dims,pts_dims",
-        (
-            ["time", ["lat"], None],  # Lon as vectorizing dim
-            ["time", None, None],  # Lon as second coord dims
-            ["time", ["lat"], ["lon"]],  # Lon as a Points dim
-            # Testing time grouping, vectorization on lon
-            [Grouper("time.month"), ["lat"], None],
-        ),
+        "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
     )
-    def test_simple(self, group, crd_dims, pts_dims):
+    def test_simple(self, group):
         n = 15 * 365
         m = 2  # A dummy dimension to test vectorizing.
         ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
@@ -546,24 +539,13 @@ class TestPrincipalComponents:
         )
         sim["time"] = ref["time"]
 
-        PCA = PrincipalComponents.train(
-            ref, sim, group=group, crd_dims=crd_dims, pts_dims=pts_dims
-        )
+        PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lat")
         scen = PCA.adjust(sim)
 
-        group = group if isinstance(group, Grouper) else Grouper("time")
-        crds = crd_dims or ["lat", "lon"]
-        pts = (pts_dims or []) + ["time"]
-
-        vec = list({"lat", "lon"} - set(crds) - set(pts))
-        refs = ref.stack(crd=crds)
-        sims = sim.stack(crd=crds)
-        scens = scen.stack(crd=crds)
-
         def _assert(ds):
-            cov_ref = nancov(ds.ref.transpose("crd", "pt"))
-            cov_sim = nancov(ds.sim.transpose("crd", "pt"))
-            cov_scen = nancov(ds.scen.transpose("crd", "pt"))
+            cov_ref = nancov(ds.ref.transpose("lat", "pt"))
+            cov_sim = nancov(ds.sim.transpose("lat", "pt"))
+            cov_scen = nancov(ds.scen.transpose("lat", "pt"))
 
             # PC adjustment makes the covariance of scen match the one of ref.
             np.testing.assert_allclose(cov_ref - cov_scen, 0, atol=1e-6)
@@ -571,15 +553,14 @@ class TestPrincipalComponents:
                 np.testing.assert_allclose(cov_ref - cov_sim, 0, atol=1e-6)
 
         def _group_assert(ds, dim):
-            ds = ds.stack(pt=pts)
-            if len(vec) == 1:
-                for v in ds[vec[0]]:
-                    _assert(ds.sel({vec[0]: 0}))
+            if dim == ["time"]:
+                for lon in ds.lon:
+                    _assert(ds.sel(lon=lon).rename(time="pt"))
             else:
-                _assert(ds)
-            return ds.unstack("pt")
+                _assert(ds.stack(pt=dim))
+            return ds
 
-        group.apply(_group_assert, {"ref": refs, "sim": sims, "scen": scens})
+        group.apply(_group_assert, {"ref": ref, "sim": sim, "scen": scen})
 
     @pytest.mark.parametrize(
         "group", [Grouper("time"), Grouper("time.month", window=11)]
@@ -590,7 +571,7 @@ class TestPrincipalComponents:
         ref = ds.air.isel(lat=21, lon=[40, 52]).drop_vars(["lon", "lat"])
         sim = ds.air.isel(lat=18, lon=[17, 35]).drop_vars(["lon", "lat"])
 
-        PCA = PrincipalComponents.train(ref, sim, group=group)
+        PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lon")
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
