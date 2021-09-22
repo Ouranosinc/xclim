@@ -14,6 +14,7 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from dask import array as dsk
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
@@ -411,7 +412,7 @@ def last_run(
 
 
 # TODO: Add window arg
-# Maybe todo : Inverse window arg to tolerate holes?
+# TODO: Inverse window arg to tolerate holes?
 def run_bounds(
     mask: xr.DataArray, dim: str = "time", coord: Optional[Union[bool, str]] = True
 ):
@@ -508,7 +509,7 @@ def season(
     date: Optional[DayOfYearStr] = None,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """Return the bounds of a season (along dim).
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
@@ -532,7 +533,7 @@ def season(
 
     Returns
     -------
-    xr.DataArray
+    xr.Dataset
       "dim" is reduced to "season_bnds" with 2 elements : season start and season end, both indices of da[dim].
 
     Notes
@@ -611,7 +612,8 @@ def season(
     )
     out.end.attrs.update(
         long_name="End of the season.",
-        description=f"First {coordstr} of a run of at least {window} steps breaking the condition, starting after `start`.",
+        description=f"First {coordstr} of a run of at least {window} "
+        "steps breaking the condition, starting after `start`.",
     )
     out.length.attrs.update(
         long_name="Length of the season.",
@@ -937,6 +939,8 @@ def windowed_run_count_ufunc(
       Input array (bool).
     window : int
       Minimum duration of consecutive run to accumulate values.
+    dim : str
+      Dimension along which to calculate windowed run.
 
     Returns
     -------
@@ -966,6 +970,8 @@ def windowed_run_events_ufunc(
       Input array (bool).
     window : int
       Minimum run length.
+    dim : str
+      Dimension along which to calculate windowed run.
 
     Returns
     -------
@@ -1001,7 +1007,7 @@ def statistics_run_ufunc(
     window : int
       Minimal length of runs.
     dim : str
-      The dimension along which the run are found.
+      The dimension along which the runs are found.
 
     Returns
     -------
@@ -1034,7 +1040,7 @@ def first_run_ufunc(
     window : int
       Minimum run length.
     dim : str
-      Dimension along which to index (default: "time").
+      The dimension along which the runs are found.
 
     Returns
     -------
@@ -1088,7 +1094,7 @@ def lazy_indexing(
         idx_ndim = index.ndim
         if idx_ndim == 0:
             # The 0-D index case, we add a dummy dimension to help dask
-            dim = xr.core.utils.get_temp_dimname(da.dims, "x")
+            dim = get_temp_dimname(da.dims, "x")
             index = index.expand_dims(dim)
         invalid = index.isnull()  # Which indexes to mask
         # NaN-indexing doesn't work, so fill with 0 and cast to int
@@ -1177,3 +1183,90 @@ def index_of_date(
             f"More than {max_idxs} instance of date {date} found in the coordinate array."
         )
     return idxs
+
+
+def suspicious_run_1d(
+    arr: np.ndarray,
+    window: int = 10,
+    op: str = ">",
+    thresh: Optional[float] = None,
+) -> np.ndarray:
+    """Return True where the array contains a run of identical values.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+      Array of values to be parsed.
+    window : int
+      Minimum run length
+    op : {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}, optional
+      Operator for threshold comparison. Defaults to ">".
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
+
+    Returns
+    -------
+    numpy.ndarray
+      Whether or not the data points are part of a run of identical values.
+    """
+    v, rl, pos = rle_1d(arr)
+    sus_runs = rl >= window
+    if thresh is not None:
+        if op in {">", "gt"}:
+            sus_runs = sus_runs & (v > thresh)
+        elif op in {"<", "lt"}:
+            sus_runs = sus_runs & (v < thresh)
+        elif op in {"==", "eq"}:
+            sus_runs = sus_runs & (v == thresh)
+        elif op in {">=", "gteq"}:
+            sus_runs = sus_runs & (v >= thresh)
+        elif op in {"<=", "lteq"}:
+            sus_runs = sus_runs & (v <= thresh)
+        else:
+            raise NotImplementedError(f"{op}")
+
+    out = np.zeros_like(arr, dtype=bool)
+    for st, l in zip(pos[sus_runs], rl[sus_runs]):
+        out[st : st + l] = True
+    return out
+
+
+def suspicious_run(
+    arr: xr.DataArray,
+    dim: str = "time",
+    window: int = 10,
+    op: str = ">",
+    thresh: Optional[float] = None,
+) -> xr.DataArray:
+    """Return True where the array contains has runs of identical values, vectorized version.
+
+    In opposition to other run length functions, here the output has the same shape as the input.
+
+    Parameters
+    ----------
+    arr : xr.DataArray
+      Array of values to be parsed.
+    dim: str
+      Dimension along which to check for runs (default: "time").
+    window : int
+      Minimum run length
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
+    op: {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}
+      Operator for threshold comparison, defaults to ">".
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    return xr.apply_ufunc(
+        suspicious_run_1d,
+        arr,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[bool],
+        keep_attrs=True,
+        kwargs=dict(window=window, op=op, thresh=thresh),
+    )
