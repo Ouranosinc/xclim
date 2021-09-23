@@ -24,7 +24,7 @@ import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
-from yaml import safe_load
+from yaml import safe_dump, safe_load
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
@@ -266,7 +266,7 @@ def raise_warn_or_log(
     elif mode == "warn":
         warnings.warn(msg, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise err
+        raise ValueError(msg) from err
 
 
 class InputKind(IntEnum):
@@ -414,3 +414,116 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
         return InputKind.KWARGS
 
     return InputKind.OTHER_PARAMETER
+
+
+def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
+    """Reads in a clix-meta yaml and refactors it to fit xclim's yaml specifications."""
+    from xclim.indices import generic
+
+    freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
+    freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
+
+    with open(raw) as f:
+        yml = safe_load(f)
+
+    yml["realm"] = "atmos"
+    yml[
+        "doc"
+    ] = """  ===================
+  CF Standard indices
+  ===================
+
+  Indicator found here are defined by the team at `clix-meta`_.
+  Adapted documentation from that repository follows:
+
+  The repository aims to provide a platform for thinking about, and developing,
+  a unified view of metadata elements required to describe climate indices (aka climate indicators).
+
+  To facilitate data exchange and dissemination the metadata should, as far as possible,
+  follow the Climate and Forecasting (CF) Conventions. Considering the very rich and diverse flora of
+  climate indices this is however not always possible. By collecting a wide range of different indices
+  it is easier to discover any common patterns and features that are currently not well covered by the
+  CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
+  which both are controlled vocabularies of the CF Conventions.
+
+  .. _clix-meta: https://github.com/clix-meta/clix-meta
+"""
+    yml["references"] = "clix-meta https://github.com/clix-meta/clix-meta"
+
+    remove_ids = []
+    rename_ids = {}
+    for cmid, data in yml["indices"].items():
+        if "reference" in data:
+            data["references"] = data.pop("reference")
+
+        index_function = data.pop("index_function")
+
+        data["compute"] = index_function["name"]
+        if getattr(generic, data["compute"], None) is None:
+            remove_ids.append(cmid)
+            print(
+                f"Indicator {cmid} uses non-implemented function {data['compute']}, removing."
+            )
+            continue
+
+        rename_params = {}
+        if index_function["parameters"]:
+            data["parameters"] = index_function["parameters"]
+            for name, param in data["parameters"].copy().items():
+                if param["kind"] in ["operator", "reducer"]:
+                    data["parameters"][name] = param[param["kind"]]
+                else:  # kind = quantity
+                    if param.get("proposed_standard_name") == "temporal_window_size":
+                        # Window, nothing to do.
+                        del data["parameters"][name]
+                    elif isinstance(param["data"], dict):
+                        # No value
+                        data["parameters"][name] = {
+                            "description": param.get(
+                                "long_name",
+                                param.get(
+                                    "proposed_standard_name", param.get("standard_name")
+                                ).replace("_", " "),
+                            ),
+                            "units": param["units"],
+                        }
+                        rename_params[
+                            f"{{{name}}}"
+                        ] = f"{{{list(param['data'].keys())[0]}}}"
+                    else:
+                        # Value
+                        data["parameters"][name] = f"{param['data']} {param['units']}"
+
+        period = data.pop("period")
+        data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
+        data.setdefault("parameters", {})["freq"] = {
+            "default": freq_defs[period["default"]]
+        }
+
+        if "proposed_standard_name" in data["output"]:
+            del data["output"]["proposed_standard_name"]
+        for attr in data["output"].keys():
+            if attr == "cell_methods" and data["output"][attr] is not None:
+                methods = []
+                for cell_method in data["output"][attr]:
+                    methods.append(
+                        "".join([f"{dim}: {meth}" for dim, meth in cell_method.items()])
+                    )
+                data["output"][attr] = " ".join(methods)
+            if attr in ["var_name", "long_name"]:
+                for new, old in rename_params.items():
+                    data["output"][attr] = data["output"][attr].replace(old, new)
+
+        del data["ET"]
+
+        if "{" in cmid:
+            rename_ids[cmid] = cmid.replace("{", "").replace("}", "")
+
+    for old, new in rename_ids.items():
+        yml["indices"][new] = yml["indices"].pop(old)
+
+    for cmid in remove_ids:
+        del yml["indices"][cmid]
+
+    with open(adapted, "w") as f:
+        safe_dump(yml, f)

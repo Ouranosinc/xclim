@@ -307,7 +307,7 @@ class Indicator(IndicatorRegistrar):
         # All fields parsed by parse_doc except "parameters"
         # i.e. : title, abstract, notes, references, long_name
         for name, value in docmeta.items():
-            if not getattr(cls, name):
+            if not getattr(cls, name, None):
                 # Set if neither the class attr is set nor the kwds attr
                 kwds.setdefault(name, value)
 
@@ -364,64 +364,58 @@ class Indicator(IndicatorRegistrar):
     @classmethod
     def _parse_output_attrs(
         cls, kwds: Dict[str, Any], identifier: str
-    ) -> Union[List[Dict[str, str]], List[Dict[str, Union[str, Callable]]]]:
+    ) -> List[Dict[str, Union[str, Callable]]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_output = cls.output
-        new_output = kwds.get("output")
-        if isinstance(new_output, list):
-            pass  # All good, we assume a list of dicts
-        elif isinstance(new_output, dict):
+        output = kwds.get("output")
+        if isinstance(output, dict):
             # Single output indicator, but we store as a list anyway.
-            new_output = [new_output]
-        elif new_output is None:
+            output = [output]
+        elif output is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
-            # We need to get the number of outputs, we use var_names as it is the only required attr.
-            var_names = kwds.pop("var_name", None)
-            if var_names is None:
-                if parent_output is not None:
-                    # No passed var_names, try to taken them from the parent class?
-                    var_names = [out["var_name"] for out in parent_output]
-                else:
-                    # No luck, assume it is equal to the identifier and there is only one output.
-                    var_names = [identifier]
-            elif isinstance(var_names, str):
-                # Got a single one, assume single output.
-                var_names = [var_names]
+            # We need to get the number of outputs, defaulting to 1
+            n_outs = max(
+                [1]
+                + [
+                    len(kwds.get(name))
+                    for name in cls._cf_names
+                    if isinstance(kwds.get(name), (tuple, list))
+                ]
+            )
 
-            n_outs = len(var_names)
             # Populate new output from parsing cf_names passed directly.
-            new_output = [{} for i in range(n_outs)]
+            output = [{} for i in range(n_outs)]
+
             for name in cls._cf_names:
-                if name == "var_name":  # Already parsed
-                    values = var_names
-                else:
-                    values = kwds.pop(name, None)
+                values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                elif not isinstance(values, (list, tuple)):
+                elif not isinstance(values, (tuple, list)):
+                    # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
                     raise ValueError(
-                        f"Attribute {name} has {len(values)} elements but should have {n_outs} according to var_name."
+                        f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
-                for attrs, value in zip(new_output, values):
+                for attrs, value in zip(output, values):
                     if value:  # Skip the empty ones (None or '')
                         attrs[name] = value
+        # else we assume a list of dicts
 
-        # update parent, only if there is one and they have the same length.
-        if parent_output is not None and len(parent_output) == len(new_output):
-            output = deepcopy(parent_output)
-            for old, new in zip(output, new_output):
-                old.update(new)
-        else:
-            output = new_output
+        # For single output, var_name defauls to identifer.
+        if len(output) == 1 and "var_name" not in output[0]:
+            output[0]["var_name"] = identifier
+
+        # update from parent, if they have the same length.
+        if parent_output is not None and len(parent_output) == len(output):
+            for old, new in zip(parent_output, output):
+                for attr, value in old.items():
+                    new.setdefault(attr, value)
 
         # check if we have var_names for everybody
-        for i, var in enumerate(output):
+        for i, var in enumerate(output, start=1):
             if "var_name" not in var:
-                raise ValueError(
-                    f"Output attrs for output #{i + 1} is missing a var_name! Received : {var}."
-                )
+                raise ValueError(f"Output #{i} is missing a var_name! Got: {var}.")
 
         return output
 
@@ -464,11 +458,7 @@ class Indicator(IndicatorRegistrar):
         if inputs is not None:
             # Override input metadata
             for varname, name in inputs.items():
-                # Indicator's new will put the name of the variable as its default,
-                # we override this with the real variable name.
-                # Also take the canonical units and description from the yaml of official variables.
-                # Description overrides the one parsed from the generic compute docstring
-                # Canonical units go into the declare_units wrapper.
+                # Indicator's new will put the name of the variable as its default, we override this with the real variable name.
                 params[varname] = {
                     "default": name,
                     "description": VARIABLES[name]["description"],
@@ -476,10 +466,9 @@ class Indicator(IndicatorRegistrar):
                 input_units[varname] = VARIABLES[name]["canonical_units"]
 
         compute = data.pop("compute", None)
+        # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
+        # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            # Generate compute function
-            # data.index_function.name refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
-            # It can also directly be a function.
             compute = getattr(indices.generic, compute, getattr(indices, compute, None))
             if compute is None:
                 raise ImportError(
@@ -494,14 +483,13 @@ class Indicator(IndicatorRegistrar):
             else:
                 # Changing the metadata (only "description", "default", "choices" and "units")
                 params[name] = param
-
                 if "units" in param:
                     input_units[name] = param["units"]
 
-        if input_units is not None:
+        if input_units:
             if hasattr(compute, "in_units"):
                 raise ValueError(
-                    f"Passing inputs or changing parameters' units is only valid if the compute function is not aleady wrapped by `xclim.core.units.declare_units`. Got function {compute} with input units {compute.in_units}."
+                    f"Passing inputs or changing parameters' units is only valid if the compute function is not aleady wrapped by `xclim.core.units.declare_units`. Got function {compute} that has input units {compute.in_units}."
                 )
             compute = declare_units(**input_units)(compute)
 
@@ -515,7 +503,7 @@ class Indicator(IndicatorRegistrar):
         if params:  # non-empty dict
             data["parameters"] = params
 
-        return cls(**data)
+        return cls(identifier=identifier, module=module, **data)
 
     def __init__(self, **kwds):
         """Run checks and organizes the metadata."""
@@ -993,6 +981,11 @@ class Indicator(IndicatorRegistrar):
         """
         pass
 
+    @classmethod
+    @property
+    def cf_attrs(cls):
+        return cls.output
+
 
 class Daily(Indicator):
     """Indicator defined for inputs at daily frequency."""
@@ -1140,7 +1133,7 @@ def add_iter_indicators(module):
                 if isinstance(ind, Indicator):
                     yield indname, ind
 
-        iter_indicators.__doc__ = f"Iterated over the (name, indicator) pairs in the {module.__name__} indicator module."
+        iter_indicators.__doc__ = f"Iterate over the (name, indicator) pairs in the {module.__name__} indicator module."
 
         module.__dict__["iter_indicators"] = iter_indicators
 
@@ -1201,7 +1194,6 @@ def build_indicator_module_from_yaml(
     realm: Optional[str] = None,
     keywords: Optional[str] = None,
     references: Optional[str] = None,
-    notes: Optional[str] = None,
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1233,7 +1225,6 @@ def build_indicator_module_from_yaml(
        Comma separated keywords.
     references: str, optional
         Source citations.
-    notes: str, optional
       Other indicator attributes that would apply to all indicators in this module.
       Values given here are overridden by the ones given in individual definition, but
       they override the ones given at top-level in the YAMl file.
@@ -1294,21 +1285,30 @@ def build_indicator_module_from_yaml(
 
     # Module-wide default values for some attributes
     defkwargs = {
-        # Other default argument, only given in case the indicator definition does not give them.
+        # Only usedin case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
+        # Merged with a space
         "keywords": keywords or yml.get("keywords"),
+        # Merged with a new line
         "references": references or yml.get("references"),
-        "notes": notes or yml.get("notes"),
     }
+
+    def _merge_attrs(dbase, dextra, attr, sep):
+        """Merge or replace attribute in dbase from dextra."""
+        a = dbase.get(attr)
+        b = dextra.get(attr)
+        # If both are not None and sep is a string, join.
+        if a and b and sep is not None:
+            dbase[attr] = sep.join([a, b])
+        # If both are not None but sep is, this overrides with b
+        # also fills when a is simply missing
+        elif b:
+            dbase[attr] = b
 
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indices"].items():
         try:
-            clean_id, data = _cleanup_indicator_dict(
-                identifier, data, indices, defkwargs
-            )
-
             if "base" in data:
                 if data["base"].startswith("."):
                     # A point means the base has been declared above.
@@ -1318,8 +1318,26 @@ def build_indicator_module_from_yaml(
             else:
                 base = default_base
 
-            mapping[clean_id] = base.from_dict(
-                data, identifier=clean_id, module=module_name
+            # Get the compute function
+            indice_name = data.get("compute")
+            indice_func = None
+            if indice_name is not None and indices is not None:
+                indice_func = getattr(indices, indice_name, None)
+                if indice_func is None and hasattr(indices, "__getitem__"):
+                    try:
+                        indice_func = indices[indice_name]
+                    except KeyError:
+                        pass
+
+            if indice_func is not None:
+                data["compute"] = indice_func
+
+            _merge_attrs(data, defkwargs, "references", "\n")
+            _merge_attrs(data, defkwargs, "keywords", " ")
+            _merge_attrs(data, defkwargs, "realm", None)
+
+            mapping[identifier] = base.from_dict(
+                data, identifier=identifier, module=module_name
             )
 
         except Exception as err:
@@ -1336,29 +1354,3 @@ def build_indicator_module_from_yaml(
             load_locale(locdict, locale)
 
     return mod
-
-
-def _cleanup_indicator_dict(identifier, data, indices, defaults):
-    # Assign indice as func.
-    # If data.index_function.name refers to a function in `indices`, replace that field by the function.
-    indice_name = data.get("index_function", {}).get("name", None)
-    if indice_name is not None and indices is not None:
-        indice_func = getattr(indices, indice_name, None)
-        if indice_func is None and hasattr(indices, "__getitem__"):
-            try:
-                indice_func = indices[indice_name]
-            except KeyError:
-                pass
-
-        if indice_func is not None:
-            data["index_function"]["name"] = indice_func
-
-    # clix-meta has illegal characters in the identifiers.
-    clean_id = identifier.replace("{", "").replace("}", "")
-
-    # Workaround for clix-meta (we name it references, they name it reference)
-    data.setdefault("references", data.get("reference"))
-    for k, v in defaults.items():
-        data.setdefault(k, v)
-
-    return clean_id, data
