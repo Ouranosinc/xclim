@@ -9,6 +9,8 @@ New indicators
 ~~~~~~~~~~~~~~
 * ``climatological_mean_doy`` indice returns the mean and standard deviation across a climatology according to day-of-year (`xarray.DataArray.groupby("time.dayofyear")`). A moving window averaging of days can also be supplied (default:`window=1`).
 * ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
+* Added ``atmos.wet_precip_accumulation``, an indicator cumulating precip over wet days.
+* Module ICCLIM now includes ``PRCPTOT``, which cumulates precip on days with precip above 1 mm/day.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,19 +25,16 @@ New features and enhancements
     These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
     If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
 * A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (``xclim dataflags --help``). See the CLI documentation page for usage examples.
+* Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
 * Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
 
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Added ``atmos.wet_precip_accumulation``, an indicator cumulating precip over wet days.
-* Module ICCLIM now includes ``PRCPTOT``, which cumulates precip on days with precip above 1 mm/day.
-
 Bug fixes
 ~~~~~~~~~
+* Fixes in ``sdba`` for (1) inputs with dimensions without coordinates, for (2) ``sdba.detrending.MeanDetrend`` and for (3) ``DetrendedQuantileMapping`` when used with dask's distributed scheduler.
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
 * Addressed an edge case where ``test_sdba::test_standardize`` randomness could generate values that surpass the test error tolerance.
 * Added a missing `.txt` file to the MANIFEST of the source distributable in order to be able to run all tests.
@@ -49,7 +48,7 @@ Bug fixes
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
-* Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+
 
 0.29.0 (2021-08-30)
 -------------------
