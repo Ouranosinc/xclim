@@ -348,11 +348,13 @@ class TestQDM:
         ref = mon_series(y, name)
         hist = sim = series(x, name)
         if use_dask:
+            ref = ref.chunk({"time": -1})
+            hist = hist.chunk({"time": -1})
             sim = sim.chunk({"time": -1})
         if add_dims:
-            ref = ref.expand_dims(site=[0, 1, 2, 3, 4])
-            hist = hist.expand_dims(site=[0, 1, 2, 3, 4])
-            sim = sim.expand_dims(site=[0, 1, 2, 3, 4])
+            ref = ref.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
+            hist = hist.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
+            sim = sim.expand_dims(site=[0, 1, 2, 3, 4]).drop_vars("site")
             sel = {"site": 0}
         else:
             sel = {}

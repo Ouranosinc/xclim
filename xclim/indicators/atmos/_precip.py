@@ -31,6 +31,7 @@ __all__ = [
     "liquid_precip_ratio",
     "dry_spell_frequency",
     "dry_spell_total_length",
+    "wet_precip_accumulation",
 ]
 
 
@@ -170,6 +171,17 @@ precip_accumulation = Precip(
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
     compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
+)
+
+wet_precip_accumulation = Precip(
+    title="Accumulated total precipitation (solid and liquid) during wet days",
+    identifier="wet_prcptot",
+    units="mm",
+    standard_name="lwe_thickness_of_precipitation_amount",
+    long_name="Total precipitation",
+    description="{freq} total precipitation over wet days, defined as days where precipitation exceeds {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
+    compute=wrapped_partial(indices.prcptot, suggested={"thresh": "1 mm/day"}),
 )
 
 liquid_precip_accumulation = PrTasx(

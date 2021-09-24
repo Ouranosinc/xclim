@@ -558,7 +558,7 @@ def thresholded_statistics(
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the statistic is calculated for those data values that fulfil the condition.
+    Finally, the statistic is calculated for those data values that fulfill the condition.
 
     Parameters
     ----------

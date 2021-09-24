@@ -72,7 +72,7 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from inspect import Parameter, _empty, signature
+from inspect import Parameter, _empty, signature  # noqa
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -156,7 +156,8 @@ class IndicatorRegistrar:
             if inst is not None:
                 return inst
         raise ValueError(
-            f"There is no existing instance of {cls.__name__}. Either none were created or they were all garbage-collected."
+            f"There is no existing instance of {cls.__name__}. "
+            "Either none were created or they were all garbage-collected."
         )
 
 
@@ -169,9 +170,9 @@ class Indicator(IndicatorRegistrar):
 
     Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
 
-    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators` subclasses,
-    if the compute function returns multiple variables, attributes may be given as lists of strings or strings.
-    In the latter case, the same value is used on all variables.
+    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators`
+    subclasses, if the compute function returns multiple variables, attributes may be given as lists of strings or
+    strings. In the latter case, the same value is used on all variables.
 
     Compared to their base `compute` function, indicators add the possibility of using dataset as input,
     with the injected argument `ds` in the call signature. All arguments that were indicated by the compute function
@@ -568,7 +569,8 @@ class Indicator(IndicatorRegistrar):
             and parse_offset(all_params["freq"])[1] not in self.allowed_periods
         ):
             raise ValueError(
-                f"Resampling frequency {all_params['freq']} is not allowed for indicator {self.identifier} (needs something equivalent to one of {self.allowed_periods})."
+                f"Resampling frequency {all_params['freq']} is not allowed for indicator "
+                f"{self.identifier} (needs something equivalent to one of {self.allowed_periods})."
             )
 
         # Compute the indicator values, ignoring NaNs and missing values.

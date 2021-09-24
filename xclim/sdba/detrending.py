@@ -56,7 +56,7 @@ class BaseDetrend(ParametrizableWithDataset):
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
-        new.ds.trend.attrs["units"] = da.units
+        new.ds.trend.attrs["units"] = da.attrs.get("units", "")
         return new
 
     def _get_trend(self, da: xr.DataArray):
@@ -79,14 +79,18 @@ class BaseDetrend(ParametrizableWithDataset):
         """Remove the previously fitted trend from a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before detrending.")
-        trend = convert_units_to(self.ds.trend, da)
+        trend = self.ds.trend
+        if "units" in da.attrs:
+            trend = convert_units_to(self.ds.trend, da)
         return self._detrend(da, trend)
 
     def retrend(self, da: xr.DataArray):
         """Put the previously fitted trend back on a DataArray."""
         if not self.fitted:
             raise ValueError("You must call fit() before retrending")
-        trend = convert_units_to(self.ds.trend, da)
+        trend = self.ds.trend
+        if "units" in da.attrs:
+            trend = convert_units_to(self.ds.trend, da)
         return self._retrend(da, trend)
 
     def _detrend(self, da, trend):
@@ -124,12 +128,12 @@ class MeanDetrend(BaseDetrend):
     """Simple detrending removing only the mean from the data, quite similar to normalizing."""
 
     def _get_trend(self, da):
-        return _meandetrend_get_trend(da, **self)
+        return _meandetrend_get_trend(da, **self).trend
 
 
-@map_groups(main_only=True, trend=["<DIM>"])
+@map_groups(main_only=True, trend=[Grouper.DIM])
 def _meandetrend_get_trend(da, *, dim, kind):
-    trend = xr.full_like(da, da.mean(dim))
+    trend = da.mean(dim).broadcast_like(da)
     return trend.rename("trend").to_dataset()
 
 
