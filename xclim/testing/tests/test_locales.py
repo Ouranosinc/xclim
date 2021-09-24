@@ -155,7 +155,7 @@ def test_xclim_translations(locale, official_indicators):
 
 
 @pytest.mark.parametrize(
-    "initeng,expected", [(False, ""), (True, atmos.tg_mean.long_name)]
+    "initeng,expected", [(False, ""), (True, atmos.tg_mean.output[0]["long_name"])]
 )
 def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)

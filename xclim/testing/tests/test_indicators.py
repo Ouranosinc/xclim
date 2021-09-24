@@ -464,19 +464,17 @@ def test_indicator_from_dict():
     d = dict(
         realm="atmos",
         output=dict(
-            var_name="tmean{thresh}",
+            var_name="tmean{threshold}",
             units="K",
             long_name="{freq} mean surface temperature",
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        index_function=dict(
-            name="thresholded_statistics",
-            parameters=dict(
-                threshold={"data": {"thresh": None}, "description": "A threshold temp"},
-                condition={"data": "`<"},
-                reducer={"data": "mean"},
-            ),
+        compute="thresholded_statistics",
+        parameters=dict(
+            threshold={"description": "A threshold temp"},
+            condition="<",
+            reducer="mean",
         ),
         input={"data": "tas"},
     )
@@ -488,8 +486,6 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"]["description"] == "A threshold temp"
     # Injection of paramters
     assert "condition" in ind.compute._injected
-    # Placeholders were translated to name in signature
-    assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
     assert ind.parameters["data"]["units"] == "K"

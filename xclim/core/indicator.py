@@ -378,13 +378,15 @@ class Indicator(IndicatorRegistrar):
             output = deepcopy(parent_output)
         elif output is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
-            # We need to get the number of outputs, defaulting to the length of parent's output or 1
+            # We need to get the number of outputs first, defaulting to the length of parent's output or 1
             n_outs = max(
                 [len(parent_output or [1])]
                 + [
-                    len(kwds.get(name))
+                    len(kwds.get(name, getattr(cls, name, None)))
                     for name in cls._cf_names
-                    if isinstance(kwds.get(name), (tuple, list))
+                    if isinstance(
+                        kwds.get(name, getattr(cls, name, None)), (tuple, list)
+                    )
                 ]
             )
 
@@ -392,7 +394,7 @@ class Indicator(IndicatorRegistrar):
             output = [{} for i in range(n_outs)]
 
             for name in cls._cf_names:
-                values = kwds.pop(name, None)
+                values = kwds.pop(name, getattr(cls, name, None))
                 if values is None:  # None passed, skip
                     continue
                 elif not isinstance(values, (tuple, list)):

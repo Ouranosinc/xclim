@@ -79,7 +79,9 @@ def test_custom_indices():
     )
 
     # From mapping
-    exinds = {"extreme_precip_accumulation": example.extreme_precip_accumulation}
+    exinds = {
+        "extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days
+    }
     ex2 = build_indicator_module_from_yaml(
         nbpath / "example.yml", name="ex2", indices=exinds
     )
@@ -89,7 +91,7 @@ def test_custom_indices():
     out1 = ex1.R95p(pr=pr)  # noqa
     out2 = ex2.R95p(pr=pr)  # noqa
 
-    xr.testing.assert_equal(out1, out2)
+    xr.testing.assert_equal(out1[0], out2[0])
 
     # Check that missing was not modified even with injecting `freq`.
     assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing

@@ -266,7 +266,7 @@ def raise_warn_or_log(
     elif mode == "warn":
         warnings.warn(msg, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise ValueError(msg) from err
+        raise err
 
 
 class InputKind(IntEnum):
