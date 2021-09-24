@@ -57,6 +57,9 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 In the following, the section under `<identifier>` is refered to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
+The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml) and the [yamale](https://github.com/23andMe/Yamale) tool.
+See the "Extending xclim" notebook for more info.
+
 Inputs
 ~~~~~~
 As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.utils.variables`),
@@ -222,7 +225,7 @@ class Indicator(IndicatorRegistrar):
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     allowed_periods : Sequence[str], optional
       A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["Y", "A"]`. `None` means, "any period" or that the
+      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
       indicator doesn't take a `freq` argument.
 
     Notes
@@ -371,11 +374,13 @@ class Indicator(IndicatorRegistrar):
         if isinstance(output, dict):
             # Single output indicator, but we store as a list anyway.
             output = [output]
+        elif output is None and parent_output:
+            output = deepcopy(parent_output)
         elif output is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
-            # We need to get the number of outputs, defaulting to 1
+            # We need to get the number of outputs, defaulting to the length of parent's output or 1
             n_outs = max(
-                [1]
+                [len(parent_output or [1])]
                 + [
                     len(kwds.get(name))
                     for name in cls._cf_names

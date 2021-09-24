@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import xarray as xr
+import yamale
 
 from xclim import indicators
 from xclim.core.indicator import build_indicator_module_from_yaml
@@ -58,9 +59,16 @@ def test_virtual_modules(virtual_indicator, atmosds):
 @pytest.mark.requires_docs
 def test_custom_indices():
     # Use the example in the Extending Xclim notebook for testing.
+    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+
+    schema = yamale.make_schema(
+        Path(__file__).parent.parent.parent / "data" / "schema.yml"
+    )
+    data = yamale.make_data(nbpath / "example.yml")
+    yamale.validate(schema, data)
+
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
-    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
     sys.path.insert(1, str(nbpath.absolute()))
 
     import example  # noqa
@@ -85,3 +93,12 @@ def test_custom_indices():
 
     # Check that missing was not modified even with injecting `freq`.
     assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing
+
+
+class TestOfficalYaml(yamale.YamaleTestCase):
+    base_dir = str(Path(__file__).parent.parent.parent / "data")
+    schema = "schema.yml"
+    yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
+
+    def test_all(self):
+        assert self.validate()

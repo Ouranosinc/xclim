@@ -34,7 +34,7 @@ indices:
     base: tg_min
   TX90p:
     base: tx90p
-    ouput:
+    output:
       long_name: Days with TX>90th percentile of daily maximum temperature (warm day-times)
   TX10p:
     base: tx10p
@@ -190,7 +190,7 @@ indices:
       thresh: 1 mm/day
   R10mm:
     base: wetdays
-    ouput:
+    output:
       long_name: Heavy precipitation days (precipitation≥10 mm)
     parameters:
       thresh: 10 mm/day

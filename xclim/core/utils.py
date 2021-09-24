@@ -466,6 +466,22 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
             )
             continue
 
+        if (data["output"].get("standard_name") or "").startswith(
+            "number_of_days"
+        ) or cmid == "nzero":
+            remove_ids.append(cmid)
+            print(
+                f"Indicator {cmid} has a 'number_of_days' standard name and xclim disagrees with the CF conventions on the correct output units, removing."
+            )
+            continue
+
+        if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
+            remove_ids.append(cmid)
+            print(
+                f"Indicator {cmid} has a 'precipitation_amount' standard name and clix-meta has incoherent output units, removing."
+            )
+            continue
+
         rename_params = {}
         if index_function["parameters"]:
             data["parameters"] = index_function["parameters"]
@@ -502,8 +518,11 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
         if "proposed_standard_name" in data["output"]:
             del data["output"]["proposed_standard_name"]
-        for attr in data["output"].keys():
-            if attr == "cell_methods" and data["output"][attr] is not None:
+        for attr in list(data["output"].keys()):
+            if data["output"][attr] is None:
+                del data["output"][attr]
+                continue
+            if attr == "cell_methods":
                 methods = []
                 for cell_method in data["output"][attr]:
                     methods.append(
