@@ -651,7 +651,7 @@ def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> No
         dim = str2pint(dim)
         expected = dim.dimensionality
     except pint.UndefinedUnitError:
-        # Raised when it is not understood, we assume it was a dimensionlity
+        # Raised when it is not understood, we assume it was a dimensionality
         expected = units.get_dimensionality(dim.replace("dimensionless", ""))
 
     if isinstance(val, str):
@@ -720,14 +720,14 @@ def declare_units(
             # If this fails, it's a developer's error.
             if isinstance(out, tuple):
                 for outd in out:
-                    assert (
-                        "units" in outd.attrs
-                    ), "No units were assigned in one of the indice's outputs."
+                    if "units" not in outd.attrs:
+                        raise ValueError(
+                            "No units were assigned in one of the indice's outputs."
+                        )
                     outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
             else:
-                assert (
-                    "units" in out.attrs
-                ), "No units were assigned to the indice's output."
+                if "units" not in out.attrs:
+                    raise ValueError("No units were assigned to the indice's output.")
                 out.attrs["units"] = ensure_cf_units(out.attrs["units"])
 
             return out

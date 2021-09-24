@@ -5,9 +5,32 @@ History
 0.30.0 (unreleased)
 -------------------
 
+New indicators
+~~~~~~~~~~~~~~
+* ``climatological_mean_doy`` indice returns the mean and standard deviation across a climatology according to day-of-year (`xarray.DataArray.groupby("time.dayofyear")`). A moving window averaging of days can also be supplied (default:`window=1`).
+* ``within_bnds_doy`` indice returns a boolean array indicating whether or not array values are within bounds for each day of the year.
+* Added ``atmos.wet_precip_accumulation``, an indicator cumulating precip over wet days.
+* Module ICCLIM now includes ``PRCPTOT``, which cumulates precip on days with precip above 1 mm/day.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``xc.core.utils.nan_calc_percentiles`` now uses a custom algorithm instead of ``numpy.nanpercentiles`` to have more flexibility on the interpolation method. The performance is also improved.
+* ``xc.core.calendar.percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (climdex, icclim). Using `alpha = beta = 1` restores the previous behaviour.
+* ``xc.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
+* ``xclim`` now implements many data quality assurance flags for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
+    - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
+    - Precipitation-specific (variables: ``pr``, ``prsn``, ):  ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
+    - Wind-specific (variables: ``sfcWind``, ``wsgsmax``/``sfcWindMax``): ``wind_values_outside_of_bounds``
+    - Generic: ``outside_n_standard_deviations_of_climatology``, ``values_repeating_for_n_or_more_days``, ``values_of_thresh_repeating_for_n_or_more_days``, ``percentage_values_outside_of_bounds``.
+    These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
+    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
+* A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (``xclim dataflags --help``). See the CLI documentation page for usage examples.
+* Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
+* Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
 
 Bug fixes
 ~~~~~~~~~
@@ -22,16 +45,10 @@ Bug fixes
 * Fix bootstrapping with dask arrays. Dask does not support using ``loc`` with multiple indexes to set new values so a workaround was necessary.
 * Fix bootstrapping when the bootstrapped year must be converted to a 366_day calendar.
 
-
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
 
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* ``xc.core.utils.nan_calc_percentiles`` now uses a custom algorithm instead of ``numpy.nanpercentiles`` to have more flexibility on the interpolation method. The performance is also improved.
-* ``xc.core.calendar.percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (climdex, icclim). Using `alpha = beta = 1` restores the previous behaviour.
-* ``xc.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
 
 0.29.0 (2021-08-30)
 -------------------

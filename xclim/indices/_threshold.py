@@ -303,7 +303,7 @@ def daily_pr_intensity(
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      precipitation value over which a day is considered wet.
+      Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
 

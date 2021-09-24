@@ -78,6 +78,11 @@ Other utilities
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: xclim.core.dataflags
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: xclim.core.formatting
    :members:
    :undoc-members:

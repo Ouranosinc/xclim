@@ -197,7 +197,7 @@ class MissingAny(MissingBase):
       Input array.
     freq : str
       Resampling frequency.
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "H", "M"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
