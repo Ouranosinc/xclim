@@ -392,17 +392,18 @@ def prcptot_warmcold_quarter(
     return out
 
 
-# FIXME: `src_timestep` is not used here.
-@declare_units(pr="[precipitation]")
-def prcptot(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""ANUCLIM Accumulated total precipitation.
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
+def prcptot(
+    pr: xarray.DataArray, thresh: str = "0 mm/d", freq: str = "YS"
+) -> xarray.DataArray:
+    r"""Accumulated total precipitation.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    src_timestep : {'D', 'W', 'M'}
-      Input data time frequency - One of daily, weekly or monthly.
+    thresh : str
+      Threshold over which precipitation starts being cumulated.
     freq : str
       Resampling frequency.
 
@@ -410,15 +411,11 @@ def prcptot(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     -------
     xarray.DataArray, [length]
        Total precipitation.
-
-    Notes
-    -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well.
     """
-    pram = rate2amount(pr)
-    return pram.resample(time=freq).sum(dim="time", keep_attrs=True)
+    thresh = convert_units_to(thresh, pr)
+    return (
+        rate2amount(pr.where(pr >= thresh, 0)).resample(time=freq).sum(keep_attrs=True)
+    )
 
 
 @declare_units(pr="[precipitation]")

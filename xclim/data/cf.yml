@@ -3104,44 +3104,38 @@ indices:
       definition: "Maximum number of consecutive days with P>=1mm"
       comment: "maximum consecutive days when daily total precipitation is at least 1 mm"
 
-  # prcptot:
-  #   reference: ETCCDI
-  #   period:
-  #     allowed:
-  #       annual:
-  #       seasonal:
-  #       monthly:
-  #     default: annual
-  #   output:
-  #     var_name: "prcptot"
-  #     standard_name: lwe_thickness_of_precipitation_amount
-  #     long_name: "Total precipitation during Wet Days"
-  #     units: "mm"
-  #     cell_methods:
-  #       - time: sum within days
-  #       - time: mean over days
-  #   input:
-  #     data: pr
-  #   index_function:
-  #     name: thresholded_statistics
-  #     parameters:
-  #       threshold:
-  #         kind: quantity
-  #         standard_name: lwe_precipitation_rate
-  #         long_name: "Wet day threshold"
-  #         data: 1
-  #         units: "mm day-1"
-  #       condition:
-  #         kind: operator
-  #         operator: ">"
-  #       reducer:
-  #         kind: reducer
-  #         reducer: sum
-  #   ET:
-  #     short_name: "prcptot"
-  #     long_name: "Total wet- day precipitation"
-  #     definition: "PRCP from wet days (P>=1mm)"
-  #     comment: "sum of total daily precipitation during days having at least 1 mm"
+  prcptot:
+    reference: ETCCDI
+    period:
+      allowed:
+        annual:
+        seasonal:
+        monthly:
+      default: annual
+    output:
+      var_name: "prcptot"
+      standard_name: lwe_thickness_of_precipitation_amount
+      long_name: "Total precipitation during Wet Days"
+      units: "mm"
+      cell_methods:
+        - time: sum within days
+        - time: mean over days
+    input:
+      data: pr
+    index_function:
+      name: wet_precip_accumulation
+      parameters:
+        thresh:
+          kind: quantity
+          standard_name: lwe_precipitation_rate
+          long_name: "Wet day threshold"
+          data: 1
+          units: "mm day-1"
+    ET:
+      short_name: "prcptot"
+      long_name: "Total wet-day precipitation"
+      definition: "PRCP from wet days (P>=1mm)"
+      comment: "sum of total daily precipitation during days having at least 1 mm"
 
   sdii:
     reference: ETCCDI

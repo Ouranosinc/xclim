@@ -29,6 +29,11 @@ Breaking changes
 * All "Anuclim" indices and indicators have lost their ``src_timestep`` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for :py:func:``xr.infer_freq``.
 * Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added ``atmos.wet_precip_accumulation``, an indicator cumulating precip over wet days.
+* Module ICCLIM now includes ``PRCPTOT``, which cumulates precip on days with precip above 1 mm/day.
+
 Bug fixes
 ~~~~~~~~~
 * Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
