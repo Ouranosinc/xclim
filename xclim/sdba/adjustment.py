@@ -917,6 +917,7 @@ class PrincipalComponents(TrainAdjust):
         group: Union[str, Grouper] = "time",
     ):
         all_dims = set(ref.dims + hist.dims)
+
         # Dimension name for the "points"
         lblP = xr.core.utils.get_temp_dimname(all_dims, "points")
 

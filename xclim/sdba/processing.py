@@ -373,3 +373,179 @@ def escore(
         references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
     )
     return out
+
+
+@update_xclim_history
+def to_additive_space(
+    data, trans: str = "log", lower_bound: float = 0, upper_bound: float = 1
+):
+    r"""Transform a non-additive variable into an addtitive space by the means of a log or logit transformation.
+
+    Based on [AlavoineGrenier]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      A variable that can't usually be bias-adusted by additive methods.
+    trans : {'log', 'logit'}
+      The transformation to use. See notes.
+    lower_bound : float
+      The smallest physical value of the variable, excluded.
+      The data should only have values strictly larger than this bound.
+    upper_bound : float
+      The largest physical value of the variable, excluded. Only relevant for the logit transformation.
+      The data should only have values strictly smaller than this bound.
+
+    Returns
+    -------
+    xr.DataArray
+      The transformed variable. Attributes are conserved, even if some might be incorrect.
+      Except units, which are replace with "". Old units are stored in `sdba_transformation_units`.
+      A `sdba_transform` attribute is added, set to the transformation method.
+      `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
+
+    Notes
+    -----
+    Given a variable that is not usable in an additive adjustment, this apply a transformation to a space where
+    addtitive methods are sensible. Given :math:`X` the variable, :math:`b_-` the lower physical bound of that variable
+    and :math:`b_+` the upper physical bound, two transformations are currently implemented to get :math:`Y`,
+    the additive-ready variable. :math:`\ln` is the natural logarithm.
+
+    - `log`
+
+        .. math::
+
+            Y = \ln\left( X - b_- \right)
+
+        Usually used for variables with only a lower bound, like precipitation (`pr`,  `prsn`, etc)
+        and daily temperature range (`dtr`). Both have a lower bound of 0.
+
+    - `logit`
+
+        .. math::
+
+            X' = (X - b_-) / (b_+ - b_-)
+            Y = \ln\left(\frac{X'}{1 - X'} \right)
+
+        Usually used for variables with both a lower and a upper bound, like relative and specific humidity,
+        cloud cover fraction, etc.
+
+    This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
+    We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
+
+    See also
+    --------
+    from_additive_space : for the inverse transformation.
+    jitter_under_thresh : Remove values exactly equal to the lower bound.
+    jitter_over_thresh : Remove values exactly equal to the upper bound.
+
+    References
+    ----------
+    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
+    """
+
+    with xr.set_options(keep_attrs=True):
+        if trans == "log":
+            out = np.log(data - lower_bound)
+        elif trans == "logit":
+            data_prime = (data - lower_bound) / (upper_bound - lower_bound)
+            out = np.log(data_prime / (1 - data_prime))
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # Attributes to remember all this.
+    out.attrs["sdba_transform"] = trans
+    if lower_bound != 0:
+        out.attrs["sdba_transform_lower"] = lower_bound
+    if upper_bound != 1:
+        out.attrs["sdba_transform_upper"] = upper_bound
+    if "units" in out.attrs:
+        out.attrs["sdba_transform_units"] = out.attrs.pop("units")
+        out.attrs["units"] = ""
+    return out
+
+
+@update_xclim_history
+def from_additive_space(data, trans=None, lower_bound=None, upper_bound=None):
+    r"""Transform back a to the physical space a variable that was transformed with `to_addtitive_space`.
+
+    Based on [AlavoineGrenier]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      A variable that can't usually be bias-adusted by additive methods.
+    trans : {'log', 'logit'}, optional
+      The transformation to use. See notes.
+      If None (the default), the `sdba_transform` attribute is looked up on `data`.
+    lower_bound : float, optional
+      The smallest physical value of the variable.
+      The final data will have no value smaller or equal to this bound.
+      If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
+    upper_bound : float, optional
+      The largest physical value of the variable, only relevant for the logit transformation.
+      The final data will have no value larger or equal to this bound.
+      If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
+
+    Returns
+    -------
+    xr.DataArray
+      The physical variable. Attributes are conserved, even if some might be incorrect.
+      Except units which are taken from `sdba_transform_units` if available.
+      All `sdba_transform*` attributes are deleted.
+
+    Notes
+    -----
+    Given a variable that is not usable in an additive adjustment,
+    :py:func:`to_additive_space` applied a transformation to a space where addtitive
+    methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
+    lower physical bound of that variable and :math:`b_+` the upper physical bound,
+    two back-transformations are currently implemented to get :math:`X`. the physical variable.
+
+    - `log`
+
+        .. math::
+
+            X = e^{Y) + b_-
+
+    - `logit`
+
+        .. math::
+
+            X' = \frac{1}{1 + e^{-Y}}
+            X = X * (b_+ - b_-) + b_-
+
+    See also
+    --------
+    to_additive_space : for the original transformation.
+
+    References
+    ----------
+    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
+    """
+    if trans is None:
+        trans = data.attrs["sdba_transform"]
+    if lower_bound is None:
+        lower_bound = data.attrs.get("sdba_transform_lower", 0)
+    if upper_bound is None:
+        upper_bound = data.attrs.get("sdba_transform_upper", 1)
+
+    with xr.set_options(keep_attrs=True):
+        if trans == "log":
+            out = np.exp(data) + lower_bound
+        elif trans == "logit":
+            out_prime = 1 / (1 + np.exp(-data))
+            out = out_prime * (upper_bound - lower_bound) + lower_bound
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # Remove unneeded attributes, put correct units back.
+    out.attrs.pop("sdba_transform", None)
+    out.attrs.pop("sdba_transform_lower", None)
+    out.attrs.pop("sdba_transform_upper", None)
+    if "sdba_transform_units" in out.attrs:
+        out.attrs["units"] = out.attrs["sdba_transform_units"]
+        out.attrs.pop("sdba_transform_units")
+    return out
