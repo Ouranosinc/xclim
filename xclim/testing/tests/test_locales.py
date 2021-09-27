@@ -141,7 +141,7 @@ def test_xclim_translations(locale, official_indicators):
             continue
         # Both global attrs are present
         is_complete = not ({"title", "abstract"} - set(trans.keys()))
-        for attrs, transattrs in zip(indcls.cf_attrs, trans["outputs"]):
+        for attrs, transattrs in zip(indcls.output, trans["outputs"]):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
 

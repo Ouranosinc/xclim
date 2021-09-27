@@ -305,9 +305,9 @@ def generate_local_dict(locale: str, init_english: bool = False):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
 
-        for var_attrs in indicator.cf_attrs:
+        for var_attrs in indicator.output:
             # In the case of single output, put var attrs in main dict
-            if len(indicator.cf_attrs) > 1:
+            if len(indicator.output) > 1:
                 ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
