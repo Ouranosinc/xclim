@@ -20,8 +20,6 @@ __all__ = [
 
 class Streamflow(Daily):
     context = "hydro"
-    units = "m^3 s-1"
-    standard_name = "discharge"
 
     @staticmethod
     def cfcheck(q):
@@ -79,6 +77,7 @@ freq_analysis = FA(
     long_name="N-year return period {mode} {indexer} {window}-day flow",
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow "
     "estimated using the {dist} distribution.",
+    units="m^3 s-1",
     title="Flow values for given return periods.",
     compute=frequency_analysis,
 )
@@ -98,6 +97,7 @@ stats = Stats(
     long_name="{freq} {op} of {indexer} daily flow ",
     description="{freq} {op} of {indexer} daily flow",
     title="Statistic of the daily flow on a given period.",
+    units="m^3 s-1",
     compute=generic.select_resample_op,
 )
 
@@ -123,7 +123,6 @@ doy_qmax = Streamflow(
     description="Day of the year of the maximum over {indexer}",
     title="Day of year of the maximum.",
     units="",
-    _partial=True,
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymax),
 )
 
@@ -135,6 +134,5 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum over {indexer}",
     title="Day of year of the minimum.",
     units="",
-    _partial=True,
     compute=wrapped_partial(generic.select_resample_op, op=generic.doymin),
 )
