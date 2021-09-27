@@ -555,7 +555,7 @@ class Indicator(IndicatorRegistrar):
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # For convenience
-        n_outs = len(self.cf_attrs)
+        n_outs = len(self.output)
 
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
@@ -567,7 +567,7 @@ class Indicator(IndicatorRegistrar):
         # Metadata attributes from templates
         var_id = None
         var_attrs = []
-        for attrs in self.cf_attrs:
+        for attrs in self.output:
             if n_outs > 1:
                 var_id = attrs["var_name"]
             var_attrs.append(
@@ -851,8 +851,8 @@ class Indicator(IndicatorRegistrar):
         # Translate variable attrs
         attrs["outputs"] = []
         var_id = None
-        for var_attrs in cls.cf_attrs:  # Translate for each variable
-            if len(cls.cf_attrs) > 1:
+        for var_attrs in cls.output:  # Translate for each variable
+            if len(cls.output) > 1:
                 var_id = var_attrs["var_name"]
             attrs["outputs"].append(
                 _translate(
@@ -882,7 +882,7 @@ class Indicator(IndicatorRegistrar):
         out = self._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
+        out["outputs"] = [self._format(attrs, args) for attrs in self.output]
         out["notes"] = self.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!

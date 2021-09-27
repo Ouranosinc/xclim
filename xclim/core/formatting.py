@@ -519,8 +519,8 @@ def _gen_returns_section(cfattrs):
 
     Parameters
     ----------
-    cfattrs : Sequence[Dict[str, Any]]
-      The list of cf attributes, usually Indicator.cf_attrs.
+    attrs : Sequence[Dict[str, Any]]
+      The list of attributes, usually Indicator.output.
     """
     section = "Returns\n-------\n"
     for attrs in cfattrs:
@@ -564,7 +564,7 @@ def generate_indicator_docstring(ind):
         ind._parameters, ind.parameters, ind.allowed_periods
     )
 
-    returns = _gen_returns_section(ind.cf_attrs)
+    returns = _gen_returns_section(ind.output)
 
     extras = ""
     for section in ["notes", "references"]:
