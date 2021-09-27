@@ -30,11 +30,15 @@ from xclim.testing import open_dataset
 class UniIndTemp(Daily):
     realm = "atmos"
     identifier = "tmin"
-    var_name = "tmin{thresh}"
-    units = "K"
-    long_name = "{freq} mean surface temperature"
-    standard_name = "{freq} mean temperature"
-    cell_methods = "time: mean within {freq:noun}"
+    output = [
+        dict(
+            var_name="tmin{thresh}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods="time: mean within {freq:noun}",
+        )
+    ]
 
     @staticmethod
     def compute(da: xr.DataArray, thresh: int = 0.0, freq: str = "YS"):
@@ -47,7 +51,7 @@ class UniIndTemp(Daily):
 class UniIndPr(Daily):
     realm = "atmos"
     identifier = "prmax"
-    units = "mm/s"
+    output = [dict(units="mm/s")]
     context = "hydro"
 
     @staticmethod
@@ -59,7 +63,7 @@ class UniIndPr(Daily):
 class UniClim(Daily):
     realm = "atmos"
     identifier = "clim"
-    units = "K"
+    output = [dict(units="K")]
 
     @staticmethod
     def compute(da: xr.DataArray, freq="YS", **indexer):
@@ -70,10 +74,19 @@ class UniClim(Daily):
 class MultiTemp(Daily):
     realm = "atmos"
     identifier = "minmaxtemp"
-    var_name = ["tmin", "tmax"]
-    units = "K"
-    standard_name = ["Min temp", ""]
-    description = "Grouped computation of tmax and tmin"
+    output = [
+        dict(
+            var_name="tmin",
+            units="K",
+            standard_name="Min temp",
+            description="Grouped computation of tmax and tmin",
+        ),
+        dict(
+            var_name="tmax",
+            units="K",
+            description="Grouped computation of tmax and tmin",
+        ),
+    ]
 
     @staticmethod
     def compute(tas: xr.DataArray, freq):
@@ -86,7 +99,7 @@ class MultiTemp(Daily):
 class MultiOptVar(Daily):
     realm = "atmos"
     identifier = "multiopt"
-    units = "K"
+    output = [dict(units="K")]
 
     @staticmethod
     def compute(
@@ -177,8 +190,51 @@ def test_temp_unit_conversion(tas_series):
 
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
-    ind = MultiTemp()
+    ind = MultiTemp()  # Attrs passed as class attributes
 
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+
+    # Attrs passed as keywords - together
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp2",
+        output=[
+            dict(
+                var_name="tmin",
+                units="K",
+                standard_name="Min temp",
+                description="Grouped computation of tmax and tmin",
+            ),
+            dict(
+                var_name="tmax",
+                units="K",
+                description="Grouped computation of tmax and tmin",
+            ),
+        ],
+        compute=MultiTemp.compute,
+    )
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+
+    # Attrs passed as keywords - individually
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp3",
+        var_name=["tmin", "tmax"],
+        units="K",
+        standard_name=["Min temp", ""],
+        description="Grouped computation of tmax and tmin",
+        compute=MultiTemp.compute,
+    )
     tmin, tmax = ind(tas, freq="YS")
     assert tmin[0] == tas.min()
     assert tmax[0] == tas.max()

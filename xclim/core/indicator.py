@@ -382,22 +382,16 @@ class Indicator(IndicatorRegistrar):
         elif output is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
             # We need to get the number of outputs first, defaulting to the length of parent's output or 1
-            n_outs = max(
-                [len(parent_output or [1])]
-                + [
-                    len(kwds.get(name, getattr(cls, name, None)))
-                    for name in cls._cf_names
-                    if isinstance(
-                        kwds.get(name, getattr(cls, name, None)), (tuple, list)
-                    )
-                ]
-            )
+            n_outs = len(parent_output) if parent_output is not None else 1
+            for name in cls._cf_names:
+                arg = kwds.get(name)
+                if isinstance(arg, (tuple, list)):
+                    n_outs = len(arg)
 
             # Populate new output from parsing cf_names passed directly.
             output = [{} for i in range(n_outs)]
-
             for name in cls._cf_names:
-                values = kwds.pop(name, getattr(cls, name, None))
+                values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
                 elif not isinstance(values, (tuple, list)):
@@ -472,10 +466,6 @@ class Indicator(IndicatorRegistrar):
                     )
             else:
                 cls = data["base"]
-        elif cls is Indicator:
-            raise ValueError(
-                "Indicators can't be created from dict with the Indicator class as base. Please use an existing indicator as base, or another base class."
-            )
 
         params = {}
         input_units = {}
@@ -504,7 +494,7 @@ class Indicator(IndicatorRegistrar):
         injected_params = {}
         for name, param in data.pop("parameters", {}).items():
             if not isinstance(param, dict):
-                # Injecting by passing a value directly.
+                # Injecting by passing a value directly, catch all YAML-supported types
                 injected_params[name] = param
             else:
                 # Changing the metadata (only "description", "default", "choices" and "units")
