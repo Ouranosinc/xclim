@@ -170,9 +170,8 @@ indices:
     base: wet_prcptot
     output:
       long_name: Precipitation sum over wet days
-    index_function:
-      parameters:
-        thresh: 1 mm/day
+    parameters:
+      thresh: 1 mm/day
   SDII:
     base: sdii
     parameters:

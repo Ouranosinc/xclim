@@ -489,3 +489,7 @@ def test_indicator_from_dict():
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
     assert ind.parameters["data"]["units"] == "K"
+
+    # Wrap a multi-output ind
+    d = dict(base="wind_speed_from_vector")
+    ind = Indicator.from_dict(d, identifier="wsfv", module="test")

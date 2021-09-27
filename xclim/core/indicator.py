@@ -34,8 +34,9 @@ Indicator-defining yaml files are structured in the following way:
       <identifier>:
         # All arguments of a built-in type accepted by `Indicator__init__` are valid here (types : None, string, number or boolean)
         # The following are translated into init-comprehensible arguments for convenience and because of the limitations of the YAML format.
-        base: <base indicator class>  # Defaults to module-wide base class or "Daily".
+        base: <base indicator class>  # Defaults to module-wide base class
                                       # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
+                                      # Available classes are listed in `xclim.core.indicator.registry` and `xclim.core.indicator.base_registry`.
 
         # Compute function
         compute: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
@@ -117,6 +118,7 @@ from .utils import (
 
 # Indicators registry
 registry = dict()  # Main class registry
+base_registry = dict()
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
@@ -351,7 +353,7 @@ class Indicator(IndicatorRegistrar):
         new = type(identifier.upper(), (cls,), kwds)
 
         # Forcing the module is there so YAML-generated submodules are correctly seen by IndicatorRegistrar.
-        if "module" in kwds:
+        if kwds.get("module") is not None:
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
             # If the module was not forced, set the module to the base class' module.
@@ -458,6 +460,22 @@ class Indicator(IndicatorRegistrar):
           is part of a dynamically generated submodule, to override the module of the base class.
         """
         data = data.copy()
+
+        if "base" in data:
+            if isinstance(data["base"], str):
+                cls = registry.get(
+                    data["base"].upper(), base_registry.get(data["base"])
+                )
+                if cls is None:
+                    raise ValueError(
+                        f"Requested base class {data['base']} is neither in the indicators registry nor in base classes registry."
+                    )
+            else:
+                cls = data["base"]
+        elif cls is Indicator:
+            raise ValueError(
+                "Indicators can't be created from dict with the Indicator class as base. Please use an existing indicator as base, or another base class."
+            )
 
         params = {}
         input_units = {}
@@ -1019,6 +1037,10 @@ class Hourly(Indicator):
             datachecks.check_freq(da, "H")
 
 
+base_registry["Hourly"] = Hourly
+base_registry["Daily"] = Daily
+
+
 def _parse_indice(indice: Callable, passed=None, **new_kwargs):
     """Parse an indice function and return corresponding elements needed for constructing an indicator.
 
@@ -1318,19 +1340,18 @@ def build_indicator_module_from_yaml(
     mapping = {}
     for identifier, data in yml["indices"].items():
         try:
+            # Get base class if it was relative to this module
             if "base" in data:
                 if data["base"].startswith("."):
                     # A point means the base has been declared above.
-                    base = registry[module_name + data["base"].upper()]
-                else:
-                    base = registry[data["base"].upper()]
+                    data["base"] = registry[module_name + data["base"].upper()]
             else:
-                base = default_base
+                # If no base is specified, pass the default one.
+                data["base"] = default_base
 
-            # Get the compute function
-            indice_name = data.get("compute")
-            indice_func = None
-            if indice_name is not None and indices is not None:
+            # Get the compute function if it is from the passed mapping
+            if indices is not None and "compute" in data:
+                indice_name = data["compute"]
                 indice_func = getattr(indices, indice_name, None)
                 if indice_func is None and hasattr(indices, "__getitem__"):
                     try:
@@ -1338,14 +1359,14 @@ def build_indicator_module_from_yaml(
                     except KeyError:
                         pass
 
-            if indice_func is not None:
-                data["compute"] = indice_func
+                if indice_func is not None:
+                    data["compute"] = indice_func
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
             _merge_attrs(data, defkwargs, "realm", None)
 
-            mapping[identifier] = base.from_dict(
+            mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name
             )
 
