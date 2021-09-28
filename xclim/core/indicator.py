@@ -290,9 +290,6 @@ class Indicator(IndicatorRegistrar):
     freq = None
     allowed_periods = None
 
-    # A dictionary of suspect flag-raising criteria
-    flag = {"no-check": lambda x: False}
-
     # Variable metadata (_cf_names, those that can be lists or strings)
     # A developper should access those through cf_attrs on instances
     var_name = None
