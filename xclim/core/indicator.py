@@ -1292,6 +1292,7 @@ def build_indicator_module_from_yaml(
     keywords: Optional[str] = None,
     references: Optional[str] = None,
     notes: Optional[str] = None,
+    encoding: str = "UTF8",
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1327,6 +1328,9 @@ def build_indicator_module_from_yaml(
       Other indicator attributes that would apply to all indicators in this module.
       Values given here are overridden by the ones given in individual definition, but
       they override the ones given at top-level in the YAMl file.
+    encoding: str
+      The encoding used to open the `.yaml` and `.json` files.
+      It defaults to UTF-8, overriding python's mechanism which is machine dependent.
 
     Returns
     -------
@@ -1359,7 +1363,7 @@ def build_indicator_module_from_yaml(
         ymlpath = filepath
 
     # Read YAML file
-    with ymlpath.open() as f:
+    with ymlpath.open(encoding=encoding) as f:
         yml = safe_load(f)
 
     # Load values from top-level in yml.
@@ -1380,7 +1384,9 @@ def build_indicator_module_from_yaml(
             translations = {}
             for locfile in filepath.parent.glob(filepath.stem + ".*.json"):
                 locale = locfile.suffixes[0][1:]
-                translations[locale] = read_locale_file(locfile, module=module_name)
+                translations[locale] = read_locale_file(
+                    locfile, module=module_name, encoding=encoding
+                )
 
     # Module-wide default values for some attributes
     defkwargs = {
