@@ -1315,7 +1315,7 @@ def build_indicator_module_from_yaml(
 
     # Module-wide default values for some attributes
     defkwargs = {
-        # Only usedin case the indicator definition does not give them.
+        # Only used in case the indicator definition does not give them.
         "realm": realm or yml.get("realm"),
         # Merged with a space
         "keywords": keywords or yml.get("keywords"),
