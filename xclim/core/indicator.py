@@ -998,10 +998,19 @@ class Indicator(IndicatorRegistrar):
         """
         pass
 
-    @classmethod
     @property
     def cf_attrs(cls):
+        warnings.warn(
+            "Attribute `cf_attrs` has been renamed `output` in xclim 0.31, it will be removed completely in 0.32.",
+            category=FutureWarning,
+            stacklevel=2,
+        )
         return cls.output
+
+    def __getattr__(self, attr):
+        if attr in self._cf_names:
+            return [meta.get(attr, "") for meta in self.output]
+        raise AttributeError(attr)
 
 
 class Daily(Indicator):

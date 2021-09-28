@@ -37,6 +37,7 @@ class UniIndTemp(Daily):
             long_name="{freq} mean surface temperature",
             standard_name="{freq} mean temperature",
             cell_methods="time: mean within {freq:noun}",
+            another_attr="With a value.",
         )
     ]
 
@@ -124,6 +125,8 @@ def test_attrs(tas_series):
     assert "TMIN(da=tas, thresh=5, freq='YS')" in txm.attrs["history"]
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
+    assert ind.standard_name == ["{freq} mean temperature"]
+    assert ind.output[0]["another_attr"] == "With a value."
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -198,6 +201,7 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["standard_name"] == "Min temp"
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert ind.units == ["K", "K"]
 
     # Attrs passed as keywords - together
     ind = Daily(
@@ -241,6 +245,7 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["standard_name"] == "Min temp"
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert ind.units == ["K", "K"]
 
 
 def test_missing(tas_series):
