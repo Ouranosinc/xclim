@@ -22,6 +22,7 @@ New features and enhancements
     - Precipitation-specific (variables: ``pr``, ``prsn``, ):  ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
     - Wind-specific (variables: ``sfcWind``, ``wsgsmax``/``sfcWindMax``): ``wind_values_outside_of_bounds``
     - Generic: ``outside_n_standard_deviations_of_climatology``, ``values_repeating_for_n_or_more_days``, ``values_op_thresh_repeating_for_n_or_more_days``, ``percentage_values_outside_of_bounds``.
+
     These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
     If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
 * A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
