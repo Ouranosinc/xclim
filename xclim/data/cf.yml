@@ -19,13 +19,6 @@ indices:
     compute: spell_length
     input:
       data: pr
-    output:
-      cell_methods: 'time: sum within days time: sum over days'
-      long_name: Maximum consecutive dry days (Precip < 1mm)
-      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
-      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold
-      units: day
-      var_name: cdd
     parameters:
       condition: <
       freq:
@@ -33,6 +26,13 @@ indices:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: sum within days time: sum over days'
+      long_name: Maximum consecutive dry days (Precip < 1mm)
+      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
+      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold
+      units: day
+      var_name: cdd
   cddcoldTT:
     allowed_periods:
     - A
@@ -41,12 +41,6 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Cooling Degree Days (Tmean > {threshold}C)
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: cddcold{threshold}
     parameters:
       condition: '>'
       freq:
@@ -55,6 +49,12 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Cooling Degree Days (Tmean > {threshold}C)
+      standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: cddcold{threshold}
   cfd:
     allowed_periods:
     - A
@@ -63,19 +63,19 @@ indices:
     compute: count_occurrences
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum number of consecutive frost days (Tmin < 0 C)
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: cfd
     parameters:
       condition: <
       freq:
         default: YS
       threshold: 0 degree_Celsius
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum number of consecutive frost days (Tmin < 0 C)
+      proposed_standard_name: spell_length_with_air_temperature_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: cfd
   csu:
     allowed_periods:
     - A
@@ -84,19 +84,19 @@ indices:
     compute: count_occurrences
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum number of consecutive summer days (Tmax >25 C)
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: csu
     parameters:
       condition: '>'
       freq:
         default: YS
       threshold: 25 degree_Celsius
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum number of consecutive summer days (Tmax >25 C)
+      proposed_standard_name: spell_length_with_air_temperature_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: csu
   ctmgeTT:
     allowed_periods:
     - A
@@ -105,13 +105,6 @@ indices:
     compute: spell_length
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctmge{threshold}
     parameters:
       condition: '>'
       freq:
@@ -121,6 +114,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmean >= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctmge{threshold}
   ctmgtTT:
     allowed_periods:
     - A
@@ -129,13 +129,6 @@ indices:
     compute: spell_length
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctmgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -145,6 +138,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmean > {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctmgt{threshold}
   ctmleTT:
     allowed_periods:
     - A
@@ -153,13 +153,6 @@ indices:
     compute: spell_length
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctmle{threshold}
     parameters:
       condition: <
       freq:
@@ -169,6 +162,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmean <= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctmle{threshold}
   ctmltTT:
     allowed_periods:
     - A
@@ -177,13 +177,6 @@ indices:
     compute: spell_length
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctmlt{threshold}
     parameters:
       condition: <
       freq:
@@ -193,6 +186,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmean < {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctmlt{threshold}
   ctngeTT:
     allowed_periods:
     - A
@@ -201,13 +201,6 @@ indices:
     compute: spell_length
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctnge{threshold}
     parameters:
       condition: '>'
       freq:
@@ -217,6 +210,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmin >= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctnge{threshold}
   ctngtTT:
     allowed_periods:
     - A
@@ -225,13 +225,6 @@ indices:
     compute: spell_length
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctngt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -241,6 +234,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmin > {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctngt{threshold}
   ctnleTT:
     allowed_periods:
     - A
@@ -249,13 +249,6 @@ indices:
     compute: spell_length
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctnle{threshold}
     parameters:
       condition: <
       freq:
@@ -265,6 +258,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmin <= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctnle{threshold}
   ctnltTT:
     allowed_periods:
     - A
@@ -273,13 +273,6 @@ indices:
     compute: spell_length
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctnlt{threshold}
     parameters:
       condition: <
       freq:
@@ -289,6 +282,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmin < {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctnlt{threshold}
   ctxgeTT:
     allowed_periods:
     - A
@@ -297,13 +297,6 @@ indices:
     compute: spell_length
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax >= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctxge{threshold}
     parameters:
       condition: '>'
       freq:
@@ -313,6 +306,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmax >= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctxge{threshold}
   ctxgtTT:
     allowed_periods:
     - A
@@ -321,13 +321,6 @@ indices:
     compute: spell_length
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax > {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_above_threshold
-      standard_name: spell_length_of_days_with_air_temperature_above_threshold
-      units: day
-      var_name: ctxgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -337,6 +330,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmax > {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_above_threshold
+      standard_name: spell_length_of_days_with_air_temperature_above_threshold
+      units: day
+      var_name: ctxgt{threshold}
   ctxleTT:
     allowed_periods:
     - A
@@ -345,13 +345,6 @@ indices:
     compute: spell_length
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax <= {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctxle{threshold}
     parameters:
       condition: <
       freq:
@@ -361,6 +354,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmax <= {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctxle{threshold}
   ctxltTT:
     allowed_periods:
     - A
@@ -369,13 +369,6 @@ indices:
     compute: spell_length
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax < {threshold}C
-      proposed_standard_name: spell_length_with_air_temperature_below_threshold
-      standard_name: spell_length_of_days_with_air_temperature_below_threshold
-      units: day
-      var_name: ctxlt{threshold}
     parameters:
       condition: <
       freq:
@@ -385,6 +378,13 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum number of consequtive days with Tmax < {threshold}C
+      proposed_standard_name: spell_length_with_air_temperature_below_threshold
+      standard_name: spell_length_of_days_with_air_temperature_below_threshold
+      units: day
+      var_name: ctxlt{threshold}
   cwd:
     allowed_periods:
     - A
@@ -393,13 +393,6 @@ indices:
     compute: spell_length
     input:
       data: pr
-    output:
-      cell_methods: 'time: sum within days time: sum over days'
-      long_name: Maximum consecutive wet days (Precip >= 1mm)
-      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
-      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
-      units: day
-      var_name: cwd
     parameters:
       condition: '>'
       freq:
@@ -407,6 +400,13 @@ indices:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: sum within days time: sum over days'
+      long_name: Maximum consecutive wet days (Precip >= 1mm)
+      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
+      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold
+      units: day
+      var_name: cwd
   ddgtTT:
     allowed_periods:
     - A
@@ -415,12 +415,6 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Degree Days (Tmean > {threshold}C)
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: ddgt{threshold}
     parameters:
       condition: '>'
       freq:
@@ -429,6 +423,12 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Degree Days (Tmean > {threshold}C)
+      standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: ddgt{threshold}
   ddltTT:
     allowed_periods:
     - A
@@ -437,12 +437,6 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Degree Days (Tmean < {threshold}C)
-      standard_name: integral_wrt_time_of_air_temperature_deficit
-      units: degree_Celsius day
-      var_name: ddlt{threshold}
     parameters:
       condition: <
       freq:
@@ -451,6 +445,12 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Degree Days (Tmean < {threshold}C)
+      standard_name: integral_wrt_time_of_air_temperature_deficit
+      units: degree_Celsius day
+      var_name: ddlt{threshold}
   dtr:
     allowed_periods:
     - A
@@ -460,16 +460,17 @@ indices:
     input:
       high_data: tasmax
       low_data: tasmin
-    output:
-      cell_methods: 'time: range within days time: mean over days'
+    parameters:
+      freq:
+        default: MS
+      reducer: mean
+    references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: range within days time: mean over days'
       long_name: Mean Diurnal Temperature Range
       proposed_standard_name: air_temperature_range
       units: degree_Celsius
       var_name: dtr
-    parameters:
-      freq:
-        default: MS
-    references: ETCCDI
   etr:
     allowed_periods:
     - A
@@ -479,16 +480,16 @@ indices:
     input:
       high_data: tasmax
       low_data: tasmin
-    output:
-      cell_methods: 'time: range'
-      long_name: Intra-period extreme temperature range
-      proposed_standard_name: air_temperature_range
-      units: degree_Celsius
-      var_name: etr
     parameters:
       freq:
         default: MS
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: range'
+      long_name: Intra-period extreme temperature range
+      proposed_standard_name: air_temperature_range
+      units: degree_Celsius
+      var_name: etr
   fg:
     allowed_periods:
     - A
@@ -497,17 +498,17 @@ indices:
     compute: statistics
     input:
       data: sfcWind
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily mean wind strength
-      standard_name: wind_speed
-      units: meter second-1
-      var_name: fg
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily mean wind strength
+      standard_name: wind_speed
+      units: meter second-1
+      var_name: fg
   fxx:
     allowed_periods:
     - A
@@ -516,17 +517,17 @@ indices:
     compute: statistics
     input:
       data: wsgsmax
-    output:
-      cell_methods: 'time: maximum'
-      long_name: Maximum value of daily maximum wind gust strength
-      standard_name: wind_speed_of_gust
-      units: meter second-1
-      var_name: fxx
     parameters:
       freq:
         default: MS
       reducer: max
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: maximum'
+      long_name: Maximum value of daily maximum wind gust strength
+      standard_name: wind_speed_of_gust
+      units: meter second-1
+      var_name: fxx
   gd4:
     allowed_periods:
     - A
@@ -535,30 +536,24 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Growing degree days (sum of Tmean > 4 C)
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: gd4
     parameters:
       condition: '>'
       freq:
         default: YS
       threshold: 4 degree_Celsius
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Growing degree days (sum of Tmean > 4 C)
+      standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: gd4
   gddgrowTT:
     allowed_periods:
     - A
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Annual Growing Degree Days (Tmean > {threshold}C)
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: gddgrow{threshold}
     parameters:
       condition: '>'
       freq:
@@ -567,6 +562,12 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Annual Growing Degree Days (Tmean > {threshold}C)
+      standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: gddgrow{threshold}
   hd17:
     allowed_periods:
     - A
@@ -575,18 +576,18 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Heating degree days (sum of Tmean < 17 C)
-      standard_name: integral_wrt_time_of_air_temperature_excess
-      units: degree_Celsius day
-      var_name: hd17
     parameters:
       condition: <
       freq:
         default: YS
       threshold: 17 degree_Celsius
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Heating degree days (sum of Tmean < 17 C)
+      standard_name: integral_wrt_time_of_air_temperature_excess
+      units: degree_Celsius day
+      var_name: hd17
   hddheatTT:
     allowed_periods:
     - A
@@ -595,12 +596,6 @@ indices:
     compute: temperature_sum
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: sum over days'
-      long_name: Heating Degree Days (Tmean < {threshold}C)
-      standard_name: integral_wrt_time_of_air_temperature_deficit
-      units: degree_Celsius day
-      var_name: hddheat{threshold}
     parameters:
       condition: <
       freq:
@@ -609,6 +604,32 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
+    var_attrs:
+    - cell_methods: 'time: mean within days time: sum over days'
+      long_name: Heating Degree Days (Tmean < {threshold}C)
+      standard_name: integral_wrt_time_of_air_temperature_deficit
+      units: degree_Celsius day
+      var_name: hddheat{threshold}
+  maxdtr:
+    allowed_periods:
+    - A
+    - Q
+    - M
+    compute: diurnal_temperature_range
+    input:
+      high_data: tasmax
+      low_data: tasmin
+    parameters:
+      freq:
+        default: MS
+      reducer: max
+    references: SMHI
+    var_attrs:
+    - cell_methods: 'time: range within days time: maximum over days'
+      long_name: Maximum Diurnal Temperature Range
+      proposed_standard_name: air_temperature_range
+      units: degree_Celsius
+      var_name: maxdtr
   pp:
     allowed_periods:
     - A
@@ -617,17 +638,17 @@ indices:
     compute: statistics
     input:
       data: psl
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily sea level pressure
-      standard_name: air_pressure_at_sea_level
-      units: hPa
-      var_name: pp
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily sea level pressure
+      standard_name: air_pressure_at_sea_level
+      units: hPa
+      var_name: pp
   rh:
     allowed_periods:
     - A
@@ -636,17 +657,17 @@ indices:
     compute: statistics
     input:
       data: hurs
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily relative humidity
-      standard_name: relative_humidity
-      units: '%'
-      var_name: rh
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily relative humidity
+      standard_name: relative_humidity
+      units: '%'
+      var_name: rh
   sd:
     allowed_periods:
     - A
@@ -655,17 +676,17 @@ indices:
     compute: statistics
     input:
       data: snd
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily snow depth
-      standard_name: surface_snow_thickness
-      units: cm
-      var_name: sd
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily snow depth
+      standard_name: surface_snow_thickness
+      units: cm
+      var_name: sd
   sdii:
     allowed_periods:
     - A
@@ -674,12 +695,6 @@ indices:
     compute: thresholded_statistics
     input:
       data: pr
-    output:
-      cell_methods: 'time: sum within days time: mean over days'
-      long_name: Average precipitation during Wet Days (SDII)
-      standard_name: lwe_precipitation_rate
-      units: mm day-1
-      var_name: sdii
     parameters:
       condition: '>'
       freq:
@@ -687,6 +702,12 @@ indices:
       reducer: mean
       threshold: 1 mm day-1
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: sum within days time: mean over days'
+      long_name: Average precipitation during Wet Days (SDII)
+      standard_name: lwe_precipitation_rate
+      units: mm day-1
+      var_name: sdii
   ss:
     allowed_periods:
     - A
@@ -695,16 +716,16 @@ indices:
     compute: statistics
     input:
       data: sund
-    output:
-      long_name: Sunshine duration, sum
-      standard_name: duration_of_sunshine
-      units: hour
-      var_name: ss
     parameters:
       freq:
         default: MS
       reducer: sum
     references: ECA&D
+    var_attrs:
+    - long_name: Sunshine duration, sum
+      standard_name: duration_of_sunshine
+      units: hour
+      var_name: ss
   tg:
     allowed_periods:
     - A
@@ -713,17 +734,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tg
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tg
   tmm:
     allowed_periods:
     - A
@@ -732,17 +753,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: mean over days'
-      long_name: Mean daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmm
     parameters:
       freq:
         default: YS
       reducer: mean
     references: null
+    var_attrs:
+    - cell_methods: 'time: mean within days time: mean over days'
+      long_name: Mean daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmm
   tmmax:
     allowed_periods:
     - A
@@ -751,17 +772,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmax
     parameters:
       freq:
         default: YS
       reducer: max
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmax
   tmmean:
     allowed_periods:
     - A
@@ -770,17 +791,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: mean over days'
-      long_name: Mean daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmean
     parameters:
       freq:
         default: YS
       reducer: mean
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: mean over days'
+      long_name: Mean daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmean
   tmmin:
     allowed_periods:
     - A
@@ -789,17 +810,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Minimum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmmin
     parameters:
       freq:
         default: YS
       reducer: min
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Minimum daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmmin
   tmn:
     allowed_periods:
     - A
@@ -808,17 +829,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: minimum over days'
-      long_name: Minimum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmn
     parameters:
       freq:
         default: YS
       reducer: min
     references: null
+    var_attrs:
+    - cell_methods: 'time: mean within days time: minimum over days'
+      long_name: Minimum daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmn
   tmx:
     allowed_periods:
     - A
@@ -827,17 +848,17 @@ indices:
     compute: statistics
     input:
       data: tas
-    output:
-      cell_methods: 'time: mean within days time: maximum over days'
-      long_name: Maximum daily mean temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tmx
     parameters:
       freq:
         default: YS
       reducer: max
     references: null
+    var_attrs:
+    - cell_methods: 'time: mean within days time: maximum over days'
+      long_name: Maximum daily mean temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tmx
   tn:
     allowed_periods:
     - A
@@ -846,17 +867,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tn
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tn
   tnm:
     allowed_periods:
     - A
@@ -865,17 +886,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: mean over days'
-      long_name: Mean daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnm
     parameters:
       freq:
         default: YS
       reducer: mean
     references: null
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: mean over days'
+      long_name: Mean daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnm
   tnmax:
     allowed_periods:
     - A
@@ -884,17 +905,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmax
     parameters:
       freq:
         default: YS
       reducer: max
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmax
   tnmean:
     allowed_periods:
     - A
@@ -903,17 +924,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: mean over days'
-      long_name: Mean daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmean
     parameters:
       freq:
         default: YS
       reducer: mean
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: mean over days'
+      long_name: Mean daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmean
   tnmin:
     allowed_periods:
     - A
@@ -922,17 +943,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: minimum over days'
-      long_name: Minimum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnmin
     parameters:
       freq:
         default: YS
       reducer: min
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: minimum over days'
+      long_name: Minimum daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnmin
   tnn:
     allowed_periods:
     - A
@@ -941,17 +962,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: minimum over days'
-      long_name: Minimum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnn
     parameters:
       freq:
         default: YS
       reducer: min
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: minimum over days'
+      long_name: Minimum daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnn
   tnx:
     allowed_periods:
     - A
@@ -960,17 +981,17 @@ indices:
     compute: statistics
     input:
       data: tasmin
-    output:
-      cell_methods: 'time: minimum within days time: maximum over days'
-      long_name: Maximum daily minimum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tnx
     parameters:
       freq:
         default: YS
       reducer: max
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: minimum within days time: maximum over days'
+      long_name: Maximum daily minimum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tnx
   tx:
     allowed_periods:
     - A
@@ -979,17 +1000,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: mean'
-      long_name: Mean of daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: tx
     parameters:
       freq:
         default: MS
       reducer: mean
     references: ECA&D
+    var_attrs:
+    - cell_methods: 'time: mean'
+      long_name: Mean of daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: tx
   txm:
     allowed_periods:
     - A
@@ -998,17 +1019,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: mean over days'
-      long_name: Mean daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txm
     parameters:
       freq:
         default: YS
       reducer: mean
     references: null
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: mean over days'
+      long_name: Mean daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txm
   txmax:
     allowed_periods:
     - A
@@ -1017,17 +1038,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmax
     parameters:
       freq:
         default: YS
       reducer: max
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmax
   txmean:
     allowed_periods:
     - A
@@ -1036,17 +1057,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: mean over days'
-      long_name: Mean daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmean
     parameters:
       freq:
         default: YS
       reducer: mean
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: mean over days'
+      long_name: Mean daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmean
   txmin:
     allowed_periods:
     - A
@@ -1055,17 +1076,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: minimum over days'
-      long_name: Minimum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txmin
     parameters:
       freq:
         default: YS
       reducer: min
     references: CLIPC
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: minimum over days'
+      long_name: Minimum daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txmin
   txn:
     allowed_periods:
     - A
@@ -1074,17 +1095,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: minimum over days'
-      long_name: Minimum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txn
     parameters:
       freq:
         default: YS
       reducer: min
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: minimum over days'
+      long_name: Minimum daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txn
   txx:
     allowed_periods:
     - A
@@ -1093,17 +1114,17 @@ indices:
     compute: statistics
     input:
       data: tasmax
-    output:
-      cell_methods: 'time: maximum within days time: maximum over days'
-      long_name: Maximum daily maximum temperature
-      standard_name: air_temperature
-      units: degree_Celsius
-      var_name: txx
     parameters:
       freq:
         default: YS
       reducer: max
     references: ETCCDI
+    var_attrs:
+    - cell_methods: 'time: maximum within days time: maximum over days'
+      long_name: Maximum daily maximum temperature
+      standard_name: air_temperature
+      units: degree_Celsius
+      var_name: txx
   vdtr:
     allowed_periods:
     - A
@@ -1113,31 +1134,14 @@ indices:
     input:
       high_data: tasmax
       low_data: tasmin
-    output:
-      long_name: Mean day-to-day variation in Diurnal Temperature Range
-      proposed_standard_name: air_temperature_difference
-      units: degree_Celsius
-      var_name: vdtr
     parameters:
       freq:
         default: MS
     references: ECA&D
-  prcptot:
-    references: ETCCDI
-    allowed_periods:
-      - A
-      - Q
-      - M
-    output:
-      var_name: "prcptot"
-      standard_name: lwe_thickness_of_precipitation_amount
-      long_name: "Total precipitation during Wet Days"
-      units: "mm"
-      cell_methods: "time: sum within days time: mean over days"
-    input:
-      data: pr
-    compute: wet_precip_accumulation
-    parameters:
-      thresh: 1 mm day-1
+    var_attrs:
+    - long_name: Mean day-to-day variation in Diurnal Temperature Range
+      proposed_standard_name: air_temperature_difference
+      units: degree_Celsius
+      var_name: vdtr
 realm: atmos
 references: clix-meta https://github.com/clix-meta/clix-meta

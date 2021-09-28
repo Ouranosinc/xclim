@@ -18,124 +18,106 @@ doc: '===============
   '
 indices:
   P10_MeanTempWarmestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: tg_mean_warmcold_quarter
-    output:
+    var_attrs:
       units: K
     parameters:
       op: warmest
   P11_MeanTempColdestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: tg_mean_warmcold_quarter
-    output:
+    var_attrs:
       units: K
     parameters:
       op: coldest
   P12_AnnualPrecip:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     base: prcptot
-    output:
+    var_attrs:
       long_name: Annual precipitation
   P13_PrecipWettestPeriod:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_wetdry_period
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: wettest
   P14_PrecipDriestPeriod:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_wetdry_period
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: driest
   P15_PrecipSeasonality:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: precip_seasonality
   P16_PrecipWettestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_wetdry_quarter
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: wettest
   P17_PrecipDriestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_wetdry_quarter
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: driest
   P18_PrecipWarmestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_warmcold_quarter
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: warmest
   P19_PrecipColdestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: prcptot_warmcold_quarter
-    output:
+    var_attrs:
       units: mm
     parameters:
       op: coldest
   P1_AnnMeanTemp:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     base: tg_mean
   P2_MeanDiurnalRange:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     base: dtr
   P3_Isothermality:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: isothermality
   P4_TempSeasonality:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: temperature_seasonality
   P5_MaxTempWarmestPeriod:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     base: tx_max
-    output:
+    var_attrs:
       long_name: Max temperature of warmest period
   P6_MinTempColdestPeriod:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     base: tn_min
-    output:
+    var_attrs:
       long_name: Min temperature of coldest period
   P7_TempAnnualRange:
     base: etr
-    output:
+    var_attrs:
       long_name: Temperature annual range
   P8_MeanTempWettestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: tg_mean_wetdry_quarter
-    output:
+    var_attrs:
       units: K
     parameters:
       op: wettest
   P9_MeanTempDriestQuarter:
-    allowed_periods:
-    - A
+    allowed_periods: [A]
     compute: tg_mean_wetdry_quarter
-    output:
+    var_attrs:
       units: K
     parameters:
       op: driest

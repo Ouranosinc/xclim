@@ -17,13 +17,13 @@ indice:
   missing: str(required=False)
   missing_options: map(key=str(), required=False)
   notes: str(required=False)
-  output: any(list(include('output')), include('output'), required=False)
+  var_attrs: any(list(include('var_attrs')), include('var_attrs'), required=False)
   parameters: map(str(), num(), bool(), null(), include('parameter'), key=str(), required=False)
   realm: str(required=False)
   references: str(required=False)
   title: str(required=False)
 
-output: map(str(), key=str(), required=False)
+var_attrs: map(str(), key=str(), required=False)
 
 parameter:
   description: str(required=False)

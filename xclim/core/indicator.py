@@ -6,7 +6,7 @@ Indicators utilities
 
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
-missing and adds metadata attributes to the output object.
+missing and adds metadata attributes to the  object.
 
 There are many ways to construct indicators. A good place to start is `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
 
@@ -277,7 +277,7 @@ class Indicator(IndicatorRegistrar):
        "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
     """
 
-    output: Sequence[Mapping[str, Any]] = None
+    var_attrs: Sequence[Mapping[str, Any]] = None
     """A list of metadata information for each output of the indicator.
 
        It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
@@ -328,9 +328,9 @@ class Indicator(IndicatorRegistrar):
         ):
             kwds["missing"] = "skip"
 
-        # Parse kwds to organize `output`
+        # Parse kwds to organize `var_attrs`
         # And before converting callables to staticmethods
-        kwds["output"] = cls._parse_output_attrs(kwds, identifier)
+        kwds["var_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
         for key in cls._funcs + cls._cf_names:
@@ -372,24 +372,24 @@ class Indicator(IndicatorRegistrar):
         cls, kwds: Dict[str, Any], identifier: str
     ) -> List[Dict[str, Union[str, Callable]]]:
         """CF-compliant metadata attributes for all output variables."""
-        parent_output = cls.output
-        output = kwds.get("output")
-        if isinstance(output, dict):
+        parent_var_attrs = cls.var_attrs
+        var_attrs = kwds.get("var_attrs")
+        if isinstance(var_attrs, dict):
             # Single output indicator, but we store as a list anyway.
-            output = [output]
-        elif output is None and parent_output:
-            output = deepcopy(parent_output)
-        elif output is None:
+            var_attrs = [var_attrs]
+        elif var_attrs is None and parent_var_attrs:
+            var_attrs = deepcopy(parent_var_attrs)
+        elif var_attrs is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
-            # We need to get the number of outputs first, defaulting to the length of parent's output or 1
-            n_outs = len(parent_output) if parent_output is not None else 1
+            # We need to get the number of outputs first, defaulting to the length of parent's var_attrs or 1
+            n_outs = len(parent_var_attrs) if parent_var_attrs is not None else 1
             for name in cls._cf_names:
                 arg = kwds.get(name)
                 if isinstance(arg, (tuple, list)):
                     n_outs = len(arg)
 
-            # Populate new output from parsing cf_names passed directly.
-            output = [{} for i in range(n_outs)]
+            # Populate new var_attrs from parsing cf_names passed directly.
+            var_attrs = [{} for i in range(n_outs)]
             for name in cls._cf_names:
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
@@ -401,27 +401,27 @@ class Indicator(IndicatorRegistrar):
                     raise ValueError(
                         f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
-                for attrs, value in zip(output, values):
+                for attrs, value in zip(var_attrs, values):
                     if value:  # Skip the empty ones (None or '')
                         attrs[name] = value
         # else we assume a list of dicts
 
         # For single output, var_name defauls to identifer.
-        if len(output) == 1 and "var_name" not in output[0]:
-            output[0]["var_name"] = identifier
+        if len(var_attrs) == 1 and "var_name" not in var_attrs[0]:
+            var_attrs[0]["var_name"] = identifier
 
         # update from parent, if they have the same length.
-        if parent_output is not None and len(parent_output) == len(output):
-            for old, new in zip(parent_output, output):
+        if parent_var_attrs is not None and len(parent_var_attrs) == len(var_attrs):
+            for old, new in zip(parent_var_attrs, var_attrs):
                 for attr, value in old.items():
                     new.setdefault(attr, value)
 
         # check if we have var_names for everybody
-        for i, var in enumerate(output, start=1):
+        for i, var in enumerate(var_attrs, start=1):
             if "var_name" not in var:
                 raise ValueError(f"Output #{i} is missing a var_name! Got: {var}.")
 
-        return output
+        return var_attrs
 
     @classmethod
     def from_dict(
@@ -545,7 +545,7 @@ class Indicator(IndicatorRegistrar):
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # For convenience
-        n_outs = len(self.output)
+        n_outs = len(self.var_attrs)
 
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
@@ -557,7 +557,7 @@ class Indicator(IndicatorRegistrar):
         # Metadata attributes from templates
         var_id = None
         var_attrs = []
-        for attrs in self.output:
+        for attrs in self.var_attrs:
             if n_outs > 1:
                 var_id = attrs["var_name"]
             var_attrs.append(
@@ -839,12 +839,12 @@ class Indicator(IndicatorRegistrar):
             set(TRANSLATABLE_ATTRS).difference(set(cls._cf_names)),
         )
         # Translate variable attrs
-        attrs["outputs"] = []
+        attrs["var_attrs"] = []
         var_id = None
-        for var_attrs in cls.output:  # Translate for each variable
-            if len(cls.output) > 1:
+        for var_attrs in cls.var_attrs:  # Translate for each variable
+            if len(cls.var_attrs) > 1:
                 var_id = var_attrs["var_name"]
-            attrs["outputs"].append(
+            attrs["var_attrs"].append(
                 _translate(
                     var_attrs,
                     set(TRANSLATABLE_ATTRS).intersection(cls._cf_names),
@@ -872,7 +872,7 @@ class Indicator(IndicatorRegistrar):
         out = self._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self._format(attrs, args) for attrs in self.output]
+        out["outputs"] = [self._format(attrs, args) for attrs in self.var_attrs]
         out["notes"] = self.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
@@ -1001,15 +1001,15 @@ class Indicator(IndicatorRegistrar):
     @property
     def cf_attrs(cls):
         warnings.warn(
-            "Attribute `cf_attrs` has been renamed `output` in xclim 0.31, it will be removed completely in 0.32.",
+            "Attribute `cf_attrs` has been renamed `var_attrs` in xclim 0.31, it will be removed completely in 0.32.",
             category=FutureWarning,
             stacklevel=2,
         )
-        return cls.output
+        return cls.var_attrs
 
     def __getattr__(self, attr):
         if attr in self._cf_names:
-            return [meta.get(attr, "") for meta in self.output]
+            return [meta.get(attr, "") for meta in self.var_attrs]
         raise AttributeError(attr)
 
 
@@ -1216,14 +1216,10 @@ def build_indicator_module(
 def build_indicator_module_from_yaml(
     filename: PathLike,
     name: Optional[str] = None,
-    base: Type[Indicator] = Daily,
-    doc: Optional[str] = None,
     indices: Optional[Union[Mapping[str, Callable], ModuleType]] = None,
     translations: Optional[Mapping[str, dict]] = None,
     mode: str = "raise",
-    realm: Optional[str] = None,
-    keywords: Optional[str] = None,
-    references: Optional[str] = None,
+    encoding: str = "UTF8",
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1237,11 +1233,6 @@ def build_indicator_module_from_yaml(
     name: str, optional
       The name of the new or existing module, defaults to the basename of the file.
       (e.g: `atmos.yml` -> `atmos`)
-    base: Indicator subclass
-      The Indicator subclass from which the new indicators are based. Superseeded by
-      the class given in the yaml file or in individual indicator definitions (see submodule's doc).
-    doc : str, optional
-      The docstring of the new submodule. Defaults to a very minimal header with the submodule's name.
     indices : Mapping of callables or module, optional
       A mapping or module of indice functions. When creating the indicator, the name in the `index_function` field is
       first sought here, then in xclim.indices.generic and finally in xclim.indices.
@@ -1250,14 +1241,9 @@ def build_indicator_module_from_yaml(
       See Notes and :ref:`Internationalization` for more details.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
-    realm: str, optional
-    keywords: str, optional
-       Comma separated keywords.
-    references: str, optional
-        Source citations.
-      Other indicator attributes that would apply to all indicators in this module.
-      Values given here are overridden by the ones given in individual definition, but
-      they override the ones given at top-level in the YAMl file.
+    encoding: str
+      The encoding used to open the `.yaml` and `.json` files.
+      It defaults to UTF-8, overriding python's mechanism which is machine dependent.
 
     Returns
     -------
@@ -1290,14 +1276,14 @@ def build_indicator_module_from_yaml(
         ymlpath = filepath
 
     # Read YAML file
-    with ymlpath.open() as f:
+    with ymlpath.open(encoding=encoding) as f:
         yml = safe_load(f)
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
     module_name = name or yml.get("module", filepath.stem)
-    default_base = registry.get(yml.get("base"), base)
-    doc = doc or yml.get("doc")
+    default_base = registry.get(yml.get("base"), Daily)
+    doc = yml.get("doc")
 
     # When given as a stem, we try to load indices and translations
     if not filepath.suffix:
@@ -1311,16 +1297,18 @@ def build_indicator_module_from_yaml(
             translations = {}
             for locfile in filepath.parent.glob(filepath.stem + ".*.json"):
                 locale = locfile.suffixes[0][1:]
-                translations[locale] = read_locale_file(locfile, module=module_name)
+                translations[locale] = read_locale_file(
+                    locfile, module=module_name, encoding=encoding
+                )
 
     # Module-wide default values for some attributes
     defkwargs = {
         # Only used in case the indicator definition does not give them.
-        "realm": realm or yml.get("realm"),
+        "realm": yml.get("realm", "atmos"),
         # Merged with a space
-        "keywords": keywords or yml.get("keywords"),
+        "keywords": yml.get("keywords"),
         # Merged with a new line
-        "references": references or yml.get("references"),
+        "references": yml.get("references"),
     }
 
     def _merge_attrs(dbase, dextra, attr, sep):

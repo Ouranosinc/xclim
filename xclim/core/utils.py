@@ -633,20 +633,22 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
             "default": freq_defs[period["default"]]
         }
 
-        for attr in list(data["output"].keys()):
-            if data["output"][attr] is None:
-                del data["output"][attr]
+        attrs = {}
+        for attr, val in data.pop("output").items():
+            if val is None:
                 continue
             if attr == "cell_methods":
                 methods = []
-                for cell_method in data["output"][attr]:
+                for cell_method in val:
                     methods.append(
                         "".join([f"{dim}: {meth}" for dim, meth in cell_method.items()])
                     )
-                data["output"][attr] = " ".join(methods)
-            if attr in ["var_name", "long_name"]:
+                val = " ".join(methods)
+            elif attr in ["var_name", "long_name"]:
                 for new, old in rename_params.items():
-                    data["output"][attr] = data["output"][attr].replace(old, new)
+                    val = val.replace(old, new)
+            attrs[attr] = val
+        data["var_attrs"] = [attrs]
 
         del data["ET"]
 

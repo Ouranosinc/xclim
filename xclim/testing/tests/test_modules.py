@@ -104,3 +104,24 @@ class TestOfficalYaml(yamale.YamaleTestCase):
 
     def test_all(self):
         assert self.validate()
+
+
+# It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
+@pytest.mark.slow
+def test_encoding():
+    import sys
+
+    import _locale
+
+    # remove xclim
+    del sys.modules["xclim"]
+
+    # patch so that the default encoding is not UTF-8
+    old = _locale.nl_langinfo
+    _locale.nl_langinfo = lambda x: "GBK"
+
+    try:
+        import xclim  # noqa
+    finally:
+        # Put the correct function back
+        _locale.nl_langinfo = old

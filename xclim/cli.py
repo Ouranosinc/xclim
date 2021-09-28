@@ -222,10 +222,12 @@ def indices(info):
     for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join(
-            [var.get("long_name", var["var_name"]) for var in indcls.output]
+            [var.get("long_name", var["var_name"]) for var in indcls.var_attrs]
         )
-        if indcls.output[0]["var_name"] != name.lower():
-            right += " (" + ", ".join([var["var_name"] for var in indcls.output]) + ")"
+        if indcls.var_attrs[0]["var_name"] != name.lower():
+            right += (
+                " (" + ", ".join([var["var_name"] for var in indcls.var_attrs]) + ")"
+            )
         if info:
             right += "\n" + indcls.abstract
         rows.append((left, right))
