@@ -20,7 +20,10 @@ This functionality is inspired by the work of [clix-meta](https://github.com/cli
 YAML file structure
 ~~~~~~~~~~~~~~~~~~~
 
-Indicator-defining yaml files are structured in the following way:
+Indicator-defining yaml files are structured in the following way.
+Most entries of the `indices` section are mirroring attributes of
+the :py:class:`Indicator`, please refer to its documentation for more
+details on each.
 
 .. code-block:: yaml
 
@@ -32,11 +35,24 @@ Indicator-defining yaml files are structured in the following way:
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
     indices:
       <identifier>:
-        # All arguments of a built-in type accepted by `Indicator__init__` are valid here (types : None, string, number or boolean)
-        # The following are translated into init-comprehensible arguments for convenience and because of the limitations of the YAML format.
+        # From which Indicator to inherit
         base: <base indicator class>  # Defaults to module-wide base class
                                       # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
                                       # Available classes are listed in `xclim.core.indicator.registry` and `xclim.core.indicator.base_registry`.
+
+        # General metadata, usually parsed from the compute's docstring when possible.
+        realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
+        title: <title>
+        abstract: <abstract>
+        keywords: <keywords>  # Space-separated, merged to module-wide keywords.
+        references: <references>  # newline-seperated, merged to module-wide references.
+        notes: <notes>
+
+        # Other options
+        missing: <missing method name>
+        missing_options:
+            # missing options mapping
+        allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
         compute: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
@@ -277,7 +293,7 @@ class Indicator(IndicatorRegistrar):
        "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
     """
 
-    var_attrs: Sequence[Mapping[str, Any]] = None
+    cf_attrs: Sequence[Mapping[str, Any]] = None
     """A list of metadata information for each output of the indicator.
 
        It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
@@ -328,9 +344,9 @@ class Indicator(IndicatorRegistrar):
         ):
             kwds["missing"] = "skip"
 
-        # Parse kwds to organize `var_attrs`
+        # Parse kwds to organize `cf_attrs`
         # And before converting callables to staticmethods
-        kwds["var_attrs"] = cls._parse_output_attrs(kwds, identifier)
+        kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
         for key in cls._funcs + cls._cf_names:
@@ -372,24 +388,24 @@ class Indicator(IndicatorRegistrar):
         cls, kwds: Dict[str, Any], identifier: str
     ) -> List[Dict[str, Union[str, Callable]]]:
         """CF-compliant metadata attributes for all output variables."""
-        parent_var_attrs = cls.var_attrs
-        var_attrs = kwds.get("var_attrs")
-        if isinstance(var_attrs, dict):
+        parent_cf_attrs = cls.cf_attrs
+        cf_attrs = kwds.get("cf_attrs")
+        if isinstance(cf_attrs, dict):
             # Single output indicator, but we store as a list anyway.
-            var_attrs = [var_attrs]
-        elif var_attrs is None and parent_var_attrs:
-            var_attrs = deepcopy(parent_var_attrs)
-        elif var_attrs is None:
+            cf_attrs = [cf_attrs]
+        elif cf_attrs is None and parent_cf_attrs:
+            cf_attrs = deepcopy(parent_cf_attrs)
+        elif cf_attrs is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
-            # We need to get the number of outputs first, defaulting to the length of parent's var_attrs or 1
-            n_outs = len(parent_var_attrs) if parent_var_attrs is not None else 1
+            # We need to get the number of outputs first, defaulting to the length of parent's cf_attrs or 1
+            n_outs = len(parent_cf_attrs) if parent_cf_attrs is not None else 1
             for name in cls._cf_names:
                 arg = kwds.get(name)
                 if isinstance(arg, (tuple, list)):
                     n_outs = len(arg)
 
-            # Populate new var_attrs from parsing cf_names passed directly.
-            var_attrs = [{} for i in range(n_outs)]
+            # Populate new cf_attrs from parsing cf_names passed directly.
+            cf_attrs = [{} for i in range(n_outs)]
             for name in cls._cf_names:
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
@@ -401,27 +417,27 @@ class Indicator(IndicatorRegistrar):
                     raise ValueError(
                         f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
-                for attrs, value in zip(var_attrs, values):
+                for attrs, value in zip(cf_attrs, values):
                     if value:  # Skip the empty ones (None or '')
                         attrs[name] = value
         # else we assume a list of dicts
 
         # For single output, var_name defauls to identifer.
-        if len(var_attrs) == 1 and "var_name" not in var_attrs[0]:
-            var_attrs[0]["var_name"] = identifier
+        if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
+            cf_attrs[0]["var_name"] = identifier
 
         # update from parent, if they have the same length.
-        if parent_var_attrs is not None and len(parent_var_attrs) == len(var_attrs):
-            for old, new in zip(parent_var_attrs, var_attrs):
+        if parent_cf_attrs is not None and len(parent_cf_attrs) == len(cf_attrs):
+            for old, new in zip(parent_cf_attrs, cf_attrs):
                 for attr, value in old.items():
                     new.setdefault(attr, value)
 
         # check if we have var_names for everybody
-        for i, var in enumerate(var_attrs, start=1):
+        for i, var in enumerate(cf_attrs, start=1):
             if "var_name" not in var:
                 raise ValueError(f"Output #{i} is missing a var_name! Got: {var}.")
 
-        return var_attrs
+        return cf_attrs
 
     @classmethod
     def from_dict(
@@ -545,7 +561,7 @@ class Indicator(IndicatorRegistrar):
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # For convenience
-        n_outs = len(self.var_attrs)
+        n_outs = len(self.cf_attrs)
 
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
@@ -556,11 +572,11 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        var_attrs = []
-        for attrs in self.var_attrs:
+        cf_attrs = []
+        for attrs in self.cf_attrs:
             if n_outs > 1:
                 var_id = attrs["var_name"]
-            var_attrs.append(
+            cf_attrs.append(
                 self._update_attrs(
                     all_params.copy(), das, attrs, names=self._cf_names, var_id=var_id
                 )
@@ -595,11 +611,11 @@ class Indicator(IndicatorRegistrar):
         # Convert to output units
         outs = [
             convert_units_to(out, attrs.get("units", ""), self.context)
-            for out, attrs in zip(outs, var_attrs)
+            for out, attrs in zip(outs, cf_attrs)
         ]
 
         # Update variable attributes
-        for out, attrs in zip(outs, var_attrs):
+        for out, attrs in zip(outs, cf_attrs):
             var_name = attrs.pop("var_name")
             out.attrs.update(attrs)
             out.name = var_name
@@ -819,7 +835,7 @@ class Indicator(IndicatorRegistrar):
             If True (default fill the missing attributes by their english values.
         """
 
-        def _translate(var_attrs, names, var_id=None):
+        def _translate(cf_attrs, names, var_id=None):
             attrs = cls._get_translated_metadata(
                 locale,
                 var_id=var_id,
@@ -828,8 +844,8 @@ class Indicator(IndicatorRegistrar):
             )
             if fill_missing:
                 for name in names:
-                    if name not in attrs and var_attrs.get(name):
-                        attrs[name] = var_attrs.get(name)
+                    if name not in attrs and cf_attrs.get(name):
+                        attrs[name] = cf_attrs.get(name)
             return attrs
 
         # Translate global attrs
@@ -839,14 +855,14 @@ class Indicator(IndicatorRegistrar):
             set(TRANSLATABLE_ATTRS).difference(set(cls._cf_names)),
         )
         # Translate variable attrs
-        attrs["var_attrs"] = []
+        attrs["cf_attrs"] = []
         var_id = None
-        for var_attrs in cls.var_attrs:  # Translate for each variable
-            if len(cls.var_attrs) > 1:
-                var_id = var_attrs["var_name"]
-            attrs["var_attrs"].append(
+        for cf_attrs in cls.cf_attrs:  # Translate for each variable
+            if len(cls.cf_attrs) > 1:
+                var_id = cf_attrs["var_name"]
+            attrs["cf_attrs"].append(
                 _translate(
-                    var_attrs,
+                    cf_attrs,
                     set(TRANSLATABLE_ATTRS).intersection(cls._cf_names),
                     var_id=var_id,
                 )
@@ -872,7 +888,7 @@ class Indicator(IndicatorRegistrar):
         out = self._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self._format(attrs, args) for attrs in self.var_attrs]
+        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
         out["notes"] = self.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
@@ -998,18 +1014,9 @@ class Indicator(IndicatorRegistrar):
         """
         pass
 
-    @property
-    def cf_attrs(cls):
-        warnings.warn(
-            "Attribute `cf_attrs` has been renamed `var_attrs` in xclim 0.31, it will be removed completely in 0.32.",
-            category=FutureWarning,
-            stacklevel=2,
-        )
-        return cls.var_attrs
-
     def __getattr__(self, attr):
         if attr in self._cf_names:
-            return [meta.get(attr, "") for meta in self.var_attrs]
+            return [meta.get(attr, "") for meta in self.cf_attrs]
         raise AttributeError(attr)
 
 

@@ -648,7 +648,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
                 for new, old in rename_params.items():
                     val = val.replace(old, new)
             attrs[attr] = val
-        data["var_attrs"] = [attrs]
+        data["cf_attrs"] = [attrs]
 
         del data["ET"]
 

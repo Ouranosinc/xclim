@@ -30,7 +30,7 @@ from xclim.testing import open_dataset
 class UniIndTemp(Daily):
     realm = "atmos"
     identifier = "tmin"
-    var_attrs = [
+    cf_attrs = [
         dict(
             var_name="tmin{thresh}",
             units="K",
@@ -52,7 +52,7 @@ class UniIndTemp(Daily):
 class UniIndPr(Daily):
     realm = "atmos"
     identifier = "prmax"
-    var_attrs = [dict(units="mm/s")]
+    cf_attrs = [dict(units="mm/s")]
     context = "hydro"
 
     @staticmethod
@@ -64,7 +64,7 @@ class UniIndPr(Daily):
 class UniClim(Daily):
     realm = "atmos"
     identifier = "clim"
-    var_attrs = [dict(units="K")]
+    cf_attrs = [dict(units="K")]
 
     @staticmethod
     def compute(da: xr.DataArray, freq="YS", **indexer):
@@ -75,7 +75,7 @@ class UniClim(Daily):
 class MultiTemp(Daily):
     realm = "atmos"
     identifier = "minmaxtemp"
-    var_attrs = [
+    cf_attrs = [
         dict(
             var_name="tmin",
             units="K",
@@ -100,7 +100,7 @@ class MultiTemp(Daily):
 class MultiOptVar(Daily):
     realm = "atmos"
     identifier = "multiopt"
-    var_attrs = [dict(units="K")]
+    cf_attrs = [dict(units="K")]
 
     @staticmethod
     def compute(
@@ -126,7 +126,7 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
     assert ind.standard_name == ["{freq} mean temperature"]
-    assert ind.var_attrs[0]["another_attr"] == "With a value."
+    assert ind.cf_attrs[0]["another_attr"] == "With a value."
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -207,7 +207,7 @@ def test_multiindicator(tas_series):
     ind = Daily(
         realm="atmos",
         identifier="minmaxtemp2",
-        var_attrs=[
+        cf_attrs=[
             dict(
                 var_name="tmin",
                 units="K",
@@ -524,7 +524,7 @@ def test_input_dataset():
 def test_indicator_from_dict():
     d = dict(
         realm="atmos",
-        var_attrs=dict(
+        cf_attrs=dict(
             var_name="tmean{threshold}",
             units="K",
             long_name="{freq} mean surface temperature",

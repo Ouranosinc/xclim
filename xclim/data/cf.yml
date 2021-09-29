@@ -26,7 +26,7 @@ indices:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: sum within days time: sum over days'
       long_name: Maximum consecutive dry days (Precip < 1mm)
       proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
@@ -49,7 +49,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Cooling Degree Days (Tmean > {threshold}C)
       standard_name: integral_wrt_time_of_air_temperature_excess
@@ -69,7 +69,7 @@ indices:
         default: YS
       threshold: 0 degree_Celsius
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum number of consecutive frost days (Tmin < 0 C)
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
@@ -90,7 +90,7 @@ indices:
         default: YS
       threshold: 25 degree_Celsius
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum number of consecutive summer days (Tmax >25 C)
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
@@ -114,7 +114,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmean >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
@@ -138,7 +138,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmean > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
@@ -162,7 +162,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmean <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
@@ -186,7 +186,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmean < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
@@ -210,7 +210,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmin >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
@@ -234,7 +234,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmin > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
@@ -258,7 +258,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmin <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
@@ -282,7 +282,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmin < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
@@ -306,7 +306,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmax >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
@@ -330,7 +330,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmax > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
@@ -354,7 +354,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmax <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
@@ -378,7 +378,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum number of consequtive days with Tmax < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
@@ -400,7 +400,7 @@ indices:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: sum within days time: sum over days'
       long_name: Maximum consecutive wet days (Precip >= 1mm)
       proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold
@@ -423,7 +423,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Degree Days (Tmean > {threshold}C)
       standard_name: integral_wrt_time_of_air_temperature_excess
@@ -445,7 +445,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Degree Days (Tmean < {threshold}C)
       standard_name: integral_wrt_time_of_air_temperature_deficit
@@ -465,7 +465,7 @@ indices:
         default: MS
       reducer: mean
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: range within days time: mean over days'
       long_name: Mean Diurnal Temperature Range
       proposed_standard_name: air_temperature_range
@@ -484,7 +484,7 @@ indices:
       freq:
         default: MS
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: range'
       long_name: Intra-period extreme temperature range
       proposed_standard_name: air_temperature_range
@@ -503,7 +503,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily mean wind strength
       standard_name: wind_speed
@@ -522,7 +522,7 @@ indices:
         default: MS
       reducer: max
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum'
       long_name: Maximum value of daily maximum wind gust strength
       standard_name: wind_speed_of_gust
@@ -542,7 +542,7 @@ indices:
         default: YS
       threshold: 4 degree_Celsius
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Growing degree days (sum of Tmean > 4 C)
       standard_name: integral_wrt_time_of_air_temperature_excess
@@ -562,7 +562,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Annual Growing Degree Days (Tmean > {threshold}C)
       standard_name: integral_wrt_time_of_air_temperature_excess
@@ -582,7 +582,7 @@ indices:
         default: YS
       threshold: 17 degree_Celsius
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Heating degree days (sum of Tmean < 17 C)
       standard_name: integral_wrt_time_of_air_temperature_excess
@@ -604,7 +604,7 @@ indices:
         description: air temperature
         units: degree_Celsius
     references: ET-SCI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: sum over days'
       long_name: Heating Degree Days (Tmean < {threshold}C)
       standard_name: integral_wrt_time_of_air_temperature_deficit
@@ -624,7 +624,7 @@ indices:
         default: MS
       reducer: max
     references: SMHI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: range within days time: maximum over days'
       long_name: Maximum Diurnal Temperature Range
       proposed_standard_name: air_temperature_range
@@ -643,7 +643,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily sea level pressure
       standard_name: air_pressure_at_sea_level
@@ -662,7 +662,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily relative humidity
       standard_name: relative_humidity
@@ -681,7 +681,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily snow depth
       standard_name: surface_snow_thickness
@@ -702,7 +702,7 @@ indices:
       reducer: mean
       threshold: 1 mm day-1
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: sum within days time: mean over days'
       long_name: Average precipitation during Wet Days (SDII)
       standard_name: lwe_precipitation_rate
@@ -721,7 +721,7 @@ indices:
         default: MS
       reducer: sum
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - long_name: Sunshine duration, sum
       standard_name: duration_of_sunshine
       units: hour
@@ -739,7 +739,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily mean temperature
       standard_name: air_temperature
@@ -758,7 +758,7 @@ indices:
         default: YS
       reducer: mean
     references: null
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: mean over days'
       long_name: Mean daily mean temperature
       standard_name: air_temperature
@@ -777,7 +777,7 @@ indices:
         default: YS
       reducer: max
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum daily mean temperature
       standard_name: air_temperature
@@ -796,7 +796,7 @@ indices:
         default: YS
       reducer: mean
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: mean over days'
       long_name: Mean daily mean temperature
       standard_name: air_temperature
@@ -815,7 +815,7 @@ indices:
         default: YS
       reducer: min
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Minimum daily mean temperature
       standard_name: air_temperature
@@ -834,7 +834,7 @@ indices:
         default: YS
       reducer: min
     references: null
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: minimum over days'
       long_name: Minimum daily mean temperature
       standard_name: air_temperature
@@ -853,7 +853,7 @@ indices:
         default: YS
       reducer: max
     references: null
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean within days time: maximum over days'
       long_name: Maximum daily mean temperature
       standard_name: air_temperature
@@ -872,7 +872,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily minimum temperature
       standard_name: air_temperature
@@ -891,7 +891,7 @@ indices:
         default: YS
       reducer: mean
     references: null
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: mean over days'
       long_name: Mean daily minimum temperature
       standard_name: air_temperature
@@ -910,7 +910,7 @@ indices:
         default: YS
       reducer: max
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum daily minimum temperature
       standard_name: air_temperature
@@ -929,7 +929,7 @@ indices:
         default: YS
       reducer: mean
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: mean over days'
       long_name: Mean daily minimum temperature
       standard_name: air_temperature
@@ -948,7 +948,7 @@ indices:
         default: YS
       reducer: min
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: minimum over days'
       long_name: Minimum daily minimum temperature
       standard_name: air_temperature
@@ -967,7 +967,7 @@ indices:
         default: YS
       reducer: min
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: minimum over days'
       long_name: Minimum daily minimum temperature
       standard_name: air_temperature
@@ -986,7 +986,7 @@ indices:
         default: YS
       reducer: max
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: minimum within days time: maximum over days'
       long_name: Maximum daily minimum temperature
       standard_name: air_temperature
@@ -1005,7 +1005,7 @@ indices:
         default: MS
       reducer: mean
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: mean'
       long_name: Mean of daily maximum temperature
       standard_name: air_temperature
@@ -1024,7 +1024,7 @@ indices:
         default: YS
       reducer: mean
     references: null
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: mean over days'
       long_name: Mean daily maximum temperature
       standard_name: air_temperature
@@ -1043,7 +1043,7 @@ indices:
         default: YS
       reducer: max
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum daily maximum temperature
       standard_name: air_temperature
@@ -1062,7 +1062,7 @@ indices:
         default: YS
       reducer: mean
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: mean over days'
       long_name: Mean daily maximum temperature
       standard_name: air_temperature
@@ -1081,7 +1081,7 @@ indices:
         default: YS
       reducer: min
     references: CLIPC
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: minimum over days'
       long_name: Minimum daily maximum temperature
       standard_name: air_temperature
@@ -1100,7 +1100,7 @@ indices:
         default: YS
       reducer: min
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: minimum over days'
       long_name: Minimum daily maximum temperature
       standard_name: air_temperature
@@ -1119,7 +1119,7 @@ indices:
         default: YS
       reducer: max
     references: ETCCDI
-    var_attrs:
+    cf_attrs:
     - cell_methods: 'time: maximum within days time: maximum over days'
       long_name: Maximum daily maximum temperature
       standard_name: air_temperature
@@ -1138,7 +1138,7 @@ indices:
       freq:
         default: MS
     references: ECA&D
-    var_attrs:
+    cf_attrs:
     - long_name: Mean day-to-day variation in Diurnal Temperature Range
       proposed_standard_name: air_temperature_difference
       units: degree_Celsius

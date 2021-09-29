@@ -9,7 +9,7 @@ references: xclim documentation https://xclim.readthedocs.io
 indices:
   LPRatio:
     base: liquid_precip_ratio
-    var_attrs:
+    cf_attrs:
       description: "Precipitation is estimated to be solid when tas is under 0.5°C"
       long_name: Liquid precip to total precip ratio.
     parameters:
@@ -22,7 +22,7 @@ indices:
       thresh: 1 mm/day
   R95p:
     compute: extreme_precip_accumulation_and_days
-    var_attrs:
+    cf_attrs:
       - cell_methods: 'time: sum within days time: sum over days'
         long_name: Annual total PRCP when RR > {perc}th percentile
         units: m
@@ -36,7 +36,7 @@ indices:
   R99p:
     base: .R95p
     compute: extreme_precip_accumulation_and_days
-    var_attrs:
+    cf_attrs:
       - var_name: R99p
       - var_name: R99p_days
     parameters:
@@ -44,11 +44,11 @@ indices:
   RX1day:
     allowed_periods: [Q, A]
     base: rx1day
-    var_attrs:
+    cf_attrs:
       long_name: Highest 1-day precipitation amount
   RX5day:
     base: max_n_day_precipitation_amount
-    var_attrs:
+    cf_attrs:
       long_name: Highest 5-day precipitation amount
     parameters:
       freq: QS-DEC
@@ -57,7 +57,7 @@ indices:
     compute: count_occurrences
     input:
       data: tasmin
-    var_attrs:
+    cf_attrs:
       cell_methods: 'time: minimum within days time: sum over days'
       long_name: Number of Frost Days (Tmin < 0°C)
       standard_name: number_of_days_with_air_temperature_below_threshold

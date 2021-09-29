@@ -8,8 +8,7 @@ History
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically.
-* `Indicator` objects now always return a list of strings when output attributes are accessed as properties.
-* `Indicator.cf_attrs` was renamed `Indicator.var_attrs`.
+* `Indicator` objects now always return a list of strings when output (keys of `cf_attrs`) attributes are accessed as properties.
 
 
 0.30.0 (2021-09-28)
