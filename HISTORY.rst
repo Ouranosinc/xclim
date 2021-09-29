@@ -2,6 +2,13 @@
 History
 =======
 
+0.30.1 (unreleased)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Fix a bug in sdba's ``map_groups`` where 1D input including an auxialiary coordinate would fail with an obscure error on a reducing operation.
+
 0.30.0 (2021-09-28)
 -------------------
 

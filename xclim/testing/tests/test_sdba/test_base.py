@@ -174,7 +174,7 @@ def test_map_blocks(tas_series):
 
     data = func(
         xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, lon=[1, 2, 3, 4]
-    )
+    ).load()
     assert set(data.data.dims) == {"time", "lon"}
 
     @map_groups(data=[Grouper.PROP])
@@ -185,7 +185,7 @@ def test_map_blocks(tas_series):
 
     data = func(
         xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, add_dims=["lat"]
-    )
+    ).load()
     assert set(data.data.dims) == {"dayofyear"}
 
     @map_groups(data=[Grouper.PROP], main_only=True)
@@ -194,5 +194,10 @@ def test_map_blocks(tas_series):
         data = ds.tas.mean(dim)
         return data.rename("data").to_dataset()
 
-    data = func(xr.Dataset(dict(tas=tas)), group="time.dayofyear")
-    assert set(data.data.dims) == {"dayofyear", "lat"}
+    # with a scalar aux coord
+    data = func(
+        xr.Dataset(dict(tas=tas.isel(lat=0, drop=True)), coords=dict(leftover=1)),
+        group="time.dayofyear",
+    ).load()
+    assert set(data.data.dims) == {"dayofyear"}
+    assert "leftover" in data
