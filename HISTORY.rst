@@ -10,6 +10,12 @@ Breaking changes
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically.
 * `Indicator` objects now always return a list of strings when output (keys of `cf_attrs`) attributes are accessed as properties.
 
+0.30.1 (unreleased)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Fix a bug in sdba's ``map_groups`` where 1D input including an auxialiary coordinate would fail with an obscure error on a reducing operation.
 
 0.30.0 (2021-09-28)
 -------------------

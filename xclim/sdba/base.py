@@ -639,7 +639,8 @@ def map_blocks(reduces=None, **outvars):
                 nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
             }
             ds = ds.drop_vars(extra_coords.keys())
-            tmpl = tmpl.drop_vars(extra_coords.keys())
+            # Coords not sharing dims with `all_dims` (like scalar aux coord on reduced 1D input) are absent from tmpl
+            tmpl = tmpl.drop_vars(extra_coords.keys(), errors="ignore")
 
             # Call
             out = ds.map_blocks(
