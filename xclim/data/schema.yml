@@ -4,10 +4,10 @@ keywords: str(required=False)
 module : str(required=False)
 realm: str(required=False)
 references: str(required=False)
-indices: map(include('indice'), key=regex('^[-\w]+$'))
+indicators: map(include('indice'), key=regex('^[-\w]+$'))
 
 ---
-indice:
+indicator:
   abstract: str(required=False)
   allowed_periods: list(enum('A', 'Q', 'M', 'W'), required=False)
   base: str(required=False)

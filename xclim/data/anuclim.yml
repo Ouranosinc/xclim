@@ -16,7 +16,7 @@ doc: '===============
   .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 
   '
-indices:
+indicators:
   P10_MeanTempWarmestQuarter:
     allowed_periods: [A]
     compute: tg_mean_warmcold_quarter

@@ -13,7 +13,7 @@ doc: |
 
   .. _ECAD: https://www.ecad.eu/
 references: European Climate Assessment & Dataset, https://www.ecad.eu/
-indices:
+indicators:
   TG:
     base: tg_mean
   TX:

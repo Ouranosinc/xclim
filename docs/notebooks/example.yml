@@ -6,7 +6,7 @@ doc: |
   This module is an example of YAML generated xclim submodule.
 realm: atmos
 references: xclim documentation https://xclim.readthedocs.io
-indices:
+indicators:
   LPRatio:
     base: liquid_precip_ratio
     cf_attrs:

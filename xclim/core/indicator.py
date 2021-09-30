@@ -21,7 +21,7 @@ YAML file structure
 ~~~~~~~~~~~~~~~~~~~
 
 Indicator-defining yaml files are structured in the following way.
-Most entries of the `indices` section are mirroring attributes of
+Most entries of the `indicators` section are mirroring attributes of
 the :py:class:`Indicator`, please refer to its documentation for more
 details on each.
 
@@ -33,7 +33,7 @@ details on each.
     references: <references> # Merged with indicator-specific referencess (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
-    indices:
+    indicators:
       <identifier>:
         # From which Indicator to inherit
         base: <base indicator class>  # Defaults to module-wide base class
@@ -93,7 +93,7 @@ from inspect import Parameter, _empty, signature  # noqa
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -1332,7 +1332,7 @@ def build_indicator_module_from_yaml(
 
     # Parse the indicators:
     mapping = {}
-    for identifier, data in yml["indices"].items():
+    for identifier, data in yml["indicators"].items():
         try:
             # Get base class if it was relative to this module
             if "base" in data:
