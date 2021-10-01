@@ -2,12 +2,12 @@
 History
 =======
 
-0.30.1 (unreleased)
+0.30.1 (2021-10-01)
 -------------------
 
 Bug fixes
 ~~~~~~~~~
-* Fix a bug in sdba's ``map_groups`` where 1D input including an auxialiary coordinate would fail with an obscure error on a reducing operation.
+* Fix a bug in ``xclim.sdba``'s ``map_groups`` where 1D input including an auxiliary coordinate would fail with an obscure error on a reducing operation.
 
 0.30.0 (2021-09-28)
 -------------------
