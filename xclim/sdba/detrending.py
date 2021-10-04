@@ -231,14 +231,23 @@ class LoessDetrend(BaseDetrend):
             equal_spacing=equal_spacing,
         )
 
-    def _get_trend_group(self, da, *, dim):
-        trend = loess_smoothing(
-            da,
-            dim=dim,
-            f=self.f,
-            niter=self.niter,
-            d=self.d,
-            weights=self.weights,
-            equal_spacing=self.equal_spacing,
-        )
-        return trend
+    def _get_trend(self, da):
+        # Estimate trend over da
+        trend = _loessdetrend_get_trend(da, **self)
+        return trend.trend
+
+
+@map_groups(trend=[Grouper.DIM])
+def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kind):
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    trend = loess_smoothing(
+        da,
+        dim=dim[0],
+        f=f,
+        niter=niter,
+        d=d,
+        weights=weights,
+        equal_spacing=equal_spacing,
+    )
+    return trend.rename("trend").to_dataset()
