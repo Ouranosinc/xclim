@@ -2,6 +2,14 @@
 History
 =======
 
+
+0.30.2 (Unreleased)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Fix a bug on bootstrapping when the dataset time is encoded with cftime.
+
 0.30.1 (2021-10-01)
 -------------------
 
