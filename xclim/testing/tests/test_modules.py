@@ -32,7 +32,7 @@ def test_default_modules_exist():
 
     assert hasattr(cf, "fg")
 
-    assert len(list(icclim.iter_indicators())) == 54
+    assert len(list(icclim.iter_indicators())) == 55
     assert len(list(anuclim.iter_indicators())) == 19
     # Not testing cf because many indices are waiting to be implemented.
 
@@ -85,3 +85,24 @@ def test_custom_indices():
 
     # Check that missing was not modified even with injecting `freq`.
     assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing
+
+
+# It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
+@pytest.mark.slow
+def test_encoding():
+    import sys
+
+    import _locale
+
+    # remove xclim
+    del sys.modules["xclim"]
+
+    # patch so that the default encoding is not UTF-8
+    old = _locale.nl_langinfo
+    _locale.nl_langinfo = lambda x: "GBK"
+
+    try:
+        import xclim  # noqa
+    finally:
+        # Put the correct function back
+        _locale.nl_langinfo = old

@@ -231,12 +231,21 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module=None):
+def read_locale_file(filename, module=None, encoding="UTF8"):
     """Read a locale file (*.json) and return its dictionary.
 
-    If module is a string, this module name is added to all identifiers translated in this file.
+    Parameters
+    ----------
+    filename: PathLike
+      The file to read.
+    module: string, optional
+      If module is a string, this module name is added to all identifiers translated in this file.
+      Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
+    encoding : string
+      The encoding to use when reading the file.
+      Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, "r", encoding=encoding) as f:
         locdict = json.load(f)
 
     if module is not None:
