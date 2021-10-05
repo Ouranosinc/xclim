@@ -8,8 +8,6 @@ History
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically.
-* `Indicator` objects now always return a list of strings when output (keys of `cf_attrs`) attributes are accessed as properties.
-
 
 Bug fixes
 ~~~~~~~~~
