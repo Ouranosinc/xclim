@@ -8,7 +8,7 @@ History
 
 Bug fixes
 ~~~~~~~~~
-* Fix a bug on bootstrapping when the dataset time is encoded with cftime.
+* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`.
 
 0.30.1 (2021-10-01)
 -------------------
