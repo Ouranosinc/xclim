@@ -1016,7 +1016,10 @@ class Indicator(IndicatorRegistrar):
 
     def __getattr__(self, attr):
         if attr in self._cf_names:
-            return [meta.get(attr, "") for meta in self.cf_attrs]
+            out = [meta.get(attr, "") for meta in self.cf_attrs]
+            if len(out) == 1:
+                return out[0]
+            return out
         raise AttributeError(attr)
 
 

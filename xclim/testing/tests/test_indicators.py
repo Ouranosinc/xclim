@@ -125,7 +125,7 @@ def test_attrs(tas_series):
     assert "TMIN(da=tas, thresh=5, freq='YS')" in txm.attrs["history"]
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
-    assert ind.standard_name == ["{freq} mean temperature"]
+    assert ind.standard_name == "{freq} mean temperature"
     assert ind.cf_attrs[0]["another_attr"] == "With a value."
 
 

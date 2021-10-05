@@ -7,19 +7,39 @@ doc: |
 realm: atmos
 references: xclim documentation https://xclim.readthedocs.io
 indicators:
-  LPRatio:
-    base: liquid_precip_ratio
+  RX1day:
+    base: rx1day
     cf_attrs:
-      description: "Precipitation is estimated to be solid when tas is under 0.5°C"
-      long_name: Liquid precip to total precip ratio.
+      long_name: Highest 1-day precipitation amount
+  RX5day:
+    base: max_n_day_precipitation_amount
+    cf_attrs:
+      long_name: Highest 5-day precipitation amount
     parameters:
-      thresh: 0.5 degC
+      freq: QS-DEC
+      window: 5
   R75pdays:
     base: days_over_precip_thresh
     parameters:
       per:
         description: Daily 75th percentile of wet day precipitation flux.
       thresh: 1 mm/day
+  fd:
+    compute: count_occurrences
+    input:
+      data: tasmin
+    cf_attrs:
+      cell_methods: 'time: minimum within days time: sum over days'
+      long_name: Number of Frost Days (Tmin < 0°C)
+      standard_name: number_of_days_with_air_temperature_below_threshold
+      units: days
+      var_name: fd
+    parameters:
+      condition: <
+      threshold: 0 degC
+      freq:
+        default: YS
+    references: ETCCDI
   R95p:
     compute: extreme_precip_accumulation_and_days
     cf_attrs:
@@ -41,31 +61,3 @@ indicators:
       - var_name: R99p_days
     parameters:
       perc: 99
-  RX1day:
-    allowed_periods: [Q, A]
-    base: rx1day
-    cf_attrs:
-      long_name: Highest 1-day precipitation amount
-  RX5day:
-    base: max_n_day_precipitation_amount
-    cf_attrs:
-      long_name: Highest 5-day precipitation amount
-    parameters:
-      freq: QS-DEC
-      window: 5
-  fd:
-    compute: count_occurrences
-    input:
-      data: tasmin
-    cf_attrs:
-      cell_methods: 'time: minimum within days time: sum over days'
-      long_name: Number of Frost Days (Tmin < 0°C)
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: days
-      var_name: fd
-    parameters:
-      condition: <
-      threshold: 0 degC
-      freq:
-        default: YS
-    references: ETCCDI
