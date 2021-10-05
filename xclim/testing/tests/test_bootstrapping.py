@@ -127,6 +127,15 @@ class Test_bootstrap:
             use_dask=use_dask,
         )
 
+    def test_bootstrap_cftime(self, bootstrap_series):
+        self.bootstrap_testor(
+            lambda values, start: bootstrap_series(values, start, cf_time=True),
+            98,
+            lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+            positive_values=True,
+            use_dask=False,
+        )
+
     def bootstrap_testor(
         self,
         series,
