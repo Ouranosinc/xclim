@@ -7,22 +7,15 @@ from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.sdba.adjustment import (
     LOCI,
-    BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
-    NpdfTransform,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
 )
 from xclim.sdba.base import Grouper, stack_variables, unstack_variables
-from xclim.sdba.processing import (
-    jitter_under_thresh,
-    reordering,
-    standardize,
-    uniform_noise_like,
-)
+from xclim.sdba.processing import jitter_under_thresh, uniform_noise_like
 from xclim.sdba.utils import (
     ADDITIVE,
     MULTIPLICATIVE,
@@ -553,36 +546,58 @@ class TestPrincipalComponents:
                 np.testing.assert_allclose(cov_ref - cov_sim, 0, atol=1e-6)
 
         def _group_assert(ds, dim):
-            if dim == ["time"]:
+            if "lon" not in dim:
                 for lon in ds.lon:
-                    _assert(ds.sel(lon=lon).rename(time="pt"))
+                    _assert(ds.sel(lon=lon).stack(pt=dim))
             else:
                 _assert(ds.stack(pt=dim))
             return ds
 
         group.apply(_group_assert, {"ref": ref, "sim": sim, "scen": scen})
 
-    @pytest.mark.parametrize(
-        "group", [Grouper("time"), Grouper("time.month", window=11)]
-    )
-    def test_real_data(self, group):
-        ds = xr.tutorial.open_dataset("air_temperature")
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize("pcorient", ["full", "simple"])
+    def test_real_data(self, atmosds, use_dask, pcorient):
+        ref = stack_variables(
+            xr.Dataset(
+                {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
+            )
+        ).isel(location=3)
+        hist = stack_variables(
+            xr.Dataset(
+                {
+                    "tasmax": 1.001 * atmosds.tasmax,
+                    "tasmin": atmosds.tasmin - 0.25,
+                    "tas": atmosds.tas + 1,
+                }
+            )
+        ).isel(location=3)
+        with xr.set_options(keep_attrs=True):
+            sim = hist + 5
+            sim["time"] = sim.time + np.timedelta64(10, "Y").astype("<m8[ns]")
 
-        ref = ds.air.isel(lat=21, lon=[40, 52]).drop_vars(["lon", "lat"])
-        sim = ds.air.isel(lat=18, lon=[17, 35]).drop_vars(["lon", "lat"])
+        if use_dask:
+            ref = ref.chunk()
+            hist = hist.chunk()
+            sim = sim.chunk()
 
-        PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lon")
+        PCA = PrincipalComponents.train(
+            ref, hist, crd_dim="variables", best_orientation=pcorient
+        )
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
             """Pointwise distance between ref and sim in the PC space."""
-            return np.sqrt(((ref - sim) ** 2).sum("lon"))
+            sim["time"] = ref.time
+            return np.sqrt(((ref - sim) ** 2).sum("variables"))
 
         # Most points are closer after transform.
-        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.05
+        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.01
 
+        ref = unstack_variables(ref)
+        scen = unstack_variables(scen)
         # "Error" is very small
-        assert (ref - scen).mean() < 5e-3
+        assert (ref - scen).mean().tasmin < 5e-3
 
 
 @pytest.mark.xfail(reason="Inaccurate version.")

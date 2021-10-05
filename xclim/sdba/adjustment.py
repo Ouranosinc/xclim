@@ -1,5 +1,5 @@
 """Adjustment objects."""
-from typing import Any, Mapping, Optional, Sequence, Union
+from typing import Any, Mapping, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -28,7 +28,8 @@ from ._adjustment import (
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .utils import (
     ADDITIVE,
-    best_pc_orientation,
+    best_pc_orientation_full,
+    best_pc_orientation_simple,
     equally_spaced_nodes,
     get_clusters,
     get_clusters_1d,
@@ -189,6 +190,12 @@ class TrainAdjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
+
+        # Keep attrs
+        scen.attrs.update(sim.attrs)
+        for name, crd in sim.coords.items():
+            if name in scen.coords:
+                scen[name].attrs.update(crd.attrs)
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
@@ -865,6 +872,11 @@ class PrincipalComponents(TrainAdjust):
       See :py:class:`xclim.sdba.base.Grouper` for details.
       The adjustment will be performed on each group independently.
       Default is "time", meaning an single adjustment group along dimension "time".
+    best_orientation : {'simple', 'full'}
+      Which method to use when searching for the best principal component orientation.
+      See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
+      :py:func:`~xclim.sdba.utils.best_pc_orientiation_full`.
+      "full" is more precise, but it is much slower.
     crd_dim : str
       The data dimension long which the multiple simulation space dimensions are taken.
       For a multivariate ajustment, this should be "variables", as returned by `sdba.stack_variables`.
@@ -914,6 +926,7 @@ class PrincipalComponents(TrainAdjust):
         hist: xr.DataArray,
         *,
         crd_dim: str,
+        best_orientation: str = "simple",
         group: Union[str, Grouper] = "time",
     ):
         all_dims = set(ref.dims + hist.dims)
@@ -938,20 +951,24 @@ class PrincipalComponents(TrainAdjust):
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
-            # Fancy trick to choose best orientation on each axes
+            # Fancy tricks to choose best orientation on each axes
             # (using eigenvectors, the output axes orientation is undefined)
-            orient = best_pc_orientation(R, Hinv)
+            if best_orientation == "simple":
+                orient = best_pc_orientation_simple(R, Hinv)
+            elif best_orientation == "full":
+                orient = best_pc_orientation_full(
+                    R, Hinv, reference.mean(axis=1), historical.mean(axis=1), historical
+                )
             # Get transformation matrix
             return (R * orient) @ Hinv
 
         # The group wrapper
         def _compute_transform_matrices(ds, dim):
             """Apply `_compute_transform_matrix` along dimensions other than time and the variables to map."""
-            # The multiple PC-space dimensions are along "coordinate"
+            # The multiple PC-space dimensions are along lblR and lblM
             # Matrix multiplication in xarray behaves as a dot product across
             # same-name dimensions, instead of reducing according to the dimension order,
-            # as in numpy or normal maths. So crdX all refer to the same dimension,
-            # but with names assuring correct matrix multiplication even if they are out of order.
+            # as in numpy or normal maths.
             if len(dim) > 1:
                 reference = ds.ref.stack({lblP: dim})
                 historical = ds.hist.stack({lblP: dim})
