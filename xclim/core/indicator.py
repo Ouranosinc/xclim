@@ -121,15 +121,15 @@ from .locales import (
     read_locale_file,
 )
 from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
-from .units import convert_units_to, declare_units, units
+from .units import check_units, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
     InputKind,
     MissingVariableError,
+    ValidationError,
     infer_kind_from_parameter,
     load_module,
     raise_warn_or_log,
-    wrapped_partial,
 )
 
 # Indicators registry
@@ -266,8 +266,12 @@ class Indicator(IndicatorRegistrar):
 
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
-
+    # Parameters metadata fields
+    _param_fields = {"description", "choices", "kind", "default", "units"}
+    # Class attributes that are function (so we know which to convert to static methods)
     _funcs = ["compute", "cfcheck", "datacheck"]
+    # Mapping from variable name in "compute" to a new variable (CMIP6) name
+    _variable_mapping = {}
 
     # Will become the class's name
     identifier = None
@@ -286,10 +290,13 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    parameters: Mapping[str, Any]
+    parameters: Mapping[str, Any] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
-       Contains : "default", "description", "kind" and, sometimes, "units" and "choices".
+       Keys are the arguments of the "compute" function. "Injected" parameters,
+       those absent from the indicator's call signature are listed here with the
+       injected values. Controlable parameters have mappings containing :
+       "default", "description", "kind" and, sometimes, "units" and "choices".
        "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
     """
 
@@ -307,41 +314,121 @@ class Indicator(IndicatorRegistrar):
         if identifier is None:
             raise AttributeError("`identifier` has not been set.")
 
-        # Parse and update compute's signature.
-        kwds["compute"] = kwds.get("compute", None) or cls.compute
-
-        # Updated to allow string variable names and the ds arg.
-        # Parse docstring of the compute function, its signature and its parameters
-        kwds["_indcompute"], docmeta, params = _parse_indice(
-            kwds["compute"],
-            passed=kwds.get("parameters"),
-            ds={
-                "annotation": Dataset,
-                "description": "A dataset with the variables given by name.",
-            },
-        )
-
-        # The update signature
-        kwds["_sig"] = kwds["_indcompute"].__signature__
-        # The input parameters' name
-        kwds["_parameters"] = tuple(kwds["_sig"].parameters.keys())
-
-        # All fields parsed by parse_doc except "parameters"
-        # i.e. : title, abstract, notes, references, long_name
-        for name, value in docmeta.items():
-            if not getattr(cls, name, None):
-                # Set if neither the class attr is set nor the kwds attr
+        if "compute" in kwds:
+            # Compute is passed :
+            #   - Metadata is extracted from the docstring
+            #   - Parameters of base class are thrown in the bin, replaced by
+            #     what we parse from the docstring (description, choices), decorator (units),
+            #     signature (kind, default) and passed "input".
+            docmeta = parse_doc(kwds["compute"].__doc__)
+            parameters = docmeta.pop("parameters", {})  # override parent's parameters
+            for (
+                name,
+                value,
+            ) in docmeta.items():  # title, abstract, references, notes, long_name
+                # Only set if not passed as keywords (parent's are overridden anyway)
                 kwds.setdefault(name, value)
 
-        # The input parameters' metadata
-        # We dump whatever the base class had and take what was parsed from the current compute function.
-        kwds["parameters"] = params
+            for name, unit in getattr(kwds["compute"], "in_units", {}).items():
+                parameters.setdefault(name, {})["units"] = unit
+
+            compute_sig = signature(kwds["compute"])
+            # Test for malformed docstrings. Maybe that's too strong?
+            if not set(parameters.keys()).issubset(compute_sig.parameters.keys()):
+                raise ValueError(
+                    f"Malformed docstring on {kwds['compute']} : the parameters "
+                    f"{set(parameters.keys()) - set(compute_sig.parameters.keys())} "
+                    "are absent from the signature."
+                )
+            for name, param in compute_sig.parameters.items():
+                meta = parameters.setdefault(name, {})
+                meta["default"] = param.default
+                has_units = (
+                    "units" in meta  # Units read from compute.in_units
+                    or "units" in kwds.get("parameters", {}).get(name, {})
+                )  # Units passed explicitly, will be added to "meta" below.
+                meta["kind"] = infer_kind_from_parameter(param, has_units)
+
+        else:  # inherit parameters from base class
+            parameters = deepcopy(cls.parameters)
+
+        # Update parameters with passed parameters
+        param_fields = cls._param_fields - {"units"}
+        try:
+            for key, val in kwds.get("parameters", {}).items():
+                if isinstance(val, dict):  # Modified meta
+                    if not set(val.keys()).issubset(param_fields):
+                        raise ValueError(
+                            "Parameter metadata can only have keys: "
+                            f"{param_fields}, got : {val.keys()} for parameter {key}."
+                        )
+                    parameters[key].update(val)
+                else:  # Injected
+                    parameters[key] = val
+        except KeyError as err:
+            raise ValueError(
+                f"Parameter {err} was passed but it does not exist on the "
+                f" compute function (not one of {parameters.keys()})"
+            ) from err
+
+        # Input variable mapping (to change variable names in signature and expected units/cf attrs).
+        if "input" in kwds:
+            # Update parameters
+            new_variable_mapping = kwds.pop("input")
+            for old_name, new_name in new_variable_mapping.items():
+                meta = parameters[new_name] = parameters.pop(old_name)
+                try:
+                    varmeta = VARIABLES[new_name]
+                except KeyError:
+                    raise ValueError(
+                        f"Compute argument {old_name} was mapped to variable "
+                        f"{new_name} which is not understood by xclim or CMIP6. Please"
+                        " use names listed in `xclim.core.utils.VARIABLES`."
+                    )
+                if "units" in meta:
+                    try:
+                        check_units(varmeta["canonical_units"], meta["units"])
+                    except ValidationError:
+                        raise ValueError(
+                            "When changing the name of a variable by passing `input`, "
+                            "the units dimensionality must stay the same. Got: old = "
+                            f"{meta['units']}, new = {varmeta['canonical_units']}"
+                        )
+                meta["units"] = varmeta["canonical_units"]
+                meta["description"] = varmeta["description"]
+
+            # Update mapping attribute
+            variable_mapping = deepcopy(cls._variable_mapping)
+            variable_mapping.update(new_variable_mapping)
+            kwds["_variable_mapping"] = variable_mapping
+
+        # Ensure correct parameters
+        for name, meta in parameters.items():
+            if isinstance(meta, dict):
+                if meta["kind"] <= InputKind.OPTIONAL_VARIABLE and "units" not in meta:
+                    raise ValueError(
+                        f"Input variable {name} is missing expected units. Units are "
+                        "parsed either from the declare_units decorator or from the "
+                        "variable mapping (arg name to CMIP6 name) passed in `input`"
+                    )
+                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
+                    meta["default"] = None
+                elif meta["kind"] == InputKind.VARIABLE:
+                    meta["default"] = name
+
+        # If needed, wrap compute with declare units
+        if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
+            kwds["compute"] = declare_units(
+                kwds["compute"],
+                **{k: m["units"] for k, m in parameters.items() if "units" in m},
+            )
+
+        # All updates done.
+        kwds["parameters"] = parameters
 
         # By default skip missing values handling if there is no resampling.
         # Dont only check if freq is in current parameters but also if it was injected earlier.
-        if "freq" not in params and "freq" not in getattr(
-            kwds["compute"], "_injected", {}
-        ):
+        if "freq" not in parameters:
             kwds["missing"] = "skip"
 
         # Parse kwds to organize `cf_attrs`
@@ -450,14 +537,12 @@ class Indicator(IndicatorRegistrar):
 
         Most parameters are passed directly as keyword arguments to the class constructor, except:
 
+        - "base" : A subclass of Indicator or a name of one listed in
+          :py:data:`xclim.core.indicator.registry` or
+          :py:data:`xclim.core.indicaotr.base_registry`. When passed, it acts as if
+          `from_dict` was called on that class instead.
         - "compute" : A string function name translates to a
           :py:mod:`xclim.indices.generic` or :py:mod:`xclim.indices` function.
-        - "input" : This mapping is used when "compute" is a generic function, to map
-           from function argument names to CMIP6/xclim variable names (see :py:data:`xclim.core.utils.VARIABLES`).
-        - "parameters" : This mapping can be used to either inject a parameters,
-           by passing a value directly, or to update the metadata of a parameters,
-           by passing a mapping with one or more keys in "default", "description" or "units".
-           The later is only valid is "compute" is a generic function.
 
         Parameters
         ----------
@@ -483,20 +568,6 @@ class Indicator(IndicatorRegistrar):
             else:
                 cls = data["base"]
 
-        params = {}
-        input_units = {}
-
-        inputs = data.pop("input", None)
-        if inputs is not None:
-            # Override input metadata
-            for varname, name in inputs.items():
-                # Indicator's new will put the name of the variable as its default, we override this with the real variable name.
-                params[varname] = {
-                    "default": name,
-                    "description": VARIABLES[name]["description"],
-                }
-                input_units[varname] = VARIABLES[name]["canonical_units"]
-
         compute = data.pop("compute", None)
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
@@ -506,34 +577,7 @@ class Indicator(IndicatorRegistrar):
                 raise ImportError(
                     f"Indice function {compute} not found in xclim.indices or xclim.indices.generic."
                 )
-
-        injected_params = {}
-        for name, param in data.pop("parameters", {}).items():
-            if not isinstance(param, dict):
-                # Injecting by passing a value directly, catch all YAML-supported types
-                injected_params[name] = param
-            else:
-                # Changing the metadata (only "description", "default", "choices" and "units")
-                params[name] = param
-                if "units" in param:
-                    input_units[name] = param["units"]
-
-        if input_units:
-            if hasattr(compute, "in_units"):
-                raise ValueError(
-                    f"Passing inputs or changing parameters' units is only valid if the compute function is not aleady wrapped by `xclim.core.units.declare_units`. Got function {compute} that has input units {compute.in_units}."
-                )
-            compute = declare_units(**input_units)(compute)
-
-        if injected_params:
-            # It's possible to inject params without passing a compute, in that case we use the one from the base class.
-            compute = wrapped_partial(compute or cls.compute, **injected_params)
-
-        # Dont pass things it they were not updated
-        if compute is not None:
             data["compute"] = compute
-        if params:  # non-empty dict
-            data["parameters"] = params
 
         return cls(identifier=identifier, module=module, **data)
 
@@ -556,7 +600,35 @@ class Indicator(IndicatorRegistrar):
         super().__init__()
 
         # Update call signature
-        self.__call__ = wraps(self._indcompute)(self.__call__)
+        variables = []
+        parameters = []
+        compute_sig = signature(self.compute)
+        for name, meta in self.parameters.items():
+            if not isinstance(meta, dict):
+                continue
+            if meta["kind"] <= InputKind.OPTIONAL_VARIABLE:
+                annot = Union[DataArray, str]
+                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
+                    annot = Optional[annot]
+                variables.append(
+                    Parameter(
+                        name,
+                        kind=Parameter.POSITIONAL_OR_KEYWORD,
+                        default=meta["default"],
+                        annotation=annot,
+                    )
+                )
+            elif meta["kind"] != InputKind.KWARGS:
+                parameters.append(
+                    Parameter(
+                        name,
+                        kind=Parameter.KEYWORD_ONLY,
+                        default=meta["default"],
+                        annotation=compute_sig.parameters[name].annotation,
+                    )
+                )
+            else:
+                parameters.append(Parameter(name, kind=Parameter.VAR_KEYWORD))
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
@@ -1048,121 +1120,6 @@ class Hourly(Indicator):
 
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
-
-
-def _parse_indice(indice: Callable, passed=None, **new_kwargs):
-    """Parse an indice function and return corresponding elements needed for constructing an indicator.
-
-    Parameters
-    ----------
-    indice : Callable
-      A indice function, written according to xclim's guidelines.
-    new_kwargs :
-      Mapping from name to dicts containing the necessary info for injecting new keyword-only
-      arguments into the indice_wrapper function. The meta dict can include (all optional):
-      `default`, `description`, `annotation`.
-
-    Returns
-    -------
-    indice_wrapper : callable
-      A function with a new signature including the injected args in new_kwargs.
-    docmeta : Mapping[str, str]
-      A dictionary of the metadata attributes parsed in the docstring.
-    params : Mapping[str, Mapping[str, Any]]
-      A dictionary of metadata for each input parameter of the indice. The metadata dictionaries
-      include the following entries: "default", "description", "kind" and, optionally, "choices" and "units".
-      "kind" is one of the constants in :py:class:`xclim.core.utils.InputKind`.
-    """
-    # Base signature
-    sig = signature(indice)
-    passed = passed or {}
-
-    # Update
-    def _upd_param(param):
-        # Required DataArray arguments receive their own name as new default
-        #         + the Union[str, DataArray] annotation
-        if param.kind in [param.VAR_KEYWORD, param.VAR_POSITIONAL]:
-            return param
-
-        xckind = infer_kind_from_parameter(param)
-
-        default = passed.get(param.name, {}).get("default", param.default)
-        if xckind == InputKind.OPTIONAL_VARIABLE and (
-            default is _empty or isinstance(default, str)
-        ):
-            # Was wrapped with suggested={param: _empty} OR somehow a variable name was injected (ex: through yaml)
-            # It becomes a non-optional variable
-            xckind = InputKind.VARIABLE
-        if default is _empty:
-            if xckind == InputKind.VARIABLE:
-                default = param.name
-            else:
-                # Parameters with no default receive None
-                # Because we can't have no-default args _after_ default args and we just set the default on the variables (which are the first args)
-                default = None
-
-        # Python dont need no switch case
-        annots = {
-            InputKind.VARIABLE: Union[str, DataArray],
-            InputKind.OPTIONAL_VARIABLE: Optional[Union[str, DataArray]],
-        }
-        annot = annots.get(xckind, param.annotation)
-
-        return Parameter(
-            param.name,
-            # We keep the kind, except we replace POSITIONAL_ONLY by POSITONAL_OR_KEYWORD
-            max(param.kind, 1),
-            default=default,
-            annotation=annot,
-        )
-
-    # Parse all parameters, replacing annotations and default where needed and possible.
-    new_params = list(map(_upd_param, sig.parameters.values()))
-
-    # Injection
-    for name, meta in new_kwargs.items():
-        # ds argunent
-        param = Parameter(
-            name,
-            Parameter.KEYWORD_ONLY,
-            default=meta.get("default"),
-            annotation=meta.get("annotation"),
-        )
-
-        if new_params[-1].kind == Parameter.VAR_KEYWORD:
-            new_params.insert(-1, param)
-        else:
-            new_params.append(param)
-
-    # Create new compute function to be wrapped in __call__
-    indice_wrapper = copy_function(indice)
-    indice_wrapper.__signature__ = new_sig = sig.replace(parameters=new_params)
-    indice_wrapper.__doc__ = indice.__doc__
-
-    # Docstring parsing
-    parsed = parse_doc(indice.__doc__)
-
-    # Extract params and pop those not in the signature.
-    params = parsed.pop("parameters", {})
-    for dropped in set(params.keys()) - set(new_sig.parameters.keys()):
-        params.pop(dropped)
-
-    if hasattr(indice, "in_units"):
-        # Try to put units
-        for var, ustr in indice.in_units.items():
-            if var in params:
-                params[var]["units"] = ustr
-
-    # Fill default values and annotation in parameter doc
-    for name, param in new_sig.parameters.items():
-        if name in new_kwargs and "description" in new_kwargs[name]:
-            params[name] = {"description": new_kwargs[name]["description"]}
-        param_doc = params.setdefault(name, {"description": ""})
-        param_doc["default"] = param.default
-        param_doc["kind"] = infer_kind_from_parameter(param, "units" in param_doc)
-        param_doc.update(passed.get(name, {}))
-
-    return indice_wrapper, parsed, params
 
 
 def add_iter_indicators(module):
