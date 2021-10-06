@@ -8,7 +8,7 @@ History
 
 Bug fixes
 ~~~~~~~~~
-* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`.
+* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`). By `Abel Aoun <https://github.com/bzah>`_.
 
 0.30.1 (2021-10-01)
 -------------------
