@@ -30,11 +30,16 @@ from xclim.testing import open_dataset
 class UniIndTemp(Daily):
     realm = "atmos"
     identifier = "tmin"
-    var_name = "tmin{thresh}"
-    units = "K"
-    long_name = "{freq} mean surface temperature"
-    standard_name = "{freq} mean temperature"
-    cell_methods = "time: mean within {freq:noun}"
+    cf_attrs = [
+        dict(
+            var_name="tmin{thresh}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods="time: mean within {freq:noun}",
+            another_attr="With a value.",
+        )
+    ]
 
     @staticmethod
     def compute(da: xr.DataArray, thresh: int = 0.0, freq: str = "YS"):
@@ -47,7 +52,7 @@ class UniIndTemp(Daily):
 class UniIndPr(Daily):
     realm = "atmos"
     identifier = "prmax"
-    units = "mm/s"
+    cf_attrs = [dict(units="mm/s")]
     context = "hydro"
 
     @staticmethod
@@ -59,7 +64,7 @@ class UniIndPr(Daily):
 class UniClim(Daily):
     realm = "atmos"
     identifier = "clim"
-    units = "K"
+    cf_attrs = [dict(units="K")]
 
     @staticmethod
     def compute(da: xr.DataArray, freq="YS", **indexer):
@@ -70,10 +75,19 @@ class UniClim(Daily):
 class MultiTemp(Daily):
     realm = "atmos"
     identifier = "minmaxtemp"
-    var_name = ["tmin", "tmax"]
-    units = "K"
-    standard_name = ["Min temp", ""]
-    description = "Grouped computation of tmax and tmin"
+    cf_attrs = [
+        dict(
+            var_name="tmin",
+            units="K",
+            standard_name="Min temp",
+            description="Grouped computation of tmax and tmin",
+        ),
+        dict(
+            var_name="tmax",
+            units="K",
+            description="Grouped computation of tmax and tmin",
+        ),
+    ]
 
     @staticmethod
     def compute(tas: xr.DataArray, freq):
@@ -86,7 +100,7 @@ class MultiTemp(Daily):
 class MultiOptVar(Daily):
     realm = "atmos"
     identifier = "multiopt"
-    units = "K"
+    cf_attrs = [dict(units="K")]
 
     @staticmethod
     def compute(
@@ -111,6 +125,8 @@ def test_attrs(tas_series):
     assert "TMIN(da=tas, thresh=5, freq='YS')" in txm.attrs["history"]
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
+    assert ind.standard_name == "{freq} mean temperature"
+    assert ind.cf_attrs[0]["another_attr"] == "With a value."
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -177,7 +193,7 @@ def test_temp_unit_conversion(tas_series):
 
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
-    ind = MultiTemp()
+    ind = MultiTemp()  # Attrs passed as class attributes
 
     tmin, tmax = ind(tas, freq="YS")
     assert tmin[0] == tas.min()
@@ -185,6 +201,51 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["standard_name"] == "Min temp"
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert ind.units == ["K", "K"]
+
+    # Attrs passed as keywords - together
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp2",
+        cf_attrs=[
+            dict(
+                var_name="tmin",
+                units="K",
+                standard_name="Min temp",
+                description="Grouped computation of tmax and tmin",
+            ),
+            dict(
+                var_name="tmax",
+                units="K",
+                description="Grouped computation of tmax and tmin",
+            ),
+        ],
+        compute=MultiTemp.compute,
+    )
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+
+    # Attrs passed as keywords - individually
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp3",
+        var_name=["tmin", "tmax"],
+        units="K",
+        standard_name=["Min temp", ""],
+        description="Grouped computation of tmax and tmin",
+        compute=MultiTemp.compute,
+    )
+    tmin, tmax = ind(tas, freq="YS")
+    assert tmin[0] == tas.min()
+    assert tmax[0] == tas.max()
+    assert tmin.attrs["standard_name"] == "Min temp"
+    assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
+    assert ind.units == ["K", "K"]
 
 
 def test_missing(tas_series):
@@ -463,20 +524,18 @@ def test_input_dataset():
 def test_indicator_from_dict():
     d = dict(
         realm="atmos",
-        output=dict(
-            var_name="tmean{thresh}",
+        cf_attrs=dict(
+            var_name="tmean{threshold}",
             units="K",
             long_name="{freq} mean surface temperature",
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        index_function=dict(
-            name="thresholded_statistics",
-            parameters=dict(
-                threshold={"data": {"thresh": None}, "description": "A threshold temp"},
-                condition={"data": "`<"},
-                reducer={"data": "mean"},
-            ),
+        compute="thresholded_statistics",
+        parameters=dict(
+            threshold={"description": "A threshold temp"},
+            condition="<",
+            reducer="mean",
         ),
         input={"data": "tas"},
     )
@@ -488,8 +547,10 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"]["description"] == "A threshold temp"
     # Injection of paramters
     assert "condition" in ind.compute._injected
-    # Placeholders were translated to name in signature
-    assert ind.cf_attrs[0]["var_name"] == "tmean{threshold}"
     # Default value for input variable injected and meta injected
     assert ind._sig.parameters["data"].default == "tas"
     assert ind.parameters["data"]["units"] == "K"
+
+    # Wrap a multi-output ind
+    d = dict(base="wind_speed_from_vector")
+    ind = Indicator.from_dict(d, identifier="wsfv", module="test")

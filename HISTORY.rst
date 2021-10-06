@@ -2,9 +2,12 @@
 History
 =======
 
-
-0.30.2 (Unreleased)
+0.31.0 (unreleased)
 -------------------
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
 
 Bug fixes
 ~~~~~~~~~

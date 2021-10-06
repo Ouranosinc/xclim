@@ -314,16 +314,16 @@ def generate_local_dict(locale: str, init_english: bool = False):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
 
-        for var_attrs in indicator.cf_attrs:
+        for cf_attrs in indicator.cf_attrs:
             # In the case of single output, put var attrs in main dict
             if len(indicator.cf_attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+                ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
                 set(indicator._cf_names)
             ):
                 if init_english:
-                    eng_attr = var_attrs.get(translatable_attr)
+                    eng_attr = cf_attrs.get(translatable_attr)
                     if not isinstance(eng_attr, str):
                         eng_attr = ""
                 ind_attrs.setdefault(f"{translatable_attr}", eng_attr)

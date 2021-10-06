@@ -519,8 +519,8 @@ def _gen_returns_section(cfattrs):
 
     Parameters
     ----------
-    cfattrs : Sequence[Dict[str, Any]]
-      The list of cf attributes, usually Indicator.cf_attrs.
+    attrs : Sequence[Dict[str, Any]]
+      The list of attributes, usually Indicator.cf_attrs.
     """
     section = "Returns\n-------\n"
     for attrs in cfattrs:
@@ -573,11 +573,3 @@ def generate_indicator_docstring(ind):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
-
-
-def parse_cell_methods(cell_methods: Sequence[Mapping[str, str]]) -> str:
-    """Parse cell methods as YAML reads them into a string."""
-    methods = []
-    for cell_method in cell_methods:
-        methods.append("".join([f"{dim}: {meth}" for dim, meth in cell_method.items()]))
-    return " ".join(methods)
